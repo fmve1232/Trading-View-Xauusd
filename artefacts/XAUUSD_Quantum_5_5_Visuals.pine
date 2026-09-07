@@ -1,0 +1,931 @@
+//@version=6
+// ═══════════════════════════════════════════════════════════════════════════════
+// XAUUSD QUANTUM — VISUALS & FOOTPRINT COMPANION  (V2.0)
+// Runs ALONGSIDE the Quantum Master (Q6.3) indicator on the same chart.
+//
+// WHY TWO SCRIPTS: the Master sits ~1,500 tokens under Pine's 100,256 ceiling, so
+// its chart-drawing layer lives here instead. Master = intelligence + dashboard.
+// Companion = every line, label, zone, and the footprint approximation.
+// Definitions MATCH the Master exactly (EMA 20/100/200, corrected FVG bounds,
+// NY-session-anchored PDH/PDL/PWH/PWL + CDH/CDL), so the two never disagree.
+//
+// V2.0 ADDS (the achievable subset of the Final Institutional Edition spec):
+//   · Unified TAG REGISTRY with collision avoidance — every label is placed via
+//     one sorter that enforces a minimum vertical gap, so tags stop overlapping
+//     when EMAs / VWAP / BB / S-R converge. Pine has NO auto-layout engine; this
+//     is hand-written collision handling, the only way it can be done.
+//   · Candle info panel (O/H/L/C, range, ATR%, direction, relative volume).
+//   · S/R auto-hide — levels beyond N×ATR from price are suppressed.
+//   · Extended zone colors (OB brown / FVG orange / sweep magenta), toggleable
+//     back to directional bull-bear coding, which carries more information.
+//
+// PRICE-SCALE POLICY (deliberate — per the earlier explicit instruction):
+// ONLY current price, Support, Resistance, EMA 200 and VWAP-D publish to the
+// right axis. The spec's 7-tag list was NOT adopted: it re-crowds the axis that
+// the 5-tag limit was chosen to fix, and it drops S/R which was asked for.
+// NOTE: TradingView owns price-axis layout — axis tags CANNOT be de-overlapped
+// from Pine. The collision handling below applies to CHART labels, not the axis.
+//
+// FOOTPRINT HONESTY: Pine has NO bid/ask order-flow data, so a true footprint
+// (volume at bid vs ask per price level) is impossible here. What follows is a
+// documented approximation: intrabar data via request.security_lower_tf(), each
+// intrabar classified by the tick rule (close>open = buy-side), binned by price.
+// A genuine intrabar volume distribution — NOT exchange footprint.
+// ═══════════════════════════════════════════════════════════════════════════════
+indicator("XAUUSD Quantum Visuals V2", "QV2", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500, max_bars_back = 5000)
+
+// ─────────────────────────── INPUTS ───────────────────────────
+grpT = "Trend Overlays"
+showEma      = input.bool(true,  "EMA 20 / 100 / 200",      group = grpT)
+ema20Len     = input.int(20,  "EMA fast length",   minval = 2, group = grpT, tooltip = "Keep these matched to the Master's EMA inputs, or the drawn averages will differ from the ones the engine scores.")
+ema100Len    = input.int(100, "EMA mid length",    minval = 5, group = grpT)
+ema200Len    = input.int(200, "EMA slow length",   minval = 10, group = grpT)
+showVwap     = input.bool(true,  "VWAP (daily anchor)",     group = grpT)
+showVwapWM   = input.bool(false, "VWAP weekly + monthly",   group = grpT)
+showBB       = input.bool(true,  "Bollinger Bands (20, 2)", group = grpT)
+
+grpTag = "Labels"
+showTags      = input.bool(true, "Label every line at right edge", group = grpTag)
+tagOffset     = input.int(14,    "Tag distance (bars right)", minval = 2, maxval = 60, group = grpTag)
+tagGapATR     = input.float(0.22, "Min label separation (ATR)", minval = 0.0, maxval = 2.0, step = 0.02, group = grpTag, tooltip = "Collision avoidance: labels closer than this are pushed apart vertically. The dotted leader still points at each line's true value. Set 0 to disable.")
+showPriceLine = input.bool(true, "Live price line + tag",   group = grpTag)
+
+grpL = "Key Levels"
+showLevels   = input.bool(true,  "PDH/PDL · PWH/PWL",       group = grpL)
+showMonthly  = input.bool(false, "PMH/PML (monthly)",       group = grpL)
+showCurDay   = input.bool(true,  "CDH/CDL (current day)",   group = grpL, tooltip = "Current NY-session day high/low — the Master uses these as live take-profit candidates.")
+
+grpSR = "Support / Resistance"
+showSR       = input.bool(true,  "Show S/R levels",         group = grpSR)
+srCount      = input.int(2,      "Levels each side", minval = 1, maxval = 4, group = grpSR)
+srMergeATR   = input.float(0.5,  "Merge distance (ATR)", minval = 0.1, step = 0.1, group = grpSR)
+srMaxDistATR = input.float(8.0,  "Auto-hide beyond (ATR)", minval = 1.0, maxval = 50.0, step = 0.5, group = grpSR, tooltip = "Levels farther than this from current price are hidden — keeps the chart clean when price travels away from an old zone.")
+srMaxKeep    = input.int(40,     "Pivots retained", minval = 10, maxval = 120, group = grpSR)
+
+grpS = "Structure"
+// F-030: these markers come from a DIFFERENT algorithm than the Master's. This script
+// uses ONE pivot scale (pivotLen), a simple close-through-pivot break and a bias-flip
+// CHoCH; the Master uses TWO pivot scales, HH/HL/LH/LL sequence validation, ATR-distance
+// and bar-spacing filters, and an 8-bar structWindow -- and it also detects MSS, which
+// this script cannot produce at all. A marker here is therefore NOT evidence the engine
+// scored a structure break. The "~" prefix on every label says so on the chart itself.
+showStruct   = input.bool(true,  "BOS / CHoCH labels (~ = approximation, NOT the engine's signal)", group = grpS, tooltip = "Drawn by a simplified structure detector, not the Master's engine. Use them for chart reading; never treat a ~BOS or ~CHoCH as confirmation that the engine registered one.")
+pivotLen     = input.int(5,      "Pivot length", minval = 2, maxval = 20, group = grpS)
+showPivots   = input.bool(false, "Mark swing pivots",       group = grpS)
+structKeep   = input.int(25,     "BOS/CHoCH markers kept", minval = 5, maxval = 100, group = grpS, tooltip = "Older structure markers are deleted. Without a cap they accumulate until TradingView's 500-object limit silently drops the oldest drawings.")
+showSweep    = input.bool(true,  "Liquidity sweep markers", group = grpS)
+
+grpZ = "Zones"
+showFVG      = input.bool(true,  "Fair Value Gaps",         group = grpZ)
+fvgMaxBars   = input.int(60,     "FVG max age (bars)", minval = 5, group = grpZ)
+fvgMinATR    = input.float(0.3,  "FVG min size (ATR)", minval = 0.05, step = 0.05, group = grpZ)
+showOB       = input.bool(true,  "Order Blocks",            group = grpZ)
+obDispATR    = input.float(1.0,  "OB displacement (ATR)", minval = 0.3, step = 0.1, group = grpZ)
+obKeep       = input.int(4,      "Order Blocks kept", minval = 1, maxval = 10, group = grpZ)
+obShowLabel = input.bool(true, "Label OB / FVG zones", group="Zones", tooltip="Zone identity labels, relocated here from the Master when it exceeded the Pine token limit.")
+
+// ===== SUPPORT / RESISTANCE — MIGRATED FROM THE MASTER =====================
+// PORTED VERBATIM. The Master was at ~95% of the Pine token ceiling while this file sits
+// at ~14%, and the S/R scanner was display-only there: its level arrays were consumed only
+// by the scanner and the drawing block, never by a decision. (The activeResistance /
+// activeSupport that DO feed the trade plan come from the pivot path and remain in the
+// Master.) Moving it freed ~1,587 compiled tokens for inputs that change decisions.
+// PARITY IS THE RISK, so the function below is copied UNCHANGED and driven with the same
+// constants the Master used: maxSR 6, scanLen 100, same ATR proximity clustering. The
+// levels drawn here are therefore the same levels the Master drew. Any future edit must be
+// mirrored or the Master/Visuals parity check will flag it.
+srShow    = input.bool(true, "Support / Resistance levels", group="Zones")
+srMaxLv   = input.int(6,   "  Max levels per side", minval=1, maxval=12, group="Zones")
+srScanLen = input.int(100, "  Scan lookback (bars)", minval=20, maxval=400, group="Zones")
+boxFade      = input.int(94,     "Zone fill transparency (higher = fainter)", minval = 80, maxval = 99, group = grpZ)
+zoneFlatCol  = input.bool(true,  "Spec colors (OB brown / FVG orange)", group = grpZ, tooltip = "ON = Final Edition palette. OFF = directional bull/bear colouring, which carries MORE information — you can read gap direction at a glance.")
+
+grpC = "Candle Info Panel"
+showCandle   = input.bool(true,  "Show candle info panel",  group = grpC)
+candlePos    = input.string("Top Right", "Panel position", options = ["Top Right", "Middle Right", "Bottom Right", "Top Left"], group = grpC)
+
+grpSess = "Sessions (UTC)"
+showSess     = input.bool(true,  "Session shading",         group = grpSess)
+
+grpF = "Footprint (approximation)"
+showFP       = input.bool(true,  "Enable footprint engine", group = grpF)
+fpTf         = input.timeframe("1", "Intrabar timeframe",   group = grpF, tooltip = "Must be LOWER than the chart timeframe. 1 minute on a 5M chart gives 5 intrabars per candle.")
+fpBars       = input.int(25,     "Bars to render", minval = 5, maxval = 60, group = grpF)
+fpBins       = input.int(6,      "Price bins per bar", minval = 3, maxval = 10, group = grpF)
+showFpBins   = input.bool(true,  "Draw volume-at-price bins", group = grpF)
+showFpPOC    = input.bool(true,  "Mark bar volume POC",     group = grpF)
+showFpDelta  = input.bool(true,  "Delta labels",            group = grpF)
+
+// ===== ABSORPTION BUBBLES =====================================================
+// WHAT THIS IS, PRECISELY. True absorption is large RESTING size soaking up aggression
+// without price moving — that requires bid/ask order-flow, which Pine does not expose and
+// which spot XAUUSD does not have at all: `volume` on this feed is a TICK COUNT (number of
+// price updates), not contracts traded. So this is NOT exchange absorption and is not
+// labelled as such anywhere on the chart.
+// WHAT IT ACTUALLY MEASURES — the observable shadow of absorption, three conditions
+// together (any one alone is meaningless):
+//   EFFORT   total lower-timeframe activity well above its own recent average
+//   RESULT   realised progress (|close-open|) SMALL relative to the bar's own range
+//   ONE-SIDED  the footprint delta clearly skewed to one side
+// Read together: one side pushed hard, and got nowhere. That is the footprint an
+// absorbing counterparty leaves behind on a feed without a tape.
+// DIRECTION IS DELIBERATELY INVERTED vs the aggression: buy-side effort that fails to
+// advance means BUYERS were absorbed, which is a BEARISH tell, and vice versa.
+// Bubble is placed at fpPOC — where the activity actually concentrated — not at the close.
+// REQUIRES the footprint engine (it consumes its delta/POC), so it is gated on showFP.
+showAbs      = input.bool(true,  "Absorption bubbles",      group = grpF, tooltip = "Tick-activity proxy, NOT exchange order-flow. Spot XAUUSD volume is a tick count. Requires the footprint engine.")
+absEffort    = input.float(1.6,  "  Effort: vol vs average", minval = 1.0, maxval = 5.0, step = 0.1, group = grpF)
+absResult    = input.float(0.35, "  Result: |c-o| / range",  minval = 0.05, maxval = 0.9, step = 0.05, group = grpF)
+absImb       = input.float(0.30, "  Delta imbalance min",    minval = 0.05, maxval = 0.9, step = 0.05, group = grpF)
+absKeep      = input.int(40,     "  Bubbles kept",           minval = 5, maxval = 200, group = grpF)
+
+// ─────────────────────────── COLORS ───────────────────────────
+cBull   = #00D084
+cBear   = #FF4D4D
+cNeut   = #808A93
+cFast   = #FFFFFF
+cMid    = #3B82F6
+cSlow   = #FFD700
+cVwap   = #00BCD4
+cBB     = #B084FF
+cPrice  = #00E676
+cLevel  = #FFD54F
+cLevelW = #FF8A65
+cCur    = #4DD0E1
+cSup    = #26A69A
+cRes    = #EF5350
+cOB     = #8D6E63
+cFVG    = #FF9800
+cSweep  = #E040FB
+
+float atr14 = ta.atr(14)
+// ta.* must be evaluated on EVERY bar or its rolling window silently desynchronises.
+// Both former call sites sat inside conditional blocks — the candle panel's was inside
+// `if showCandle and barstate.islast`, so the 20-bar average only ever advanced on the
+// final bar and RVOL was computed against a window that had barely accumulated. Hoisted
+// here so both consumers read one consistent series.
+float volSma20 = ta.sma(volume, 20)
+
+// ═══════════════════ TREND OVERLAYS (match Master: 20/100/200) ═══════════════════
+float ema20  = ta.ema(close, ema20Len)
+float ema100 = ta.ema(close, ema100Len)
+float ema200 = ta.ema(close, ema200Len)
+plot(showEma ? ema20  : na, "EMA 20",  color = cFast, linewidth = 1, display = display.pane)
+plot(showEma ? ema100 : na, "EMA 100", color = cMid,  linewidth = 1, display = display.pane)
+plot(showEma ? ema200 : na, "EMA 200", color = cSlow, linewidth = 2, display = display.all)
+
+float vwapD = ta.vwap(hlc3)
+float vwapW = ta.vwap(hlc3, timeframe.change("1W"))
+float vwapM = ta.vwap(hlc3, timeframe.change("1M"))
+plot(showVwap ? vwapD : na, "VWAP D", color = cVwap, linewidth = 2, display = display.all)
+plot(showVwapWM ? vwapW : na, "VWAP W", color = color.new(cVwap, 40), linewidth = 1, display = display.pane)
+plot(showVwapWM ? vwapM : na, "VWAP M", color = color.new(cVwap, 65), linewidth = 1, display = display.pane)
+
+float bbBasis = ta.sma(close, 20)
+float bbDev   = 2.0 * ta.stdev(close, 20)
+pBBU = plot(showBB ? bbBasis + bbDev : na, "BB Upper", color = color.new(cBB, 25), display = display.pane)
+pBBL = plot(showBB ? bbBasis - bbDev : na, "BB Lower", color = color.new(cBB, 25), display = display.pane)
+plot(showBB ? bbBasis : na, "BB Basis", color = color.new(cBB, 55), display = display.pane)
+fill(pBBU, pBBL, color = color.new(cBB, 96), title = "BB Fill")
+
+// ═══════════════ KEY LEVELS — NY-SESSION ANCHORED (matches the Master) ═══════════════
+// AUDIT FIX: this block previously used request.security("D"/"W", high[1]) — the
+// EXCHANGE CALENDAR day/week. The Master does NOT: it tracks previous day/week
+// extremes against the 17:00 New York close, with the weekly roll detected by the
+// PREVIOUS bar being a Friday bar (the market is shut Fri 17:00 -> Sun 17:00 ET, so
+// testing the crossing bar's own weekday can never be true — the Master's R5.2-C1
+// fix). Calendar levels and NY-session levels are NOT the same numbers, so the chart
+// could disagree with the engine trading off them. Master logic replicated verbatim.
+// Monthly stays on request.security — that is what the Master uses for PMH/PML.
+int msInDay = 86400000
+// CHANGE ID: F-033 | NY-day anchor bound to the EXCHANGE timezone instead of New York.
+// DEFECT. `hour`/`minute` with no timezone argument return EXCHANGE time, so this resolved
+// to "17:00 in whatever timezone the feed reports" -- not 17:00 New York. On a feed whose
+// exchange timezone is UTC (common for spot metals/FX), the NY-day rollover fired at
+// 17:00 UTC = 13:00 EDT, four hours early, cutting PDH/PDL through the middle of the New
+// York session. PWH/PWL and CDH/CDL inherit it: both key off crossedNYDay.
+// SECOND DEFECT, same line. There was no DST handling here at all, while the session
+// shading block below IS explicitly DST-aware (usIsDST). Two blocks in one file, both
+// about New York time, disagreeing on whether DST exists.
+// FIX. Read the clock in "America/New_York" explicitly. The offset then comes from the
+// IANA zone, so DST is handled by the calendar rather than by arithmetic that has to be
+// maintained: the boundary lands on 21:00 UTC in EDT and 22:00 UTC in EST, which is
+// exactly the convention F-005 documents. The exchange-timezone dependency is removed
+// entirely, so the levels no longer change meaning when the feed's timezone does.
+// The final ((x % d) + d) % d normalises the result -- Pine's % can return a negative.
+int _nyMsOfDay  = hour(time, "America/New_York") * 3600000 + minute(time, "America/New_York") * 60000
+int _nyOffsetMs = _nyMsOfDay - int(time % msInDay)
+int nyCloseDayMs = ((17 * 3600000 - _nyOffsetMs) % msInDay + msInDay) % msInDay
+var float nyDailyHigh = na
+var float nyDailyLow = na
+var float prevNyDailyHigh = na
+var float prevNyDailyLow = na
+var float nyWeeklyHigh = na
+var float nyWeeklyLow = na
+var float prevNyWeeklyHigh = na
+var float prevNyWeeklyLow = na
+bool crossedNYDay = false
+if not na(time[1])
+    int tMod = time % msInDay
+    int t1Mod = time[1] % msInDay
+    if tMod > t1Mod
+        crossedNYDay := t1Mod < nyCloseDayMs and tMod >= nyCloseDayMs
+    else
+        // F-004 PARITY (see Master for the full rationale): strict `<`, not `<=`. A bar
+        // opening exactly on the boundary has already consumed the rollover; `<=` re-fired
+        // when the next bar wrapped past midnight, double-resetting the NY day on 2H (EST)
+        // and 3H (EDT). Chart and engine must agree on every timeframe.
+        crossedNYDay := t1Mod < nyCloseDayMs or tMod >= nyCloseDayMs
+// CHANGE ID: P1-LVL-002 | Timeframe robustness of the NY-anchored rollover.
+// FINDING (simulated across 1M/5M/15M/1H/4H/D/W): the boundary detector is correct on
+// every INTRADAY timeframe and on D. On W and above it degenerates twice over:
+//  (a) tMod == t1Mod on every bar (bar times are a whole number of days apart), so the
+//      wrap-case `t1Mod <= C or tMod >= C` is a tautology -> crossedNYDay fires EVERY
+//      bar. On D that is harmless and in fact correct (prev bar = prev day). On W it
+//      makes "PDH/PDL" silently mean PREVIOUS WEEK's high/low under a daily label.
+//  (b) crossedNYWeek additionally required the previous bar to be a Friday. Weekly bars
+//      open Sunday/Monday, so that test is NEVER true -> PWH/PWL never rolled and stayed
+//      na forever (measured: 0 week-rollovers over 700 simulated days on W).
+// FIX: on D-and-above use timeframe.change("1W"), which resolves the weekly boundary off
+// the exchange calendar and is correct on D, W and MN alike (verified). Intraday keeps
+// the NY 17:00-Friday anchor, which is the more precise trading convention and is
+// already correct there — so no intraday behaviour changes.
+bool _tfDayPlus = timeframe.in_seconds() >= 86400
+bool crossedNYWeek = _tfDayPlus ? timeframe.change("1W") : (crossedNYDay and dayofweek(nz(time[1], time), "UTC") == dayofweek.friday)
+if na(nyDailyHigh)
+    // FIX (PDH/PDL parity with Master): previous-session values are no longer seeded
+    // from the chart's first bar. Seeding them fabricated a "previous day" equal to
+    // one bar's range, which on a fresh chart drew PDH/PDL right on top of price.
+    // They stay na until the first genuine rollover; f_tagAdd/f_level already skip
+    // na values, so the lines and labels are simply absent until real data exists.
+    nyDailyHigh := high
+    nyDailyLow := low
+    nyWeeklyHigh := high
+    nyWeeklyLow := low
+else if crossedNYDay
+    prevNyDailyHigh := nyDailyHigh
+    prevNyDailyLow := nyDailyLow
+    nyDailyHigh := high
+    nyDailyLow := low
+    if crossedNYWeek
+        prevNyWeeklyHigh := nyWeeklyHigh
+        prevNyWeeklyLow := nyWeeklyLow
+        nyWeeklyHigh := high
+        nyWeeklyLow := low
+else
+    nyDailyHigh := math.max(nz(nyDailyHigh, high), high)
+    nyDailyLow := math.min(nz(nyDailyLow, low), low)
+    nyWeeklyHigh := math.max(nz(nyWeeklyHigh, high), high)
+    nyWeeklyLow := math.min(nz(nyWeeklyLow, low), low)
+
+// P1-LVL-002 (b) PARITY: mirrors the Master's suppression above D, where a "previous
+// DAY" extreme is undefined and the detector would otherwise resolve to the previous
+// week/month under a PDH/PDL label. na simply omits the tag (f_tagAdd is na-guarded),
+// so the chart and the engine still agree on every timeframe.
+bool _tfAboveD = timeframe.in_seconds() > 86400
+float pdh = _tfAboveD ? na : prevNyDailyHigh
+float pdl = _tfAboveD ? na : prevNyDailyLow
+// P1-LVL-002 (c) PARITY: mirrors the Master's suppression above W.
+bool _tfAboveW = timeframe.in_seconds() > 604800
+float pwh = _tfAboveW ? na : prevNyWeeklyHigh
+float pwl = _tfAboveW ? na : prevNyWeeklyLow
+[pmh, pml] = request.security(syminfo.tickerid, "M", [high[1], low[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
+
+// CURRENT-DAY extremes (CDH/CDL) — same NY anchor. Present in the Master as live TP
+// candidates but never drawn here, so the chart omitted two levels the engine targets.
+var float cdh = na
+var float cdl = na
+if crossedNYDay
+    cdh := high
+    cdl := low
+else
+    cdh := math.max(nz(cdh, high), high)
+    cdl := math.min(nz(cdl, low), low)
+
+// ═══════════════════ STRUCTURE — pivots, BOS / CHoCH, sweeps ═══════════════════
+float ph = ta.pivothigh(pivotLen, pivotLen)
+float pl = ta.pivotlow(pivotLen, pivotLen)
+plotshape(showPivots and not na(ph) ? high[pivotLen] : na, "Swing High", shape.triangledown, location.absolute, cBear, offset = -pivotLen, size = size.tiny)
+plotshape(showPivots and not na(pl) ? low[pivotLen]  : na, "Swing Low",  shape.triangleup,   location.absolute, cBull, offset = -pivotLen, size = size.tiny)
+
+var float lastPH   = na
+var float lastPL   = na
+var bool  bullBias = false
+var bool  haveBias = false
+if not na(ph)
+    lastPH := high[pivotLen]
+if not na(pl)
+    lastPL := low[pivotLen]
+
+bool brokeUp   = not na(lastPH) and close > lastPH and close[1] <= lastPH
+bool brokeDown = not na(lastPL) and close < lastPL and close[1] >= lastPL
+
+// AUDIT FIX (object lifecycle): these were the ONLY uncapped drawing calls in this
+// script — a label + line per structure break, never deleted. On a long chart they
+// exhaust max_labels_count/max_lines_count (500), at which point TradingView silently
+// drops the OLDEST objects, which also starves the tag registry below. Now bounded.
+var label[] structLb = array.new<label>()
+var line[]  structLn = array.new<line>()
+if showStruct and barstate.isconfirmed
+    if brokeUp
+        bool isChoch = haveBias and not bullBias
+        array.push(structLb, label.new(bar_index, high, isChoch ? "~CHoCH▲" : "~BOS▲", xloc.bar_index, yloc.abovebar, color.new(cBull, 20), label.style_label_down, color.white, size.tiny))
+        array.push(structLn, line.new(bar_index - 1, lastPH, bar_index, lastPH, xloc.bar_index, extend.none, cBull, line.style_solid, 2))
+        bullBias := true
+        haveBias := true
+    if brokeDown
+        bool isChoch2 = haveBias and bullBias
+        array.push(structLb, label.new(bar_index, low, isChoch2 ? "~CHoCH▼" : "~BOS▼", xloc.bar_index, yloc.belowbar, color.new(cBear, 20), label.style_label_up, color.white, size.tiny))
+        array.push(structLn, line.new(bar_index - 1, lastPL, bar_index, lastPL, xloc.bar_index, extend.none, cBear, line.style_solid, 2))
+        bullBias := false
+        haveBias := true
+    while array.size(structLb) > structKeep
+        label.delete(array.shift(structLb))
+    while array.size(structLn) > structKeep
+        line.delete(array.shift(structLn))
+
+// Liquidity sweep = trade beyond a confirmed pivot, then close back inside it.
+bool sweepUp = showSweep and not na(lastPH) and high > lastPH and close < lastPH and barstate.isconfirmed
+bool sweepDn = showSweep and not na(lastPL) and low  < lastPL and close > lastPL and barstate.isconfirmed
+plotshape(sweepUp ? high : na, "Sweep High", shape.xcross, location.absolute, cSweep, size = size.tiny)
+plotshape(sweepDn ? low  : na, "Sweep Low",  shape.xcross, location.absolute, cSweep, size = size.tiny)
+
+// ═══════════════════ FAIR VALUE GAPS (Master's corrected bounds) ═══════════════════
+// Bullish (BISI): low[0] > high[2] -> gap [high[2], low[0]]
+// Bearish (SIBI): low[2] > high[0] -> gap [high[0], low[2]]
+// Store for the OB/FVG zone labels relocated from the Master. Capped alongside obBoxes so
+// label objects cannot accumulate past Pine's per-script drawing limit.
+var label[] obLbls = array.new<label>()
+var box[] fvgBoxes = array.new<box>()
+if showFVG and barstate.isconfirmed and bar_index > 3
+    bool bullGap = low > high[2]
+    bool bearGap = low[2] > high
+    float gLo = bullGap ? high[2] : bearGap ? high   : na
+    float gHi = bullGap ? low     : bearGap ? low[2] : na
+    if not na(gLo) and gHi - gLo >= atr14 * fvgMinATR
+        color _fc = zoneFlatCol ? cFVG : bullGap ? cBull : cBear
+        box nb = box.new(bar_index - 2, gHi, bar_index + fvgMaxBars, gLo, border_color = color.new(_fc, 78), border_width = 1, bgcolor = color.new(_fc, boxFade))
+        array.push(fvgBoxes, nb)
+        if obShowLabel
+            array.push(obLbls, label.new(bar_index - 2, gHi, "FVG", xloc.bar_index, yloc.price, color.new(color.black, 100), label.style_label_down, _fc, size.tiny))
+    // Mitigation sweep — snapshot the size and iterate downward so removals stay in range.
+    int fvgN = array.size(fvgBoxes)
+    if fvgN > 0
+        for i = fvgN - 1 to 0
+            if i < array.size(fvgBoxes)
+                box bx = array.get(fvgBoxes, i)
+                float bTop = box.get_top(bx)
+                float bBot = box.get_bottom(bx)
+                if low < bTop and high > bBot
+                    box.set_right(bx, bar_index)
+                    box.set_bgcolor(bx, color.new(cNeut, 92))
+                    box.set_border_color(bx, color.new(cNeut, 70))
+                    array.remove(fvgBoxes, i)
+    while array.size(fvgBoxes) > 30
+        array.remove(fvgBoxes, 0)
+
+// ═══════════════════ ORDER BLOCKS ═══════════════════
+var box[] obBoxes = array.new<box>()
+if showOB and barstate.isconfirmed and bar_index > 3
+    // AUDIT FIX (cross-file consistency): this previously tested ONLY body > N*ATR.
+    // The Master's displacement requires FIVE conditions — body size, direction, a
+    // close beyond the prior bar's extreme, body >= 70% of range, and volume > 1.3x
+    // the 20-bar average. The chart was therefore drawing order blocks the engine
+    // would never recognise, and missing none of the reverse. Master logic mirrored.
+    float _bodySz  = math.abs(close - open)
+    float _cRange  = high - low
+    float _bodyPct = _cRange > 0 ? _bodySz / _cRange * 100.0 : 0.0
+    bool  _volOk   = not na(volume) and not na(volSma20) and volume > volSma20 * 1.30
+    bool dispUp = _bodySz > atr14 * obDispATR and close > open and close > high[1] and _bodyPct > 70 and _volOk
+    bool dispDn = _bodySz > atr14 * obDispATR and close < open and close < low[1]  and _bodyPct > 70 and _volOk
+    if dispUp and close[1] < open[1]
+        color _oc = zoneFlatCol ? cOB : cBull
+        box ob = box.new(bar_index - 1, high[1], bar_index + 40, low[1], border_color = color.new(_oc, 72), border_width = 1, bgcolor = color.new(_oc, boxFade))
+        array.push(obBoxes, ob)
+        // OB/FVG zone LABELS relocated here from the Master (which was over the Pine token
+        // limit). The Master already drew these zones as boundary lines + a label while this
+        // file drew them as filled boxes, so every zone was rendered twice in two styles.
+        // Rendering is now consolidated here: the box carries the zone, this label carries
+        // its identity, and the Master keeps the detection that feeds the decision engine.
+        if obShowLabel
+            array.push(obLbls, label.new(bar_index - 1, high[1], "OB▲", xloc.bar_index, yloc.price, color.new(color.black, 100), label.style_label_down, _oc, size.tiny))
+    if dispDn and close[1] > open[1]
+        color _oc2 = zoneFlatCol ? cOB : cBear
+        box ob2 = box.new(bar_index - 1, high[1], bar_index + 40, low[1], border_color = color.new(_oc2, 72), border_width = 1, bgcolor = color.new(_oc2, boxFade))
+        array.push(obBoxes, ob2)
+        if obShowLabel
+            array.push(obLbls, label.new(bar_index - 1, low[1], "OB▼", xloc.bar_index, yloc.price, color.new(color.black, 100), label.style_label_up, _oc2, size.tiny))
+    while array.size(obBoxes) > obKeep * 2
+        box old = array.shift(obBoxes)
+        box.delete(old)
+    while array.size(obLbls) > obKeep * 3
+        label.delete(array.shift(obLbls))
+
+// ═══════════════════ SESSION SHADING — DST-AWARE (matches the Master) ═══════════════════
+// AUDIT FIX: this block used FIXED UTC hours (London 7-16, NY 12-21) while the Master
+// derives its session windows from EU and US daylight-saving trackers:
+//     londonClose = euIsDST ? 16 : 17
+//     nyOpen      = usIsDST ? 14 : 15      nyClose = usIsDST ? 20 : 21
+// The NY window was therefore shaded from 12:00 UTC while the engine only counts NY
+// from 14:00/15:00 — a 2-3 hour disagreement, and the London/NY overlap highlight was
+// wrong with it. Since sessionQuality gates trades, the chart was telling you a
+// different session than the one the decision engine was scoring. Master trackers
+// replicated verbatim below.
+int _dom = dayofmonth(time, "UTC")
+int _mon = month(time, "UTC")
+int _yr  = year(time, "UTC")
+int _dow = dayofweek(time, "UTC")
+int _thisSunDom = _dom - ((_dow - 1 + 7) % 7)
+int _firstSunDom = _thisSunDom - 7 * int((_thisSunDom - 1) / 7)
+if _firstSunDom < 1
+    _firstSunDom := _firstSunDom + 7
+var int usDstStartDom = 8
+var int usDstEndDom = 1
+var int _lastUsDstYr = 0
+if _yr != _lastUsDstYr
+    usDstStartDom := 8
+    usDstEndDom := 1
+    _lastUsDstYr := _yr
+if _mon == 3
+    usDstStartDom := _firstSunDom + 7
+if _mon == 11
+    usDstEndDom := _firstSunDom
+bool usIsDST = (_mon > 3 and _mon < 11) or (_mon == 3 and _dom >= usDstStartDom) or (_mon == 11 and _dom < usDstEndDom)
+var int euDstStartDom = 25
+var int euDstEndDom = 25
+var int _lastEuDstYr = 0
+if _yr != _lastEuDstYr
+    euDstStartDom := 25
+    euDstEndDom := 25
+    _lastEuDstYr := _yr
+if _mon == 3 and _dow == 1
+    euDstStartDom := math.max(euDstStartDom, _dom)
+if _mon == 10 and _dow == 1
+    euDstEndDom := math.max(euDstEndDom, _dom)
+bool euIsDST = (_mon > 3 and _mon < 10) or (_mon == 3 and _dom >= euDstStartDom) or (_mon == 10 and _dom < euDstEndDom)
+
+int hU = hour(time, "UTC")
+int londonOpen  = 7
+int londonClose = euIsDST ? 16 : 17
+int nyOpen      = usIsDST ? 14 : 15
+int nyClose     = usIsDST ? 20 : 21
+bool inAsian  = hU >= 0 and hU < londonOpen
+bool inLondon = hU >= londonOpen and hU < londonClose
+bool inNY     = hU >= nyOpen and hU < nyClose
+bgcolor(showSess and inLondon and inNY ? color.new(#FFD54F, 95) : showSess and inLondon ? color.new(#4DA6FF, 95) : showSess and inNY ? color.new(#00D084, 95) : showSess and inAsian ? color.new(#B084FF, 96) : na, title = "Sessions")
+
+// ═══════════════════ SUPPORT & RESISTANCE ═══════════════════
+// Confirmed swing pivots, clustered by ATR proximity so repeated tests of the same
+// area merge into ONE level carrying a touch count. Non-repainting (pivots confirm
+// pivotLen bars back). Levels flip side naturally as price crosses them, and are
+// auto-hidden once price travels beyond srMaxDistATR.
+var float[] srPrice = array.new<float>()
+var int[]   srHits  = array.new<int>()
+
+f_srAdd(_px) =>
+    if not na(_px) and showSR
+        int hit = -1
+        for i = 0 to math.max(array.size(srPrice) - 1, 0)
+            if array.size(srPrice) > 0 and math.abs(array.get(srPrice, i) - _px) <= atr14 * srMergeATR
+                hit := i
+                break
+        if hit >= 0
+            int c = array.get(srHits, hit)
+            array.set(srPrice, hit, (array.get(srPrice, hit) * c + _px) / (c + 1))
+            array.set(srHits, hit, c + 1)
+        else
+            array.push(srPrice, _px)
+            array.push(srHits, 1)
+        while array.size(srPrice) > srMaxKeep
+            array.shift(srPrice)
+            array.shift(srHits)
+
+if not na(ph)
+    f_srAdd(high[pivotLen])
+if not na(pl)
+    f_srAdd(low[pivotLen])
+
+// Nearest levels as SERIES so they can publish to the right price axis.
+float nearestRes = na
+float nearestSup = na
+if showSR and array.size(srPrice) > 0
+    for i = 0 to array.size(srPrice) - 1
+        float lv = array.get(srPrice, i)
+        if lv > close and (na(nearestRes) or lv < nearestRes)
+            nearestRes := lv
+        if lv < close and (na(nearestSup) or lv > nearestSup)
+            nearestSup := lv
+plot(nearestRes, "Resistance", color = cRes, display = display.price_scale, editable = false)
+plot(nearestSup, "Support", color = cSup, display = display.price_scale, editable = false)
+
+// ═══════════════════ TAG REGISTRY (collision-aware labelling) ═══════════════════
+// Pine has NO automatic label layout. Every tag is registered here, then a single
+// pass sorts them by price and enforces a minimum vertical gap, pushing colliding
+// labels apart. The dotted LEADER LINE always runs from the current candle at the
+// line's TRUE value to the (possibly nudged) label, so a displaced tag still
+// points unambiguously at the thing it labels.
+var float[]  tgPx = array.new<float>()
+var string[] tgTx = array.new<string>()
+var color[]  tgCl = array.new<color>()
+var line[]   tgLn = array.new<line>()
+var label[]  tgLb = array.new<label>()
+
+f_tagAdd(_px, _txt, _col, _on) =>
+    if _on and not na(_px)
+        array.push(tgPx, _px)
+        array.push(tgTx, _txt)
+        array.push(tgCl, _col)
+
+if barstate.islast
+    while array.size(tgLn) > 0
+        line.delete(array.pop(tgLn))
+    while array.size(tgLb) > 0
+        label.delete(array.pop(tgLb))
+    array.clear(tgPx)
+    array.clear(tgTx)
+    array.clear(tgCl)
+
+    f_tagAdd(close,           str.tostring(close, format.mintick), cPrice, showPriceLine)
+    // Extended horizontal reference at the live price. The registry only draws a short
+    // leader into the tag; this restores the full-width line the V2 rewrite dropped.
+    if showPriceLine
+        array.push(tgLn, line.new(math.max(bar_index - 250, 0), close, bar_index + tagOffset, close, xloc.bar_index, extend.right, color.new(cPrice, 55), line.style_dotted, 1))
+    f_tagAdd(ema20,           "EMA " + str.tostring(ema20Len),  cFast, showTags and showEma)
+    f_tagAdd(ema100,          "EMA " + str.tostring(ema100Len), cMid,  showTags and showEma)
+    f_tagAdd(ema200,          "EMA " + str.tostring(ema200Len), cSlow, showTags and showEma)
+    f_tagAdd(vwapD,           "VWAP D",  cVwap, showTags and showVwap)
+    f_tagAdd(vwapW,           "VWAP W",  cVwap, showTags and showVwapWM)
+    f_tagAdd(vwapM,           "VWAP M",  cVwap, showTags and showVwapWM)
+    f_tagAdd(bbBasis + bbDev, "BB +2σ",  cBB,   showTags and showBB)
+    f_tagAdd(bbBasis - bbDev, "BB −2σ",  cBB,   showTags and showBB)
+    f_tagAdd(pdh, "PDH " + str.tostring(pdh, format.mintick), cLevel,  showLevels)
+    f_tagAdd(pdl, "PDL " + str.tostring(pdl, format.mintick), cLevel,  showLevels)
+    f_tagAdd(pwh, "PWH " + str.tostring(pwh, format.mintick), cLevelW, showLevels)
+    f_tagAdd(pwl, "PWL " + str.tostring(pwl, format.mintick), cLevelW, showLevels)
+    f_tagAdd(pmh, "PMH " + str.tostring(pmh, format.mintick), cNeut,   showMonthly)
+    f_tagAdd(pml, "PML " + str.tostring(pml, format.mintick), cNeut,   showMonthly)
+    f_tagAdd(cdh, "CDH " + str.tostring(cdh, format.mintick), cCur,    showCurDay)
+    f_tagAdd(cdl, "CDL " + str.tostring(cdl, format.mintick), cCur,    showCurDay)
+
+    // S/R: nearest srCount each side, auto-hidden beyond srMaxDistATR
+    if showSR and array.size(srPrice) > 0
+        float maxDist = atr14 * srMaxDistATR
+        for _side = 0 to 1
+            float lastPick = na
+            for _rank = 0 to srCount - 1
+                float best = na
+                int bestHits = 0
+                for i = 0 to array.size(srPrice) - 1
+                    float lv = array.get(srPrice, i)
+                    bool sideOk = _side == 0 ? lv > close : lv < close
+                    bool beyond = na(lastPick) or (_side == 0 ? lv > lastPick : lv < lastPick)
+                    bool closer = na(best) or (_side == 0 ? lv < best : lv > best)
+                    if sideOk and beyond and closer and math.abs(lv - close) <= maxDist
+                        best := lv
+                        bestHits := array.get(srHits, i)
+                if not na(best)
+                    color _sc = _side == 0 ? cRes : cSup
+                    f_tagAdd(best, (_side == 0 ? "R" : "S") + str.tostring(_rank + 1) + " " + str.tostring(best, format.mintick) + " ×" + str.tostring(bestHits), _sc, true)
+                    line sl = line.new(math.max(bar_index - 200, 0), best, bar_index + tagOffset, best, xloc.bar_index, extend.none, color.new(_sc, 70), line.style_dotted, bestHits >= 3 ? 2 : 1)
+                    array.push(tgLn, sl)
+                    lastPick := best
+
+    // collision pass: sort by price, push overlapping labels apart
+    int nTag = array.size(tgPx)
+    if nTag > 0
+        int[] ord = array.sort_indices(tgPx, order.ascending)
+        float minGap = atr14 * tagGapATR
+        float prevY = na
+        for k = 0 to nTag - 1
+            int i = array.get(ord, k)
+            float truePx = array.get(tgPx, i)
+            float dispY = na(prevY) or minGap <= 0 ? truePx : math.max(truePx, prevY + minGap)
+            prevY := dispY
+            color c = array.get(tgCl, i)
+            line ln = line.new(bar_index, truePx, bar_index + tagOffset, dispY, xloc.bar_index, extend.none, color.new(c, 45), line.style_dotted, 1)
+            label lb = label.new(bar_index + tagOffset, dispY, array.get(tgTx, i), xloc.bar_index, yloc.price, color.new(c, 82), label.style_label_left, c, size.small)
+            array.push(tgLn, ln)
+            array.push(tgLb, lb)
+
+// ═══════════════════ CANDLE INFO PANEL ═══════════════════
+var table tblC = na
+if showCandle and barstate.islast
+    if na(tblC)
+        tblC := table.new(candlePos == "Top Right" ? position.top_right : candlePos == "Middle Right" ? position.middle_right : candlePos == "Bottom Right" ? position.bottom_right : position.top_left, 1, 1, bgcolor = color.new(#101418, 12), border_width = 0, frame_width = 0)
+    float rngC   = high - low
+    float atrPct = close > 0 ? atr14 / close * 100.0 : na
+    float rvol   = not na(volSma20) and volSma20 > 0 ? volume / volSma20 : na
+    bool  isUp   = close >= open
+    string cTxt = "O " + str.tostring(open, format.mintick) + "   H " + str.tostring(high, format.mintick) + "\nL " + str.tostring(low, format.mintick) + "   C " + str.tostring(close, format.mintick) + "\nRNG " + str.tostring(rngC, "#.##") + "  (" + str.tostring(atr14 > 0 ? rngC / atr14 : na, "#.##") + " ATR)\nATR% " + str.tostring(atrPct, "#.###") + "   " + (isUp ? "▲ UP" : "▼ DOWN") + (na(rvol) ? "" : "\nRVOL " + str.tostring(rvol, "#.##") + "x")
+    table.cell(tblC, 0, 0, cTxt, bgcolor = color.new(#101418, 12), text_color = isUp ? cBull : cBear, text_size = size.small, text_halign = text.align_left)
+if not showCandle and not na(tblC)
+    table.delete(tblC)
+    tblC := na
+
+// ═══════════════════ FOOTPRINT APPROXIMATION ═══════════════════
+// Intrabar volume via request.security_lower_tf(), classified by the tick rule and
+// binned by price. NOT exchange bid/ask footprint — Pine has no order-flow feed.
+array<float> ltfC = request.security_lower_tf(syminfo.tickerid, fpTf, close)
+array<float> ltfO = request.security_lower_tf(syminfo.tickerid, fpTf, open)
+array<float> ltfV = request.security_lower_tf(syminfo.tickerid, fpTf, volume)
+
+var box[]   fpBoxes  = array.new<box>()
+var label[] fpLabels = array.new<label>()
+var label[] absLbls  = array.new<label>()
+float absVolSma = ta.sma(volume, 20)
+float fpPOC   = na
+float fpDelta = na
+
+if showFP and barstate.isconfirmed
+    int nI = array.size(ltfV)
+    if nI > 0 and high > low
+        float buyV  = 0.0
+        float sellV = 0.0
+        array<float> binV = array.new<float>(fpBins, 0.0)
+        float rngF = high - low
+        float binH = rngF / fpBins
+        for i = 0 to nI - 1
+            float c = array.get(ltfC, i)
+            float o = array.get(ltfO, i)
+            float v = nz(array.get(ltfV, i), 0.0)
+            if c > o
+                buyV += v
+            else if c < o
+                sellV += v
+            else
+                buyV  += v * 0.5
+                sellV += v * 0.5
+            int bi = binH > 0 ? int(math.floor((c - low) / binH)) : 0
+            bi := math.min(math.max(bi, 0), fpBins - 1)
+            array.set(binV, bi, array.get(binV, bi) + v)
+        fpDelta := buyV - sellV
+        float maxV = 0.0
+        int   maxI = 0
+        for b = 0 to fpBins - 1
+            if array.get(binV, b) > maxV
+                maxV := array.get(binV, b)
+                maxI := b
+        fpPOC := low + binH * (maxI + 0.5)
+        if showFpBins and maxV > 0
+            for b = 0 to fpBins - 1
+                float bv = array.get(binV, b)
+                if bv > 0
+                    int tr = int(math.max(78.0, 97.0 - bv / maxV * 19.0))
+                    box nb2 = box.new(bar_index, low + binH * (b + 1), bar_index + 1, low + binH * b, border_color = color.new(cNeut, 90), border_width = 1, bgcolor = color.new(fpDelta >= 0 ? cBull : cBear, tr))
+                    array.push(fpBoxes, nb2)
+        // --- Absorption detection (reuses the footprint's own delta and POC) ---
+        if showAbs and not na(absVolSma) and absVolSma > 0
+            float _totV   = buyV + sellV
+            float _effort = _totV / absVolSma
+            float _result = rngF > 0 ? math.abs(close - open) / rngF : 1.0
+            float _imb    = _totV > 0 ? math.abs(fpDelta) / _totV : 0.0
+            if _effort >= absEffort and _result <= absResult and _imb >= absImb
+                // Aggression that failed to move price = that side was ABSORBED, so the
+                // implication runs AGAINST the aggressor.
+                bool _buyAbsorbed = fpDelta > 0
+                color _ac = _buyAbsorbed ? cBear : cBull
+                string _tag = (_buyAbsorbed ? "▼" : "▲") + " ABS " + str.tostring(_effort, "#.#") + "x"
+                label ab = label.new(bar_index, fpPOC, _tag, xloc.bar_index, yloc.price, color.new(_ac, 82), _buyAbsorbed ? label.style_label_down : label.style_label_up, _ac, _effort >= absEffort * 1.75 ? size.small : size.tiny)
+                array.push(absLbls, ab)
+        if showFpDelta
+            label dl = label.new(bar_index, low, (fpDelta >= 0 ? "+" : "") + str.tostring(fpDelta / 1000.0, "#.#") + "k", xloc.bar_index, yloc.belowbar, color.new(color.black, 100), label.style_label_up, fpDelta >= 0 ? cBull : cBear, size.tiny)
+            array.push(fpLabels, dl)
+    while array.size(fpBoxes) > fpBars * fpBins
+        box ob3 = array.shift(fpBoxes)
+        box.delete(ob3)
+    while array.size(absLbls) > absKeep
+        label.delete(array.shift(absLbls))
+    while array.size(fpLabels) > fpBars
+        label ol = array.shift(fpLabels)
+        label.delete(ol)
+
+plot(showFP and showFpPOC ? fpPOC : na, "Bar volume POC", color = color.new(#FFD54F, 10), style = plot.style_circles, linewidth = 2, display = display.pane)
+
+
+// ===== S/R SCANNER (ported verbatim from the Master) ==========================
+scanSRLevels(float[] srResLevels, float[] srResStrengths, float[] srSupLevels, float[] srSupStrengths, int maxSR, int scanLen, float atr, bool perfModeFlag) =>
+    if barstate.islast and barstate.isconfirmed and bar_index > 100 and not perfModeFlag
+        array.clear(srResLevels)
+        array.clear(srResStrengths)
+        array.clear(srSupLevels)
+        array.clear(srSupStrengths)
+        for i = 1 to scanLen
+            if i >= bar_index - 2
+                break
+            if not na(high[i]) and not na(high[i+1]) and not na(high[i-1])
+                if high[i] > high[i+1] and high[i] >= high[i-1]
+                    float clusterThreshold = math.max(atr * 0.4, high[i] * 0.0003) / math.max(high[i], 1.0)
+                    bool alreadyExists = false
+                    int _srN = array.size(srResLevels)
+                    if _srN > 0
+                        for j = 0 to _srN - 1
+                            float lev = array.get(srResLevels, j)
+                            if math.abs(lev - high[i]) / lev < clusterThreshold
+                                alreadyExists := true
+                                array.set(srResStrengths, j, array.get(srResStrengths, j) + 1.0)
+                                break
+                    if not alreadyExists and array.size(srResLevels) < maxSR
+                        array.push(srResLevels, high[i])
+                        array.push(srResStrengths, 1.0)
+        // Fractal-low (support) detection — symmetric to fractal-high pass above
+        for i = 1 to scanLen
+            if i >= bar_index - 2
+                break
+            if not na(low[i]) and not na(low[i+1]) and not na(low[i-1])
+                if low[i] < low[i+1] and low[i] <= low[i-1]
+                    float clusterThreshold = math.max(atr * 0.4, low[i] * 0.0003) / math.max(low[i], 1.0)
+                    bool alreadyExists = false
+                    int _srN = array.size(srSupLevels)
+                    if _srN > 0
+                        for j = 0 to _srN - 1
+                            float lev = array.get(srSupLevels, j)
+                            if math.abs(lev - low[i]) / lev < clusterThreshold
+                                alreadyExists := true
+                                array.set(srSupStrengths, j, array.get(srSupStrengths, j) + 1.0)
+                                break
+                    if not alreadyExists and array.size(srSupLevels) < maxSR
+                        array.push(srSupLevels, low[i])
+                        array.push(srSupStrengths, 1.0)
+
+var float[] srResLevels    = array.new_float()
+var float[] srResStrengths = array.new_float()
+var float[] srSupLevels    = array.new_float()
+var float[] srSupStrengths = array.new_float()
+var line[]  srLines        = array.new_line()
+
+if barstate.islast
+    // F-031: this passed ta.atr(14) INSIDE the barstate.islast branch, so the call was
+    // evaluated on one bar instead of every bar. ta.* functions keep internal state that
+    // only stays correct when called on each calculation -- a conditionally-called ta.atr
+    // returns an unreliable value, and that value sets the S/R cluster threshold. The file
+    // already maintains atr14 = ta.atr(14) globally at the top, so reuse it rather than
+    // making a second, conditionally-evaluated call.
+    scanSRLevels(srResLevels, srResStrengths, srSupLevels, srSupStrengths, srMaxLv, srScanLen, atr14, false)
+    // clear previous frame's lines before redrawing
+    if array.size(srLines) > 0
+        for i = 0 to array.size(srLines) - 1
+            line _sl = array.get(srLines, i)
+            if not na(_sl)
+                line.delete(_sl)
+        array.clear(srLines)
+    // Single merged pass over both sides (resistance then support), preserving the
+    // Master's draw order and colour tiers exactly.
+    for _p = 0 to 1
+        float[] _lv = _p == 0 ? srResLevels : srSupLevels
+        float[] _st = _p == 0 ? srResStrengths : srSupStrengths
+        color   _bc = _p == 0 ? #FF4D4D : #00D084
+        if srShow and array.size(_lv) > 0
+            for i = 0 to array.size(_lv) - 1
+                if i >= srMaxLv
+                    break
+                float lev = array.get(_lv, i)
+                float st  = array.get(_st, i)
+                if not na(lev)
+                    color lc = color.new(_bc, st >= 3 ? 30 : st >= 2 ? 50 : 65)
+                    array.push(srLines, line.new(bar_index - 1, lev, bar_index, lev, xloc.bar_index, extend.both, lc, line.style_dotted, 1))
+
+// ═══════════════════ LAST 4H CANDLE — yellow dotted reference ═══════════════════
+// Marks the most recent CLOSED 4H candle on a lower-timeframe chart.
+//
+// NON-REPAINTING BY CONSTRUCTION. The request.security below reads high[1]/low[1]/
+// open[1]/close[1] with lookahead_off, so it returns the LAST FULLY CLOSED 4H bar and
+// never the one still forming. A forming 4H candle's high and low change until it
+// closes; drawing those would repaint historical chart state, which is exactly the
+// defect class this audit treats as critical. The forming candle is therefore offered
+// only behind an explicit opt-in that names the cost.
+//
+// NO PRICE-SCALE TAGS, as required. These are line objects, not plot() calls and not
+// hline(): line.new never writes a coloured tag into the price column or onto the bar.
+//
+// OBJECT LIFECYCLE. Four `var` lines are created once and repositioned each bar with
+// line.set_xy1/xy2. Nothing accumulates, so this cannot contribute to the 500-object
+// ceiling that the structure layer above had to be capped against.
+grpH4 = "4H Candle Marker"
+showH4      = input.bool(true,  "Mark last closed 4H candle", group = grpH4)
+h4ShowOC    = input.bool(false, "Also mark open / close",     group = grpH4, tooltip = "High and low bound the 4H range. Open and close add two more lines; off by default to keep the chart readable.")
+h4ShowLive  = input.bool(false, "Also mark the FORMING 4H candle (REPAINTS)", group = grpH4, tooltip = "The in-progress 4H bar's high and low change until it closes, so these two lines move and historical chart state is not reproducible. Diagnostic only — leave off unless you specifically want live 4H range context.")
+h4Col       = input.color(color.yellow, "Line colour", group = grpH4)
+// The span is DERIVED, not a bar count: 4 hours / chart-TF seconds, so the line covers
+// exactly the last four hours on any timeframe (48 bars on 5M, 16 on 15M, 4 on 1H) and
+// stays correct when the timeframe changes. It terminates at the current candle -- no
+// right extension -- so the marker reads as a bounded 4-hour window, not an open level.
+
+// Self-disables at or above 4H, where "the last 4H candle" is just the previous bar and
+// the lines would sit on top of the chart's own candles.
+bool h4Active = showH4 and timeframe.in_seconds() < 14400
+
+[h4H, h4L, h4O, h4C] = request.security(syminfo.tickerid, "240", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
+[h4LiveH, h4LiveL]   = request.security(syminfo.tickerid, "240", [high, low], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
+
+var line h4Hi = na
+var line h4Lo = na
+var line h4Op = na
+var line h4Cl = na
+var line h4LvH = na
+var line h4LvL = na
+
+// Visibility is expressed as full transparency rather than by deleting and recreating
+// the line: a hidden line costs nothing, and recreating objects each bar is what
+// exhausts the drawing ceiling. A na level is hidden for the same reason it must not be
+// drawn at 0 -- a zero level would compress the entire price scale.
+_h4Set(line _ln, float _px, int _x1, int _x2, bool _on, int _transp, int _w) =>
+    if not na(_ln)
+        bool _vis = _on and not na(_px)
+        line.set_xy1(_ln, _x1, nz(_px, 0.0))
+        line.set_xy2(_ln, _x2, nz(_px, 0.0))
+        line.set_color(_ln, color.new(h4Col, _vis ? _transp : 100))
+        line.set_width(_ln, _w)
+        line.set_style(_ln, line.style_dotted)
+        line.set_extend(_ln, extend.none)
+
+if barstate.islast
+    if na(h4Hi)
+        h4Hi  := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, h4Col, line.style_dotted, 1)
+        h4Lo  := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, h4Col, line.style_dotted, 1)
+        h4Op  := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, h4Col, line.style_dotted, 1)
+        h4Cl  := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, h4Col, line.style_dotted, 1)
+        h4LvH := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, h4Col, line.style_dotted, 1)
+        h4LvL := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, h4Col, line.style_dotted, 1)
+    int _h4Bars = math.max(1, int(14400 / math.max(timeframe.in_seconds(), 1)))
+    int _x1 = bar_index - _h4Bars
+    int _x2 = bar_index
+    _h4Set(h4Hi,  h4H,     _x1, _x2, h4Active, 0,  2)
+    _h4Set(h4Lo,  h4L,     _x1, _x2, h4Active, 0,  2)
+    _h4Set(h4Op,  h4O,     _x1, _x2, h4Active and h4ShowOC, 45, 1)
+    _h4Set(h4Cl,  h4C,     _x1, _x2, h4Active and h4ShowOC, 45, 1)
+    // Forming candle: dimmer and thinner so it is distinguishable from the closed one
+    // without a label, since price-column tags are explicitly not wanted.
+    _h4Set(h4LvH, h4LiveH, _x1, _x2, h4Active and h4ShowLive, 65, 1)
+    _h4Set(h4LvL, h4LiveL, _x1, _x2, h4Active and h4ShowLive, 65, 1)
+
+// ═══════════ PDH/PDL DASHED LINES + 4H / 1D TOUCH ALERTS ═══════════
+// PDH/PDL previously rendered as price tags only. These are the same NY-anchored values
+// (F-033 corrected), drawn as lines so the level is visible across the chart, not just in
+// the price column. Reuses the existing pdh/pdl -- no second calculation, no new source.
+grpPD = "PDH/PDL lines & alerts"
+showPdLines = input.bool(true, "PDH / PDL dashed lines", group = grpPD)
+// Yellow to match the 4H marker; the two stay distinguishable by STYLE, not colour:
+// PDH/PDL = DASHED, 4H = DOTTED. Both remain user-configurable.
+pdCol       = input.color(color.new(color.yellow, 0), "PDH/PDL colour", group = grpPD)
+pdBack      = input.int(200, "Bars drawn back", minval = 20, maxval = 500, group = grpPD)
+
+// Same var-and-reposition lifecycle as the 4H marker: two objects created once, moved each
+// bar. Nothing accumulates, so this cannot contribute to the 500-object ceiling.
+var line pdhLn = na
+var line pdlLn = na
+
+// Declared at GLOBAL scope: Pine does not permit a function definition inside a local
+// block, and _x1 is passed in rather than captured, since a function cannot close over a
+// local variable from the calling scope.
+_pdSet(line _ln, float _px, int _x1, int _x2) =>
+    if not na(_ln)
+        bool _vis = showPdLines and not na(_px)
+        line.set_xy1(_ln, _x1, nz(_px, 0.0))
+        line.set_xy2(_ln, _x2, nz(_px, 0.0))
+        line.set_color(_ln, color.new(pdCol, _vis ? 0 : 100))
+        line.set_style(_ln, line.style_dashed)
+        line.set_width(_ln, 1)
+
+if barstate.islast
+    if na(pdhLn)
+        pdhLn := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, pdCol, line.style_dashed, 1)
+        pdlLn := line.new(bar_index, 0.0, bar_index, 0.0, xloc.bar_index, extend.none, pdCol, line.style_dashed, 1)
+    _pdSet(pdhLn, pdh, bar_index - pdBack, bar_index)
+    _pdSet(pdlLn, pdl, bar_index - pdBack, bar_index)
+
+// ---- TOUCH ALERTS: 4H closed candle high/low, and 1D (PDH/PDL) ----------------
+// WHAT COUNTS AS A TOUCH: the bar's range spans the level (high >= L and low <= L). This
+// fires on the bar that actually reaches the level rather than waiting for a close beyond
+// it, which is what a level-touch alert is for.
+// TIMING, STATED PLAINLY: these fire in REALTIME, on the forming bar. That is intentional
+// for a notification -- a touch alert delivered one bar late is useless. It does mean an
+// alert can fire on a wick that the bar later retraces. These alerts are NOT signals and
+// feed nothing: no gate, no score, no plotted history. The decision engine remains
+// confirmed-bar-only, so nothing here weakens the non-repainting guarantee.
+// freq_once_per_bar keeps one alert per level per bar instead of one per tick.
+alertOn4H = input.bool(true, "Alert on 4H high/low touch", group = grpPD)
+alertOn1D = input.bool(true, "Alert on PDH/PDL touch",     group = grpPD)
+
+_touched(float _lvl) => not na(_lvl) and high >= _lvl and low <= _lvl
+
+bool _t4hH = alertOn4H and h4Active and _touched(h4H)
+bool _t4hL = alertOn4H and h4Active and _touched(h4L)
+bool _t1dH = alertOn1D and _touched(pdh)
+bool _t1dL = alertOn1D and _touched(pdl)
+
+if _t4hH
+    alert("XAUUSD touched 4H HIGH " + str.tostring(h4H, format.mintick) + " (price " + str.tostring(close, format.mintick) + ")", alert.freq_once_per_bar)
+if _t4hL
+    alert("XAUUSD touched 4H LOW " + str.tostring(h4L, format.mintick) + " (price " + str.tostring(close, format.mintick) + ")", alert.freq_once_per_bar)
+if _t1dH
+    alert("XAUUSD touched PDH " + str.tostring(pdh, format.mintick) + " (price " + str.tostring(close, format.mintick) + ")", alert.freq_once_per_bar)
+if _t1dL
+    alert("XAUUSD touched PDL " + str.tostring(pdl, format.mintick) + " (price " + str.tostring(close, format.mintick) + ")", alert.freq_once_per_bar)
+
+// alertcondition() alternatives: these appear as named conditions in the alert dialog, so
+// a separate alert can be set per level. Both routes are provided because alert() needs
+// "Any alert() function call" while alertcondition() gives per-level granularity.
+alertcondition(_t4hH, "4H High Touch", "XAUUSD touched the last closed 4H candle HIGH")
+alertcondition(_t4hL, "4H Low Touch",  "XAUUSD touched the last closed 4H candle LOW")
+alertcondition(_t1dH, "PDH Touch",     "XAUUSD touched the previous day HIGH (PDH)")
+alertcondition(_t1dL, "PDL Touch",     "XAUUSD touched the previous day LOW (PDL)")
