@@ -19,8 +19,9 @@
 > distorted the way I stated. The real defect that guard exposes is different, is inside
 > the Master, and is recorded as **F-A07** below.
 >
-> **Applied:** F-A01 (as structural parity), F-A03, F-A04, F-A06 in v2; **F-A07 in v3**
-> (option 3 — marked basis). **Not applied:** F-A02, F-A05.
+> **Applied:** F-A01/F-A03/F-A04/F-A06 (v2), F-A07 (v3), **F-A02 + F-A05 (v4)**.
+> All seven are now applied. **F-A02's wiring is not a validation** — see the
+> revised Question B below.
 > Build v2 hashes are in `audit/MANIFEST.sha256`; v1→v2 line mapping in
 > `audit/LINE_MAP_v2.md`.
 
@@ -31,10 +32,10 @@
 | ID | Severity | Class | Finding |
 |---|---|---|---|
 | F-A01 | MEDIUM *(was CRITICAL — see correction)* | `BUG` | Volume-profile engine absent from both arms while still consumed by the SL/TP candidate arrays — **FIXED** (parity port) |
-| F-A02 | **CRITICAL** | `STAT` | The calibration engine is display-only; no calibrated probability gates any trade — **NOT FIXED** (needs a frozen holdout) |
+| F-A02 | **CRITICAL** | `STAT` | Calibration engine display-only; no calibrated probability gated any trade — **WIRED in v4**; underlying validity still unestablished |
 | F-A03 | HIGH | `BUG` | The Decision Log explains failures against a gate set the engine no longer uses — **FIXED** |
 | F-A04 | HIGH | `BUG` | OB/FVG volume-quality values computed every bar, consumed by nothing — **FIXED** (removed) |
-| F-A05 | MEDIUM | `STAT` | The weighted evidence composite (`bullScore`) does not gate entry — **NOT FIXED** (design decision) |
+| F-A05 | MEDIUM | `STAT` | Weighted evidence composite (`bullScore`) did not gate entry — **WIRED in v4** through the same calibrated channel |
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 
@@ -258,6 +259,23 @@ Ordered by ratio of decision-impact to risk. **None of these were performed** �
 
 **Question A — is the code correct?** Largely yes, with four genuine wiring defects (F-A01, F-A03, F-A04, F-A06). The engines that are wired are constructed carefully: guards are present, `na` handling is deliberate, clamps are explicit, inputs are fully consumed. F-A01 is the one that changes numbers.
 
-**Question B — are the statistics valid?** **Not established, and F-A02 lowers the ceiling further.** Prior to this audit the position was that `ROLL` is not a holdout and the window is development-contaminated (`AUDIT_PROMPT.md` §4.2). This audit adds that the calibration layer — the part of the system that would make a probability *mean* something — is not connected to any decision. The system does not currently apply a calibrated probability to a trading decision. It applies an uncalibrated weighted heuristic, vetoed by the sign of a marginal-frequency difference.
+**Question B — are the statistics valid?** **Still not established, and v4 changed the
+shape of the risk rather than removing it.**
 
-Neither answer follows from the other, and B is not improved by fixing A.
+Before v4 the calibration layer was disconnected: the engine applied an uncalibrated
+weighted heuristic, vetoed by the sign of a marginal-frequency difference, and the
+Platt fit could have been perfect or rejected with no trade changing. After v4 the
+calibrated probability gates entries through `tqVeto`.
+
+That closes the *wiring* defect. It does **not** close the *validity* one. `ROLL` is
+still a sliding boundary, the history is still development-contaminated, and no frozen
+holdout exists — so how well that probability is calibrated remains unmeasured. The
+engine has moved from **ignoring** an unvalidated statistic to **acting on** it.
+
+Whether that is an improvement depends entirely on whether the calibration is any good,
+which is precisely the thing not established. The change is defensible — a calibrated
+probability is the right quantity to gate on, and 0.50 is the right boundary — but it
+should be read as a wiring correction taken with the defect documented, not as evidence
+the numbers are now trustworthy.
+
+Neither answer follows from the other, and B is still not improved by fixing A.

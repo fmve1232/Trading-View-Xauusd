@@ -1,13 +1,19 @@
-# Build changelog — v1 → v2 → v3
+# Build changelog — v1 → v2 → v3 → v4
 
-**Five of seven findings applied** (F-A01, F-A03, F-A04, F-A06 in v2; F-A07 in v3).
-Two deliberately not applied: **F-A02** (wiring calibration into the gate — needs a
-frozen holdout, not a code change) and **F-A05** (a design decision that is yours).
+**All seven findings applied** (F-A01, F-A03, F-A04, F-A06 in v2; F-A07 in v3; F-A02 and F-A05 in v4).
+Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
-**Nothing was tuned.** No threshold, weight, lookback or gate condition changed value.
-Every edit is a parity port of existing Master code, a correction of a display that
-contradicted the engine, a removal of code with no consumer, a comment fix, or a
+**Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
+value in any build. Edits in v1→v3 were parity ports, corrections of displays that
+contradicted the engine, removal of code with no consumer, comment fixes and a
 traceability marker.
+
+**v4 is the exception to "no behaviour change", and is honest about it:** it adds a new
+gate condition. That gate's threshold (0.50) was *chosen on principle* — the natural
+decision boundary of a probability — not fitted to any observed result, so §9's
+prohibition on tuning is intact. But it does change which trades are taken. It is an
+input, defaults can be reverted with `useCalGate = false`, and the recommended way to
+evaluate it is an A/B with the gate off vs on.
 
 Verify: `sha256sum -c audit/MANIFEST.sha256` · line mapping: `audit/LINE_MAP_v2.md`
 
@@ -182,3 +188,95 @@ the markers become wrong and must be deleted. Both comment blocks say so.
 - No tabs, no dangling operators on any added line.
 
 Still **not compiled** — same caveat as v2.
+
+---
+
+# Build v3 → v4 — F-A02 + F-A05 fixed (calibrated-probability gate)
+
+`Master.pine` 5476 → 5516 · `Strategy.pine` 4853 → 4893 · `Strategy_OLDGATES.pine` 4853 → 4893
+`EdgeCases` and `Visuals` still unchanged from v1. **All seven findings now applied.**
+
+**This one changes trading behaviour.** The previous three builds did not.
+
+## One gate, not two
+
+`_calibratedProb` *is* `bullScore` pushed through the fitted sigmoid, so it is monotone
+in `bullScore`. A raw-score floor and a calibrated-probability floor are the **same gate
+in different units** — applying both would count one body of evidence twice, the exact
+defect R5.3 removed when it took `oBosCont` out of `fAdj`. So both findings are closed by
+a single term, gating on the calibrated value because it is the one already in probability
+units.
+
+The chain now completes:
+
+```
+bullScore -> _calP (sigmoid, gCalFit) -> _calibratedProb -> _calVeto -> tqVeto
+          -> Master alerts + DECISION cell, and execBuyS/execSellS in BOTH twins
+```
+
+Previously it terminated at `calProbStr` -> one dashboard cell.
+
+## What was added
+
+| | |
+|---|---|
+| `useCalGate` | input, **default ON**, group Risk |
+| `calGateMinP` | input, **default 0.50**, range 0.00–0.95 |
+| `_calPLong` / `_calPShort` | directional calibrated probability |
+| `_calGateReady` | fail-open guard |
+| `_calVeto` | folded into `tqVeto` |
+| `_xQ` | now shows `P✗` for a calibration veto vs `Q✗` for a TQ/expectancy veto |
+
+## Applied on `tqVeto`, not on `shouldBuy`
+
+`_calibratedProb` is computed ~1850 lines **below** `shouldBuy`, and Pine requires
+declaration before use. Gating the entry expression itself would mean reordering a
+5,516-line file — far more dangerous than this. `tqVeto` is the veto every consumer
+already respects, including `execBuyS`/`execSellS` in both twins, so **the A/B measures
+this change**.
+
+## The threshold is 0.50 and that is not a tuned number
+
+0.50 is the only non-arbitrary value available: the natural decision boundary of a
+probability — *do not take a trade the calibrated model puts below even odds in that
+direction*. Any other default (0.55, 0.60) would be a figure fitted to nothing, which is
+what §9 forbids. It is an input so it can be moved deliberately rather than silently.
+
+Note that raising it above 0.50 also vetoes range-dominant setups, whose calibrated
+probability is exactly 0.50 in both directions.
+
+## Fail-open, which is not optional
+
+`_calGateReady` requires a real Platt fit (`gCalFit[0]` non-`na`) **and** `oOosNeff >= 10`
+**and** a non-`na` probability. Until all three hold the term is inert and behaviour is
+byte-for-byte as v3. Without this a fresh chart would sit at NO TRADE indefinitely and
+look broken.
+
+## Validity — read this before running it live
+
+**Wiring the probability in is not the same as validating it.** F-037 still stands: the
+IS/OOS boundary slides, the window is development-contaminated, and no frozen holdout
+exists, so *how well* this probability is calibrated is still unmeasured.
+
+The engine has moved from **ignoring** an unvalidated statistic to **acting on** it.
+Whether that is an improvement depends on whether the calibration is any good — precisely
+the thing not established. Set `useCalGate = false` to restore v3 behaviour exactly.
+
+Suggested way to find out, and the only one that does not restart the contamination
+cycle: run the twins with the gate **off**, then with it **on**, changing nothing else.
+That measures the gate's effect as an A/B rather than tuning toward a number.
+
+## Verification
+
+- Declaration-before-use confirmed for all seven dependencies in all three files
+  (`_calibratedProb`, `gCalFit`, `oOosNeff`, `shouldBuy`, `shouldSell`, and both inputs).
+- Gate block byte-identical across all three files (same md5).
+- Traceability re-run: Master zero-read still 3 — the same intentionally dormant symbols
+  (`oBosFail`, `oOosCI`, `oPdl1stPct`) — **no new orphans**.
+- `_calibratedProb` and `gCalFit` now have non-display consumers; the chain reaches
+  `tqVeto`.
+- A/B diff unchanged in structure: same 5 hunk headers, shifted.
+- No tabs, no dangling operators on any added line.
+
+Still **not compiled** — same caveat as v2 and v3, and the Master is now 5,516 lines with
+two more inputs against the token ceiling.

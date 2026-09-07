@@ -18,17 +18,24 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5476 | 346767 | `8ee5841fbc0be9de4958ef5fbacd4025cd183e229b9b1a78fc137d1bc87fef7f` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4853 | 295346 | `737d5cf84b72b424bc01700d6ceb9f641334475dc1b0d002a6d754e70dedb3ac` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4853 | 295411 | `bb3da864bf8e7957e90ca9cc9bf2a004f2cc1220c906f9b75fa2342b483d8a1a` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5516 | 351459 | `60a4511919a1ff8d4c90652b6aba7dc4bc32c38cacd4a8cce038bfb91097fe02` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4893 | 300038 | `22017af0b2fb7849fc6fc591598ea1a316b352bacccd995f663659b7344e28f6` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4893 | 300103 | `c6814aaddc1f4856b64a423a127a383bdafe7e3d334860ae6439e1e456d37767` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 276 | 18506 | `4559de25ed4afa9f7fe391ef03cb18718af91c659021eaac4c32093aeab25c83` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 931 | 57494 | `28dd76cb07b3f6863b89e24a0933247836f64c621c8bfb72b5034fc6655c0e6b` |
 
-> **BUILD v3 — this prompt pins the current fixed build.** The originally audited build
+> **BUILD v4 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
-> `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 was fixed in v3** via the
-> marked-basis option (a trailing `°` on any plan basis whose level exists only at
-> the live edge). F-A02 and F-A05 remain **not applied**.
+> `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
+> **F-A02 and F-A05 in v4**, via a single calibrated-probability veto folded into
+> `tqVeto`. **All seven findings are now applied.**
+>
+> **§4.2 is NOT superseded by that.** Wiring the calibrated probability into the
+> gate does not make it valid: the IS/OOS boundary still slides and the window is
+> still development-contaminated. The engine now *acts* on a statistic whose
+> calibration quality remains unestablished. An auditor must still answer §11's
+> Question B as **not established** — and should now also ask what the gate is
+> doing to trade selection on that basis.
 > Provenance of the superseded v1 hashes:
 >
 > | File | v1 SHA-256 (superseded) | v2 |

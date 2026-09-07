@@ -362,6 +362,11 @@ pointValue = input.float(100, "Value per Point per Lot (USD)", minval=1, group=g
 // Transaction cost model — affects backtest metrics, NOT signal generation
 useDDBreaker = input.bool(false, "Max Drawdown Signal Breaker", group=grpRisk, tooltip="When enabled, blocks new signals if historical max drawdown (oMaxDD, previous bar) exceeds the threshold below.")
 maxDdPct = input.float(12.0, "Max DD % Before Signal Block", minval=5.0, maxval=40.0, step=1.0, group=grpRisk)
+// F-A02 + F-A05 — calibrated-probability entry gate. Full rationale sits at the gate
+// itself (search "CALIBRATED-PROBABILITY ENTRY GATE"). Default ON at the neutral 0.50
+// boundary; set useCalGate=false to restore the previous behaviour exactly.
+useCalGate = input.bool(true, "Gate entries on calibrated probability", group=grpRisk, tooltip="Vetoes an entry when the CALIBRATED probability in the trade's direction is below the floor below. This is what wires the Platt/WLS calibration -- and through it the weighted evidence score bullScore, where trend, structure, flow, macro and liquidity converge -- into the decision. Before this, both terminated in dashboard strings and gated nothing. INERT until a real Platt fit exists AND the effective OOS sample reaches 10, so a cold engine never blocks trades. IMPORTANT: F-037 still applies. The IS/OOS boundary slides and the history is development-contaminated, so how WELL this probability is calibrated is NOT established. Enabling this means deciding to act on that statistic.")
+calGateMinP = input.float(0.50, "  Min calibrated P in trade direction", minval=0.0, maxval=0.95, step=0.01, group=grpRisk, tooltip="0.50 is the only non-arbitrary default: the natural decision boundary of a probability -- do not take a trade the calibrated model puts below even odds in that direction. Any higher value is a judgement you are making, not a fitted parameter. Raising it above 0.50 also vetoes range-dominant setups, whose calibrated probability is exactly 0.50 in both directions.")
 spreadCost = input.float(0.3, "Spread Cost (points)", minval=0.0, maxval=5.0, step=0.1, group=grpRisk, tooltip="XAUUSD typical spread 0.2-0.5pts. Quoted spread is already the round-trip cost of crossing the book; slippage is applied per side.")
 slippagePts = input.float(0.2, "Slippage (points)", minval=0.0, maxval=2.0, step=0.1, group=grpRisk, tooltip="1-tick slippage ~0.1pts, applied on entry AND exit.")
 // P0-CAL-003 (reviewer item 3): these three are BROKER/INSTRUMENT CONFIGURATION, not
@@ -4350,8 +4355,43 @@ int effTqMin = tqMinScore == 0 ? 0 : math.min(math.max(tqMinScore + (regAbnormal
 // +5 TQ points required when leaning with a crowded book; 0 otherwise, so with COT off
 // (default) effTqMin is bit-identical to before this feature existed.
 int _cotDamp = cotRegime == 0 ? 0 : (cotRegime == -1 and shouldBuy) or (cotRegime == 1 and shouldSell) ? 5 : 0
+// ═══════════ F-A02 + F-A05 — CALIBRATED-PROBABILITY ENTRY GATE ═══════════
+// WHAT THIS CLOSES. Two findings, one mechanism -- deliberately ONE gate, not two:
+//   F-A02  the Platt/WLS calibration chain (bins -> gCalFit -> sigmoid -> _calibratedProb)
+//          terminated in a dashboard string. No calibrated probability gated anything. The
+//          only probability-shaped veto ran on tradeQuality (a weighted average of hand-set
+//          constants) and on the sign of planExpectancy -- which is a difference of two
+//          MARGINAL excursion frequencies, not an expected value (see F-035/F-038).
+//   F-A05  bullScore -- where trend, structure, flow, macro and LIQUIDITY evidence all
+//          converge -- reached no gate either. Entry was a conjunction of boolean flags.
+// ONE GATE AND NOT TWO, AND WHY THAT MATTERS. _calibratedProb IS bullScore pushed through
+// the fitted sigmoid, so it is MONOTONE in bullScore. A raw-score floor and a calibrated-
+// probability floor are therefore the SAME gate expressed in different units; applying
+// both would count one body of evidence twice -- the precise defect R5.3 removed when it
+// took oBosCont out of fAdj. Gating on the calibrated value is strictly better: it is the
+// one already in probability units, and the one the calibration machinery exists to make.
+// WHERE IT IS APPLIED, AND WHY NOT ON shouldBuy. _calibratedProb is computed ~1850 lines
+// BELOW shouldBuy and Pine requires declaration before use, so gating the entry expression
+// itself would mean reordering the file -- far more dangerous than this. tqVeto is the veto
+// every consumer already respects: the Master's alerts and DECISION cell, and execBuyS /
+// execSellS in BOTH strategy twins -- so the A/B actually measures this change.
+// THRESHOLD. 0.50 is the ONLY non-arbitrary default available: the natural decision
+// boundary of a probability. Any other figure would be a number fitted to nothing.
+// FAIL-OPEN, WHICH IS NOT OPTIONAL. The veto applies ONLY once a real Platt fit exists and
+// the effective sample supports it. A cold or unfitted engine must never block every trade:
+// without _calGateReady a fresh chart would sit at NO TRADE indefinitely and look broken.
+// While not ready this term is inert and behaviour is byte-for-byte as before.
+// VALIDITY -- STATED PLAINLY, AND NOT RESOLVED BY THIS CHANGE. F-037 still stands: the
+// IS/OOS boundary SLIDES and the window is development-contaminated, so how well this
+// probability is calibrated is NOT ESTABLISHED. Wiring it makes the engine act on that
+// statistic. That is a deliberate decision taken with the defect documented, not a
+// validation of it. The honest fix for the underlying problem remains a frozen holdout.
+float _calPLong  = _calibratedProb
+float _calPShort = na(_calibratedProb) ? na : 1.0 - _calibratedProb
+bool _calGateReady = useCalGate and not na(array.get(gCalFit, 0)) and oOosNeff >= 10 and not na(_calibratedProb)
+bool _calVeto = _calGateReady and ((shouldBuy and _calPLong < calGateMinP) or (shouldSell and _calPShort < calGateMinP))
 int effTqMinCot = math.min(effTqMin + _cotDamp, 95)
-bool tqVeto = (effTqMinCot > 0 and tradeQuality < effTqMinCot) or (not na(planExpectancy) and planExpectancy < 0.0)
+bool tqVeto = (effTqMinCot > 0 and tradeQuality < effTqMinCot) or (not na(planExpectancy) and planExpectancy < 0.0) or _calVeto
 // ═══════════════ Q5.6 ACCOUNT-STATE RISK CONTROLS ═══════════════
 // Closes the audit's risk gap (daily loss / trade cap / consecutive-loss halt).
 // Virtual tracking: each accepted signal is followed until SL or TP1 resolves it in
@@ -4487,7 +4527,7 @@ string _xT = bullTrend ? "T▲" : bearTrend ? "T▼" : "T="
 string _xS = bullStructActive ? "S▲" + bullStructType : bearStructActive ? "S▼" + bearStructType : "S="
 string _xL = evLiqBull > evLiqBear + 3 ? "L▲" : evLiqBear > evLiqBull + 3 ? "L▼" : "L="
 string _xM = mtfConfluenceScore > 20 ? "M▲" : mtfConfluenceScore < -20 ? "M▼" : "M="
-string _xQ = riskLock ? "R✗" : tqVeto ? "Q✗" : "R✓"
+string _xQ = riskLock ? "R✗" : _calVeto ? "P✗" : tqVeto ? "Q✗" : "R✓"
 string crossCheck = _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100  [~ = analog estimate, /100 = heuristic score]"
 string auctionStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + "»" + aucBias + " " + aucState + str.tostring(aucProb) + "% " + aucCycle + " " + discStr + " A" + str.tostring(acceptScore) + acceptGrade + " " + valueMigStr + (openType != "" ? " " + openType : "") + (lastSweepQ > 0 ? " SW:" + lastSweepGrade + str.tostring(lastSweepQ) : "") + (not na(vixD) ? " VIX" + str.tostring(vixD, "#.#") : "")
 // ═══════════════ END TRADE QUALITY ═══════════════
