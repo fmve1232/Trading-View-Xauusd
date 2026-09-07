@@ -3664,7 +3664,18 @@ runStatsEngines() =>
             // pays spread + commission, but oc == 0 was charged nothing. That made analog
             // expectancy optimistic by one full round trip exactly in chop/compression/
             // low-ADX regimes, which is where the negative-expectancy veto should bind
-            // hardest. Cost now applies to all three outcome codes.
+            // F-A10 CORRECTION: that last sentence WAS NOT TRUE OF THE CODE. The subtraction
+            // below does run for every analog, but for oc == 0 the result is then DISCARDED:
+            // absFrAdj is read only inside the `oc == 1` / `oc == -1` branches, and _pnlPct is
+            // 0.0 on the timeout branch. Meanwhile mt/wt DO count timeouts, so a timed-out
+            // analog enters the EV denominator contributing exactly zero instead of the round
+            // trip it really paid. Analog EV therefore remains OPTIMISTIC by the cost of every
+            // timeout -- the D-001 defect is still live, and this comment previously hid that.
+            // NOT changed here: charging it correctly means expressing _costATR (ATR units) in
+            // R units per analog, and avgW/avgL are R-multiples -- mixing them silently would
+            // be worse than the known bias. oEvVal is DISPLAY-ONLY (dashboard EV cell; the
+            // gating quantity is planExpectancy, which is different), so nothing is gated on
+            // this meanwhile. See F-A10 in audit/FINDINGS_TRACEABILITY.md for the two options.
             // EXPECT trade count to FALL and chop expectancy to drop — that is the
             // correction working, not a regression.
             float frAdj = fr - _costATR

@@ -39,6 +39,7 @@
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
+| F-A10 | MEDIUM | `STAT` | *(new)* The D-001 timeout-cost fix does not bite — cost is subtracted then discarded for `oc==0`, so analog EV stays optimistic — **DOCUMENTED, not changed** |
 | F-A09 | MEDIUM | `PRES` | *(new)* EdgeCases' Master line citations stale (§4.5) — **FIXED** (re-derived) |
 
 **Verified clean:** 95/95 inputs consumed (zero orphans); treatment-arm entry gates byte-identical to the Master; `EdgeCases` and `Visuals` carry zero unread symbols; plan direction cannot contradict signal direction; three flagged symbols confirmed *intentionally* dormant.
@@ -266,6 +267,51 @@ citations have been mechanically re-derived against the current Master and a pro
 banner added stating they must be re-derived whenever the Master changes.
 
 The harness is now re-anchored: a reader can follow any `chk()` back to live Master code.
+
+---
+
+## F-A10 — the D-001 timeout-cost fix does not bite `MEDIUM` `STAT` *(documented, not changed)*
+
+Found by the expression-drift pass that §4.5 asks for — checking that EdgeCases'
+transcribed expressions still match the Master, not merely that the line numbers do.
+
+**The Master's claim.** The D-001 note states: *"a timed-out trade is still ENTERED and
+EXITED and still pays spread + commission, but oc == 0 was charged nothing… **Cost now
+applies to all three outcome codes.**"*
+
+**What the code does.** `frAdj = fr - _costATR` does run for every analog. But for
+`oc == 0` the result is then **discarded**:
+
+- `absFrAdj` is read only inside the `if oc == 1` / `else if oc == -1` branches.
+- `_pnlPct` is `0.0` on the timeout branch.
+- `wt` and `mt` **do** count timeouts (there is an explicit `else if oc == 0` branch
+  incrementing both).
+
+So `_cEvVal = wr*avgW − lr*avgL`, with timeouts in the **denominator** contributing
+**zero to the numerator** — instead of the round trip they actually paid.
+
+**Failure scenario.** In chop, compression or low-ADX regimes — exactly where timeouts
+cluster and where a negative-expectancy read should bind hardest — analog EV is
+optimistic by the full transaction cost of every timed-out analog. The displayed EV is
+biased upward precisely where it most needs to be pessimistic. **This is the original
+D-001 defect, still live**, with a comment asserting it was fixed.
+
+**Severity is bounded by wiring, not by correctness.** `oEvVal`/`oEvLabel` are
+**display-only** — consumed once for the dashboard EV cell. The gating expectancy is
+`planExpectancy`, a different quantity (§4.1). Nothing is gated on this.
+
+**Why it was documented rather than fixed.** Charging the cost correctly means expressing
+`_costATR` (ATR units) as an R-multiple per analog, because `avgW`/`avgL` are R-multiples.
+Mixing those units silently would be worse than a known, documented bias. Two defensible
+fixes, both a modelling decision for the operator:
+
+1. **Charge it.** Convert `_costATR` to R per analog and add a timeout term to `_cEvVal`.
+   Most correct; needs the per-analog R unit at the EV site, which is not currently there.
+2. **Exclude timeouts from the denominator.** Makes EV a win/loss-conditional expectancy
+   and relabels it as such. Cheaper, but changes what the number means.
+
+The misleading comment has been corrected in all three files so the code no longer claims
+a fix it does not deliver.
 
 ---
 

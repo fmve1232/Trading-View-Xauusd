@@ -111,7 +111,13 @@ if barstate.islastconfirmedhistory
 // =============================================================================
 // GROUP C — TIMEOUT ACCOUNTING INCONSISTENCY
 // Calibration bins (L3787 c*t / L3790 c*b): oc==0 increments the TOTAL but never the WIN.
-// Expectancy (D-001, L3694):      oc==0 charged ZERO transaction cost -> scored FREE.
+// Expectancy (D-001, L3694): oc==0 is still effectively FREE. RE-VERIFIED against the
+// current Master (F-A10): the cost subtraction `frAdj = fr - _costATR` now runs for every
+// analog, but for oc==0 the result is DISCARDED -- absFrAdj is read only in the oc==+/-1
+// branches and _pnlPct is 0.0 on the timeout branch. The Master's own D-001 note claimed
+// "cost now applies to all three outcome codes"; it does arithmetically, not effectively.
+// So C3/C5 below still describe the LIVE behaviour -- but for a different reason than the
+// original defect, and costCharged() models the OUTCOME, not the (now present) subtraction.
 // The SAME observation is pessimistic in one statistic and optimistic in the other.
 // =============================================================================
 calBinCount(int _oc) => 1                       // total always increments

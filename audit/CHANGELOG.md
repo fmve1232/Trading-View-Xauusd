@@ -1,6 +1,6 @@
-# Build changelog — v1 → v2 → v3 → v4 → v5
+# Build changelog — v1 → v2 → v3 → v4 → v5 → v6
 
-**All nine findings applied** (F-A01/03/04/06 in v2; F-A07 in v3; F-A02+F-A05 in v4; F-A08+F-A09 in v5).
+**Nine findings applied** (F-A01/03/04/06 v2; F-A07 v3; F-A02+F-A05 v4; F-A08+F-A09 v5). **F-A10** (v6) is documented, not changed — see that section.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -337,3 +337,62 @@ have still never been run.**
 - Master, Strategy and OLDGATES **byte-identical to v4** — re-pasting them is optional.
 
 Still **not compiled**.
+
+---
+
+# Build v5 → v6 — pre-compile checks, and F-A10 found
+
+`Master` 5516 → 5527 · `Strategy` 4893 → 4904 · `OLDGATES` 4893 → 4904 · `EdgeCases` 286 → 292
+`Visuals` unchanged. **All changes in this build are comments. No behaviour changes at all.**
+
+## Two new checkers (`audit/tools/`)
+
+`precheck.py` — balanced delimiters, indentation multiples of 4, no indent jumps > 4,
+block openers followed by an indented body, no stray colon block syntax. **All five files
+pass.**
+
+`undeclared.py` — identifiers used but never bound, after excluding Pine's binding forms
+(function params, tuple destructuring at any indent, `for` variables, `:=` targets),
+named call arguments and `#RRGGBB` literals. **All five files: 0 unresolved.** That is the
+error class the Master's own comments record hitting twice ("Undeclared identifier"), so a
+clean result here is worth something — though it is still not a compiler.
+
+## Token-ceiling risk was overstated — correction
+
+I repeatedly warned that the Master was gaining lines against the 100,256 compiled-token
+ceiling and that `_ctxLog` should be dropped first if it failed. Measured lexical tokens
+against the audited v1 build:
+
+| file | v1 | current | Δ |
+|---|---:|---:|---:|
+| Master | 41,973 | 42,119 | **+0.35 %** |
+| Strategy / OLDGATES | 34,937 | 35,490 | +1.58 % |
+| Visuals | 8,107 | 8,339 | +2.86 % |
+| EdgeCases | 2,502 | 2,502 | 0 % |
+
+Lexical tokens are not TradingView's compiled tokens, but the **delta** is the meaningful
+signal and all the added code is straight-line global scope with no inlining multiplier.
+**If v1 compiled, this build almost certainly does.** The earlier warnings were too strong.
+
+## F-A10 — the D-001 timeout-cost fix does not bite
+
+The §4.5 expression-drift check — verifying EdgeCases' transcribed expressions still match
+the Master, not just their line numbers — turned this up.
+
+The Master's D-001 note claims *"Cost now applies to all three outcome codes."*
+`frAdj = fr - _costATR` does run for every analog, but for `oc == 0` the result is
+**discarded**: `absFrAdj` is read only in the `oc == 1` / `oc == -1` branches and `_pnlPct`
+is `0.0` on the timeout branch. Meanwhile `wt`/`mt` **do** count timeouts. So a timed-out
+analog sits in the EV denominator contributing zero instead of the round trip it paid, and
+analog EV stays optimistic — worst in chop and low-ADX, exactly where it should bind
+hardest. **The original D-001 defect is still live and the comment was hiding it.**
+
+**Not changed, deliberately.** Charging it correctly means expressing `_costATR` (ATR
+units) as an R-multiple per analog, since `avgW`/`avgL` are R-multiples; mixing units
+silently would be worse than a documented bias. `oEvVal` is display-only — the gating
+quantity is `planExpectancy` — so nothing is gated on it meanwhile. Two options are set out
+in the findings report; both are modelling decisions.
+
+What did change: the false comment, in all three files, and EdgeCases group C, which now
+records that C3/C5 still describe live behaviour but for a different reason than the
+original defect.

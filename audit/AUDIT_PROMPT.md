@@ -18,18 +18,19 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5516 | 351459 | `60a4511919a1ff8d4c90652b6aba7dc4bc32c38cacd4a8cce038bfb91097fe02` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4893 | 300038 | `22017af0b2fb7849fc6fc591598ea1a316b352bacccd995f663659b7344e28f6` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4893 | 300103 | `c6814aaddc1f4856b64a423a127a383bdafe7e3d334860ae6439e1e456d37767` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 286 | 19643 | `28618307361c4f3383c7bf07172356894456f94daaf074f00ae197a402c0a243` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5527 | 352526 | `e1a71b6a04725a4687009c249443df38a3d96932373f4eedc3ac321c9e5323bb` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4904 | 301105 | `b0de81b08a03ad981b022e748a659613d9e420033ae0fce345dd40669172f546` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4904 | 301170 | `4cbb47450102cc293329aa2a6c4bc984219ee65ecefa986557dba823cea5739e` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 292 | 20189 | `f36ebb50ab9ff0a7851c213509d88806709bfa4e626933d765faef282d7c36eb` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 985 | 61543 | `6ed51986b9069054e134ff8813bc85a49f42792cff337d15a4e4367582869b1f` |
 
-> **BUILD v5 — this prompt pins the current build.** The originally audited build
+> **BUILD v6 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
-> **F-A08 + F-A09 in v5** (Visuals order-block parity, and EdgeCases' Master citations
-> re-derived). **All nine findings are now applied.**
+> **F-A08 + F-A09 in v5**; and in **v6** a pre-compile check pass plus **F-A10**, found by
+> the expression-drift check §4.5 asks for. Nine findings applied; **F-A10 is documented
+> and deliberately NOT changed** — it is a modelling decision with a units trap.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
 > mechanically re-derived against this build. Re-derive them again whenever the Master
