@@ -1,6 +1,6 @@
-# Build changelog — v1 → v2 → v3 → v4
+# Build changelog — v1 → v2 → v3 → v4 → v5
 
-**All seven findings applied** (F-A01, F-A03, F-A04, F-A06 in v2; F-A07 in v3; F-A02 and F-A05 in v4).
+**All nine findings applied** (F-A01/03/04/06 in v2; F-A07 in v3; F-A02+F-A05 in v4; F-A08+F-A09 in v5).
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -280,3 +280,60 @@ That measures the gate's effect as an A/B rather than tuning toward a number.
 
 Still **not compiled** — same caveat as v2 and v3, and the Master is now 5,516 lines with
 two more inputs against the token ceiling.
+
+---
+
+# Build v4 → v5 — F-A08 + F-A09 (chart/engine parity, harness re-anchored)
+
+`Master.pine` unchanged · `Strategy.pine` unchanged · `Strategy_OLDGATES.pine` unchanged
+`Visuals.pine` 931 → 986 · `EdgeCases.pine` 276 → 287
+
+**Both remaining files are now touched, and no trading behaviour changes.** Visuals and
+EdgeCases are display/diagnostic only — neither gates a trade.
+
+## F-A08 — Visuals order blocks did not match the engine
+
+The chart's OB test was `body > atr14 × 1.0`; the Master's is
+`body > adaptiveATR × dispMult` with **dispMult = 2.5**. At Master defaults
+`showAdaptiveATR` is OFF and `atrLen` is 14, so `adaptiveATR` collapses to `ta.atr(14)`
+and equals this file's `atr14` — **the entire divergence was the 2.5× multiplier.** Every
+candle with a body between 1.0 and 2.5 ATR was drawn as an order block the engine does not
+recognise. And because the old test was not edge-gated, a sustained displacement pushed a
+**new box every bar** of the run.
+
+Ported verbatim from the Master: the adaptive-ATR regime blend (with its ADX dependency),
+the five displacement terms, the 2.5×-enter / 1.5×-hold hysteresis latch, and the
+`dispOnsetUp`/`dispOnsetDown` onset edge the Master's OB detector actually fires on.
+`obDispATR` default 1.0 → **2.5**, min 0.3 → 1.5, to match `dispMult` exactly. The local
+`close[1] < open[1]` filter was removed — the Master takes the previous bar as the OB
+regardless of its direction, so that filter was suppressing boxes the engine records.
+
+**Residual, stated in the file:** the Master keeps one active OB per side with a mitigation
+lifecycle and a reversal-OB path; Visuals keeps the last N boxes and has neither.
+**Detection now matches; retention still does not.**
+
+`_diPV` / `_diMV` are unread on purpose — `ta.dmi` returns a 3-tuple and Pine requires
+every element be named. Commented so they are not swept as dead code.
+
+## F-A09 — EdgeCases re-anchored to the Master
+
+§4.5 of the audit prompt was the one finding never actioned: every `Master L<n>` citation
+in the harness was stale, by +7 to +143 lines against the originally audited build, and
+further adrift after v2–v4. All ten were re-derived mechanically against this build and a
+provenance banner added stating they must be re-derived whenever the Master changes.
+
+The harness is re-anchored: a reader can follow any `chk()` back to live Master code. This
+does **not** change what the harness asserts, and §8.2 still stands — **the 72 assertions
+have still never been run.**
+
+## Verification
+
+- All five files re-run through `audit/tools/trace.py`. Master zero-read 3 (unchanged,
+  the documented dormant three); EdgeCases 0; Visuals 2, both the documented `ta.dmi`
+  tuple remainders.
+- Declaration-before-use confirmed for every symbol in the ported Visuals block.
+- A/B diff unchanged: same 5 hunk headers.
+- No tabs, no dangling operators on any added line.
+- Master, Strategy and OLDGATES **byte-identical to v4** — re-pasting them is optional.
+
+Still **not compiled**.

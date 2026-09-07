@@ -29,6 +29,15 @@
 //   PRES = presentation | DESIGN = design assumption, not a defect
 // =============================================================================
 indicator("XAUUSD Quantum — Edge Case Harness", overlay = false)
+// ─────────────────────────────────────────────────────────────────────────────
+// CITATION PROVENANCE (F-A09). Every "Master L<n>" below was RE-DERIVED mechanically
+// against the Master build hashed in audit/MANIFEST.sha256, not carried forward. The
+// previous set was stale by +7 to +143 lines -- the expressions still matched but every
+// pointer was wrong, which is exactly the failure the "verified by eye, not by the
+// compiler" caveat above predicts. RE-DERIVE THESE WHENEVER THE MASTER CHANGES:
+// `audit/tools/trace.py` and audit/LINE_MAP_v2.md exist for that purpose.
+// ─────────────────────────────────────────────────────────────────────────────
+
 
 // ---------- assertion plumbing ------------------------------------------------
 var string[] tName  = array.new_string(0)
@@ -50,7 +59,8 @@ b(bool _v) => _v ? "true" : "false"
 
 // =============================================================================
 // GROUP A — ROUNDING AT REGIME BOUNDARIES  (F-021)
-// Master L1823: regimeComposite = int(math.round(<float>)), then >= 70 / >= 40.
+// Master L1868: regimeComposite = int(math.round(<float>)); the LIVE thresholds at
+// L1870-1871 test regimeCompositeRaw, i.e. the UNROUNDED composite.
 // Rounding happens BEFORE the threshold test, so the EFFECTIVE boundary is 39.5/69.5,
 // not 40/70. These cases establish the true boundary in Pine's own semantics.
 // =============================================================================
@@ -79,7 +89,7 @@ if barstate.islastconfirmedhistory
     chk("A12 int(-0.5) truncates toward zero", i(int(-0.5)), "0", "NUM")
 
 // =============================================================================
-// GROUP B — SL/TP RACE  (Master L2957-59)
+// GROUP B — SL/TP RACE  (Master L3058, guarded by `if _oR > 0` at L3055)
 //   _oRes := low[k] <= ent - R ? -1 : high[k] >= ent + R ? 1 : 0
 // SL is tested FIRST, so a bar touching both resolves to LOSS.
 // DESIGN, not BUG: Pine cannot order intrabar events without lower-timeframe data.
@@ -100,8 +110,8 @@ if barstate.islastconfirmedhistory
 
 // =============================================================================
 // GROUP C — TIMEOUT ACCOUNTING INCONSISTENCY
-// Calibration bins (L3636-3661): oc==0 increments c*t but NEVER c*b -> scored FAILURE.
-// Expectancy (D-001, L3535):      oc==0 charged ZERO transaction cost -> scored FREE.
+// Calibration bins (L3787 c*t / L3790 c*b): oc==0 increments the TOTAL but never the WIN.
+// Expectancy (D-001, L3694):      oc==0 charged ZERO transaction cost -> scored FREE.
 // The SAME observation is pessimistic in one statistic and optimistic in the other.
 // =============================================================================
 calBinCount(int _oc) => 1                       // total always increments
@@ -117,7 +127,7 @@ if barstate.islastconfirmedhistory
     chk("C5  timeout: failure in calib AND free in EV", b(calBinWin(0) == 0 and costCharged(0, 0.77) == 0.0), "true", "STAT")
 
 // =============================================================================
-// GROUP D — bayesRate  (Master L260)  bayesRate(w,t) = t>0 ? (w+1)/(t+2) : 0.5
+// GROUP D — bayesRate  (Master L272)  bayesRate(w,t) = t>0 ? (w+1)/(t+2) : 0.5
 // Beta(1,1) shrink. Verifies no bucket can ever claim 0% or 100%.
 // PINE TRAP UNDER TEST: (w+1)/(t+2) with INT arguments would be integer division.
 // =============================================================================
@@ -132,7 +142,7 @@ if barstate.islastconfirmedhistory
     chk("D6  shrink weakens as N grows",       b(bayesRate(0, 1000) < bayesRate(0, 30)), "true", "STAT")
 
 // =============================================================================
-// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate, L3854 etc.)
+// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L3988, and the Platt bin gate at L4055)
 // =============================================================================
 bucketQualifies(int _n) => _n >= 30
 
@@ -140,12 +150,12 @@ if barstate.islastconfirmedhistory
     chk("E1  N=29 rejected", b(bucketQualifies(29)), "false", "PRES")
     chk("E2  N=30 accepted", b(bucketQualifies(30)), "true",  "PRES")
     chk("E3  N=31 accepted", b(bucketQualifies(31)), "true",  "PRES")
-    // Platt fit needs >= 3 qualifying bins (L3910). 2 bins must NOT fit.
+    // Platt fit needs >= 3 qualifying bins (fit block L4069-4073). 2 bins must NOT fit.
     chk("E4  2 qualifying bins -> no fit", b(2 >= 3), "false", "STAT")
     chk("E5  3 qualifying bins -> fit ok", b(3 >= 3), "true",  "STAT")
 
 // =============================================================================
-// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L3910-3919)
+// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4069-4073)
 //   slope clamped [0.02, 0.25]; intercept clamped [-1, 1];
 //   fit REJECTED when slope <= 0; variance guard _pfVr > 1e-6
 // =============================================================================
@@ -169,7 +179,7 @@ if barstate.islastconfirmedhistory
     chk("F11 slopes 0.5 and 0.9 collapse to one value", b(slopeClamp(0.5) == slopeClamp(0.9)), "true", "NUM")
 
 // =============================================================================
-// GROUP G — SIGMOID OUTPUT CLAMP  (L4243/4247)  _calP clamped [0.05, 0.95]
+// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4419, clamp L4420)  _calP clamped [0.05, 0.95]
 // A calibrated probability can NEVER be reported below 5% or above 95%.
 // =============================================================================
 probClamp(float _p) => math.min(math.max(_p, 0.05), 0.95)
@@ -184,7 +194,7 @@ if barstate.islastconfirmedhistory
     chk("G6  no overflow at extreme -input", b(not na(sigmoid(-1e6, 0.25, 0.0))), "true", "NUM")
 
 // =============================================================================
-// GROUP H — macroRegime CLAMP SATURATION  (Master L1821)
+// GROUP H — macroRegime CLAMP SATURATION  (Master L1856)
 //   macroRegime = clamp(0,100, base + (oi!=0 and macroBull/Bear ? 10 : oi!=0 ? 5 : 0))
 // Confirms the finding that at base 100 the OI nudge is ENTIRELY absorbed, so V2 == V1
 // there and any "subtract the nudge" shortcut would fabricate a divergence.

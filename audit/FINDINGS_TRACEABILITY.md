@@ -38,6 +38,8 @@
 | F-A05 | MEDIUM | `STAT` | Weighted evidence composite (`bullScore`) did not gate entry — **WIRED in v4** through the same calibrated channel |
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
+| F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
+| F-A09 | MEDIUM | `PRES` | *(new)* EdgeCases' Master line citations stale (§4.5) — **FIXED** (re-derived) |
 
 **Verified clean:** 95/95 inputs consumed (zero orphans); treatment-arm entry gates byte-identical to the Master; `EdgeCases` and `Visuals` carry zero unread symbols; plan direction cannot contradict signal direction; three flagged symbols confirmed *intentionally* dormant.
 
@@ -221,6 +223,49 @@ cannot change behaviour.
 **This marks the asymmetry; it does not remove it.** The live plan can still select a
 level no historical bar could produce — it now says so. Option 1 (measure, then unguard)
 remains the correct structural fix if you ever get a runtime baseline.
+
+---
+
+## F-A08 — Visuals drew order blocks the engine would never recognise `HIGH` `BUG` *(FIXED in v5)*
+
+**Where.** `Visuals.pine` OB block vs `Master.pine` L1524–1527, L1686–1700.
+
+| | Master | Visuals (before) |
+|---|---|---|
+| Threshold | `adaptiveATR × dispMult`, **dispMult default 2.5** | `atr14 × obDispATR`, **default 1.0** |
+| Hysteresis | 2.5× enter / 1.5× hold, latched | none |
+| Trigger | `dispOnsetUp` — the **onset edge** | `dispUp` — true every bar of the run |
+| Extra filter | none | `close[1] < open[1]` |
+| ATR source | `adaptiveATR` | `ta.atr(14)` |
+
+The block's own comment claimed *"Master logic mirrored"*. It was not mirrored.
+
+**Failure scenario.** At default settings `showAdaptiveATR` is OFF and `atrLen` is 14, so
+`adaptiveATR` collapses to `ta.atr(14)` and the ATR sources agree — meaning the entire gap
+was the **2.5× multiplier**. Any candle with a body between 1.0 and 2.5 ATR (plus the
+shared direction/body%/volume terms) was drawn as an order block on the chart while the
+Master's engine did not register displacement at all. Because `dispUp` is not edge-gated,
+a sustained displacement also pushed a **fresh box every bar** of the run.
+
+**Fixed** by porting the Master's displacement engine verbatim — adaptive-ATR regime blend,
+the five displacement terms, the hysteresis latch, and the `dispOnsetUp`/`dispOnsetDown`
+edge the Master's OB detector actually triggers on. `obDispATR` default moved 1.0 → 2.5 to
+match `dispMult`, and the local `close[1] < open[1]` filter removed (the Master takes the
+previous bar regardless of its direction).
+
+**Residual, documented in the file:** the Master keeps ONE active OB per side with a
+mitigation lifecycle and a reversal-OB path; Visuals keeps the last N boxes and has
+neither. **Detection now matches; retention does not.**
+
+---
+
+## F-A09 — EdgeCases' Master citations were stale `MEDIUM` `PRES` *(FIXED in v5)*
+
+This is §4.5 of `AUDIT_PROMPT.md`, and it was the one finding never actioned. All ten
+citations have been mechanically re-derived against the current Master and a provenance
+banner added stating they must be re-derived whenever the Master changes.
+
+The harness is now re-anchored: a reader can follow any `chk()` back to live Master code.
 
 ---
 
