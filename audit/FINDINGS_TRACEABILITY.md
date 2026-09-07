@@ -19,8 +19,8 @@
 > distorted the way I stated. The real defect that guard exposes is different, is inside
 > the Master, and is recorded as **F-A07** below.
 >
-> **Applied:** F-A01 (as structural parity), F-A03, F-A04, F-A06.
-> **Not applied:** F-A02, F-A05, F-A07 — each needs a decision or a measurement first.
+> **Applied:** F-A01 (as structural parity), F-A03, F-A04, F-A06 in v2; **F-A07 in v3**
+> (option 3 — marked basis). **Not applied:** F-A02, F-A05.
 > Build v2 hashes are in `audit/MANIFEST.sha256`; v1→v2 line mapping in
 > `audit/LINE_MAP_v2.md`.
 
@@ -36,7 +36,7 @@
 | F-A04 | HIGH | `BUG` | OB/FVG volume-quality values computed every bar, consumed by nothing — **FIXED** (removed) |
 | F-A05 | MEDIUM | `STAT` | The weighted evidence composite (`bullScore`) does not gate entry — **NOT FIXED** (design decision) |
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
-| F-A07 | **HIGH** | `STAT` | *(new)* Master's volume profile is last-bar-only, so the live plan can use levels no historical bar could — **NOT FIXED** |
+| F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 
 **Verified clean:** 95/95 inputs consumed (zero orphans); treatment-arm entry gates byte-identical to the Master; `EdgeCases` and `Visuals` carry zero unread symbols; plan direction cannot contradict signal direction; three flagged symbols confirmed *intentionally* dormant.
 
@@ -166,7 +166,7 @@ The entry decision is a conjunction of boolean state flags only — `bullTrend` 
 
 ---
 
-## F-A07 — The Master's volume profile is last-bar-only `HIGH` `STAT` *(new; not fixed)*
+## F-A07 — Volume profile is last-bar-only `HIGH` `STAT` *(new; FIXED in v3, option 3)*
 
 **Where.** `Master.pine` v2 L1911 (v1 L1914):
 
@@ -202,7 +202,24 @@ exist specifically to avoid timeouts. Making it would be guessing.
 3. **Mark it.** Keep as-is but suffix the basis string (e.g. `"VAL*"`) when the level came
    from a last-bar-only source, so the plan is honest about it.
 
-Option 3 is the cheapest honest fix; option 1 is the correct one if the budget allows.
+**RESOLVED in v3 by option 3.** Every plan basis whose level can only exist at the live
+edge now carries a trailing `°`: `VAL°`/`VAH°` in the stop-candidate names and
+`POC°`/`VAH°`/`VAL°` in the target-candidate names, applied identically in all three
+files. Marker placement was verified **positionally**, not by string match: in each of
+the four branches (SL long/short, TP long/short) every `°` name maps to a VP-sourced
+candidate and every VP-sourced candidate has a `°` name.
+
+The marker is a literal inside the existing name arrays, so it costs **zero runtime
+tokens** — which matters on a file near the compile ceiling. It is distinct from `*`
+(a stop clamped into the R-unit band); both can appear, e.g. `VAL°*`.
+
+Verified safe: the basis strings are display-only — no equality or substring test is
+performed against them anywhere in any of the three files, so lengthening the literals
+cannot change behaviour.
+
+**This marks the asymmetry; it does not remove it.** The live plan can still select a
+level no historical bar could produce — it now says so. Option 1 (measure, then unguard)
+remains the correct structural fix if you ever get a runtime baseline.
 
 ---
 

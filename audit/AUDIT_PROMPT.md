@@ -18,16 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5461 | 345408 | `2fc16c90d138eb6c4f206883f811734ad5b4c420fb8823c50ba361546df16556` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4838 | 293987 | `23b096d66ad6905835c278a16bf5d61f664eedba5ee11dc8311a274064dac97e` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4838 | 294052 | `bfeb9c1d5e04e7b99c0212e3bfead8544eb0734837515c67ffe3d84c29801526` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5476 | 346767 | `8ee5841fbc0be9de4958ef5fbacd4025cd183e229b9b1a78fc137d1bc87fef7f` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4853 | 295346 | `737d5cf84b72b424bc01700d6ceb9f641334475dc1b0d002a6d754e70dedb3ac` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4853 | 295411 | `bb3da864bf8e7957e90ca9cc9bf2a004f2cc1220c906f9b75fa2342b483d8a1a` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 276 | 18506 | `4559de25ed4afa9f7fe391ef03cb18718af91c659021eaac4c32093aeab25c83` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 931 | 57494 | `28dd76cb07b3f6863b89e24a0933247836f64c621c8bfb72b5034fc6655c0e6b` |
 
-
-> **BUILD v2 — this prompt now pins the FIXED build.** The originally audited build
+> **BUILD v3 — this prompt pins the current fixed build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
-> `FINDINGS_TRACEABILITY.md` were applied; F-A02, F-A05 and F-A07 were **not**.
+> `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 was fixed in v3** via the
+> marked-basis option (a trailing `°` on any plan basis whose level exists only at
+> the live edge). F-A02 and F-A05 remain **not applied**.
 > Provenance of the superseded v1 hashes:
 >
 > | File | v1 SHA-256 (superseded) | v2 |

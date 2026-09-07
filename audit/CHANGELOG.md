@@ -1,11 +1,19 @@
-# Build v1 → v2 — applied fixes
+# Build changelog — v1 → v2 → v3
 
-Four findings applied. Three deliberately not applied. Nothing was tuned: no
-threshold, weight, lookback or gate condition changed value. Every edit is either
-a parity port of existing Master code, a correction of a display that contradicted
-the engine, a removal of code with no consumer, or a comment fix.
+**Five of seven findings applied** (F-A01, F-A03, F-A04, F-A06 in v2; F-A07 in v3).
+Two deliberately not applied: **F-A02** (wiring calibration into the gate — needs a
+frozen holdout, not a code change) and **F-A05** (a design decision that is yours).
+
+**Nothing was tuned.** No threshold, weight, lookback or gate condition changed value.
+Every edit is a parity port of existing Master code, a correction of a display that
+contradicted the engine, a removal of code with no consumer, a comment fix, or a
+traceability marker.
 
 Verify: `sha256sum -c audit/MANIFEST.sha256` · line mapping: `audit/LINE_MAP_v2.md`
+
+---
+
+# Build v1 → v2 — applied fixes
 
 | File | v1 lines | v2 lines | Δ |
 |---|---:|---:|---:|
@@ -112,3 +120,65 @@ with no measured runtime baseline. Three options are set out in the findings rep
    thing to drop is the `_ctxLog` block.
 3. **Paste both arms together.** F-A01 was applied to both; updating only one
    breaks the A/B.
+
+---
+
+# Build v2 → v3 — F-A07 fixed (marked basis)
+
+`Master.pine` 5461 → 5476 · `Strategy.pine` 4838 → 4853 · `Strategy_OLDGATES.pine` 4838 → 4853
+`EdgeCases` and `Visuals` still unchanged from v1.
+
+## What changed
+
+Every trade-plan basis whose level can only exist at the live edge now carries a
+trailing `°`:
+
+| Array | Slot | Was | Now | Source |
+|---|---:|---|---|---|
+| `_slN` long | 5 | `VAL` | `VAL°` | `valPrice` |
+| `_slN` short | 5 | `VAH` | `VAH°` | `vahPrice` |
+| `_tpNms` long | 6, 7 | `POC`, `VAH` | `POC°`, `VAH°` | `vpocPrice`, `vahPrice` |
+| `_tpNms` short | 6, 7 | `POC`, `VAL` | `POC°`, `VAL°` | `vpocPrice`, `valPrice` |
+
+Six markers per file, applied identically to all three. Two explanatory comment
+blocks added: one above `_slN`, one above the volume-profile block, each pointing at
+the other so the guard and the markers cannot drift apart.
+
+## Reading it on the chart
+
+- `SL:VAL°` — stop taken from the value-area low. **No backtested bar could have
+  produced this**, because `valPrice` is `na` on every historical bar.
+- `SL:VAL°*` — the same, then clamped into the R-unit band. `°` and `*` are
+  independent and can co-occur.
+- `TP:PDH/POC°/VAH°` — first target from a reproducible level, second and third from
+  live-edge-only ones.
+
+No `°` anywhere in a plan means every level in it is one a backtest could also have
+found.
+
+## Why it is a literal, not a computed flag
+
+`valPrice`, `vahPrice` and `vpocPrice` are assigned **only** inside the
+`barstate.islast`-guarded block, so whenever one of them is selected the marker is
+necessarily correct — a runtime test would be logically equivalent and cost tokens on
+a file already near the compile ceiling. Comments are stripped before tokenisation, so
+the two comment blocks are free; the six `°` characters are the entire runtime cost.
+
+**If the volume-profile guard is ever relaxed to per-bar** (option 1 in the findings),
+the markers become wrong and must be deleted. Both comment blocks say so.
+
+## Verification
+
+- **Positional** check, not string matching: in each of the four branches (SL long/
+  short, TP long/short) every `°` name maps to a VP-sourced candidate and every
+  VP-sourced candidate has a `°` name. Candidate and name arrays confirmed equal length
+  (7/7 and 10/10).
+- Basis strings confirmed **display-only** — no equality or substring test against
+  `tpSLBasis`, `tp1Basis`, `tp2Basis`, `tp3Basis`, `_tpB`, `_slN` or `_tpNms` in any of
+  the three files — so lengthening the literals cannot change behaviour.
+- `_slN`/`_tpNms` region byte-identical across all three files (same md5).
+- Exactly 6 markers in executable code per file; the other 5 are in comments.
+- A/B diff unchanged in structure: same 5 hunk headers, shifted.
+- No tabs, no dangling operators on any added line.
+
+Still **not compiled** — same caveat as v2.

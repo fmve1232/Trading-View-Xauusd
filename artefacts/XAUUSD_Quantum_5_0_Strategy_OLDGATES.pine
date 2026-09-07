@@ -1853,6 +1853,10 @@ bool weakTrend = regimeCompositeRaw < 40
 float volDelta = close > open ? volume : close < open ? -volume : 0.0
 float volDelta50 = math.sum(volDelta, 50)
 
+// F-A07: every level this block produces is marked with a trailing "°" where it appears
+// as a trade-plan basis (_slN and _tpNms inside f_tradePlan). The `barstate.islast` guard
+// below means these values do not exist on historical bars, so a "°" basis is one a
+// backtest could never have reproduced. Relax that guard and those markers must be removed.
 // VOLUME PROFILE — price-level volume distribution (100-bar lookback)
 // F-A01 PARITY FIX. This arm previously carried ONLY the declarations below: vpocPrice,
 // vahPrice and valPrice were declared `na` and never assigned, because the computation
@@ -2545,7 +2549,18 @@ f_tradePlan() =>
     float tpSL = tpIsLong ? close - _slAtrBase : close + _slAtrBase
     // Q5.1-C: candidate sets extended with VP value-area edges and weekly VWAP.
     float[] _slC = tpIsLong ? array.from(activeSupport, obBullActive ? obBullLow : na, cdl, poolPdL, poolEqL, valPrice, wVwapVal < close ? wVwapVal : na) : array.from(activeResistance, obBearActive ? obBearHigh : na, cdh, poolPdH, poolEqH, vahPrice, wVwapVal > close ? wVwapVal : na)
-    string[] _slN = tpIsLong ? array.from("Swing", "OB", "CDL", "PDL", "EQL", "VAL", "wVWAP") : array.from("Swing", "OB", "CDH", "PDH", "EQH", "VAH", "wVWAP")
+    // F-A07 MARKER. A trailing "°" on a basis name marks a level that exists ONLY at the
+    // live edge. valPrice / vahPrice / vpocPrice are assigned inside the volume-profile
+    // block, which is guarded by `barstate.islast`, so on every HISTORICAL bar they are na
+    // and the candidate is silently skipped by the `not na(_lv)` test below. A "°" basis
+    // therefore CANNOT have been produced by any backtested bar: the plan is telling you it
+    // used a level no historical bar could see. That asymmetry is the finding; this marks it
+    // rather than hiding it. Applies to VAL/VAH here and to POC/VAH/VAL in _tpNms.
+    // DISTINCT FROM "*", which marks a stop clamped into the R-unit band (see below).
+    // Both can appear together, e.g. "VAL°*" = value-area low, live-only, then clamped.
+    // IF the volume-profile guard is ever relaxed to per-bar, DELETE these five markers --
+    // they are baked into the literals precisely so they cost zero runtime tokens.
+    string[] _slN = tpIsLong ? array.from("Swing", "OB", "CDL", "PDL", "EQL", "VAL°", "wVWAP") : array.from("Swing", "OB", "CDH", "PDH", "EQH", "VAH°", "wVWAP")
     float _slBest = 1e10
     for _k = 0 to array.size(_slC) - 1
         float _lv = array.get(_slC, _k)
@@ -2590,7 +2605,7 @@ f_tradePlan() =>
     float _tpMaxD = tpDist * 12.0
     // Q5.1-C: POC, opposite value-area edge, and monthly VWAP are first-class targets.
     float[] _tpLvls = tpIsLong ? array.from(poolPdH, poolPwH, poolPmH, poolEqH, obBearActive ? obBearLow : na, cdh, vpocPrice, vahPrice, mVwapVal, math.floor(close / rnGrid) * rnGrid + rnGrid) : array.from(poolPdL, poolPwL, poolPmL, poolEqL, obBullActive ? obBullHigh : na, cdl, vpocPrice, valPrice, mVwapVal, math.ceil(close / rnGrid) * rnGrid - rnGrid)
-    string[] _tpNms = tpIsLong ? array.from("PDH", "PWH", "PMH", "EQH", "OB", "CDH", "POC", "VAH", "mVWAP", "RN") : array.from("PDL", "PWL", "PML", "EQL", "OB", "CDL", "POC", "VAL", "mVWAP", "RN")
+    string[] _tpNms = tpIsLong ? array.from("PDH", "PWH", "PMH", "EQH", "OB", "CDH", "POC°", "VAH°", "mVWAP", "RN") : array.from("PDL", "PWL", "PML", "EQL", "OB", "CDL", "POC°", "VAL°", "mVWAP", "RN")
     float[] _tpD = array.new<float>()
     float[] _tpL = array.new<float>()
     string[] _tpB = array.new<string>()
