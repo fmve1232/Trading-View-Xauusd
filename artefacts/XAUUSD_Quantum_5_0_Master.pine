@@ -243,7 +243,12 @@ string QVERSION = "Q7.2"
 //  (dead transfer vars oPdh1stPct/oPdl1stPct/oBosFail/oCalDetail/oMaxAdverseATR/oBosCont
 //   REMOVED — their dashboard consumers no longer existed; this comment claimed otherwise.)
 //  wrCIStr→risk row2; liqHealthScore→liquidity row3; vpocPrice/vaPos/vaRatio→PRICE row3;
-//  obBull/BearVolPct→OB labels; fvgVolPctAtDetect→FVG label; tpDirStr/tpCol/tp*Str/tpRRStr→plan panel;
+//  (F-A04: obBull/BearVolPct + fvgVolPctAtDetect REMOVED. They were assigned every bar and
+//   read by nothing: their OB/FVG label consumers went with the drawing layer in Q5.4-CORE,
+//   and this file now contains ZERO label.new calls. The Visuals companion draws those zones
+//   but carries no volume term, so the value reached no output in either file. volPercentile
+//   itself is untouched and still feeds climaxUp/Down and sweep quality.)
+//  tpDirStr/tpCol/tp*Str/tpRRStr->plan panel;
 //  (debugMode input REMOVED — the DECISION debug line it gated no longer exists.) density→table width scaling.
 //  Removed (pure leftovers, no coherent consumer): unused palette constants, macro1..5Color,
 //  dxyC/yldC/eurC/slvC, _stateCol/_qualCol/_mtfCol/_tfArrows/_nearAboveCol/_nearBelowCol/_rrCol/_prVal,
@@ -1622,7 +1627,6 @@ fvgDetected = showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0]
 var float fvgHighUpper = na
 var float fvgLowLower = na
 var int fvgBarIndex = -1
-var float fvgVolPctAtDetect = na
 var bool fvgActive = false
 var bool fvgWasBullish = false
 // R5.2-C2: three fixes. (1) Bearish gap bounds were [low[0], high[2]] — the entire
@@ -1641,7 +1645,6 @@ if fvgDetected and not fvgActive
         fvgHighUpper := gapHigh
         fvgLowLower := gapLow
         fvgBarIndex := bar_index
-        fvgVolPctAtDetect := volPercentile
         fvgActive := true
         fvgWasBullish := low[0] > high[2]
 fvgActive := fvgActive and bar_index - fvgBarIndex <= fvgMaxBars
@@ -1660,8 +1663,6 @@ var int obBullBar = -1
 var int obBearBar = -1
 var bool obBullActive = false
 var bool obBearActive = false
-var float obBullVolPct = na
-var float obBearVolPct = na
 var bool obBullMitigated = false
 var bool obBearMitigated = false
 var float obBullMitPct = 0.0
@@ -1683,7 +1684,6 @@ if showOB and dispOnsetDown and not obBearActive
     obBearHigh := high[1]
     obBearLow := low[1]
     obBearBar := bar_index
-    obBearVolPct := volPercentile[1]
     obBearActive := true
     obBearMitigated := false
     obBearMitPct := 0.0
@@ -1695,7 +1695,6 @@ if showOB and dispOnsetUp and not obBullActive
     obBullHigh := high[1]
     obBullLow := low[1]
     obBullBar := bar_index
-    obBullVolPct := volPercentile[1]
     obBullActive := true
     obBullMitigated := false
     obBullMitPct := 0.0
@@ -1709,7 +1708,6 @@ if failedBullDisp
     obBearHigh := high[1]
     obBearLow := low[1]
     obBearBar := bar_index
-    obBearVolPct := volPercentile[1]
     obBearActive := true
     obBearMitigated := false
     obBearMitPct := 0.0
@@ -1723,7 +1721,6 @@ if failedBearDisp
     obBullHigh := high[1]
     obBullLow := low[1]
     obBullBar := bar_index
-    obBullVolPct := volPercentile[1]
     obBullActive := true
     obBullMitigated := false
     obBullMitPct := 0.0
@@ -2564,32 +2561,48 @@ if not shouldBuy and not shouldSell
     bool _bullSide = bullScore >= bearScore
     _blkWhy := _ddBreach ? "DD" : inNewsWindow ? "NEWS" : not recentBars ? "OLD-BAR" : sessionQuality < 30 ? "SESS " + str.tostring(int(sessionQuality)) + "/30" : (_bullSide ? not bullTrend : not bearTrend) ? "TREND " + str.tostring(_bullSide ? bullTrendScore : bearTrendScore) + "/" + str.tostring(trendThreshold) : (_bullSide ? htfBearScoreGate : htfBullScoreGate) ? "HTF-OPP" : "NO-TRIGGER"
 
-// ---- Decision Log: which pre-filters are passing ----
+// ---- Decision Log: which gate terms are passing ----
+// F-A03 FIX. This block previously scored against the PRE-Q5.5 filter set
+// (htfBullScoreGate/macroBull/regimeConfHigh/bullRsiDiv) -- the CONTROL arm's gate, not
+// this file's. Three of those terms are absent from the live gate and a fourth was
+// inverted: the gate tests `not htfBearScoreGate`, the log tested `htfBullScoreGate`,
+// and those are NOT complements (htfAlignmentLong>=2 vs htfAlignmentShort>=2 at
+// L702-703 -- both can be false at once). The readout therefore named filters that had
+// not blocked anything, while never naming the one that had.
+// Now mirrored term-for-term on buyPreFilters/sellPreFilters (L2544-2545) plus the
+// structure/displacement trigger (L2547/L2549), so log and gate cannot drift apart.
 string _buyFilterLog = ""
 string _sellFilterLog = ""
 _buyFilterLog := bullTrend ? _buyFilterLog : _buyFilterLog + "Trend "
-_buyFilterLog := htfBullScoreGate ? _buyFilterLog : _buyFilterLog + "HTF "
-_buyFilterLog := macroBull ? _buyFilterLog : _buyFilterLog + "Macro "
-_buyFilterLog := regimeConfHigh ? _buyFilterLog : _buyFilterLog + "Regime "
-_buyFilterLog := bullRsiDiv ? _buyFilterLog : _buyFilterLog + "RSI "
+_buyFilterLog := not htfBearScoreGate ? _buyFilterLog : _buyFilterLog + "HTF-Bear "
 _buyFilterLog := recentBars ? _buyFilterLog : _buyFilterLog + "Recent "
 _buyFilterLog := sessionQuality >= 30 ? _buyFilterLog : _buyFilterLog + "Sess "
-int _buyPass = (bullTrend ? 1 : 0) + (htfBullScoreGate ? 1 : 0) + (macroBull ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bullRsiDiv ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0)
+_buyFilterLog := not inNewsWindow ? _buyFilterLog : _buyFilterLog + "News "
+_buyFilterLog := not _ddBreach ? _buyFilterLog : _buyFilterLog + "DD "
+_buyFilterLog := (bullStructActive or displacementUp) ? _buyFilterLog : _buyFilterLog + "Trig "
+int _buyPass = (bullTrend ? 1 : 0) + (not htfBearScoreGate ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0) + (not inNewsWindow ? 1 : 0) + (not _ddBreach ? 1 : 0) + ((bullStructActive or displacementUp) ? 1 : 0)
 string _buyLog = "▲" + str.tostring(_buyPass) + "/7" + (_buyPass < 7 ? " [✗" + _buyFilterLog + "]" : "")
 _sellFilterLog := bearTrend ? _sellFilterLog : _sellFilterLog + "Trend "
-_sellFilterLog := htfBearScoreGate ? _sellFilterLog : _sellFilterLog + "HTF "
-_sellFilterLog := macroBear ? _sellFilterLog : _sellFilterLog + "Macro "
-_sellFilterLog := regimeConfHigh ? _sellFilterLog : _sellFilterLog + "Regime "
-_sellFilterLog := bearRsiDiv ? _sellFilterLog : _sellFilterLog + "RSI "
+_sellFilterLog := not htfBullScoreGate ? _sellFilterLog : _sellFilterLog + "HTF-Bull "
 _sellFilterLog := recentBars ? _sellFilterLog : _sellFilterLog + "Recent "
 _sellFilterLog := sessionQuality >= 30 ? _sellFilterLog : _sellFilterLog + "Sess "
-int _sellPass = (bearTrend ? 1 : 0) + (htfBearScoreGate ? 1 : 0) + (macroBear ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bearRsiDiv ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0)
+_sellFilterLog := not inNewsWindow ? _sellFilterLog : _sellFilterLog + "News "
+_sellFilterLog := not _ddBreach ? _sellFilterLog : _sellFilterLog + "DD "
+_sellFilterLog := (bearStructActive or displacementDown) ? _sellFilterLog : _sellFilterLog + "Trig "
+int _sellPass = (bearTrend ? 1 : 0) + (not htfBullScoreGate ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0) + (not inNewsWindow ? 1 : 0) + (not _ddBreach ? 1 : 0) + ((bearStructActive or displacementDown) ? 1 : 0)
 string _sellLog = "▼" + str.tostring(_sellPass) + "/7" + (_sellPass < 7 ? " [✗" + _sellFilterLog + "]" : "")
-string _trigLog = (bullBOS or displacementUp or bearBOS or displacementDown) ? "" : " NO-TRIG"
+// Non-gating CONTEXT. regimeConfHigh / macroBull / macroBear / bullRsiDiv / bearRsiDiv were
+// in the OLD (control-arm) filter list and are NOT in this file's gate -- they feed the
+// evidence score and bias, not the entry decision. They are surfaced here behind a "ctx:"
+// marker so that correcting the pass/fail count (F-A03) does not make them invisible on the
+// dashboard. Upper case = true. regimeConfHigh has no other consumer in this file, so this
+// is also what keeps it wired rather than orphaned.
+string _ctxLog = " ctx:" + (regimeConfHigh ? "Rg" : "rg") + (macroBull ? "M+" : macroBear ? "M-" : "M=") + (bullRsiDiv ? "R+" : bearRsiDiv ? "R-" : "R=")
+string _trigLog = (bullStructActive or displacementUp or bearStructActive or displacementDown) ? "" : " NO-TRIG"
 string _newsLog = inNewsWindow ? " NEWS-BLK" : ""
 string _ddLog = _ddBreach ? " DD-BREACH" : ""
 string _conflictLog = _pipelineConflict ? " CONFLICT" : ""
-string decisionLog = rangeDominant ? "RANGE " + str.tostring(int(rangeBiasScore)) + "/130 [no dir. edge]" : bullBiasScore >= bearBiasScore ? _buyLog + _trigLog + _newsLog + _ddLog + _conflictLog : _sellLog + _trigLog + _newsLog + _ddLog + _conflictLog
+string decisionLog = rangeDominant ? "RANGE " + str.tostring(int(rangeBiasScore)) + "/130 [no dir. edge]" : bullBiasScore >= bearBiasScore ? _buyLog + _trigLog + _newsLog + _ddLog + _conflictLog + _ctxLog : _sellLog + _trigLog + _newsLog + _ddLog + _conflictLog + _ctxLog
 
 // Q5.2-F3: per-direction analog hit probabilities [L>=1R, L>=2R, L>=3R, L SL1R,
 // S>=1R, S>=2R, S>=3R, S SL1R], written by the stats engine (N>=20), read by the plan.
@@ -4721,7 +4734,7 @@ string _evidence = showStatsEngine ? "  A" + str.tostring(oMatch) + (oMatch < 30
 // (Pine requires declaration before use — placing it near the calibration block further
 // down produced a forward reference).
 // oBosFail is the exact arithmetic complement of oBosCont (they sum to 100 by construction
-// at L3545), so it is intentionally NOT printed twice; BOScont carries both.
+// at L4096), so it is intentionally NOT printed twice; BOScont carries both.
 string calStr = showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : ""
 // ----- OOS RELIABILITY TABLE (observability only) ------------------------------
 // FOUR DISTINCT QUANTITIES, deliberately labelled apart because conflating them is the

@@ -1854,6 +1854,21 @@ float volDelta = close > open ? volume : close < open ? -volume : 0.0
 float volDelta50 = math.sum(volDelta, 50)
 
 // VOLUME PROFILE — price-level volume distribution (100-bar lookback)
+// F-A01 PARITY FIX. This arm previously carried ONLY the declarations below: vpocPrice,
+// vahPrice and valPrice were declared `na` and never assigned, because the computation
+// block was absent from this file entirely (vpBuckets/bucketSize: 12 references in the
+// Master, 0 here). Both were still CONSUMED by the stop-loss candidate array (_slC) and
+// the take-profit candidate array (_tpLvls), whose loops guard with `if not na(_lv)` --
+// so the value-area and POC candidates were skipped silently rather than erroring.
+// The Master's block is reproduced below VERBATIM so the twins compute the same levels
+// from the same code. NOTE the guard is `barstate.islast`: in the Master too these
+// values exist only on the chart's final bar, so this port changes almost nothing on
+// historical bars -- its purpose is structural parity, not a change in backtest results.
+// The live-vs-history asymmetry that guard creates is recorded separately as F-A07 and
+// is deliberately NOT changed here (making it per-bar is a performance decision that
+// needs a measured runtime baseline, which does not yet exist).
+int vpLookback = 100
+int vpBuckets = 40
 var float[] vpVolumes = array.new_float(40, 0.0)
 var float[] vpPrices = array.new_float(40, 0.0)
 var float vpocPrice = na
@@ -1861,6 +1876,53 @@ var float vahPrice = na
 var float valPrice = na
 var float vaRatio = 0.0
 var string vaPos = "—"
+float vpHigh = ta.highest(high, vpLookback)
+float vpLow = ta.lowest(low, vpLookback)
+var int vpRefresh = 0
+if barstate.islast and barstate.isconfirmed and not perfMode
+    float bucketSize = (vpHigh - vpLow) / vpBuckets
+    if vpRefresh % 5 == 0
+        for i = 0 to vpBuckets - 1
+            array.set(vpVolumes, i, 0.0)
+        if bucketSize > 0.0
+            for i = 0 to vpBuckets - 1
+                array.set(vpPrices, i, vpLow + bucketSize * (i + 0.5))
+            for i = 0 to vpLookback - 1
+                float bp = (high[i] + low[i] + close[i]) / 3.0
+                float bv = nz(volume[i], 0.0)
+                int midB = int((bp - vpLow) / bucketSize)
+                midB := math.max(0, math.min(midB, vpBuckets - 1))
+                array.set(vpVolumes, midB, array.get(vpVolumes, midB) + bv)
+            float maxV = 0.0
+            int vpocIdx = 0
+            for i = 0 to vpBuckets - 1
+                float v = array.get(vpVolumes, i)
+                if v > maxV
+                    maxV := v
+                    vpocIdx := i
+            vpocPrice := array.get(vpPrices, vpocIdx)
+            float totalV = array.sum(vpVolumes)
+            float targetV = totalV * 0.70
+            float cumV = maxV
+            int vaLow = vpocIdx
+            int vaHigh = vpocIdx
+            while cumV < targetV and (vaLow > 0 or vaHigh < vpBuckets - 1)
+                float vBelow = vaLow > 0 ? array.get(vpVolumes, vaLow - 1) : -1.0
+                float vAbove = vaHigh < vpBuckets - 1 ? array.get(vpVolumes, vaHigh + 1) : -1.0
+                if vAbove >= vBelow and vaHigh < vpBuckets - 1
+                    vaHigh += 1
+                    cumV += vAbove
+                else if vaLow > 0
+                    vaLow -= 1
+                    cumV += vBelow
+                else
+                    break
+            vahPrice := array.get(vpPrices, vaHigh)
+            valPrice := array.get(vpPrices, vaLow)
+            float vpRange = vpHigh - vpLow
+            vaRatio := totalV > 0.0 and vpRange > 0.0 ? (vahPrice - valPrice) / vpRange * 100.0 : 0.0
+            vaPos := close > vahPrice ? "▲" : close < valPrice ? "▼" : "●"
+    vpRefresh += 1
 // Session volume modeling — per-session rolling averages for anomaly detection
 
 // ORDER FLOW — CVD (proxy-based)

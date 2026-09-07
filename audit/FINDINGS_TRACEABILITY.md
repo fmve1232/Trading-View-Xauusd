@@ -8,18 +8,35 @@
 
 **Nothing was changed.** No tuning, no fixes — per `AUDIT_PROMPT.md` §9.
 
+> ## ⚠ CORRECTION AND FIX STATUS (applied after this report was first written)
+>
+> **F-A01's severity rationale was wrong and is corrected below.** The volume-profile
+> block is guarded by `barstate.islast` (v1 L1914 / v2 L1911), so it computes **only on
+> the chart's final bar** — in the Master as well. My original claim that the Master
+> "picks a stop from 7 candidates and a target from 10" while the arms pick from 6 and 8
+> is true **only on the last bar**; on every historical bar the Master's VP candidates
+> were `na` too. The A/B's absolute PF and win-rate figures are therefore **not**
+> distorted the way I stated. The real defect that guard exposes is different, is inside
+> the Master, and is recorded as **F-A07** below.
+>
+> **Applied:** F-A01 (as structural parity), F-A03, F-A04, F-A06.
+> **Not applied:** F-A02, F-A05, F-A07 — each needs a decision or a measurement first.
+> Build v2 hashes are in `audit/MANIFEST.sha256`; v1→v2 line mapping in
+> `audit/LINE_MAP_v2.md`.
+
 ---
 
 ## Summary
 
 | ID | Severity | Class | Finding |
 |---|---|---|---|
-| F-A01 | **CRITICAL** | `BUG` | Volume-profile engine is absent from both backtest arms while still consumed by the SL/TP candidate arrays |
-| F-A02 | **CRITICAL** | `STAT` | The calibration engine is display-only; no calibrated probability gates any trade |
-| F-A03 | HIGH | `BUG` | The Decision Log explains failures against a gate set the engine no longer uses |
-| F-A04 | HIGH | `BUG` | OB/FVG volume-quality values are computed every bar and consumed by nothing |
-| F-A05 | MEDIUM | `STAT` | The weighted evidence composite (`bullScore`) does not gate entry |
-| F-A06 | LOW | `PRES` | Stale line citation for the BOS complement (same class as `AUDIT_PROMPT.md` §4.5) |
+| F-A01 | MEDIUM *(was CRITICAL — see correction)* | `BUG` | Volume-profile engine absent from both arms while still consumed by the SL/TP candidate arrays — **FIXED** (parity port) |
+| F-A02 | **CRITICAL** | `STAT` | The calibration engine is display-only; no calibrated probability gates any trade — **NOT FIXED** (needs a frozen holdout) |
+| F-A03 | HIGH | `BUG` | The Decision Log explains failures against a gate set the engine no longer uses — **FIXED** |
+| F-A04 | HIGH | `BUG` | OB/FVG volume-quality values computed every bar, consumed by nothing — **FIXED** (removed) |
+| F-A05 | MEDIUM | `STAT` | The weighted evidence composite (`bullScore`) does not gate entry — **NOT FIXED** (design decision) |
+| F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
+| F-A07 | **HIGH** | `STAT` | *(new)* Master's volume profile is last-bar-only, so the live plan can use levels no historical bar could — **NOT FIXED** |
 
 **Verified clean:** 95/95 inputs consumed (zero orphans); treatment-arm entry gates byte-identical to the Master; `EdgeCases` and `Visuals` carry zero unread symbols; plan direction cannot contradict signal direction; three flagged symbols confirmed *intentionally* dormant.
 
@@ -146,6 +163,46 @@ The entry decision is a conjunction of boolean state flags only — `bullTrend` 
 ## F-A06 — Stale complement citation `LOW` `PRES`
 
 `Master.pine` L4723 states `oBosFail` and `oBosCont` "sum to 100 by construction **at L3545**". L3543–3548 is the analog-skip guard for missing lookbacks — unrelated code. The actual construction is **L4096** (`_cBosFail := 100 - _cBosCont`). The claim itself is true; the pointer is wrong. Same failure class as `AUDIT_PROMPT.md` §4.5.
+
+---
+
+## F-A07 — The Master's volume profile is last-bar-only `HIGH` `STAT` *(new; not fixed)*
+
+**Where.** `Master.pine` v2 L1911 (v1 L1914):
+
+```pine
+if barstate.islast and barstate.isconfirmed and not perfMode
+```
+
+**What it means.** `vpocPrice`, `vahPrice` and `valPrice` are assigned **only inside this
+guard**, and `barstate.islast` is true only on the chart's final bar. On every historical
+bar they are `na`. They are nonetheless consumed on every bar by `_slC` (stop candidates)
+and `_tpLvls` (target candidates), whose loops skip `na` silently.
+
+**Failure scenario.** On the live bar the plan may select a stop at the value-area low or
+a target at the VPOC — `tpSLBasis` reads `"VAL"`, a TP basis reads `"VPOC"`. No historical
+bar could ever have produced those bases, because the values did not exist then. **The
+live trade plan is therefore drawn from a candidate set that no backtest bar used**, which
+is precisely the property a backtest exists to rule out. It is a live-vs-history asymmetry
+*inside the Master* — not, as F-A01 originally claimed, a Master-vs-arms asymmetry.
+
+**Why it was not fixed.** The obvious change — drop `barstate.islast`, keep the existing
+`vpRefresh % 5` throttle — makes a 100-iteration inner loop run every fifth confirmed bar
+across all history. On a 5,461-line script with **no measured compile or runtime baseline**
+(`AUDIT_PROMPT.md` §8.1) that is a blind performance change, and `perfMode`/`barstate.islast`
+exist specifically to avoid timeouts. Making it would be guessing.
+
+**Options, for the operator to choose:**
+
+1. **Measure first, then unguard.** Establish the runtime baseline (§8.1), then change the
+   guard to `barstate.isconfirmed and not perfMode` and re-measure. Highest fidelity,
+   needs the baseline that does not yet exist.
+2. **Exclude VP from the plan.** Drop `vpocPrice`/`vahPrice`/`valPrice` from `_slC` and
+   `_tpLvls`. Live then matches history exactly, at the cost of the feature.
+3. **Mark it.** Keep as-is but suffix the basis string (e.g. `"VAL*"`) when the level came
+   from a last-bar-only source, so the plan is honest about it.
+
+Option 3 is the cheapest honest fix; option 1 is the correct one if the budget allows.
 
 ---
 

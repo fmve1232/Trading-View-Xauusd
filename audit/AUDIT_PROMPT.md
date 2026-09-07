@@ -18,11 +18,29 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5448 | 343716 | `27d4ab4e6ccbbe2ad12e049eae5955914779935da7660c372af2abae2d274803` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4776 | 290669 | `d4acc741dfbbaa2aee25cc55f9cc2ade4981ece93d1b6818967235bea6ed0c4f` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4776 | 290734 | `44465cdbb3c15752bf2998c94464f6e6d6a09bb729f37ccd61737d96685ffa7f` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5461 | 345408 | `2fc16c90d138eb6c4f206883f811734ad5b4c420fb8823c50ba361546df16556` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4838 | 293987 | `23b096d66ad6905835c278a16bf5d61f664eedba5ee11dc8311a274064dac97e` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4838 | 294052 | `bfeb9c1d5e04e7b99c0212e3bfead8544eb0734837515c67ffe3d84c29801526` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 276 | 18506 | `4559de25ed4afa9f7fe391ef03cb18718af91c659021eaac4c32093aeab25c83` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 931 | 57494 | `28dd76cb07b3f6863b89e24a0933247836f64c621c8bfb72b5034fc6655c0e6b` |
+
+
+> **BUILD v2 — this prompt now pins the FIXED build.** The originally audited build
+> (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
+> `FINDINGS_TRACEABILITY.md` were applied; F-A02, F-A05 and F-A07 were **not**.
+> Provenance of the superseded v1 hashes:
+>
+> | File | v1 SHA-256 (superseded) | v2 |
+> |---|---|---|
+> | `XAUUSD_Quantum_5_0_Master.pine` | `27d4ab4e6ccbbe2a…` | **changed** |
+> | `XAUUSD_Quantum_5_0_Strategy.pine` | `d4acc741dfbbaa2a…` | **changed** |
+> | `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | `44465cdbb3c15752…` | **changed** |
+> | `XAUUSD_Quantum_5_0_EdgeCases.pine` | `4559de25ed4afa9f…` | unchanged |
+> | `XAUUSD_Quantum_5_5_Visuals.pine` | `28dd76cb07b3f686…` | unchanged |
+>
+> **Line references in §4, §6, §7 and §10 were captured against v1.** Every anchor's
+> v1→v2 line number is mapped mechanically in `audit/LINE_MAP_v2.md`; shifts are −3
+> before the decision-log block and +13 after. Use that map, not arithmetic.
 
 Line counts are newline counts (`wc -l`). Every line reference in this document
 is 1-indexed against these exact files.
