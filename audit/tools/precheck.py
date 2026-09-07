@@ -59,6 +59,27 @@ def check(path):
                 nind=len(nxt)-len(nxt.lstrip(' '))
                 if nind<=ind: errs.append(f"L{i+1}: block opener not followed by an indented body")
 
+
+    # 5. else / else-if chain integrity  (added after this checker MISSED a real
+    #    `else` inserted before an `else if`, which Pine rejects)
+    stack={}
+    for i,l in enumerate(S,1):
+        if not l.strip(): continue
+        ind=len(l)-len(l.lstrip(' ')); t=l.strip()
+        if re.match(r'^if\b',t):
+            stack[ind]='if'
+        elif re.match(r'^else\s+if\b',t):
+            if stack.get(ind) not in ('if','elif'):
+                errs.append(f"L{i}: 'else if' with no matching 'if' at indent {ind}")
+            stack[ind]='elif'
+        elif re.match(r'^else\b',t):
+            if stack.get(ind) not in ('if','elif'):
+                errs.append(f"L{i}: 'else' with no matching 'if' at indent {ind}")
+            stack[ind]='else'
+        elif ind in stack and ind<=(len(l)-len(l.lstrip(' '))):
+            if re.match(r'^(if|else)\b',t) is None and ind in stack and stack.get(ind)=='else':
+                stack.pop(ind,None)
+
     # 4. `=` used where `:=` is required (reassigning a known var at deeper indent)
     declared=set()
     for i,l in enumerate(S,1):

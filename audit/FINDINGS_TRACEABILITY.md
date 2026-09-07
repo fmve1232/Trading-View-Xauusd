@@ -39,7 +39,7 @@
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
-| F-A10 | MEDIUM | `STAT` | *(new)* The D-001 timeout-cost fix does not bite — cost is subtracted then discarded for `oc==0`, so analog EV stays optimistic — **DOCUMENTED, not changed** |
+| F-A10 | **HIGH** | `STAT` | The D-001 timeout-cost fix did not bite, **and the existing cost subtraction was in the wrong units** — **FIXED in v7** (R-unit conversion + timeout term) |
 | F-A09 | MEDIUM | `PRES` | *(new)* EdgeCases' Master line citations stale (§4.5) — **FIXED** (re-derived) |
 
 **Verified clean:** 95/95 inputs consumed (zero orphans); treatment-arm entry gates byte-identical to the Master; `EdgeCases` and `Visuals` carry zero unread symbols; plan direction cannot contradict signal direction; three flagged symbols confirmed *intentionally* dormant.
@@ -270,7 +270,7 @@ The harness is now re-anchored: a reader can follow any `chk()` back to live Mas
 
 ---
 
-## F-A10 — the D-001 timeout-cost fix does not bite `MEDIUM` `STAT` *(documented, not changed)*
+## F-A10 — timeout cost discarded, and cost subtracted in the wrong units `HIGH` `STAT` *(FIXED in v7)*
 
 Found by the expression-drift pass that §4.5 asks for — checking that EdgeCases'
 transcribed expressions still match the Master, not merely that the line numbers do.
@@ -300,18 +300,39 @@ D-001 defect, still live**, with a comment asserting it was fixed.
 **display-only** — consumed once for the dashboard EV cell. The gating expectancy is
 `planExpectancy`, a different quantity (§4.1). Nothing is gated on this.
 
-**Why it was documented rather than fixed.** Charging the cost correctly means expressing
-`_costATR` (ATR units) as an R-multiple per analog, because `avgW`/`avgL` are R-multiples.
-Mixing those units silently would be worse than a known, documented bias. Two defensible
-fixes, both a modelling decision for the operator:
+### A second, larger defect found while fixing this
 
-1. **Charge it.** Convert `_costATR` to R per analog and add a timeout term to `_cEvVal`.
-   Most correct; needs the per-analog R unit at the EV site, which is not currently there.
-2. **Exclude timeouts from the denominator.** Makes EV a win/loss-conditional expectancy
-   and relabels it as such. Cheaper, but changes what the number means.
+Implementing the R-unit conversion surfaced that **the existing cost subtraction was
+already mis-united**. `fr = array.get(hRet, i)`, and Q7.0 redefined `hRet` as **realised
+R**. But `_costATR` divided cost by `adaptiveATR`, giving **ATR units**. So
+`frAdj = fr - _costATR` subtracted an ATR-unit quantity from an R-unit one — wrong
+whenever the SL multiple is not 1.0, and `regSLMult` defaults to **1.5**. Every
+cost-adjusted win and loss was mis-scaled by that factor, not only the timeouts.
 
-The misleading comment has been corrected in all three files so the code no longer claims
-a fix it does not deliver.
+### Fixed in v7, in four parts
+
+1. **Units.** Cost is now divided by the analog's own R unit — the risk distance in points
+   it was normalised by — putting `_costR` on the same scale as `fr`, `avgW` and `avgL`.
+   That R unit (`_oR`) is local to the outcome-recording loop, so it is now persisted
+   per analog in a new `hRUnit` history array and read at the expectancy site.
+2. **The timeout is charged.** A new accumulator sums each timed-out analog's *signed*
+   cost-adjusted realised R. Signed, not magnitude: a timeout can end either side of
+   entry, and forcing a magnitude would fabricate a loss. `mr_`/`wr_` already carried the
+   timeout rate, so only the sum was missing.
+3. **The equity curve too.** `_pnlPct`'s timeout branch was `0.0`, reproducing the same
+   defect in `_cumEq`/`_maxDD`. It now contributes like any other outcome. **This feeds
+   `oMaxDD` → `_ddForBreaker`, so it can move the drawdown breaker when `useDDBreaker` is
+   ON — it defaults OFF.**
+4. **EV.** `_cEvVal = (wr × avgW) − (lr × avgL) + (tr × avgT)`. Added rather than
+   subtracted because `avgT` carries its own sign, unlike `avgW`/`avgL` which are
+   magnitudes with the sign written into the formula. The three terms now partition every
+   analog, so EV is a true expected R per matched state.
+
+Verified that `st` and `mr_` see the same population — same loop iteration, same nesting,
+no intervening `continue` or `_isOos` guard — so `avgT = st / mr_` is sound.
+
+**Expect analog EV to fall**, most in chop, compression and low-ADX regimes where timeouts
+cluster. That is the correction working, not a regression.
 
 ---
 

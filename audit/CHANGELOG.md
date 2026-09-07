@@ -1,6 +1,6 @@
-# Build changelog — v1 → v2 → v3 → v4 → v5 → v6
+# Build changelog — v1 → v2 → v3 → v4 → v5 → v6 → v7
 
-**Nine findings applied** (F-A01/03/04/06 v2; F-A07 v3; F-A02+F-A05 v4; F-A08+F-A09 v5). **F-A10** (v6) is documented, not changed — see that section.
+**All ten findings applied** (F-A01/03/04/06 v2; F-A07 v3; F-A02+F-A05 v4; F-A08+F-A09 v5; F-A10 v7).
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -396,3 +396,55 @@ in the findings report; both are modelling decisions.
 What did change: the false comment, in all three files, and EdgeCases group C, which now
 records that C3/C5 still describe live behaviour but for a different reason than the
 original defect.
+
+---
+
+# Build v6 → v7 — F-A10 fixed (R-unit conversion), and a units bug found doing it
+
+`Master` 5527 → 5566 · `Strategy` 4904 → 4943 · `OLDGATES` 4904 → 4943 · `EdgeCases`/`Visuals` unchanged.
+
+**This changes displayed statistics, and can move the drawdown breaker when it is enabled.**
+
+## A larger defect surfaced while implementing the fix
+
+`fr = array.get(hRet, i)`, and Q7.0 redefined `hRet` as **realised R**. But `_costATR`
+divided cost by `adaptiveATR`, giving **ATR units**. So `frAdj = fr - _costATR` was
+subtracting an ATR-unit quantity from an R-unit one — wrong whenever the SL multiple is
+not 1.0, and `regSLMult` defaults to **1.5**. **Every cost-adjusted win and loss was
+mis-scaled**, not only the timeouts. The units trap I warned about was already in the code.
+
+## The fix, in four parts
+
+1. **Units.** Cost is divided by the analog's own R unit (risk distance in points), putting
+   `_costR` on the same scale as `fr`, `avgW`, `avgL`. `_oR` is local to the
+   outcome-recording loop, so it is now persisted per analog in a new `hRUnit` array.
+2. **Timeout charged.** A new accumulator sums each timed-out analog's **signed**
+   cost-adjusted realised R. Signed, not magnitude — a timeout can end either side of
+   entry and forcing a magnitude would fabricate a loss.
+3. **Equity curve.** `_pnlPct`'s timeout branch was `0.0`, reproducing the defect in
+   `_cumEq`/`_maxDD`. Now contributes like any other outcome. **Feeds `oMaxDD` →
+   `_ddForBreaker`, so it can move the DD breaker when `useDDBreaker` is ON (defaults OFF).**
+4. **EV.** `_cEvVal = (wr × avgW) − (lr × avgL) + (tr × avgT)`. Added, not subtracted,
+   because `avgT` carries its own sign. The three terms now partition every analog.
+
+**Expect analog EV to fall**, most in chop, compression and low-ADX where timeouts cluster.
+That is the correction working.
+
+## I made a real mistake here, and the checker missed it
+
+The first attempt inserted the `else` branch **before** `else if oc == -1`, producing
+`else` followed by `else if` — invalid Pine. `precheck.py` passed it.
+
+Both are fixed: the branch is relocated, and `precheck.py` gained an else/else-if chain
+check. It was then **verified against a re-created copy of the exact defect**, which it now
+reports as `'else if' with no matching 'if'`. All five real files still pass.
+
+## Verification
+
+- `st` and `mr_` confirmed to see the same population — same loop iteration, same nesting,
+  no intervening `continue` or `_isOos` guard — so `avgT = st / mr_` is sound.
+- The fix lines are **byte-identical** across all three files.
+- A/B diff unchanged: same 5 hunk headers.
+- `precheck.py` and `undeclared.py` clean on all five files (0 unresolved).
+
+Still **not compiled**.

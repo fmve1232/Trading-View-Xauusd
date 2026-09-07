@@ -2761,6 +2761,11 @@ var int[] hMr = array.new_int(HIST_MAX, 0)
 var int[] hCor = array.new_int(HIST_MAX, 0)
 var int[] hOut = array.new_int(HIST_MAX, 0)
 var float[] hRet = array.new_float(HIST_MAX, 0.0)
+// F-A10: the per-analog R UNIT (risk distance in POINTS) that hRet was normalised by.
+// Stored because the expectancy loop needs it to express transaction cost in R, and
+// _oR is local to the outcome-recording loop. Without it the cost subtraction there
+// was in ATR units while hRet is in R units -- see the block at the subtraction.
+var float[] hRUnit = array.new_float(HIST_MAX, 0.0)
 var float[] hPred = array.new_float(HIST_MAX, 50.0)
 var int[] h1st = array.new_int(HIST_MAX, 0)
 var int[] hBEv = array.new_int(HIST_MAX, 0)
@@ -2927,6 +2932,7 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
             // R-multiples, so Kelly's b is the real payoff ratio rather than a
             // drift ratio.
             array.set(hRet, oP, _oRes != 0 ? float(_oRes) : (_oR > 0 ? fc / _oR : 0.0))
+            array.set(hRUnit, oP, _oR)
             int be = array.get(hBEv, oP)
             if be == 1
                 array.set(hBCont, oP, fc > 0 ? 1.0 : 0.0)
@@ -3050,6 +3056,7 @@ runStatsEngines() =>
     var int _gPT = 0
     var float _gSw = 0.0
     var float _gSl = 0.0
+    var float _gSt = 0.0
     var int _gWc = 0
     var int _gLc = 0
     var int _gBov = 0
@@ -3134,6 +3141,7 @@ runStatsEngines() =>
         _gPT := 0
         _gSw := 0.0
         _gSl := 0.0
+        _gSt := 0.0
         _gWc := 0
         _gLc := 0
         _gBov := 0
@@ -3213,6 +3221,7 @@ runStatsEngines() =>
     int pT = _gPT
     float sw = _gSw
     float sl = _gSl
+    float st = _gSt
     int wc = _gWc
     int lc = _gLc
     int bov = _gBov
@@ -3480,7 +3489,15 @@ runStatsEngines() =>
             // R5-F15: cost (ATR units) = [(spread + 2 x slippage) + commission/pointValue] / ATR at match bar
             // R5.3-L3: lookback cap raised 2000 -> 4999 (max_bars_back is 5000; HIST_MAX
             // reaches 4500, so older matches were silently priced at CURRENT ATR).
-            float _costATR = adaptiveATR > 0 ? ((_sessSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)) / nz(adaptiveATR[math.min(barDist_, 4999)], adaptiveATR) : 0.0
+            // F-A10 FIX, PART 1 -- UNITS. The old form divided cost by adaptiveATR, giving cost
+            // in ATR units, and subtracted it from fr = hRet, which Q7.0 redefined as realised R.
+            // Those are different units whenever the SL multiple is not 1.0 (regSLMult defaults
+            // 1.5), so every cost-adjusted win and loss was mis-scaled. Cost is now divided by
+            // the analog's OWN R unit -- the risk distance in points it was normalised by --
+            // which puts _costR on exactly the same scale as fr, avgW and avgL.
+            float _costPts = (_sessSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)
+            float _rUnit   = array.get(hRUnit, i)
+            float _costR   = _rUnit > 0 ? _costPts / _rUnit : 0.0
             // CHANGE ID: D-001 — a timed-out trade is still ENTERED and EXITED and still
             // pays spread + commission, but oc == 0 was charged nothing. That made analog
             // expectancy optimistic by one full round trip exactly in chop/compression/
@@ -3499,7 +3516,7 @@ runStatsEngines() =>
             // this meanwhile. See F-A10 in audit/FINDINGS_TRACEABILITY.md for the two options.
             // EXPECT trade count to FALL and chop expectancy to drop — that is the
             // correction working, not a regression.
-            float frAdj = fr - _costATR
+            float frAdj = fr - _costR
             float absFrAdj = math.abs(frAdj)
             if oc == 1
                 wc += 1
@@ -3518,12 +3535,25 @@ runStatsEngines() =>
                 float worstUp = math.max(forwardHi - close[barOff], 0.0)
                 maeSum += adaptiveATR > 0 ? worstUp / adaptiveATR : 0.0
                 maeCnt += 1
+            else
+                // F-A10 FIX, PART 2 -- THE TIMEOUT IS NO LONGER FREE. A timed-out analog is
+                // still entered and exited and still pays the round trip, and hRet already
+                // holds its terminal excursion in R, so its cost-adjusted return is a real
+                // number -- it was simply never accumulated. SIGNED, not abs: a timeout can
+                // end either side of entry, and forcing a magnitude here would fabricate a
+                // loss. mr_/wr_ already carry the timeout RATE, so only the sum was missing.
+                st += frAdj
             // R5.3-M1/M6: equity accumulates inline (matches now arrive in chronological
             // order). Notional %-account: each match risks riskPercent over a 1.5-ATR
             // unit, cost-adjusted via frAdj (per-match ATR). Convention unchanged from
             // the old block: bullish outcome = +, i.e. the curve tracks a long-bias
             // strategy over state-matched bars.
-            float _pnlPct = oc == 1 ? riskPercent * math.abs(frAdj) / 1.5 : oc == -1 ? -riskPercent * math.abs(frAdj) / 1.5 : 0.0
+            // F-A10 FIX, PART 3. The timeout branch of this ternary was 0.0, which reproduced
+            // the same defect in the equity curve that it did in EV: a timed-out match moved
+            // _cumEq not at all, cost included. Now it contributes its signed cost-adjusted
+            // return like any other. NOTE this feeds _maxDD -> oMaxDD -> _ddForBreaker, so it
+            // can move the drawdown breaker when useDDBreaker is ON (it defaults OFF).
+            float _pnlPct = oc == 1 ? riskPercent * math.abs(frAdj) / 1.5 : oc == -1 ? -riskPercent * math.abs(frAdj) / 1.5 : riskPercent * frAdj / 1.5
             _cumEq := _cumEq + _pnlPct
             if _cumEq > _eqPeak
                 _eqPeak := _cumEq
@@ -3716,6 +3746,7 @@ runStatsEngines() =>
         _gPT := pT
         _gSw := sw
         _gSl := sl
+        _gSt := st
         _gWc := wc
         _gLc := lc
         _gBov := bov
@@ -3804,7 +3835,15 @@ runStatsEngines() =>
             // SL/TP race resolves, terminal excursion in R otherwise). EV is therefore a
             // true R-multiple per trade — the standard unit — and the +/-0.3 thresholds
             // below now read as +/-0.3R, which is what they were always meant to mean.
-            _cEvVal := (wr * avgW) - (lr * avgL)
+            // F-A10 FIX, PART 4. Timeouts were in the DENOMINATOR (wt/mt count them) but
+            // contributed nothing to the numerator, so EV was optimistic by their whole cost.
+            // tr is their weighted rate, avgT their mean signed cost-adjusted R. Added, not
+            // subtracted, because avgT already carries its own sign -- unlike avgW/avgL, which
+            // are magnitudes with the sign written into the formula. The three terms now
+            // partition every analog, so EV is a true expected R per matched state.
+            float tr   = wt > 0 ? wr_ / wt : (mt > 0 ? mr_ * 1.0 / mt : 0.0)
+            float avgT = mr_ > 0 ? st / mr_ : 0.0
+            _cEvVal := (wr * avgW) - (lr * avgL) + (tr * avgT)
             _cEvLabel := _cEvVal > 0.3 ? 1 : _cEvVal < -0.3 ? -1 : 0
             _cWr := wr * 100.0
             _cAvgW := wc > 0 ? sw / wc : 0.5
