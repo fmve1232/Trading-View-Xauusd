@@ -39,6 +39,7 @@
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
+| F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
 | F-A11 | **HIGH** | `PRES` | *(new, from a mobile screenshot)* "Mobile Layout" changed only the font size — the 9-column desktop table was still rendered on phones — **FIXED** (real column reduction) |
 | F-A10 | **HIGH** | `STAT` | The D-001 timeout-cost fix did not bite, **and the existing cost subtraction was in the wrong units** — **FIXED in v7** (R-unit conversion + timeout term) |
 | F-A09 | MEDIUM | `PRES` | *(new)* EdgeCases' Master line citations stale (§4.5) — **FIXED** (re-derived) |
@@ -384,6 +385,35 @@ chart labels from the Visuals tag registry, which already does collision avoidan
 narrow viewport there are simply too many. Existing knobs: raise `tagGapATR`, lower
 `srCount`, lower `srMaxDistATR`, or turn off `showTags` groups. Changing those defaults
 would alter every chart, so it is left as a user setting.
+
+---
+
+## F-A12 — the per-trade probability the export promised was never emitted `HIGH` `BUG` *(FIXED)*
+
+Found while writing the data-collection runbook — i.e. by asking "what will actually be in
+the file the operator sends back?"
+
+**The promise.** `Strategy.pine` states that the entry comment exists because *"validate.py's
+calibration test needs a `prob` and `tq` per trade, and those are internal engine values
+absent from the standard export… Format `"TQ<n>|P<pct>"` parses trivially into the two
+columns."* It also states, correctly, that this **must precede the baseline run**, because
+`alert()` fires only forward in real time and can never backfill a backtest.
+
+**What was emitted.** `TQ<n>|CG<n>|B<n>V<n>|D<n>` — trade quality, calibration grade, schema
+build, feature version, bar-data status. **No probability field at all.**
+
+**Failure scenario.** The operator runs a full backtest, exports the List of Trades, and
+discovers the one field a calibration test requires is the one field missing. By the code's
+own reasoning that costs a **second complete backtest**, since no alert can backfill it. The
+defect hid behind a comment describing the *intended* format rather than the real one.
+
+**Fixed** in both arms, and deliberately before any baseline run. `|P<pct>` is appended, and
+it is the **directional** probability — `_calibratedProb` for longs, `1 − _calibratedProb`
+for shorts — i.e. P(*this trade* wins) rather than P(bullish). A reliability curve needs the
+former; using the latter would invert every short.
+
+Emitted format is now `TQ<n>|CG<n>|B<n>V<n>|D<n>|P<pct>`, and the comment describes what the
+code does. Applied identically to both arms, so the A/B diff is unchanged.
 
 ---
 

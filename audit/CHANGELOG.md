@@ -1,6 +1,6 @@
-# Build changelog — v1 → v2 → v3 → v4 → v5 → v6 → v7 → v8
+# Build changelog — v1 → … → v9
 
-**All eleven findings applied** (F-A01/03/04/06 v2; F-A07 v3; F-A02+F-A05 v4; F-A08+F-A09 v5; F-A10 v7; F-A11 v8).
+**All twelve findings applied.** See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -501,5 +501,39 @@ Changing those defaults would alter every chart, so it stays a user setting.
 Also unverified: a literal `u00b7` appeared in the screenshot's DECISION column. That string
 exists in **no committed version** of any file here, so it is either from a build predating
 these artefacts or an artefact of the compressed image. Not claimed as a finding.
+
+Still **not compiled**.
+
+---
+
+# Build v8 → v9 — F-A12, and the data-collection runbook
+
+`Strategy` 4943 → 4952 · `OLDGATES` 4943 → 4952. Master, Visuals and EdgeCases unchanged.
+A/B diff unchanged.
+
+## F-A12 — the export was missing the one field that matters
+
+Found by asking what would actually be *in* the file the operator sends back.
+
+The code states the entry comment exists so a calibration test has a per-trade `prob`, gives
+the format as `"TQ<n>|P<pct>"`, and correctly notes it **must precede the baseline run**
+because alerts cannot backfill history. What it emitted was
+`TQ<n>|CG<n>|B<n>V<n>|D<n>` — **no probability field at all.**
+
+The cost of finding that after a run is a second complete backtest. Fixed now, before any
+baseline: `|P<pct>` appended in both arms, carrying the **directional** probability
+(`1 − p` for shorts) so a reliability curve is meaningful rather than inverted on every
+short.
+
+## `audit/RUNBOOK.md`
+
+Step-by-step collection guide, ordered by value: the mintick gate that silently blocks all
+entries on a mismatched feed, then compiling the Master (§8.1), running the 72 assertions
+(§8.2), recording the run configuration, exporting the trades, the four-run design that
+isolates one variable at a time, the forming-candle test, and sanity checks for the fixes.
+
+It closes with what the data can and cannot establish, and the frozen-holdout path — the
+only route to genuine calibration, since everything measured on the existing window is a
+diagnostic rather than validation.
 
 Still **not compiled**.

@@ -4900,8 +4900,17 @@ if execBuyS and strategy.position_size <= 0
     // never on historical bars, so they can never backfill a backtest. The entry comment
     // is the only mechanism that attaches them to every historical trade. Without this,
     // the baseline export cannot support the calibration test and a second full run
-    // would be needed. Format "TQ<n>|P<pct>" parses trivially into the two columns.
-    strategy.entry("L", strategy.long, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus))
+    // F-A12 FIX. That format was NEVER EMITTED: the comment shipped TQ|CG|B..V..|D and
+    // carried no probability at all, so the one field the calibration test actually needs
+    // was the one field missing -- and the defect hid behind a comment describing the
+    // intended format rather than the real one. P is now appended, and it is the
+    // DIRECTIONAL probability: _calibratedProb for longs, 1 - _calibratedProb for shorts,
+    // i.e. P(this trade wins) rather than P(bullish). A reliability curve needs the
+    // former. Emitted format is now "TQ<n>|CG<n>|B<n>V<n>|D<n>|P<pct>".
+    // This had to land BEFORE the baseline run for the reason stated just above: alerts
+    // cannot backfill history, so without it the export cannot support the calibration
+    // test and a second full backtest would be needed to get it.
+    strategy.entry("L", strategy.long, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round(_calibratedProb * 100.0)))
 if execSellS and strategy.position_size >= 0
     strategy.close_all(comment="flip")
     stEntry := close
@@ -4909,7 +4918,7 @@ if execSellS and strategy.position_size >= 0
     stTP1 := tp1
     stTP2 := tp2
     stBE := false
-    strategy.entry("S", strategy.short, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus))
+    strategy.entry("S", strategy.short, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round((1.0 - _calibratedProb) * 100.0)))
 // CHANGE ID: P0-EXEC-002-FIX | FILE: Strategy execution layer (both twins)
 // OLD LOGIC: on the bar where high>=stTP1, stSL was mutated to breakeven BEFORE
 // being passed to strategy.exit() the SAME bar, with no check for whether the
