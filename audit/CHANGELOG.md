@@ -576,3 +576,36 @@ nothing else**. Now 0 violations across all five files.
 
 Second checker gap this session, third false-confidence pass. These tools narrow the
 search; they do not replace the compiler.
+
+---
+
+# Build v10 → v11 — build stamps (no code change)
+
+All five files gain a header banner; `EdgeCases` also shows its build in the on-chart
+table header. **No executable change in any file.**
+
+## Why
+
+The operator hit `Row 70 is out of table bounds` from `EdgeCases`. That is not a defect in
+any build here: **every** version in this repo, including the originally audited v1, creates
+the table with **100** rows. The chart was running an older copy — the error names 70 rows,
+and the editor showed `plot()` at line 272 against 292 in the shipped build.
+
+That is the exact risk `CLAUDE.md` names: pasting by hand across five scripts with no way to
+tell, from TradingView, which build a given script is on. A stale script throws errors
+already fixed, and the time goes into re-diagnosing a solved problem.
+
+## The stamp
+
+A banner directly under `//@version=6` reading **"this file last CHANGED in vN"**.
+
+It moves **only when that file changes**, so an unchanged file keeps its old number and
+still matches the record — which preserves the "which files changed" signal instead of
+making every file differ on every build. Compare the banner against the record in chat: if
+they differ, that script is stale.
+
+`EdgeCases` additionally carries its build in the table's header cell (`§16 EDGE CASE v6`),
+because that is the file that was stale and its table is the only thing on screen.
+
+Verified: `//@version=6` remains line 1 in all five, the EdgeCases table is untouched at 100
+rows, A/B diff unchanged at five hunk headers, all checkers clean.

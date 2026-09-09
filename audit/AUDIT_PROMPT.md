@@ -18,13 +18,13 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5606 | 358773 | `4f95956601a625d0bf56b24c7b66eecaa09920477fac63d67b31385ff19dac90` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4963 | 305765 | `53e7373dfd2e45c4901ab7a931624e09749fe7d51813472d3d4c54504fd09028` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4963 | 305830 | `63589f1ddc0f00e649a9710a23b5bebb09d13cc4f2ac451580120d8a37775149` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 292 | 20189 | `f36ebb50ab9ff0a7851c213509d88806709bfa4e626933d765faef282d7c36eb` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 985 | 61543 | `6ed51986b9069054e134ff8813bc85a49f42792cff337d15a4e4367582869b1f` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5615 | 359886 | `b81db1b65bbf9f2a57d93ff7a6f6d1c6012689c9fcdb5121c5ed5acdd81c2bb3` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4972 | 306878 | `339e972fda81085e99d9aebe3c8b105a4ad0e1c8ee304534effeab6d3933402f` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4972 | 306943 | `a53d4841f670ebe13a46a3ebe19310dcb1b3a469839a5d5b39ab6a881ae213b0` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 301 | 21307 | `538f8eee0a65285174399e2299aa387cc64f3ff931b88bf9f8dc6407606f83ea` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
 
-> **BUILD v10 — this prompt pins the current build.** The originally audited build
+> **BUILD v11 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and

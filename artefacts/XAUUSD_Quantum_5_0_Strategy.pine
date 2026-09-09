@@ -1,4 +1,13 @@
 //@version=6
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║  BUILD STAMP — this file last CHANGED in v10   (OUTCOME_N compile-order fix)║
+// ║  Compare against the build record in chat. If they differ, the copy on your   ║
+// ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
+// ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
+// ║  whose table has had 100 rows since the first audited version.                ║
+// ║  The stamp only moves when THIS file changes, so an unchanged file keeps its  ║
+// ║  old number and still matches the record.                                     ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
 // A/B COST MODEL (pinned in code, NOT left to the Properties tab). Commission and
 // slippage default to ZERO in TradingView, and zero costs systematically FLATTER the
 // Treatment arm specifically: it is designed to fire materially more trades, so it pays
