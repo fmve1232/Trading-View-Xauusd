@@ -39,6 +39,7 @@
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
+| F-A11 | **HIGH** | `PRES` | *(new, from a mobile screenshot)* "Mobile Layout" changed only the font size — the 9-column desktop table was still rendered on phones — **FIXED** (real column reduction) |
 | F-A10 | **HIGH** | `STAT` | The D-001 timeout-cost fix did not bite, **and the existing cost subtraction was in the wrong units** — **FIXED in v7** (R-unit conversion + timeout term) |
 | F-A09 | MEDIUM | `PRES` | *(new)* EdgeCases' Master line citations stale (§4.5) — **FIXED** (re-derived) |
 
@@ -333,6 +334,56 @@ no intervening `continue` or `_isOos` guard — so `avgT = st / mr_` is sound.
 
 **Expect analog EV to fall**, most in chop, compression and low-ADX regimes where timeouts
 cluster. That is the correction working, not a regression.
+
+---
+
+## F-A11 — "Mobile Layout" was a font-size toggle, not a layout `HIGH` `PRES` *(FIXED)*
+
+**Found from a mobile screenshot of the live dashboard**, then confirmed in code.
+
+**What the screenshot showed.** Every cell overflowing into its neighbour, both edges
+clipped off-screen: `4406.46` rendered as `406.46`, `CHoCH— MH4510/PDL4` running into
+`V 4373.17` running into `(Y≈ R33 10Y`, and the DECISION column truncated mid-word.
+
+**What the code did.**
+
+- `_respCols := 9` and `_respRows := 4` were set **unconditionally** — mobile or not.
+- All nine logical columns 0–8 were written regardless of mode.
+- `_mobUI` (the only thing "Mobile Layout" drove) changed `_hdSize`/`_seSize` to `tiny`
+  and moved the table's corner. **That is the entire mobile path.**
+
+Nine columns do not fit a phone at any font size. The toggle made the text smaller and
+the overlap worse.
+
+**Second defect in the same block.** `dashMode` offers `"Auto"`, which resolves to
+`"Desktop"` — Pine cannot detect viewport size, so `Auto` is a promise the platform cannot
+keep, and it is the **default**. A phone user on defaults gets the desktop table.
+
+**Fixed.**
+
+- `_dashMobile` drops the four *context* columns (STRUCTURE, LIQUIDITY, PRICE, MACRO) and
+  keeps the five that answer *what do I do*: MARKET, BIAS, SIGNAL, RISK, DECISION.
+  Table is created with 5 columns; mobile widths sum to exactly 100, weighted toward
+  SIGNAL / RISK / DECISION.
+- `_dashPort` additionally drops the two dense sub-rows on portrait; landscape keeps them.
+- A logical→physical column map guards `tc`/`tcb` in **one place**, so all ~30 call sites
+  are unchanged. Returning −1 skips the cell.
+- The `Auto` tooltip now states plainly that Pine cannot detect screen size.
+
+**Bounds invariant, verified mechanically** — this is the class of bug that only appears at
+runtime (`"Row 70 is out of table bounds"`, EdgeCases L250): logical columns written are
+`{0..8}`; kept on mobile `{0,1,2,7,8}` → physical `{0,1,2,3,4}`, max **4**, against
+`_respCols = 5` → valid `0..4`. Confirmed the only two `table.cell(tblA, …)` sites are the
+guarded ones, so nothing can bypass the map.
+
+**Master only.** The strategy arms define `tc`/`tcb` but never create `tblA` and never call
+them — the dashboard was stripped from the backtest twins — so the A/B diff is untouched.
+
+**Not addressed:** the price-axis label crowding also visible in the screenshot. Those are
+chart labels from the Visuals tag registry, which already does collision avoidance; on a
+narrow viewport there are simply too many. Existing knobs: raise `tagGapATR`, lower
+`srCount`, lower `srMaxDistATR`, or turn off `showTags` groups. Changing those defaults
+would alter every chart, so it is left as a user setting.
 
 ---
 

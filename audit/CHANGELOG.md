@@ -1,6 +1,6 @@
-# Build changelog — v1 → v2 → v3 → v4 → v5 → v6 → v7
+# Build changelog — v1 → v2 → v3 → v4 → v5 → v6 → v7 → v8
 
-**All ten findings applied** (F-A01/03/04/06 v2; F-A07 v3; F-A02+F-A05 v4; F-A08+F-A09 v5; F-A10 v7).
+**All eleven findings applied** (F-A01/03/04/06 v2; F-A07 v3; F-A02+F-A05 v4; F-A08+F-A09 v5; F-A10 v7; F-A11 v8).
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -446,5 +446,60 @@ reports as `'else if' with no matching 'if'`. All five real files still pass.
 - The fix lines are **byte-identical** across all three files.
 - A/B diff unchanged: same 5 hunk headers.
 - `precheck.py` and `undeclared.py` clean on all five files (0 unresolved).
+
+Still **not compiled**.
+
+---
+
+# Build v7 → v8 — F-A11 (the mobile dashboard was never a mobile layout)
+
+`Master` 5566 → 5596. **Master only** — the other four are unchanged, and the A/B diff is
+untouched. Display layer only: no gate, score, probability or risk value changes.
+
+## What a screenshot showed that static analysis could not
+
+A phone screenshot of the live dashboard: every cell overflowing into its neighbour,
+both edges clipped, `4406.46` rendering as `406.46`, `CHoCH—` running into `V 4373.17`
+running into `(Y≈ R33 10Y`.
+
+## What was actually wrong
+
+- `_respCols := 9` and `_respRows := 4` set **unconditionally**, mobile or not.
+- All nine columns written regardless of mode.
+- `_mobUI` — the only thing "☰ Mobile Layout" drove — changed the font to `tiny` and moved
+  the table's corner. **That was the entire mobile path.** Nine columns do not fit a phone
+  at any font size; the toggle made the text smaller and the overlap worse.
+- `dashMode` defaults to `"Auto"`, which resolves to `"Desktop"`. Pine cannot detect
+  viewport size, so `Auto` was a promise the platform cannot keep — and the default.
+
+## Fixed
+
+`_dashMobile` drops the four **context** columns (STRUCTURE, LIQUIDITY, PRICE, MACRO) and
+keeps the five that answer *what do I do*: MARKET, BIAS, SIGNAL, RISK, DECISION. Mobile
+widths sum to exactly 100, weighted toward SIGNAL / RISK / DECISION. `_dashPort` also drops
+the two dense sub-rows in portrait; landscape keeps them. A logical→physical column map
+guards `tc`/`tcb` in **one place**, so all ~30 call sites are unchanged — returning −1 skips
+the cell. The `Auto` tooltip now says plainly that Pine cannot detect screen size.
+
+Nothing is lost: switch Dash Mode to Desktop for the full nine columns.
+
+## Bounds invariant — checked, because this class only fails at runtime
+
+Writing past the declared column count is a runtime error (the same class as the harness's
+`"Row 70 is out of table bounds"`). Verified mechanically: logical columns written `{0..8}`;
+kept `{0,1,2,7,8}` → physical `{0,1,2,3,4}`, max **4**, against `_respCols = 5` → valid
+`0..4`. Confirmed the only two `table.cell(tblA, …)` sites are the guarded ones, so nothing
+bypasses the map. `_respCols` and the map must stay in step — both comments say so.
+
+## Not addressed
+
+The price-axis label crowding also visible in the screenshot. Those are Visuals tag-registry
+chart labels, which already do collision avoidance; a narrow viewport simply has too many.
+Knobs: raise `tagGapATR`, lower `srCount` or `srMaxDistATR`, or disable `showTags` groups.
+Changing those defaults would alter every chart, so it stays a user setting.
+
+Also unverified: a literal `u00b7` appeared in the screenshot's DECISION column. That string
+exists in **no committed version** of any file here, so it is either from a build predating
+these artefacts or an artefact of the compressed image. Not claimed as a finding.
 
 Still **not compiled**.

@@ -312,11 +312,26 @@ forecastZ = input.float(2.0, "Forecast Band (Z multiple of ATR)", minval=1.0, ma
 showStatsEngine = input.bool(true, "Statistical Engines", group=grpModules)
 
 grpLayout = "LAYOUT"
-dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "MobileLand", "MobilePort"], group=grpLayout)
+dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "MobileLand", "MobilePort"], group=grpLayout, tooltip="Pine cannot detect screen size, so \"Auto\" resolves to Desktop -- it is not detection. On a phone pick MobileLand or MobilePort (or tick Mobile Layout below): those drop the four context columns so the remaining cells actually fit. MobilePort also drops the two dense sub-rows.")
 mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Force mobile-optimized dashboard for phones/tablets")
 _resolvedMode = mobileOverride ? "MobilePort" : dashMode
 textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group=grpLayout)
 density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group=grpLayout)
+// F-A11. "Mobile Layout" previously changed ONLY the font size: _respCols was set to 9
+// unconditionally and every column 0-8 was still written, so a phone got the full
+// nine-column desktop table in tiny type -- every cell overflowing into its neighbour and
+// both edges clipped off screen. These two flags drive a real layout reduction below.
+//   _dashMobile  drops the CONTEXT columns (STRUCTURE / LIQUIDITY / PRICE / MACRO) and
+//                keeps the five that answer "what do I do": MARKET, BIAS, SIGNAL, RISK,
+//                DECISION. The dropped columns are not lost -- switch Dash Mode to
+//                Desktop to see them.
+//   _dashPort    additionally drops the two dense sub-rows, which are unreadable on a
+//                portrait phone. Landscape keeps them.
+// NOTE ON "Auto": Pine cannot detect viewport size, so Auto resolves to Desktop and
+// always has. On a phone you must set this yourself -- that is a platform limit, not a
+// preference. The tooltip now says so instead of implying detection.
+bool _dashMobile = _resolvedMode == "MobilePort" or _resolvedMode == "MobileLand"
+bool _dashPort   = _resolvedMode == "MobilePort"
 showDowTracker = input.bool(true, "Show Day-of-Week Bias Tracker", group=grpLayout)
 
 grpRisk = "RISK MANAGEMENT"
@@ -5002,8 +5017,20 @@ float vdK = volDelta50 / 1000.0
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
 // ══════════════════════════════════════════════════════════════════════
 // R5.3-L8: parameter renamed tc -> tcol (it shadowed the function's own name — fragile).
-tc(col, row, txt, tcol, ts, w) => table.cell(tblA, col, row, txt, text_color=tcol, text_size=ts, width=w)
-tcb(col, row, txt, tcol, bg, ts, w) => table.cell(tblA, col, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
+// F-A11: logical column -> physical column. On mobile the four context columns collapse
+// out and the survivors close up, so the table is created with 5 columns and nothing is
+// ever written past index 4. Returning -1 means "skip this cell" -- writing past the
+// declared column count is a RUNTIME error in Pine (the same class as the harness's
+// "Row 70 is out of table bounds"), so the guard and _respCols must stay in step.
+_dCol(int _c) => not _dashMobile ? _c : _c == 0 ? 0 : _c == 1 ? 1 : _c == 2 ? 2 : _c == 7 ? 3 : _c == 8 ? 4 : -1
+tc(col, row, txt, tcol, ts, w) =>
+    int _pc = _dCol(col)
+    if _pc >= 0 and not (_dashPort and row >= 2)
+        table.cell(tblA, _pc, row, txt, text_color=tcol, text_size=ts, width=w)
+tcb(col, row, txt, tcol, bg, ts, w) =>
+    int _pc = _dCol(col)
+    if _pc >= 0 and not (_dashPort and row >= 2)
+        table.cell(tblA, _pc, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
 tcp(col, row, txt, bg, ts, w) => table.cell(tblPlan, col, row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
 
 var bool[] gBreach = array.from(false, false)
@@ -5325,15 +5352,17 @@ f_dashRender() =>
     string _seSize = _mobUI ? "tiny" : textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"
     // R5.1: density input wired — scales all table column widths
     float _densW = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
-    int _w0 = int(10 * _densW)
-    int _w1 = int(10 * _densW)
-    int _w2 = int(12 * _densW)
+    // F-A11: mobile widths sum to 100 across the five surviving columns, weighted toward
+    // SIGNAL/RISK/DECISION. The desktop nine keep their original values untouched.
+    int _w0 = _dashMobile ? 16 : int(10 * _densW)
+    int _w1 = _dashMobile ? 14 : int(10 * _densW)
+    int _w2 = _dashMobile ? 22 : int(12 * _densW)
     int _w3 = int(11 * _densW)
     int _w4 = int(13 * _densW)
     int _w5 = int(10 * _densW)
     int _w6 = int(11 * _densW)
-    int _w7 = int(11 * _densW)
-    int _w8 = int(13 * _densW)
+    int _w7 = _dashMobile ? 20 : int(11 * _densW)
+    int _w8 = _dashMobile ? 28 : int(13 * _densW)
     // F-037: was `OOS nn%+/-x N../..eff`. Two false claims in one field: the name OOS,
     // and a confidence interval implying a fixed sample. Now reports the rolling win rate
     // and its counts with NO interval, under a name that says what it is.
@@ -5464,8 +5493,8 @@ if showDashboard and barstate.islast
     // out of bounds (dropped content / runtime error). The table is now always
     // allocated at full size; the mobile toggle changes POSITION and TEXT SIZE
     // only, so no dashboard information is ever lost on a phone.
-    _respRows := 4
-    _respCols := 9
+    _respRows := _dashPort ? 2 : 4
+    _respCols := _dashMobile ? 5 : 9
     // Recreate tables if mode changed
     if _mode2 != _prevDashMode
         modeChanged := true
