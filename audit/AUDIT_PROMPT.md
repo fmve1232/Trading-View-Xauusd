@@ -18,13 +18,13 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5595 | 357881 | `2ec8251741deef832746eb3659c2d7540cb0cfd2df1c306ac542f737b5b4cf27` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4952 | 304873 | `5edd72d631b336c22107c808198449025f4c527ae7770150a405e246e52ff34b` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4952 | 304938 | `a1a189e92c3259fd40183137a02626b4bf6f63a95d0512c04a9cbec8d2ea52aa` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5606 | 358773 | `4f95956601a625d0bf56b24c7b66eecaa09920477fac63d67b31385ff19dac90` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4963 | 305765 | `53e7373dfd2e45c4901ab7a931624e09749fe7d51813472d3d4c54504fd09028` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4963 | 305830 | `63589f1ddc0f00e649a9710a23b5bebb09d13cc4f2ac451580120d8a37775149` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 292 | 20189 | `f36ebb50ab9ff0a7851c213509d88806709bfa4e626933d765faef282d7c36eb` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 985 | 61543 | `6ed51986b9069054e134ff8813bc85a49f42792cff337d15a4e4367582869b1f` |
 
-> **BUILD v9 — this prompt pins the current build.** The originally audited build
+> **BUILD v10 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -33,7 +33,11 @@ scope, and no other build of these scripts is in scope.
 > which in turn exposed that the existing cost subtraction was itself mis-united.
 > **F-A11 in v8** (mobile dashboard layout, found from a screenshot of the live chart).
 > **F-A12 in v9** (the per-trade probability the export promised was never emitted).
-> **All twelve findings are now applied.** Data-collection steps: `audit/RUNBOOK.md`.
+> **F-A13 in v10** — the first REAL COMPILER ERROR, reported by the operator: the Master
+> and both twins failed with `Undeclared identifier "OUTCOME_N"`. **§8.1 is now CLOSED as
+> a fact rather than an assumption: the Master had never compiled, and the defect is
+> present in the originally audited v1 build.** All thirteen findings applied.
+> Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
 > mechanically re-derived against this build. Re-derive them again whenever the Master

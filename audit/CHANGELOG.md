@@ -1,6 +1,6 @@
 # Build changelog — v1 → … → v9
 
-**All twelve findings applied.** See each build section below.
+**All thirteen findings applied.** F-A13 was the first reported by a real compiler.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -537,3 +537,42 @@ only route to genuine calibration, since everything measured on the existing win
 diagnostic rather than validation.
 
 Still **not compiled**.
+
+---
+
+# Build v9 → v10 — F-A13: the first real compiler error
+
+`Master` 5595 → 5606 · `Strategy` 4952 → 4963 · `OLDGATES` 4952 → 4963. A/B diff unchanged.
+
+## It never compiled, and now that is a fact
+
+The operator pasted and got, from all three files:
+
+```
+Error at 2815:168   Undeclared identifier "OUTCOME_N"     (Master)
+Error at 2712:168   Undeclared identifier "OUTCOME_N"     (both twins)
+```
+
+`f_tradePlan()`'s `planReason` reads `OUTCOME_N`, which was declared **12 lines below the
+function**. Present in the **originally audited v1 build** (used v1 L2767, declared v1
+L2779), so **§8.1 is closed as fact: the Master had never compiled.**
+
+The prior attempt at this bug is recorded in the file and was incomplete — it moved a
+*different* block below the declaration, fixing that reader while leaving `f_tradePlan`
+broken, since the function sits above either way.
+
+**Fixed** by moving `tfSec` / `HIST_MAX` / `OUTCOME_N` **above** `f_tradePlan`.
+`chartTFSeconds` (L686) is far earlier, so the block's own dependency is satisfied and
+declaring earlier cannot break a later reader.
+
+## New checker: `audit/tools/order.py`
+
+`undeclared.py` asked only whether a name was bound *anywhere*. Pine enforces
+**declaration before use** — a use inside a function may reach its params/locals or a
+global declared before the **function definition line**.
+
+Run against the broken build, `order.py` reported **exactly the compiler's three lines and
+nothing else**. Now 0 violations across all five files.
+
+Second checker gap this session, third false-confidence pass. These tools narrow the
+search; they do not replace the compiler.

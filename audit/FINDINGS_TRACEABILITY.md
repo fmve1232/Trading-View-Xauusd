@@ -39,6 +39,7 @@
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
+| F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
 | F-A11 | **HIGH** | `PRES` | *(new, from a mobile screenshot)* "Mobile Layout" changed only the font size — the 9-column desktop table was still rendered on phones — **FIXED** (real column reduction) |
 | F-A10 | **HIGH** | `STAT` | The D-001 timeout-cost fix did not bite, **and the existing cost subtraction was in the wrong units** — **FIXED in v7** (R-unit conversion + timeout term) |
@@ -414,6 +415,52 @@ former; using the latter would invert every short.
 
 Emitted format is now `TQ<n>|CG<n>|B<n>V<n>|D<n>|P<pct>`, and the comment describes what the
 code does. Applied identically to both arms, so the A/B diff is unchanged.
+
+---
+
+## F-A13 — `Undeclared identifier "OUTCOME_N"` — it never compiled `CRITICAL` `BUG` *(FIXED)*
+
+**The first finding from an actual compiler.** Reported by the operator with the exact
+error, from all three files.
+
+```
+Error at 2815:168   Undeclared identifier "OUTCOME_N"     (Master)
+Error at 2712:168   Undeclared identifier "OUTCOME_N"     (both twins)
+```
+
+`f_tradePlan()`'s `planReason` string calls `str.tostring(OUTCOME_N)`, but `OUTCOME_N` was
+declared **12 lines below the function**. Pine requires declaration before use.
+
+**This was present in the originally audited v1 build** — `OUTCOME_N` used at v1 L2767,
+declared at v1 L2779. So **§8.1 is closed as a fact: the Master had never compiled.** Every
+"still not compiled" caveat in this audit was pointing at something real.
+
+**The previous fix attempt was incomplete, and said so.** A note at the old site records
+hitting this same error before: *"Q7.3 FIX: this block reads OUTCOME_N, so it must sit BELOW
+that declaration. Moving it above f_tradePlan in Q7.1 also moved it above OUTCOME_N →
+Undeclared identifier."* That moved a **different** block below the declaration — fixing
+that reader and leaving `f_tradePlan` broken, because the function sits above either way.
+
+**Fixed** by moving the `tfSec` / `HIST_MAX` / `OUTCOME_N` block **above** `f_tradePlan`
+instead. `chartTFSeconds` is declared at L686, far earlier, so nothing the block needs is
+out of reach, and declaring earlier cannot break a later reader. Verified: one declaration
+each (no duplicates), `OUTCOME_N` L2658 < `f_tradePlan` L2660 < first use L2834, and the
+A/B diff is unchanged.
+
+### My checker missed it — that gap is now closed
+
+`undeclared.py` asked only whether a name was bound **anywhere** in the file. `OUTCOME_N`
+is, so it passed. The rule Pine actually enforces is **declaration before use**: a use
+inside a function may reach that function's params/locals, or a global declared before the
+**function definition line**.
+
+`audit/tools/order.py` implements that rule. Run against the broken build it reported
+**exactly the compiler's three lines** — Master L2815, twins L2712 — and nothing else, so
+this class is clean across all five files.
+
+That is the second checker gap this session, and the third time a static pass gave false
+confidence. Worth stating plainly: these tools narrow the search, they do not replace the
+compiler.
 
 ---
 

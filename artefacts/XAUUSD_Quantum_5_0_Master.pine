@@ -2638,6 +2638,25 @@ var float[] gHitN = array.new<float>(1, na)
 // Linear interpolation over the 1R/2R/3R grid; geometric taper beyond 3R.
 f_hitInterp(_rr, _p1, _p2, _p3) =>
     _rr <= 1.0 ? _p1 : _rr <= 2.0 ? _p1 + (_p2 - _p1) * (_rr - 1.0) : _rr <= 3.0 ? _p2 + (_p3 - _p2) * (_rr - 2.0) : _p3 * math.pow(0.7, _rr - 3.0)
+// ═══ COMPILE-ORDER FIX (F-A13) ═══════════════════════════════════════════════
+// This block was BELOW f_tradePlan(), whose planReason string reads OUTCOME_N. Pine
+// requires declaration before use, so the Master and both twins failed to compile with
+//     Undeclared identifier "OUTCOME_N"
+// on the planReason line. The note left further down records hitting this exact error
+// once before and moving a DIFFERENT block below the declaration -- which fixed that
+// block and left this one broken, because f_tradePlan() sits above it either way.
+// Moved here instead: chartTFSeconds is declared far earlier, so nothing this block
+// needs is out of reach, and declaring earlier cannot break a later reader.
+// KEEP THIS ABOVE f_tradePlan(). audit/tools/order.py checks it on every build.
+// Timeframe-adaptive history to prevent timeout
+int tfSec = chartTFSeconds
+int HIST_MAX = tfSec <= 60 ? 1200 : tfSec <= 300 ? 2000 : tfSec <= 900 ? 3000 : 4500
+// R5.3: floor raised 1 -> 3. On TFs >= 1H the horizon collapsed to a single bar (pure
+// next-bar drift), and OUTCOME_N=1 also made the PDH/PDL first-touch loop degenerate
+// (for j = 0 to 1 iterates ASCENDING, touching offset 0). Min 3 bars keeps every
+// consumer well-formed; on <=15M charts behavior is unchanged (~1 hour horizon).
+OUTCOME_N = math.max(3, int(3600.0 / tfSec))
+
 f_tradePlan() =>
     // ---- R6.0 DYNAMIC TRADE PLAN — structural SL, liquidity-target TPs, explainable ----
     // SL: nearest valid structural/liquidity level on the protective side, buffered 0.15
@@ -2817,17 +2836,9 @@ f_tradePlan() =>
 [tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason] = f_tradePlan()
 
 // STATISTICAL ENGINES — Evidence-based historical outcome analysis
-// Timeframe-adaptive history to prevent timeout
-int tfSec = chartTFSeconds
-int HIST_MAX = tfSec <= 60 ? 1200 : tfSec <= 300 ? 2000 : tfSec <= 900 ? 3000 : 4500
-// R5.3: floor raised 1 -> 3. On TFs >= 1H the horizon collapsed to a single bar (pure
-// next-bar drift), and OUTCOME_N=1 also made the PDH/PDL first-touch loop degenerate
-// (for j = 0 to 1 iterates ASCENDING, touching offset 0). Min 3 bars keeps every
-// consumer well-formed; on <=15M charts behavior is unchanged (~1 hour horizon).
-OUTCOME_N = math.max(3, int(3600.0 / tfSec))
 
-// Q7.3 FIX: this block reads OUTCOME_N, so it must sit BELOW that declaration.
-// Moving it above f_tradePlan in Q7.1 also moved it above OUTCOME_N -> "Undeclared
+// Q7.3 NOTE (superseded by F-A13): OUTCOME_N is now declared ABOVE f_tradePlan, so
+// this block no longer depends on sitting below it. The original note read:
 // identifier". Its only consumer is the plan panel far below, so here is correct.
 // ═══ Q6.8 CREDIBLE INTERVAL ON ANALOG HIT RATES ═══
 // Beta-Binomial conjugacy with a uniform Beta(1,1) prior: posterior is
