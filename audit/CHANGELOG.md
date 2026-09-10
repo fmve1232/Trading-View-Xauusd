@@ -1,6 +1,6 @@
 # Build changelog — v1 → … → v9
 
-**All thirteen findings applied.** F-A13 was the first reported by a real compiler.
+**Fifteen findings applied; F-A16 open by necessity.** See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -609,3 +609,29 @@ because that is the file that was stale and its table is the only thing on scree
 
 Verified: `//@version=6` remains line 1 in all five, the EdgeCases table is untouched at 100
 rows, A/B diff unchanged at five hunk headers, all checkers clean.
+
+---
+
+# Build v11 → v12 — F-A15: calibration applied to the wrong variable
+
+`Master` 5615→5644 · `Strategy` 4972→5001 · `OLDGATES` 4972→5001. Visuals and EdgeCases
+unchanged. **This changes which trades fire.**
+
+`hPred` stores `bullScore`, so the Platt fit maps `bullScore → P(bull resolution)`. The bear
+branch fed `bearScore` into that same fitted map. A map fitted on one variable, evaluated on
+another — and since the F-A02 wiring, that quantity **gates entries**.
+
+Live 15M evidence: `L 31 / S 42 / R 26`, bear dominant, `BIAS BEAR-ISH`, plan `SHORT` — panel
+printed `mP=73%`, reading bullish. Short directional probability computed 0.31 → VETO, where
+using the fitted variable gives 0.87 → PASS. **Opposite decision on identical data.**
+
+Fixed by evaluating the map on `bullScore` always; direction is applied at the gate, which
+already handles it. Range-dominant branch kept at 0.5. `_pBear` gone — 0 executable
+occurrences anywhere.
+
+**Expect fewer longs and more shorts than v10.** That is the correction. `useCalGate = false`
+reverts.
+
+F-A16 recorded and left open: the bull fit's denominator includes timeouts, so the short's
+complement covers "bear OR timeout" and is optimistic by the timeout rate. Fixing it needs a
+bear-outcome calibration that does not exist.

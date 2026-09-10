@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v10   (OUTCOME_N compile-order fix)║
+// ║  BUILD STAMP — this file last CHANGED in v12   (F-A15 calibration direction fix)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -4261,10 +4261,40 @@ if showStatsEngine and oMatch >= 30
         float _pfB2 = _pfOk ? array.get(gCalFit, 1) : 0.0
         _calP := 1.0 / (1.0 + math.exp(-((bullScore - 50.0) * _pfK2 + _pfB2)))
         _calP := math.min(math.max(_calP, 0.05), 0.95)
-        if bearScore > bullScore and bearScore > rangeScore
-            float _pBear = 1.0 / (1.0 + math.exp(-((bearScore - 50.0) * _pfK2 + _pfB2)))
-            _calibratedProb := 1.0 - math.min(math.max(_pBear, 0.05), 0.95)
-        else if rangeScore > bullScore and rangeScore > bearScore
+        // ═══════ F-A15 FIX — THE MAP WAS FITTED ON ONE VARIABLE, APPLIED TO ANOTHER ═══════
+        // WHAT WAS WRONG. hPred stores bullScore (see array.set(hPred, ...) at both write
+        // sites), so the Platt fit maps  bullScore -> P(bull resolution).  The branch
+        // removed here fed bearScore into that same fitted map:
+        //     _pBear          = sigmoid((bearScore - 50) * _pfK2 + _pfB2)
+        //     _calibratedProb = 1 - _pBear
+        // A map fitted on one variable was being evaluated on a different one. Nothing
+        // establishes that the relationship is symmetric across the two scores, and the
+        // three-way normalisation (bull + bear + range ~= 100) means they are not even on
+        // a comparable scale: a "dominant" score is routinely in the 40s, i.e. BELOW the
+        // sigmoid's 50 centre, so the dominant direction mapped to a LOW probability.
+        // OBSERVED SYMPTOM, live 15M chart: L 31 / S 42 / R 26 -- bear dominant, BIAS
+        // BEAR-ISH, plan SHORT -- yet the panel printed mP=73%, which reads BULLISH. The
+        // dashboard contradicted its own bias and its own trade plan on the same row.
+        // WHY THIS WAS NOT COSMETIC. Since the F-A02 wiring, _calibratedProb GATES ENTRIES
+        // via _calVeto. On that same bar the short's directional probability came out as
+        // 1 - 0.69 = 0.31 -> VETO, where evaluating the map on the variable it was fitted
+        // on gives 1 - sigmoid(31) = 0.87 -> PASS. Same bar, same data, opposite decision.
+        // THE FIX. Always evaluate the map on bullScore, the variable it was fitted on;
+        // _calP already IS clamp(sigmoid(bullScore)). Direction is applied where it
+        // belongs -- at the gate, which already reads _calibratedProb for longs and
+        // 1 - _calibratedProb for shorts. The range-dominant branch is KEPT: 0.5 is the
+        // honest "no directional opinion" value and it misuses no map.
+        // RESIDUAL, STATED AND DELIBERATELY NOT FIXED HERE (F-A16). The calibration counts
+        // oc == 1 as a win against a denominator that also contains timeouts (oc == 0), so
+        // sigmoid(bullScore) is P(bull resolution) over ALL outcomes. Its complement --
+        // what a short now uses -- therefore covers "bear OR timeout" and is OPTIMISTIC for
+        // a short by the timeout rate. Removing that needs a calibration fitted on BEAR
+        // outcomes, which does not exist and cannot be derived from the bull fit.
+        // EXPECTED BEHAVIOUR CHANGE. The rule becomes symmetric in bullScore: a long needs
+        // bullScore above ~50, a short needs it below ~50. Expect FEWER longs and MORE
+        // shorts than v10. That is the correction working, not a regression. To hold the
+        // previous behaviour while you assess it, set useCalGate = false.
+        if rangeScore > bullScore and rangeScore > bearScore
             _calibratedProb := 0.5
         else
             _calibratedProb := _calP

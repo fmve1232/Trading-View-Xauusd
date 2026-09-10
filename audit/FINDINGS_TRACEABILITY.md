@@ -39,6 +39,8 @@
 | F-A06 | LOW | `PRES` | Stale line citation for the BOS complement — **FIXED** |
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
+| F-A15 | **P0** | `BUG`+`STAT` | Platt map fitted on `bullScore` was evaluated on `bearScore`; since F-A02 this **gated entries** — **FIXED v12** |
+| F-A16 | P2 | `STAT` | Short probability is the complement of a bull fit whose denominator includes timeouts — optimistic by the timeout rate — **OPEN** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
 | F-A11 | **HIGH** | `PRES` | *(new, from a mobile screenshot)* "Mobile Layout" changed only the font size — the 9-column desktop table was still rendered on phones — **FIXED** (real column reduction) |
@@ -461,6 +463,56 @@ this class is clean across all five files.
 That is the second checker gap this session, and the third time a static pass gave false
 confidence. Worth stating plainly: these tools narrow the search, they do not replace the
 compiler.
+
+---
+
+## F-A15 — calibration map applied to the wrong variable `P0` `BUG`+`STAT` *(FIXED v12)*
+
+**Found from a live 15M screenshot**, then confirmed arithmetically.
+
+`hPred` stores **`bullScore`** at both write sites, so the Platt fit is a map
+**`bullScore → P(bull resolution)`**. The bear branch fed **`bearScore`** into that same
+fitted map and took the complement.
+
+**A map fitted on one variable, evaluated on another.** Nothing establishes symmetry between
+the two scores, and the three-way normalisation (`bull + bear + range ≈ 100`) means they are
+not on a comparable scale — a *dominant* score sits routinely in the 40s, i.e. **below** the
+sigmoid's 50 centre, so the dominant direction mapped to a **low** probability.
+
+**Observed symptom.** Live 15M: `L 31 / S 42 / R 26` — bear dominant, `BIAS BEAR-ISH`, plan
+`SHORT` — and the panel printed **`mP=73%`**, which reads bullish. The dashboard contradicted
+its own bias and its own trade plan on the same row.
+
+**Why it was not cosmetic.** Since the F-A02 wiring, `_calibratedProb` **gates entries**:
+
+| | short directional prob | gate @ 0.50 |
+|---|---:|---|
+| v10 — `1 − sigmoid(bearScore=42)` → 0.69 | **0.31** | **VETO** |
+| v12 — `1 − sigmoid(bullScore=31)` → 0.13 | **0.87** | **PASS** |
+
+Same bar, same data, opposite decision.
+
+**Fix.** Evaluate the map on `bullScore` always — `_calP` already *is*
+`clamp(sigmoid(bullScore))`. Direction is applied at the gate, which already reads
+`_calibratedProb` for longs and `1 − _calibratedProb` for shorts. The range-dominant branch is
+kept (0.5 = no directional opinion; it misuses no map). `_pBear` removed — **0 executable
+occurrences** in any file.
+
+**Expected behaviour change:** the rule becomes symmetric in `bullScore` — longs need it
+above ~50, shorts below ~50. **Fewer longs, more shorts** than v10. `useCalGate = false`
+holds the previous behaviour.
+
+---
+
+## F-A16 — short probability inherits the timeout rate `P2` `STAT` *(OPEN)*
+
+The calibration counts `oc == 1` as a win against a denominator that also contains timeouts
+(`oc == 0`). So `sigmoid(bullScore)` is P(bull resolution) over **all** outcomes, and its
+complement — what a short now uses — covers **"bear OR timeout"**. Short probabilities are
+therefore **optimistic by the timeout rate**.
+
+Not fixable from the bull fit: it needs a calibration fitted on **bear** outcomes, which does
+not exist. Recorded rather than guessed at.
 
 ---
 
