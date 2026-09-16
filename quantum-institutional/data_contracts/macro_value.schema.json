@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fmve1232/quantum-institutional/data_contracts/macro_value.schema.json",
+  "title": "MacroValue",
+  "description": "One macroeconomic observation. publication_time is the only field a point-in-time query may filter on.",
+  "type": "object",
+  "required": ["series_id", "event_time", "publication_time", "received_time", "value", "source"],
+  "additionalProperties": false,
+  "properties": {
+    "series_id": { "type": "string" },
+    "event_time": { "type": "string", "format": "date-time", "description": "Reference period. NOT a visibility filter." },
+    "publication_time": { "type": "string", "format": "date-time", "description": "When it became public. The only visibility filter." },
+    "received_time": { "type": "string", "format": "date-time", "description": "Latency only. Never a filter." },
+    "value": { "type": "number" },
+    "source": { "type": "string" },
+    "revision_of": { "type": ["string", "null"], "description": "null for a first release. A revision is a NEW record, never an update." },
+    "quality": { "enum": ["OK","DEGRADED","STALE","INVALID","OFFLINE"], "default": "OK" }
+  }
+}

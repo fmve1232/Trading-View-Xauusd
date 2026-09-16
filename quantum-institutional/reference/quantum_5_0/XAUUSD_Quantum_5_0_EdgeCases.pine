@@ -1,0 +1,301 @@
+//@version=6
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║  BUILD STAMP — this file last CHANGED in v6    (Master citations re-anchored)║
+// ║  Compare against the build record in chat. If they differ, the copy on your   ║
+// ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
+// ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
+// ║  whose table has had 100 rows since the first audited version.                ║
+// ║  The stamp only moves when THIS file changes, so an unchanged file keeps its  ║
+// ║  old number and still matches the record.                                     ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+// =============================================================================
+// XAUUSD QUANTUM — §16 EDGE-CASE HARNESS                      (DIAGNOSTIC ONLY)
+// =============================================================================
+// PURPOSE
+//   Deterministic, adversarial assertions over the exact arithmetic the engine uses.
+//   This script is STANDALONE. It imports nothing from the Master, writes nothing,
+//   trades nothing, and is not part of the decision path. Run it, read the table,
+//   then close it.
+//
+// WHY A SEPARATE SCRIPT AND NOT A BLOCK INSIDE THE MASTER
+//   The Master has no measured compiler baseline yet. Adding an assertion block to a
+//   file already near the token ceiling is the single change most likely to push it
+//   over, and we would not find out until compile. Keeping the harness separate costs
+//   the Master exactly zero tokens.
+//
+// WHAT THIS PROVES AND WHAT IT DOES NOT
+//   PROVES: how Pine ITSELF evaluates these expressions -- int() truncation,
+//           math.round() half-away-from-zero, na propagation, clamp saturation,
+//           integer division. A Python reimplementation cannot establish any of this,
+//           because it would test the transcription rather than the language.
+//   DOES NOT PROVE: that the Master is WIRED to these expressions. Every case below is
+//           transcribed from the Master; transcription is verified by eye, not by the
+//           compiler. Cases needing live wiring are marked NEEDS-MASTER and are NOT
+//           asserted here -- they are listed so they are not silently forgotten.
+//
+// CLASSIFICATION (per the audit protocol) is printed per case. Nothing is fixed here.
+//   BUG | STAT = statistical correction | NUM = numerical stability
+//   PRES = presentation | DESIGN = design assumption, not a defect
+// =============================================================================
+indicator("XAUUSD Quantum — Edge Case Harness", overlay = false)
+// ─────────────────────────────────────────────────────────────────────────────
+// CITATION PROVENANCE (F-A09). Every "Master L<n>" below was RE-DERIVED mechanically
+// against the Master build hashed in audit/MANIFEST.sha256, not carried forward. The
+// previous set was stale by +7 to +143 lines -- the expressions still matched but every
+// pointer was wrong, which is exactly the failure the "verified by eye, not by the
+// compiler" caveat above predicts. RE-DERIVE THESE WHENEVER THE MASTER CHANGES:
+// `audit/tools/trace.py` and audit/LINE_MAP_v2.md exist for that purpose.
+// ─────────────────────────────────────────────────────────────────────────────
+
+
+// ---------- assertion plumbing ------------------------------------------------
+var string[] tName  = array.new_string(0)
+var string[] tGot   = array.new_string(0)
+var string[] tWant  = array.new_string(0)
+var bool[]   tPass  = array.new_bool(0)
+var string[] tClass = array.new_string(0)
+
+chk(string _n, string _got, string _want, string _cls) =>
+    array.push(tName, _n)
+    array.push(tGot, _got)
+    array.push(tWant, _want)
+    array.push(tPass, _got == _want)
+    array.push(tClass, _cls)
+
+f(float _v) => na(_v) ? "na" : str.tostring(_v, "#.####")
+i(int _v) => na(_v) ? "na" : str.tostring(_v)
+b(bool _v) => _v ? "true" : "false"
+
+// =============================================================================
+// GROUP A — ROUNDING AT REGIME BOUNDARIES  (F-021)
+// Master L1868: regimeComposite = int(math.round(<float>)); the LIVE thresholds at
+// L1870-1871 test regimeCompositeRaw, i.e. the UNROUNDED composite.
+// Rounding happens BEFORE the threshold test, so the EFFECTIVE boundary is 39.5/69.5,
+// not 40/70. These cases establish the true boundary in Pine's own semantics.
+// =============================================================================
+// UPDATED FOR F-021. The engine now thresholds on the UNROUNDED composite, so the
+// boundaries are the documented 40 and 70. These cases previously asserted the DEFECTIVE
+// behaviour (69.50 -> STRONG); they now assert the corrected behaviour, and A7 inverts:
+// it verifies the 69.5 artefact is GONE rather than that it exists.
+regimeCat(float _raw) =>
+    _raw >= 70 ? 0 : _raw >= 40 ? 1 : 2     // 0 strong, 1 moderate, 2 weak
+
+if barstate.islastconfirmedhistory
+    chk("A1  raw 39.49 -> category", i(regimeCat(39.49)), "2", "STAT")
+    chk("A2  raw 39.50 -> category (was 1, now 2)", i(regimeCat(39.50)), "2", "STAT")
+    chk("A3  raw 39.51 -> category", i(regimeCat(39.51)), "1", "STAT")
+    chk("A4  raw 69.49 -> category", i(regimeCat(69.49)), "1", "STAT")
+    chk("A5  raw 69.50 -> category (was 0, now 1)", i(regimeCat(69.50)), "1", "STAT")
+    chk("A6  raw 69.51 -> category", i(regimeCat(69.51)), "0", "STAT")
+    // If A2 and A5 pass, the documented 40/70 thresholds are actually 39.5/69.5.
+    chk("A7  F-021 CLOSED: boundary is 70, not 69.5", b(regimeCat(69.50) == 1 and regimeCat(70.00) == 0), "true", "STAT")
+    // Pine rounds half AWAY FROM ZERO, not banker's rounding. Establish it explicitly.
+    chk("A8  math.round(0.5) half-away-from-zero", f(math.round(0.5)), "1", "NUM")
+    chk("A9  math.round(1.5)", f(math.round(1.5)), "2", "NUM")
+    chk("A10 math.round(2.5) (banker's would give 2)", f(math.round(2.5)), "3", "NUM")
+    // int() TRUNCATES toward zero -- distinct from round. Both appear in the file.
+    chk("A11 int(69.99) truncates", i(int(69.99)), "69", "NUM")
+    chk("A12 int(-0.5) truncates toward zero", i(int(-0.5)), "0", "NUM")
+
+// =============================================================================
+// GROUP B — SL/TP RACE  (Master L3058, guarded by `if _oR > 0` at L3055)
+//   _oRes := low[k] <= ent - R ? -1 : high[k] >= ent + R ? 1 : 0
+// SL is tested FIRST, so a bar touching both resolves to LOSS.
+// DESIGN, not BUG: Pine cannot order intrabar events without lower-timeframe data.
+// The harness can only confirm the conservative branch is taken.
+// =============================================================================
+race(float _lo, float _hi, float _ent, float _R) =>
+    _lo <= _ent - _R ? -1 : _hi >= _ent + _R ? 1 : 0
+
+if barstate.islastconfirmedhistory
+    chk("B1  TP only  -> win",              i(race(2000.0, 2020.0, 2000.0, 10.0)), "1",  "DESIGN")
+    chk("B2  SL only  -> loss",             i(race(1985.0, 2005.0, 2000.0, 10.0)), "-1", "DESIGN")
+    chk("B3  BOTH in one candle -> LOSS",   i(race(1985.0, 2020.0, 2000.0, 10.0)), "-1", "DESIGN")
+    chk("B4  neither -> timeout 0",         i(race(1995.0, 2005.0, 2000.0, 10.0)), "0",  "DESIGN")
+    chk("B5  EXACT touch of SL counts",     i(race(1990.0, 2005.0, 2000.0, 10.0)), "-1", "DESIGN")
+    chk("B6  EXACT touch of TP counts",     i(race(1995.0, 2010.0, 2000.0, 10.0)), "1",  "DESIGN")
+    // R = 0 disables the race entirely (guard is `if _oR > 0`). Flat/zero-ATR market.
+    chk("B7  R=0 -> race never runs (guard)", b(not (0.0 > 0.0)), "true", "NUM")
+
+// =============================================================================
+// GROUP C — TIMEOUT ACCOUNTING INCONSISTENCY
+// Calibration bins (L3787 c*t / L3790 c*b): oc==0 increments the TOTAL but never the WIN.
+// Expectancy (D-001, L3694): oc==0 is still effectively FREE. RE-VERIFIED against the
+// current Master (F-A10): the cost subtraction `frAdj = fr - _costATR` now runs for every
+// analog, but for oc==0 the result is DISCARDED -- absFrAdj is read only in the oc==+/-1
+// branches and _pnlPct is 0.0 on the timeout branch. The Master's own D-001 note claimed
+// "cost now applies to all three outcome codes"; it does arithmetically, not effectively.
+// So C3/C5 below still describe the LIVE behaviour -- but for a different reason than the
+// original defect, and costCharged() models the OUTCOME, not the (now present) subtraction.
+// The SAME observation is pessimistic in one statistic and optimistic in the other.
+// =============================================================================
+calBinCount(int _oc) => 1                       // total always increments
+calBinWin(int _oc)   => _oc == 1 ? 1 : 0        // only oc==1 counts as success
+costCharged(int _oc, float _cost) => _oc == 1 or _oc == -1 ? _cost : 0.0
+
+if barstate.islastconfirmedhistory
+    chk("C1  timeout enters bin TOTAL",        i(calBinCount(0)), "1", "STAT")
+    chk("C2  timeout is NOT a bin WIN",        i(calBinWin(0)),   "0", "STAT")
+    chk("C3  timeout charged ZERO cost",       f(costCharged(0, 0.77)), "0", "STAT")
+    chk("C4  win charged full cost",           f(costCharged(1, 0.77)), "0.77", "STAT")
+    // The inconsistency, stated as a single assertion so it cannot be overlooked:
+    chk("C5  timeout: failure in calib AND free in EV", b(calBinWin(0) == 0 and costCharged(0, 0.77) == 0.0), "true", "STAT")
+
+// =============================================================================
+// GROUP D — bayesRate  (Master L272)  bayesRate(w,t) = t>0 ? (w+1)/(t+2) : 0.5
+// Beta(1,1) shrink. Verifies no bucket can ever claim 0% or 100%.
+// PINE TRAP UNDER TEST: (w+1)/(t+2) with INT arguments would be integer division.
+// =============================================================================
+bayesRate(int _w, int _t) => _t > 0 ? (_w + 1) / (_t + 2) : 0.5
+
+if barstate.islastconfirmedhistory
+    chk("D1  t=0 -> neutral 0.5",              f(bayesRate(0, 0)),   "0.5",    "NUM")
+    chk("D2  0 wins of 30 is NOT 0%",          f(bayesRate(0, 30)),  "0.0313", "STAT")
+    chk("D3  30 wins of 30 is NOT 100%",       f(bayesRate(30, 30)), "0.9688", "STAT")
+    chk("D4  15 of 30 ~ 0.5",                  f(bayesRate(15, 30)), "0.5",    "STAT")
+    chk("D5  no integer-division truncation",  b(bayesRate(0, 30) > 0.0), "true", "NUM")
+    chk("D6  shrink weakens as N grows",       b(bayesRate(0, 1000) < bayesRate(0, 30)), "true", "STAT")
+
+// =============================================================================
+// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L3988, and the Platt bin gate at L4055)
+// =============================================================================
+bucketQualifies(int _n) => _n >= 30
+
+if barstate.islastconfirmedhistory
+    chk("E1  N=29 rejected", b(bucketQualifies(29)), "false", "PRES")
+    chk("E2  N=30 accepted", b(bucketQualifies(30)), "true",  "PRES")
+    chk("E3  N=31 accepted", b(bucketQualifies(31)), "true",  "PRES")
+    // Platt fit needs >= 3 qualifying bins (fit block L4069-4073). 2 bins must NOT fit.
+    chk("E4  2 qualifying bins -> no fit", b(2 >= 3), "false", "STAT")
+    chk("E5  3 qualifying bins -> fit ok", b(3 >= 3), "true",  "STAT")
+
+// =============================================================================
+// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4069-4073)
+//   slope clamped [0.02, 0.25]; intercept clamped [-1, 1];
+//   fit REJECTED when slope <= 0; variance guard _pfVr > 1e-6
+// =============================================================================
+slopeClamp(float _k) => math.min(math.max(_k, 0.02), 0.25)
+interClamp(float _b) => math.min(math.max(_b, -1.0), 1.0)
+fitAccepted(float _k, float _vr, int _bins) => _bins >= 3 and _vr > 1e-6 and _k > 0
+
+if barstate.islastconfirmedhistory
+    chk("F1  slope 0.001 -> clamped up 0.02",   f(slopeClamp(0.001)), "0.02", "NUM")
+    chk("F2  slope 0.90  -> clamped down 0.25", f(slopeClamp(0.90)),  "0.25", "NUM")
+    chk("F3  slope 0.10  -> untouched",         f(slopeClamp(0.10)),  "0.1",  "NUM")
+    chk("F4  intercept -5 -> clamped -1",       f(interClamp(-5.0)),  "-1",   "NUM")
+    chk("F5  intercept  5 -> clamped  1",       f(interClamp(5.0)),   "1",    "NUM")
+    chk("F6  NEGATIVE slope rejected",          b(fitAccepted(-0.05, 1.0, 5)), "false", "STAT")
+    chk("F7  ZERO slope rejected",              b(fitAccepted(0.0, 1.0, 5)),   "false", "STAT")
+    chk("F8  near-zero variance rejected",      b(fitAccepted(0.1, 1e-9, 5)),  "false", "NUM")
+    chk("F9  too few bins rejected",            b(fitAccepted(0.1, 1.0, 2)),   "false", "STAT")
+    chk("F10 valid fit accepted",               b(fitAccepted(0.1, 1.0, 3)),   "true",  "STAT")
+    // SATURATION CONSEQUENCE: two genuinely different slopes become IDENTICAL after
+    // clamping. Information is destroyed. Intentional, but it must be visible.
+    chk("F11 slopes 0.5 and 0.9 collapse to one value", b(slopeClamp(0.5) == slopeClamp(0.9)), "true", "NUM")
+
+// =============================================================================
+// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4419, clamp L4420)  _calP clamped [0.05, 0.95]
+// A calibrated probability can NEVER be reported below 5% or above 95%.
+// =============================================================================
+probClamp(float _p) => math.min(math.max(_p, 0.05), 0.95)
+sigmoid(float _score, float _k, float _b) => 1.0 / (1.0 + math.exp(-((_score - 50.0) * _k + _b)))
+
+if barstate.islastconfirmedhistory
+    chk("G1  score 50 -> 0.5 exactly",       f(sigmoid(50.0, 0.1, 0.0)), "0.5", "NUM")
+    chk("G2  score 100 clamped to 0.95",     f(probClamp(sigmoid(100.0, 0.25, 0.0))), "0.95", "STAT")
+    chk("G3  score 0   clamped to 0.05",     f(probClamp(sigmoid(0.0, 0.25, 0.0))),   "0.05", "STAT")
+    chk("G4  MAX and near-max both 0.95",    b(probClamp(sigmoid(100.0, 0.25, 0.0)) == probClamp(sigmoid(95.0, 0.25, 0.0))), "true", "NUM")
+    chk("G5  no overflow at extreme input",  b(not na(sigmoid(1e6, 0.25, 0.0))), "true", "NUM")
+    chk("G6  no overflow at extreme -input", b(not na(sigmoid(-1e6, 0.25, 0.0))), "true", "NUM")
+
+// =============================================================================
+// GROUP H — macroRegime CLAMP SATURATION  (Master L1856)
+//   macroRegime = clamp(0,100, base + (oi!=0 and macroBull/Bear ? 10 : oi!=0 ? 5 : 0))
+// Confirms the finding that at base 100 the OI nudge is ENTIRELY absorbed, so V2 == V1
+// there and any "subtract the nudge" shortcut would fabricate a divergence.
+// =============================================================================
+macroRegime(int _base, int _oiConv, bool _macroDir) =>
+    math.max(0, math.min(100, _base + (_oiConv != 0 and _macroDir ? 10 : _oiConv != 0 ? 5 : 0)))
+
+if barstate.islastconfirmedhistory
+    chk("H1  base100 +10 saturates to 100",   i(macroRegime(100, 1, true)),  "100", "NUM")
+    chk("H2  base100 no OI also 100",         i(macroRegime(100, 0, true)),  "100", "NUM")
+    chk("H3  SATURATION: V2 == V1 at base100", b(macroRegime(100, 1, true) == macroRegime(100, 0, true)), "true", "NUM")
+    chk("H4  base60 +10 -> 70 (no clamp)",    i(macroRegime(60, 1, true)),   "70",  "NUM")
+    chk("H5  base30 +5  -> 35",               i(macroRegime(30, 1, false)),  "35",  "NUM")
+    // The nudge is MAGNITUDE-based: oiConviction -1 ADDS exactly as +1 does.
+    chk("H6  oiConviction -1 ADDS not subtracts", i(macroRegime(60, -1, true)), "70", "NUM")
+    chk("H7  +1 and -1 give identical result",    b(macroRegime(60, 1, true) == macroRegime(60, -1, true)), "true", "DESIGN")
+
+// =============================================================================
+// GROUP I — na PROPAGATION AND ZERO DENOMINATORS
+// The failure mode that matters: does a missing value become a SILENT number?
+// =============================================================================
+safeDiv(float _a, float _b) => _b == 0 ? 0.0 : _a / _b
+
+if barstate.islastconfirmedhistory
+    float _nan = float(na)
+    chk("I1  na + 1 stays na",              f(_nan + 1.0), "na", "NUM")
+    chk("I2  na > 0 is FALSE not na",       b(_nan > 0.0), "false", "NUM")
+    chk("I3  na comparison never throws",   b(not (_nan > 0.0)), "true", "NUM")
+    chk("I4  math.max(na, 5) propagates na",f(math.max(_nan, 5.0)), "na", "NUM")
+    chk("I5  nz() substitutes",             f(nz(_nan, 7.0)), "7", "NUM")
+    chk("I6  safeDiv by zero -> 0",         f(safeDiv(10.0, 0.0)), "0", "NUM")
+    chk("I7  safeDiv near-zero NOT guarded",b(safeDiv(10.0, 1e-12) > 1e9), "true", "NUM")
+    // I7 is the real finding: the guard is `== 0`, so 1e-12 passes and explodes.
+    chk("I8  0/0 guarded to 0",             f(safeDiv(0.0, 0.0)), "0", "NUM")
+
+// =============================================================================
+// GROUP J — SCORE EXTREMES AND VOTE POOL
+// =============================================================================
+macroNeed(bool _gcValid) => int(math.ceil((6 + (_gcValid ? 1 : 0)) / 2.0))
+
+if barstate.islastconfirmedhistory
+    chk("J1  GC off -> pool 6 need 3", i(macroNeed(false)), "3", "STAT")
+    chk("J2  GC on  -> pool 7 need 4", i(macroNeed(true)),  "4", "STAT")
+    chk("J3  all 6 bull votes clears gate",  b(6 >= macroNeed(false)), "true", "STAT")
+    chk("J4  zero votes fails gate",         b(0 >= macroNeed(false)), "false", "STAT")
+    // TIGHTENING: 3 non-GC votes clear V1 but FAIL V2 when GC is valid but silent.
+    chk("J5  3 votes: passes V1, FAILS V2",  b(3 >= macroNeed(false) and not (3 >= macroNeed(true))), "true", "STAT")
+
+// =============================================================================
+// NEEDS-MASTER — NOT ASSERTED HERE, LISTED SO THEY ARE NOT FORGOTTEN
+//   These depend on live wiring, buffer state or feed availability and cannot be
+//   established by a standalone script. Do not mark §16 complete without them.
+//     M1  first valid calibration observation (warm-up boundary behaviour)
+//     M2  insufficient history: hN < 30 and hN < OUTCOME_N*3+50
+//     M3  GC unavailable mid-session -> gcValid false -> vote pool collapses 7->6
+//     M4  OI unavailable -> oiConviction 0 -> nudge 0 -> V2 == V1
+//     M5  all macro feeds unavailable simultaneously
+//     M6  session transition and market close/open gaps
+//     M7  ring-buffer wrap at HIST_MAX with the O(1) schema census
+//     M8  extreme XAUUSD spike/collapse against adaptiveATR
+// =============================================================================
+
+// ---------- render ------------------------------------------------------------
+// Rows were hardcoded to 70 while this file carries 72 assertions plus a header = 73.
+// TradingView threw "Row 70 is out of table bounds" at runtime -- a count that only
+// breaks when the table is actually written, so no static check here would catch it.
+var table tT = table.new(position.top_left, 5, 100, border_width = 1)
+if barstate.islastconfirmedhistory
+    int _n = array.size(tName)
+    int _fail = 0
+    for _q = 0 to (_n > 0 ? _n - 1 : 0)
+        if not array.get(tPass, _q)
+            _fail += 1
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v6", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
+    table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
+    table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
+    table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
+    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n), bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = size.tiny)
+    int _maxRow = math.min(_n, 99)
+    for _q = 0 to (_maxRow > 0 ? _maxRow - 1 : 0)
+        bool _p = array.get(tPass, _q)
+        color _bg = _p ? color.new(color.green, 85) : color.new(color.red, 55)
+        table.cell(tT, 0, _q + 1, array.get(tName, _q),  bgcolor = _bg, text_size = size.tiny, text_halign = text.align_left)
+        table.cell(tT, 1, _q + 1, array.get(tGot, _q),   bgcolor = _bg, text_size = size.tiny)
+        table.cell(tT, 2, _q + 1, array.get(tWant, _q),  bgcolor = _bg, text_size = size.tiny)
+        table.cell(tT, 3, _q + 1, array.get(tClass, _q), bgcolor = _bg, text_size = size.tiny)
+        table.cell(tT, 4, _q + 1, _p ? "PASS" : "FAIL",  bgcolor = _bg, text_size = size.tiny)
+
+plot(na, "harness", display = display.none)

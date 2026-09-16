@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Section 57: results must carry the commit that produced them. Build
+  # artefacts have no .git directory, so the SHA is injected.
+  GIT_COMMIT: ${{ github.sha }}
+
+jobs:
+  reference-integrity:
+    # Runs first and alone: every line citation, parity fixture and audit
+    # finding is written against these exact bytes. If they moved, nothing
+    # downstream is meaningful, so fail before spending time on it.
+    name: Quantum 5.0 reference is byte-identical
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python scripts/verify_reference.py
+
+  quality:
+    name: Lint, types, tests (py${{ matrix.python-version }})
+    needs: reference-integrity
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[api,dev]"
+      - name: Ruff lint
+        run: python -m ruff check --output-format=github .
+      - name: Ruff format check
+        run: python -m ruff format --check .
+      - name: mypy (strict)
+        run: python -m mypy
+      - name: Tests
+        # xfail_strict is on, so the two known-stale harness cases (F-A18)
+        # fail the build if they ever start passing without the register
+        # being updated in the same commit.
+        run: python -m pytest --cov=quantum_institutional --cov-report=term-missing
+
+  secrets:
+    name: No committed credentials
+    needs: reference-integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject tracked .env files
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.' | grep -v '\.env\.example$'; then
+            echo "::error::a .env file is tracked; see docs/SECURITY.md"
+            exit 1
+          fi
+          echo "no tracked .env files"
+      - name: Reject obvious key material
+        run: |
+          if git ls-files | grep -E '\.(pem|key|p12|pfx)$'; then
+            echo "::error::key material is tracked"
+            exit 1
+          fi
+          echo "no tracked key material"

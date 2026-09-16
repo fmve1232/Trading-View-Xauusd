@@ -1,0 +1,32 @@
+# Parity tolerances. Master prompt §13, PARITY_PLAN.md step 4.
+#
+# DECLARED BEFORE THE FIRST COMPARISON IS RUN. Choosing a tolerance after seeing
+# the mismatches is fitting the test to the result.
+#
+# Widening a value here to make a mismatch go away is not a fix. If a comparison
+# needs more room than this, it is a finding.
+
+version: 1
+
+defaults:
+  # Pure float arithmetic. Should be near-exact; anything larger means the
+  # expression differs, not the floating point.
+  absolute: 1.0e-9
+  relative: 1.0e-12
+
+by_output_kind:
+  composite_scores:      { absolute: 1.0e-9,  relative: 1.0e-12 }
+  # Recursive smoothing accumulates seed differences. The warm-up bars are
+  # excluded from the comparison and declared in the report (D-07).
+  recursive_smoothed:    { absolute: null,    relative: 1.0e-6  }
+  # Exact, or it is a defect.
+  rounded_integers:      { absolute: 0,       relative: null    }
+  categories:            { exact: true }
+  booleans:              { exact: true }
+  probabilities:         { absolute: 1.0e-9,  relative: 1.0e-12 }
+
+comparison:
+  confirmed_bars_only: true      # barstate.islast values are recomputed intrabar
+  require_both_present: true     # warm-up na is not a mismatch
+  timezone: UTC
+  bar_alignment: open            # left-aligned, matching contracts.Bar

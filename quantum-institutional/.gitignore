@@ -1,0 +1,29 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Secrets. Section 66: never commit a credential.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# Data. Never in git -- it belongs in the database, versioned by data_version.
+# Root-anchored: an unanchored `data/` also matches src/quantum_institutional/data/
+# and silently drops the package from the repository.
+/data/
+*.parquet
+*.duckdb
+*.sqlite

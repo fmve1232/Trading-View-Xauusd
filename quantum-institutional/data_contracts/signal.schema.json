@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/fmve1232/quantum-institutional/data_contracts/signal.schema.json",
+  "title": "Signal",
+  "description": "The section 78 final decision object. A field that cannot be computed reliably is null PLUS a reason. Never a fabricated value.",
+  "type": "object",
+  "required": ["signal_id","timestamp","symbol","timeframe","direction","status","data_quality","engine_version","formula_version"],
+  "properties": {
+    "signal_id": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "symbol": { "type": "string" },
+    "timeframe": { "type": "string" },
+    "direction": { "enum": ["LONG","SHORT","FLAT"] },
+    "entry": { "type": ["number","null"] },
+    "stop": { "type": ["number","null"] },
+    "target": { "type": ["number","null"] },
+    "probability": { "type": ["number","null"], "minimum": 0, "maximum": 1 },
+    "probability_interval": {
+      "type": ["array","null"],
+      "items": { "type": "number" },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "expected_value": { "type": ["number","null"] },
+    "risk": { "type": ["number","null"] },
+    "regime": { "type": ["string","null"] },
+    "session": { "type": ["string","null"] },
+    "strategy_a": { "type": ["object","null"] },
+    "strategy_b": { "type": ["object","null"] },
+    "smc_state": { "type": ["object","null"] },
+    "macro_state": { "type": ["object","null"] },
+    "news_state": { "type": ["object","null"] },
+    "data_quality": { "enum": ["OK","DEGRADED","STALE","INVALID","OFFLINE"] },
+    "status": { "enum": ["VALID","DEGRADED","INVALID","STALE","OFFLINE"] },
+    "unavailable_reasons": {
+      "type": "object",
+      "description": "field name -> why it is null. Required for every null field.",
+      "additionalProperties": { "type": "string" }
+    },
+    "model_version": { "type": ["string","null"] },
+    "formula_version": { "type": "string" },
+    "engine_version": { "type": "string" },
+    "data_version": { "type": ["string","null"] },
+    "git_commit": { "type": ["string","null"], "description": "null means the result is NOT reproducible" }
+  }
+}

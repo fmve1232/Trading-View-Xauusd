@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantum-institutional"
+version = "0.1.0"
+description = "XAUUSD quantitative research platform. Quantum 5.0 (Pine v6) is the reference layer."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+api = ["fastapi>=0.110", "uvicorn[standard]>=0.27", "pydantic>=2.6"]
+data = ["pandas>=2.2", "numpy>=1.26", "polars>=0.20"]
+db = ["psycopg[binary]>=3.1", "sqlalchemy>=2.0"]
+ml = ["scikit-learn>=1.4", "scipy>=1.12"]
+dev = ["pytest>=8.0", "pytest-cov>=4.1", "ruff>=0.3", "mypy>=1.9", "httpx>=0.27"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# `src` for the package, `.` so `quantum_parity` and `tests.conftest` import.
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+xfail_strict = true
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+src = ["src", "tests", "quantum_parity"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "DTZ", "RUF"]
+ignore = [
+    # The edge-case ports keep the Pine signature even where a parameter is
+    # unused, because the signature is the thing under test.
+    "B008",
+    # N818 wants an `Error` suffix on every exception. `DataUnavailable` and
+    # `ValidationFailed` read as STATES at the call site, which is the whole
+    # point of them -- `raise DataUnavailable("bars", ...)` says what is true,
+    # not that an error object exists.
+    "N818",
+    # RUF022 sorts `__all__` alphabetically. These are ordered to match the
+    # module's own narrative (primitives, then the functions built on them),
+    # which is more useful to a reader than alphabetical order.
+    "RUF022",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# The parity port mirrors Pine identifiers and harness helper names (f, i, b).
+"quantum_parity/*" = ["N803", "N806", "ARG001"]
+"tests/test_edge_case_parity.py" = ["E501", "N802"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["quantum_institutional"]
+mypy_path = "src"
+strict = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false

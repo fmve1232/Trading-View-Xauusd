@@ -1,0 +1,5 @@
+# Runtime for the API and engine. Install with:  pip install -r requirements/base.txt
+# Pinned by lower bound only; CI resolves and the lockfile lands in Phase 21.
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.6
