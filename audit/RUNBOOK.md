@@ -130,8 +130,15 @@ TQ<n>|CG<n>|B<n>V<n>|D<n>|P<pct>
 | `P` | **calibrated probability that *this trade* wins**, in percent |
 
 `P` is new — it was promised by a code comment but never actually emitted, so the field a
-calibration test most needs was the one field missing. It is now the *directional*
-probability (`1 − p` for shorts), which is what a reliability curve requires.
+calibration test most needs was the one field missing. It is the *directional* probability
+the gate used for that trade.
+
+**From v14 (`B3`) `P` means something different, so never pool `B2` and `B3` trades.**
+Once both the bull and the bear calibration maps have fitted, `P` is
+`P(win | resolved) = P(win) / (P(win) + P(loss))` from the trade direction's own fit — the
+probability that the target comes before the stop. Before the bear map fits, it is the
+v12 value (`P(bull)` for longs, `1 − P(bull)` for shorts). Build 2 and build 3 rows
+answer different questions; a reliability curve over both is meaningless.
 
 **This is why Step 4 must come after pasting the current build.** Alerts cannot backfill
 history, so the entry comment is the only way to attach per-trade engine state to
@@ -181,6 +188,11 @@ Quick visual confirmations that the fixes behave:
 - **Plan basis**: look for a `°` suffix (e.g. `SL:VAL°`). It marks a level that exists only
   at the live edge and no historical bar could have produced.
 - **Decision log**: should now name the filter that actually blocked, plus a `ctx:` suffix.
+- **v14 plan panel**: the expectancy reads `EVrace x.xxR` (was `E x.xxR`). It is now a real
+  expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
+- **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
+  and `mP unfit` before either map exists — the old heuristic value is gone.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v14`, **92** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 

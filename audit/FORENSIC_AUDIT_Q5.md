@@ -405,11 +405,12 @@ reached through a different variable. Visible in the operator's live screenshots
 | F-A07 | **P1** | Master | volume profile | Last-bar-only levels reach the live plan | Marked v3 |
 | F-A01 | **P1** | twins | volume profile | Engine absent from both arms, still consumed | Ported v2 |
 | F-A12 | **P1** | twins | export | Promised per-trade `P<pct>` never emitted | Fixed v9 |
-| F-035 | **P1** | Master | `~touch` | Horizon is timeframe-dependent; 3% on 30M vs 18% on 4H | **OPEN** |
+| F-035 | **P1** | Master | `~touch` | Horizon is timeframe-dependent; 3% on 30M vs 18% on 4H | **Mitigated v14** for both gates (race EV with MTM, conditional P); `~touch` display still per-horizon, labelled |
 | F-A05 | **P2** | Master | evidence | `bullScore` did not gate entry | Wired v4 |
 | F-A14 | **P2** | Master | CI display | F-037 suppression incomplete — `wrCIStr` still renders ±x% | Fixed v13 |
-| — | **P2** | Master | calibration | Cold-start sigmoid slope parameterised by `oCalGrade`, underived | **OPEN** |
-| — | **P2** | Master | effective-N | Two unreconciled effective-N methods (`/OUTCOME_N` vs ρ=0.3) | **OPEN** |
+| — | **P2** | Master | calibration | Cold-start sigmoid slope parameterised by `oCalGrade`, underived | Fixed v14 (identity map, `mP unfit`) |
+| — | **P2** | Master | effective-N | Two unreconciled effective-N methods (`/OUTCOME_N` vs ρ=0.3) | Fixed v14 (`/OUTCOME_N` throughout) |
+| F-A16…F-A20 | P0–P2 | all 3 + EdgeCases | probability / expectancy | See `FINDINGS_TRACEABILITY.md` | Fixed v14 |
 | F-A04/06/09/11 | P2–P3 | various | wiring/docs | dead vars, stale citations, mobile layout | Fixed |
 
 ---

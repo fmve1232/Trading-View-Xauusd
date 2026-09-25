@@ -56,4 +56,4 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |
-| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`. |
+| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`; `race_model_check.py` (tests the v14 expectancy maths on synthetic data, not the Pine). |

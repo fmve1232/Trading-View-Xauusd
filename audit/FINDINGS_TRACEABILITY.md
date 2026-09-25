@@ -41,7 +41,11 @@
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
 | F-A15 | **P0** | `BUG`+`STAT` | Platt map fitted on `bullScore` was evaluated on `bearScore`; since F-A02 this **gated entries** — **FIXED v12** |
 | F-A14 | P2 | `PRES` | F-037's suppression incomplete: `wrCIStr` still rendered a ±x% interval over the rolling population (`WR 74%+/-4%`) — **FIXED v13** |
-| F-A16 | P2 | `STAT` | Short probability is the complement of a bull fit whose denominator includes timeouts — optimistic by the timeout rate — **OPEN** |
+| F-A16 | P2 | `STAT` | Short probability was the complement of a bull fit whose denominator includes timeouts — optimistic by the timeout rate — **FIXED v14** (bear fit + conditional gate) |
+| F-A17 | **P1** | `BUG` | Plan touch probabilities read a 1.5×ATR-unit histogram with plan-stop-unit distances; SL always the 1-unit rate — **FIXED v14** |
+| F-A18 | P2 | `BUG` | Regime adjustment could push the calibrated probability to 1.175 (short complement negative) — **FIXED v14** (clamp) |
+| F-A19 | **P0** | `STAT` | `planExpectancy` (a difference of marginal touch rates) vetoed trades as if it were an expectancy — **FIXED v14** (race expectancy) |
+| F-A20 | MEDIUM | `PRES` | EdgeCases C3/C5 asserted pre-F-A10 behaviour and passed, because they tested the harness's own model — **FIXED v14** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
 | F-A11 | **HIGH** | `PRES` | *(new, from a mobile screenshot)* "Mobile Layout" changed only the font size — the 9-column desktop table was still rendered on phones — **FIXED** (real column reduction) |
@@ -527,7 +531,23 @@ hit rates, Q6.8) and was not part of this finding.
 
 ---
 
-## F-A16 — short probability inherits the timeout rate `P2` `STAT` *(OPEN)*
+## F-A16 — short probability inherits the timeout rate `P2` `STAT` *(FIXED v14)*
+
+**v14 resolution.** The bear map *could* be fitted after all. The race label `hOut` is
+symmetric (+1 = up first, −1 = down first, 0 = timeout), so P(bear resolution | bullScore)
+comes from the same bins and the same x as the bull fit, just with `oc == −1` as the
+target. v14 adds that fit (`gCalFitBear`, negative slope required, bounds mirroring the
+bull fit's).
+
+The gate then compares like with like. With three outcomes, 0.50 is the right boundary
+only for the probability **conditional on resolution**, P(win)/(P(win)+P(loss)).
+Comparing the *unconditional* P(win) with 0.50 vetoes by the timeout rate, and that rate
+depends on timeframe: in a fair market with a 3-bar horizon only ~70% of races resolve, so
+P(win) ≈ 0.35 (`audit/tools/race_model_check.py`). Each direction now uses its own fit,
+conditioned. Until the bear map fits, the v12 behaviour holds exactly. The TQ history term
+uses the published OOS bear rate instead of `100 − oOosWr`.
+
+*Original finding, kept for the record:*
 
 The calibration counts `oc == 1` as a win against a denominator that also contains timeouts
 (`oc == 0`). So `sigmoid(bullScore)` is P(bull resolution) over **all** outcomes, and its
@@ -536,6 +556,66 @@ therefore **optimistic by the timeout rate**.
 
 Not fixable from the bull fit: it needs a calibration fitted on **bear** outcomes, which does
 not exist. Recorded rather than guessed at.
+
+---
+
+## F-A17 — plan probabilities read in the wrong unit `P1` `BUG` *(FIXED v14)*
+
+`_gHit` measures MFE/MAE in units of **1.5 × ATR** (`_rU`). The plan looked it up with
+`tpRR = distance / tpDist`, in units of the **plan's structural stop** (0.6 ATR … 1.6 ×
+regime ATR), so every `~touch` figure was read at the wrong point whenever
+`tpDist ≠ 1.5 ATR`. `pSLhit` was always the **1-unit** touch rate, whatever the stop, and
+below 1 unit the interpolation returned the 1-unit value. Tight stops were therefore
+credited with the much lower touch rate of a wide one. That fed `planExpectancy`, and so
+the veto.
+
+Fixed: distances are converted into the histogram's unit. The SL touch uses the adverse
+ladder (long: MAE slots 4–6; short: MFE slots 0–2), and the grid has an explicit anchor at
+0 units.
+
+## F-A18 — calibrated probability could exceed 1 `P2` `BUG` *(FIXED v14)*
+
+`_calibratedProb := 0.5 + (p − 0.5) × _regAdj` with `_regAdj ∈ [0.67, 1.5]`. At p = 0.95
+that gives **1.175**, and the short complement is **−0.175**. Now clamped to the fitted
+map's own [0.05, 0.95]. The bear map is deliberately not regime-adjusted: `_regAdj` is
+built from bull win rates only, and using it on the bear side would repeat F-A15's error.
+
+## F-A19 — the veto quantity was not an expectancy `P0` `STAT` *(FIXED v14)*
+
+This was the forensic audit's verdict reason #2. `planExpectancy = pTP1 − pSLhit` is a
+difference of two **marginal** touch rates over one population (F-038): not mutually
+exclusive, not a race, and with no payoff in it. It still vetoed trades via `tqVeto`.
+
+**Measured on synthetic data where the truth is known** (`race_model_check.py`,
+driftless price, true E[R] = 0 at every RR): the old estimator reads **−0.27 at RR 2 and
+−0.34 to −0.46 at RR 3**, so it systematically vetoed well-structured trades in a fair
+market. The v14 estimator reads within about ±0.03 R at every RR and both horizons. That
+residue is the simulation's own fill-overshoot artefact.
+
+**v14 estimator.** A chronological first-touch label `hRace` for six races (long and
+short, TP at 1R/2R/3R against a 1R stop, stop first on a same-bar tie), plus the horizon
+mark-to-market `hTerm` for races still open at the horizon:
+
+    E[R] = P(TP1 first)·RR1 − P(SL first) + E[timeout MTM] − cost_R
+
+The MTM term is what keeps it horizon-robust. For a bracket held past the horizon, MTM is
+the optimal-stopping-unbiased estimate of its eventual P&L when price is driftless;
+counting timeouts as 0 while charging cost would have biased E[R] negative wherever the
+horizon is short (F-035).
+
+**Approximation, stated:** the grid's stop is 1 regime-R and the plan's is structural.
+Reading RR1 off the grid assumes the race is scale-free in stop distance, which is exact
+only when the plan uses its regime-ATR fallback.
+
+**Model check ≠ Pine test.** The simulator re-implements the maths; it does not execute
+the `.pine`. `SCHEMA_BUILD` 2 → 3 so exported trades from the two definitions never pool.
+
+## F-A20 — EdgeCases asserted a fixed defect and passed `MEDIUM` `PRES` *(FIXED v14)*
+
+C3 "timeout charged ZERO cost" and C5 encoded the pre-F-A10 behaviour. The Master has
+charged timeouts since v7 (`st += frAdj`). They passed because the harness tests its own
+transcription of the Master, not the Master. They are corrected, all citations are
+re-derived against v14, and GROUP K adds 20 assertions for the v14 maths (92 total).
 
 ---
 

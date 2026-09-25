@@ -1,6 +1,6 @@
 # Build changelog — v1 → … → v9
 
-**Sixteen findings applied; F-A16 open by necessity.** See each build section below.
+**All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -654,3 +654,39 @@ displayed are corrected.
 
 The twins have no dashboard and their `wrCIStr` was already unread, so they are not
 touched. A/B diff unchanged at five hunk headers. All checkers clean. **Compile NOT RUN.**
+
+---
+
+# Build v13 → v14 — the probability layer made coherent (F-A16 … F-A20)
+
+`Master` 5652 → 5850 · `Strategy` / `OLDGATES` 5002 → 5200 (identical edits, A/B diff
+still five hunk headers) · `EdgeCases` 301 → 343 · Visuals unchanged.
+**This changes which trades fire.** `SCHEMA_BUILD` 2 → 3; never pool B2 and B3 exports.
+
+| ID | What was wrong | Fix |
+|---|---|---|
+| F-A19 (P0) | The veto used `pTP1 − pSLhit`, a difference of marginal touch rates, as if it were an expectancy. Under a fair game it reads −0.27…−0.46 at RR 2–3 | Race expectancy from a first-touch label, with timeouts at horizon mark-to-market, net of cost |
+| F-A17 (P1) | Touch probabilities were read from a 1.5×ATR-unit histogram using plan-stop-unit distances; SL was always the 1-unit rate | Converted to the histogram's unit; SL on the adverse ladder; 0-anchor on the grid |
+| F-A16 (P2) | A short used 1 − P(bull), i.e. "bear or timeout" | Bear Platt fit; gate on P(win \| resolved) from each direction's own fit |
+| F-A18 (P2) | The regime multiplier could push the probability to 1.175 | Clamped to [0.05, 0.95] |
+| F-A20 | EdgeCases C3/C5 asserted pre-v7 behaviour and passed | Corrected; citations re-derived; GROUP K (+20 assertions, 92 total) |
+| P2 | Cold-start slope derived from an accuracy grade | Identity map, `mP unfit` |
+| P2 | Two effective-N methods | `N / OUTCOME_N` throughout |
+
+**Nothing tuned.** No existing threshold, weight or lookback changed value. The bear fit
+mirrors the bull fit's bounds, the gate stays at 0.50 (now the correct boundary, because
+the probability is conditional), and the 0.7 taper is the existing one.
+
+**Expected on the chart.**
+- Fewer spurious vetoes on setups with RR ≥ 2 (the old quantity penalised them).
+- More vetoes where costs are large relative to the stop (cost is now inside E[R]).
+- On ≥30M charts the gate stops blocking by the timeout rate once both maps fit.
+- Plan panel shows `EVrace`; SIGNAL cell shows `mP=L/S%` or `mP unfit`.
+
+**Verification.** precheck / undeclared / order clean; manifest updated;
+`audit/tools/race_model_check.py` PASS on two seeds (tests the maths, not the Pine).
+**Compile NOT RUN. Harness NOT RUN. Backtest NOT RUN.**
+
+**Token budget.** About +90 executable lines across the probability layer. The compiled
+token count is still unmeasured (`CONCURRENCY_AND_MIGRATION.md` B4). If TradingView
+reports a ceiling problem on save, follow B5 of that file; do not split the engine.
