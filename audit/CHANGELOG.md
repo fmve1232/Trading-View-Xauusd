@@ -1,6 +1,6 @@
 # Build changelog — v1 → … → v9
 
-**Fifteen findings applied; F-A16 open by necessity.** See each build section below.
+**Sixteen findings applied; F-A16 open by necessity.** See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -635,3 +635,22 @@ reverts.
 F-A16 recorded and left open: the bull fit's denominator includes timeouts, so the short's
 complement covers "bear OR timeout" and is optimistic by the timeout rate. Fixing it needs a
 bear-outcome calibration that does not exist.
+
+---
+
+# Build v12 → v13 — F-A14: the rolling win rate's ±x% interval suppressed
+
+`Master` 5645 → 5652 (by `wc -l`). Strategy, OLDGATES, Visuals and EdgeCases unchanged.
+**Display only — no trading behaviour changes.**
+
+F-037 suppressed `oOosCI` because a ±x% interval implies a fixed independent holdout, and
+the win-rate population here is rolling. A second interval, `wrCIStr`, still put that claim
+on the dashboard as `WR 74%+/-4%`, over the same rolling `oMatch` population.
+
+The risk cell now reads `WR 74% ROLL …`. `wrCIStr` is still computed, unchanged, and is
+deliberately write-only with an F-A14 annotation, matching how `oOosCI` is handled, so it
+can be restored once a frozen holdout exists. Two header comments that said the interval was
+displayed are corrected.
+
+The twins have no dashboard and their `wrCIStr` was already unread, so they are not
+touched. A/B diff unchanged at five hunk headers. All checkers clean. **Compile NOT RUN.**

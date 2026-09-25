@@ -40,6 +40,7 @@
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
 | F-A15 | **P0** | `BUG`+`STAT` | Platt map fitted on `bullScore` was evaluated on `bearScore`; since F-A02 this **gated entries** — **FIXED v12** |
+| F-A14 | P2 | `PRES` | F-037's suppression incomplete: `wrCIStr` still rendered a ±x% interval over the rolling population (`WR 74%+/-4%`) — **FIXED v13** |
 | F-A16 | P2 | `STAT` | Short probability is the complement of a bull fit whose denominator includes timeouts — optimistic by the timeout rate — **OPEN** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
@@ -501,6 +502,28 @@ occurrences** in any file.
 **Expected behaviour change:** the rule becomes symmetric in `bullScore` — longs need it
 above ~50, shorts below ~50. **Fewer longs, more shorts** than v10. `useCalGate = false`
 holds the previous behaviour.
+
+---
+
+## F-A14 — F-037's suppression was incomplete `P2` `PRES` *(FIXED v13)*
+
+Recorded in `FORENSIC_AUDIT_Q5.md` §50. F-037 suppressed `oOosCI` because a ±x% interval is
+the notation for a fixed independent holdout, and the population it sat on is a rolling,
+continuously re-drawn one. A **second** interval, `_wrCI95 → wrCIStr`, still rendered
+`+/-x%` in the dashboard risk cell over `oMatch`, the same rolling population, so the claim
+F-037 set out to remove stayed on screen as `WR 74%+/-4%`.
+
+**Fix (Master only).** The render drops `wrCIStr`; the cell now reads `WR nn% ROLL …`. The
+formula is unchanged and still computed. As with `oOosCI`, the variable is **deliberately
+write-only** (1 declaration, 1 assignment, 0 reads, verified by search), feeds no gate,
+probability, risk term or alert, and is annotated so an orphan sweep does not delete it. It
+is restored when a genuine frozen holdout exists (F-037B). Two header comments that claimed
+the interval was displayed are corrected.
+
+**Not changed:** the strategy twins have no dashboard. Their `wrCIStr` was already
+write-only, so they are untouched and the A/B diff stays at five hunks. The `~touch …%±x`
+credible interval on the plan panel is a different construction (Beta-Binomial on analog
+hit rates, Q6.8) and was not part of this finding.
 
 ---
 

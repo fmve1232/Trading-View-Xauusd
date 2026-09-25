@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v12   (F-A15 calibration direction fix)║
+// ║  BUILD STAMP — this file last CHANGED in v13   (F-A14 WR interval suppressed) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -101,7 +101,7 @@ string QVERSION = "Q7.2"
 // ═══════════════ Q5.0 MASTER (quant-audit roadmap items implemented) ═══════════════
 //  S1  Effective-N correction: overlapping OUTCOME_N-bar outcomes mean N_eff ~ N/OUTCOME_N.
 //      Kelly's p is now the Wilson 95% LOWER bound at effective N (self-shrinking with
-//      thin data); the OOS win-rate display carries a ± half-width at effective N.
+//      thin data); the ± half-width is computed but NOT displayed (F-037, F-A14).
 //  S2  mP= is now Platt-FITTED: slope/intercept estimated by weighted least squares on
 //      logit(realized frequency) vs mean bin score across calibration bins (>=3 bins of
 //      >=30 samples, positive slope required); the heuristic slope remains the
@@ -251,7 +251,7 @@ string QVERSION = "Q7.2"
 //  _structActiveBg/_macroBg/_macro2Col/_volCol/_biasCol→cell colors; per-target reach scores→TGT suffix;
 //  (dead transfer vars oPdh1stPct/oPdl1stPct/oBosFail/oCalDetail/oMaxAdverseATR/oBosCont
 //   REMOVED — their dashboard consumers no longer existed; this comment claimed otherwise.)
-//  wrCIStr→risk row2; liqHealthScore→liquidity row3; vpocPrice/vaPos/vaRatio→PRICE row3;
+//  (wrCIStr: computed, NOT rendered — F-A14); liqHealthScore→liquidity row3; vpocPrice/vaPos/vaRatio→PRICE row3;
 //  (F-A04: obBull/BearVolPct + fvgVolPctAtDetect REMOVED. They were assigned every bar and
 //   read by nothing: their OB/FVG label consumers went with the drawing layer in Q5.4-CORE,
 //   and this file now contains ZERO label.new calls. The Visuals companion draws those zones
@@ -4995,6 +4995,13 @@ string tipsMag = tipsValid ? (math.abs(avgCorrTIPS) > 0.5 ? "Strong" : math.abs(
 float _rhoEst = 0.3
 // Win rate display
 string wrStr = "—"
+// F-A14: wrCIStr is SUPPRESSED in the presentation layer, for the reason F-037 gives for
+// oOosCI: a +/-x% interval is the notation for a fixed independent holdout, and oMatch is
+// the same rolling, continuously re-drawn population. F-037 removed that claim from
+// oOosCI but it stayed on screen through this second variable (`WR 74%+/-4%`). The
+// formula is UNCHANGED and still computed; it is DELIBERATELY WRITE-ONLY (1 declaration,
+// 0 reads) and feeds no gate, probability, risk term or alert. Do NOT delete it in an
+// orphan sweep: restore the render the day a genuine frozen holdout exists (F-037B).
 string wrCIStr = ""
 if showStatsEngine and oMatch >= 30
     float _wrR = oWr / 100.0
@@ -5521,7 +5528,7 @@ f_dashRender() =>
         string _dowStr = showDowTracker ? _dowBiasStr() : ""
         string _macroRow2 = _macroVerdict + (_dowStr != "" ? "\n" + _dowStr : "")
         tcb(6, 2, _macroLine2 + " CR" + str.tostring(int(_crVal)) + "%\n" + _macroRow2, _crCol, color.new(_macro2Col, 88), _seSize, _w6)
-        string _riskSec = "WR " + wrStr + (wrCIStr != "" ? wrCIStr : "") + " ROLL " + _oosFixed + " " + _pfDisp + (showForecastCone ? "\n" + _coneStatus : "")
+        string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp + (showForecastCone ? "\n" + _coneStatus : "")
         tc(7, 2, _riskSec, pfCol, _seSize, _w7)
         // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement
         // that the trade cannot be placed at this account size; "0.00L" read as a valid

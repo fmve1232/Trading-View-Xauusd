@@ -18,13 +18,13 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5645 | 362523 | `a38b66a35be70a37a33f1619af2748b45bb22ba4dbee0581d48b9a4f6be94bc5` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5652 | 363124 | `b0e2e05a5ff8d76fadf4e201b5338ed06bc9cda28b42ddc3d14ed244aba4db80` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5002 | 309515 | `7b1330179e54dd4ec7d1067bb0b8f4685458a83b1e058ab661e2affc1cbcb1bb` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5002 | 309580 | `f499570854cfebda3c50c9458543d5cd415082c3e1134bd991e034971d9fbe2a` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 301 | 21307 | `538f8eee0a65285174399e2299aa387cc64f3ff931b88bf9f8dc6407606f83ea` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
 
-> **BUILD v12 — this prompt pins the current build.** The originally audited build
+> **BUILD v13 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -37,6 +37,8 @@ scope, and no other build of these scripts is in scope.
 > and both twins failed with `Undeclared identifier "OUTCOME_N"`. **§8.1 is now CLOSED as
 > a fact rather than an assumption: the Master had never compiled, and the defect is
 > present in the originally audited v1 build.** All thirteen findings applied.
+> **F-A15 in v12** (calibration map evaluated on the wrong variable). **F-A14 in v13**
+> (the rolling win rate's ±x% interval suppressed on the dashboard, completing F-037).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

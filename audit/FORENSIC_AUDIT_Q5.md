@@ -407,7 +407,7 @@ reached through a different variable. Visible in the operator's live screenshots
 | F-A12 | **P1** | twins | export | Promised per-trade `P<pct>` never emitted | Fixed v9 |
 | F-035 | **P1** | Master | `~touch` | Horizon is timeframe-dependent; 3% on 30M vs 18% on 4H | **OPEN** |
 | F-A05 | **P2** | Master | evidence | `bullScore` did not gate entry | Wired v4 |
-| F-A14 | **P2** | Master | CI display | F-037 suppression incomplete — `wrCIStr` still renders ±x% | **OPEN** |
+| F-A14 | **P2** | Master | CI display | F-037 suppression incomplete — `wrCIStr` still renders ±x% | Fixed v13 |
 | — | **P2** | Master | calibration | Cold-start sigmoid slope parameterised by `oCalGrade`, underived | **OPEN** |
 | — | **P2** | Master | effective-N | Two unreconciled effective-N methods (`/OUTCOME_N` vs ρ=0.3) | **OPEN** |
 | F-A04/06/09/11 | P2–P3 | various | wiring/docs | dead vars, stale citations, mobile layout | Fixed |
