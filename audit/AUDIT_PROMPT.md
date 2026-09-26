@@ -18,13 +18,13 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5726 | 368050 | `f6894acfb57f18a28c97941fe7de562b5b496b5bde284ec7352ad24fc1dd47fe` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5214 | 324717 | `35103dc1570fd36cea3cb0575898261e76973b81e924cdfdee23837716effb33` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5214 | 324782 | `0883edf5c1069b96c7713abcfd80fc12e4b6c089e9af264cfcd24b863e879e19` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 343 | 24569 | `c4d344ff8fd9e687b541b9fc662bac8258ad35376b94f3791ae72d0a88fd4be8` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5698 | 366953 | `3da4d45b83cd04e54c90609f25852ca0066fc2931bb9a216a05a2b439e34ffb4` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4735 | 292882 | `289e49b51e4eb3e178e863e212fc4651ab52deab2f77acda97a9e8eb3b6602b3` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4735 | 292947 | `ac3c2e13262468816ddaa4bb508bd503fe7f3e6420df9299c6be446993090b59` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 367 | 26200 | `3e987bb503b870e60ab08c2ef82afaec0f5702f08df62c6a80b5ca0aa3779e66` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
 
-> **BUILD v15 — this prompt pins the current build.** The originally audited build
+> **BUILD v16 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -44,6 +44,8 @@ scope, and no other build of these scripts is in scope.
 > the marginal difference that vetoed trades, and the EdgeCases harness re-anchored.
 > **v15:** Master cut under the compiled-token limit (three default-OFF diagnostics
 > removed); strategy cost model made tick-size independent (P0-CAL-006).
+> **v16: F-A21 … F-A26** — zero dead code in all five files (`deadcode.py`), five formulas
+> corrected to their textbook definitions (`formula_check.py`).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

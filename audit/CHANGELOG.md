@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v15
+# Build changelog — v1 → … → v16
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -723,3 +723,27 @@ model would (conservative).
 **EdgeCases**: all Master citations re-derived against v15; header now `v15`. No assertion changed.
 
 **Nothing tuned.** Compile of v15 NOT RUN.
+
+---
+
+# Build v15 → v16 — end-to-end wiring and formula compliance (F-A21 … F-A26)
+
+`Master` 5726 → 5698 · `Strategy` / `OLDGATES` 5214 → 4735 (identical; A/B diff still five
+hunk headers) · `EdgeCases` 343 → 367 (97 assertions) · Visuals unchanged.
+**Changes which trades fire** (F-A22, F-A24). `SCHEMA_BUILD` 3 → 4.
+
+- **Wiring:** `deadcode.py` reports 0 dead symbols in all five files. Removed: the what-if
+  scenario engine (never read), unread and self-only accumulators, the write-only
+  `hDataStatus` buffer, two engine outputs no file used, the two inputs v15 orphaned, and
+  the twins' dashboard remnants (dead in *both* arms only). Two dormant ±x% intervals
+  (F-037/F-A14) are no longer computed; their formulas are kept verbatim in comments.
+- **Formulas:** Cornish-Fisher inverted (F-A22); Kelly with timeouts and in the plan's
+  direction (F-A23); Berkson-weighted Platt fits (F-A24); exact Brier decomposition
+  (F-A25); t-quantile expansion order (F-A26). `formula_check.py` PASS.
+- **EdgeCases:** citations re-derived and verified line by line against v16; GROUP L adds
+  5 assertions for the corrected formulas.
+- **Token estimate:** Master 39,224 lexical tokens (≈96,700 compiled at the measured 2.466
+  ratio, ~3.5% headroom). An estimate until the save reports it.
+
+**Nothing tuned.** Compile of v16 NOT RUN. EdgeCases' 3 v14 failures still undiagnosed
+(screenshot not legible).

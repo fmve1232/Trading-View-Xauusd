@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v15   (token cut: 3 OFF diagnostics) ║
+// ║  BUILD STAMP — this file last CHANGED in v16   (dead code + 5 formula fixes)  ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -245,7 +245,7 @@ string QVERSION = "Q7.2"
 //  F23 "P=" renamed "mP=" — mapped, not fitted, probability
 // Q4.0-R5.1 traceability pass (F24): every computed value now has a consumer.
 //  Wired: QVERSION/_symStr/_tfLabel→footer; avgCorrSPX→adaptive wSPX;
-//  ratePressure (yield ROC) + EURUSD ROC→macro momentum msRate; vwapSlope/vwapAccel→VWAP scenarios;
+//  ratePressure (yield ROC) + EURUSD ROC→macro momentum msRate; (VWAP what-if scenarios removed v16: never read);
 //  vwapRejectBull/Bear→aligned-signal counters; climaxUp/Down→plotshape markers; cvdBull/Bear+vdK+
 //  session vol EWMA→MARKET row2; mtfAgreementHigh/Med + _htfBias→BIAS row2; calProbStr→SIGNAL row2;
 //  _structActiveBg/_macroBg/_macro2Col/_volCol/_biasCol→cell colors; per-target reach scores→TGT suffix;
@@ -363,9 +363,6 @@ slippagePts = input.float(0.2, "Slippage (points)", minval=0.0, maxval=2.0, step
 // constants per the derivation in the twin headers.
 commissionL = input.float(7.0, "Commission per Lot (USD, round turn) [BROKER CONFIG]", minval=0.0, maxval=50.0, step=0.5, group=grpRisk, tooltip="Per-lot commission. 0 for spread-only brokers; ~$5-15 for ECN.")
 
-grpClean = "CHART CLEANUP"
-cleanInstitutional = input.bool(false, "Clean Institutional Appearance", group=grpClean)
-professionalMode = input.bool(false, "Professional Execution Mode", group=grpClean)
 holdoutRatio = input.float(0.20, "Holdout Ratio (OOS validation)", minval=0.0, maxval=0.5, step=0.05, group=grpRisk)
 useNewsSuppress = input.bool(false, "Suppress Signals on News Events", group=grpRisk, tooltip="Blocks signals during FOMC/NFP windows")
 newsSession = input.session("", "News Event Window (UTC)", group=grpRisk, tooltip="Session during which signals are suppressed, e.g. 1300-1500:4 for FOMC Wednesdays. Leave empty to disable.")
@@ -549,8 +546,6 @@ float vwapSd = ta.stdev(close - vwapVal, 20)
 float vwapUpper2 = vwapVal + vwapSd * 2.0
 float vwapLower2 = vwapVal - vwapSd * 2.0
 // VWAP slope (10-bar change) and acceleration (slope rate-of-change)
-float vwapSlope = vwapVal - nz(vwapVal[10], vwapVal)
-float vwapAccel = vwapSlope - nz(vwapSlope[5], vwapSlope)
 // VWAP rejection: price touched ±2σ band then closed back on VWAP side
 bool vwapRejectBull = low <= vwapLower2 and close > vwapVal
 // Bollinger Bands (20,2)
@@ -813,10 +808,27 @@ float retSkew = _cfValid ? (_m3 / _n - 3.0 * _mu * _m2 / _n + 2.0 * _mu * _mu * 
 float retKurt = _cfValid ? (_m4 / _n - 4.0 * _mu * _m3 / _n + 6.0 * _mu * _mu * _m2 / _n - 3.0 * _mu * _mu * _mu * _mu) / (_v * _v) - 3.0 : 0.0
 // Q5.0-S7: CF expansion inputs clamped to the monotone-validity region.
 float retSkewC = math.min(math.max(retSkew, -1.0), 1.0)
-// Cornish-Fisher expansion: Zcf = Z + (Z²-1)S/6 + (Z³-3Z)K/24 − (2Z³-5Z)S²/36
-float _z2 = retZScoreRaw * retZScoreRaw
-float _z3 = _z2 * retZScoreRaw
-float retZScore = _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 ? retZScoreRaw + (_z2 - 1.0) * retSkewC / 6.0 + (_z3 - 3.0 * retZScoreRaw) * (math.min(math.max(retKurt, -1.0), 3.0)) / 24.0 - (2.0 * _z3 - 5.0 * retZScoreRaw) * retSkewC * retSkewC / 36.0 : retZScoreRaw
+// Cornish-Fisher: q(w) = w + (w²-1)S/6 + (w³-3w)K/24 − (2w³-5w)S²/36 maps a NORMAL quantile w
+// to the quantile of the skewed / fat-tailed return distribution. retZScoreRaw is an OBSERVED
+// standardised return, i.e. a quantile of the return distribution, so its normal-equivalent is
+// the INVERSE: the w with q(w) = retZScoreRaw.
+// v16 FIX: the forward map was applied to the observed value, counting the fat tails twice.
+// Measured on a skewed, fat-tailed sample (S 0.62, K 3): at the 99th percentile the true
+// normal-equivalent is 2.33; the inverse gives 2.29, the old forward map gave 6.64.
+// Inverted exactly by Newton's method (6 steps, from w = x) rather than a truncated inverse
+// series, whose error grows with K. q'(w) is positive over the clamped (S, K) region; the 0.1
+// floor on it only guards the step.
+float _cfK = math.min(math.max(retKurt, -1.0), 3.0)
+float retZScore = retZScoreRaw
+if _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(retZScoreRaw)
+    float _w = retZScoreRaw
+    for _it = 0 to 5
+        float _w2 = _w * _w
+        float _w3 = _w2 * _w
+        float _q = _w + (_w2 - 1.0) * retSkewC / 6.0 + (_w3 - 3.0 * _w) * _cfK / 24.0 - (2.0 * _w3 - 5.0 * _w) * retSkewC * retSkewC / 36.0
+        float _dq = 1.0 + _w * retSkewC / 3.0 + (3.0 * _w2 - 3.0) * _cfK / 24.0 - (6.0 * _w2 - 5.0) * retSkewC * retSkewC / 36.0
+        _w := _w - (_q - retZScoreRaw) / math.max(_dq, 0.1)
+    retZScore := _w
 
 // Distance from VWAP, EMAs in ATR terms (mean reversion gauges)
 float distVwapATR = adaptiveATR > 0 ? (close - vwapVal) / adaptiveATR : 0.0
@@ -1325,8 +1337,9 @@ tInv(float p, int df) =>
         float z2 = z * z
         float z3 = z2 * z
         float z5 = z3 * z2
-        z := z + (z3 + z) / (4.0 * df)
-        z := z + (5.0 * z5 + 16.0 * z3 + 3.0 * z) / (96.0 * df * df)
+        // v16: both terms are evaluated at the ORIGINAL normal quantile z. The old code added
+        // the first term, then evaluated the second term's "3z" at the already-corrected z.
+        z := z + (z3 + z) / (4.0 * df) + (5.0 * z5 + 16.0 * z3 + 3.0 * z) / (96.0 * df * df)
     z
 
 // Per-window correlation significance thresholds
@@ -2465,40 +2478,7 @@ biasLabel = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 
 
 // HISTORICAL ANALOG ANALYSIS (Part 6) — outputs populated below from stats engine
 
-// SCENARIO ANALYSIS — WHAT-IF ENGINE (Part 8)
-if not na(poolPdH)
-    float pdhContFactor = 50.0
-    pdhContFactor += bullTrend ? 15.0 : bearTrend ? -10.0 : 0.0
-    pdhContFactor += htfBullScoreGate ? 12.0 : htfBearScoreGate ? -8.0 : 0.0
-    pdhContFactor += macroStrengthScore > 0 ? 10.0 : macroStrengthScore < 0 ? -10.0 : 0.0
-    pdhContFactor += adxVal > adxThreshold ? 5.0 : 0.0
-if not na(poolPdL)
-    float pdlContFactor = 50.0
-    pdlContFactor += bearTrend ? 15.0 : bullTrend ? -10.0 : 0.0
-    pdlContFactor += htfBearScoreGate ? 12.0 : htfBullScoreGate ? -8.0 : 0.0
-    pdlContFactor += macroStrengthScore < 0 ? 10.0 : macroStrengthScore > 0 ? -10.0 : 0.0
-    pdlContFactor += adxVal > adxThreshold ? 5.0 : 0.0
-// VWAP hold/fail scenarios
-float vwapDist = math.abs(distVwapATR)
-if vwapDist < 1.0 and not na(vwapVal)
-    float holdFactor = 50.0
-    holdFactor += bullTrend ? 12.0 : bearTrend ? -12.0 : 0.0
-    holdFactor += htfBullScoreGate ? 10.0 : htfBearScoreGate ? -10.0 : 0.0
-    holdFactor += macroStrengthScore > 0 ? 8.0 : macroStrengthScore < 0 ? -8.0 : 0.0
-    holdFactor += evLiqBull > evLiqBear ? 8.0 : -8.0
-    holdFactor += adxVal > adxThreshold ? 5.0 : 0.0
-    // R5.1: VWAP slope/acceleration wired in (small heuristic weights; clamp keeps [10,90])
-    holdFactor += vwapSlope > 0 ? 5.0 : vwapSlope < 0 ? -5.0 : 0.0
-    holdFactor += vwapAccel > 0 ? 3.0 : vwapAccel < 0 ? -3.0 : 0.0
-    float failFactor = 50.0
-    failFactor += bearTrend ? 12.0 : bullTrend ? -12.0 : 0.0
-    failFactor += htfBearScoreGate ? 10.0 : htfBullScoreGate ? -10.0 : 0.0
-    failFactor += macroStrengthScore < 0 ? 8.0 : macroStrengthScore > 0 ? -8.0 : 0.0
-    failFactor += evLiqBear > evLiqBull ? 8.0 : -8.0
-    failFactor += adxVal > adxThreshold ? 5.0 : 0.0
-    failFactor += vwapSlope < 0 ? 5.0 : vwapSlope > 0 ? -5.0 : 0.0
-    failFactor += vwapAccel < 0 ? 3.0 : vwapAccel > 0 ? -3.0 : 0.0
-// PDH/PDL Reach — uses rawBullScore/rawBearScore (same 8-factor weighted sum)
+// (v16: the what-if scenario factors below this heading were computed and never read; removed.)
 float totalR = rawBullScore + rawBearScore
 float pdhReachScore = totalR > 0 ? math.round(rawBullScore / totalR * 100.0) : 50.0
 float pdlReachScore = 100.0 - pdhReachScore
@@ -2955,24 +2935,21 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 //                    this?" It is NOT the migration census and MUST NOT filter analogs:
 //                    using it alone would mark every observation V2 from the first bar,
 //                    which would silently destroy the MIXED_SCHEMA measurement.
-//   hDataStatus   -- SOURCE-CONTRIBUTION identity. Per-observation bitmask of which
-//                    external sources actually reached the calculation on that bar.
+//   barDataStatus -- SOURCE-CONTRIBUTION identity: bitmask of which external sources
+//                    reached the calculation on that bar. Computed and exported per trade
+//                    (D field) by the strategy twins; the Master had no reader, so v16
+//                    removed it here along with the write-only hDataStatus buffer.
 //   hSchemaVer    -- FEATURE-DEFINITION EQUIVALENCE, availability-derived. Answers "is this
 //                    observation mathematically equivalent to V1 for analog matching?"
 //                    When GC/OI contribute exactly zero the bar IS effectively V1, because
 //                    rCurr is then bit-identical. This is what the census uses. UNCHANGED.
 // v14: 2 -> 3. The race label (hRace), the bear calibration and the race expectancy
 // change what the gate acts on, so exported trades must be separable by build.
-int SCHEMA_BUILD = 3
-// Bit allocation for hDataStatus. CONTRIBUTED, not merely VALID: a resolved-but-neutral GC
-// leaves rCurr bit-identical to V1, so it must not set its bit.
-//   bit0 (1)  GC contributed a macro vote      bit1 (2)  OI contributed a regime nudge
-//   bit2 (4)  US2Y valid (context only)        bit3 (8)  COT contributed a TQ damper
-//   bit4 (16) GC status was non-VALID          bit5 (32) OI status was non-VALID
+// v16: 3 -> 4. Berkson-weighted calibration fits and the inverted Cornish-Fisher z-score
+// (an analog feature via mrComposite) change what the gate acts on.
+int SCHEMA_BUILD = 4
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
-int barDataStatus = ((gcConfirmsBull or gcConfirmsBear) ? 1 : 0) + ((oiValid and oiConviction != 0) ? 2 : 0) + (US2Y_STATUS == 0 ? 4 : 0) + (COT_STATUS == 0 ? 8 : 0) + (GC_STATUS != 0 ? 16 : 0) + (OI_STATUS != 0 ? 32 : 0)
 var int[] hSchemaVer = array.new_int(HIST_MAX, 1)
-var int[] hDataStatus = array.new_int(HIST_MAX, 0)
 var int migV2Count = 0
 var int[] hRegime = array.new_int(HIST_MAX, 0)
 var float[] hSess = array.new_float(HIST_MAX, 0.5)
@@ -3059,7 +3036,6 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
     if _prevVer != 2 and REGIME_FEATURE_VERSION == 2
         migV2Count := migV2Count + 1
     array.set(hSchemaVer, hW, REGIME_FEATURE_VERSION)
-    array.set(hDataStatus, hW, barDataStatus)
     float _sessVal = inNY ? 1.0 : inLondon ? 0.67 : inAsian ? 0.33 : 0.0
     array.set(hSess, hW, _sessVal)
     int oP = (hW - OUTCOME_N + HIST_MAX) % HIST_MAX
@@ -3198,10 +3174,8 @@ int oMatch = 0
 // R5.3 deliberately removed it from fAdj because it re-used the same historical DB already
 // blended elsewhere — showing it does not reintroduce that double-count.)
 int oPdh1stPct = na
-int oPdl1stPct = na
 float oMaxAdverseATR = na
 float oBosCont = 50.0
-float oBosFail = 50.0
 string oCalDetail = ""
 int oEvLabel = na
 float oEvVal = 0.0
@@ -3231,7 +3205,6 @@ runStatsEngines() =>
     var float _cRange = 0.0
     var int _cMatch = 0
     var int _cPdh1stPct = na
-    var int _cPdl1stPct = na
     var float _cEvVal = 0.0
     var int _cEvLabel = na
     var float _cWr = 50.0
@@ -3248,7 +3221,6 @@ runStatsEngines() =>
     var float _cCalBrier = na
     var string _cCalDetail = ""
     var float _cBosCont = 50.0
-    var float _cBosFail = 50.0
     var float _cRegPer = 50.0
     var float _cFeatStr = na
     var float _cFeatHtf = na
@@ -4085,7 +4057,7 @@ runStatsEngines() =>
     if not showStatsEngine or hN <= OUTCOME_N * 2
         [50.0, 50.0, 0.0, 0, int(na), int(na), 0.0, int(na), 50.0, 0.5, 1.0, 0, "N/A", float(na), "", 50.0, 50.0, 50.0, float(na), float(na), float(na), float(na), float(na), float(na), float(na), 0.0, 50.0, 0, 50.0, 0, 0.5, 1.0]
     else if not barstate.isconfirmed or (chartTFSeconds < 300 and not barstate.islast) or not (_cec % _rb == 0 or barstate.islast) or _rsp > 0
-        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cPdl1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cBosFail, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
+        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
     else
         // F-009: RATIOS now use the weighted sums (wb/wt); GATES and the displayed
         // A-count deliberately still use the raw integer counts, so "mt >= 3" still means
@@ -4104,7 +4076,6 @@ runStatsEngines() =>
             _cMatch := mt
         if pT >= 3
             _cPdh1stPct := int(math.round((wpT > 0 ? wp1 / wpT : p1 * 1.0 / pT) * 100.0))
-            _cPdl1stPct := 100 - _cPdh1stPct
         if mt / math.max(OUTCOME_N, 1) >= 10  // Q6.8: EFFECTIVE N, was raw mt >= 5 (~1 independent obs) and (wc > 0 or lc > 0)
             float wr = wt > 0 ? wb / wt : mb * 1.0 / mt
             float lr = wt > 0 ? wbr / wt : mbr * 1.0 / mt
@@ -4129,7 +4100,6 @@ runStatsEngines() =>
             _cWr := wr * 100.0
             _cAvgW := wc > 0 ? sw / wc : 0.5
             _cAvgL := lc > 0 ? sl / lc : 1.0
-        float calBrier = 0.0
         int calBins = 0
         // OOS RELIABILITY CAPTURE (observability only). Every value stored below is
         // ALREADY computed in this block for the grade/Brier maths — nothing is
@@ -4142,31 +4112,26 @@ runStatsEngines() =>
             float p0 = c0s / c0t / 100.0
             calErr += math.abs(a0 * 100.0 - p0 * 100.0)
             calBins += 1
-            calBrier += (a0 - p0) * (a0 - p0) * c0t
         if c1t >= 30
             float a1 = bayesRate(c1b, c1t)
             float p1c = c1s / c1t / 100.0
             calErr += math.abs(a1 * 100.0 - p1c * 100.0)
             calBins += 1
-            calBrier += (a1 - p1c) * (a1 - p1c) * c1t
         if c2t >= 30
             float a2 = bayesRate(c2b, c2t)
             float p2c = c2s / c2t / 100.0
             calErr += math.abs(a2 * 100.0 - p2c * 100.0)
             calBins += 1
-            calBrier += (a2 - p2c) * (a2 - p2c) * c2t
         if c3t >= 30
             float a3 = bayesRate(c3b, c3t)
             float p3 = c3s / c3t / 100.0
             calErr += math.abs(a3 * 100.0 - p3 * 100.0)
             calBins += 1
-            calBrier += (a3 - p3) * (a3 - p3) * c3t
         if c4t >= 30
             float a4 = bayesRate(c4b, c4t)
             float p4 = c4s / c4t / 100.0
             calErr += math.abs(a4 * 100.0 - p4 * 100.0)
             calBins += 1
-            calBrier += (a4 - p4) * (a4 - p4) * c4t
         if calBins > 0
             float ae = calErr / calBins
             _cCalGradePct := int(math.max(0, 100.0 - ae * 2.0))
@@ -4188,11 +4153,15 @@ runStatsEngines() =>
                     float _xm = array.get(_pfPs, _pf) / _ctF - 50.0
                     float _arF = math.min(math.max(bayesRate(int(array.get(_pfBw, _pf)), int(_ctF)), 0.05), 0.95)
                     float _ym = math.log(_arF / (1.0 - _arF))
-                    _pfSw += _ctF
-                    _pfSx += _ctF * _xm
-                    _pfSy += _ctF * _ym
-                    _pfSxx += _ctF * _xm * _xm
-                    _pfSxy += _ctF * _xm * _ym
+                    // v16: WLS weight = n p(1-p), the inverse delta-method variance of logit(p)
+                    // (Berkson's minimum logit chi-square). A weight of n alone treats a bin at
+                    // p = 0.9 as precisely as one at 0.5, though its logit is ~2.8x noisier.
+                    float _wF = _ctF * _arF * (1.0 - _arF)
+                    _pfSw += _wF
+                    _pfSx += _wF * _xm
+                    _pfSy += _wF * _ym
+                    _pfSxx += _wF * _xm * _xm
+                    _pfSxy += _wF * _xm * _ym
                     _pfBins += 1
             if _pfBins >= 3 and _pfSw > 0
                 float _pfMx = _pfSx / _pfSw
@@ -4203,7 +4172,7 @@ runStatsEngines() =>
                     if _pfK > 0
                         array.set(gCalFit, 0, math.min(math.max(_pfK, 0.02), 0.25))
                         array.set(gCalFit, 1, math.min(math.max(_pfMy - _pfK * _pfMx, -1.0), 1.0))
-            // F-A16: the BEAR fit -- identical WLS on the same bins and the same x (mean
+            // F-A16: the BEAR fit -- identical WLS (same Berkson weights) on the same bins and the same x (mean
             // bullScore), target = bear resolution. Slope must be NEGATIVE (a higher
             // bullScore should mean a lower chance of a bear resolution); bounds mirror
             // the bull fit's. No threshold here is new.
@@ -4219,11 +4188,12 @@ runStatsEngines() =>
                     float _bxm = array.get(_pfPs, _bf) / _bCt - 50.0
                     float _bar = math.min(math.max(bayesRate(int(array.get(_gCr, _bf)), int(_bCt)), 0.05), 0.95)
                     float _bym = math.log(_bar / (1.0 - _bar))
-                    _bfSw += _bCt
-                    _bfSx += _bCt * _bxm
-                    _bfSy += _bCt * _bym
-                    _bfSxx += _bCt * _bxm * _bxm
-                    _bfSxy += _bCt * _bxm * _bym
+                    float _bW = _bCt * _bar * (1.0 - _bar)
+                    _bfSw += _bW
+                    _bfSx += _bW * _bxm
+                    _bfSy += _bW * _bym
+                    _bfSxx += _bW * _bxm * _bxm
+                    _bfSxy += _bW * _bxm * _bym
                     _bfBins += 1
             if _bfBins >= 3 and _bfSw > 0
                 float _bfMx = _bfSx / _bfSw
@@ -4235,34 +4205,38 @@ runStatsEngines() =>
                         array.set(gCalFitBear, 0, math.min(math.max(_bfK, -0.25), -0.02))
                         array.set(gCalFitBear, 1, math.min(math.max(_bfMy - _bfK * _bfMx, -1.0), 1.0))
             float _totalCal = c0t + c1t + c2t + c3t + c4t
-            // Brier decomposition (Murphy): BS = Uncertainty + Reliability - Resolution
+            // Brier decomposition (Murphy): BS = Uncertainty + Reliability - Resolution.
+            // v16: the identity holds only with RAW bin frequencies over the SAME bins as the
+            // base rate. It used Laplace-smoothed frequencies over bins with N >= 30 while
+            // the base rate and the denominator counted every bin. Now raw frequencies over
+            // every bin with N > 0: the exact Brier score of the bin-mean forecasts.
             float _totalBull = c0b + c1b + c2b + c3b + c4b
             float _baseRate = _totalCal > 0 ? _totalBull / _totalCal : 0.5
             float _rel = 0.0
             float _res = 0.0
-            if c0t >= 30
+            if c0t > 0
                 float p0_ = c0s / c0t / 100.0
-                float o0_ = bayesRate(c0b, c0t)
+                float o0_ = c0b * 1.0 / c0t
                 _rel += c0t * (p0_ - o0_) * (p0_ - o0_)
                 _res += c0t * (o0_ - _baseRate) * (o0_ - _baseRate)
-            if c1t >= 30
+            if c1t > 0
                 float p1_ = c1s / c1t / 100.0
-                float o1_ = bayesRate(c1b, c1t)
+                float o1_ = c1b * 1.0 / c1t
                 _rel += c1t * (p1_ - o1_) * (p1_ - o1_)
                 _res += c1t * (o1_ - _baseRate) * (o1_ - _baseRate)
-            if c2t >= 30
+            if c2t > 0
                 float p2_ = c2s / c2t / 100.0
-                float o2_ = bayesRate(c2b, c2t)
+                float o2_ = c2b * 1.0 / c2t
                 _rel += c2t * (p2_ - o2_) * (p2_ - o2_)
                 _res += c2t * (o2_ - _baseRate) * (o2_ - _baseRate)
-            if c3t >= 30
+            if c3t > 0
                 float p3_ = c3s / c3t / 100.0
-                float o3_ = bayesRate(c3b, c3t)
+                float o3_ = c3b * 1.0 / c3t
                 _rel += c3t * (p3_ - o3_) * (p3_ - o3_)
                 _res += c3t * (o3_ - _baseRate) * (o3_ - _baseRate)
-            if c4t >= 30
+            if c4t > 0
                 float p4_ = c4s / c4t / 100.0
-                float o4_ = bayesRate(c4b, c4t)
+                float o4_ = c4b * 1.0 / c4t
                 _rel += c4t * (p4_ - o4_) * (p4_ - o4_)
                 _res += c4t * (o4_ - _baseRate) * (o4_ - _baseRate)
             _rel /= _totalCal
@@ -4288,7 +4262,6 @@ runStatsEngines() =>
             _cCalDetail := calDetail
         if boT >= 3
             _cBosCont := math.round(bov * 100.0 / boT)
-            _cBosFail := 100 - _cBosCont
         if rCurr == 0 and rTCnt > 0
             _cRegPer := math.round((rTCnt - rTR - rTD) * 100.0 / rTCnt)
         else if rCurr == 1 and rRCnt > 0
@@ -4346,9 +4319,9 @@ runStatsEngines() =>
             float _isWr = isMb * 100.0 / isMt
             _cIsWr := math.round(_isWr)
             _cIsN := isMt
-        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cPdl1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cBosFail, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
+        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
 
-[__b, __be, __r, __m, __p1, __p2, __ev, __el, __wr, __aw, __al, __cp, __cg, __cb, __cd, __bc, __bf, __rp, __fs, __fh, __fl, __fm, __fc, __pf, __ma, __md, __ow, __on, __iw, __in, __awo, __alo] = runStatsEngines()
+[__b, __be, __r, __m, __p1, __ev, __el, __wr, __aw, __al, __cp, __cg, __cb, __cd, __bc, __rp, __fs, __fh, __fl, __fm, __fc, __pf, __ma, __md, __ow, __on, __iw, __in, __awo, __alo] = runStatsEngines()
 
 // Quantile-based calibration bin edges — after engine call so historical scan uses prior bins
 var int _qcec = -1
@@ -4373,10 +4346,8 @@ oBear := __be
 oRange := __r
 oMatch := __m
 oPdh1stPct := __p1
-oPdl1stPct := __p2
 oMaxAdverseATR := __ma
 oBosCont := __bc
-oBosFail := __bf
 oCalDetail := __cd
 oEvVal := __ev
 oEvLabel := __el
@@ -4399,8 +4370,6 @@ oOosWr := __ow
 // zeroed variable. FIX: assign first, then derive. No formula, threshold or gate altered.
 // Classification: BUG (restores intended behaviour), not a statistical correction.
 oOosN := __on
-// Q5.0-S1: 95% half-width of the OOS win rate at EFFECTIVE (overlap-corrected) N.
-float _wNeffD = math.max(oOosN / OUTCOME_N, 1.0)
 // Q6.9 (plan item 3): effective sample size for every count-based gate below.
 // Kelly already used this correction; the display and drift gates did not.
 int oOosNeff = int(oOosN / math.max(OUTCOME_N, 1))
@@ -4413,9 +4382,9 @@ int oOosNeff = int(oOosN / math.max(OUTCOME_N, 1))
 // AUDIT NOTE: after suppression this variable is DELIBERATELY WRITE-ONLY. Verified by
 // full-file search: 1 declaration, 0 reads. It feeds NO gate, confidence, signal,
 // probability, risk term or alert -- suppression was therefore sufficient, not cosmetic.
-// Do NOT delete it in an orphan sweep: it is dormant on purpose, awaiting a genuine
-// fixed holdout (F-037B), and deleting it would forfeit a correct implementation.
-float oOosCI = oOosNeff >= 10 ? 1.96 * math.sqrt(math.max(oOosWr / 100.0 * (1.0 - oOosWr / 100.0), 0.0025) / _wNeffD) * 100.0 : na
+// v16 (no dead code): the unread computation is removed; the implementation is kept here
+// for F-037B, to be restored with a render the day a genuine frozen holdout exists:
+//     oOosCI = oOosNeff >= 10 ? 1.96 * sqrt(max(p(1-p), 0.0025) / max(oOosN / OUTCOME_N, 1)) * 100 : na
 oAvgWOos := __awo
 oAvgLOos := __alo
 // R5-F4: update the persistent DD mirror used by the signal-gate breaker.
@@ -5096,21 +5065,15 @@ string tipsMag = tipsValid ? (math.abs(avgCorrTIPS) > 0.5 ? "Strong" : math.abs(
 // derived from how the labels are built, so it is used here too.
 // Win rate display
 string wrStr = "—"
-// F-A14: wrCIStr is SUPPRESSED in the presentation layer, for the reason F-037 gives for
-// oOosCI: a +/-x% interval is the notation for a fixed independent holdout, and oMatch is
-// the same rolling, continuously re-drawn population. F-037 removed that claim from
-// oOosCI but it stayed on screen through this second variable (`WR 74%+/-4%`). The
-// formula is UNCHANGED and still computed; it is DELIBERATELY WRITE-ONLY (1 declaration,
-// 0 reads) and feeds no gate, probability, risk term or alert. Do NOT delete it in an
-// orphan sweep: restore the render the day a genuine frozen holdout exists (F-037B).
-string wrCIStr = ""
+// F-A14 / v16 (no dead code): the +/-x% interval on this win rate is NOT displayed -- a
+// +/-x% reads as a fixed-holdout claim and oMatch is a rolling population (F-037). v13-v15
+// kept it computed but unread; v16 removes the dead computation. To restore it once a
+// frozen holdout exists (F-037B), the formula, at the overlap-corrected effective N, is:
+//     effN = max(oMatch / OUTCOME_N, 1);  half95 = 1.96 * sqrt(p(1-p) / effN) * 100
 if showStatsEngine and oMatch >= 30
     float _wrR = oWr / 100.0
     float _wrDir = bearBiasScore > bullBiasScore ? (1.0 - _wrR) : _wrR
-    float _effN = math.max(oMatch / math.max(OUTCOME_N, 1), 1.0)
-    float _wrCI95 = oMatch >= 30 ? 1.96 * math.sqrt(_wrDir * (1.0 - _wrDir) / _effN) * 100.0 : 0.0
     wrStr := str.tostring(int(_wrDir * 100.0)) + "%"
-    wrCIStr := _wrCI95 > 1.0 ? "+/-" + str.tostring(int(_wrCI95 + 0.5)) + "%" : ""
 // Reliability label — sample-size bins for historical analog confidence
 // Feature contribution breakdown: directional accuracy lift per factor
 // EV + N + Cal (shared by dashboard + bottom strip)
@@ -5265,15 +5228,24 @@ f_dashData1() =>
     int _setupScore = math.min(math.max(int(confidenceScore / 20), 0), 5)
     string _gradeLabel = _setupScore >= 4 ? "A" : _setupScore >= 3 ? "B" : _setupScore >= 2 ? "C" : "D"
     // Kelly-optimal sizing with tail-risk penalty and DD circuit breaker
-    // NOTE (design): p = oOosWr is the rate of bullish 1h drift among state-similar bars,
-    // NOT the win rate of this trade structure (1.5 ATR SL, 1:1/1:2 TP). Half-Kelly plus the
-    // haircuts below keep this conservative; a trade-level outcome log is the proper base.
+    // v16 -- KELLY FOR THE BET ACTUALLY PLACED. The label has three outcomes over the horizon:
+    // win (+b), loss (-1) and timeout (~0). Maximising p ln(1+fb) + q ln(1-f) gives
+    //     f* = (p b - q) / (b (p + q)) = (p' b - q') / b,   p' = p / (p + q),  q' = 1 - p'
+    // i.e. binary Kelly on the probability CONDITIONAL on resolution. The old form used the
+    // bull win rate for shorts as well, and 1 - p as the loss probability, which counts
+    // every timeout as a full loss. p' is taken in the plan's direction, and its Wilson 95%
+    // lower bound is computed at the effective number of RESOLVED observations.
+    // b is the long-side win/loss magnitude ratio, (1 - c)/(1 + c) in R. Under a constant
+    // cost c it is identical for a short.
     float _kellyPct = riskPercent
     if showStatsEngine and oOosNeff >= 10 and not na(oOosWr) and not na(oAvgW) and not na(oAvgL) and oAvgL > 0
         // Q5.0-S1: p = Wilson 95% LOWER bound at EFFECTIVE sample size (overlap-corrected
         // N/OUTCOME_N) — self-shrinks toward no-bet when the independent sample is thin.
-        float _nEffK = math.max(oOosN / OUTCOME_N, 1.0)
-        float _pHatK = oOosWr / 100.0
+        float _brK = nz(array.get(gOosBearWr, 0), 100.0 - oOosWr) / 100.0
+        float _pWinK = tpIsLong ? oOosWr / 100.0 : _brK
+        float _pResK = oOosWr / 100.0 + _brK
+        float _nEffK = math.max(oOosN * _pResK / OUTCOME_N, 1.0)
+        float _pHatK = _pResK > 0 ? _pWinK / _pResK : 0.5
         float _zWK = 1.96
         float _wDenK = 1.0 + _zWK * _zWK / _nEffK
         float _wCtrK = (_pHatK + _zWK * _zWK / (2.0 * _nEffK)) / _wDenK

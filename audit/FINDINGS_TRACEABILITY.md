@@ -47,6 +47,12 @@
 | F-A18 | P2 | `BUG` | Regime adjustment could push the calibrated probability to 1.175 (short complement negative) — **FIXED v14** (clamp) |
 | F-A19 | **P0** | `STAT` | `planExpectancy` (a difference of marginal touch rates) vetoed trades as if it were an expectancy — **FIXED v14** (race expectancy) |
 | F-A20 | MEDIUM | `PRES` | EdgeCases C3/C5 asserted pre-F-A10 behaviour and passed, because they tested the harness's own model — **FIXED v14** |
+| F-A21 | MEDIUM | `BUG` | Dead and broken code: a what-if scenario engine that computed factors and never used them, unread/self-only accumulators, write-only buffers, 394 lines of dashboard remnants per strategy arm, and 2 inputs orphaned by v15 — **FIXED v16** |
+| F-A22 | **P1** | `STAT` | Cornish-Fisher applied FORWARD to an observed z-score, counting fat tails twice (99th pct: 6.64 vs a true 2.33); feeds `mrComposite` and an analog feature — **FIXED v16** (Newton inverse) |
+| F-A23 | P2 | `STAT` | Kelly used the bull win rate for shorts, and 1−p as the loss probability, so timeouts counted as losses — **FIXED v16** (f* = (pb−q)/(b(p+q))) |
+| F-A24 | P2 | `STAT` | Platt WLS weighted each bin by n, not the inverse variance of its logit, n·p(1−p) — **FIXED v16** (Berkson) |
+| F-A25 | P3 | `STAT` | Brier decomposition mixed smoothed frequencies with the raw base rate over different bin sets, so the identity failed — **FIXED v16** |
+| F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
 | F-A11 | **HIGH** | `PRES` | *(new, from a mobile screenshot)* "Mobile Layout" changed only the font size — the 9-column desktop table was still rendered on phones — **FIXED** (real column reduction) |
@@ -617,6 +623,41 @@ C3 "timeout charged ZERO cost" and C5 encoded the pre-F-A10 behaviour. The Maste
 charged timeouts since v7 (`st += frAdj`). They passed because the harness tests its own
 transcription of the Master, not the Master. They are corrected, all citations are
 re-derived against v14, and GROUP K adds 20 assertions for the v14 maths (92 total).
+
+---
+
+## F-A21 … F-A26 — the v16 traceability and formula pass *(FIXED v16)*
+
+**Wiring.** `audit/tools/deadcode.py` checks every symbol in all five files for four
+failure classes: never read, read only by its own update (`x += …`), write-only arrays,
+and functions never called. It iterates, because removing one dead symbol can orphan
+another. After v16 the result is **0 dead** in every file. What remains is structural and
+documented in the tool: the stats-engine tuple slots in the twins (Pine requires every
+element to be named; the Master reads them all), `ta.dmi`'s unused slots in Visuals, and
+the three inputs each strategy arm computes only because the *other* arm's gate reads them
+(this is what keeps the arms identical apart from the gate). Pruning a symbol that was dead
+in only one arm broke the A/B identity (7 hunks). So the pruning was redone to remove only
+symbols dead in **both** arms, and the diff is back to 5.
+
+**Formulas.** Checked against textbook definitions:
+- Verified correct: raw-moment skewness and kurtosis; the A–S 26.2.23 normal quantile
+  (constants checked); the correlation critical value r = t/√(df+t²) with Bonferroni over
+  18 tests; the Wilson bound; binary Kelly; Laplace smoothing; the Beta-posterior interval.
+- Five deviations, fixed and checked numerically (`audit/tools/formula_check.py`):
+
+| | Old | Correct | Evidence |
+|---|---|---|---|
+| F-A22 | forward CF q(x) on an observed x | w with q(w) = x (Newton, 6 steps) | 99th pct: true 2.33, inverse 2.29, forward 6.64 |
+| F-A23 | (p b − (1−p))/b, bull p for shorts | (p b − q)/(b(p+q)), direction's own p | p .35, q .30, b 1: optimum 7.7%, old −30% |
+| F-A24 | WLS weight n | n p(1−p) (Berkson min-logit χ²) | Var logit(p̂) ≈ 1/(n p(1−p)) |
+| F-A25 | smoothed o_k, N≥30 bins | raw o_k, all bins | identity exact to 1e-10; old off by 0.0035 |
+| F-A26 | 2nd Fisher term at corrected z | both terms at original z | textbook form; effect ~1e-5 |
+
+**Behaviour.** F-A22 changes `mrComposite`, and through it the stored analog feature `cM`.
+F-A24 changes the fitted calibration maps. Both change which trades fire, so
+`SCHEMA_BUILD` goes 3 → 4. F-A23 changes the *size guidance*, not the gate. It can
+recommend a **larger** size than v15 whenever timeouts are common, because v15 counted
+every timeout as a loss.
 
 ---
 

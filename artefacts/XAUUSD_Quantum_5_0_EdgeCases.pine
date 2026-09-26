@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v15   (citations re-anchored to v15) ║
+// ║  BUILD STAMP — this file last CHANGED in v16   (re-anchored; GROUP L added)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -68,8 +68,8 @@ b(bool _v) => _v ? "true" : "false"
 
 // =============================================================================
 // GROUP A — ROUNDING AT REGIME BOUNDARIES  (F-021)
-// Master L1888: regimeComposite = int(math.round(<float>)); the LIVE thresholds at
-// L1890-1891 test regimeCompositeRaw, i.e. the UNROUNDED composite.
+// Master L1901: regimeComposite = int(math.round(<float>)); the LIVE thresholds at
+// L1903-1904 test regimeCompositeRaw, i.e. the UNROUNDED composite.
 // Rounding happens BEFORE the threshold test, so the EFFECTIVE boundary is 39.5/69.5,
 // not 40/70. These cases establish the true boundary in Pine's own semantics.
 // =============================================================================
@@ -98,7 +98,7 @@ if barstate.islastconfirmedhistory
     chk("A12 int(-0.5) truncates toward zero", i(int(-0.5)), "0", "NUM")
 
 // =============================================================================
-// GROUP B — SL/TP RACE  (Master L3111, guarded by `if _oR > 0` at L3108)
+// GROUP B — SL/TP RACE  (Master L3087, guarded by `if _oR > 0` at L3084)
 //   _oRes := low[k] <= ent - R ? -1 : high[k] >= ent + R ? 1 : 0
 // SL is tested FIRST, so a bar touching both resolves to LOSS.
 // DESIGN, not BUG: Pine cannot order intrabar events without lower-timeframe data.
@@ -119,8 +119,8 @@ if barstate.islastconfirmedhistory
 
 // =============================================================================
 // GROUP C — TIMEOUT ACCOUNTING INCONSISTENCY
-// Calibration bins (L3906 c*t / L3909 c*b): oc==0 increments the TOTAL but never the WIN.
-// Expectancy (L3781 frAdj, L3807 timeout branch): SINCE v7 (F-A10) a timeout IS charged --
+// Calibration bins (L3878 c*t / L3881 c*b): oc==0 increments the TOTAL but never the WIN.
+// Expectancy (L3753 frAdj, L3779 timeout branch): SINCE v7 (F-A10) a timeout IS charged --
 // `st += frAdj` accumulates its signed cost-adjusted return. v6 of this harness still
 // asserted the pre-F-A10 behaviour (C3 "timeout charged ZERO cost") and PASSED, because it
 // tested its own model of the Master, not the Master. Corrected in v14: costCharged()
@@ -156,7 +156,7 @@ if barstate.islastconfirmedhistory
     chk("D6  shrink weakens as N grows",       b(bayesRate(0, 1000) < bayesRate(0, 30)), "true", "STAT")
 
 // =============================================================================
-// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L4140, and the Platt bin gate at L4187)
+// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L4110, and the Platt bin gate at L4152)
 // =============================================================================
 bucketQualifies(int _n) => _n >= 30
 
@@ -164,12 +164,12 @@ if barstate.islastconfirmedhistory
     chk("E1  N=29 rejected", b(bucketQualifies(29)), "false", "PRES")
     chk("E2  N=30 accepted", b(bucketQualifies(30)), "true",  "PRES")
     chk("E3  N=31 accepted", b(bucketQualifies(31)), "true",  "PRES")
-    // Platt fit needs >= 3 qualifying bins (fit block L4197-4205). 2 bins must NOT fit.
+    // Platt fit needs >= 3 qualifying bins (fit block L4166-4174). 2 bins must NOT fit.
     chk("E4  2 qualifying bins -> no fit", b(2 >= 3), "false", "STAT")
     chk("E5  3 qualifying bins -> fit ok", b(3 >= 3), "true",  "STAT")
 
 // =============================================================================
-// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4197-4205; bear fit L4234-4236)
+// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4166-4174; bear fit L4204-4206)
 //   slope clamped [0.02, 0.25]; intercept clamped [-1, 1];
 //   fit REJECTED when slope <= 0; variance guard _pfVr > 1e-6
 // =============================================================================
@@ -193,7 +193,7 @@ if barstate.islastconfirmedhistory
     chk("F11 slopes 0.5 and 0.9 collapse to one value", b(slopeClamp(0.5) == slopeClamp(0.9)), "true", "NUM")
 
 // =============================================================================
-// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4591, clamp L4592)  _calP clamped [0.05, 0.95]
+// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4560, clamp L4561)  _calP clamped [0.05, 0.95]
 // A calibrated probability can NEVER be reported below 5% or above 95%.
 // =============================================================================
 probClamp(float _p) => math.min(math.max(_p, 0.05), 0.95)
@@ -208,7 +208,7 @@ if barstate.islastconfirmedhistory
     chk("G6  no overflow at extreme -input", b(not na(sigmoid(-1e6, 0.25, 0.0))), "true", "NUM")
 
 // =============================================================================
-// GROUP H — macroRegime CLAMP SATURATION  (Master L1876)
+// GROUP H — macroRegime CLAMP SATURATION  (Master L1889)
 //   macroRegime = clamp(0,100, base + (oi!=0 and macroBull/Bear ? 10 : oi!=0 ? 5 : 0))
 // Confirms the finding that at base 100 the OI nudge is ENTIRELY absorbed, so V2 == V1
 // there and any "subtract the nudge" shortcut would fabricate a divergence.
@@ -259,8 +259,8 @@ if barstate.islastconfirmedhistory
 
 // =============================================================================
 // GROUP K — v14 RACE LABEL, EXPECTANCY AND CONDITIONAL GATE  (F-A16..F-A19)
-//   race outcome  L3134-3139   encode L3140   decode L3864   grid interp L2627
-//   expectancy L2853   F-A18 clamp L4647   conditional gate L4849   bear fit L4234-4236
+//   race outcome  L3110-3115   encode L3116   decode L3836   grid interp L2607
+//   expectancy L2833   F-A18 clamp L4616   conditional gate L4818   bear fit L4204-4206
 // =============================================================================
 raceOut(int _tStop, int _tTp) => _tStop < 9999 and _tStop <= _tTp ? 2 : _tTp < 9999 ? 1 : 0
 raceEnc(int _a, int _b, int _c, int _d, int _e, int _f) => _a + 3 * _b + 9 * _c + 27 * _d + 81 * _e + 243 * _f
@@ -301,6 +301,30 @@ if barstate.islastconfirmedhistory
     chk("K20 bear slope -0.9 -> -0.25",       f(bearSlope(-0.9)), "-0.25", "NUM")
 
 // =============================================================================
+// GROUP L — v16 FORMULA CORRECTIONS  (Kelly L5244-5257, Cornish-Fisher inverse L821-831)
+//   Kelly with timeouts: f* = (p b - q) / (b (p + q)). Cornish-Fisher is INVERTED by
+//   Newton's method, so an observed standardised return maps to its normal-equivalent.
+// =============================================================================
+kellyTri(float _p, float _q, float _b) => (_p * _b - _q) / (_b * (_p + _q))
+cfFwd(float _w, float _s, float _k) => _w + (_w * _w - 1.0) * _s / 6.0 + (_w * _w * _w - 3.0 * _w) * _k / 24.0 - (2.0 * _w * _w * _w - 5.0 * _w) * _s * _s / 36.0
+cfInv(float _x, float _s, float _k) =>
+    float _w = _x
+    for _it = 0 to 5
+        float _w2 = _w * _w
+        float _w3 = _w2 * _w
+        float _q = _w + (_w2 - 1.0) * _s / 6.0 + (_w3 - 3.0 * _w) * _k / 24.0 - (2.0 * _w3 - 5.0 * _w) * _s * _s / 36.0
+        float _dq = 1.0 + _w * _s / 3.0 + (3.0 * _w2 - 3.0) * _k / 24.0 - (6.0 * _w2 - 5.0) * _s * _s / 36.0
+        _w := _w - (_q - _x) / math.max(_dq, 0.1)
+    _w
+
+if barstate.islastconfirmedhistory
+    chk("L1  Kelly p.35 q.30 b1 = 0.0769",      f(kellyTri(0.35, 0.30, 1.0)), "0.0769", "STAT")
+    chk("L2  old 1-p form said no bet",         b((0.35 * 1.0 - 0.65) / 1.0 < 0.0), "true", "STAT")
+    chk("L3  CF inverse is identity at S=K=0",  f(cfInv(1.7, 0.0, 0.0)), "1.7", "NUM")
+    chk("L4  CF inverse undoes the forward map", b(math.abs(cfInv(cfFwd(2.0, 0.5, 2.0), 0.5, 2.0) - 2.0) < 1e-6), "true", "NUM")
+    chk("L5  fat tails SHRINK an observed 3.0", b(cfInv(3.0, 0.0, 3.0) < 3.0), "true", "STAT")
+
+// =============================================================================
 // NEEDS-MASTER — NOT ASSERTED HERE, LISTED SO THEY ARE NOT FORGOTTEN
 //   These depend on live wiring, buffer state or feed availability and cannot be
 //   established by a standalone script. Do not mark §16 complete without them.
@@ -325,7 +349,7 @@ if barstate.islastconfirmedhistory
     for _q = 0 to (_n > 0 ? _n - 1 : 0)
         if not array.get(tPass, _q)
             _fail += 1
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v15", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v16", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
     table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
     table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
     table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)

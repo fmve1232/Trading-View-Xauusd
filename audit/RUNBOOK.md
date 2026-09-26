@@ -2,7 +2,7 @@
 
 Ordered by value. **Steps 1 and 2 are worth more than everything else combined**, because
 they close gaps that no amount of analysis here can: the Master has never been compiled and
-the 92 assertions (72 until v13, +20 in v14) have never been run.
+the 97 assertions (72 until v13, +20 in v14, +5 in v16) have never been run.
 
 Read §9 at the end before running the strategies. It is short and it changes what the data
 is allowed to do.
@@ -60,19 +60,19 @@ context readout near the decision log). It is display-only.
 
 ## Step 2 — Run the Edge Case harness  *(closes §8.2)*
 
-92 assertions that have never been run (v14: 72 original + 20 in GROUP K). The last recorded attempt hit a runtime error
+97 assertions that have never been run (72 original + 20 in GROUP K, v14 + 5 in GROUP L, v16). The last recorded attempt hit a runtime error
 (`Row 70 is out of table bounds`), which was fixed — but the corrected build's result was
 never recorded.
 
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 92`, or `<n> FAIL / 92`. The header cell must read `§16 EDGE CASE v15`.
+   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v16`.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
 4. Remove it afterwards — it is diagnostic only.
 
-A green `ALL PASS 92` establishes how Pine evaluates the arithmetic. It does **not**
+A green `ALL PASS 97` establishes how Pine evaluates the arithmetic. It does **not**
 establish that the Master is wired to those expressions — that is a separate, known limit.
 
 ---
@@ -193,7 +193,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v15`, **92** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v16`, **97** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 
