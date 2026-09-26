@@ -18,14 +18,14 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5698 | 366953 | `3da4d45b83cd04e54c90609f25852ca0066fc2931bb9a216a05a2b439e34ffb4` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 4735 | 292882 | `289e49b51e4eb3e178e863e212fc4651ab52deab2f77acda97a9e8eb3b6602b3` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 4735 | 292947 | `ac3c2e13262468816ddaa4bb508bd503fe7f3e6420df9299c6be446993090b59` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 367 | 26200 | `3e987bb503b870e60ab08c2ef82afaec0f5702f08df62c6a80b5ca0aa3779e66` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5712 | 367530 | `4fc15678f84fe594fc7536b078770305083e7d9597568dec1e3b56a6ff72dce1` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5243 | 326826 | `c50e2b6fb0cda6814a013131bbb685b86583c3ad8a21d68f14287d99498c10d8` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5243 | 326891 | `f200a5c85d2a4ea2b24aa1632638b08c1649fc08db2b8866cad5f12abd624b39` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 367 | 26200 | `a9bfd639b5939eda66390a0e4fb73245b01311a4eaaf26328e92e7f8b4f221f4` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 4832 | 298172 | `340812df2778a3e0bf0222dfc2849e3cc2ed5641757d82710d01a1b538e7cafc` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5319 | 331071 | `0c44a4ca8abc1fbc19d14bab3822715076b40f1b2826f88a9103286475894100` |
 
-> **BUILD v17 — this prompt pins the current build.** The originally audited build
+> **BUILD v18 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -49,6 +49,7 @@ scope, and no other build of these scripts is in scope.
 > corrected to their textbook definitions (`formula_check.py`).
 > **v17:** the six features v15/v16 removed from the Master are restored and wired in a new
 > `Diagnostics.pine` companion on the Treatment engine verbatim (`diag_parity.py`).
+> **v18:** the removed non-features restored as well (listed in `audit/tools/retained.txt`).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

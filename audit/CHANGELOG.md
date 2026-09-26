@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v17
+# Build changelog — v1 → … → v18
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -758,3 +758,21 @@ reliability buckets, rolling intervals, what-if scores, data-source census). Two
 were never visible before and are now wired. Master, twins, Visuals and EdgeCases are
 **unchanged**. New `audit/tools/diag_parity.py` enforces engine identity. deadcode: 0 dead.
 Details in `FINDINGS_TRACEABILITY.md` ("v17"). Compile of Diagnostics NOT RUN.
+
+---
+
+# Build v17 → v18 — removed non-features restored
+
+Operator instruction: restore the removed non-features too.
+- **Strategy / OLDGATES** 4735 → 5244: v15 text restored in full (dashboard remnants, request
+  tuple slots, complements, `calBrier`, scenario factors), plus exactly v16's formula
+  corrections (blocks byte-identical to the Master's). A/B diff: five hunk headers.
+- **Master** +14 lines: `calBrier` and the two complements with their engine outputs and
+  tuple slots, back in their v15 positions. Tuples identical to v15. ~39,349 lexical tokens,
+  an estimated ~97,040 compiled.
+- **Diagnostics** rebuilt on the restored engine. Panel names are `dg`-prefixed where the
+  engine now declares the same name; the census reads the engine's own `hDataStatus`. No
+  duplicate globals (checked). `diag_parity.py` PASS.
+- **EdgeCases** citations re-mapped through the diff and verified line by line.
+
+**No output changes**: every restored line is unread. `SCHEMA_BUILD` stays 4. Compile NOT RUN.

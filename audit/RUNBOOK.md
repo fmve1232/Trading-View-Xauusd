@@ -67,7 +67,7 @@ never recorded.
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v16`.
+   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v18`.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
 4. Remove it afterwards — it is diagnostic only.
@@ -86,7 +86,7 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
    slow to load as a strategy arm.
 2. Screenshot the panel (top right by default; there's a position input). The header must
-   read `QUANTUM DIAGNOSTICS v17 B4`.
+   read `QUANTUM DIAGNOSTICS v18 B4`.
 3. It trades and alerts nothing. Keep it or remove it; nothing else depends on it.
 
 ---
@@ -207,7 +207,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v16`, **97** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v18`, **97** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 

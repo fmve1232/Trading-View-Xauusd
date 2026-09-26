@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v16   (dead code + 5 formula fixes)  ║
+// ║  BUILD STAMP — this file last CHANGED in v18   (calBrier + complements back)  ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -3174,8 +3174,10 @@ int oMatch = 0
 // R5.3 deliberately removed it from fAdj because it re-used the same historical DB already
 // blended elsewhere — showing it does not reintroduce that double-count.)
 int oPdh1stPct = na
+int oPdl1stPct = na
 float oMaxAdverseATR = na
 float oBosCont = 50.0
+float oBosFail = 50.0
 string oCalDetail = ""
 int oEvLabel = na
 float oEvVal = 0.0
@@ -3205,6 +3207,7 @@ runStatsEngines() =>
     var float _cRange = 0.0
     var int _cMatch = 0
     var int _cPdh1stPct = na
+    var int _cPdl1stPct = na
     var float _cEvVal = 0.0
     var int _cEvLabel = na
     var float _cWr = 50.0
@@ -3221,6 +3224,7 @@ runStatsEngines() =>
     var float _cCalBrier = na
     var string _cCalDetail = ""
     var float _cBosCont = 50.0
+    var float _cBosFail = 50.0
     var float _cRegPer = 50.0
     var float _cFeatStr = na
     var float _cFeatHtf = na
@@ -4057,7 +4061,7 @@ runStatsEngines() =>
     if not showStatsEngine or hN <= OUTCOME_N * 2
         [50.0, 50.0, 0.0, 0, int(na), int(na), 0.0, int(na), 50.0, 0.5, 1.0, 0, "N/A", float(na), "", 50.0, 50.0, 50.0, float(na), float(na), float(na), float(na), float(na), float(na), float(na), 0.0, 50.0, 0, 50.0, 0, 0.5, 1.0]
     else if not barstate.isconfirmed or (chartTFSeconds < 300 and not barstate.islast) or not (_cec % _rb == 0 or barstate.islast) or _rsp > 0
-        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
+        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cPdl1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cBosFail, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
     else
         // F-009: RATIOS now use the weighted sums (wb/wt); GATES and the displayed
         // A-count deliberately still use the raw integer counts, so "mt >= 3" still means
@@ -4076,6 +4080,7 @@ runStatsEngines() =>
             _cMatch := mt
         if pT >= 3
             _cPdh1stPct := int(math.round((wpT > 0 ? wp1 / wpT : p1 * 1.0 / pT) * 100.0))
+            _cPdl1stPct := 100 - _cPdh1stPct
         if mt / math.max(OUTCOME_N, 1) >= 10  // Q6.8: EFFECTIVE N, was raw mt >= 5 (~1 independent obs) and (wc > 0 or lc > 0)
             float wr = wt > 0 ? wb / wt : mb * 1.0 / mt
             float lr = wt > 0 ? wbr / wt : mbr * 1.0 / mt
@@ -4100,6 +4105,7 @@ runStatsEngines() =>
             _cWr := wr * 100.0
             _cAvgW := wc > 0 ? sw / wc : 0.5
             _cAvgL := lc > 0 ? sl / lc : 1.0
+        float calBrier = 0.0
         int calBins = 0
         // OOS RELIABILITY CAPTURE (observability only). Every value stored below is
         // ALREADY computed in this block for the grade/Brier maths — nothing is
@@ -4112,26 +4118,31 @@ runStatsEngines() =>
             float p0 = c0s / c0t / 100.0
             calErr += math.abs(a0 * 100.0 - p0 * 100.0)
             calBins += 1
+            calBrier += (a0 - p0) * (a0 - p0) * c0t
         if c1t >= 30
             float a1 = bayesRate(c1b, c1t)
             float p1c = c1s / c1t / 100.0
             calErr += math.abs(a1 * 100.0 - p1c * 100.0)
             calBins += 1
+            calBrier += (a1 - p1c) * (a1 - p1c) * c1t
         if c2t >= 30
             float a2 = bayesRate(c2b, c2t)
             float p2c = c2s / c2t / 100.0
             calErr += math.abs(a2 * 100.0 - p2c * 100.0)
             calBins += 1
+            calBrier += (a2 - p2c) * (a2 - p2c) * c2t
         if c3t >= 30
             float a3 = bayesRate(c3b, c3t)
             float p3 = c3s / c3t / 100.0
             calErr += math.abs(a3 * 100.0 - p3 * 100.0)
             calBins += 1
+            calBrier += (a3 - p3) * (a3 - p3) * c3t
         if c4t >= 30
             float a4 = bayesRate(c4b, c4t)
             float p4 = c4s / c4t / 100.0
             calErr += math.abs(a4 * 100.0 - p4 * 100.0)
             calBins += 1
+            calBrier += (a4 - p4) * (a4 - p4) * c4t
         if calBins > 0
             float ae = calErr / calBins
             _cCalGradePct := int(math.max(0, 100.0 - ae * 2.0))
@@ -4262,6 +4273,7 @@ runStatsEngines() =>
             _cCalDetail := calDetail
         if boT >= 3
             _cBosCont := math.round(bov * 100.0 / boT)
+            _cBosFail := 100 - _cBosCont
         if rCurr == 0 and rTCnt > 0
             _cRegPer := math.round((rTCnt - rTR - rTD) * 100.0 / rTCnt)
         else if rCurr == 1 and rRCnt > 0
@@ -4319,9 +4331,9 @@ runStatsEngines() =>
             float _isWr = isMb * 100.0 / isMt
             _cIsWr := math.round(_isWr)
             _cIsN := isMt
-        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
+        [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cPdl1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cBosFail, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
 
-[__b, __be, __r, __m, __p1, __ev, __el, __wr, __aw, __al, __cp, __cg, __cb, __cd, __bc, __rp, __fs, __fh, __fl, __fm, __fc, __pf, __ma, __md, __ow, __on, __iw, __in, __awo, __alo] = runStatsEngines()
+[__b, __be, __r, __m, __p1, __p2, __ev, __el, __wr, __aw, __al, __cp, __cg, __cb, __cd, __bc, __bf, __rp, __fs, __fh, __fl, __fm, __fc, __pf, __ma, __md, __ow, __on, __iw, __in, __awo, __alo] = runStatsEngines()
 
 // Quantile-based calibration bin edges — after engine call so historical scan uses prior bins
 var int _qcec = -1
@@ -4346,8 +4358,10 @@ oBear := __be
 oRange := __r
 oMatch := __m
 oPdh1stPct := __p1
+oPdl1stPct := __p2
 oMaxAdverseATR := __ma
 oBosCont := __bc
+oBosFail := __bf
 oCalDetail := __cd
 oEvVal := __ev
 oEvLabel := __el

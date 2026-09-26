@@ -680,10 +680,15 @@ Treatment twin's engine verbatim and draws them in a panel:
 | Rolling 95% intervals (WR, OOS) | suppressed (F-037/F-A14) | shown only under the panel's "ROLL, NOT A HOLDOUT" heading |
 | Data-source census (`hDataStatus`) | **write-only** | **wired**: % of stored observations where GC / OI contributed |
 
-**Not restored, because they were not features** (no visible output in any build): the
-dashboard code copied into the strategy twins, which never draw a dashboard; `calBrier`,
-which duplicated the Brier reliability term; and two exact complements (100 − x) of values
-already shown. Any of these can be restored on request.
+**v18 — the non-features restored too (operator instruction).** The dashboard code in the
+strategy twins, `calBrier`, the two complements (`oPdl1stPct`, `oBosFail`, with their engine
+outputs and tuple slots) and the two trimmed request-tuple slots are all back. The twins are
+their v15 text plus exactly the v16 formula corrections: each formula block is byte-identical
+to the Master's. The Master's restored lines sit exactly where v15 had them (checked
+neighbour by neighbour; one statement-order slip was corrected). None of this code has a
+reader, so it cannot change any output. `deadcode.py` lists it as RETAINED
+(`audit/tools/retained.txt`, 64 names, each verified absent from v16) instead of dead; any
+dead symbol not on that list still fails.
 
 `diag_parity.py` fails if the Diagnostics engine differs from the Treatment engine by one
 code line (verified by injecting a one-character change).

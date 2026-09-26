@@ -15,6 +15,9 @@ hits that are correct and must stay:
   * bull/bearStructActive (Control arm) and regimeConfHigh (Treatment arm) -- read by
     the OTHER arm's entry gate; kept so the two arms stay identical except for the gate.
 
+RETAINED: names listed in audit/tools/retained.txt were restored on operator instruction
+(v18) and are reported separately. They do not fail the check; anything dead and NOT listed does.
+
 Usage: python3 audit/tools/deadcode.py artefacts/*.pine
 """
 import re
@@ -24,6 +27,8 @@ sys.path.insert(0, os.path.dirname(__file__))
 import trace as T
 
 WR = re.compile(r'array\.(set|fill|push|clear|unshift|insert|remove|shift|pop)\s*\(\s*([A-Za-z_]\w*)')
+_rt = os.path.join(os.path.dirname(__file__), 'retained.txt')
+RETAINED = set(l.strip() for l in open(_rt) if l.strip() and not l.startswith('#')) if os.path.exists(_rt) else set()
 STRUCTURAL = {'_diPV', '_diMV', 'bullStructActive', 'bearStructActive', 'regimeConfHigh'}
 
 total = 0
@@ -58,8 +63,9 @@ for p in sys.argv[1:]:
         n = sum(len(re.findall(r'(?<![\w.])' + re.escape(f) + r'\s*\(', l)) for l in lines)
         if n <= 1:
             hits.append(('UNCALLED-FUNC', f, ln, False))
-    real = [h for h in hits if not h[3]]
-    print(f"{os.path.basename(p)}: {len(real)} dead, {len(hits) - len(real)} structural")
+    kept = [h for h in hits if not h[3] and h[1] in RETAINED]
+    real = [h for h in hits if not h[3] and h[1] not in RETAINED]
+    print(f"{os.path.basename(p)}: {len(real)} dead, {len(kept)} retained (operator instruction), {len(hits) - len(real) - len(kept)} structural")
     for h in real:
         print(f"    {h[0]:17s} {h[1]}  L{h[2]}")
     total += len(real)
