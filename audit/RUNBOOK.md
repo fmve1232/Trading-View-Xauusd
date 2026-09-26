@@ -67,7 +67,7 @@ never recorded.
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v20`. Since v20
+   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v21`. Since v20
    **failing rows are drawn first**, and a *Table text size* input (default Small) keeps them legible.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
@@ -87,10 +87,32 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
    slow to load as a strategy arm.
 2. Screenshot the panel (top right by default; there's a position input). The header must
-   read `QUANTUM DIAGNOSTICS v20 B4`. The **Gate funnel** rows show how many
+   read `QUANTUM DIAGNOSTICS v21 Q7.2 B5`. Bottom-left: the dashboard mirror (the Master's
+   dashboard values recomputed from the same engine); bottom-right: the MT5 plan. Input
+   *Engine zones overlay* draws the engine's own OB / FVG / liquidity levels to compare with
+   Visuals. The **Gate funnel** rows show how many
    historical bars pass each entry stage and how often each veto fires; send them with any
    backtest that takes few or no trades.
 3. It trades and alerts nothing. Keep it or remove it; nothing else depends on it.
+
+---
+
+## Step 2c — Alerts for manual MT5 execution (v21)
+
+One alert on the **Master** delivers everything. In TradingView choose **Create Alert**, then
+**Condition: XAUUSD Quantum 5.0 → "Any alert() function call"**, and set expiry and your
+notification channel (app / e-mail / webhook). It fires only on **closed bars**, with:
+
+| Event | Message carries |
+|---|---|
+| BUY / SELL signal | MT5 entry, SL, TP1, TP2, TP3, RR, directional P, race EV, bias, TQ, session |
+| DECISION changes (e.g. BUY → NO TRADE, WAIT → SELL) | old → new state; the MT5 plan when the new state is a trade |
+| Tracked plan hits SL or TP1 | which level (MT5 price) and the result in R |
+| Risk lock engages | the lock reason; new entries are blocked |
+
+MT5 prices use the **MT5 Price Offset** input (MT5 − TradingView). Set it from your broker's
+quote before trading. The separate "Nexus Buy/Sell Signal" and "Bull/Bear BOS" alertconditions
+remain available and are confirmed-bar gated too.
 
 ---
 
@@ -211,7 +233,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v20`, **97** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v21`, **97** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 

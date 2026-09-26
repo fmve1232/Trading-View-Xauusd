@@ -18,6 +18,13 @@ hits that are correct and must stay:
 RETAINED: names listed in audit/tools/retained.txt were restored on operator instruction
 (v18) and are reported separately. They do not fail the check; anything dead and NOT listed does.
 
+DRAWING HANDLES: a line / label / box / table variable re-assigned through a function that
+deletes and redraws it (x := f(x, ...)) is a live chart object, not a self-only accumulator.
+
+COMPANION: the strategy twins and Diagnostics.pine run the same engine verbatim
+(diag_parity.py). A twin symbol that the twin never reads but Diagnostics DOES read is wired
+through Diagnostics, and is reported as such.
+
 Usage: python3 audit/tools/deadcode.py artefacts/*.pine
 """
 import re
@@ -34,6 +41,7 @@ STRUCTURAL = {'_diPV', '_diMV', 'bullStructActive', 'bearStructActive', 'regimeC
 total = 0
 for p in sys.argv[1:]:
     res = T.analyze(p)
+    raw = open(p, encoding='utf-8').read().split('\n')
     lines = T.strip(open(p, encoding='utf-8').read())
     hits = []
     for r in res['rows']:
@@ -44,7 +52,9 @@ for p in sys.argv[1:]:
         if r['nreads'] == 0:
             tag = 'UNREAD'
         elif all(re.match(r'^\s*' + re.escape(nm) + r'\s*(:=|\+=|-=|\*=|/=)', lines[i - 1]) for i in r['reads']):
-            tag = 'SELF-ONLY'
+            decl_src = raw[(r['decl'] or [1])[0] - 1] if r['decl'] else ''
+            if not re.search(r'\b(line|label|box|table|linefill|polyline)\b', decl_src):
+                tag = 'SELF-ONLY'
         else:
             real = False
             for i in r['reads']:
@@ -54,7 +64,8 @@ for p in sys.argv[1:]:
                 if tot > w:
                     real = True
                     break
-            if not real:
+            decl_src = raw[(r['decl'] or [1])[0] - 1] if r['decl'] else ''
+            if not real and not re.search(r'\b(line|label|box|linefill|polyline)\[\]', decl_src):
                 tag = 'WRITE-ONLY-ARRAY'
         if tag:
             structural = nm.startswith('__') or nm in STRUCTURAL
@@ -63,6 +74,20 @@ for p in sys.argv[1:]:
         n = sum(len(re.findall(r'(?<![\w.])' + re.escape(f) + r'\s*\(', l)) for l in lines)
         if n <= 1:
             hits.append(('UNCALLED-FUNC', f, ln, False))
+    if 'Strategy' in os.path.basename(p):
+        _dp = os.path.join(os.path.dirname(p), 'XAUUSD_Quantum_5_0_Diagnostics.pine')
+        if os.path.exists(_dp):
+            _dr = {r['name']: r['nreads'] for r in T.analyze(_dp)['rows']}
+            _df = set(T.analyze(_dp)['funcs'])
+            _dl = T.strip(open(_dp, encoding='utf-8').read())
+            def _wired(nm):
+                if nm in _df:
+                    return sum(len(re.findall(r'(?<![\w.])' + re.escape(nm) + r'\s*\(', l)) for l in _dl) > 1
+                return _dr.get(nm, 0) > 0
+            via = [h for h in hits if not h[3] and _wired(h[1])]
+            hits = [h for h in hits if h not in via]
+            if via:
+                print(f"{os.path.basename(p)}: {len(via)} symbols wired through Diagnostics (same engine)")
     kept = [h for h in hits if not h[3] and h[1] in RETAINED]
     real = [h for h in hits if not h[3] and h[1] not in RETAINED]
     print(f"{os.path.basename(p)}: {len(real)} dead, {len(kept)} retained (operator instruction), {len(hits) - len(real) - len(kept)} structural")

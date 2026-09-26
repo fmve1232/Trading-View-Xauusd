@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v20   (WR bear-rate fix F-A28)       ║
+// ║  BUILD STAMP — this file last CHANGED in v21   (engine inputs on; MT5 alerts) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -308,13 +308,13 @@ showTradePlan = input.bool(true, "Trade Plan", group=grpModules)
 // It now reports where the feature lives, so a user toggling it is told the truth instead
 // of flipping a switch wired to nothing. The dashboard reads it via _srWhere below.
 showSR = input.bool(false, "Support / Resistance (drawn by the Visuals companion)", group=grpModules, tooltip="The S/R scanner now runs in the Visuals companion, which has the token budget for it. Enable it THERE. This switch only annotates the Master dashboard so the two files cannot disagree about who owns the feature.")
-showSignals = input.bool(false, "Signals", group=grpModules)
-showFVG = input.bool(false, "Fair Value Gaps", group=grpModules, tooltip="Legacy in-Master drawing, OFF by default. The Visuals companion draws this. Turn this ON only if running the Master ALONE — with both scripts loaded you get two overlapping sets, and the S/R algorithms differ (Master: pivot-strength scan; companion: ATR-clustered touch counts), so the two will disagree on level prices.")
-showOB = input.bool(false, "Order Blocks", group=grpModules, tooltip="Legacy in-Master drawing, OFF by default. The Visuals companion draws this. Turn this ON only if running the Master ALONE — with both scripts loaded you get two overlapping sets, and the S/R algorithms differ (Master: pivot-strength scan; companion: ATR-clustered touch counts), so the two will disagree on level prices.")
-showSMT = input.bool(false, "SMT Divergence", group=grpModules)
-showClimax = input.bool(false, "Volume Climax", group=grpModules)
+showSignals = input.bool(true, "BOS alerts", group=grpModules, tooltip="Enables the Bull/Bear BOS alertconditions (confirmed bars). An alertcondition fires only if you create an alert for it; this switch was OFF by default, so a created BOS alert never fired.")
+showFVG = input.bool(true, "Fair Value Gaps (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). FVG detection feeds trade quality, the analog zone feature and the plan. It was gated by this switch at OFF since the drawing moved to Visuals, so the decision ignored the FVGs Visuals draws. Same definition as Visuals (gap > 0.3 x ATR). Drawing is done by Visuals.")
+showOB = input.bool(true, "Order Blocks (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Order-block detection feeds SL/TP candidates, trade quality and the analog zone feature. It was gated OFF, so the decision ignored the OBs Visuals draws. Same definition as Visuals (F-A08 parity). Drawing is done by Visuals.")
+showSMT = input.bool(true, "SMT Divergence (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Gold/silver SMT divergence feeds the confluence signal count. It was gated OFF. Needs the silver feed.")
+showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax feeds the auction exhaustion read. It was gated OFF.")
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
-showDisplacement = input.bool(false, "Displacement Candles", group=grpModules)
+showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
 showStatsEngine = input.bool(true, "Statistical Engines", group=grpModules)
 
@@ -2947,7 +2947,9 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 // change what the gate acts on, so exported trades must be separable by build.
 // v16: 3 -> 4. Berkson-weighted calibration fits and the inverted Cornish-Fisher z-score
 // (an analog feature via mrComposite) change what the gate acts on.
-int SCHEMA_BUILD = 4
+// v21: 4 -> 5. OB / FVG / displacement / SMT / climax are engine inputs again (F-A30), which
+// changes which trades fire; exports from B4 and B5 must never be pooled.
+int SCHEMA_BUILD = 5
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
 var int[] hSchemaVer = array.new_int(HIST_MAX, 1)
 var int migV2Count = 0
@@ -4106,6 +4108,7 @@ runStatsEngines() =>
             _cAvgW := wc > 0 ? sw / wc : 0.5
             _cAvgL := lc > 0 ? sl / lc : 1.0
         float calBrier = 0.0
+        float calN = 0.0
         int calBins = 0
         // OOS RELIABILITY CAPTURE (observability only). Every value stored below is
         // ALREADY computed in this block for the grade/Brier maths — nothing is
@@ -4119,30 +4122,35 @@ runStatsEngines() =>
             calErr += math.abs(a0 * 100.0 - p0 * 100.0)
             calBins += 1
             calBrier += (a0 - p0) * (a0 - p0) * c0t
+            calN += c0t
         if c1t >= 30
             float a1 = bayesRate(c1b, c1t)
             float p1c = c1s / c1t / 100.0
             calErr += math.abs(a1 * 100.0 - p1c * 100.0)
             calBins += 1
             calBrier += (a1 - p1c) * (a1 - p1c) * c1t
+            calN += c1t
         if c2t >= 30
             float a2 = bayesRate(c2b, c2t)
             float p2c = c2s / c2t / 100.0
             calErr += math.abs(a2 * 100.0 - p2c * 100.0)
             calBins += 1
             calBrier += (a2 - p2c) * (a2 - p2c) * c2t
+            calN += c2t
         if c3t >= 30
             float a3 = bayesRate(c3b, c3t)
             float p3 = c3s / c3t / 100.0
             calErr += math.abs(a3 * 100.0 - p3 * 100.0)
             calBins += 1
             calBrier += (a3 - p3) * (a3 - p3) * c3t
+            calN += c3t
         if c4t >= 30
             float a4 = bayesRate(c4b, c4t)
             float p4 = c4s / c4t / 100.0
             calErr += math.abs(a4 * 100.0 - p4 * 100.0)
             calBins += 1
             calBrier += (a4 - p4) * (a4 - p4) * c4t
+            calN += c4t
         if calBins > 0
             float ae = calErr / calBins
             _cCalGradePct := int(math.max(0, 100.0 - ae * 2.0))
@@ -4270,7 +4278,9 @@ runStatsEngines() =>
             else if c0t >= 30
                 float a0r = math.round(bayesRate(c0b, c0t) * 100.0)
                 calDetail := "P" + str.tostring(int(c0s / c0t)) + ">" + str.tostring(int(a0r)) + "%"
-            _cCalDetail := calDetail
+            // v21: calBrier (sum of n x (observed - predicted)^2 over the N>=30 buckets) is wired as the
+            // n-weighted RMS calibration error, the root of its mean, shown with the calibration detail.
+            _cCalDetail := calDetail + (calN > 0 ? " rmsCE" + str.tostring(math.sqrt(calBrier / calN) * 100.0, "#") + "%" : "")
         if boT >= 3
             _cBosCont := math.round(bov * 100.0 / boT)
             _cBosFail := 100 - _cBosCont
@@ -4864,6 +4874,8 @@ if not na(rkEntry) and barstate.isconfirmed
     bool _rkTp = rkLong ? high >= rkTP : low <= rkTP
     if _rkSl or _rkTp
         float _rkRes = _rkSl ? -1.0 : math.min(math.abs(rkTP - rkEntry) / _rkR, 5.0)
+        if not perfMode
+            alert("XAUUSD " + timeframe.period + " tracked " + (rkLong ? "BUY" : "SELL") + (_rkSl ? " STOPPED at SL " : " reached TP1 ") + str.tostring((_rkSl ? rkSL : rkTP) + mt5Offset, "#.##") + " (MT5) = " + str.tostring(_rkRes, "#.##") + "R", alert.freq_once_per_bar_close)
         rkDayR := rkDayR + _rkRes
         rkConsec := _rkRes < 0 ? rkConsec + 1 : 0
         rkEntry := na
@@ -5047,7 +5059,7 @@ string _vaStr = vaPos != "—" ? "  VA" + vaPos + str.tostring(int(vaRatio)) + "
 //             tells you whether a stop is inside the historical noise band.
 //   BOScont — BOS continuation rate. DISPLAY ONLY: R5.3 removed it from fAdj to kill a
 //             double-count, and it must never be fed back into a score.
-string _analytics = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "%" : ""
+string _analytics = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "/PDL" + str.tostring(oPdl1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "/fail" + str.tostring(int(oBosFail)) + "%" : ""
 // showSR consumer: annotates the readout when the user has toggled the Master switch for a
 // feature that now lives in the companion, so the control is wired to something truthful.
 string _srWhere = showSR ? "  SR@Visuals" : ""
@@ -5700,16 +5712,30 @@ if showDashboard and barstate.islast
 // THE ENGINE IS UNTOUCHED. Detection still runs here and still feeds the decision path —
 // obBullActive / obBullLow / obBullHigh / obBearActive continue to supply the SL/TP
 // candidate arrays and the liquidity map exactly as before. Only the drawing left.
+// F-A30 (v21) CORRECTION: that was not true at default settings. Detection was gated by
+// showOB / showFVG / showDisplacement (and SMT / Climax by their switches), all OFF by
+// default, so the decision ignored the zones Visuals draws. They are engine inputs again,
+// default ON, with the same definitions Visuals uses.
 
 // Shared label cleaner helper
 // Helper: apply vertical offset bidirectionally (push up OR down, whichever is closer to base)
 // R5-F12: alertcondition messages use only valid built-in placeholders; the dynamic
 // alert() calls below carry the full bias detail.
-alertcondition(shouldBuy and not tqVeto and not perfMode, title="Nexus Buy Signal", message="XAUUSD {{ticker}} {{interval}}: BUY signal @ {{close}}")
-alertcondition(shouldSell and not tqVeto and not perfMode, title="Nexus Sell Signal", message="XAUUSD {{ticker}} {{interval}}: SELL signal @ {{close}}")
+// F-A31 (v21): the two alertconditions were not confirmed-bar gated -- with "Once per bar"
+// they could fire mid-candle on a signal gone by the close. The alert() texts now carry the
+// MT5-adjusted plan (entry / SL / TP1-3), directional P and race EV, for manual execution.
+alertcondition(shouldBuy and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Buy Signal", message="XAUUSD {{ticker}} {{interval}}: BUY signal @ {{close}}")
+alertcondition(shouldSell and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Sell Signal", message="XAUUSD {{ticker}} {{interval}}: SELL signal @ {{close}}")
+string _mt5Plan = "MT5 entry " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str + " TP3 " + tp3Str + " (" + tpRRStr + ") P" + str.tostring(math.round((tpIsLong ? _calPLong : _calPShort) * 100.0)) + "% EV" + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##") + "R")
 if shouldBuy and not tqVeto and barstate.isconfirmed and not perfMode
-    alert("XAUUSD BUY @ " + str.tostring(close, "#.##") + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar)
+    alert("XAUUSD " + timeframe.period + " BUY | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar_close)
 if shouldSell and not tqVeto and barstate.isconfirmed and not perfMode
-    alert("XAUUSD SELL @ " + str.tostring(close, "#.##") + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar)
+    alert("XAUUSD " + timeframe.period + " SELL | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar_close)
 alertcondition(showSignals and barstate.isconfirmed and bullBOS and not perfMode, "Bull BOS", "XAUUSD Bull BOS @ {{close}}")
 alertcondition(showSignals and barstate.isconfirmed and bearBOS and not perfMode, "Bear BOS", "XAUUSD Bear BOS @ {{close}}")
+// v21: every CONFIRMED change of the DECISION cell raises an alert (e.g. BUY -> NO TRADE when a
+// veto engages, WAIT -> SELL), carrying the MT5 plan when the new state is a trade.
+if barstate.isconfirmed and not perfMode and _confDirLabel != _confDirLabel[1]
+    alert("XAUUSD " + timeframe.period + " DECISION " + _confDirLabel[1] + " -> " + _confDirLabel + (_confDirLabel == "BUY" or _confDirLabel == "SELL" ? " | " + _mt5Plan : _confDirLabel == "RISK LOCK" ? " | " + riskLockStr : ""), alert.freq_once_per_bar_close)
+if barstate.isconfirmed and not perfMode and useRiskLimits and riskLock and not riskLock[1]
+    alert("XAUUSD " + timeframe.period + " RISK LOCK engaged: " + riskLockStr + " -- new entries blocked", alert.freq_once_per_bar_close)

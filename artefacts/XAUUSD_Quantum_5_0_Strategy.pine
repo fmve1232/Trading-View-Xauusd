@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v20   (backtest all bars F-A29)      ║
+// ║  BUILD STAMP — this file last CHANGED in v21   (engine inputs on; wired)      ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -360,12 +360,12 @@ color C_TEXT = color.white
 // MODULE TOGGLES (reduced)
 grpModules = "MODULES"
 perfMode = input.bool(false, "Institutional Performance Mode", group=grpModules)
-showFVG = input.bool(false, "Fair Value Gaps", group=grpModules, tooltip="Legacy in-Master drawing, OFF by default. The Visuals companion draws this. Turn this ON only if running the Master ALONE — with both scripts loaded you get two overlapping sets, and the S/R algorithms differ (Master: pivot-strength scan; companion: ATR-clustered touch counts), so the two will disagree on level prices.")
-showOB = input.bool(false, "Order Blocks", group=grpModules, tooltip="Legacy in-Master drawing, OFF by default. The Visuals companion draws this. Turn this ON only if running the Master ALONE — with both scripts loaded you get two overlapping sets, and the S/R algorithms differ (Master: pivot-strength scan; companion: ATR-clustered touch counts), so the two will disagree on level prices.")
-showSMT = input.bool(false, "SMT Divergence", group=grpModules)
-showClimax = input.bool(false, "Volume Climax", group=grpModules)
+showFVG = input.bool(true, "Fair Value Gaps (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). FVG detection feeds trade quality, the analog zone feature and the plan. It was gated by this switch at OFF since the drawing moved to Visuals, so the decision ignored the FVGs Visuals draws. Same definition as Visuals (gap > 0.3 x ATR). Drawing is done by Visuals.")
+showOB = input.bool(true, "Order Blocks (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Order-block detection feeds SL/TP candidates, trade quality and the analog zone feature. It was gated OFF, so the decision ignored the OBs Visuals draws. Same definition as Visuals (F-A08 parity). Drawing is done by Visuals.")
+showSMT = input.bool(true, "SMT Divergence (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Gold/silver SMT divergence feeds the confluence signal count. It was gated OFF. Needs the silver feed.")
+showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax feeds the auction exhaustion read. It was gated OFF.")
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
-showDisplacement = input.bool(false, "Displacement Candles", group=grpModules)
+showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
 showForecastCone = input.bool(false, "Forecast Cone", group=grpModules)
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
 forecastZ = input.float(2.0, "Forecast Band (Z multiple of ATR)", minval=1.0, maxval=3.0, step=0.1, group="V17 PREDICTIVE ENHANCEMENTS")
@@ -2470,18 +2470,26 @@ if bearScore > 95.0
 // HISTORICAL ANALOG ANALYSIS (Part 6) — outputs populated below from stats engine
 
 // SCENARIO ANALYSIS — WHAT-IF ENGINE (Part 8)
+// v21: the factors are published (wi*, clamped [10, 90] as the R5.1 note specifies) and shown
+// by the Diagnostics panel, which runs this engine. na when the scenario does not apply.
+float wiPdhCont = na
+float wiPdlCont = na
+float wiVwapHold = na
+float wiVwapFail = na
 if not na(poolPdH)
     float pdhContFactor = 50.0
     pdhContFactor += bullTrend ? 15.0 : bearTrend ? -10.0 : 0.0
     pdhContFactor += htfBullScoreGate ? 12.0 : htfBearScoreGate ? -8.0 : 0.0
     pdhContFactor += macroStrengthScore > 0 ? 10.0 : macroStrengthScore < 0 ? -10.0 : 0.0
     pdhContFactor += adxVal > adxThreshold ? 5.0 : 0.0
+    wiPdhCont := math.min(math.max(pdhContFactor, 10.0), 90.0)
 if not na(poolPdL)
     float pdlContFactor = 50.0
     pdlContFactor += bearTrend ? 15.0 : bullTrend ? -10.0 : 0.0
     pdlContFactor += htfBearScoreGate ? 12.0 : htfBullScoreGate ? -8.0 : 0.0
     pdlContFactor += macroStrengthScore < 0 ? 10.0 : macroStrengthScore > 0 ? -10.0 : 0.0
     pdlContFactor += adxVal > adxThreshold ? 5.0 : 0.0
+    wiPdlCont := math.min(math.max(pdlContFactor, 10.0), 90.0)
 // VWAP hold/fail scenarios
 float vwapDist = math.abs(distVwapATR)
 if vwapDist < 1.0 and not na(vwapVal)
@@ -2502,6 +2510,8 @@ if vwapDist < 1.0 and not na(vwapVal)
     failFactor += adxVal > adxThreshold ? 5.0 : 0.0
     failFactor += vwapSlope < 0 ? 5.0 : vwapSlope > 0 ? -5.0 : 0.0
     failFactor += vwapAccel < 0 ? 3.0 : vwapAccel > 0 ? -3.0 : 0.0
+    wiVwapHold := math.min(math.max(holdFactor, 10.0), 90.0)
+    wiVwapFail := math.min(math.max(failFactor, 10.0), 90.0)
 // PDH/PDL Reach — uses rawBullScore/rawBearScore (same 8-factor weighted sum)
 float totalR = rawBullScore + rawBearScore
 float pdhReachScore = totalR > 0 ? math.round(rawBullScore / totalR * 100.0) : 50.0
@@ -2911,7 +2921,9 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 // change what the gate acts on, so exported trades must be separable by build.
 // v16: 3 -> 4. Berkson-weighted calibration fits and the inverted Cornish-Fisher z-score
 // (an analog feature via mrComposite) change what the gate acts on.
-int SCHEMA_BUILD = 4
+// v21: 4 -> 5. OB / FVG / displacement / SMT / climax are engine inputs again (F-A30), which
+// changes which trades fire; exports from B4 and B5 must never be pooled.
+int SCHEMA_BUILD = 5
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
 int barDataStatus = ((gcConfirmsBull or gcConfirmsBear) ? 1 : 0) + ((oiValid and oiConviction != 0) ? 2 : 0) + (US2Y_STATUS == 0 ? 4 : 0) + (COT_STATUS == 0 ? 8 : 0) + (GC_STATUS != 0 ? 16 : 0) + (OI_STATUS != 0 ? 32 : 0)
 var int[] hSchemaVer = array.new_int(HIST_MAX, 1)
@@ -4032,6 +4044,7 @@ runStatsEngines() =>
             _cAvgW := wc > 0 ? sw / wc : 0.5
             _cAvgL := lc > 0 ? sl / lc : 1.0
         float calBrier = 0.0
+        float calN = 0.0
         int calBins = 0
         float calErr = 0.0
         if c0t >= 30
@@ -4040,30 +4053,35 @@ runStatsEngines() =>
             calErr += math.abs(a0 * 100.0 - p0 * 100.0)
             calBins += 1
             calBrier += (a0 - p0) * (a0 - p0) * c0t
+            calN += c0t
         if c1t >= 30
             float a1 = bayesRate(c1b, c1t)
             float p1c = c1s / c1t / 100.0
             calErr += math.abs(a1 * 100.0 - p1c * 100.0)
             calBins += 1
             calBrier += (a1 - p1c) * (a1 - p1c) * c1t
+            calN += c1t
         if c2t >= 30
             float a2 = bayesRate(c2b, c2t)
             float p2c = c2s / c2t / 100.0
             calErr += math.abs(a2 * 100.0 - p2c * 100.0)
             calBins += 1
             calBrier += (a2 - p2c) * (a2 - p2c) * c2t
+            calN += c2t
         if c3t >= 30
             float a3 = bayesRate(c3b, c3t)
             float p3 = c3s / c3t / 100.0
             calErr += math.abs(a3 * 100.0 - p3 * 100.0)
             calBins += 1
             calBrier += (a3 - p3) * (a3 - p3) * c3t
+            calN += c3t
         if c4t >= 30
             float a4 = bayesRate(c4b, c4t)
             float p4 = c4s / c4t / 100.0
             calErr += math.abs(a4 * 100.0 - p4 * 100.0)
             calBins += 1
             calBrier += (a4 - p4) * (a4 - p4) * c4t
+            calN += c4t
         if calBins > 0
             float ae = calErr / calBins
             _cCalGradePct := int(math.max(0, 100.0 - ae * 2.0))
@@ -4191,7 +4209,9 @@ runStatsEngines() =>
             else if c0t >= 30
                 float a0r = math.round(bayesRate(c0b, c0t) * 100.0)
                 calDetail := "P" + str.tostring(int(c0s / c0t)) + ">" + str.tostring(int(a0r)) + "%"
-            _cCalDetail := calDetail
+            // v21: calBrier (sum of n x (observed - predicted)^2 over the N>=30 buckets) is wired as the
+            // n-weighted RMS calibration error, the root of its mean, shown with the calibration detail.
+            _cCalDetail := calDetail + (calN > 0 ? " rmsCE" + str.tostring(math.sqrt(calBrier / calN) * 100.0, "#") + "%" : "")
         if boT >= 3
             _cBosCont := math.round(bov * 100.0 / boT)
             _cBosFail := 100 - _cBosCont
@@ -4831,6 +4851,9 @@ tqVeto := tqVeto or (useRiskLimits and riskLock)
 // analogs are clearing the similarity threshold — a different problem with a different
 // fix, and one that was previously indistinguishable from simply needing more bars.
 bool _statsWarm = not showStatsEngine or (hN > OUTCOME_N * 2 and oOosNeff >= 10)
+// v21: history-gate hint, identical to the Master's, so the dashboard builder matches it.
+int _histFloor = OUTCOME_N * 3 + 50
+string _histGate = hN > 0 ? "" : "  HIST-GATE[" + (perfMode ? "PERF-MODE-ON!" : "perf:ok") + " " + (showStatsEngine ? "stats:ok" : "STATS-ENGINE-OFF!") + " bars:" + str.tostring(bar_index) + "/" + str.tostring(_histFloor) + (bar_index > _histFloor ? ":ok" : ":TOO-FEW-BARS!") + " N" + str.tostring(hN) + "]"
 var string _confDirLabel = "WAIT"
 if barstate.isconfirmed
     // FIX: _rkBlocked/_tqBlocked are LOCAL to f_dashData1() (defined far later in the
@@ -4992,7 +5015,7 @@ f_dashData1() =>
     // probability. The only genuinely probability-like figures on screen are the
     // analog "~X%" hit rates in the trade plan panel, which carry the "~" precisely
     // to mark them as empirical estimates with a stated sample.
-    string _dirConfLabel = _confDirLabel == "RISK LOCK" ? riskLockStr : _confDirLabel == "BUY" ? "BUY " + str.tostring(confidenceScore) + "/100" : _confDirLabel == "SELL" ? "SELL " + str.tostring(confidenceScore) + "/100" : _confDirLabel == "NO TRADE" ? "NO TRADE Q" + str.tostring(tradeQuality) : _confDirLabel == "WARMUP" ? "WARMUP " + str.tostring(oOosNeff) + "/10eff " + str.tostring(int(math.min(math.max(hN * 100.0 / math.max(OUTCOME_N * 2 + 1, 1), 0.0), 100.0))) + "%hist" : "WAIT"
+    string _dirConfLabel = _confDirLabel == "RISK LOCK" ? riskLockStr : _confDirLabel == "BUY" ? "BUY " + str.tostring(confidenceScore) + "/100" : _confDirLabel == "SELL" ? "SELL " + str.tostring(confidenceScore) + "/100" : _confDirLabel == "NO TRADE" ? "NO TRADE Q" + str.tostring(tradeQuality) : _confDirLabel == "WARMUP" ? "WARMUP " + str.tostring(oOosNeff) + "/10eff " + str.tostring(int(math.min(math.max(hN * 100.0 / math.max(OUTCOME_N * 2 + 1, 1), 0.0), 100.0))) + "%hist" + _histGate : "WAIT"
     color _dirBg = _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : cBloomNeut
     // Bias score (ordinal)
     int _bullPct = int(bullScore)
@@ -5037,8 +5060,11 @@ f_dashData1() =>
     if showStatsEngine and oOosNeff >= 10 and not na(oOosWr) and not na(oAvgW) and not na(oAvgL) and oAvgL > 0
         // Q5.0-S1: p = Wilson 95% LOWER bound at EFFECTIVE sample size (overlap-corrected
         // N/OUTCOME_N) — self-shrinks toward no-bet when the independent sample is thin.
-        float _nEffK = math.max(oOosN / OUTCOME_N, 1.0)
-        float _pHatK = oOosWr / 100.0
+        float _brK = nz(array.get(gOosBearWr, 0), 100.0 - oOosWr) / 100.0
+        float _pWinK = tpIsLong ? oOosWr / 100.0 : _brK
+        float _pResK = oOosWr / 100.0 + _brK
+        float _nEffK = math.max(oOosN * _pResK / OUTCOME_N, 1.0)
+        float _pHatK = _pResK > 0 ? _pWinK / _pResK : 0.5
         float _zWK = 1.96
         float _wDenK = 1.0 + _zWK * _zWK / _nEffK
         float _wCtrK = (_pHatK + _zWK * _zWK / (2.0 * _nEffK)) / _wDenK

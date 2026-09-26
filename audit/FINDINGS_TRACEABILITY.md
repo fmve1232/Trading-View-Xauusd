@@ -55,6 +55,8 @@
 | F-A27 | MEDIUM | `PRES` | EdgeCases A3/A6 asserted the pre-F-021 rounded categories and FAILED on the chart (engine correct) — **FIXED v20** |
 | F-A28 | P2 | `PRES` | Dashboard "WR" for a bearish bias was 1 − P(bull) = "bear OR timeout" (showed 80% on a ~20% chart) — **FIXED v20** (bear rate) |
 | F-A29 | **P0** | `BUG` | Strategy entries required `recentBars` (last 120 bars): the backtest could only trade the final ~5 days, so it took 0 trades — **FIXED v20** (switchable, default all bars) |
+| F-A30 | **P0** | `BUG` | OB, FVG, displacement, SMT and climax DETECTION were gated by display toggles defaulting OFF: the decision ignored the zones Visuals draws, and half the entry trigger was disabled — **FIXED v21** (engine inputs, default ON) |
+| F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
 | F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
@@ -719,6 +721,43 @@ also exposed three defects:
   categories that F-021 removed; the engine is right. Fixed, and failing rows now render
   first at a readable size, because the third failure was below the visible part of the
   screenshot and is still unidentified.
+
+---
+
+## F-A30, F-A31 and the v21 wiring pass *(FIXED v21)*
+
+**F-A30 (P0), the chart and the decision disagreed.** In the Master (and the engine copies)
+`showOB`, `showFVG`, `showDisplacement`, `showSMT` and `showClimax` gate **detection**, not
+drawing, and all default OFF. That has been so since v1: the comment claiming "detection still
+runs and feeds the decision path" was untrue at defaults. Consequences:
+- displacement, half of the entry trigger (`bullStructActive or displacementUp`), never fired;
+- no order block ever formed (its onset is a displacement), so none reached the SL/TP
+  candidates, trade quality or the analog zone feature;
+- FVGs were ignored.
+
+Meanwhile Visuals draws OBs and FVGs by default, with the same definitions. The toggles are
+now engine inputs defaulting ON, with the same definitions as Visuals (checked: OB onset,
+displacement thresholds, FVG size). `SCHEMA_BUILD` 4 → 5.
+
+**Checked identical, Master vs Visuals:** the NY-17:00 day roll behind PDH/PDL (28 code lines,
+0 differences); daily/weekly/monthly VWAP; BB(20) basis; monthly high/low request.
+
+**F-A31, alerts for manual MT5 execution.** Details in `RUNBOOK.md` Step 2c.
+
+**Wiring pass.** Every name retained in v18 is now wired:
+- Master: `oPdl1stPct` and `oBosFail` shown beside their partners; `calBrier` becomes the
+  n-weighted RMS calibration error in the calibration detail (engine, all copies).
+- Strategy twins: the dashboard builder, table helpers, display strings, layout inputs and
+  drawing handles are wired through Diagnostics, which runs the same engine verbatim. That
+  gives a dashboard mirror, an MT5 plan table, cross-check rows, and an engine-zones overlay
+  (OB/FVG handles, and S/R containers filled with the engine's scored liquidity pools).
+- The twins' dashboard builder was brought in line with the Master's (the v16 Kelly fix and
+  the history-gate hint).
+- The what-if factors are published by the engine instead of recomputed by the panel.
+
+`deadcode.py` now counts drawing handles redrawn via delete/new as live. It also treats a twin
+symbol read by Diagnostics as wired through the companion. Result: 0 dead, 0 retained in all
+six files; `retained.txt` is empty.
 
 ---
 

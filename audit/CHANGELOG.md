@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v20
+# Build changelog — v1 → … → v21
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -817,3 +817,19 @@ Visuals move is needed. The arms show only `barstate.islast` warnings, which are
   vetoes → PASS).
 
 The strategy arms will now trade history. Compile of v20 NOT RUN.
+
+---
+
+# Build v20 → v21 — decision, alerts, chart parity, full wiring (F-A30, F-A31)
+
+- **F-A30 (P0):** OB / FVG / displacement / SMT / climax detection is on by default as engine
+  inputs (Master and both arms, identically). The decision now sees the zones Visuals
+  draws. **Changes which trades fire**; `SCHEMA_BUILD` 5.
+- **F-A31:** alerts are confirmed-bar only and MT5-ready: plan with MT5 prices, P, EV. New:
+  decision-change, tracked SL/TP1, risk-lock alerts. BOS alerts on by default.
+- **Wiring:** every retained name is wired (see FINDINGS). The Diagnostics panel gains a
+  dashboard mirror, an MT5 plan table, cross-check rows and an engine-zones overlay; the
+  twins' dashboard builder matches the Master's.
+- **Parity verified:** NY day roll (PDH/PDL) identical in Master and Visuals; OB and FVG
+  definitions identical.
+- **Estimates:** Master ~97,700, Diagnostics ~94,200, twins ~85,900. Compile NOT RUN.

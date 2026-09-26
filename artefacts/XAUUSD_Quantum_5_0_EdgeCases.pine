@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v20   (A3/A6 fixed; fails first)     ║
+// ║  BUILD STAMP — this file last CHANGED in v21   (citations re-anchored)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -101,7 +101,7 @@ if barstate.islastconfirmedhistory
     chk("A12 int(-0.5) truncates toward zero", i(int(-0.5)), "0", "NUM")
 
 // =============================================================================
-// GROUP B — SL/TP RACE  (Master L3087, guarded by `if _oR > 0` at L3084)
+// GROUP B — SL/TP RACE  (Master L3089, guarded by `if _oR > 0` at L3086)
 //   _oRes := low[k] <= ent - R ? -1 : high[k] >= ent + R ? 1 : 0
 // SL is tested FIRST, so a bar touching both resolves to LOSS.
 // DESIGN, not BUG: Pine cannot order intrabar events without lower-timeframe data.
@@ -122,8 +122,8 @@ if barstate.islastconfirmedhistory
 
 // =============================================================================
 // GROUP C — TIMEOUT ACCOUNTING INCONSISTENCY
-// Calibration bins (L3882 c*t / L3885 c*b): oc==0 increments the TOTAL but never the WIN.
-// Expectancy (L3757 frAdj, L3783 timeout branch): SINCE v7 (F-A10) a timeout IS charged --
+// Calibration bins (L3884 c*t / L3887 c*b): oc==0 increments the TOTAL but never the WIN.
+// Expectancy (L3759 frAdj, L3785 timeout branch): SINCE v7 (F-A10) a timeout IS charged --
 // `st += frAdj` accumulates its signed cost-adjusted return. v6 of this harness still
 // asserted the pre-F-A10 behaviour (C3 "timeout charged ZERO cost") and PASSED, because it
 // tested its own model of the Master, not the Master. Corrected in v14: costCharged()
@@ -159,7 +159,7 @@ if barstate.islastconfirmedhistory
     chk("D6  shrink weakens as N grows",       b(bayesRate(0, 1000) < bayesRate(0, 30)), "true", "STAT")
 
 // =============================================================================
-// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L4116, and the Platt bin gate at L4163)
+// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L4119, and the Platt bin gate at L4171)
 // =============================================================================
 bucketQualifies(int _n) => _n >= 30
 
@@ -167,12 +167,12 @@ if barstate.islastconfirmedhistory
     chk("E1  N=29 rejected", b(bucketQualifies(29)), "false", "PRES")
     chk("E2  N=30 accepted", b(bucketQualifies(30)), "true",  "PRES")
     chk("E3  N=31 accepted", b(bucketQualifies(31)), "true",  "PRES")
-    // Platt fit needs >= 3 qualifying bins (fit block L4177-4185). 2 bins must NOT fit.
+    // Platt fit needs >= 3 qualifying bins (fit block L4185-4193). 2 bins must NOT fit.
     chk("E4  2 qualifying bins -> no fit", b(2 >= 3), "false", "STAT")
     chk("E5  3 qualifying bins -> fit ok", b(3 >= 3), "true",  "STAT")
 
 // =============================================================================
-// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4177-4185; bear fit L4215-4217)
+// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4185-4193; bear fit L4223-4225)
 //   slope clamped [0.02, 0.25]; intercept clamped [-1, 1];
 //   fit REJECTED when slope <= 0; variance guard _pfVr > 1e-6
 // =============================================================================
@@ -196,7 +196,7 @@ if barstate.islastconfirmedhistory
     chk("F11 slopes 0.5 and 0.9 collapse to one value", b(slopeClamp(0.5) == slopeClamp(0.9)), "true", "NUM")
 
 // =============================================================================
-// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4574, clamp L4575)  _calP clamped [0.05, 0.95]
+// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4584, clamp L4585)  _calP clamped [0.05, 0.95]
 // A calibrated probability can NEVER be reported below 5% or above 95%.
 // =============================================================================
 probClamp(float _p) => math.min(math.max(_p, 0.05), 0.95)
@@ -262,8 +262,8 @@ if barstate.islastconfirmedhistory
 
 // =============================================================================
 // GROUP K — v14 RACE LABEL, EXPECTANCY AND CONDITIONAL GATE  (F-A16..F-A19)
-//   race outcome  L3110-3115   encode L3116   decode L3840   grid interp L2607
-//   expectancy L2833   F-A18 clamp L4630   conditional gate L4832   bear fit L4215-4217
+//   race outcome  L3112-3117   encode L3118   decode L3842   grid interp L2607
+//   expectancy L2833   F-A18 clamp L4640   conditional gate L4842   bear fit L4223-4225
 // =============================================================================
 raceOut(int _tStop, int _tTp) => _tStop < 9999 and _tStop <= _tTp ? 2 : _tTp < 9999 ? 1 : 0
 raceEnc(int _a, int _b, int _c, int _d, int _e, int _f) => _a + 3 * _b + 9 * _c + 27 * _d + 81 * _e + 243 * _f
@@ -304,7 +304,7 @@ if barstate.islastconfirmedhistory
     chk("K20 bear slope -0.9 -> -0.25",       f(bearSlope(-0.9)), "-0.25", "NUM")
 
 // =============================================================================
-// GROUP L — v16 FORMULA CORRECTIONS  (Kelly L5261-5274, Cornish-Fisher inverse L821-831)
+// GROUP L — v16 FORMULA CORRECTIONS  (Kelly L5273-5286, Cornish-Fisher inverse L821-831)
 //   Kelly with timeouts: f* = (p b - q) / (b (p + q)). Cornish-Fisher is INVERTED by
 //   Newton's method, so an observed standardised return maps to its normal-equivalent.
 // =============================================================================
@@ -356,7 +356,7 @@ if barstate.islastconfirmedhistory
     for _q = 0 to (_n > 0 ? _n - 1 : 0)
         if not array.get(tPass, _q)
             _fail += 1
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v20", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v21", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
