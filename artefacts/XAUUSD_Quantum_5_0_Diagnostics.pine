@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v21   (retained code wired)          ║
+// ║  BUILD STAMP — this file last CHANGED in v22   (free-plan volume check)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5438,6 +5438,22 @@ if dgZones and obBearActive and not obBearActive[1]
         line.delete(array.shift(bearOBHistLowA))
         line.delete(array.shift(bearOBHistHighA))
 
+// ---- 12. VOLUME SOURCE CHECK (free TradingView plan, v22) ------------------------------
+// OANDA XAUUSD is spot OTC: its volume is TICK volume (price changes), the only real-time
+// volume a free plan has. COMEX GC1! carries real exchange volume, delayed ~10 min on a free
+// plan. The engine already fetches GC1!'s PREVIOUS-bar volume (_gcVol). Pairing it with the
+// chart's previous-bar tick volume compares two COMPLETE bars, so the delay does not bias the
+// comparison on charts of 30M and up (below that the previous GC bar may still be incomplete).
+//   corr    -- Pearson correlation of the two over the last 100 closed bars: how far the
+//              tick-volume filters (displacement, climax, CVD) can be trusted as real volume.
+//   confirm -- the PREVIOUS bar's displacement, checked against real COMEX volume expansion
+//              (engine's gcVolExp). Available one bar late, by construction.
+// Display only: nothing here feeds a gate. The GOOD / PARTIAL / WEAK words are reading aids
+// for the correlation, not thresholds of the strategy.
+float dgVolCorr = gcValid ? ta.correlation(volume[1], _gcVol, 100) : na
+bool dgPrevDisp = displacementUp[1] or displacementDown[1]
+string volLine = not gcValid ? "COMEX feed not valid — tick volume unverified (" + gcState + ")" : "tick vs COMEX corr(100) " + (na(dgVolCorr) ? "—" : str.tostring(dgVolCorr, "#.##") + (dgVolCorr >= 0.7 ? " GOOD" : dgVolCorr >= 0.4 ? " PARTIAL" : " WEAK")) + "  |  prev-bar displacement " + (dgPrevDisp ? (gcVolExp ? "CONFIRMED by COMEX volume" : "NOT confirmed by COMEX volume") : "none") + (timeframe.in_seconds() < 1800 ? "  |  <30M: COMEX bar may be incomplete" : "")
+
 // ---- PANEL -----------------------------------------------------------------------------
 var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 24, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 _dRow(int _r, string _k, string _v, color _c) =>
@@ -5445,7 +5461,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v21 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v22 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5467,6 +5483,7 @@ if barstate.islast
         _dRow(20, "Auction", auctionStr, _cT)
     if debugMode
         _dRow(21, "Gate booleans", xDebug, _cT)
+    _dRow(22, "Volume (free plan)", volLine, _cT)
     _dRow(14, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
 // Pine rejects an indicator with no output function call ("Script must have at least one
 // output function call"); tables do not count. Same fix as the EdgeCases harness.

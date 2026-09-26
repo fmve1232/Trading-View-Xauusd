@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v21
+# Build changelog — v1 → … → v22
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -833,3 +833,20 @@ The strategy arms will now trade history. Compile of v20 NOT RUN.
 - **Parity verified:** NY day roll (PDH/PDL) identical in Master and Visuals; OB and FVG
   definitions identical.
 - **Estimates:** Master ~97,700, Diagnostics ~94,200, twins ~85,900. Compile NOT RUN.
+
+---
+
+# Build v21 → v22 — real-volume check within a free TradingView plan
+
+Operator request: "actual" volume, liquidity and order-block data via free API keys.
+- Pine cannot make web requests, so there is no API or key route.
+- Order blocks and liquidity are price-derived patterns, not a data feed.
+- The only real volume reachable on a free plan is COMEX GC1!: delayed ~10 min, and
+  already loading on the operator's chart (Diagnostics showed GC 98%).
+
+**Diagnostics** gains a *Volume (free plan)* row:
+- the 100-bar correlation between OANDA tick volume and COMEX GC1! volume (both previous
+  bar, so both complete despite the delay);
+- whether the previous bar's displacement was backed by real COMEX volume expansion.
+
+It is display only; no engine, gate or Master change. Compile NOT RUN.
