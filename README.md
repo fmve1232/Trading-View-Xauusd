@@ -30,3 +30,15 @@ sha256sum -c audit/MANIFEST.sha256
 
 If any hash mismatches, stop and request the correct build. A finding written
 against a different build is a false record. See `audit/AUDIT_PROMPT.md` §1.
+
+## Web platform
+
+`quantum/` is a Python port of the Master engine, run on free market data by
+`.github/workflows/quantum-site.yml` and published from `site/` to GitHub Pages. Setup,
+parity notes (D-01 … D-07) and limits: [`docs/PLATFORM.md`](docs/PLATFORM.md).
+
+```sh
+pip install -r requirements.txt && python -m pytest -q tests
+python -m quantum.pipeline --synthetic --out site/data   # offline demo, labelled SYNTHETIC
+```
+

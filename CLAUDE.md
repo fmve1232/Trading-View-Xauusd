@@ -65,3 +65,16 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |
 | `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`; `race_model_check.py` / `formula_check.py` (test the maths on synthetic data, not the Pine); `deadcode.py` (unread / self-only / write-only / uncalled symbols; `retained.txt` lists code kept on operator instruction); `diag_parity.py`; `pinelimits.py` (compile-error classes the others miss, incl. "no output call"). |
+
+## Web platform (`quantum/`, `site/`)
+
+- `quantum/` ports the Master engine to Python for the GitHub Pages site. An engine change in the
+  Pine artefacts is ported to `quantum/` in the same build (and the reverse); `python -m pytest -q
+  tests` must pass, including `test_no_lookahead`.
+- The same non-negotiables apply: defaults in `quantum/config.py` are the Pine input defaults and are
+  **not tuned**. Changing any of them changes the config hash, which restarts the frozen forward
+  holdout — by design.
+- Deliberate differences from Pine are listed in `docs/PLATFORM.md` (D-01 … D-07). Any other
+  difference is a bug.
+- The artefact delivery rule above applies to the `.pine` files only; the site deploys itself.
+
