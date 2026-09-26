@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v12   (F-A15 calibration direction fix)║
+// ║  BUILD STAMP — this file last CHANGED in v21   (engine inputs on; MT5 alerts) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -101,7 +101,7 @@ string QVERSION = "Q7.2"
 // ═══════════════ Q5.0 MASTER (quant-audit roadmap items implemented) ═══════════════
 //  S1  Effective-N correction: overlapping OUTCOME_N-bar outcomes mean N_eff ~ N/OUTCOME_N.
 //      Kelly's p is now the Wilson 95% LOWER bound at effective N (self-shrinking with
-//      thin data); the OOS win-rate display carries a ± half-width at effective N.
+//      thin data); the ± half-width is computed but NOT displayed (F-037, F-A14).
 //  S2  mP= is now Platt-FITTED: slope/intercept estimated by weighted least squares on
 //      logit(realized frequency) vs mean bin score across calibration bins (>=3 bins of
 //      >=30 samples, positive slope required); the heuristic slope remains the
@@ -244,14 +244,14 @@ string QVERSION = "Q7.2"
 //  F22 liq hierarchy check removed (penalized normal early-week states)
 //  F23 "P=" renamed "mP=" — mapped, not fitted, probability
 // Q4.0-R5.1 traceability pass (F24): every computed value now has a consumer.
-//  Wired: QVERSION/_symStr/_tfLabel→footer; _coneStatus+_csLabel→RISK row2; avgCorrSPX→adaptive wSPX;
-//  ratePressure (yield ROC) + EURUSD ROC→macro momentum msRate; vwapSlope/vwapAccel→VWAP scenarios;
+//  Wired: QVERSION/_symStr/_tfLabel→footer; avgCorrSPX→adaptive wSPX;
+//  ratePressure (yield ROC) + EURUSD ROC→macro momentum msRate; (VWAP what-if scenarios removed v16: never read);
 //  vwapRejectBull/Bear→aligned-signal counters; climaxUp/Down→plotshape markers; cvdBull/Bear+vdK+
 //  session vol EWMA→MARKET row2; mtfAgreementHigh/Med + _htfBias→BIAS row2; calProbStr→SIGNAL row2;
 //  _structActiveBg/_macroBg/_macro2Col/_volCol/_biasCol→cell colors; per-target reach scores→TGT suffix;
 //  (dead transfer vars oPdh1stPct/oPdl1stPct/oBosFail/oCalDetail/oMaxAdverseATR/oBosCont
 //   REMOVED — their dashboard consumers no longer existed; this comment claimed otherwise.)
-//  wrCIStr→risk row2; liqHealthScore→liquidity row3; vpocPrice/vaPos/vaRatio→PRICE row3;
+//  (wrCIStr: computed, NOT rendered — F-A14); liqHealthScore→liquidity row3; vpocPrice/vaPos/vaRatio→PRICE row3;
 //  (F-A04: obBull/BearVolPct + fvgVolPctAtDetect REMOVED. They were assigned every bar and
 //   read by nothing: their OB/FVG label consumers went with the drawing layer in Q5.4-CORE,
 //   and this file now contains ZERO label.new calls. The Visuals companion draws those zones
@@ -308,16 +308,14 @@ showTradePlan = input.bool(true, "Trade Plan", group=grpModules)
 // It now reports where the feature lives, so a user toggling it is told the truth instead
 // of flipping a switch wired to nothing. The dashboard reads it via _srWhere below.
 showSR = input.bool(false, "Support / Resistance (drawn by the Visuals companion)", group=grpModules, tooltip="The S/R scanner now runs in the Visuals companion, which has the token budget for it. Enable it THERE. This switch only annotates the Master dashboard so the two files cannot disagree about who owns the feature.")
-showSignals = input.bool(false, "Signals", group=grpModules)
-showFVG = input.bool(false, "Fair Value Gaps", group=grpModules, tooltip="Legacy in-Master drawing, OFF by default. The Visuals companion draws this. Turn this ON only if running the Master ALONE — with both scripts loaded you get two overlapping sets, and the S/R algorithms differ (Master: pivot-strength scan; companion: ATR-clustered touch counts), so the two will disagree on level prices.")
-showOB = input.bool(false, "Order Blocks", group=grpModules, tooltip="Legacy in-Master drawing, OFF by default. The Visuals companion draws this. Turn this ON only if running the Master ALONE — with both scripts loaded you get two overlapping sets, and the S/R algorithms differ (Master: pivot-strength scan; companion: ATR-clustered touch counts), so the two will disagree on level prices.")
-showSMT = input.bool(false, "SMT Divergence", group=grpModules)
-showClimax = input.bool(false, "Volume Climax", group=grpModules)
+showSignals = input.bool(true, "BOS alerts", group=grpModules, tooltip="Enables the Bull/Bear BOS alertconditions (confirmed bars). An alertcondition fires only if you create an alert for it; this switch was OFF by default, so a created BOS alert never fired.")
+showFVG = input.bool(true, "Fair Value Gaps (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). FVG detection feeds trade quality, the analog zone feature and the plan. It was gated by this switch at OFF since the drawing moved to Visuals, so the decision ignored the FVGs Visuals draws. Same definition as Visuals (gap > 0.3 x ATR). Drawing is done by Visuals.")
+showOB = input.bool(true, "Order Blocks (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Order-block detection feeds SL/TP candidates, trade quality and the analog zone feature. It was gated OFF, so the decision ignored the OBs Visuals draws. Same definition as Visuals (F-A08 parity). Drawing is done by Visuals.")
+showSMT = input.bool(true, "SMT Divergence (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Gold/silver SMT divergence feeds the confluence signal count. It was gated OFF. Needs the silver feed.")
+showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax feeds the auction exhaustion read. It was gated OFF.")
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
-showDisplacement = input.bool(false, "Displacement Candles", group=grpModules)
-showForecastCone = input.bool(false, "Forecast Cone", group=grpModules)
+showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
-forecastZ = input.float(2.0, "Forecast Band (Z multiple of ATR)", minval=1.0, maxval=3.0, step=0.1, group="V17 PREDICTIVE ENHANCEMENTS")
 showStatsEngine = input.bool(true, "Statistical Engines", group=grpModules)
 
 grpLayout = "LAYOUT"
@@ -365,9 +363,6 @@ slippagePts = input.float(0.2, "Slippage (points)", minval=0.0, maxval=2.0, step
 // constants per the derivation in the twin headers.
 commissionL = input.float(7.0, "Commission per Lot (USD, round turn) [BROKER CONFIG]", minval=0.0, maxval=50.0, step=0.5, group=grpRisk, tooltip="Per-lot commission. 0 for spread-only brokers; ~$5-15 for ECN.")
 
-grpClean = "CHART CLEANUP"
-cleanInstitutional = input.bool(false, "Clean Institutional Appearance", group=grpClean)
-professionalMode = input.bool(false, "Professional Execution Mode", group=grpClean)
 holdoutRatio = input.float(0.20, "Holdout Ratio (OOS validation)", minval=0.0, maxval=0.5, step=0.05, group=grpRisk)
 useNewsSuppress = input.bool(false, "Suppress Signals on News Events", group=grpRisk, tooltip="Blocks signals during FOMC/NFP windows")
 newsSession = input.session("", "News Event Window (UTC)", group=grpRisk, tooltip="Session during which signals are suppressed, e.g. 1300-1500:4 for FOMC Wednesdays. Leave empty to disable.")
@@ -493,8 +488,6 @@ oiSymbol = input.symbol("COMEX:GC1!_OI", "Open Interest symbol (blank=off)", gro
 // Read as a PERCENTILE of its own history, not an absolute: "net long" means nothing
 // without knowing whether that is high or low for this market.
 cotEnable = input.bool(false, "CFTC COT positioning (weekly)", group=grpV17, tooltip="Managed-money net positioning as a percentile of its own history. Weekly CFTC data (Tuesday close, published Friday) — a REGIME/crowding input, never an entry trigger. OFF by default: enable after the baseline so its effect is measurable.")
-showCalReliability = input.bool(false, "Rolling reliability table (observability)", group=grpV17, tooltip="Displays the five EXISTING calibration buckets: N, predicted, observed, error, plus base rate, OOS N, calibration error and Brier. Recalculates nothing. Predicted is NOT a validated probability until an OOS reliability run demonstrates predicted matches observed.")
-enableSchemaShadowAudit = input.bool(false, "V1/V2 schema shadow audit (diagnostic)", group=grpV17, tooltip="DIAGNOSTIC ONLY. Computes the pre-GC/OI (V1) regime definition alongside the live V2 one on the SAME bar and counts where they diverge. It feeds NOTHING: no signal, no probability, no risk state, no stored observation. OFF by default so the production path is untouched.")
 cotLen = input.int(52, "  Percentile lookback (weeks)", minval=13, maxval=260, group=grpV17)
 cotExtreme = input.int(85, "  Crowding percentile", minval=60, maxval=99, group=grpV17, tooltip="Above this (or below 100-this) positioning is treated as crowded, which historically raises reversal risk rather than confirming trend.")
 
@@ -553,8 +546,6 @@ float vwapSd = ta.stdev(close - vwapVal, 20)
 float vwapUpper2 = vwapVal + vwapSd * 2.0
 float vwapLower2 = vwapVal - vwapSd * 2.0
 // VWAP slope (10-bar change) and acceleration (slope rate-of-change)
-float vwapSlope = vwapVal - nz(vwapVal[10], vwapVal)
-float vwapAccel = vwapSlope - nz(vwapSlope[5], vwapSlope)
 // VWAP rejection: price touched ±2σ band then closed back on VWAP side
 bool vwapRejectBull = low <= vwapLower2 and close > vwapVal
 // Bollinger Bands (20,2)
@@ -817,10 +808,27 @@ float retSkew = _cfValid ? (_m3 / _n - 3.0 * _mu * _m2 / _n + 2.0 * _mu * _mu * 
 float retKurt = _cfValid ? (_m4 / _n - 4.0 * _mu * _m3 / _n + 6.0 * _mu * _mu * _m2 / _n - 3.0 * _mu * _mu * _mu * _mu) / (_v * _v) - 3.0 : 0.0
 // Q5.0-S7: CF expansion inputs clamped to the monotone-validity region.
 float retSkewC = math.min(math.max(retSkew, -1.0), 1.0)
-// Cornish-Fisher expansion: Zcf = Z + (Z²-1)S/6 + (Z³-3Z)K/24 − (2Z³-5Z)S²/36
-float _z2 = retZScoreRaw * retZScoreRaw
-float _z3 = _z2 * retZScoreRaw
-float retZScore = _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 ? retZScoreRaw + (_z2 - 1.0) * retSkewC / 6.0 + (_z3 - 3.0 * retZScoreRaw) * (math.min(math.max(retKurt, -1.0), 3.0)) / 24.0 - (2.0 * _z3 - 5.0 * retZScoreRaw) * retSkewC * retSkewC / 36.0 : retZScoreRaw
+// Cornish-Fisher: q(w) = w + (w²-1)S/6 + (w³-3w)K/24 − (2w³-5w)S²/36 maps a NORMAL quantile w
+// to the quantile of the skewed / fat-tailed return distribution. retZScoreRaw is an OBSERVED
+// standardised return, i.e. a quantile of the return distribution, so its normal-equivalent is
+// the INVERSE: the w with q(w) = retZScoreRaw.
+// v16 FIX: the forward map was applied to the observed value, counting the fat tails twice.
+// Measured on a skewed, fat-tailed sample (S 0.62, K 3): at the 99th percentile the true
+// normal-equivalent is 2.33; the inverse gives 2.29, the old forward map gave 6.64.
+// Inverted exactly by Newton's method (6 steps, from w = x) rather than a truncated inverse
+// series, whose error grows with K. q'(w) is positive over the clamped (S, K) region; the 0.1
+// floor on it only guards the step.
+float _cfK = math.min(math.max(retKurt, -1.0), 3.0)
+float retZScore = retZScoreRaw
+if _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(retZScoreRaw)
+    float _w = retZScoreRaw
+    for _it = 0 to 5
+        float _w2 = _w * _w
+        float _w3 = _w2 * _w
+        float _q = _w + (_w2 - 1.0) * retSkewC / 6.0 + (_w3 - 3.0 * _w) * _cfK / 24.0 - (2.0 * _w3 - 5.0 * _w) * retSkewC * retSkewC / 36.0
+        float _dq = 1.0 + _w * retSkewC / 3.0 + (3.0 * _w2 - 3.0) * _cfK / 24.0 - (6.0 * _w2 - 5.0) * retSkewC * retSkewC / 36.0
+        _w := _w - (_q - retZScoreRaw) / math.max(_dq, 0.1)
+    retZScore := _w
 
 // Distance from VWAP, EMAs in ATR terms (mean reversion gauges)
 float distVwapATR = adaptiveATR > 0 ? (close - vwapVal) / adaptiveATR : 0.0
@@ -1329,8 +1337,9 @@ tInv(float p, int df) =>
         float z2 = z * z
         float z3 = z2 * z
         float z5 = z3 * z2
-        z := z + (z3 + z) / (4.0 * df)
-        z := z + (5.0 * z5 + 16.0 * z3 + 3.0 * z) / (96.0 * df * df)
+        // v16: both terms are evaluated at the ORIGINAL normal quantile z. The old code added
+        // the first term, then evaluated the second term's "3z" at the already-corrected z.
+        z := z + (z3 + z) / (4.0 * df) + (5.0 * z5 + 16.0 * z3 + 3.0 * z) / (96.0 * df * df)
     z
 
 // Per-window correlation significance thresholds
@@ -1894,31 +1903,8 @@ regimeComposite = int(math.round(regimeCompositeRaw))
 bool strongTrend = regimeCompositeRaw >= 70
 bool moderateTrend = regimeCompositeRaw >= 40 and regimeCompositeRaw < 70
 bool weakTrend = regimeCompositeRaw < 40
-// ===== V1/V2 SAME-BAR SHADOW — CAUSAL SENSITIVITY (DIAGNOSTIC ONLY) ==========
-// Reviewer §4 permitted "rCurrV1 = rCurrV2 - nudge" ONLY IF exactly reversible. It is NOT,
-// for three independent reasons found by tracing this exact chain:
-//   (1) CLAMP SATURATION, and it is the COMMON case. When macroBull/Bear is true the base
-//       is already 100 and the +10 nudge is clamped straight back to 100 — V2 EQUALS V1
-//       there. Subtracting 10 would report 90 and FABRICATE a divergence that never
-//       occurred, which is worse than missing one.
-//   (2) THE NUDGE IS NOT SIGNED. It is +5/+10 on conviction MAGNITUDE (either sign of
-//       oiConviction adds), so there is no symmetric term to reverse.
-//   (3) GC IS NOT ADDITIVE AT ALL. It changes the NUMERATOR (a 7th vote) and the
-//       DENOMINATOR (_macroPool 6->7, _macroNeed 3->4) and lands on a DISCRETE branch
-//       (100/60/30). No scalar subtraction can express that.
-// So V1 is computed INDEPENDENTLY below, through the same clamp, the same rounding and the
-// same 70/40 categorisation. It is read by counters only and by nothing else.
-int _mbvV1 = macroBullVotes - (gcConfirmsBull ? 1 : 0)
-int _mbrV1 = macroBearVotes - (gcConfirmsBear ? 1 : 0)
-bool _macroBullV1 = _mbvV1 >= 3
-bool _macroBearV1 = _mbrV1 >= 3
-int _macroRegimeV1 = (_macroBullV1 or _macroBearV1) ? 100 : (_mbvV1 >= 2 or _mbrV1 >= 2) ? 60 : 30
-// Categorised off the RAW float, mirroring the F-021 fix above. If the shadow kept
-// rounding while the live path stopped, the V1/V2 counters would report divergences
-// caused by the fix itself rather than by GC/OI -- contaminating the very measurement.
-float regimeCompositeRawV1 = (regimeScore * 0.30) + (volRegime * 0.15) + (structureRegime * 0.20) + (_macroRegimeV1 * 0.20) + (sessionRegime * 0.15)
-int regimeCompositeV1 = int(math.round(regimeCompositeRawV1))
-int rCurrV1 = regimeCompositeRawV1 >= 70 ? 0 : regimeCompositeRawV1 >= 40 ? 1 : 2
+// v15 (token ceiling): the V1/V2 same-bar shadow (default OFF, fed nothing) was removed
+// to bring the Master under the 100,256 compiled-token limit. Recoverable from git (v14).
 
 // VOLUME DELTA — directional bar-volume proxy (buying vs selling pressure)
 float volDelta = close > open ? volume : close < open ? -volume : 0.0
@@ -2492,40 +2478,7 @@ biasLabel = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 
 
 // HISTORICAL ANALOG ANALYSIS (Part 6) — outputs populated below from stats engine
 
-// SCENARIO ANALYSIS — WHAT-IF ENGINE (Part 8)
-if not na(poolPdH)
-    float pdhContFactor = 50.0
-    pdhContFactor += bullTrend ? 15.0 : bearTrend ? -10.0 : 0.0
-    pdhContFactor += htfBullScoreGate ? 12.0 : htfBearScoreGate ? -8.0 : 0.0
-    pdhContFactor += macroStrengthScore > 0 ? 10.0 : macroStrengthScore < 0 ? -10.0 : 0.0
-    pdhContFactor += adxVal > adxThreshold ? 5.0 : 0.0
-if not na(poolPdL)
-    float pdlContFactor = 50.0
-    pdlContFactor += bearTrend ? 15.0 : bullTrend ? -10.0 : 0.0
-    pdlContFactor += htfBearScoreGate ? 12.0 : htfBullScoreGate ? -8.0 : 0.0
-    pdlContFactor += macroStrengthScore < 0 ? 10.0 : macroStrengthScore > 0 ? -10.0 : 0.0
-    pdlContFactor += adxVal > adxThreshold ? 5.0 : 0.0
-// VWAP hold/fail scenarios
-float vwapDist = math.abs(distVwapATR)
-if vwapDist < 1.0 and not na(vwapVal)
-    float holdFactor = 50.0
-    holdFactor += bullTrend ? 12.0 : bearTrend ? -12.0 : 0.0
-    holdFactor += htfBullScoreGate ? 10.0 : htfBearScoreGate ? -10.0 : 0.0
-    holdFactor += macroStrengthScore > 0 ? 8.0 : macroStrengthScore < 0 ? -8.0 : 0.0
-    holdFactor += evLiqBull > evLiqBear ? 8.0 : -8.0
-    holdFactor += adxVal > adxThreshold ? 5.0 : 0.0
-    // R5.1: VWAP slope/acceleration wired in (small heuristic weights; clamp keeps [10,90])
-    holdFactor += vwapSlope > 0 ? 5.0 : vwapSlope < 0 ? -5.0 : 0.0
-    holdFactor += vwapAccel > 0 ? 3.0 : vwapAccel < 0 ? -3.0 : 0.0
-    float failFactor = 50.0
-    failFactor += bearTrend ? 12.0 : bullTrend ? -12.0 : 0.0
-    failFactor += htfBearScoreGate ? 10.0 : htfBullScoreGate ? -10.0 : 0.0
-    failFactor += macroStrengthScore < 0 ? 8.0 : macroStrengthScore > 0 ? -8.0 : 0.0
-    failFactor += evLiqBear > evLiqBull ? 8.0 : -8.0
-    failFactor += adxVal > adxThreshold ? 5.0 : 0.0
-    failFactor += vwapSlope < 0 ? 5.0 : vwapSlope > 0 ? -5.0 : 0.0
-    failFactor += vwapAccel < 0 ? 3.0 : vwapAccel > 0 ? -3.0 : 0.0
-// PDH/PDL Reach — uses rawBullScore/rawBearScore (same 8-factor weighted sum)
+// (v16: the what-if scenario factors below this heading were computed and never read; removed.)
 float totalR = rawBullScore + rawBearScore
 float pdhReachScore = totalR > 0 ? math.round(rawBullScore / totalR * 100.0) : 50.0
 float pdlReachScore = 100.0 - pdhReachScore
@@ -2644,9 +2597,28 @@ var float[] gHitProb = array.new<float>(8, na)
 // from 200 analogs and one from 21 analogs are very different claims; without N the
 // reader cannot tell them apart.
 var float[] gHitN = array.new<float>(1, na)
-// Linear interpolation over the 1R/2R/3R grid; geometric taper beyond 3R.
+// Linear interpolation over the 0/1/2/3-unit grid.
+// F-A17: below 1 unit the old form returned the 1-unit value unchanged, so a stop at 0.4
+// units was credited with the (much lower) touch rate of a 1-unit stop -- optimistic on
+// the SL side exactly when the stop is tight. The grid now has an explicit anchor at 0
+// (_p0: 100 for a touch/win probability, 0 for a race loss) and interpolates linearly
+// from it. Beyond 3 units: geometric taper when _decay (touch/win rates fall with
+// distance), held flat otherwise (a race loss cannot fall as the target moves away).
+f_gridInterp(_rr, _p0, _p1, _p2, _p3, _decay) =>
+    _rr <= 0.0 ? _p0 : _rr <= 1.0 ? _p0 + (_p1 - _p0) * _rr : _rr <= 2.0 ? _p1 + (_p2 - _p1) * (_rr - 1.0) : _rr <= 3.0 ? _p2 + (_p3 - _p2) * (_rr - 2.0) : _decay ? _p3 * math.pow(0.7, _rr - 3.0) : _p3
 f_hitInterp(_rr, _p1, _p2, _p3) =>
-    _rr <= 1.0 ? _p1 : _rr <= 2.0 ? _p1 + (_p2 - _p1) * (_rr - 1.0) : _rr <= 3.0 ? _p2 + (_p3 - _p2) * (_rr - 2.0) : _p3 * math.pow(0.7, _rr - 3.0)
+    f_gridInterp(_rr, 100.0, _p1, _p2, _p3, true)
+// F-A19: TP-before-SL RACE probabilities, SL fixed at 1R (R = regSLMult x ATR at entry,
+// the same unit as the hOut label). Layout [L win@1R,2R,3R, L loss@1R,2R,3R,
+// S win@1R,2R,3R, S loss@1R,2R,3R] in percent, then [12..17] = the TIMEOUT contribution
+// per analog in R (sum of horizon mark-to-market over timed-out races / N) for L1..L3,
+// S1..S3. N alongside. Written by the stats engine (N>=20) from hRace/hTerm, read by the
+// trade plan's expectancy.
+var float[] gRaceProb = array.new<float>(18, na)
+var float[] gRaceN = array.new<float>(1, na)
+// F-A16: OOS BEAR resolution rate (oc == -1), published so a short is scored on its own
+// outcome rather than on the complement of the bull rate (which also contains timeouts).
+var float[] gOosBearWr = array.new<float>(1, na)
 // ═══ COMPILE-ORDER FIX (F-A13) ═══════════════════════════════════════════════
 // This block was BELOW f_tradePlan(), whose planReason string reads OUTCOME_N. Pine
 // requires declaration before use, so the Master and both twins failed to compile with
@@ -2814,13 +2786,51 @@ f_tradePlan() =>
     float pTP2 = na
     float pTP3 = na
     float pSLhit = na
-    if not na(array.get(gHitProb, 0))
+    // F-A17 -- UNIT FIX. The histogram (_gHit) is measured in units of 1.5 x ATR (see
+    // _rU in the stats engine). The old lookup passed tpRR = distance / tpDist, i.e. in
+    // units of the PLAN's stop, which is structural and ranges 0.6 ATR .. 1.6 x regime
+    // ATR -- a different unit whenever tpDist != 1.5 ATR. And pSLhit was always the
+    // 1-unit touch rate, whatever the real stop distance. Both are now expressed in the
+    // histogram's own unit. The SL touch uses the ADVERSE ladder: for a long that is MAE
+    // (slots 4..6, which double as the short's favourable ladder), for a short MFE (0..2).
+    float _uH = 1.5 * adaptiveATR
+    if not na(array.get(gHitProb, 0)) and _uH > 0
         int _hb = tpIsLong ? 0 : 4
-        pTP1 := f_hitInterp(tpRR1, array.get(gHitProb, _hb), array.get(gHitProb, _hb + 1), array.get(gHitProb, _hb + 2))
-        pTP2 := f_hitInterp(tpRR2, array.get(gHitProb, _hb), array.get(gHitProb, _hb + 1), array.get(gHitProb, _hb + 2))
-        pTP3 := f_hitInterp(tpRR3, array.get(gHitProb, _hb), array.get(gHitProb, _hb + 1), array.get(gHitProb, _hb + 2))
-        pSLhit := array.get(gHitProb, _hb + 3)
-    float planExpectancy = not na(pTP1) and not na(pSLhit) ? pTP1 / 100.0 - pSLhit / 100.0 : na
+        int _hbA = tpIsLong ? 4 : 0
+        float _u1 = math.abs(tp1 - tpEntry) / _uH
+        float _u2 = math.abs(tp2 - tpEntry) / _uH
+        float _u3 = math.abs(tp3 - tpEntry) / _uH
+        float _uS = tpDist / _uH
+        pTP1 := f_hitInterp(_u1, array.get(gHitProb, _hb), array.get(gHitProb, _hb + 1), array.get(gHitProb, _hb + 2))
+        pTP2 := f_hitInterp(_u2, array.get(gHitProb, _hb), array.get(gHitProb, _hb + 1), array.get(gHitProb, _hb + 2))
+        pTP3 := f_hitInterp(_u3, array.get(gHitProb, _hb), array.get(gHitProb, _hb + 1), array.get(gHitProb, _hb + 2))
+        pSLhit := f_hitInterp(_uS, array.get(gHitProb, _hbA), array.get(gHitProb, _hbA + 1), array.get(gHitProb, _hbA + 2))
+    // F-A19 -- planExpectancy IS NOW AN EXPECTED VALUE. It was pTP1 - pSLhit: a difference
+    // of two MARGINAL touch rates over one population (F-038), which is not an expectation
+    // and yet VETOED trades through tqVeto. It is now the expectancy of the TP1-vs-SL
+    // RACE, in R, net of the round-trip cost:
+    //     E[R] = P(TP1 first) x RR1  -  P(SL first) x 1  -  cost_R
+    // P(first) comes from hRace, a chronological first-touch label (stop assumed first on
+    // a same-bar tie, the live tracker's convention). A race still open at the horizon
+    // contributes its MARK-TO-MARKET R there (hTerm): for a bracket held past the horizon
+    // that is the unbiased estimate of its eventual P&L when price is driftless (optional
+    // stopping), and an approximation otherwise. Counting it as 0 while charging cost would
+    // bias E[R] negative wherever the horizon is short (3 bars at >= 30M, F-035).
+    //     E[R] = P(TP1 first) x RR1 - P(SL first) x 1 + E[timeout MTM] - cost_R
+    // Cost is charged on every trade, timed out or not.
+    // APPROXIMATION, STATED: the race grid has its stop at 1 regime-R; the plan's stop is
+    // structural. RR1 = TP1 distance / plan stop is read off that grid, which assumes the
+    // race is scale-free in the stop distance. That holds exactly only when the plan's stop
+    // is its regime-ATR fallback.
+    float planExpectancy = na
+    if not na(array.get(gRaceProb, 0)) and tpDist > 0
+        int _rb0 = tpIsLong ? 0 : 6
+        float _pW = f_gridInterp(tpRR1, 100.0, array.get(gRaceProb, _rb0), array.get(gRaceProb, _rb0 + 1), array.get(gRaceProb, _rb0 + 2), true) / 100.0
+        float _pL = f_gridInterp(tpRR1, 0.0, array.get(gRaceProb, _rb0 + 3), array.get(gRaceProb, _rb0 + 4), array.get(gRaceProb, _rb0 + 5), false) / 100.0
+        int _rt0 = tpIsLong ? 12 : 15
+        float _pT = f_gridInterp(tpRR1, 0.0, array.get(gRaceProb, _rt0), array.get(gRaceProb, _rt0 + 1), array.get(gRaceProb, _rt0 + 2), false)
+        float _cR = ((_sessSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)) / tpDist
+        planExpectancy := _pW * tpRR1 - _pL + _pT - _cR
     // F-035 + F-038 TERMINOLOGY. Two separate things this number is NOT.
     // (1) NOT a lifetime probability: it is measured within OUTCOME_N bars only -- 60 min
     //     below 20M, then 3 BARS above it (90 min on 30M, 720 min on 4H). The same ~26pt
@@ -2840,7 +2850,7 @@ f_tradePlan() =>
     // horizon is now printed in the label so the number cannot be read as a trade
     // probability. The underlying calculation is UNCHANGED -- this is a labelling fix, and
     // the horizon mismatch itself (F-035) remains OPEN as a design decision.
-    string planReason = "SL:" + tpSLBasis + " TP:" + tp1Basis + "/" + tp2Basis + "/" + tp3Basis + " [" + mktRegime + "]" + (not na(pTP1) ? " ~touch(<=" + str.tostring(OUTCOME_N) + "b):" + str.tostring(int(pTP1)) + "/" + str.tostring(int(pTP2)) + "/" + str.tostring(int(pTP3)) + "% ~SLtouch" + str.tostring(int(pSLhit)) + "% E" + str.tostring(planExpectancy, "#.##") + "R" : "")
+    string planReason = "SL:" + tpSLBasis + " TP:" + tp1Basis + "/" + tp2Basis + "/" + tp3Basis + " [" + mktRegime + "]" + (not na(pTP1) ? " ~touch(<=" + str.tostring(OUTCOME_N) + "b):" + str.tostring(int(pTP1)) + "/" + str.tostring(int(pTP2)) + "/" + str.tostring(int(pTP3)) + "% ~SLtouch" + str.tostring(int(pSLhit)) + "% EVrace" + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##") + "R n" + str.tostring(int(nz(array.get(gRaceN, 0))))) : "")
     [tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason]
 [tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason] = f_tradePlan()
 
@@ -2895,6 +2905,13 @@ var float[] hRet = array.new_float(HIST_MAX, 0.0)
 // was in ATR units while hRet is in R units -- see the block at the subtraction.
 var float[] hRUnit = array.new_float(HIST_MAX, 0.0)
 var float[] hPred = array.new_float(HIST_MAX, 50.0)
+// F-A19: 6-race first-touch label, base-3 encoded (L TP1/2/3R, S TP1/2/3R vs a 1R stop;
+// digit 0 = timeout, 1 = TP first, 2 = SL first). -1 = not yet labelled, so a reused
+// slot can never be read as six timeouts.
+var int[] hRace = array.new_int(HIST_MAX, -1)
+// F-A19: horizon mark-to-market of the entry in R (close[0] vs entry / R), read only for
+// races that timed out. Written together with hRace; read only when hRace >= 0.
+var float[] hTerm = array.new_float(HIST_MAX, 0.0)
 var int[] h1st = array.new_int(HIST_MAX, 0)
 var int[] hBEv = array.new_int(HIST_MAX, 0)
 var float[] hBCont = array.new_float(HIST_MAX, 0.0)
@@ -2918,22 +2935,23 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 //                    this?" It is NOT the migration census and MUST NOT filter analogs:
 //                    using it alone would mark every observation V2 from the first bar,
 //                    which would silently destroy the MIXED_SCHEMA measurement.
-//   hDataStatus   -- SOURCE-CONTRIBUTION identity. Per-observation bitmask of which
-//                    external sources actually reached the calculation on that bar.
+//   barDataStatus -- SOURCE-CONTRIBUTION identity: bitmask of which external sources
+//                    reached the calculation on that bar. Computed and exported per trade
+//                    (D field) by the strategy twins; the Master had no reader, so v16
+//                    removed it here along with the write-only hDataStatus buffer.
 //   hSchemaVer    -- FEATURE-DEFINITION EQUIVALENCE, availability-derived. Answers "is this
 //                    observation mathematically equivalent to V1 for analog matching?"
 //                    When GC/OI contribute exactly zero the bar IS effectively V1, because
 //                    rCurr is then bit-identical. This is what the census uses. UNCHANGED.
-int SCHEMA_BUILD = 2
-// Bit allocation for hDataStatus. CONTRIBUTED, not merely VALID: a resolved-but-neutral GC
-// leaves rCurr bit-identical to V1, so it must not set its bit.
-//   bit0 (1)  GC contributed a macro vote      bit1 (2)  OI contributed a regime nudge
-//   bit2 (4)  US2Y valid (context only)        bit3 (8)  COT contributed a TQ damper
-//   bit4 (16) GC status was non-VALID          bit5 (32) OI status was non-VALID
+// v14: 2 -> 3. The race label (hRace), the bear calibration and the race expectancy
+// change what the gate acts on, so exported trades must be separable by build.
+// v16: 3 -> 4. Berkson-weighted calibration fits and the inverted Cornish-Fisher z-score
+// (an analog feature via mrComposite) change what the gate acts on.
+// v21: 4 -> 5. OB / FVG / displacement / SMT / climax are engine inputs again (F-A30), which
+// changes which trades fire; exports from B4 and B5 must never be pooled.
+int SCHEMA_BUILD = 5
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
-int barDataStatus = ((gcConfirmsBull or gcConfirmsBear) ? 1 : 0) + ((oiValid and oiConviction != 0) ? 2 : 0) + (US2Y_STATUS == 0 ? 4 : 0) + (COT_STATUS == 0 ? 8 : 0) + (GC_STATUS != 0 ? 16 : 0) + (OI_STATUS != 0 ? 32 : 0)
 var int[] hSchemaVer = array.new_int(HIST_MAX, 1)
-var int[] hDataStatus = array.new_int(HIST_MAX, 0)
 var int migV2Count = 0
 var int[] hRegime = array.new_int(HIST_MAX, 0)
 var float[] hSess = array.new_float(HIST_MAX, 0.5)
@@ -2979,33 +2997,6 @@ if barstate.isconfirmed and rPrev >= 0
             rDR += 1
 rPrev := rCurr
 
-// ----- V1/V2 shadow counters (DIAGNOSTIC ONLY, default OFF) -------------------
-// CONTAMINATION BARRIER: every name below is written here and read ONLY by the readout.
-// None is passed to array.set, to runStatsEngines(), to any threshold, score, probability
-// or risk term. The shadow cannot alter the live V2 path even when the audit is ON.
-// WHY rCurr DIVERGENCE IS THE RIGHT DOWNSTREAM PROXY: rCurr is itself the stored analog
-// feature (hRegime). On any bar where rCurrV1 == rCurrV2 the analog SELECTION from this
-// cause is provably identical, so probability, signal and risk cannot differ from it
-// either. Counting rCurr divergences therefore BOUNDS the downstream impact exactly,
-// without running a second stats engine the token budget could not fund.
-var int shdBars = 0
-var int shdDeltaComp = 0
-var int shdRegimeChg = 0
-var int shdX40 = 0
-var int shdX70 = 0
-var int shdMaxAbs = 0
-if enableSchemaShadowAudit and barstate.isconfirmed
-    shdBars += 1
-    int _d = regimeComposite - regimeCompositeV1
-    if _d != 0
-        shdDeltaComp += 1
-        shdMaxAbs := math.max(shdMaxAbs, math.abs(_d))
-    if rCurr != rCurrV1
-        shdRegimeChg += 1
-    if (regimeCompositeV1 < 40) != (regimeComposite < 40)
-        shdX40 += 1
-    if (regimeCompositeV1 < 70) != (regimeComposite < 70)
-        shdX70 += 1
 
 float highOutcome = ta.highest(high, OUTCOME_N)
 float lowOutcome = ta.lowest(low, OUTCOME_N)
@@ -3029,6 +3020,7 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
     array.set(hMr, hW, cM)
     array.set(hCor, hW, cC)
     array.set(hPred, hW, bullScore)
+    array.set(hRace, hW, -1)
     float _hBin = bullScore >= calQ80 ? 4.0 : bullScore >= calQ60 ? 3.0 : bullScore >= calQ40 ? 2.0 : bullScore >= calQ20 ? 1.0 : 0.0
     array.set(hCalBin, hW, _hBin)
     array.set(hBEv, hW, bullBOS ? 1 : bearBOS ? 2 : 0)
@@ -3046,7 +3038,6 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
     if _prevVer != 2 and REGIME_FEATURE_VERSION == 2
         migV2Count := migV2Count + 1
     array.set(hSchemaVer, hW, REGIME_FEATURE_VERSION)
-    array.set(hDataStatus, hW, barDataStatus)
     float _sessVal = inNY ? 1.0 : inLondon ? 0.67 : inAsian ? 0.33 : 0.0
     array.set(hSess, hW, _sessVal)
     int oP = (hW - OUTCOME_N + HIST_MAX) % HIST_MAX
@@ -3097,6 +3088,35 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
                     if _oRes == 0
                         _oRes := low[_k] <= _oEnt - _oR ? -1 : high[_k] >= _oEnt + _oR ? 1 : 0
             array.set(hOut, oP, _oRes)
+            // F-A19: first-touch offsets (forward-time order) for +/-1R, 2R, 3R. The long
+            // race to TPk is lost if -1R is touched on or before the bar that reaches +kR
+            // (same-bar tie = stop first); the short race mirrors it. 9999 = never touched.
+            if _oR > 0
+                int _tU1 = 9999
+                int _tU2 = 9999
+                int _tU3 = 9999
+                int _tD1 = 9999
+                int _tD2 = 9999
+                int _tD3 = 9999
+                int _tI = 0
+                for _k = OUTCOME_N - 1 to _oScan
+                    float _hk = high[_k]
+                    float _lk = low[_k]
+                    _tU1 := _tU1 == 9999 and _hk >= _oEnt + _oR ? _tI : _tU1
+                    _tU2 := _tU2 == 9999 and _hk >= _oEnt + 2.0 * _oR ? _tI : _tU2
+                    _tU3 := _tU3 == 9999 and _hk >= _oEnt + 3.0 * _oR ? _tI : _tU3
+                    _tD1 := _tD1 == 9999 and _lk <= _oEnt - _oR ? _tI : _tD1
+                    _tD2 := _tD2 == 9999 and _lk <= _oEnt - 2.0 * _oR ? _tI : _tD2
+                    _tD3 := _tD3 == 9999 and _lk <= _oEnt - 3.0 * _oR ? _tI : _tD3
+                    _tI += 1
+                int _oL1 = _tD1 < 9999 and _tD1 <= _tU1 ? 2 : _tU1 < 9999 ? 1 : 0
+                int _oL2 = _tD1 < 9999 and _tD1 <= _tU2 ? 2 : _tU2 < 9999 ? 1 : 0
+                int _oL3 = _tD1 < 9999 and _tD1 <= _tU3 ? 2 : _tU3 < 9999 ? 1 : 0
+                int _oS1 = _tU1 < 9999 and _tU1 <= _tD1 ? 2 : _tD1 < 9999 ? 1 : 0
+                int _oS2 = _tU1 < 9999 and _tU1 <= _tD2 ? 2 : _tD2 < 9999 ? 1 : 0
+                int _oS3 = _tU1 < 9999 and _tU1 <= _tD3 ? 2 : _tD3 < 9999 ? 1 : 0
+                array.set(hRace, oP, _oL1 + 3 * _oL2 + 9 * _oL3 + 27 * _oS1 + 81 * _oS2 + 243 * _oS3)
+                array.set(hTerm, oP, fc / _oR)
             // Realised R: +/-1 when the race resolved, otherwise the unresolved
             // terminal excursion in R units. avgW/avgL therefore become genuine
             // R-multiples, so Kelly's b is the real payoff ratio rather than a
@@ -3144,7 +3164,6 @@ float migPct = hN > 0 ? math.min(migV2Count * 100.0 / math.min(hN, HIST_MAX), 10
 float migV1Pct = 100.0 - migPct
 string migState = migPct >= 99.5 ? "  SCHEMA_V2 CLEAN" : migV2Count == 0 ? "  V1 100%" : "  MIXED_SCHEMA V1 " + str.tostring(int(migV1Pct)) + "% V2 " + str.tostring(int(migPct)) + "%"
 string schemaLine = "BUILD v" + str.tostring(SCHEMA_BUILD) + migState + "  " + dataStatusLine
-string shadowLine = not enableSchemaShadowAudit ? "" : "  SHDW n" + str.tostring(shdBars) + " dC" + str.tostring(shdDeltaComp) + " reg" + str.tostring(shdRegimeChg) + " x40:" + str.tostring(shdX40) + " x70:" + str.tostring(shdX70) + " max" + str.tostring(shdMaxAbs)
 float oBull = 50.0
 float oBear = 50.0
 float oRange = 0.0
@@ -3169,9 +3188,8 @@ float oRegPer = 50.0
 // Q5.0-S2: Platt fit [slope per score-unit, intercept] — written by the calibration
 // block inside the stats engine, consumed by the mP= mapping. na until fit qualifies.
 var float[] gCalFit = array.from(float(na), float(na))
-// [N,pred,obs] x 5 buckets, then slot 15 = OOS base rate. Written from values the stats
-// engine already computes; read only by the reliability readout.
-var float[] gCalRel = array.new_float(16, na)
+// F-A16: the bear map [slope, intercept]: bullScore -> P(bear resolution). na until fitted.
+var float[] gCalFitBear = array.from(float(na), float(na))
 float oWr = 50.0
 float oAvgW = 0.5
 float oAvgL = 1.0
@@ -3310,6 +3328,11 @@ runStatsEngines() =>
     var float _gMaxDD = 0.0
     // Q5.2-F3: MFE/MAE hit counters [L1R,L2R,L3R,LSL, S1R,S2R,S3R,SSL, N]
     var float[] _gHit = array.new<float>(9, 0.0)
+    // F-A19: race counters, gRaceProb layout; slot 12 = N; 13..18 = timeout MTM sums.
+    var float[] _gRace = array.new<float>(19, 0.0)
+    // F-A16: bear-resolution (oc == -1) counts per calibration bin 0..4, decayed with the
+    // bull counts so both fits see the same effective window.
+    var float[] _gCr = array.new<float>(5, 0.0)
     // Q5.0-S3: lag-1 autocorrelation accumulators (chronological match returns)
     // Persistent bar_index bounds for holdout fold (full-cycle, not per-chunk)
     var float _sbMin = 1e12
@@ -3359,6 +3382,8 @@ runStatsEngines() =>
         _gC4t := int(_gC4t * 0.7)
         _gC4b := int(_gC4b * 0.7)
         _gC4s := _gC4s * 0.7
+        for _cri = 0 to 4
+            array.set(_gCr, _cri, math.floor(array.get(_gCr, _cri) * 0.7))
         _gFSc := 0
         _gFSw := 0
         _gFSt := 0
@@ -3388,6 +3413,7 @@ runStatsEngines() =>
         _gEqPeak := 100.0
         _gMaxDD := 0.0
         array.fill(_gHit, 0.0)
+        array.fill(_gRace, 0.0)
         // Pre-compute bounds from FULL buffer before any chunk processing
         // (prevents within-cycle OOS boundary drift)
         _sbMin := 1e12
@@ -3806,6 +3832,21 @@ runStatsEngines() =>
                     array.set(_gHit, 6, array.get(_gHit, 6) + 1.0)
                 if _mfeL >= 1.0
                     array.set(_gHit, 7, array.get(_gHit, 7) + 1.0)
+            // F-A19: same population as the hit histogram (_isOosEarly), labelled slots only.
+            int _rcd = array.get(hRace, i)
+            if _rcd >= 0 and _isOosEarly
+                array.set(_gRace, 12, array.get(_gRace, 12) + 1.0)
+                int _rrem = _rcd
+                float _rTm = array.get(hTerm, i)
+                for _rj = 0 to 5
+                    int _ro = _rrem % 3
+                    _rrem := int(math.floor(_rrem / 3.0))
+                    int _rslot = (_rj < 3 ? 0 : 6) + (_ro == 2 ? 3 : 0) + _rj % 3
+                    if _ro != 0
+                        array.set(_gRace, _rslot, array.get(_gRace, _rslot) + 1.0)
+                    else
+                        // Timed out: signed MTM in the trade's direction (short = -move).
+                        array.set(_gRace, 13 + _rj, array.get(_gRace, 13 + _rj) + (_rj < 3 ? _rTm : -_rTm))
             float _oosPct = 1.0 - holdoutRatio
             // Q5.0-S4: embargo — outcome windows straddling the fold boundary are excluded.
             bool _isOos = _sbRng > 0 and (sb - _sbMin) / _sbRng >= _oosPct and (sb - _sbMin) - _oosPct * _sbRng >= OUTCOME_N
@@ -3864,6 +3905,10 @@ runStatsEngines() =>
                     c0s += pp
                     if oc == 1
                         c0b += 1
+                // F-A16: same bin assignment as the chain above, bear resolutions counted.
+                if oc == -1
+                    int _cbi = _calBin == 4.0 or (_calBin < 0 and pp >= calQ80) ? 4 : _calBin == 3.0 or (_calBin < 0 and pp >= calQ60) ? 3 : _calBin == 2.0 or (_calBin < 0 and pp >= calQ40) ? 2 : _calBin == 1.0 or (_calBin < 0 and pp >= calQ20) ? 1 : 0
+                    array.set(_gCr, _cbi, array.get(_gCr, _cbi) + 1.0)
             // Per-regime outcome tracking for regime-conditioned calibration
             int _rgi = array.get(hRegime, i)
             if _rgi >= 0 and _rgi <= 2
@@ -4063,6 +4108,7 @@ runStatsEngines() =>
             _cAvgW := wc > 0 ? sw / wc : 0.5
             _cAvgL := lc > 0 ? sl / lc : 1.0
         float calBrier = 0.0
+        float calN = 0.0
         int calBins = 0
         // OOS RELIABILITY CAPTURE (observability only). Every value stored below is
         // ALREADY computed in this block for the grade/Brier maths — nothing is
@@ -4076,50 +4122,35 @@ runStatsEngines() =>
             calErr += math.abs(a0 * 100.0 - p0 * 100.0)
             calBins += 1
             calBrier += (a0 - p0) * (a0 - p0) * c0t
+            calN += c0t
         if c1t >= 30
             float a1 = bayesRate(c1b, c1t)
             float p1c = c1s / c1t / 100.0
             calErr += math.abs(a1 * 100.0 - p1c * 100.0)
             calBins += 1
             calBrier += (a1 - p1c) * (a1 - p1c) * c1t
+            calN += c1t
         if c2t >= 30
             float a2 = bayesRate(c2b, c2t)
             float p2c = c2s / c2t / 100.0
             calErr += math.abs(a2 * 100.0 - p2c * 100.0)
             calBins += 1
             calBrier += (a2 - p2c) * (a2 - p2c) * c2t
+            calN += c2t
         if c3t >= 30
             float a3 = bayesRate(c3b, c3t)
             float p3 = c3s / c3t / 100.0
             calErr += math.abs(a3 * 100.0 - p3 * 100.0)
             calBins += 1
             calBrier += (a3 - p3) * (a3 - p3) * c3t
+            calN += c3t
         if c4t >= 30
             float a4 = bayesRate(c4b, c4t)
             float p4 = c4s / c4t / 100.0
             calErr += math.abs(a4 * 100.0 - p4 * 100.0)
             calBins += 1
             calBrier += (a4 - p4) * (a4 - p4) * c4t
-        array.set(gCalRel, 0, c0t)
-        array.set(gCalRel, 3, c1t)
-        array.set(gCalRel, 6, c2t)
-        array.set(gCalRel, 9, c3t)
-        array.set(gCalRel, 12, c4t)
-        if c0t >= 30
-            array.set(gCalRel, 1, c0s / c0t)
-            array.set(gCalRel, 2, bayesRate(c0b, c0t) * 100.0)
-        if c1t >= 30
-            array.set(gCalRel, 4, c1s / c1t)
-            array.set(gCalRel, 5, bayesRate(c1b, c1t) * 100.0)
-        if c2t >= 30
-            array.set(gCalRel, 7, c2s / c2t)
-            array.set(gCalRel, 8, bayesRate(c2b, c2t) * 100.0)
-        if c3t >= 30
-            array.set(gCalRel, 10, c3s / c3t)
-            array.set(gCalRel, 11, bayesRate(c3b, c3t) * 100.0)
-        if c4t >= 30
-            array.set(gCalRel, 13, c4s / c4t)
-            array.set(gCalRel, 14, bayesRate(c4b, c4t) * 100.0)
+            calN += c4t
         if calBins > 0
             float ae = calErr / calBins
             _cCalGradePct := int(math.max(0, 100.0 - ae * 2.0))
@@ -4141,11 +4172,15 @@ runStatsEngines() =>
                     float _xm = array.get(_pfPs, _pf) / _ctF - 50.0
                     float _arF = math.min(math.max(bayesRate(int(array.get(_pfBw, _pf)), int(_ctF)), 0.05), 0.95)
                     float _ym = math.log(_arF / (1.0 - _arF))
-                    _pfSw += _ctF
-                    _pfSx += _ctF * _xm
-                    _pfSy += _ctF * _ym
-                    _pfSxx += _ctF * _xm * _xm
-                    _pfSxy += _ctF * _xm * _ym
+                    // v16: WLS weight = n p(1-p), the inverse delta-method variance of logit(p)
+                    // (Berkson's minimum logit chi-square). A weight of n alone treats a bin at
+                    // p = 0.9 as precisely as one at 0.5, though its logit is ~2.8x noisier.
+                    float _wF = _ctF * _arF * (1.0 - _arF)
+                    _pfSw += _wF
+                    _pfSx += _wF * _xm
+                    _pfSy += _wF * _ym
+                    _pfSxx += _wF * _xm * _xm
+                    _pfSxy += _wF * _xm * _ym
                     _pfBins += 1
             if _pfBins >= 3 and _pfSw > 0
                 float _pfMx = _pfSx / _pfSw
@@ -4156,36 +4191,71 @@ runStatsEngines() =>
                     if _pfK > 0
                         array.set(gCalFit, 0, math.min(math.max(_pfK, 0.02), 0.25))
                         array.set(gCalFit, 1, math.min(math.max(_pfMy - _pfK * _pfMx, -1.0), 1.0))
+            // F-A16: the BEAR fit -- identical WLS (same Berkson weights) on the same bins and the same x (mean
+            // bullScore), target = bear resolution. Slope must be NEGATIVE (a higher
+            // bullScore should mean a lower chance of a bear resolution); bounds mirror
+            // the bull fit's. No threshold here is new.
+            float _bfSw = 0.0
+            float _bfSx = 0.0
+            float _bfSy = 0.0
+            float _bfSxx = 0.0
+            float _bfSxy = 0.0
+            int _bfBins = 0
+            for _bf = 0 to 4
+                float _bCt = array.get(_pfCt, _bf)
+                if _bCt >= 30
+                    float _bxm = array.get(_pfPs, _bf) / _bCt - 50.0
+                    float _bar = math.min(math.max(bayesRate(int(array.get(_gCr, _bf)), int(_bCt)), 0.05), 0.95)
+                    float _bym = math.log(_bar / (1.0 - _bar))
+                    float _bW = _bCt * _bar * (1.0 - _bar)
+                    _bfSw += _bW
+                    _bfSx += _bW * _bxm
+                    _bfSy += _bW * _bym
+                    _bfSxx += _bW * _bxm * _bxm
+                    _bfSxy += _bW * _bxm * _bym
+                    _bfBins += 1
+            if _bfBins >= 3 and _bfSw > 0
+                float _bfMx = _bfSx / _bfSw
+                float _bfMy = _bfSy / _bfSw
+                float _bfVr = _bfSxx / _bfSw - _bfMx * _bfMx
+                if _bfVr > 1e-6
+                    float _bfK = (_bfSxy / _bfSw - _bfMx * _bfMy) / _bfVr
+                    if _bfK < 0
+                        array.set(gCalFitBear, 0, math.min(math.max(_bfK, -0.25), -0.02))
+                        array.set(gCalFitBear, 1, math.min(math.max(_bfMy - _bfK * _bfMx, -1.0), 1.0))
             float _totalCal = c0t + c1t + c2t + c3t + c4t
-            // Brier decomposition (Murphy): BS = Uncertainty + Reliability - Resolution
+            // Brier decomposition (Murphy): BS = Uncertainty + Reliability - Resolution.
+            // v16: the identity holds only with RAW bin frequencies over the SAME bins as the
+            // base rate. It used Laplace-smoothed frequencies over bins with N >= 30 while
+            // the base rate and the denominator counted every bin. Now raw frequencies over
+            // every bin with N > 0: the exact Brier score of the bin-mean forecasts.
             float _totalBull = c0b + c1b + c2b + c3b + c4b
             float _baseRate = _totalCal > 0 ? _totalBull / _totalCal : 0.5
-            array.set(gCalRel, 15, _baseRate * 100.0)
             float _rel = 0.0
             float _res = 0.0
-            if c0t >= 30
+            if c0t > 0
                 float p0_ = c0s / c0t / 100.0
-                float o0_ = bayesRate(c0b, c0t)
+                float o0_ = c0b * 1.0 / c0t
                 _rel += c0t * (p0_ - o0_) * (p0_ - o0_)
                 _res += c0t * (o0_ - _baseRate) * (o0_ - _baseRate)
-            if c1t >= 30
+            if c1t > 0
                 float p1_ = c1s / c1t / 100.0
-                float o1_ = bayesRate(c1b, c1t)
+                float o1_ = c1b * 1.0 / c1t
                 _rel += c1t * (p1_ - o1_) * (p1_ - o1_)
                 _res += c1t * (o1_ - _baseRate) * (o1_ - _baseRate)
-            if c2t >= 30
+            if c2t > 0
                 float p2_ = c2s / c2t / 100.0
-                float o2_ = bayesRate(c2b, c2t)
+                float o2_ = c2b * 1.0 / c2t
                 _rel += c2t * (p2_ - o2_) * (p2_ - o2_)
                 _res += c2t * (o2_ - _baseRate) * (o2_ - _baseRate)
-            if c3t >= 30
+            if c3t > 0
                 float p3_ = c3s / c3t / 100.0
-                float o3_ = bayesRate(c3b, c3t)
+                float o3_ = c3b * 1.0 / c3t
                 _rel += c3t * (p3_ - o3_) * (p3_ - o3_)
                 _res += c3t * (o3_ - _baseRate) * (o3_ - _baseRate)
-            if c4t >= 30
+            if c4t > 0
                 float p4_ = c4s / c4t / 100.0
-                float o4_ = bayesRate(c4b, c4t)
+                float o4_ = c4b * 1.0 / c4t
                 _rel += c4t * (p4_ - o4_) * (p4_ - o4_)
                 _res += c4t * (o4_ - _baseRate) * (o4_ - _baseRate)
             _rel /= _totalCal
@@ -4208,7 +4278,9 @@ runStatsEngines() =>
             else if c0t >= 30
                 float a0r = math.round(bayesRate(c0b, c0t) * 100.0)
                 calDetail := "P" + str.tostring(int(c0s / c0t)) + ">" + str.tostring(int(a0r)) + "%"
-            _cCalDetail := calDetail
+            // v21: calBrier (sum of n x (observed - predicted)^2 over the N>=30 buckets) is wired as the
+            // n-weighted RMS calibration error, the root of its mean, shown with the calibration detail.
+            _cCalDetail := calDetail + (calN > 0 ? " rmsCE" + str.tostring(math.sqrt(calBrier / calN) * 100.0, "#") + "%" : "")
         if boT >= 3
             _cBosCont := math.round(bov * 100.0 / boT)
             _cBosFail := 100 - _cBosCont
@@ -4241,6 +4313,13 @@ runStatsEngines() =>
             for _hi = 0 to 7
                 array.set(gHitProb, _hi, array.get(_gHit, _hi) / _hNQ * 100.0)
             array.set(gHitN, 0, _hNQ)
+        float _rNQ = array.get(_gRace, 12)
+        if _rNQ >= 20
+            for _ri = 0 to 11
+                array.set(gRaceProb, _ri, array.get(_gRace, _ri) / _rNQ * 100.0)
+            for _rt = 0 to 5
+                array.set(gRaceProb, 12 + _rt, array.get(_gRace, 13 + _rt) / _rNQ)
+            array.set(gRaceN, 0, _rNQ)
         // R5.3: MaxDD stored BEFORE the Sharpe/Calmar block — Calmar previously divided
         // by the PREVIOUS cycle's MaxDD.
         if _eqPeak > 0
@@ -4253,6 +4332,7 @@ runStatsEngines() =>
         // retained above: oMaxDD still feeds the drawdown breaker.
         if oosMt > 0
             float _oosWr = oosMb * 100.0 / oosMt
+            array.set(gOosBearWr, 0, oosMbr * 100.0 / oosMt)
             _cOosWr := math.round(_oosWr)
             _cOosN := oosMt
             _cAvgWOos := wcOos > 0 ? swOos / wcOos : 0.5
@@ -4314,8 +4394,6 @@ oOosWr := __ow
 // zeroed variable. FIX: assign first, then derive. No formula, threshold or gate altered.
 // Classification: BUG (restores intended behaviour), not a statistical correction.
 oOosN := __on
-// Q5.0-S1: 95% half-width of the OOS win rate at EFFECTIVE (overlap-corrected) N.
-float _wNeffD = math.max(oOosN / OUTCOME_N, 1.0)
 // Q6.9 (plan item 3): effective sample size for every count-based gate below.
 // Kelly already used this correction; the display and drift gates did not.
 int oOosNeff = int(oOosN / math.max(OUTCOME_N, 1))
@@ -4328,9 +4406,9 @@ int oOosNeff = int(oOosN / math.max(OUTCOME_N, 1))
 // AUDIT NOTE: after suppression this variable is DELIBERATELY WRITE-ONLY. Verified by
 // full-file search: 1 declaration, 0 reads. It feeds NO gate, confidence, signal,
 // probability, risk term or alert -- suppression was therefore sufficient, not cosmetic.
-// Do NOT delete it in an orphan sweep: it is dormant on purpose, awaiting a genuine
-// fixed holdout (F-037B), and deleting it would forfeit a correct implementation.
-float oOosCI = oOosNeff >= 10 ? 1.96 * math.sqrt(math.max(oOosWr / 100.0 * (1.0 - oOosWr / 100.0), 0.0025) / _wNeffD) * 100.0 : na
+// v16 (no dead code): the unread computation is removed; the implementation is kept here
+// for F-037B, to be restored with a render the day a genuine frozen holdout exists:
+//     oOosCI = oOosNeff >= 10 ? 1.96 * sqrt(max(p(1-p), 0.0025) / max(oOosN / OUTCOME_N, 1)) * 100 : na
 oAvgWOos := __awo
 oAvgLOos := __alo
 // R5-F4: update the persistent DD mirror used by the signal-gate breaker.
@@ -4487,22 +4565,29 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
 // calibration grade, NOT a fitted (Platt/isotonic) probability. The per-bin
 // predicted-vs-actual data collected above is the right base for a proper fit later.
 float _calibratedProb = bullScore / 100.0
+// F-A16: the short's own calibrated probability. na = no bear fit yet (see the gate).
+float _calibratedProbBear = na
 string calProbStr = ""
 if showStatsEngine and oMatch >= 30
     if useRawScores
         _calibratedProb := bullScore / 100.0
     else
-        float _k = 8.0
+        // Q5.0-S2: fitted map when available.
+        // COLD-START FIX: the unfitted fallback used a slope of 8 + (oCalGrade-50)/50*12 per
+        // 100 score-units -- a sigmoid steepened by an ACCURACY GRADE, a coupling nothing
+        // derives. With no fit there is no calibration to apply, so the value is the raw
+        // score (identity map) and the readout says it is unfitted. The gate is inert
+        // without a fit (_calGateReady), so no entry decision changes.
         float _calP = bullScore / 100.0
-        if oCalGrade >= 50
-            _k := 8.0 + (oCalGrade - 50.0) / 50.0 * 12.0
-        // Q5.0-S2: fitted map when available; heuristic slope (_k/100 per score-unit,
-        // algebraically identical to the old form) as cold-start fallback.
         bool _pfOk = not na(array.get(gCalFit, 0))
-        float _pfK2 = _pfOk ? array.get(gCalFit, 0) : _k / 100.0
-        float _pfB2 = _pfOk ? array.get(gCalFit, 1) : 0.0
-        _calP := 1.0 / (1.0 + math.exp(-((bullScore - 50.0) * _pfK2 + _pfB2)))
-        _calP := math.min(math.max(_calP, 0.05), 0.95)
+        if _pfOk
+            _calP := 1.0 / (1.0 + math.exp(-((bullScore - 50.0) * array.get(gCalFit, 0) + array.get(gCalFit, 1))))
+            _calP := math.min(math.max(_calP, 0.05), 0.95)
+        bool _bfOk = not na(array.get(gCalFitBear, 0))
+        float _calPB = na
+        if _bfOk
+            _calPB := 1.0 / (1.0 + math.exp(-((bullScore - 50.0) * array.get(gCalFitBear, 0) + array.get(gCalFitBear, 1))))
+            _calPB := math.min(math.max(_calPB, 0.05), 0.95)
         // ═══════ F-A15 FIX — THE MAP WAS FITTED ON ONE VARIABLE, APPLIED TO ANOTHER ═══════
         // WHAT WAS WRONG. hPred stores bullScore (see array.set(hPred, ...) at both write
         // sites), so the Platt fit maps  bullScore -> P(bull resolution).  The branch
@@ -4538,8 +4623,10 @@ if showStatsEngine and oMatch >= 30
         // previous behaviour while you assess it, set useCalGate = false.
         if rangeScore > bullScore and rangeScore > bearScore
             _calibratedProb := 0.5
+            _calibratedProbBear := _bfOk ? 0.5 : na
         else
             _calibratedProb := _calP
+            _calibratedProbBear := _calPB
         float _regT = array.get(_regTot, int(math.max(0, math.min(2, rCurr))))
         float _regW = array.get(_regWin, int(math.max(0, math.min(2, rCurr))))
         if _regT >= 20
@@ -4547,8 +4634,13 @@ if showStatsEngine and oMatch >= 30
             float _overallRate = oWr / 100.0
             float _regAdj = _overallRate > 0 ? _regRate / _overallRate : 1.0
             _regAdj := math.min(math.max(_regAdj, 0.67), 1.5)
-            _calibratedProb := 0.5 + (_calibratedProb - 0.5) * _regAdj
-    calProbStr := "mP=" + str.tostring(math.round(_calibratedProb * 100.0)) + "%"
+            // F-A18: _regAdj reaches 1.5, so 0.5 + 0.45 x 1.5 = 1.175 -- a "probability"
+            // above 1, whose short complement was negative. Clamped to the same bounds
+            // as the fitted map.
+            _calibratedProb := math.min(math.max(0.5 + (_calibratedProb - 0.5) * _regAdj, 0.05), 0.95)
+    // The bear map is unadjusted: _regAdj is built from bull win rates only, so applying
+    // it to the bear probability would re-introduce the F-A15 class of error.
+    calProbStr := not na(array.get(gCalFit, 0)) or useRawScores ? "mP=" + str.tostring(math.round(_calibratedProb * 100.0)) + (na(_calibratedProbBear) ? "" : "/S" + str.tostring(math.round(_calibratedProbBear * 100.0))) + "%" : "mP unfit"
 
 // V27 ENGINE 8: INSTITUTIONAL DASHBOARD — Titled metrics + breakdown
 color cGray = color.new(#A0A0A0, 0)
@@ -4595,7 +4687,8 @@ f_tqEngine() =>
     bool _tqHasHist = oOosNeff >= 10
     bool _tqHasFc = not na(planExpectancy)
     if _tqHasHist
-        float _tqHist = tpIsLong ? oOosWr : 100.0 - oOosWr
+        // F-A16: 100 - oOosWr is "bear OR timeout"; the bear rate itself is published now.
+        float _tqHist = tpIsLong ? oOosWr : nz(array.get(gOosBearWr, 0), 100.0 - oOosWr)
         float _tqHistW = 0.10 * math.min(oOosNeff / 50.0, 1.0)  // Q6.9: ramp on EFFECTIVE N
         _tqSum += _tqHist * _tqHistW
         _tqW += _tqHistW
@@ -4705,6 +4798,8 @@ int _cotDamp = cotRegime == 0 ? 0 : (cotRegime == -1 and shouldBuy) or (cotRegim
 //          only probability-shaped veto ran on tradeQuality (a weighted average of hand-set
 //          constants) and on the sign of planExpectancy -- which is a difference of two
 //          MARGINAL excursion frequencies, not an expected value (see F-035/F-038).
+//          (v14, F-A19: planExpectancy is now the TP1-vs-SL race expectancy in R, net of
+//          cost -- see f_tradePlan. The sentence above describes v13 and earlier.)
 //   F-A05  bullScore -- where trend, structure, flow, macro and LIQUIDITY evidence all
 //          converge -- reached no gate either. Entry was a conjunction of boolean flags.
 // ONE GATE AND NOT TWO, AND WHY THAT MATTERS. _calibratedProb IS bullScore pushed through
@@ -4729,8 +4824,23 @@ int _cotDamp = cotRegime == 0 ? 0 : (cotRegime == -1 and shouldBuy) or (cotRegim
 // probability is calibrated is NOT ESTABLISHED. Wiring it makes the engine act on that
 // statistic. That is a deliberate decision taken with the defect documented, not a
 // validation of it. The honest fix for the underlying problem remains a frozen holdout.
-float _calPLong  = _calibratedProb
-float _calPShort = na(_calibratedProb) ? na : 1.0 - _calibratedProb
+// F-A16 -- THE GATE NOW COMPARES LIKE WITH LIKE. The label has THREE outcomes: bull
+// resolution, bear resolution, timeout. Two consequences:
+//  (a) 1 - P(bull) is "bear OR timeout", not P(bear): a short read through the complement
+//      was optimistic by the whole timeout rate.
+//  (b) 0.50 is the natural boundary for a BINARY outcome. For a 1R/1R race the decision
+//      is "does the win come before the loss more often than not", i.e.
+//          P(win | resolved) = P(win) / (P(win) + P(loss)) > 0.50.
+//      Comparing the unconditional P(win) with 0.50 instead vetoes by the timeout rate --
+//      which is timeframe-dependent (F-035): with a 3-bar horizon a fair market resolves
+//      only ~70% of races, so P(win) ~ 0.35 and nearly every trade would be blocked.
+// With both maps fitted, each direction's probability is the conditional above, from its
+// OWN fit. Normalising also absorbs the two independent fits not summing to <= 1. Until
+// the bear fit qualifies the previous (v12) behaviour holds exactly: long = P(bull),
+// short = 1 - P(bull). The long side still carries the bull-only _regAdj.
+bool _calBoth = not na(_calibratedProb) and not na(_calibratedProbBear) and _calibratedProb + _calibratedProbBear > 0
+float _calPLong  = _calBoth ? _calibratedProb / (_calibratedProb + _calibratedProbBear) : _calibratedProb
+float _calPShort = _calBoth ? _calibratedProbBear / (_calibratedProb + _calibratedProbBear) : na(_calibratedProb) ? na : 1.0 - _calibratedProb
 bool _calGateReady = useCalGate and not na(array.get(gCalFit, 0)) and oOosNeff >= 10 and not na(_calibratedProb)
 bool _calVeto = _calGateReady and ((shouldBuy and _calPLong < calGateMinP) or (shouldSell and _calPShort < calGateMinP))
 int effTqMinCot = math.min(effTqMin + _cotDamp, 95)
@@ -4764,6 +4874,8 @@ if not na(rkEntry) and barstate.isconfirmed
     bool _rkTp = rkLong ? high >= rkTP : low <= rkTP
     if _rkSl or _rkTp
         float _rkRes = _rkSl ? -1.0 : math.min(math.abs(rkTP - rkEntry) / _rkR, 5.0)
+        if not perfMode
+            alert("XAUUSD " + timeframe.period + " tracked " + (rkLong ? "BUY" : "SELL") + (_rkSl ? " STOPPED at SL " : " reached TP1 ") + str.tostring((_rkSl ? rkSL : rkTP) + mt5Offset, "#.##") + " (MT5) = " + str.tostring(_rkRes, "#.##") + "R", alert.freq_once_per_bar_close)
         rkDayR := rkDayR + _rkRes
         rkConsec := _rkRes < 0 ? rkConsec + 1 : 0
         rkEntry := na
@@ -4906,26 +5018,8 @@ string _evidence = showStatsEngine ? "  A" + str.tostring(oMatch) + (oMatch < 30
 // oBosFail is the exact arithmetic complement of oBosCont (they sum to 100 by construction
 // at L4096), so it is intentionally NOT printed twice; BOScont carries both.
 string calStr = showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : ""
-// ----- OOS RELIABILITY TABLE (observability only) ------------------------------
-// FOUR DISTINCT QUANTITIES, deliberately labelled apart because conflating them is the
-// defect this audit exists to remove:
-//   CalGrade = quality of calibration        (100 - 2 x mean |predicted - observed|)
-//   Pred     = estimated P(TP1 before SL)    (the model's claim for that bucket)
-//   Obs      = actual OOS outcome frequency  (what happened)
-//   Err      = |Pred - Obs|                  (the gap)
-// A bucket prints only when it meets the pre-existing N>=30 bar; otherwise "N<30".
-// NOTHING here is recalculated for display -- every figure is read from gCalRel, which the
-// stats engine populated from its own working values.
-// Calibration error is derived EXACTLY from the grade (ae = (100 - grade) / 2), not refitted.
-_relRow(int _i) =>
-    float _rn = array.get(gCalRel, _i * 3)
-    float _pd = array.get(gCalRel, _i * 3 + 1)
-    float _ob = array.get(gCalRel, _i * 3 + 2)
-    na(_rn) or _rn < 30 or na(_pd) ? "B" + str.tostring(_i) + " N<30" : "B" + str.tostring(_i) + " n" + str.tostring(int(_rn)) + " P" + str.tostring(_pd, "#") + " O" + str.tostring(_ob, "#") + " E" + str.tostring(math.abs(_pd - _ob), "#")
-string relStr = ""
-if showStatsEngine and showCalReliability
-    float _brBase = array.get(gCalRel, 15)
-    relStr := "RELIABILITY (ROLL, NOT A HOLDOUT)  " + _relRow(0) + " | " + _relRow(1) + " | " + _relRow(2) + " | " + _relRow(3) + " | " + _relRow(4) + "   base " + (na(_brBase) ? "—" : str.tostring(_brBase, "#") + "%") + "  ROLLn " + str.tostring(oOosN) + "  CalErr " + (oCalGrade > 0 ? str.tostring((100.0 - oCalGrade) / 2.0, "#.#") : "—") + (not na(__cb) ? "  Brier " + str.tostring(__cb, "#.###") : "") + "   VALIDITY: NOT ESTABLISHED (F-037 rolling population + development-contaminated history)"
+// v15 (token ceiling): the rolling reliability readout (default OFF, observability only,
+// appended to the crossCheck line) was removed. It recalculated nothing; recoverable from git.
 // CHANGE ID: F-011 — the last 9 orphans, all wired. These were destructured from the
 // stats tuple at global scope and then consumed by nothing. No new globals are needed:
 // __cg/__cb/__iw/__in/__fs.. are already in scope here, so wiring them costs display only.
@@ -4965,21 +5059,21 @@ string _vaStr = vaPos != "—" ? "  VA" + vaPos + str.tostring(int(vaRatio)) + "
 //             tells you whether a stop is inside the historical noise band.
 //   BOScont — BOS continuation rate. DISPLAY ONLY: R5.3 removed it from fAdj to kill a
 //             double-count, and it must never be fed back into a score.
-string _analytics = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "%" : ""
+string _analytics = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "/PDL" + str.tostring(oPdl1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "/fail" + str.tostring(int(oBosFail)) + "%" : ""
 // showSR consumer: annotates the readout when the user has toggled the Master switch for a
 // feature that now lives in the companion, so the control is wired to something truthful.
 string _srWhere = showSR ? "  SR@Visuals" : ""
 // GC confirmation state on the readout. Silent inputs are how features become orphans —
 // if it can move a macro vote, it must be visible. "GC DIV" is the one to watch: spot and
 // the centralised futures market disagreeing on direction.
-string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "") + cotState + curveState + "  " + schemaLine + shadowLine
+string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "") + cotState + curveState + "  " + schemaLine
 // WIRED (was assigned and never read — a pre-existing orphan, not introduced by the futures
 // work). It resolves the layout mode to a concrete name, which is genuinely useful on a
 // manual-execution dashboard: "Auto" tells you nothing about which layout you are actually
 // looking at, and layout drives how much of the panel is visible. Appended to the readout
 // so the value has a consumer and the mode is never ambiguous.
 string __resolvedModeResp = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
-string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]" + (relStr != "" ? "\n" + relStr : "")
+string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]"
 string auctionStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + "»" + aucBias + " " + aucState + str.tostring(aucProb) + "% " + aucCycle + " " + discStr + " A" + str.tostring(acceptScore) + acceptGrade + " " + valueMigStr + (openType != "" ? " " + openType : "") + (lastSweepQ > 0 ? " SW:" + lastSweepGrade + str.tostring(lastSweepQ) : "") + (not na(vixD) ? " VIX" + str.tostring(vixD, "#.#") : "")
 string tqGrade = tradeQuality >= 80 ? "A" : tradeQuality >= 65 ? "B" : tradeQuality >= 50 ? "C" : "D"
 // ═══════════════ END TRADE QUALITY ═══════════════
@@ -4991,18 +5085,24 @@ string eurMag = eurusdValid ? (math.abs(avgCorrEUR) > 0.5 ? "Strong" : math.abs(
 string yldMag = yieldValid ? (math.abs(avgCorrYld) > 0.5 ? "Strong" : math.abs(avgCorrYld) > 0.25 ? "Moderate" : "Weak") : "—"
 string xagMag = silverValid ? (math.abs(avgCorrSlv) > 0.5 ? "Strong" : math.abs(avgCorrSlv) > 0.25 ? "Moderate" : "Weak") : "—"
 string tipsMag = tipsValid ? (math.abs(avgCorrTIPS) > 0.5 ? "Strong" : math.abs(avgCorrTIPS) > 0.25 ? "Moderate" : "Weak") : "—"
-// Effective sample size correction for autocorrelated returns: N_eff = N(1-rho)/(1+rho), AR(1) rho~0.3
-float _rhoEst = 0.3
+// EFFECTIVE-N RECONCILED: this used N/(1 + 2rho/(1-rho)) with a hardcoded rho = 0.3,
+// while every other effective-N in the file uses N / OUTCOME_N (outcomes overlap over
+// OUTCOME_N bars). Two unreconciled methods for one quantity; the overlap form is the one
+// derived from how the labels are built, so it is used here too.
 // Win rate display
 string wrStr = "—"
-string wrCIStr = ""
+// F-A14 / v16 (no dead code): the +/-x% interval on this win rate is NOT displayed -- a
+// +/-x% reads as a fixed-holdout claim and oMatch is a rolling population (F-037). v13-v15
+// kept it computed but unread; v16 removes the dead computation. To restore it once a
+// frozen holdout exists (F-037B), the formula, at the overlap-corrected effective N, is:
+//     effN = max(oMatch / OUTCOME_N, 1);  half95 = 1.96 * sqrt(p(1-p) / effN) * 100
 if showStatsEngine and oMatch >= 30
     float _wrR = oWr / 100.0
-    float _wrDir = bearBiasScore > bullBiasScore ? (1.0 - _wrR) : _wrR
-    float _effN = oMatch / (1.0 + 2.0 * _rhoEst / (1.0 - _rhoEst))
-    float _wrCI95 = oMatch >= 30 ? 1.96 * math.sqrt(_wrDir * (1.0 - _wrDir) / _effN) * 100.0 : 0.0
+    // F-A28 (v20): a bearish bias showed 1 - P(bull), i.e. "bear OR timeout" -- 80% on a chart
+    // whose bear rate is ~20%. The bear direction now shows its own rate, oBear (the engine's
+    // weighted bear-resolution share), so both directions are win rates on the same basis.
+    float _wrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _wrR
     wrStr := str.tostring(int(_wrDir * 100.0)) + "%"
-    wrCIStr := _wrCI95 > 1.0 ? "+/-" + str.tostring(int(_wrCI95 + 0.5)) + "%" : ""
 // Reliability label — sample-size bins for historical analog confidence
 // Feature contribution breakdown: directional accuracy lift per factor
 // EV + N + Cal (shared by dashboard + bottom strip)
@@ -5083,20 +5183,7 @@ tcb(col, row, txt, tcol, bg, ts, w) =>
         table.cell(tblA, _pc, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
 tcp(col, row, txt, bg, ts, w) => table.cell(tblPlan, col, row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
 
-var bool[] gBreach = array.from(false, false)
-// R5.2-M5: breach state moved to main scope — it was written only inside
-// renderDashboard, so the cone breach markers in runVisuals depended on the dashboard
-// toggle. Also fixes a degenerate test: the old check compared close against a band
-// centered on the CURRENT close (close > close + band — never true), so breaches
-// could never fire. Breach is now a 1-bar move beyond the Z*ATR band from the prior
-// bar's cone origin.
-if showForecastCone
-    float _fcBandNow = math.max(adaptiveATR, atr) * forecastZ
-    array.set(gBreach, 0, not na(close[1]) and close > close[1] + _fcBandNow)
-    array.set(gBreach, 1, not na(close[1]) and close < close[1] - _fcBandNow)
-else
-    array.set(gBreach, 0, false)
-    array.set(gBreach, 1, false)
+// v15 (token ceiling): forecast-cone breach state and status removed (default OFF).
 
 // Q5.4-P1: dashboard split into three functions to satisfy the 254 external-
 // elements-per-function limit (was 338). Cross-function locals move through
@@ -5109,18 +5196,6 @@ f_dashData1() =>
     string _tfLabel = timeframe.period
     string _symStr = syminfo.ticker
     float _chgPct = not na(close[1]) and close[1] != 0 ? (close - close[1]) / close[1] * 100.0 : 0.0
-    // Cone status string — computed from main-scope f* scores for RISK column
-    string _coneStatus = "Cone: —"
-    if showForecastCone and not cleanInstitutional and not professionalMode
-        // R5.1: dead sub-calculations removed (_csEnd/_csEndBand/_fcCurr/_csSlope duplicated the
-        // cone geometry drawn in runVisuals); this block now only classifies direction and
-        // detects band breaches at the CURRENT bar. _csLabel is wired into the status string.
-        string _csLabel = fBullScore >= fBearScore and fBullScore >= fRngScore ? "BULL" : fBearScore >= fBullScore and fBearScore >= fRngScore ? "BEAR" : "RNG"
-        // R5.2-M5: gBreach is now computed in main scope (see declaration site).
-        // Confidence % from validated OOS win rate; minimum N=10
-        string _coneConf = oOosNeff >= 10 ? " C:" + str.tostring(int(oOosWr)) + "%" : " C:LowN"
-        // R5-F11: display the Z multiple, not a coverage %.
-        _coneStatus := not array.get(gBreach, 0) and not array.get(gBreach, 1) ? "Cone " + _csLabel + ": Inside (Z" + str.tostring(forecastZ, "#.#") + _coneConf + ")" : array.get(gBreach, 0) ? "Cone: Breached ↑" : "Cone: Breached ↓"
     string _chgStr = (_chgPct >= 0 ? "+" : "") + str.tostring(_chgPct, "#.##") + "%"
     color _chgCol = _chgPct >= 0 ? cBloomBull : cBloomBear
     // SSOT: SHARED — consumed by DECISION block, direction color, and multi-column display
@@ -5182,15 +5257,24 @@ f_dashData1() =>
     int _setupScore = math.min(math.max(int(confidenceScore / 20), 0), 5)
     string _gradeLabel = _setupScore >= 4 ? "A" : _setupScore >= 3 ? "B" : _setupScore >= 2 ? "C" : "D"
     // Kelly-optimal sizing with tail-risk penalty and DD circuit breaker
-    // NOTE (design): p = oOosWr is the rate of bullish 1h drift among state-similar bars,
-    // NOT the win rate of this trade structure (1.5 ATR SL, 1:1/1:2 TP). Half-Kelly plus the
-    // haircuts below keep this conservative; a trade-level outcome log is the proper base.
+    // v16 -- KELLY FOR THE BET ACTUALLY PLACED. The label has three outcomes over the horizon:
+    // win (+b), loss (-1) and timeout (~0). Maximising p ln(1+fb) + q ln(1-f) gives
+    //     f* = (p b - q) / (b (p + q)) = (p' b - q') / b,   p' = p / (p + q),  q' = 1 - p'
+    // i.e. binary Kelly on the probability CONDITIONAL on resolution. The old form used the
+    // bull win rate for shorts as well, and 1 - p as the loss probability, which counts
+    // every timeout as a full loss. p' is taken in the plan's direction, and its Wilson 95%
+    // lower bound is computed at the effective number of RESOLVED observations.
+    // b is the long-side win/loss magnitude ratio, (1 - c)/(1 + c) in R. Under a constant
+    // cost c it is identical for a short.
     float _kellyPct = riskPercent
     if showStatsEngine and oOosNeff >= 10 and not na(oOosWr) and not na(oAvgW) and not na(oAvgL) and oAvgL > 0
         // Q5.0-S1: p = Wilson 95% LOWER bound at EFFECTIVE sample size (overlap-corrected
         // N/OUTCOME_N) — self-shrinks toward no-bet when the independent sample is thin.
-        float _nEffK = math.max(oOosN / OUTCOME_N, 1.0)
-        float _pHatK = oOosWr / 100.0
+        float _brK = nz(array.get(gOosBearWr, 0), 100.0 - oOosWr) / 100.0
+        float _pWinK = tpIsLong ? oOosWr / 100.0 : _brK
+        float _pResK = oOosWr / 100.0 + _brK
+        float _nEffK = math.max(oOosN * _pResK / OUTCOME_N, 1.0)
+        float _pHatK = _pResK > 0 ? _pWinK / _pResK : 0.5
         float _zWK = 1.96
         float _wDenK = 1.0 + _zWK * _zWK / _nEffK
         float _wCtrK = (_pHatK + _zWK * _zWK / (2.0 * _nEffK)) / _wDenK
@@ -5220,7 +5304,6 @@ f_dashData1() =>
     array.set(gDashF, 1, _bullPct)
     array.set(gDashC, 1, _chgCol)
     array.set(gDashS, 2, _chgStr)
-    array.set(gDashS, 3, _coneStatus)
     array.set(gDashS, 4, _ctLabel)
     array.set(gDashC, 2, _dirBg)
     array.set(gDashS, 5, _dirConfLabel)
@@ -5352,7 +5435,6 @@ f_dashRender() =>
     int _bullPct = int(array.get(gDashF, 1))
     color _chgCol = array.get(gDashC, 1)
     string _chgStr = array.get(gDashS, 2)
-    string _coneStatus = array.get(gDashS, 3)
     string _ctLabel = array.get(gDashS, 4)
     color _dirBg = array.get(gDashC, 2)
     string _dirConfLabel = array.get(gDashS, 5)
@@ -5521,7 +5603,7 @@ f_dashRender() =>
         string _dowStr = showDowTracker ? _dowBiasStr() : ""
         string _macroRow2 = _macroVerdict + (_dowStr != "" ? "\n" + _dowStr : "")
         tcb(6, 2, _macroLine2 + " CR" + str.tostring(int(_crVal)) + "%\n" + _macroRow2, _crCol, color.new(_macro2Col, 88), _seSize, _w6)
-        string _riskSec = "WR " + wrStr + (wrCIStr != "" ? wrCIStr : "") + " ROLL " + _oosFixed + " " + _pfDisp + (showForecastCone ? "\n" + _coneStatus : "")
+        string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp
         tc(7, 2, _riskSec, pfCol, _seSize, _w7)
         // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement
         // that the trade cannot be placed at this account size; "0.00L" read as a valid
@@ -5630,16 +5712,30 @@ if showDashboard and barstate.islast
 // THE ENGINE IS UNTOUCHED. Detection still runs here and still feeds the decision path —
 // obBullActive / obBullLow / obBullHigh / obBearActive continue to supply the SL/TP
 // candidate arrays and the liquidity map exactly as before. Only the drawing left.
+// F-A30 (v21) CORRECTION: that was not true at default settings. Detection was gated by
+// showOB / showFVG / showDisplacement (and SMT / Climax by their switches), all OFF by
+// default, so the decision ignored the zones Visuals draws. They are engine inputs again,
+// default ON, with the same definitions Visuals uses.
 
 // Shared label cleaner helper
 // Helper: apply vertical offset bidirectionally (push up OR down, whichever is closer to base)
 // R5-F12: alertcondition messages use only valid built-in placeholders; the dynamic
 // alert() calls below carry the full bias detail.
-alertcondition(shouldBuy and not tqVeto and not perfMode, title="Nexus Buy Signal", message="XAUUSD {{ticker}} {{interval}}: BUY signal @ {{close}}")
-alertcondition(shouldSell and not tqVeto and not perfMode, title="Nexus Sell Signal", message="XAUUSD {{ticker}} {{interval}}: SELL signal @ {{close}}")
+// F-A31 (v21): the two alertconditions were not confirmed-bar gated -- with "Once per bar"
+// they could fire mid-candle on a signal gone by the close. The alert() texts now carry the
+// MT5-adjusted plan (entry / SL / TP1-3), directional P and race EV, for manual execution.
+alertcondition(shouldBuy and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Buy Signal", message="XAUUSD {{ticker}} {{interval}}: BUY signal @ {{close}}")
+alertcondition(shouldSell and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Sell Signal", message="XAUUSD {{ticker}} {{interval}}: SELL signal @ {{close}}")
+string _mt5Plan = "MT5 entry " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str + " TP3 " + tp3Str + " (" + tpRRStr + ") P" + str.tostring(math.round((tpIsLong ? _calPLong : _calPShort) * 100.0)) + "% EV" + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##") + "R")
 if shouldBuy and not tqVeto and barstate.isconfirmed and not perfMode
-    alert("XAUUSD BUY @ " + str.tostring(close, "#.##") + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar)
+    alert("XAUUSD " + timeframe.period + " BUY | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar_close)
 if shouldSell and not tqVeto and barstate.isconfirmed and not perfMode
-    alert("XAUUSD SELL @ " + str.tostring(close, "#.##") + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar)
+    alert("XAUUSD " + timeframe.period + " SELL | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar_close)
 alertcondition(showSignals and barstate.isconfirmed and bullBOS and not perfMode, "Bull BOS", "XAUUSD Bull BOS @ {{close}}")
 alertcondition(showSignals and barstate.isconfirmed and bearBOS and not perfMode, "Bear BOS", "XAUUSD Bear BOS @ {{close}}")
+// v21: every CONFIRMED change of the DECISION cell raises an alert (e.g. BUY -> NO TRADE when a
+// veto engages, WAIT -> SELL), carrying the MT5 plan when the new state is a trade.
+if barstate.isconfirmed and not perfMode and _confDirLabel != _confDirLabel[1]
+    alert("XAUUSD " + timeframe.period + " DECISION " + _confDirLabel[1] + " -> " + _confDirLabel + (_confDirLabel == "BUY" or _confDirLabel == "SELL" ? " | " + _mt5Plan : _confDirLabel == "RISK LOCK" ? " | " + riskLockStr : ""), alert.freq_once_per_bar_close)
+if barstate.isconfirmed and not perfMode and useRiskLimits and riskLock and not riskLock[1]
+    alert("XAUUSD " + timeframe.period + " RISK LOCK engaged: " + riskLockStr + " -- new entries blocked", alert.freq_once_per_bar_close)

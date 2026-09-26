@@ -9,8 +9,10 @@ The operator pastes these into TradingView by hand. Sending only the changed fil
 mismatched set on the chart, and there is no way to tell from the TradingView side which
 build a given script is on. A full set every time removes that class of mistake.
 
-There are **five** artefacts. Four are permanent chart scripts; `EdgeCases.pine` is a
-run-once diagnostic that is removed after reading its table. Send all five unless the
+There are **six** artefacts (since v17). Five are chart scripts; `EdgeCases.pine` is a
+run-once diagnostic that is removed after reading its table. `Diagnostics.pine` (v17)
+carries the features that no longer fit under the Master's compiled-token limit, on the
+Treatment twin's engine verbatim. Send all six unless the
 operator says to drop EdgeCases.
 
 **The chat record must include**, every time:
@@ -30,6 +32,9 @@ sha256sum artefacts/*.pine
 python3 audit/tools/precheck.py   artefacts/*.pine
 python3 audit/tools/undeclared.py artefacts/*.pine
 python3 audit/tools/order.py      artefacts/*.pine
+python3 audit/tools/deadcode.py   artefacts/*.pine
+python3 audit/tools/pinelimits.py artefacts/*.pine
+python3 audit/tools/diag_parity.py
 sha256sum -c audit/MANIFEST.sha256
 ```
 
@@ -42,7 +47,10 @@ sha256sum -c audit/MANIFEST.sha256
   them — that tests the reconstruction, not the original.
 - **Never mark anything PASS that was not executed.** `NOT RUN` is the honest verdict.
 - Changes to the strategy twins go to **both arms identically**, or the A/B breaks. The
-  diff between them must stay at its five hunk headers.
+  diff between them must stay at its five hunk headers. Engine changes also go into
+  `Diagnostics.pine` (outside its `DIAG` fences); `diag_parity.py` fails otherwise.
+- **Do not delete features** (operator instruction, 2026-09-26). Wire them; if a file has
+  no room, move the feature to a companion that runs the same engine, never drop it.
 - The checkers narrow the search; **they do not replace the compiler.** Three static passes
   gave false confidence this session, including one syntax error introduced by a fix.
 
@@ -50,10 +58,23 @@ sha256sum -c audit/MANIFEST.sha256
 
 | Path | What |
 |---|---|
-| `artefacts/` | The five Pine v6 files. |
+| `artefacts/` | The six Pine v6 files. |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A13. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A31. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |
-| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`. |
+| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`; `race_model_check.py` / `formula_check.py` (test the maths on synthetic data, not the Pine); `deadcode.py` (unread / self-only / write-only / uncalled symbols; `retained.txt` lists code kept on operator instruction); `diag_parity.py`; `pinelimits.py` (compile-error classes the others miss, incl. "no output call"). |
+
+## Web platform (`quantum/`, `site/`)
+
+- `quantum/` ports the Master engine to Python for the GitHub Pages site. An engine change in the
+  Pine artefacts is ported to `quantum/` in the same build (and the reverse); `python -m pytest -q
+  tests` must pass, including `test_no_lookahead`.
+- The same non-negotiables apply: defaults in `quantum/config.py` are the Pine input defaults and are
+  **not tuned**. Changing any of them changes the config hash, which restarts the frozen forward
+  holdout — by design.
+- Deliberate differences from Pine are listed in `docs/PLATFORM.md` (D-01 … D-07). Any other
+  difference is a bug.
+- The artefact delivery rule above applies to the `.pine` files only; the site deploys itself.
+

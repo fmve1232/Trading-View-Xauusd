@@ -1,0 +1,57 @@
+<h2>What this site is</h2>
+<p>The XAUUSD Quantum 5.0 engine — the Pine Master at build v21 — ported line for line to Python and run on free market data by a scheduled
+GitHub Actions job. The job downloads data, runs the engine on every timeframe, backtests both A/B arms, and publishes the results here as static JSON.
+The page itself makes no decisions. It shows what the engine concluded, and how it got there.</p>
+
+<h2>How it runs</h2>
+<ol>
+  <li><b>Download</b> (every 15 minutes while gold trades): XAU/USD price, COMEX gold futures (GC) volume, DXY, US 10-year, EURUSD, silver, S&amp;P 500, VIX (Yahoo Finance);
+    US 2-year and 10-year real yield (FRED); weekly Commitments of Traders for gold (CFTC). Each download is merged into a store on the <code>market-data</code> branch,
+    so the history grows beyond the 60 days Yahoo serves for 5- and 15-minute bars.</li>
+  <li><b>Engine</b>: on every confirmed bar: trend, regime, sessions, structure (BOS / CHoCH / MSS), displacement, order blocks, fair value gaps, liquidity pools and sweeps,
+    macro votes and correlations, the weighted evidence composite, the historical-analog engine and its Platt calibration, the trade plan,
+    trade quality, the vetoes and the account-state risk tracker.</li>
+  <li><b>Backtest</b> of both arms of the A/B test: <i>treatment</i> (the live gate) and <i>control</i> (the pre-Q5.5 gates).</li>
+  <li><b>Publish</b> to GitHub Pages; alerts go out for newly confirmed signals (ntfy / Telegram / Discord, optional).</li>
+</ol>
+
+<h2>Where it deliberately differs from the Pine version</h2>
+<p>These are removals of TradingView limitations, not tuning. None of them was chosen by looking at results.</p>
+<ul>
+  <li><b>D-01 · No repainting of higher-timeframe values.</b> On historical bars TradingView returns a <code>request.security(..., close[1])</code> value one HTF bar later than it does live.
+    Here every bar uses the live behaviour, so the backtest is computed the way the signal is.</li>
+  <li><b>D-02 · Exact daylight-saving time.</b> The Pine calendar rule switches European summer time up to four days early. Session windows gate entries, so this uses the IANA time-zone database instead.</li>
+  <li><b>D-03 / D-04 · Distinct analogs, whole buffer, every bar.</b> Pine scans its analog buffer in chunks across several bars and keeps calibration counts across scan cycles with a 0.7 decay,
+    so each analog is counted about 3.3 times and the <code>N ≥ 30</code> bin gates are met by repetition. Here every count is a count of distinct analogs and the whole buffer is scanned on every bar. The thresholds are unchanged.</li>
+  <li><b>D-05 · COT without look-ahead.</b> COT is aligned on its public release (Friday 15:30 New York), not on its Tuesday as-of date, and its percentile is taken over weeks rather than chart bars.</li>
+  <li><b>D-06 · Volume profile on every bar.</b> Pine computes the value area only on the last bar (F-A07), so a historical plan could never use VAL/VAH/POC. Here it is computed for every bar.</li>
+  <li><b>D-07 · Real futures volume.</b> Spot XAU/USD has no traded volume (TradingView's OANDA feed carries tick counts). Volume is taken from COMEX gold futures, bar for bar. A spot bar with no futures bar gets volume 0, and the count of such bars is shown in Diagnostics.</li>
+  <li><b>Open interest</b> is weekly (CFTC), not daily. It is labelled wherever it appears.</li>
+</ul>
+
+<h2>What is honest to claim, and what is not</h2>
+<ul>
+  <li><b>The historical window is contaminated.</b> Quantum 5.x thresholds, weights and gates were selected while looking at gold's history. No re-slicing of that history — walk-forward, purged k-fold or ROLL — is out of sample.</li>
+  <li><b>The only out-of-sample evidence is the frozen forward holdout.</b> The configuration is hashed, and every trade entered after the freeze was decided by parameters that could not have seen its outcome.
+    Change any parameter and the holdout restarts; the earlier one is kept in the manifest and never merged.</li>
+  <li><b>ROLL is not a holdout.</b> The engine's rolling IS/ROLL split is a trailing slice that is redrawn every bar (F-037). It is labelled ROLL everywhere.</li>
+  <li><b>Scores are not probabilities.</b> Confidence, trade quality, the bias composite and the what-if scores are heuristic 0–100 scores. The probability-shaped numbers are the calibrated P (after a Platt fit, marked <i>unfitted</i> before one exists), the race rates and the analog touch rates, each with its sample size.</li>
+  <li><b>No parameter here has been tuned against results.</b> The defaults are the Pine Master's input defaults. That is a rule, not an accident (audit §9).</li>
+</ul>
+
+<h2>Limits you should know</h2>
+<ul>
+  <li><b>Data is free, so it is delayed and occasionally wrong.</b> Yahoo intraday data can arrive late, have gaps, or be revised. GitHub's scheduler can delay a run by several minutes, and occasionally skips one. Every source, its row count and last timestamp are in Diagnostics.</li>
+  <li><b>Price scale.</b> If spot is unavailable the engine falls back to COMEX futures, which trade at a premium to spot. Set the MT5 offset (top bar) to your broker's difference. It shifts displayed prices only, as in Pine.</li>
+  <li><b>Parity with TradingView is not proven.</b> The port follows the Pine source line by line and is covered by unit tests, but no TradingView chart was available to compare against. Differences D-01 to D-07 are intentional; anything else is a bug worth reporting.</li>
+  <li><b>Backtest fills are modelled, not observed.</b> Entry is at the signal bar's close; a stop and a target in the same bar count as the stop (conservative); costs use the engine's session spread, slippage and commission model.</li>
+</ul>
+
+<h2>Glossary</h2>
+<ul>
+  <li><b>TQ</b> — trade quality, 0–100, direction-conditioned; entries below the regime-adjusted floor are vetoed.</li>
+  <li><b>Race EV</b> — expected R of the TP1-versus-stop race from analog first-touch statistics, net of costs; a negative value vetoes entries.</li>
+  <li><b>P(long) / P(short)</b> — Platt-calibrated probability of a bull / bear resolution, normalised across the two fits; below the minimum it vetoes entries once calibration is live.</li>
+  <li><b>ROLL</b> — the trailing 20% of the analog buffer. A diagnostic, not a holdout.</li>
+  <li><b>Holdout</b> — trades entered after the configuration freeze. The only unbiased evidence.</li>
+</ul>

@@ -20,7 +20,8 @@
 > the Master, and is recorded as **F-A07** below.
 >
 > **Applied:** F-A01/F-A03/F-A04/F-A06 (v2), F-A07 (v3), **F-A02 + F-A05 (v4)**.
-> All seven are now applied. **F-A02's wiring is not a validation** — see the
+> All seven are now applied; F-A08 … F-A20 followed, status per row in the Summary
+> table below. **F-A02's wiring is not a validation** — see the
 > revised Question B below.
 > Build v2 hashes are in `audit/MANIFEST.sha256`; v1→v2 line mapping in
 > `audit/LINE_MAP_v2.md`.
@@ -40,7 +41,23 @@
 | F-A07 | **HIGH** | `STAT` | *(new)* Volume profile is last-bar-only, so the live plan can use levels no historical bar could — **FIXED** (option 3, marked basis) |
 | F-A08 | **HIGH** | `BUG` | *(new)* Visuals drew order blocks on a 2.5× looser threshold than the Master while claiming parity — **FIXED** (engine ported) |
 | F-A15 | **P0** | `BUG`+`STAT` | Platt map fitted on `bullScore` was evaluated on `bearScore`; since F-A02 this **gated entries** — **FIXED v12** |
-| F-A16 | P2 | `STAT` | Short probability is the complement of a bull fit whose denominator includes timeouts — optimistic by the timeout rate — **OPEN** |
+| F-A14 | P2 | `PRES` | F-037's suppression incomplete: `wrCIStr` still rendered a ±x% interval over the rolling population (`WR 74%+/-4%`) — **FIXED v13** |
+| F-A16 | P2 | `STAT` | Short probability was the complement of a bull fit whose denominator includes timeouts — optimistic by the timeout rate — **FIXED v14** (bear fit + conditional gate) |
+| F-A17 | **P1** | `BUG` | Plan touch probabilities read a 1.5×ATR-unit histogram with plan-stop-unit distances; SL always the 1-unit rate — **FIXED v14** |
+| F-A18 | P2 | `BUG` | Regime adjustment could push the calibrated probability to 1.175 (short complement negative) — **FIXED v14** (clamp) |
+| F-A19 | **P0** | `STAT` | `planExpectancy` (a difference of marginal touch rates) vetoed trades as if it were an expectancy — **FIXED v14** (race expectancy) |
+| F-A20 | MEDIUM | `PRES` | EdgeCases C3/C5 asserted pre-F-A10 behaviour and passed, because they tested the harness's own model — **FIXED v14** |
+| F-A21 | MEDIUM | `BUG` | Dead and broken code: a what-if scenario engine that computed factors and never used them, unread/self-only accumulators, write-only buffers, 394 lines of dashboard remnants per strategy arm, and 2 inputs orphaned by v15 — **FIXED v16** |
+| F-A22 | **P1** | `STAT` | Cornish-Fisher applied FORWARD to an observed z-score, counting fat tails twice (99th pct: 6.64 vs a true 2.33); feeds `mrComposite` and an analog feature — **FIXED v16** (Newton inverse) |
+| F-A23 | P2 | `STAT` | Kelly used the bull win rate for shorts, and 1−p as the loss probability, so timeouts counted as losses — **FIXED v16** (f* = (pb−q)/(b(p+q))) |
+| F-A24 | P2 | `STAT` | Platt WLS weighted each bin by n, not the inverse variance of its logit, n·p(1−p) — **FIXED v16** (Berkson) |
+| F-A25 | P3 | `STAT` | Brier decomposition mixed smoothed frequencies with the raw base rate over different bin sets, so the identity failed — **FIXED v16** |
+| F-A27 | MEDIUM | `PRES` | EdgeCases A3/A6 asserted the pre-F-021 rounded categories and FAILED on the chart (engine correct) — **FIXED v20** |
+| F-A28 | P2 | `PRES` | Dashboard "WR" for a bearish bias was 1 − P(bull) = "bear OR timeout" (showed 80% on a ~20% chart) — **FIXED v20** (bear rate) |
+| F-A29 | **P0** | `BUG` | Strategy entries required `recentBars` (last 120 bars): the backtest could only trade the final ~5 days, so it took 0 trades — **FIXED v20** (switchable, default all bars) |
+| F-A30 | **P0** | `BUG` | OB, FVG, displacement, SMT and climax DETECTION were gated by display toggles defaulting OFF: the decision ignored the zones Visuals draws, and half the entry trigger was disabled — **FIXED v21** (engine inputs, default ON) |
+| F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
+| F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
 | F-A11 | **HIGH** | `PRES` | *(new, from a mobile screenshot)* "Mobile Layout" changed only the font size — the 9-column desktop table was still rendered on phones — **FIXED** (real column reduction) |
@@ -504,7 +521,45 @@ holds the previous behaviour.
 
 ---
 
-## F-A16 — short probability inherits the timeout rate `P2` `STAT` *(OPEN)*
+## F-A14 — F-037's suppression was incomplete `P2` `PRES` *(FIXED v13)*
+
+Recorded in `FORENSIC_AUDIT_Q5.md` §50. F-037 suppressed `oOosCI` because a ±x% interval is
+the notation for a fixed independent holdout, and the population it sat on is a rolling,
+continuously re-drawn one. A **second** interval, `_wrCI95 → wrCIStr`, still rendered
+`+/-x%` in the dashboard risk cell over `oMatch`, the same rolling population, so the claim
+F-037 set out to remove stayed on screen as `WR 74%+/-4%`.
+
+**Fix (Master only).** The render drops `wrCIStr`; the cell now reads `WR nn% ROLL …`. The
+formula is unchanged and still computed. As with `oOosCI`, the variable is **deliberately
+write-only** (1 declaration, 1 assignment, 0 reads, verified by search), feeds no gate,
+probability, risk term or alert, and is annotated so an orphan sweep does not delete it. It
+is restored when a genuine frozen holdout exists (F-037B). Two header comments that claimed
+the interval was displayed are corrected.
+
+**Not changed:** the strategy twins have no dashboard. Their `wrCIStr` was already
+write-only, so they are untouched and the A/B diff stays at five hunks. The `~touch …%±x`
+credible interval on the plan panel is a different construction (Beta-Binomial on analog
+hit rates, Q6.8) and was not part of this finding.
+
+---
+
+## F-A16 — short probability inherits the timeout rate `P2` `STAT` *(FIXED v14)*
+
+**v14 resolution.** The bear map *could* be fitted after all. The race label `hOut` is
+symmetric (+1 = up first, −1 = down first, 0 = timeout), so P(bear resolution | bullScore)
+comes from the same bins and the same x as the bull fit, just with `oc == −1` as the
+target. v14 adds that fit (`gCalFitBear`, negative slope required, bounds mirroring the
+bull fit's).
+
+The gate then compares like with like. With three outcomes, 0.50 is the right boundary
+only for the probability **conditional on resolution**, P(win)/(P(win)+P(loss)).
+Comparing the *unconditional* P(win) with 0.50 vetoes by the timeout rate, and that rate
+depends on timeframe: in a fair market with a 3-bar horizon only ~70% of races resolve, so
+P(win) ≈ 0.35 (`audit/tools/race_model_check.py`). Each direction now uses its own fit,
+conditioned. Until the bear map fits, the v12 behaviour holds exactly. The TQ history term
+uses the published OOS bear rate instead of `100 − oOosWr`.
+
+*Original finding, kept for the record:*
 
 The calibration counts `oc == 1` as a win against a denominator that also contains timeouts
 (`oc == 0`). So `sigmoid(bullScore)` is P(bull resolution) over **all** outcomes, and its
@@ -513,6 +568,196 @@ therefore **optimistic by the timeout rate**.
 
 Not fixable from the bull fit: it needs a calibration fitted on **bear** outcomes, which does
 not exist. Recorded rather than guessed at.
+
+---
+
+## F-A17 — plan probabilities read in the wrong unit `P1` `BUG` *(FIXED v14)*
+
+`_gHit` measures MFE/MAE in units of **1.5 × ATR** (`_rU`). The plan looked it up with
+`tpRR = distance / tpDist`, in units of the **plan's structural stop** (0.6 ATR … 1.6 ×
+regime ATR), so every `~touch` figure was read at the wrong point whenever
+`tpDist ≠ 1.5 ATR`. `pSLhit` was always the **1-unit** touch rate, whatever the stop, and
+below 1 unit the interpolation returned the 1-unit value. Tight stops were therefore
+credited with the much lower touch rate of a wide one. That fed `planExpectancy`, and so
+the veto.
+
+Fixed: distances are converted into the histogram's unit. The SL touch uses the adverse
+ladder (long: MAE slots 4–6; short: MFE slots 0–2), and the grid has an explicit anchor at
+0 units.
+
+## F-A18 — calibrated probability could exceed 1 `P2` `BUG` *(FIXED v14)*
+
+`_calibratedProb := 0.5 + (p − 0.5) × _regAdj` with `_regAdj ∈ [0.67, 1.5]`. At p = 0.95
+that gives **1.175**, and the short complement is **−0.175**. Now clamped to the fitted
+map's own [0.05, 0.95]. The bear map is deliberately not regime-adjusted: `_regAdj` is
+built from bull win rates only, and using it on the bear side would repeat F-A15's error.
+
+## F-A19 — the veto quantity was not an expectancy `P0` `STAT` *(FIXED v14)*
+
+This was the forensic audit's verdict reason #2. `planExpectancy = pTP1 − pSLhit` is a
+difference of two **marginal** touch rates over one population (F-038): not mutually
+exclusive, not a race, and with no payoff in it. It still vetoed trades via `tqVeto`.
+
+**Measured on synthetic data where the truth is known** (`race_model_check.py`,
+driftless price, true E[R] = 0 at every RR): the old estimator reads **−0.27 at RR 2 and
+−0.34 to −0.46 at RR 3**, so it systematically vetoed well-structured trades in a fair
+market. The v14 estimator reads within about ±0.03 R at every RR and both horizons. That
+residue is the simulation's own fill-overshoot artefact.
+
+**v14 estimator.** A chronological first-touch label `hRace` for six races (long and
+short, TP at 1R/2R/3R against a 1R stop, stop first on a same-bar tie), plus the horizon
+mark-to-market `hTerm` for races still open at the horizon:
+
+    E[R] = P(TP1 first)·RR1 − P(SL first) + E[timeout MTM] − cost_R
+
+The MTM term is what keeps it horizon-robust. For a bracket held past the horizon, MTM is
+the optimal-stopping-unbiased estimate of its eventual P&L when price is driftless;
+counting timeouts as 0 while charging cost would have biased E[R] negative wherever the
+horizon is short (F-035).
+
+**Approximation, stated:** the grid's stop is 1 regime-R and the plan's is structural.
+Reading RR1 off the grid assumes the race is scale-free in stop distance, which is exact
+only when the plan uses its regime-ATR fallback.
+
+**Model check ≠ Pine test.** The simulator re-implements the maths; it does not execute
+the `.pine`. `SCHEMA_BUILD` 2 → 3 so exported trades from the two definitions never pool.
+
+## F-A20 — EdgeCases asserted a fixed defect and passed `MEDIUM` `PRES` *(FIXED v14)*
+
+C3 "timeout charged ZERO cost" and C5 encoded the pre-F-A10 behaviour. The Master has
+charged timeouts since v7 (`st += frAdj`). They passed because the harness tests its own
+transcription of the Master, not the Master. They are corrected, all citations are
+re-derived against v14, and GROUP K adds 20 assertions for the v14 maths (92 total).
+
+---
+
+## F-A21 … F-A26 — the v16 traceability and formula pass *(FIXED v16)*
+
+**Wiring.** `audit/tools/deadcode.py` checks every symbol in all five files for four
+failure classes: never read, read only by its own update (`x += …`), write-only arrays,
+and functions never called. It iterates, because removing one dead symbol can orphan
+another. After v16 the result is **0 dead** in every file. What remains is structural and
+documented in the tool: the stats-engine tuple slots in the twins (Pine requires every
+element to be named; the Master reads them all), `ta.dmi`'s unused slots in Visuals, and
+the three inputs each strategy arm computes only because the *other* arm's gate reads them
+(this is what keeps the arms identical apart from the gate). Pruning a symbol that was dead
+in only one arm broke the A/B identity (7 hunks). So the pruning was redone to remove only
+symbols dead in **both** arms, and the diff is back to 5.
+
+**Formulas.** Checked against textbook definitions:
+- Verified correct: raw-moment skewness and kurtosis; the A–S 26.2.23 normal quantile
+  (constants checked); the correlation critical value r = t/√(df+t²) with Bonferroni over
+  18 tests; the Wilson bound; binary Kelly; Laplace smoothing; the Beta-posterior interval.
+- Five deviations, fixed and checked numerically (`audit/tools/formula_check.py`):
+
+| | Old | Correct | Evidence |
+|---|---|---|---|
+| F-A22 | forward CF q(x) on an observed x | w with q(w) = x (Newton, 6 steps) | 99th pct: true 2.33, inverse 2.29, forward 6.64 |
+| F-A23 | (p b − (1−p))/b, bull p for shorts | (p b − q)/(b(p+q)), direction's own p | p .35, q .30, b 1: optimum 7.7%, old −30% |
+| F-A24 | WLS weight n | n p(1−p) (Berkson min-logit χ²) | Var logit(p̂) ≈ 1/(n p(1−p)) |
+| F-A25 | smoothed o_k, N≥30 bins | raw o_k, all bins | identity exact to 1e-10; old off by 0.0035 |
+| F-A26 | 2nd Fisher term at corrected z | both terms at original z | textbook form; effect ~1e-5 |
+
+**Behaviour.** F-A22 changes `mrComposite`, and through it the stored analog feature `cM`.
+F-A24 changes the fitted calibration maps. Both change which trades fire, so
+`SCHEMA_BUILD` goes 3 → 4. F-A23 changes the *size guidance*, not the gate. It can
+recommend a **larger** size than v15 whenever timeouts are common, because v15 counted
+every timeout as a loss.
+
+---
+
+## v17 — features restored, not deleted (operator instruction)
+
+v15 and v16 removed six **features** from the Master: v15 to get under the compiled-token
+limit, v16 as dead code. The operator's rule is to wire features, never delete them.
+Measured: the Master has about 1,430 lexical tokens of headroom, and restoring and wiring all
+six costs about 1,300–1,500, so they cannot all fit back safely. Converting the engine's
+repeated code into arrays was measured too, and it *adds* tokens: each `x += y` becomes an
+`array.set(…array.get…)` call. So they live in `Diagnostics.pine`, which runs the
+Treatment twin's engine verbatim and draws them in a panel:
+
+| Feature | v14 state | v17 |
+|---|---|---|
+| Forecast cone + clean/professional hide switches | shown | shown, restored verbatim |
+| V1/V2 schema shadow audit | shown (default OFF) | shown, default ON |
+| Rolling reliability buckets + base rate + Brier | shown (default OFF) | shown; observed = raw frequency, as in the v16 Brier |
+| What-if scenarios (PDH/PDL continuation, VWAP hold/fail) | **computed, never shown** | **wired**, with the [10, 90] clamp the R5.1 note promised but never applied |
+| Rolling 95% intervals (WR, OOS) | suppressed (F-037/F-A14) | shown only under the panel's "ROLL, NOT A HOLDOUT" heading |
+| Data-source census (`hDataStatus`) | **write-only** | **wired**: % of stored observations where GC / OI contributed |
+
+**v18 — the non-features restored too (operator instruction).** The dashboard code in the
+strategy twins, `calBrier`, the two complements (`oPdl1stPct`, `oBosFail`, with their engine
+outputs and tuple slots) and the two trimmed request-tuple slots are all back. The twins are
+their v15 text plus exactly the v16 formula corrections: each formula block is byte-identical
+to the Master's. The Master's restored lines sit exactly where v15 had them (checked
+neighbour by neighbour; one statement-order slip was corrected). None of this code has a
+reader, so it cannot change any output. `deadcode.py` lists it as RETAINED
+(`audit/tools/retained.txt`, 64 names, each verified absent from v16) instead of dead; any
+dead symbol not on that list still fails.
+
+`diag_parity.py` fails if the Diagnostics engine differs from the Treatment engine by one
+code line (verified by injecting a one-character change).
+
+---
+
+## F-A27 … F-A29 — from the operator's first full chart run *(FIXED v20)*
+
+The first v19 run established that all six scripts compile. The Master is under the token
+limit: it renders v14+ fields (`EVrace … n885`). The strategy arms show only warnings. It
+also exposed three defects:
+
+- **F-A29 (P0).** Both arms took **0 trades** (Jan 2025 – Sep 2026, 1H). Both pre-filters
+  require `recentBars = bar_index > last_bar_index - recentBarsLen` (default 120). That is a
+  live-display filter present since the audited v1, and in a strategy it confines every entry
+  to the last ~5 days of the chart. It is kept, not removed: a new input *Backtest all bars*
+  (default ON in the arms) makes it switchable. The Master keeps its live behaviour.
+  Whatever else binds, the Diagnostics **gate funnel** now shows it, stage by stage, over the
+  whole history. Diagnose, don't tune.
+- **F-A28.** The Diagnostics panel read `WR 80%` beside `base 20%`. For a bearish bias the
+  WR cell showed 1 − P(bull), which counts every timeout as a bear win (the F-A16 error in a
+  display). It now shows the engine's bear-resolution share, `oBear`, in the Master, both arms
+  and Diagnostics.
+- **F-A27.** EdgeCases `3 FAIL / 97`. A3 (39.51) and A6 (69.51) still expected the ROUNDED
+  categories that F-021 removed; the engine is right. Fixed, and failing rows now render
+  first at a readable size, because the third failure was below the visible part of the
+  screenshot and is still unidentified.
+
+---
+
+## F-A30, F-A31 and the v21 wiring pass *(FIXED v21)*
+
+**F-A30 (P0), the chart and the decision disagreed.** In the Master (and the engine copies)
+`showOB`, `showFVG`, `showDisplacement`, `showSMT` and `showClimax` gate **detection**, not
+drawing, and all default OFF. That has been so since v1: the comment claiming "detection still
+runs and feeds the decision path" was untrue at defaults. Consequences:
+- displacement, half of the entry trigger (`bullStructActive or displacementUp`), never fired;
+- no order block ever formed (its onset is a displacement), so none reached the SL/TP
+  candidates, trade quality or the analog zone feature;
+- FVGs were ignored.
+
+Meanwhile Visuals draws OBs and FVGs by default, with the same definitions. The toggles are
+now engine inputs defaulting ON, with the same definitions as Visuals (checked: OB onset,
+displacement thresholds, FVG size). `SCHEMA_BUILD` 4 → 5.
+
+**Checked identical, Master vs Visuals:** the NY-17:00 day roll behind PDH/PDL (28 code lines,
+0 differences); daily/weekly/monthly VWAP; BB(20) basis; monthly high/low request.
+
+**F-A31, alerts for manual MT5 execution.** Details in `RUNBOOK.md` Step 2c.
+
+**Wiring pass.** Every name retained in v18 is now wired:
+- Master: `oPdl1stPct` and `oBosFail` shown beside their partners; `calBrier` becomes the
+  n-weighted RMS calibration error in the calibration detail (engine, all copies).
+- Strategy twins: the dashboard builder, table helpers, display strings, layout inputs and
+  drawing handles are wired through Diagnostics, which runs the same engine verbatim. That
+  gives a dashboard mirror, an MT5 plan table, cross-check rows, and an engine-zones overlay
+  (OB/FVG handles, and S/R containers filled with the engine's scored liquidity pools).
+- The twins' dashboard builder was brought in line with the Master's (the v16 Kelly fix and
+  the history-gate hint).
+- The what-if factors are published by the engine instead of recomputed by the panel.
+
+`deadcode.py` now counts drawing handles redrawn via delete/new as live. It also treats a twin
+symbol read by Diagnostics as wired through the companion. Result: 0 dead, 0 retained in all
+six files; `retained.txt` is empty.
 
 ---
 

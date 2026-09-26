@@ -1,7 +1,7 @@
 # XAUUSD Quantum — Independent Audit Prompt
 
 **Status:** binding instructions for the auditor.
-**Scope:** the five Pine v6 artefacts listed in §1 and nothing else.
+**Scope:** the six Pine v6 artefacts listed in §1 and nothing else (six since v17).
 **Generated against:** the artefact set committed under `artefacts/`.
 
 This is not a generic code-review template. It is pinned to this project's
@@ -13,18 +13,19 @@ traps in §4 are findings that already cost this project weeks to locate. Read
 
 ## §1 — Artefact manifest and the stop rule
 
-You are auditing exactly these five files. Nothing else in the repository is in
+You are auditing exactly these six files. Nothing else in the repository is in
 scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5645 | 362523 | `a38b66a35be70a37a33f1619af2748b45bb22ba4dbee0581d48b9a4f6be94bc5` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5002 | 309515 | `7b1330179e54dd4ec7d1067bb0b8f4685458a83b1e058ab661e2affc1cbcb1bb` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5002 | 309580 | `f499570854cfebda3c50c9458543d5cd415082c3e1134bd991e034971d9fbe2a` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 301 | 21307 | `538f8eee0a65285174399e2299aa387cc64f3ff931b88bf9f8dc6407606f83ea` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5741 | 371153 | `db4c24df8a018e8ca732348a2b6e8c75d153c01508891d1e6036df5a77718503` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5277 | 329997 | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5277 | 330062 | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 377 | 26980 | `8ffaf61c8a56db77cc9efff13aacef90b2166c068cff6398fe105d5aa384ef5c` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5491 | 345431 | `4c5bef5e7f2a7e13a0cbd310937848ee56ac8d3a76ad677a1c9a799a83010bd9` |
 
-> **BUILD v12 — this prompt pins the current build.** The originally audited build
+> **BUILD v22 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -36,7 +37,19 @@ scope, and no other build of these scripts is in scope.
 > **F-A13 in v10** — the first REAL COMPILER ERROR, reported by the operator: the Master
 > and both twins failed with `Undeclared identifier "OUTCOME_N"`. **§8.1 is now CLOSED as
 > a fact rather than an assumption: the Master had never compiled, and the defect is
-> present in the originally audited v1 build.** All thirteen findings applied.
+> present in the originally audited v1 build.** All thirteen findings applied as of v10.
+> **F-A15 in v12** (calibration map evaluated on the wrong variable). **F-A14 in v13**
+> (the rolling win rate's ±x% interval suppressed on the dashboard, completing F-037).
+> **v14: F-A16 … F-A20** — bear calibration and a conditional-probability gate, plan
+> probabilities in the right unit, the probability clamp, a real race expectancy replacing
+> the marginal difference that vetoed trades, and the EdgeCases harness re-anchored.
+> **v15:** Master cut under the compiled-token limit (three default-OFF diagnostics
+> removed); strategy cost model made tick-size independent (P0-CAL-006).
+> **v16: F-A21 … F-A26** — zero dead code in all five files (`deadcode.py`), five formulas
+> corrected to their textbook definitions (`formula_check.py`).
+> **v17:** the six features v15/v16 removed from the Master are restored and wired in a new
+> `Diagnostics.pine` companion on the Treatment engine verbatim (`diag_parity.py`).
+> **v18:** the removed non-features restored as well (listed in `audit/tools/retained.txt`).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

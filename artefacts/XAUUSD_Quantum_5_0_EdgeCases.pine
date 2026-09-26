@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v6    (Master citations re-anchored)║
+// ║  BUILD STAMP — this file last CHANGED in v21   (citations re-anchored)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -68,11 +68,14 @@ b(bool _v) => _v ? "true" : "false"
 
 // =============================================================================
 // GROUP A — ROUNDING AT REGIME BOUNDARIES  (F-021)
-// Master L1868: regimeComposite = int(math.round(<float>)); the LIVE thresholds at
-// L1870-1871 test regimeCompositeRaw, i.e. the UNROUNDED composite.
+// Master L1901: regimeComposite = int(math.round(<float>)); the LIVE thresholds at
+// L1903-1904 test regimeCompositeRaw, i.e. the UNROUNDED composite.
 // Rounding happens BEFORE the threshold test, so the EFFECTIVE boundary is 39.5/69.5,
 // not 40/70. These cases establish the true boundary in Pine's own semantics.
 // =============================================================================
+// F-A27 (v20): A3 and A6 still asserted the ROUNDED behaviour (39.51 -> 1, 69.51 -> 0) and
+// FAILED on the operator's chart. With the thresholds on the raw value, 39.51 < 40 is WEAK (2)
+// and 69.51 < 70 is MODERATE (1) -- the harness was wrong, not the engine.
 // UPDATED FOR F-021. The engine now thresholds on the UNROUNDED composite, so the
 // boundaries are the documented 40 and 70. These cases previously asserted the DEFECTIVE
 // behaviour (69.50 -> STRONG); they now assert the corrected behaviour, and A7 inverts:
@@ -83,10 +86,10 @@ regimeCat(float _raw) =>
 if barstate.islastconfirmedhistory
     chk("A1  raw 39.49 -> category", i(regimeCat(39.49)), "2", "STAT")
     chk("A2  raw 39.50 -> category (was 1, now 2)", i(regimeCat(39.50)), "2", "STAT")
-    chk("A3  raw 39.51 -> category", i(regimeCat(39.51)), "1", "STAT")
+    chk("A3  raw 39.51 -> category (was 1, now 2)", i(regimeCat(39.51)), "2", "STAT")
     chk("A4  raw 69.49 -> category", i(regimeCat(69.49)), "1", "STAT")
     chk("A5  raw 69.50 -> category (was 0, now 1)", i(regimeCat(69.50)), "1", "STAT")
-    chk("A6  raw 69.51 -> category", i(regimeCat(69.51)), "0", "STAT")
+    chk("A6  raw 69.51 -> category (was 0, now 1)", i(regimeCat(69.51)), "1", "STAT")
     // If A2 and A5 pass, the documented 40/70 thresholds are actually 39.5/69.5.
     chk("A7  F-021 CLOSED: boundary is 70, not 69.5", b(regimeCat(69.50) == 1 and regimeCat(70.00) == 0), "true", "STAT")
     // Pine rounds half AWAY FROM ZERO, not banker's rounding. Establish it explicitly.
@@ -98,7 +101,7 @@ if barstate.islastconfirmedhistory
     chk("A12 int(-0.5) truncates toward zero", i(int(-0.5)), "0", "NUM")
 
 // =============================================================================
-// GROUP B — SL/TP RACE  (Master L3058, guarded by `if _oR > 0` at L3055)
+// GROUP B — SL/TP RACE  (Master L3089, guarded by `if _oR > 0` at L3086)
 //   _oRes := low[k] <= ent - R ? -1 : high[k] >= ent + R ? 1 : 0
 // SL is tested FIRST, so a bar touching both resolves to LOSS.
 // DESIGN, not BUG: Pine cannot order intrabar events without lower-timeframe data.
@@ -119,30 +122,29 @@ if barstate.islastconfirmedhistory
 
 // =============================================================================
 // GROUP C — TIMEOUT ACCOUNTING INCONSISTENCY
-// Calibration bins (L3787 c*t / L3790 c*b): oc==0 increments the TOTAL but never the WIN.
-// Expectancy (D-001, L3694): oc==0 is still effectively FREE. RE-VERIFIED against the
-// current Master (F-A10): the cost subtraction `frAdj = fr - _costATR` now runs for every
-// analog, but for oc==0 the result is DISCARDED -- absFrAdj is read only in the oc==+/-1
-// branches and _pnlPct is 0.0 on the timeout branch. The Master's own D-001 note claimed
-// "cost now applies to all three outcome codes"; it does arithmetically, not effectively.
-// So C3/C5 below still describe the LIVE behaviour -- but for a different reason than the
-// original defect, and costCharged() models the OUTCOME, not the (now present) subtraction.
-// The SAME observation is pessimistic in one statistic and optimistic in the other.
+// Calibration bins (L3884 c*t / L3887 c*b): oc==0 increments the TOTAL but never the WIN.
+// Expectancy (L3759 frAdj, L3785 timeout branch): SINCE v7 (F-A10) a timeout IS charged --
+// `st += frAdj` accumulates its signed cost-adjusted return. v6 of this harness still
+// asserted the pre-F-A10 behaviour (C3 "timeout charged ZERO cost") and PASSED, because it
+// tested its own model of the Master, not the Master. Corrected in v14: costCharged()
+// now models the live code. The remaining asymmetry is in the CALIBRATION, where a
+// timeout is a non-win for the bull fit AND a non-loss for the bear fit; v14 gates on
+// P(win | resolved), which removes it from the decision (GROUP K).
 // =============================================================================
 calBinCount(int _oc) => 1                       // total always increments
 calBinWin(int _oc)   => _oc == 1 ? 1 : 0        // only oc==1 counts as success
-costCharged(int _oc, float _cost) => _oc == 1 or _oc == -1 ? _cost : 0.0
+costCharged(int _oc, float _cost) => _cost  // v7+: every outcome pays the round trip
 
 if barstate.islastconfirmedhistory
     chk("C1  timeout enters bin TOTAL",        i(calBinCount(0)), "1", "STAT")
     chk("C2  timeout is NOT a bin WIN",        i(calBinWin(0)),   "0", "STAT")
-    chk("C3  timeout charged ZERO cost",       f(costCharged(0, 0.77)), "0", "STAT")
+    chk("C3  timeout charged FULL cost (v7+)", f(costCharged(0, 0.77)), "0.77", "STAT")
     chk("C4  win charged full cost",           f(costCharged(1, 0.77)), "0.77", "STAT")
     // The inconsistency, stated as a single assertion so it cannot be overlooked:
-    chk("C5  timeout: failure in calib AND free in EV", b(calBinWin(0) == 0 and costCharged(0, 0.77) == 0.0), "true", "STAT")
+    chk("C5  timeout: non-win in calib, charged in EV", b(calBinWin(0) == 0 and costCharged(0, 0.77) == 0.77), "true", "STAT")
 
 // =============================================================================
-// GROUP D — bayesRate  (Master L272)  bayesRate(w,t) = t>0 ? (w+1)/(t+2) : 0.5
+// GROUP D — bayesRate  (Master L281)  bayesRate(w,t) = t>0 ? (w+1)/(t+2) : 0.5
 // Beta(1,1) shrink. Verifies no bucket can ever claim 0% or 100%.
 // PINE TRAP UNDER TEST: (w+1)/(t+2) with INT arguments would be integer division.
 // =============================================================================
@@ -157,7 +159,7 @@ if barstate.islastconfirmedhistory
     chk("D6  shrink weakens as N grows",       b(bayesRate(0, 1000) < bayesRate(0, 30)), "true", "STAT")
 
 // =============================================================================
-// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L3988, and the Platt bin gate at L4055)
+// GROUP E — BUCKET MINIMUM SAMPLE  (N >= 30 gate: L4119, and the Platt bin gate at L4171)
 // =============================================================================
 bucketQualifies(int _n) => _n >= 30
 
@@ -165,12 +167,12 @@ if barstate.islastconfirmedhistory
     chk("E1  N=29 rejected", b(bucketQualifies(29)), "false", "PRES")
     chk("E2  N=30 accepted", b(bucketQualifies(30)), "true",  "PRES")
     chk("E3  N=31 accepted", b(bucketQualifies(31)), "true",  "PRES")
-    // Platt fit needs >= 3 qualifying bins (fit block L4069-4073). 2 bins must NOT fit.
+    // Platt fit needs >= 3 qualifying bins (fit block L4185-4193). 2 bins must NOT fit.
     chk("E4  2 qualifying bins -> no fit", b(2 >= 3), "false", "STAT")
     chk("E5  3 qualifying bins -> fit ok", b(3 >= 3), "true",  "STAT")
 
 // =============================================================================
-// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4069-4073)
+// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4185-4193; bear fit L4223-4225)
 //   slope clamped [0.02, 0.25]; intercept clamped [-1, 1];
 //   fit REJECTED when slope <= 0; variance guard _pfVr > 1e-6
 // =============================================================================
@@ -194,7 +196,7 @@ if barstate.islastconfirmedhistory
     chk("F11 slopes 0.5 and 0.9 collapse to one value", b(slopeClamp(0.5) == slopeClamp(0.9)), "true", "NUM")
 
 // =============================================================================
-// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4419, clamp L4420)  _calP clamped [0.05, 0.95]
+// GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4584, clamp L4585)  _calP clamped [0.05, 0.95]
 // A calibrated probability can NEVER be reported below 5% or above 95%.
 // =============================================================================
 probClamp(float _p) => math.min(math.max(_p, 0.05), 0.95)
@@ -209,7 +211,7 @@ if barstate.islastconfirmedhistory
     chk("G6  no overflow at extreme -input", b(not na(sigmoid(-1e6, 0.25, 0.0))), "true", "NUM")
 
 // =============================================================================
-// GROUP H — macroRegime CLAMP SATURATION  (Master L1856)
+// GROUP H — macroRegime CLAMP SATURATION  (Master L1889)
 //   macroRegime = clamp(0,100, base + (oi!=0 and macroBull/Bear ? 10 : oi!=0 ? 5 : 0))
 // Confirms the finding that at base 100 the OI nudge is ENTIRELY absorbed, so V2 == V1
 // there and any "subtract the nudge" shortcut would fabricate a divergence.
@@ -259,6 +261,73 @@ if barstate.islastconfirmedhistory
     chk("J5  3 votes: passes V1, FAILS V2",  b(3 >= macroNeed(false) and not (3 >= macroNeed(true))), "true", "STAT")
 
 // =============================================================================
+// GROUP K — v14 RACE LABEL, EXPECTANCY AND CONDITIONAL GATE  (F-A16..F-A19)
+//   race outcome  L3112-3117   encode L3118   decode L3842   grid interp L2607
+//   expectancy L2833   F-A18 clamp L4640   conditional gate L4842   bear fit L4223-4225
+// =============================================================================
+raceOut(int _tStop, int _tTp) => _tStop < 9999 and _tStop <= _tTp ? 2 : _tTp < 9999 ? 1 : 0
+raceEnc(int _a, int _b, int _c, int _d, int _e, int _f) => _a + 3 * _b + 9 * _c + 27 * _d + 81 * _e + 243 * _f
+raceDigit(int _code, int _j) =>
+    int _rem = _code
+    int _o = 0
+    for _q = 0 to _j
+        _o := _rem % 3
+        _rem := int(math.floor(_rem / 3.0))
+    _o
+gridInterp(float _rr, float _p0, float _p1, float _p2, float _p3, bool _decay) =>
+    _rr <= 0.0 ? _p0 : _rr <= 1.0 ? _p0 + (_p1 - _p0) * _rr : _rr <= 2.0 ? _p1 + (_p2 - _p1) * (_rr - 1.0) : _rr <= 3.0 ? _p2 + (_p3 - _p2) * (_rr - 2.0) : _decay ? _p3 * math.pow(0.7, _rr - 3.0) : _p3
+raceEV(float _pw, float _pl, float _rr, float _tmo, float _cost) => _pw * _rr - _pl + _tmo - _cost
+condP(float _pDir, float _pOpp) => _pDir + _pOpp > 0 ? _pDir / (_pDir + _pOpp) : na
+regClamp(float _p, float _adj) => math.min(math.max(0.5 + (_p - 0.5) * _adj, 0.05), 0.95)
+bearSlope(float _k) => math.min(math.max(_k, -0.25), -0.02)
+
+if barstate.islastconfirmedhistory
+    chk("K1  TP bar 2, SL bar 5 -> win",      i(raceOut(5, 2)),       "1", "DESIGN")
+    chk("K2  SL bar 2, TP bar 5 -> loss",     i(raceOut(2, 5)),       "2", "DESIGN")
+    chk("K3  same bar -> LOSS (stop first)",  i(raceOut(3, 3)),       "2", "DESIGN")
+    chk("K4  neither touched -> timeout",     i(raceOut(9999, 9999)), "0", "DESIGN")
+    chk("K5  SL only -> loss",                i(raceOut(1, 9999)),    "2", "DESIGN")
+    chk("K6  TP only -> win",                 i(raceOut(9999, 4)),    "1", "DESIGN")
+    chk("K7  encode/decode digit 4",          i(raceDigit(raceEnc(2, 1, 0, 1, 2, 0), 4)), "2", "NUM")
+    chk("K8  max code 728 = all losses",      b(raceEnc(2, 2, 2, 2, 2, 2) == 728 and raceDigit(728, 5) == 2), "true", "NUM")
+    chk("K9  grid anchor at 0",               f(gridInterp(0.0, 100.0, 40.0, 20.0, 10.0, true)), "100", "NUM")
+    chk("K10 0.5 unit between 0 and 1",       f(gridInterp(0.5, 100.0, 40.0, 20.0, 10.0, true)), "70", "STAT")
+    chk("K11 2.5 units between 2 and 3",      f(gridInterp(2.5, 100.0, 40.0, 20.0, 10.0, true)), "15", "NUM")
+    chk("K12 loss held flat beyond 3",        f(gridInterp(5.0, 0.0, 30.0, 35.0, 36.0, false)), "36", "STAT")
+    chk("K13 win decays beyond 3",            b(gridInterp(4.0, 100.0, 40.0, 20.0, 10.0, true) < 10.0), "true", "STAT")
+    chk("K14 fair 1:1 race, no cost -> EV 0", f(raceEV(0.35, 0.35, 1.0, 0.0, 0.0)), "0", "STAT")
+    chk("K15 cost is charged on every trade", f(raceEV(0.35, 0.35, 1.0, 0.0, 0.05)), "-0.05", "STAT")
+    chk("K16 timeouts: P(win|res) = 0.5",     f(condP(0.35, 0.35)), "0.5", "STAT")
+    chk("K17 fits summing > 1 normalised",    f(condP(0.9, 0.6)), "0.6", "STAT")
+    chk("K18 F-A18 prob stays <= 0.95",       f(regClamp(0.95, 1.5)), "0.95", "NUM")
+    chk("K19 bear slope -0.001 -> -0.02",     f(bearSlope(-0.001)), "-0.02", "NUM")
+    chk("K20 bear slope -0.9 -> -0.25",       f(bearSlope(-0.9)), "-0.25", "NUM")
+
+// =============================================================================
+// GROUP L — v16 FORMULA CORRECTIONS  (Kelly L5273-5286, Cornish-Fisher inverse L821-831)
+//   Kelly with timeouts: f* = (p b - q) / (b (p + q)). Cornish-Fisher is INVERTED by
+//   Newton's method, so an observed standardised return maps to its normal-equivalent.
+// =============================================================================
+kellyTri(float _p, float _q, float _b) => (_p * _b - _q) / (_b * (_p + _q))
+cfFwd(float _w, float _s, float _k) => _w + (_w * _w - 1.0) * _s / 6.0 + (_w * _w * _w - 3.0 * _w) * _k / 24.0 - (2.0 * _w * _w * _w - 5.0 * _w) * _s * _s / 36.0
+cfInv(float _x, float _s, float _k) =>
+    float _w = _x
+    for _it = 0 to 5
+        float _w2 = _w * _w
+        float _w3 = _w2 * _w
+        float _q = _w + (_w2 - 1.0) * _s / 6.0 + (_w3 - 3.0 * _w) * _k / 24.0 - (2.0 * _w3 - 5.0 * _w) * _s * _s / 36.0
+        float _dq = 1.0 + _w * _s / 3.0 + (3.0 * _w2 - 3.0) * _k / 24.0 - (6.0 * _w2 - 5.0) * _s * _s / 36.0
+        _w := _w - (_q - _x) / math.max(_dq, 0.1)
+    _w
+
+if barstate.islastconfirmedhistory
+    chk("L1  Kelly p.35 q.30 b1 = 0.0769",      f(kellyTri(0.35, 0.30, 1.0)), "0.0769", "STAT")
+    chk("L2  old 1-p form said no bet",         b((0.35 * 1.0 - 0.65) / 1.0 < 0.0), "true", "STAT")
+    chk("L3  CF inverse is identity at S=K=0",  f(cfInv(1.7, 0.0, 0.0)), "1.7", "NUM")
+    chk("L4  CF inverse undoes the forward map", b(math.abs(cfInv(cfFwd(2.0, 0.5, 2.0), 0.5, 2.0) - 2.0) < 1e-6), "true", "NUM")
+    chk("L5  fat tails SHRINK an observed 3.0", b(cfInv(3.0, 0.0, 3.0) < 3.0), "true", "STAT")
+
+// =============================================================================
 // NEEDS-MASTER — NOT ASSERTED HERE, LISTED SO THEY ARE NOT FORGOTTEN
 //   These depend on live wiring, buffer state or feed availability and cannot be
 //   established by a standalone script. Do not mark §16 complete without them.
@@ -277,25 +346,32 @@ if barstate.islastconfirmedhistory
 // TradingView threw "Row 70 is out of table bounds" at runtime -- a count that only
 // breaks when the table is actually written, so no static check here would catch it.
 var table tT = table.new(position.top_left, 5, 100, border_width = 1)
+// v20: FAILING rows are drawn FIRST, so the failures are at the top of any screenshot, and the
+// text size is selectable (size.tiny was unreadable in the operator's screenshots).
+harnessText = input.string("Small", "Table text size", options=["Tiny", "Small", "Normal"])
+_hts() => harnessText == "Tiny" ? size.tiny : harnessText == "Normal" ? size.normal : size.small
 if barstate.islastconfirmedhistory
     int _n = array.size(tName)
     int _fail = 0
     for _q = 0 to (_n > 0 ? _n - 1 : 0)
         if not array.get(tPass, _q)
             _fail += 1
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v6", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n), bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = size.tiny)
-    int _maxRow = math.min(_n, 99)
-    for _q = 0 to (_maxRow > 0 ? _maxRow - 1 : 0)
-        bool _p = array.get(tPass, _q)
-        color _bg = _p ? color.new(color.green, 85) : color.new(color.red, 55)
-        table.cell(tT, 0, _q + 1, array.get(tName, _q),  bgcolor = _bg, text_size = size.tiny, text_halign = text.align_left)
-        table.cell(tT, 1, _q + 1, array.get(tGot, _q),   bgcolor = _bg, text_size = size.tiny)
-        table.cell(tT, 2, _q + 1, array.get(tWant, _q),  bgcolor = _bg, text_size = size.tiny)
-        table.cell(tT, 3, _q + 1, array.get(tClass, _q), bgcolor = _bg, text_size = size.tiny)
-        table.cell(tT, 4, _q + 1, _p ? "PASS" : "FAIL",  bgcolor = _bg, text_size = size.tiny)
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v21", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n), bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = _hts())
+    int _row = 1
+    for _pass = 0 to 1
+        for _q = 0 to (_n > 0 ? _n - 1 : 0)
+            bool _p = array.get(tPass, _q)
+            if _row <= 99 and ((_pass == 0 and not _p) or (_pass == 1 and _p))
+                color _bg = _p ? color.new(color.green, 85) : color.new(color.red, 55)
+                table.cell(tT, 0, _row, array.get(tName, _q),  bgcolor = _bg, text_size = _hts(), text_halign = text.align_left)
+                table.cell(tT, 1, _row, array.get(tGot, _q),   bgcolor = _bg, text_size = _hts())
+                table.cell(tT, 2, _row, array.get(tWant, _q),  bgcolor = _bg, text_size = _hts())
+                table.cell(tT, 3, _row, array.get(tClass, _q), bgcolor = _bg, text_size = _hts())
+                table.cell(tT, 4, _row, _p ? "PASS" : "FAIL",  bgcolor = _bg, text_size = _hts())
+                _row += 1
 
 plot(na, "harness", display = display.none)

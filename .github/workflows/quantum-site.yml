@@ -1,0 +1,85 @@
+# XAUUSD Quantum -- data -> engine -> GitHub Pages, every 15 minutes while gold trades.
+#
+# One-time setup (repository Settings):
+#   Pages   -> Build and deployment -> Source: "GitHub Actions"
+#   Actions -> General -> Workflow permissions: "Read and write"
+# Optional secrets (Settings -> Secrets and variables -> Actions):
+#   TWELVEDATA_API_KEY   free key -> spot XAU/USD instead of Yahoo / COMEX futures
+#   NTFY_TOPIC           ntfy.sh topic for phone alerts (no account needed)
+#   TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID, DISCORD_WEBHOOK_URL
+# Optional variables: MT5_PRICE_OFFSET (alert prices), ALERT_TFS (default "15m,1h")
+name: quantum-site
+
+on:
+  schedule:
+    - cron: "*/15 * * * 0-5"      # UTC. Gold trades Sun 22:00 -> Fri 21:00 UTC; Saturday is skipped
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths: ["quantum/**", "site/**", ".github/workflows/quantum-site.yml", "requirements.txt"]
+
+permissions:
+  contents: write     # push the market-data branch
+  pages: write
+  id-token: write
+
+concurrency:
+  group: quantum-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements.txt
+
+      - name: Unit tests (engine, no-look-ahead, execution model)
+        run: python -m pytest -q tests
+
+      - name: Load the market-data store
+        run: |
+          git clone -q --depth 1 --branch market-data --single-branch \
+            "https://github.com/${{ github.repository }}.git" store || mkdir -p store
+
+      - name: Run pipeline
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MT5_PRICE_OFFSET: ${{ vars.MT5_PRICE_OFFSET }}
+          ALERT_TFS: ${{ vars.ALERT_TFS || '15m,1h' }}
+        run: python -m quantum.pipeline --store store --out site/data --tfs 15m,1h,4h,5m
+
+      - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
+        if: always()
+        run: |
+          cd store
+          if [ ! -d .git ]; then git init -q -b market-data; fi
+          git config user.name "quantum-pipeline"
+          git config user.email "quantum-pipeline@users.noreply.github.com"
+          git checkout -q --orphan snapshot
+          git add -A
+          git commit -q -m "market data $(date -u +%FT%TZ)" || exit 0
+          # the shallow clone still knows the old tip, so unchanged blobs are not re-sent
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot:market-data
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

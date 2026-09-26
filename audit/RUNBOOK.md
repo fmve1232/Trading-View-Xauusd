@@ -2,7 +2,7 @@
 
 Ordered by value. **Steps 1 and 2 are worth more than everything else combined**, because
 they close gaps that no amount of analysis here can: the Master has never been compiled and
-the 72 assertions have never been run.
+the 97 assertions (72 until v13, +20 in v14, +5 in v16) have never been run.
 
 Read §9 at the end before running the strategies. It is short and it changes what the data
 is allowed to do.
@@ -13,21 +13,22 @@ is allowed to do.
 
 **Do this first. If it fails, every later step produces nothing.**
 
-Entries in both strategy arms are hard-gated on:
+Entries in both strategy arms are hard-gated on (v15):
 
 ```pine
-bool _costModelValid = math.abs(syminfo.mintick - 0.01) <= 1e-9
+bool _costModelValid = syminfo.pointvalue == 1.0 and syminfo.currency == "USD"
 ```
 
-If your broker's XAUUSD feed has a tick size other than `0.01`, **no trades will fire** and
-the backtest will look broken when it is actually refusing to run on a cost model that does
-not match. A label saying `A/B INVALID — COST MODEL MISMATCH` is drawn on the last bar.
+Up to v14 the gate tested `mintick == 0.01`, and OANDA:XAUUSD (mintick 0.001) was blocked.
+v15 charges all costs as cash per contract (`commission_value = 0.385`, `slippage = 0`), so
+tick size no longer matters. What the cash figures do depend on is 1 contract = $1 per
+point, in USD. If that doesn't hold, **no trades fire** and a label saying
+`A/B INVALID — COST MODEL MISMATCH` is drawn on the last bar.
 
 **What to do:** add either strategy to your XAUUSD chart and look for that label.
 
-- **No label** → tick size is 0.01, cost model valid, continue.
-- **Label present** → send me the `mintick=` value it prints. The commission and slippage
-  constants have to be re-derived for your feed before any run means anything.
+- **No label** → cost model valid, continue.
+- **Label present** → send me the `pointvalue=` and `currency=` values it prints.
 
 Also note your broker/exchange prefix (e.g. `OANDA:XAUUSD`, `FX:XAUUSD`, `CAPITALCOM:GOLD`).
 Different feeds have different tick sizes, spreads and session calendars.
@@ -38,7 +39,7 @@ Different feeds have different tick sizes, spreads and session calendars.
 
 The Master has **no measured compiler baseline**. A build was once measured at 128,210
 compiled tokens against a 100,256 limit, and the drawing layer was cut to fit. Whether the
-current 5,595-line build compiles is unknown.
+current build (v14: Master 5,850 lines) compiles is unknown.
 
 1. Open the Pine editor, paste `XAUUSD_Quantum_5_0_Master.pine` over the **whole** script
    body (select all first — do not splice).
@@ -59,20 +60,62 @@ context readout near the decision log). It is display-only.
 
 ## Step 2 — Run the Edge Case harness  *(closes §8.2)*
 
-72 assertions that have never been run. The last recorded attempt hit a runtime error
+97 assertions that have never been run (72 original + 20 in GROUP K, v14 + 5 in GROUP L, v16). The last recorded attempt hit a runtime error
 (`Row 70 is out of table bounds`), which was fixed — but the corrected build's result was
 never recorded.
 
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 72`, or `<n> FAIL / 72`.
+   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v21`. Since v20
+   **failing rows are drawn first**, and a *Table text size* input (default Small) keeps them legible.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
 4. Remove it afterwards — it is diagnostic only.
 
-A green `ALL PASS 72` establishes how Pine evaluates the arithmetic. It does **not**
+A green `ALL PASS 97` establishes how Pine evaluates the arithmetic. It does **not**
 establish that the Master is wired to those expressions — that is a separate, known limit.
+
+---
+
+## Step 2b — Diagnostics companion (v17)
+
+`XAUUSD_Quantum_5_0_Diagnostics.pine` runs the Treatment engine and shows the six diagnostic
+features that no longer fit in the Master: forecast cone, V1/V2 shadow audit, reliability
+buckets, rolling 95% intervals, what-if scenario scores and the data-source census.
+
+1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
+   slow to load as a strategy arm.
+2. Screenshot the panel (top right by default; there's a position input). The header must
+   read `QUANTUM DIAGNOSTICS v22 Q7.2 B5`. Row **Volume (free plan)** compares OANDA tick
+   volume with real COMEX GC1! volume (delayed on a free plan, so compared on closed bars):
+   `corr` near 1 means the volume filters can be trusted; a WEAK reading means treat
+   volume-based signals with caution. Bottom-left: the dashboard mirror (the Master's
+   dashboard values recomputed from the same engine); bottom-right: the MT5 plan. Input
+   *Engine zones overlay* draws the engine's own OB / FVG / liquidity levels to compare with
+   Visuals. The **Gate funnel** rows show how many
+   historical bars pass each entry stage and how often each veto fires; send them with any
+   backtest that takes few or no trades.
+3. It trades and alerts nothing. Keep it or remove it; nothing else depends on it.
+
+---
+
+## Step 2c — Alerts for manual MT5 execution (v21)
+
+One alert on the **Master** delivers everything. In TradingView choose **Create Alert**, then
+**Condition: XAUUSD Quantum 5.0 → "Any alert() function call"**, and set expiry and your
+notification channel (app / e-mail / webhook). It fires only on **closed bars**, with:
+
+| Event | Message carries |
+|---|---|
+| BUY / SELL signal | MT5 entry, SL, TP1, TP2, TP3, RR, directional P, race EV, bias, TQ, session |
+| DECISION changes (e.g. BUY → NO TRADE, WAIT → SELL) | old → new state; the MT5 plan when the new state is a trade |
+| Tracked plan hits SL or TP1 | which level (MT5 price) and the result in R |
+| Risk lock engages | the lock reason; new entries are blocked |
+
+MT5 prices use the **MT5 Price Offset** input (MT5 − TradingView). Set it from your broker's
+quote before trading. The separate "Nexus Buy/Sell Signal" and "Bull/Bear BOS" alertconditions
+remain available and are confirmed-bar gated too.
 
 ---
 
@@ -100,7 +143,8 @@ Easiest: screenshot the whole Inputs tab. Two screenshots beat a transcription e
 ## Step 4 — Export the List of Trades
 
 Run **each strategy arm separately**, same chart, same timeframe, same date range, same
-inputs. Only the script differs.
+inputs. Only the script differs. Leave **Backtest all bars** ON (default since v20); OFF
+confines entries to the last *Signal Lookback Bars* (120), which is why v19 took 0 trades.
 
 1. Add `XAUUSD Quantum 5.0 — Control` (OLDGATES) to the chart.
 2. Open the **Strategy Tester** panel (bottom).
@@ -130,8 +174,15 @@ TQ<n>|CG<n>|B<n>V<n>|D<n>|P<pct>
 | `P` | **calibrated probability that *this trade* wins**, in percent |
 
 `P` is new — it was promised by a code comment but never actually emitted, so the field a
-calibration test most needs was the one field missing. It is now the *directional*
-probability (`1 − p` for shorts), which is what a reliability curve requires.
+calibration test most needs was the one field missing. It is the *directional* probability
+the gate used for that trade.
+
+**From v14 (`B3`) `P` means something different, so never pool `B2` and `B3` trades.**
+Once both the bull and the bear calibration maps have fitted, `P` is
+`P(win | resolved) = P(win) / (P(win) + P(loss))` from the trade direction's own fit — the
+probability that the target comes before the stop. Before the bear map fits, it is the
+v12 value (`P(bull)` for longs, `1 − P(bull)` for shorts). Build 2 and build 3 rows
+answer different questions; a reliability curve over both is meaningless.
 
 **This is why Step 4 must come after pasting the current build.** Alerts cannot backfill
 history, so the entry comment is the only way to attach per-trade engine state to
@@ -181,6 +232,11 @@ Quick visual confirmations that the fixes behave:
 - **Plan basis**: look for a `°` suffix (e.g. `SL:VAL°`). It marks a level that exists only
   at the live edge and no historical bar could have produced.
 - **Decision log**: should now name the filter that actually blocked, plus a `ctx:` suffix.
+- **v14 plan panel**: the expectancy reads `EVrace x.xxR` (was `E x.xxR`). It is now a real
+  expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
+- **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
+  and `mP unfit` before either map exists — the old heuristic value is gone.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v21`, **97** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 
@@ -226,7 +282,7 @@ runbook, is a diagnostic. Useful, worth doing — but not validation.
 
 | Priority | Item |
 |---|---|
-| 1 | Compile result for all five files — clean, or the exact error text |
+| 1 | Compile result for all six files — clean, or the exact error text |
 | 2 | Screenshot of the Edge Case harness table |
 | 3 | Symbol, timeframe, date range, `mintick`, Inputs screenshots |
 | 4 | Four Performance Summary screenshots (runs A–D) |

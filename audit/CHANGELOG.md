@@ -1,6 +1,6 @@
-# Build changelog — v1 → … → v9
+# Build changelog — v1 → … → v22
 
-**Fifteen findings applied; F-A16 open by necessity.** See each build section below.
+**All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
 
 **Nothing was tuned, in v4 either.** No existing threshold, weight or lookback changed
@@ -635,3 +635,218 @@ reverts.
 F-A16 recorded and left open: the bull fit's denominator includes timeouts, so the short's
 complement covers "bear OR timeout" and is optimistic by the timeout rate. Fixing it needs a
 bear-outcome calibration that does not exist.
+
+---
+
+# Build v12 → v13 — F-A14: the rolling win rate's ±x% interval suppressed
+
+`Master` 5645 → 5652 (by `wc -l`). Strategy, OLDGATES, Visuals and EdgeCases unchanged.
+**Display only — no trading behaviour changes.**
+
+F-037 suppressed `oOosCI` because a ±x% interval implies a fixed independent holdout, and
+the win-rate population here is rolling. A second interval, `wrCIStr`, still put that claim
+on the dashboard as `WR 74%+/-4%`, over the same rolling `oMatch` population.
+
+The risk cell now reads `WR 74% ROLL …`. `wrCIStr` is still computed, unchanged, and is
+deliberately write-only with an F-A14 annotation, matching how `oOosCI` is handled, so it
+can be restored once a frozen holdout exists. Two header comments that said the interval was
+displayed are corrected.
+
+The twins have no dashboard and their `wrCIStr` was already unread, so they are not
+touched. A/B diff unchanged at five hunk headers. All checkers clean. **Compile NOT RUN.**
+
+---
+
+# Build v13 → v14 — the probability layer made coherent (F-A16 … F-A20)
+
+`Master` 5652 → 5850 · `Strategy` / `OLDGATES` 5002 → 5200 (identical edits, A/B diff
+still five hunk headers) · `EdgeCases` 301 → 343 · Visuals unchanged.
+**This changes which trades fire.** `SCHEMA_BUILD` 2 → 3; never pool B2 and B3 exports.
+
+| ID | What was wrong | Fix |
+|---|---|---|
+| F-A19 (P0) | The veto used `pTP1 − pSLhit`, a difference of marginal touch rates, as if it were an expectancy. Under a fair game it reads −0.27…−0.46 at RR 2–3 | Race expectancy from a first-touch label, with timeouts at horizon mark-to-market, net of cost |
+| F-A17 (P1) | Touch probabilities were read from a 1.5×ATR-unit histogram using plan-stop-unit distances; SL was always the 1-unit rate | Converted to the histogram's unit; SL on the adverse ladder; 0-anchor on the grid |
+| F-A16 (P2) | A short used 1 − P(bull), i.e. "bear or timeout" | Bear Platt fit; gate on P(win \| resolved) from each direction's own fit |
+| F-A18 (P2) | The regime multiplier could push the probability to 1.175 | Clamped to [0.05, 0.95] |
+| F-A20 | EdgeCases C3/C5 asserted pre-v7 behaviour and passed | Corrected; citations re-derived; GROUP K (+20 assertions, 92 total) |
+| P2 | Cold-start slope derived from an accuracy grade | Identity map, `mP unfit` |
+| P2 | Two effective-N methods | `N / OUTCOME_N` throughout |
+
+**Nothing tuned.** No existing threshold, weight or lookback changed value. The bear fit
+mirrors the bull fit's bounds, the gate stays at 0.50 (now the correct boundary, because
+the probability is conditional), and the 0.7 taper is the existing one.
+
+**Expected on the chart.**
+- Fewer spurious vetoes on setups with RR ≥ 2 (the old quantity penalised them).
+- More vetoes where costs are large relative to the stop (cost is now inside E[R]).
+- On ≥30M charts the gate stops blocking by the timeout rate once both maps fit.
+- Plan panel shows `EVrace`; SIGNAL cell shows `mP=L/S%` or `mP unfit`.
+
+**Verification.** precheck / undeclared / order clean; manifest updated;
+`audit/tools/race_model_check.py` PASS on two seeds (tests the maths, not the Pine).
+**Compile NOT RUN. Harness NOT RUN. Backtest NOT RUN.**
+
+**Token budget.** About +90 executable lines across the probability layer. The compiled
+token count is still unmeasured (`CONCURRENCY_AND_MIGRATION.md` B4). If TradingView
+reports a ceiling problem on save, follow B5 of that file; do not split the engine.
+
+---
+
+# Build v14 → v15 — first compile results acted on
+
+The operator's first v14 run established three facts:
+
+1. **The Master failed on tokens: 100,627 against a 100,256 limit.** The v14 additions
+   (+1,444 lexical tokens) are what crossed it. Both strategy twins and Visuals **compiled
+   and ran**, and they carry the same v14 engine code. So the v14 logic compiles, and the
+   Master's only error was size.
+2. **OANDA:XAUUSD has mintick 0.001.** The P0-CAL-005 gate therefore blocked every
+   strategy entry, correctly.
+3. **EdgeCases compiled and ran: 3 FAIL / 92.** The failing rows were not legible in the
+   screenshot. **NOT diagnosed yet.**
+
+**Master** 5850 → 5726. Executed step 1 of `CONCURRENCY_AND_MIGRATION.md` B5: removed the
+three default-OFF diagnostics (forecast cone, V1/V2 schema shadow audit, rolling
+reliability readout) and their inputs. None fed a decision. −1,010 lexical tokens, an
+estimated ~98,100 compiled. **Estimate; the save reports the real figure.**
+My first pass also claimed the reliability string was never rendered. It is rendered
+(inside `crossCheck`); `undeclared.py` caught the dangling reference, and the claim was
+withdrawn before commit.
+
+**Strategy / OLDGATES** (identical, A/B diff still five hunk headers): P0-CAL-006. Costs
+are now charged as cash per contract (`commission_value 0.385`, `slippage 0`), so tick
+size doesn't matter. The gate now checks `pointvalue == 1` and `currency == USD`. Accepted
+residual: TP-limit fills are charged up to 0.35 pts/oz more than TradingView's slippage
+model would (conservative).
+
+**EdgeCases**: all Master citations re-derived against v15; header now `v15`. No assertion changed.
+
+**Nothing tuned.** Compile of v15 NOT RUN.
+
+---
+
+# Build v15 → v16 — end-to-end wiring and formula compliance (F-A21 … F-A26)
+
+`Master` 5726 → 5698 · `Strategy` / `OLDGATES` 5214 → 4735 (identical; A/B diff still five
+hunk headers) · `EdgeCases` 343 → 367 (97 assertions) · Visuals unchanged.
+**Changes which trades fire** (F-A22, F-A24). `SCHEMA_BUILD` 3 → 4.
+
+- **Wiring:** `deadcode.py` reports 0 dead symbols in all five files. Removed: the what-if
+  scenario engine (never read), unread and self-only accumulators, the write-only
+  `hDataStatus` buffer, two engine outputs no file used, the two inputs v15 orphaned, and
+  the twins' dashboard remnants (dead in *both* arms only). Two dormant ±x% intervals
+  (F-037/F-A14) are no longer computed; their formulas are kept verbatim in comments.
+- **Formulas:** Cornish-Fisher inverted (F-A22); Kelly with timeouts and in the plan's
+  direction (F-A23); Berkson-weighted Platt fits (F-A24); exact Brier decomposition
+  (F-A25); t-quantile expansion order (F-A26). `formula_check.py` PASS.
+- **EdgeCases:** citations re-derived and verified line by line against v16; GROUP L adds
+  5 assertions for the corrected formulas.
+- **Token estimate:** Master 39,224 lexical tokens (≈96,700 compiled at the measured 2.466
+  ratio, ~3.5% headroom). An estimate until the save reports it.
+
+**Nothing tuned.** Compile of v16 NOT RUN. EdgeCases' 3 v14 failures still undiagnosed
+(screenshot not legible).
+
+---
+
+# Build v16 → v17 — no feature deleted: Diagnostics companion
+
+New sixth artefact `XAUUSD_Quantum_5_0_Diagnostics.pine`: the Treatment engine verbatim plus
+a panel showing the six features v15/v16 took out of the Master (cone, V1/V2 shadow,
+reliability buckets, rolling intervals, what-if scores, data-source census). Two of them
+were never visible before and are now wired. Master, twins, Visuals and EdgeCases are
+**unchanged**. New `audit/tools/diag_parity.py` enforces engine identity. deadcode: 0 dead.
+Details in `FINDINGS_TRACEABILITY.md` ("v17"). Compile of Diagnostics NOT RUN.
+
+---
+
+# Build v17 → v18 — removed non-features restored
+
+Operator instruction: restore the removed non-features too.
+- **Strategy / OLDGATES** 4735 → 5244: v15 text restored in full (dashboard remnants, request
+  tuple slots, complements, `calBrier`, scenario factors), plus exactly v16's formula
+  corrections (blocks byte-identical to the Master's). A/B diff: five hunk headers.
+- **Master** +14 lines: `calBrier` and the two complements with their engine outputs and
+  tuple slots, back in their v15 positions. Tuples identical to v15. ~39,349 lexical tokens,
+  an estimated ~97,040 compiled.
+- **Diagnostics** rebuilt on the restored engine. Panel names are `dg`-prefixed where the
+  engine now declares the same name; the census reads the engine's own `hDataStatus`. No
+  duplicate globals (checked). `diag_parity.py` PASS.
+- **EdgeCases** citations re-mapped through the diff and verified line by line.
+
+**No output changes**: every restored line is unread. `SCHEMA_BUILD` stays 4. Compile NOT RUN.
+
+---
+
+# Build v18 → v19 — pre-paste compile recheck
+
+New `audit/tools/pinelimits.py` covers compile-error classes the other checkers miss:
+- G1: a function modifying a global.
+- G2: a duplicate declaration in one scope.
+- G3: tuple arity.
+- G4: a float array index.
+- G6: `bool = na`.
+- G8: an indicator with no output call.
+- It also reports variables per scope and request sites.
+
+Each rule was proven on injected errors and calibrated on a build that ran on the chart (v14 twin: 0 issues).
+
+**It found a real error:** the v17/v18 Diagnostics script had **no output function call**, which TradingView
+rejects ("Script must have at least one output function call"). Fixed with a hidden
+`plot(na)`, as in EdgeCases. Also checked clean in all six files: no tabs, non-breaking
+spaces, nested functions, table bounds or loop bounds.
+
+Token estimates for every script; only the Master is tight (~97,000). A traced Master →
+Visuals contingency is recorded in `CONCURRENCY_AND_MIGRATION.md` B5a, to use only if the
+save reports an overflow. Only Diagnostics changed. Compile NOT RUN.
+
+---
+
+# Build v19 → v20 — first full chart run acted on (F-A27 … F-A29)
+
+**Confirmed on the chart:** all six compile. The Master is under the token limit, so no
+Visuals move is needed. The arms show only `barstate.islast` warnings, which are harmless.
+- **F-A29 (P0):** 0 trades in both arms, because `recentBars` confined entries to the last
+  120 bars. Now switchable with *Backtest all bars*, default ON in both arms (identical; A/B
+  diff still five hunk headers).
+- **F-A28:** bearish-bias WR showed 1 − P(bull); now the bear rate (Master, arms,
+  Diagnostics).
+- **F-A27:** EdgeCases A3/A6 expectations corrected; failures render first; text size input.
+- **Diagnostics:** gate funnel (bars → trend → HTF → session/news/DD/recent → trigger →
+  vetoes → PASS).
+
+The strategy arms will now trade history. Compile of v20 NOT RUN.
+
+---
+
+# Build v20 → v21 — decision, alerts, chart parity, full wiring (F-A30, F-A31)
+
+- **F-A30 (P0):** OB / FVG / displacement / SMT / climax detection is on by default as engine
+  inputs (Master and both arms, identically). The decision now sees the zones Visuals
+  draws. **Changes which trades fire**; `SCHEMA_BUILD` 5.
+- **F-A31:** alerts are confirmed-bar only and MT5-ready: plan with MT5 prices, P, EV. New:
+  decision-change, tracked SL/TP1, risk-lock alerts. BOS alerts on by default.
+- **Wiring:** every retained name is wired (see FINDINGS). The Diagnostics panel gains a
+  dashboard mirror, an MT5 plan table, cross-check rows and an engine-zones overlay; the
+  twins' dashboard builder matches the Master's.
+- **Parity verified:** NY day roll (PDH/PDL) identical in Master and Visuals; OB and FVG
+  definitions identical.
+- **Estimates:** Master ~97,700, Diagnostics ~94,200, twins ~85,900. Compile NOT RUN.
+
+---
+
+# Build v21 → v22 — real-volume check within a free TradingView plan
+
+Operator request: "actual" volume, liquidity and order-block data via free API keys.
+- Pine cannot make web requests, so there is no API or key route.
+- Order blocks and liquidity are price-derived patterns, not a data feed.
+- The only real volume reachable on a free plan is COMEX GC1!: delayed ~10 min, and
+  already loading on the operator's chart (Diagnostics showed GC 98%).
+
+**Diagnostics** gains a *Volume (free plan)* row:
+- the 100-bar correlation between OANDA tick volume and COMEX GC1! volume (both previous
+  bar, so both complete despite the delay);
+- whether the previous bar's displacement was backed by real COMEX volume expansion.
+
+It is display only; no engine, gate or Master change. Compile NOT RUN.
