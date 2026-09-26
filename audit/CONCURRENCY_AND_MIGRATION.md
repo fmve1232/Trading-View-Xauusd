@@ -176,6 +176,27 @@ still being consumed) and F-A08 (order-block threshold 2.5× looser on the chart
 engine, while the comment claimed parity). Splitting a system across files that cannot share
 state is exactly how definitions drift apart.
 
+### B5a. Ready contingency (v19): Master → Visuals, if the save reports a ceiling problem
+
+v19 estimates (lexical × 2.466): Master ~97,000, Diagnostics ~89,300, twins ~85,300 (v14's
+~85,100 compiled and ran), Visuals ~17,800. Only the Master is tight. If its save reports
+more than 100,256, these move to Visuals. Each was traced mechanically: it reads **no engine
+value** (scores, probabilities, analogs), uses only OHLCV, `ta.*` or `request.*` data
+Visuals can fetch itself, and **feeds no gate** (`shouldBuy/Sell`, `tqVeto`, `_calVeto`,
+`tradeQuality`, `riskLock`):
+
+| Feature (Master dashboard) | Symbols |
+|---|---|
+| Auction acceptance + value migration | `acceptScore`, `acceptGrade`, `valueMigStr` |
+| Session manipulation / continuation rates | `sessManipProb`, `sessContProb` |
+| Session volume anomaly, CVD direction | `vol{Asian,London,Ny}EWMA`, `cvdBull` |
+| PDH / liquidity reach | `pdhReachScore`, `liqReachScore` |
+
+Estimated saving ~1,000–1,500 compiled tokens. **Not movable** (they feed the veto):
+`distEma20ATR` / `distEma200ATR`. Moving anything re-opens the F-A08 risk of the chart and
+the engine computing "the same" feature differently. Each move needs a parity check like
+`diag_parity.py`, and none is done unless the compiler asks for it.
+
 ### B5. If the compiler *does* report a ceiling problem — ordered plan
 
 > **Measured 2026-09-26 on v14:** `Compiled code contains too many tokens: 100627. The limit

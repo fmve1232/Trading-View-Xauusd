@@ -86,7 +86,7 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
    slow to load as a strategy arm.
 2. Screenshot the panel (top right by default; there's a position input). The header must
-   read `QUANTUM DIAGNOSTICS v18 B4`.
+   read `QUANTUM DIAGNOSTICS v19 B4`.
 3. It trades and alerts nothing. Keep it or remove it; nothing else depends on it.
 
 ---

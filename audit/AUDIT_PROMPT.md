@@ -23,9 +23,9 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5243 | 326891 | `f200a5c85d2a4ea2b24aa1632638b08c1649fc08db2b8866cad5f12abd624b39` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 367 | 26200 | `a9bfd639b5939eda66390a0e4fb73245b01311a4eaaf26328e92e7f8b4f221f4` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5319 | 331071 | `0c44a4ca8abc1fbc19d14bab3822715076b40f1b2826f88a9103286475894100` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5322 | 331292 | `d228a2b5f7bd3b81828a0c5675229d122565882785874d366be2edd40cb66642` |
 
-> **BUILD v18 — this prompt pins the current build.** The originally audited build
+> **BUILD v19 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and

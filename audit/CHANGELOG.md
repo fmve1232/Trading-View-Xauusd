@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v18
+# Build changelog — v1 → … → v19
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -776,3 +776,27 @@ Operator instruction: restore the removed non-features too.
 - **EdgeCases** citations re-mapped through the diff and verified line by line.
 
 **No output changes**: every restored line is unread. `SCHEMA_BUILD` stays 4. Compile NOT RUN.
+
+---
+
+# Build v18 → v19 — pre-paste compile recheck
+
+New `audit/tools/pinelimits.py` covers compile-error classes the other checkers miss:
+- G1: a function modifying a global.
+- G2: a duplicate declaration in one scope.
+- G3: tuple arity.
+- G4: a float array index.
+- G6: `bool = na`.
+- G8: an indicator with no output call.
+- It also reports variables per scope and request sites.
+
+Each rule was proven on injected errors and calibrated on a build that ran on the chart (v14 twin: 0 issues).
+
+**It found a real error:** the v17/v18 Diagnostics script had **no output function call**, which TradingView
+rejects ("Script must have at least one output function call"). Fixed with a hidden
+`plot(na)`, as in EdgeCases. Also checked clean in all six files: no tabs, non-breaking
+spaces, nested functions, table bounds or loop bounds.
+
+Token estimates for every script; only the Master is tight (~97,000). A traced Master →
+Visuals contingency is recorded in `CONCURRENCY_AND_MIGRATION.md` B5a, to use only if the
+save reports an overflow. Only Diagnostics changed. Compile NOT RUN.

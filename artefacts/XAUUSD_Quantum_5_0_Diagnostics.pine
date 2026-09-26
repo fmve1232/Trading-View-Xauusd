@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v18   (engine = restored twin)       ║
+// ║  BUILD STAMP — this file last CHANGED in v19   (output-call fix)              ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5305,7 +5305,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=size.tiny, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v18  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v19  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5316,4 +5316,7 @@ if barstate.islast
     _dRow(10, "What-if (score)", showWhatIf ? "PDH cont " + _wi(wiPdhCont) + "  PDL cont " + _wi(wiPdlCont) + "  VWAP hold " + _wi(wiVwapHold) + " / fail " + _wi(wiVwapFail) : "off", _cT)
     _dRow(11, "Data sources", showDataCensus ? censusLine : "off", _cT)
     _dRow(12, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
+// Pine rejects an indicator with no output function call ("Script must have at least one
+// output function call"); tables do not count. Same fix as the EdgeCases harness.
+plot(na, "diagnostics", display = display.none)
 // DIAG-END
