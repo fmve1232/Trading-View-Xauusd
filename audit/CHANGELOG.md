@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v14
+# Build changelog — v1 → … → v15
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -690,3 +690,36 @@ the probability is conditional), and the 0.7 taper is the existing one.
 **Token budget.** About +90 executable lines across the probability layer. The compiled
 token count is still unmeasured (`CONCURRENCY_AND_MIGRATION.md` B4). If TradingView
 reports a ceiling problem on save, follow B5 of that file; do not split the engine.
+
+---
+
+# Build v14 → v15 — first compile results acted on
+
+The operator's first v14 run established three facts:
+
+1. **The Master failed on tokens: 100,627 against a 100,256 limit.** The v14 additions
+   (+1,444 lexical tokens) are what crossed it. Both strategy twins and Visuals **compiled
+   and ran**, and they carry the same v14 engine code. So the v14 logic compiles, and the
+   Master's only error was size.
+2. **OANDA:XAUUSD has mintick 0.001.** The P0-CAL-005 gate therefore blocked every
+   strategy entry, correctly.
+3. **EdgeCases compiled and ran: 3 FAIL / 92.** The failing rows were not legible in the
+   screenshot. **NOT diagnosed yet.**
+
+**Master** 5850 → 5726. Executed step 1 of `CONCURRENCY_AND_MIGRATION.md` B5: removed the
+three default-OFF diagnostics (forecast cone, V1/V2 schema shadow audit, rolling
+reliability readout) and their inputs. None fed a decision. −1,010 lexical tokens, an
+estimated ~98,100 compiled. **Estimate; the save reports the real figure.**
+My first pass also claimed the reliability string was never rendered. It is rendered
+(inside `crossCheck`); `undeclared.py` caught the dangling reference, and the claim was
+withdrawn before commit.
+
+**Strategy / OLDGATES** (identical, A/B diff still five hunk headers): P0-CAL-006. Costs
+are now charged as cash per contract (`commission_value 0.385`, `slippage 0`), so tick
+size doesn't matter. The gate now checks `pointvalue == 1` and `currency == USD`. Accepted
+residual: TP-limit fills are charged up to 0.35 pts/oz more than TradingView's slippage
+model would (conservative).
+
+**EdgeCases**: all Master citations re-derived against v15; header now `v15`. No assertion changed.
+
+**Nothing tuned.** Compile of v15 NOT RUN.

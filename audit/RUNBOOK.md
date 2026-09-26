@@ -13,21 +13,22 @@ is allowed to do.
 
 **Do this first. If it fails, every later step produces nothing.**
 
-Entries in both strategy arms are hard-gated on:
+Entries in both strategy arms are hard-gated on (v15):
 
 ```pine
-bool _costModelValid = math.abs(syminfo.mintick - 0.01) <= 1e-9
+bool _costModelValid = syminfo.pointvalue == 1.0 and syminfo.currency == "USD"
 ```
 
-If your broker's XAUUSD feed has a tick size other than `0.01`, **no trades will fire** and
-the backtest will look broken when it is actually refusing to run on a cost model that does
-not match. A label saying `A/B INVALID — COST MODEL MISMATCH` is drawn on the last bar.
+Up to v14 the gate tested `mintick == 0.01`, and OANDA:XAUUSD (mintick 0.001) was blocked.
+v15 charges all costs as cash per contract (`commission_value = 0.385`, `slippage = 0`), so
+tick size no longer matters. What the cash figures do depend on is 1 contract = $1 per
+point, in USD. If that doesn't hold, **no trades fire** and a label saying
+`A/B INVALID — COST MODEL MISMATCH` is drawn on the last bar.
 
 **What to do:** add either strategy to your XAUUSD chart and look for that label.
 
-- **No label** → tick size is 0.01, cost model valid, continue.
-- **Label present** → send me the `mintick=` value it prints. The commission and slippage
-  constants have to be re-derived for your feed before any run means anything.
+- **No label** → cost model valid, continue.
+- **Label present** → send me the `pointvalue=` and `currency=` values it prints.
 
 Also note your broker/exchange prefix (e.g. `OANDA:XAUUSD`, `FX:XAUUSD`, `CAPITALCOM:GOLD`).
 Different feeds have different tick sizes, spreads and session calendars.
@@ -66,7 +67,7 @@ never recorded.
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 92`, or `<n> FAIL / 92`. The header cell must read `§16 EDGE CASE v14`.
+   `ALL PASS 92`, or `<n> FAIL / 92`. The header cell must read `§16 EDGE CASE v15`.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
 4. Remove it afterwards — it is diagnostic only.
@@ -192,7 +193,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v14`, **92** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v15`, **92** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 

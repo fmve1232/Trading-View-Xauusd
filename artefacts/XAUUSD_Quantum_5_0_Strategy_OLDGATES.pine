@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v14   (F-A16..F-A19 race+bear fit)   ║
+// ║  BUILD STAMP — this file last CHANGED in v15   (tick-size-free cost model)    ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -60,10 +60,23 @@
 // The sessionQuality >= 30 hard gate excludes off-session bars in practice, so this
 // residual should affect no trade the A/B actually takes; if you lower that gate, revisit.
 //
+// CHANGE ID: P0-CAL-006 (v15) — THE COST MODEL NO LONGER DEPENDS ON TICK SIZE.
+//   strategy()'s `slippage` is a CONSTANT count of TICKS, so it could only be right for
+//   one mintick: OANDA:XAUUSD quotes to 0.001, and the 35-tick constant would have charged
+//   0.035 pts/side instead of 0.35 -- which is why the P0-CAL-005 gate blocked every entry.
+//   The same cost is now charged as CASH per contract (1 contract = 1 oz, 1 pt = $1/oz):
+//       commission_value = commissionL / pointValue / 2  +  (spreadCost + 2*slippagePts) / 2
+//                        = 7 / 100 / 2 + (0.30 + 0.40) / 2 = 0.035 + 0.35 = 0.385 per side
+//   and slippage = 0. P&L is identical for market fills at any tick size. KNOWN, ACCEPTED:
+//   TradingView applies `slippage` to market/stop fills but not to LIMIT fills, whereas cash
+//   commission applies to every fill -- so TP-limit exits are now charged up to 0.35 pts/oz
+//   more than before. Conservative, and stated.
+//   The gate now checks what this model actually depends on: 1 contract = $1 per point
+//   (syminfo.pointvalue == 1) quoted in USD. Tick size no longer matters.
 // These are BROKER-SPECIFIC, not universal truths. $7/lot round turn and 0.2 pts/side are
 // mid-range retail ECN gold figures. Replace with your own fills, rerun the derivation
 // above, and keep BOTH arms identical.
-strategy("XAUUSD Quantum 5.0 — Control", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, initial_capital=10000, default_qty_type=strategy.fixed, default_qty_value=1, calc_on_every_tick=false, process_orders_on_close=true, commission_type=strategy.commission.cash_per_contract, commission_value=0.035, slippage=35)
+strategy("XAUUSD Quantum 5.0 — Control", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, initial_capital=10000, default_qty_type=strategy.fixed, default_qty_value=1, calc_on_every_tick=false, process_orders_on_close=true, commission_type=strategy.commission.cash_per_contract, commission_value=0.385, slippage=0)
 // ═══════════════════════════════════════════════════════════════════════════════
 // FILE ROLE: A/B CONTROL ARM — DEPRECATED GATES, BACKTEST ONLY. DO NOT DEPLOY.
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -5094,6 +5107,7 @@ var label fvgLabel = na
 // Constant contract size for the A/B. Change it here if your instrument's contract
 // unit differs; do NOT switch back to percent-of-equity while comparing arms.
 // CHANGE ID: P0-CAL-005 — HARD calibration gate (upgraded from advisory).
+// (v15: the gate below now tests pointvalue/currency, not mintick -- see P0-CAL-006.)
 // The slippage/commission constants in the strategy() declaration are derived against
 // syminfo.mintick == 0.01. If the loaded feed quotes gold to a different precision, the
 // scorer's costs silently desynchronise from the selector's and the A/B stops measuring
@@ -5103,11 +5117,11 @@ var label fvgLabel = na
 // BLOCKS EXECUTION — _costModelValid gates both entries — and the run is unqualified by
 // construction rather than by the operator remembering to check a banner.
 // Recompute per the derivation in the header, set the constants, and it re-enables.
-bool _costModelValid = math.abs(syminfo.mintick - 0.01) <= 1e-9
+bool _costModelValid = syminfo.pointvalue == 1.0 and syminfo.currency == "USD"
 var label _mtWarn = na
 if barstate.islast and not _costModelValid
     label.delete(_mtWarn)
-    _mtWarn := label.new(bar_index, high, "A/B INVALID — COST MODEL MISMATCH\nmintick=" + str.tostring(syminfo.mintick) + " (constants derived for 0.01)\nSet slippage=" + str.tostring(math.round((0.3 + 2 * 0.2) / 2 / syminfo.mintick)) + " ticks, commission=" + str.tostring(7.0 / 100.0 / 2.0, "#.####") + "\nENTRIES BLOCKED until corrected", color=color.new(color.red, 0), textcolor=color.white, style=label.style_label_down, size=size.large)
+    _mtWarn := label.new(bar_index, high, "A/B INVALID — COST MODEL MISMATCH\npointvalue=" + str.tostring(syminfo.pointvalue) + " currency=" + syminfo.currency + "\n(cash costs derived for 1 contract = $1/pt, USD)\nENTRIES BLOCKED until corrected", color=color.new(color.red, 0), textcolor=color.white, style=label.style_label_down, size=size.large)
 
 float abTestQty = 1.0
 // Q5.6: entries additionally blocked by the account-state risk lockout, so the twin

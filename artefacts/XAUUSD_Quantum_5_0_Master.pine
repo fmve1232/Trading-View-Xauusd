@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v14   (F-A16..F-A19 race+bear fit)   ║
+// ║  BUILD STAMP — this file last CHANGED in v15   (token cut: 3 OFF diagnostics) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -244,7 +244,7 @@ string QVERSION = "Q7.2"
 //  F22 liq hierarchy check removed (penalized normal early-week states)
 //  F23 "P=" renamed "mP=" — mapped, not fitted, probability
 // Q4.0-R5.1 traceability pass (F24): every computed value now has a consumer.
-//  Wired: QVERSION/_symStr/_tfLabel→footer; _coneStatus+_csLabel→RISK row2; avgCorrSPX→adaptive wSPX;
+//  Wired: QVERSION/_symStr/_tfLabel→footer; avgCorrSPX→adaptive wSPX;
 //  ratePressure (yield ROC) + EURUSD ROC→macro momentum msRate; vwapSlope/vwapAccel→VWAP scenarios;
 //  vwapRejectBull/Bear→aligned-signal counters; climaxUp/Down→plotshape markers; cvdBull/Bear+vdK+
 //  session vol EWMA→MARKET row2; mtfAgreementHigh/Med + _htfBias→BIAS row2; calProbStr→SIGNAL row2;
@@ -315,9 +315,7 @@ showSMT = input.bool(false, "SMT Divergence", group=grpModules)
 showClimax = input.bool(false, "Volume Climax", group=grpModules)
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
 showDisplacement = input.bool(false, "Displacement Candles", group=grpModules)
-showForecastCone = input.bool(false, "Forecast Cone", group=grpModules)
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
-forecastZ = input.float(2.0, "Forecast Band (Z multiple of ATR)", minval=1.0, maxval=3.0, step=0.1, group="V17 PREDICTIVE ENHANCEMENTS")
 showStatsEngine = input.bool(true, "Statistical Engines", group=grpModules)
 
 grpLayout = "LAYOUT"
@@ -493,8 +491,6 @@ oiSymbol = input.symbol("COMEX:GC1!_OI", "Open Interest symbol (blank=off)", gro
 // Read as a PERCENTILE of its own history, not an absolute: "net long" means nothing
 // without knowing whether that is high or low for this market.
 cotEnable = input.bool(false, "CFTC COT positioning (weekly)", group=grpV17, tooltip="Managed-money net positioning as a percentile of its own history. Weekly CFTC data (Tuesday close, published Friday) — a REGIME/crowding input, never an entry trigger. OFF by default: enable after the baseline so its effect is measurable.")
-showCalReliability = input.bool(false, "Rolling reliability table (observability)", group=grpV17, tooltip="Displays the five EXISTING calibration buckets: N, predicted, observed, error, plus base rate, OOS N, calibration error and Brier. Recalculates nothing. Predicted is NOT a validated probability until an OOS reliability run demonstrates predicted matches observed.")
-enableSchemaShadowAudit = input.bool(false, "V1/V2 schema shadow audit (diagnostic)", group=grpV17, tooltip="DIAGNOSTIC ONLY. Computes the pre-GC/OI (V1) regime definition alongside the live V2 one on the SAME bar and counts where they diverge. It feeds NOTHING: no signal, no probability, no risk state, no stored observation. OFF by default so the production path is untouched.")
 cotLen = input.int(52, "  Percentile lookback (weeks)", minval=13, maxval=260, group=grpV17)
 cotExtreme = input.int(85, "  Crowding percentile", minval=60, maxval=99, group=grpV17, tooltip="Above this (or below 100-this) positioning is treated as crowded, which historically raises reversal risk rather than confirming trend.")
 
@@ -1894,31 +1890,8 @@ regimeComposite = int(math.round(regimeCompositeRaw))
 bool strongTrend = regimeCompositeRaw >= 70
 bool moderateTrend = regimeCompositeRaw >= 40 and regimeCompositeRaw < 70
 bool weakTrend = regimeCompositeRaw < 40
-// ===== V1/V2 SAME-BAR SHADOW — CAUSAL SENSITIVITY (DIAGNOSTIC ONLY) ==========
-// Reviewer §4 permitted "rCurrV1 = rCurrV2 - nudge" ONLY IF exactly reversible. It is NOT,
-// for three independent reasons found by tracing this exact chain:
-//   (1) CLAMP SATURATION, and it is the COMMON case. When macroBull/Bear is true the base
-//       is already 100 and the +10 nudge is clamped straight back to 100 — V2 EQUALS V1
-//       there. Subtracting 10 would report 90 and FABRICATE a divergence that never
-//       occurred, which is worse than missing one.
-//   (2) THE NUDGE IS NOT SIGNED. It is +5/+10 on conviction MAGNITUDE (either sign of
-//       oiConviction adds), so there is no symmetric term to reverse.
-//   (3) GC IS NOT ADDITIVE AT ALL. It changes the NUMERATOR (a 7th vote) and the
-//       DENOMINATOR (_macroPool 6->7, _macroNeed 3->4) and lands on a DISCRETE branch
-//       (100/60/30). No scalar subtraction can express that.
-// So V1 is computed INDEPENDENTLY below, through the same clamp, the same rounding and the
-// same 70/40 categorisation. It is read by counters only and by nothing else.
-int _mbvV1 = macroBullVotes - (gcConfirmsBull ? 1 : 0)
-int _mbrV1 = macroBearVotes - (gcConfirmsBear ? 1 : 0)
-bool _macroBullV1 = _mbvV1 >= 3
-bool _macroBearV1 = _mbrV1 >= 3
-int _macroRegimeV1 = (_macroBullV1 or _macroBearV1) ? 100 : (_mbvV1 >= 2 or _mbrV1 >= 2) ? 60 : 30
-// Categorised off the RAW float, mirroring the F-021 fix above. If the shadow kept
-// rounding while the live path stopped, the V1/V2 counters would report divergences
-// caused by the fix itself rather than by GC/OI -- contaminating the very measurement.
-float regimeCompositeRawV1 = (regimeScore * 0.30) + (volRegime * 0.15) + (structureRegime * 0.20) + (_macroRegimeV1 * 0.20) + (sessionRegime * 0.15)
-int regimeCompositeV1 = int(math.round(regimeCompositeRawV1))
-int rCurrV1 = regimeCompositeRawV1 >= 70 ? 0 : regimeCompositeRawV1 >= 40 ? 1 : 2
+// v15 (token ceiling): the V1/V2 same-bar shadow (default OFF, fed nothing) was removed
+// to bring the Master under the 100,256 compiled-token limit. Recoverable from git (v14).
 
 // VOLUME DELTA — directional bar-volume proxy (buying vs selling pressure)
 float volDelta = close > open ? volume : close < open ? -volume : 0.0
@@ -3045,33 +3018,6 @@ if barstate.isconfirmed and rPrev >= 0
             rDR += 1
 rPrev := rCurr
 
-// ----- V1/V2 shadow counters (DIAGNOSTIC ONLY, default OFF) -------------------
-// CONTAMINATION BARRIER: every name below is written here and read ONLY by the readout.
-// None is passed to array.set, to runStatsEngines(), to any threshold, score, probability
-// or risk term. The shadow cannot alter the live V2 path even when the audit is ON.
-// WHY rCurr DIVERGENCE IS THE RIGHT DOWNSTREAM PROXY: rCurr is itself the stored analog
-// feature (hRegime). On any bar where rCurrV1 == rCurrV2 the analog SELECTION from this
-// cause is provably identical, so probability, signal and risk cannot differ from it
-// either. Counting rCurr divergences therefore BOUNDS the downstream impact exactly,
-// without running a second stats engine the token budget could not fund.
-var int shdBars = 0
-var int shdDeltaComp = 0
-var int shdRegimeChg = 0
-var int shdX40 = 0
-var int shdX70 = 0
-var int shdMaxAbs = 0
-if enableSchemaShadowAudit and barstate.isconfirmed
-    shdBars += 1
-    int _d = regimeComposite - regimeCompositeV1
-    if _d != 0
-        shdDeltaComp += 1
-        shdMaxAbs := math.max(shdMaxAbs, math.abs(_d))
-    if rCurr != rCurrV1
-        shdRegimeChg += 1
-    if (regimeCompositeV1 < 40) != (regimeComposite < 40)
-        shdX40 += 1
-    if (regimeCompositeV1 < 70) != (regimeComposite < 70)
-        shdX70 += 1
 
 float highOutcome = ta.highest(high, OUTCOME_N)
 float lowOutcome = ta.lowest(low, OUTCOME_N)
@@ -3240,7 +3186,6 @@ float migPct = hN > 0 ? math.min(migV2Count * 100.0 / math.min(hN, HIST_MAX), 10
 float migV1Pct = 100.0 - migPct
 string migState = migPct >= 99.5 ? "  SCHEMA_V2 CLEAN" : migV2Count == 0 ? "  V1 100%" : "  MIXED_SCHEMA V1 " + str.tostring(int(migV1Pct)) + "% V2 " + str.tostring(int(migPct)) + "%"
 string schemaLine = "BUILD v" + str.tostring(SCHEMA_BUILD) + migState + "  " + dataStatusLine
-string shadowLine = not enableSchemaShadowAudit ? "" : "  SHDW n" + str.tostring(shdBars) + " dC" + str.tostring(shdDeltaComp) + " reg" + str.tostring(shdRegimeChg) + " x40:" + str.tostring(shdX40) + " x70:" + str.tostring(shdX70) + " max" + str.tostring(shdMaxAbs)
 float oBull = 50.0
 float oBear = 50.0
 float oRange = 0.0
@@ -3267,9 +3212,6 @@ float oRegPer = 50.0
 var float[] gCalFit = array.from(float(na), float(na))
 // F-A16: the bear map [slope, intercept]: bullScore -> P(bear resolution). na until fitted.
 var float[] gCalFitBear = array.from(float(na), float(na))
-// [N,pred,obs] x 5 buckets, then slot 15 = OOS base rate. Written from values the stats
-// engine already computes; read only by the reliability readout.
-var float[] gCalRel = array.new_float(16, na)
 float oWr = 50.0
 float oAvgW = 0.5
 float oAvgL = 1.0
@@ -4225,26 +4167,6 @@ runStatsEngines() =>
             calErr += math.abs(a4 * 100.0 - p4 * 100.0)
             calBins += 1
             calBrier += (a4 - p4) * (a4 - p4) * c4t
-        array.set(gCalRel, 0, c0t)
-        array.set(gCalRel, 3, c1t)
-        array.set(gCalRel, 6, c2t)
-        array.set(gCalRel, 9, c3t)
-        array.set(gCalRel, 12, c4t)
-        if c0t >= 30
-            array.set(gCalRel, 1, c0s / c0t)
-            array.set(gCalRel, 2, bayesRate(c0b, c0t) * 100.0)
-        if c1t >= 30
-            array.set(gCalRel, 4, c1s / c1t)
-            array.set(gCalRel, 5, bayesRate(c1b, c1t) * 100.0)
-        if c2t >= 30
-            array.set(gCalRel, 7, c2s / c2t)
-            array.set(gCalRel, 8, bayesRate(c2b, c2t) * 100.0)
-        if c3t >= 30
-            array.set(gCalRel, 10, c3s / c3t)
-            array.set(gCalRel, 11, bayesRate(c3b, c3t) * 100.0)
-        if c4t >= 30
-            array.set(gCalRel, 13, c4s / c4t)
-            array.set(gCalRel, 14, bayesRate(c4b, c4t) * 100.0)
         if calBins > 0
             float ae = calErr / calBins
             _cCalGradePct := int(math.max(0, 100.0 - ae * 2.0))
@@ -4316,7 +4238,6 @@ runStatsEngines() =>
             // Brier decomposition (Murphy): BS = Uncertainty + Reliability - Resolution
             float _totalBull = c0b + c1b + c2b + c3b + c4b
             float _baseRate = _totalCal > 0 ? _totalBull / _totalCal : 0.5
-            array.set(gCalRel, 15, _baseRate * 100.0)
             float _rel = 0.0
             float _res = 0.0
             if c0t >= 30
@@ -5102,26 +5023,8 @@ string _evidence = showStatsEngine ? "  A" + str.tostring(oMatch) + (oMatch < 30
 // oBosFail is the exact arithmetic complement of oBosCont (they sum to 100 by construction
 // at L4096), so it is intentionally NOT printed twice; BOScont carries both.
 string calStr = showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : ""
-// ----- OOS RELIABILITY TABLE (observability only) ------------------------------
-// FOUR DISTINCT QUANTITIES, deliberately labelled apart because conflating them is the
-// defect this audit exists to remove:
-//   CalGrade = quality of calibration        (100 - 2 x mean |predicted - observed|)
-//   Pred     = estimated P(TP1 before SL)    (the model's claim for that bucket)
-//   Obs      = actual OOS outcome frequency  (what happened)
-//   Err      = |Pred - Obs|                  (the gap)
-// A bucket prints only when it meets the pre-existing N>=30 bar; otherwise "N<30".
-// NOTHING here is recalculated for display -- every figure is read from gCalRel, which the
-// stats engine populated from its own working values.
-// Calibration error is derived EXACTLY from the grade (ae = (100 - grade) / 2), not refitted.
-_relRow(int _i) =>
-    float _rn = array.get(gCalRel, _i * 3)
-    float _pd = array.get(gCalRel, _i * 3 + 1)
-    float _ob = array.get(gCalRel, _i * 3 + 2)
-    na(_rn) or _rn < 30 or na(_pd) ? "B" + str.tostring(_i) + " N<30" : "B" + str.tostring(_i) + " n" + str.tostring(int(_rn)) + " P" + str.tostring(_pd, "#") + " O" + str.tostring(_ob, "#") + " E" + str.tostring(math.abs(_pd - _ob), "#")
-string relStr = ""
-if showStatsEngine and showCalReliability
-    float _brBase = array.get(gCalRel, 15)
-    relStr := "RELIABILITY (ROLL, NOT A HOLDOUT)  " + _relRow(0) + " | " + _relRow(1) + " | " + _relRow(2) + " | " + _relRow(3) + " | " + _relRow(4) + "   base " + (na(_brBase) ? "—" : str.tostring(_brBase, "#") + "%") + "  ROLLn " + str.tostring(oOosN) + "  CalErr " + (oCalGrade > 0 ? str.tostring((100.0 - oCalGrade) / 2.0, "#.#") : "—") + (not na(__cb) ? "  Brier " + str.tostring(__cb, "#.###") : "") + "   VALIDITY: NOT ESTABLISHED (F-037 rolling population + development-contaminated history)"
+// v15 (token ceiling): the rolling reliability readout (default OFF, observability only,
+// appended to the crossCheck line) was removed. It recalculated nothing; recoverable from git.
 // CHANGE ID: F-011 — the last 9 orphans, all wired. These were destructured from the
 // stats tuple at global scope and then consumed by nothing. No new globals are needed:
 // __cg/__cb/__iw/__in/__fs.. are already in scope here, so wiring them costs display only.
@@ -5168,14 +5071,14 @@ string _srWhere = showSR ? "  SR@Visuals" : ""
 // GC confirmation state on the readout. Silent inputs are how features become orphans —
 // if it can move a macro vote, it must be visible. "GC DIV" is the one to watch: spot and
 // the centralised futures market disagreeing on direction.
-string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "") + cotState + curveState + "  " + schemaLine + shadowLine
+string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "") + cotState + curveState + "  " + schemaLine
 // WIRED (was assigned and never read — a pre-existing orphan, not introduced by the futures
 // work). It resolves the layout mode to a concrete name, which is genuinely useful on a
 // manual-execution dashboard: "Auto" tells you nothing about which layout you are actually
 // looking at, and layout drives how much of the panel is visible. Appended to the readout
 // so the value has a consumer and the mode is never ambiguous.
 string __resolvedModeResp = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
-string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]" + (relStr != "" ? "\n" + relStr : "")
+string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]"
 string auctionStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + "»" + aucBias + " " + aucState + str.tostring(aucProb) + "% " + aucCycle + " " + discStr + " A" + str.tostring(acceptScore) + acceptGrade + " " + valueMigStr + (openType != "" ? " " + openType : "") + (lastSweepQ > 0 ? " SW:" + lastSweepGrade + str.tostring(lastSweepQ) : "") + (not na(vixD) ? " VIX" + str.tostring(vixD, "#.#") : "")
 string tqGrade = tradeQuality >= 80 ? "A" : tradeQuality >= 65 ? "B" : tradeQuality >= 50 ? "C" : "D"
 // ═══════════════ END TRADE QUALITY ═══════════════
@@ -5288,20 +5191,7 @@ tcb(col, row, txt, tcol, bg, ts, w) =>
         table.cell(tblA, _pc, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
 tcp(col, row, txt, bg, ts, w) => table.cell(tblPlan, col, row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
 
-var bool[] gBreach = array.from(false, false)
-// R5.2-M5: breach state moved to main scope — it was written only inside
-// renderDashboard, so the cone breach markers in runVisuals depended on the dashboard
-// toggle. Also fixes a degenerate test: the old check compared close against a band
-// centered on the CURRENT close (close > close + band — never true), so breaches
-// could never fire. Breach is now a 1-bar move beyond the Z*ATR band from the prior
-// bar's cone origin.
-if showForecastCone
-    float _fcBandNow = math.max(adaptiveATR, atr) * forecastZ
-    array.set(gBreach, 0, not na(close[1]) and close > close[1] + _fcBandNow)
-    array.set(gBreach, 1, not na(close[1]) and close < close[1] - _fcBandNow)
-else
-    array.set(gBreach, 0, false)
-    array.set(gBreach, 1, false)
+// v15 (token ceiling): forecast-cone breach state and status removed (default OFF).
 
 // Q5.4-P1: dashboard split into three functions to satisfy the 254 external-
 // elements-per-function limit (was 338). Cross-function locals move through
@@ -5314,18 +5204,6 @@ f_dashData1() =>
     string _tfLabel = timeframe.period
     string _symStr = syminfo.ticker
     float _chgPct = not na(close[1]) and close[1] != 0 ? (close - close[1]) / close[1] * 100.0 : 0.0
-    // Cone status string — computed from main-scope f* scores for RISK column
-    string _coneStatus = "Cone: —"
-    if showForecastCone and not cleanInstitutional and not professionalMode
-        // R5.1: dead sub-calculations removed (_csEnd/_csEndBand/_fcCurr/_csSlope duplicated the
-        // cone geometry drawn in runVisuals); this block now only classifies direction and
-        // detects band breaches at the CURRENT bar. _csLabel is wired into the status string.
-        string _csLabel = fBullScore >= fBearScore and fBullScore >= fRngScore ? "BULL" : fBearScore >= fBullScore and fBearScore >= fRngScore ? "BEAR" : "RNG"
-        // R5.2-M5: gBreach is now computed in main scope (see declaration site).
-        // Confidence % from validated OOS win rate; minimum N=10
-        string _coneConf = oOosNeff >= 10 ? " C:" + str.tostring(int(oOosWr)) + "%" : " C:LowN"
-        // R5-F11: display the Z multiple, not a coverage %.
-        _coneStatus := not array.get(gBreach, 0) and not array.get(gBreach, 1) ? "Cone " + _csLabel + ": Inside (Z" + str.tostring(forecastZ, "#.#") + _coneConf + ")" : array.get(gBreach, 0) ? "Cone: Breached ↑" : "Cone: Breached ↓"
     string _chgStr = (_chgPct >= 0 ? "+" : "") + str.tostring(_chgPct, "#.##") + "%"
     color _chgCol = _chgPct >= 0 ? cBloomBull : cBloomBear
     // SSOT: SHARED — consumed by DECISION block, direction color, and multi-column display
@@ -5425,7 +5303,6 @@ f_dashData1() =>
     array.set(gDashF, 1, _bullPct)
     array.set(gDashC, 1, _chgCol)
     array.set(gDashS, 2, _chgStr)
-    array.set(gDashS, 3, _coneStatus)
     array.set(gDashS, 4, _ctLabel)
     array.set(gDashC, 2, _dirBg)
     array.set(gDashS, 5, _dirConfLabel)
@@ -5557,7 +5434,6 @@ f_dashRender() =>
     int _bullPct = int(array.get(gDashF, 1))
     color _chgCol = array.get(gDashC, 1)
     string _chgStr = array.get(gDashS, 2)
-    string _coneStatus = array.get(gDashS, 3)
     string _ctLabel = array.get(gDashS, 4)
     color _dirBg = array.get(gDashC, 2)
     string _dirConfLabel = array.get(gDashS, 5)
@@ -5726,7 +5602,7 @@ f_dashRender() =>
         string _dowStr = showDowTracker ? _dowBiasStr() : ""
         string _macroRow2 = _macroVerdict + (_dowStr != "" ? "\n" + _dowStr : "")
         tcb(6, 2, _macroLine2 + " CR" + str.tostring(int(_crVal)) + "%\n" + _macroRow2, _crCol, color.new(_macro2Col, 88), _seSize, _w6)
-        string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp + (showForecastCone ? "\n" + _coneStatus : "")
+        string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp
         tc(7, 2, _riskSec, pfCol, _seSize, _w7)
         // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement
         // that the trade cannot be placed at this account size; "0.00L" read as a valid

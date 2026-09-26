@@ -178,6 +178,13 @@ state is exactly how definitions drift apart.
 
 ### B5. If the compiler *does* report a ceiling problem — ordered plan
 
+> **Measured 2026-09-26 on v14:** `Compiled code contains too many tokens: 100627. The limit
+> is 100256.` That is 42,339 → 40,803 lexical tokens at a ratio of **2.466 compiled per
+> lexical**. v13 (39,359 lexical) estimates to ~97,100, so **the v14 probability-layer
+> additions are what crossed the limit**. Step 1 below was executed in v15: −1,010 lexical,
+> an estimated ~98,100 compiled (~2% headroom). That is an estimate until the next save
+> reports the real figure.
+
 Only then, and in this order (cheapest and safest first):
 
 1. **Delete the three default-OFF diagnostic blocks** — V1/V2 shadow, reliability table,

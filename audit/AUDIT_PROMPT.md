@@ -18,13 +18,13 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5850 | 377193 | `a66c4531de7365b8f779e9e9f755c3fcb0f20a583ce92909a3dbbca7f0f2121a` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5200 | 323586 | `b61995943acf0ac2acdd20f6d463c79ff542bf9fff1e066c4a91724cc6d8b721` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5200 | 323651 | `e2960b2683cb24999397f70a9124c01e49169f6907e20c94382b0100d0a4c172` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 343 | 24569 | `e5490ca909c5e08252c1b0db348d386d0f32f18294d033fa9ff579a0462326a8` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5726 | 368050 | `f6894acfb57f18a28c97941fe7de562b5b496b5bde284ec7352ad24fc1dd47fe` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5214 | 324717 | `35103dc1570fd36cea3cb0575898261e76973b81e924cdfdee23837716effb33` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5214 | 324782 | `0883edf5c1069b96c7713abcfd80fc12e4b6c089e9af264cfcd24b863e879e19` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 343 | 24569 | `c4d344ff8fd9e687b541b9fc662bac8258ad35376b94f3791ae72d0a88fd4be8` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
 
-> **BUILD v14 — this prompt pins the current build.** The originally audited build
+> **BUILD v15 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -42,6 +42,8 @@ scope, and no other build of these scripts is in scope.
 > **v14: F-A16 … F-A20** — bear calibration and a conditional-probability gate, plan
 > probabilities in the right unit, the probability clamp, a real race expectancy replacing
 > the marginal difference that vetoed trades, and the EdgeCases harness re-anchored.
+> **v15:** Master cut under the compiled-token limit (three default-OFF diagnostics
+> removed); strategy cost model made tick-size independent (P0-CAL-006).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
