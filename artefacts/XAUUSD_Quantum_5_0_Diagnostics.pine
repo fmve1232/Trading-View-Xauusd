@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v19   (output-call fix)              ║
+// ║  BUILD STAMP — this file last CHANGED in v20   (gate funnel + WR fix)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -581,7 +581,12 @@ float bbDev = ta.stdev(close, 20) * 2.0
 rsiVal = ta.rsi(close, rsiLen)
 volSma20 = ta.sma(volume, 20)
 highVolume = not na(volume) and volume > volSma20
-recentBars = bar_index > last_bar_index - recentBarsLen
+// F-A29 (v20): recentBars is a LIVE-DISPLAY filter -- it lets signals fire only in the last
+// recentBarsLen bars (120 = ~5 days on 1H). In a strategy it confined the entire backtest to
+// those bars, so Jan 2025 - Sep 2026 produced "This report requires trade data". The filter is
+// kept (no feature removed) and made switchable; the strategy arms evaluate every bar.
+backtestAllBars = input.bool(true, "Backtest all bars (ignore Signal Lookback Bars)", group=grpCore, tooltip="ON for backtests: the entry gate is evaluated on every historical bar. OFF reproduces the live indicator's behaviour, where signals are shown only in the last 'Signal Lookback Bars'.")
+recentBars = backtestAllBars or bar_index > last_bar_index - recentBarsLen
 // Winsorized gold return: clamp extreme gaps (±5%) to prevent Z-score distortion after gap opens
 float _rawGoldRet = safeDiv(close, nz(close[1], close)) - 1
 // Q5.0-S6: TF-scaled winsorization (±6 sigma, prev-bar window; ±5% hard outer bound).
@@ -4911,7 +4916,10 @@ string tipsMag = tipsValid ? (math.abs(avgCorrTIPS) > 0.5 ? "Strong" : math.abs(
 string wrCIStr = ""
 if showStatsEngine and oMatch >= 30
     float _wrR = oWr / 100.0
-    float _wrDir = bearBiasScore > bullBiasScore ? (1.0 - _wrR) : _wrR
+    // F-A28 (v20): a bearish bias showed 1 - P(bull), i.e. "bear OR timeout" -- 80% on a chart
+    // whose bear rate is ~20%. The bear direction now shows its own rate, oBear (the engine's
+    // weighted bear-resolution share), so both directions are win rates on the same basis.
+    float _wrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _wrR
     float _effN = math.max(oMatch / math.max(OUTCOME_N, 1), 1.0)
     float _wrCI95 = oMatch >= 30 ? 1.96 * math.sqrt(_wrDir * (1.0 - _wrDir) / _effN) * 100.0 : 0.0
     wrCIStr := _wrCI95 > 1.0 ? "+/-" + str.tostring(int(_wrCI95 + 0.5)) + "%" : ""
@@ -5277,7 +5285,7 @@ _wi(float _v) => na(_v) ? "—" : str.tostring(int(_v))
 // noise inside that population, not out-of-sample validity. Hence the panel's heading.
 float diagWrCI = na
 float _pWr = oWr / 100.0
-float _pWrDir = bearBiasScore > bullBiasScore ? 1.0 - _pWr : _pWr
+float _pWrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _pWr  // F-A28: the bear rate, not 1 - bull
 if showStatsEngine and oMatch >= 30
     diagWrCI := 1.96 * math.sqrt(_pWrDir * (1.0 - _pWrDir) / math.max(oMatch / math.max(OUTCOME_N, 1), 1.0)) * 100.0
 float diagOosCI = oOosNeff >= 10 ? 1.96 * math.sqrt(math.max(oOosWr / 100.0 * (1.0 - oOosWr / 100.0), 0.0025) / math.max(oOosN / OUTCOME_N, 1.0)) * 100.0 : na
@@ -5298,14 +5306,45 @@ if barstate.islast and showDataCensus
         dsOI += int(math.floor(_v / 2.0)) % 2
 string censusLine = hN > 0 ? "GC " + str.tostring(dsGC * 100.0 / math.max(dsN, 1), "#") + "%  OI " + str.tostring(dsOI * 100.0 / math.max(dsN, 1), "#") + "%  of " + str.tostring(dsN) + " stored obs  (now D" + str.tostring(barDataStatus) + ")" : "no stored observations yet"
 
+// ---- 7. GATE FUNNEL (v20) -- why a backtest does or does not trade ---------------------
+// Counts confirmed bars through the Treatment entry chain, exactly as the strategy arm gates
+// them. Vetoes are counted INDEPENDENTLY among signal bars, so they can overlap; PASS is a bar
+// that clears everything (= an entry the strategy would take, position permitting).
+var int fnBars = 0
+var int fnTrend = 0
+var int fnHtf = 0
+var int fnPre = 0
+var int fnSig = 0
+var int fnTQ = 0
+var int fnEV = 0
+var int fnCal = 0
+var int fnRisk = 0
+var int fnPass = 0
+if barstate.isconfirmed
+    fnBars += 1
+    bool _fT = bullTrend or bearTrend
+    bool _fH = (bullTrend and not htfBearScoreGate) or (bearTrend and not htfBullScoreGate)
+    fnTrend += _fT ? 1 : 0
+    fnHtf += _fH ? 1 : 0
+    fnPre += buyPreFilters or sellPreFilters ? 1 : 0
+    if shouldBuy or shouldSell
+        fnSig += 1
+        fnTQ += effTqMinCot > 0 and tradeQuality < effTqMinCot ? 1 : 0
+        fnEV += not na(planExpectancy) and planExpectancy < 0.0 ? 1 : 0
+        fnCal += _calVeto ? 1 : 0
+        fnRisk += useRiskLimits and riskLock ? 1 : 0
+        fnPass += not tqVeto ? 1 : 0
+string funnel1 = "bars " + str.tostring(fnBars) + " > trend " + str.tostring(fnTrend) + " > +HTF " + str.tostring(fnHtf) + " > +sess/news/DD/recent " + str.tostring(fnPre) + " > +trigger = SIGNALS " + str.tostring(fnSig)
+string funnel2 = "TQ<floor " + str.tostring(fnTQ) + "  EV<0 " + str.tostring(fnEV) + "  P<min " + str.tostring(fnCal) + "  risk " + str.tostring(fnRisk) + "  →  PASS " + str.tostring(fnPass)
+
 // ---- PANEL -----------------------------------------------------------------------------
-var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 14, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 16, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=size.tiny, text_halign=text.align_left)
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=size.tiny, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v19  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v20  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5315,7 +5354,9 @@ if barstate.islast
     _dRow(9, "Rolling 95% CI", showRollCI ? ciLine : "off", _cT)
     _dRow(10, "What-if (score)", showWhatIf ? "PDH cont " + _wi(wiPdhCont) + "  PDL cont " + _wi(wiPdlCont) + "  VWAP hold " + _wi(wiVwapHold) + " / fail " + _wi(wiVwapFail) : "off", _cT)
     _dRow(11, "Data sources", showDataCensus ? censusLine : "off", _cT)
-    _dRow(12, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
+    _dRow(12, "Gate funnel", funnel1, _cT)
+    _dRow(13, "Vetoes (of signals)", funnel2, _cT)
+    _dRow(14, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
 // Pine rejects an indicator with no output function call ("Script must have at least one
 // output function call"); tables do not count. Same fix as the EdgeCases harness.
 plot(na, "diagnostics", display = display.none)

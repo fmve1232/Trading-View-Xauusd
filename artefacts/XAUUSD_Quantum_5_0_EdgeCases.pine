@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v18   (citations re-anchored)        ║
+// ║  BUILD STAMP — this file last CHANGED in v20   (A3/A6 fixed; fails first)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -73,6 +73,9 @@ b(bool _v) => _v ? "true" : "false"
 // Rounding happens BEFORE the threshold test, so the EFFECTIVE boundary is 39.5/69.5,
 // not 40/70. These cases establish the true boundary in Pine's own semantics.
 // =============================================================================
+// F-A27 (v20): A3 and A6 still asserted the ROUNDED behaviour (39.51 -> 1, 69.51 -> 0) and
+// FAILED on the operator's chart. With the thresholds on the raw value, 39.51 < 40 is WEAK (2)
+// and 69.51 < 70 is MODERATE (1) -- the harness was wrong, not the engine.
 // UPDATED FOR F-021. The engine now thresholds on the UNROUNDED composite, so the
 // boundaries are the documented 40 and 70. These cases previously asserted the DEFECTIVE
 // behaviour (69.50 -> STRONG); they now assert the corrected behaviour, and A7 inverts:
@@ -83,10 +86,10 @@ regimeCat(float _raw) =>
 if barstate.islastconfirmedhistory
     chk("A1  raw 39.49 -> category", i(regimeCat(39.49)), "2", "STAT")
     chk("A2  raw 39.50 -> category (was 1, now 2)", i(regimeCat(39.50)), "2", "STAT")
-    chk("A3  raw 39.51 -> category", i(regimeCat(39.51)), "1", "STAT")
+    chk("A3  raw 39.51 -> category (was 1, now 2)", i(regimeCat(39.51)), "2", "STAT")
     chk("A4  raw 69.49 -> category", i(regimeCat(69.49)), "1", "STAT")
     chk("A5  raw 69.50 -> category (was 0, now 1)", i(regimeCat(69.50)), "1", "STAT")
-    chk("A6  raw 69.51 -> category", i(regimeCat(69.51)), "0", "STAT")
+    chk("A6  raw 69.51 -> category (was 0, now 1)", i(regimeCat(69.51)), "1", "STAT")
     // If A2 and A5 pass, the documented 40/70 thresholds are actually 39.5/69.5.
     chk("A7  F-021 CLOSED: boundary is 70, not 69.5", b(regimeCat(69.50) == 1 and regimeCat(70.00) == 0), "true", "STAT")
     // Pine rounds half AWAY FROM ZERO, not banker's rounding. Establish it explicitly.
@@ -301,7 +304,7 @@ if barstate.islastconfirmedhistory
     chk("K20 bear slope -0.9 -> -0.25",       f(bearSlope(-0.9)), "-0.25", "NUM")
 
 // =============================================================================
-// GROUP L — v16 FORMULA CORRECTIONS  (Kelly L5258-5271, Cornish-Fisher inverse L821-831)
+// GROUP L — v16 FORMULA CORRECTIONS  (Kelly L5261-5274, Cornish-Fisher inverse L821-831)
 //   Kelly with timeouts: f* = (p b - q) / (b (p + q)). Cornish-Fisher is INVERTED by
 //   Newton's method, so an observed standardised return maps to its normal-equivalent.
 // =============================================================================
@@ -343,25 +346,32 @@ if barstate.islastconfirmedhistory
 // TradingView threw "Row 70 is out of table bounds" at runtime -- a count that only
 // breaks when the table is actually written, so no static check here would catch it.
 var table tT = table.new(position.top_left, 5, 100, border_width = 1)
+// v20: FAILING rows are drawn FIRST, so the failures are at the top of any screenshot, and the
+// text size is selectable (size.tiny was unreadable in the operator's screenshots).
+harnessText = input.string("Small", "Table text size", options=["Tiny", "Small", "Normal"])
+_hts() => harnessText == "Tiny" ? size.tiny : harnessText == "Normal" ? size.normal : size.small
 if barstate.islastconfirmedhistory
     int _n = array.size(tName)
     int _fail = 0
     for _q = 0 to (_n > 0 ? _n - 1 : 0)
         if not array.get(tPass, _q)
             _fail += 1
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v18", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = size.tiny)
-    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n), bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = size.tiny)
-    int _maxRow = math.min(_n, 99)
-    for _q = 0 to (_maxRow > 0 ? _maxRow - 1 : 0)
-        bool _p = array.get(tPass, _q)
-        color _bg = _p ? color.new(color.green, 85) : color.new(color.red, 55)
-        table.cell(tT, 0, _q + 1, array.get(tName, _q),  bgcolor = _bg, text_size = size.tiny, text_halign = text.align_left)
-        table.cell(tT, 1, _q + 1, array.get(tGot, _q),   bgcolor = _bg, text_size = size.tiny)
-        table.cell(tT, 2, _q + 1, array.get(tWant, _q),  bgcolor = _bg, text_size = size.tiny)
-        table.cell(tT, 3, _q + 1, array.get(tClass, _q), bgcolor = _bg, text_size = size.tiny)
-        table.cell(tT, 4, _q + 1, _p ? "PASS" : "FAIL",  bgcolor = _bg, text_size = size.tiny)
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v20", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n), bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = _hts())
+    int _row = 1
+    for _pass = 0 to 1
+        for _q = 0 to (_n > 0 ? _n - 1 : 0)
+            bool _p = array.get(tPass, _q)
+            if _row <= 99 and ((_pass == 0 and not _p) or (_pass == 1 and _p))
+                color _bg = _p ? color.new(color.green, 85) : color.new(color.red, 55)
+                table.cell(tT, 0, _row, array.get(tName, _q),  bgcolor = _bg, text_size = _hts(), text_halign = text.align_left)
+                table.cell(tT, 1, _row, array.get(tGot, _q),   bgcolor = _bg, text_size = _hts())
+                table.cell(tT, 2, _row, array.get(tWant, _q),  bgcolor = _bg, text_size = _hts())
+                table.cell(tT, 3, _row, array.get(tClass, _q), bgcolor = _bg, text_size = _hts())
+                table.cell(tT, 4, _row, _p ? "PASS" : "FAIL",  bgcolor = _bg, text_size = _hts())
+                _row += 1
 
 plot(na, "harness", display = display.none)

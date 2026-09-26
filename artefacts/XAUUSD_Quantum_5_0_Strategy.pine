@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v18   (v15 code restored + v16 maths)║
+// ║  BUILD STAMP — this file last CHANGED in v20   (backtest all bars F-A29)      ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -581,7 +581,12 @@ float bbDev = ta.stdev(close, 20) * 2.0
 rsiVal = ta.rsi(close, rsiLen)
 volSma20 = ta.sma(volume, 20)
 highVolume = not na(volume) and volume > volSma20
-recentBars = bar_index > last_bar_index - recentBarsLen
+// F-A29 (v20): recentBars is a LIVE-DISPLAY filter -- it lets signals fire only in the last
+// recentBarsLen bars (120 = ~5 days on 1H). In a strategy it confined the entire backtest to
+// those bars, so Jan 2025 - Sep 2026 produced "This report requires trade data". The filter is
+// kept (no feature removed) and made switchable; the strategy arms evaluate every bar.
+backtestAllBars = input.bool(true, "Backtest all bars (ignore Signal Lookback Bars)", group=grpCore, tooltip="ON for backtests: the entry gate is evaluated on every historical bar. OFF reproduces the live indicator's behaviour, where signals are shown only in the last 'Signal Lookback Bars'.")
+recentBars = backtestAllBars or bar_index > last_bar_index - recentBarsLen
 // Winsorized gold return: clamp extreme gaps (±5%) to prevent Z-score distortion after gap opens
 float _rawGoldRet = safeDiv(close, nz(close[1], close)) - 1
 // Q5.0-S6: TF-scaled winsorization (±6 sigma, prev-bar window; ±5% hard outer bound).
@@ -4880,7 +4885,10 @@ string tipsMag = tipsValid ? (math.abs(avgCorrTIPS) > 0.5 ? "Strong" : math.abs(
 string wrCIStr = ""
 if showStatsEngine and oMatch >= 30
     float _wrR = oWr / 100.0
-    float _wrDir = bearBiasScore > bullBiasScore ? (1.0 - _wrR) : _wrR
+    // F-A28 (v20): a bearish bias showed 1 - P(bull), i.e. "bear OR timeout" -- 80% on a chart
+    // whose bear rate is ~20%. The bear direction now shows its own rate, oBear (the engine's
+    // weighted bear-resolution share), so both directions are win rates on the same basis.
+    float _wrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _wrR
     float _effN = math.max(oMatch / math.max(OUTCOME_N, 1), 1.0)
     float _wrCI95 = oMatch >= 30 ? 1.96 * math.sqrt(_wrDir * (1.0 - _wrDir) / _effN) * 100.0 : 0.0
     wrCIStr := _wrCI95 > 1.0 ? "+/-" + str.tostring(int(_wrCI95 + 0.5)) + "%" : ""

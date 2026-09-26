@@ -18,14 +18,14 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5712 | 367530 | `4fc15678f84fe594fc7536b078770305083e7d9597568dec1e3b56a6ff72dce1` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5243 | 326826 | `c50e2b6fb0cda6814a013131bbb685b86583c3ad8a21d68f14287d99498c10d8` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5243 | 326891 | `f200a5c85d2a4ea2b24aa1632638b08c1649fc08db2b8866cad5f12abd624b39` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 367 | 26200 | `a9bfd639b5939eda66390a0e4fb73245b01311a4eaaf26328e92e7f8b4f221f4` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5715 | 367814 | `dc64930f001b219bdeeded7e832d260215003c9e1719ec8bb27369e613967079` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5251 | 327795 | `dc127a709b3c88b1310040c5d530d30c17a01d8eeaf004e286bccf2269e1c58a` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5251 | 327860 | `17dde248c38f3d8ad0715c0cda41296746c103d98a0625a18f356d5e0e2e2b50` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 377 | 26980 | `20fe84427ed6dd75522961e01f801e4d93dee5ebf348a746c9d3f28c333deab5` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5322 | 331292 | `d228a2b5f7bd3b81828a0c5675229d122565882785874d366be2edd40cb66642` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5363 | 333954 | `2440f8d93598a12bd98a54ffae1eca5e7cc60cb98407df753de8148eeac5eb8f` |
 
-> **BUILD v19 — this prompt pins the current build.** The originally audited build
+> **BUILD v20 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and

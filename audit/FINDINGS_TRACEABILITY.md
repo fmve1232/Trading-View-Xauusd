@@ -52,6 +52,9 @@
 | F-A23 | P2 | `STAT` | Kelly used the bull win rate for shorts, and 1−p as the loss probability, so timeouts counted as losses — **FIXED v16** (f* = (pb−q)/(b(p+q))) |
 | F-A24 | P2 | `STAT` | Platt WLS weighted each bin by n, not the inverse variance of its logit, n·p(1−p) — **FIXED v16** (Berkson) |
 | F-A25 | P3 | `STAT` | Brier decomposition mixed smoothed frequencies with the raw base rate over different bin sets, so the identity failed — **FIXED v16** |
+| F-A27 | MEDIUM | `PRES` | EdgeCases A3/A6 asserted the pre-F-021 rounded categories and FAILED on the chart (engine correct) — **FIXED v20** |
+| F-A28 | P2 | `PRES` | Dashboard "WR" for a bearish bias was 1 − P(bull) = "bear OR timeout" (showed 80% on a ~20% chart) — **FIXED v20** (bear rate) |
+| F-A29 | **P0** | `BUG` | Strategy entries required `recentBars` (last 120 bars): the backtest could only trade the final ~5 days, so it took 0 trades — **FIXED v20** (switchable, default all bars) |
 | F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
@@ -692,6 +695,30 @@ dead symbol not on that list still fails.
 
 `diag_parity.py` fails if the Diagnostics engine differs from the Treatment engine by one
 code line (verified by injecting a one-character change).
+
+---
+
+## F-A27 … F-A29 — from the operator's first full chart run *(FIXED v20)*
+
+The first v19 run established that all six scripts compile. The Master is under the token
+limit: it renders v14+ fields (`EVrace … n885`). The strategy arms show only warnings. It
+also exposed three defects:
+
+- **F-A29 (P0).** Both arms took **0 trades** (Jan 2025 – Sep 2026, 1H). Both pre-filters
+  require `recentBars = bar_index > last_bar_index - recentBarsLen` (default 120). That is a
+  live-display filter present since the audited v1, and in a strategy it confines every entry
+  to the last ~5 days of the chart. It is kept, not removed: a new input *Backtest all bars*
+  (default ON in the arms) makes it switchable. The Master keeps its live behaviour.
+  Whatever else binds, the Diagnostics **gate funnel** now shows it, stage by stage, over the
+  whole history. Diagnose, don't tune.
+- **F-A28.** The Diagnostics panel read `WR 80%` beside `base 20%`. For a bearish bias the
+  WR cell showed 1 − P(bull), which counts every timeout as a bear win (the F-A16 error in a
+  display). It now shows the engine's bear-resolution share, `oBear`, in the Master, both arms
+  and Diagnostics.
+- **F-A27.** EdgeCases `3 FAIL / 97`. A3 (39.51) and A6 (69.51) still expected the ROUNDED
+  categories that F-021 removed; the engine is right. Fixed, and failing rows now render
+  first at a readable size, because the third failure was below the visible part of the
+  screenshot and is still unidentified.
 
 ---
 

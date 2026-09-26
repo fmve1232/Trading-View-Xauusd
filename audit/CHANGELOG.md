@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v19
+# Build changelog — v1 → … → v20
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -800,3 +800,20 @@ spaces, nested functions, table bounds or loop bounds.
 Token estimates for every script; only the Master is tight (~97,000). A traced Master →
 Visuals contingency is recorded in `CONCURRENCY_AND_MIGRATION.md` B5a, to use only if the
 save reports an overflow. Only Diagnostics changed. Compile NOT RUN.
+
+---
+
+# Build v19 → v20 — first full chart run acted on (F-A27 … F-A29)
+
+**Confirmed on the chart:** all six compile. The Master is under the token limit, so no
+Visuals move is needed. The arms show only `barstate.islast` warnings, which are harmless.
+- **F-A29 (P0):** 0 trades in both arms, because `recentBars` confined entries to the last
+  120 bars. Now switchable with *Backtest all bars*, default ON in both arms (identical; A/B
+  diff still five hunk headers).
+- **F-A28:** bearish-bias WR showed 1 − P(bull); now the bear rate (Master, arms,
+  Diagnostics).
+- **F-A27:** EdgeCases A3/A6 expectations corrected; failures render first; text size input.
+- **Diagnostics:** gate funnel (bars → trend → HTF → session/news/DD/recent → trigger →
+  vetoes → PASS).
+
+The strategy arms will now trade history. Compile of v20 NOT RUN.
