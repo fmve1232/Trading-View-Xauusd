@@ -2,7 +2,7 @@
 
 Ordered by value. **Steps 1 and 2 are worth more than everything else combined**, because
 they close gaps that no amount of analysis here can: the Master has never been compiled and
-the 72 assertions have never been run.
+the 92 assertions (72 until v13, +20 in v14) have never been run.
 
 Read §9 at the end before running the strategies. It is short and it changes what the data
 is allowed to do.
@@ -38,7 +38,7 @@ Different feeds have different tick sizes, spreads and session calendars.
 
 The Master has **no measured compiler baseline**. A build was once measured at 128,210
 compiled tokens against a 100,256 limit, and the drawing layer was cut to fit. Whether the
-current 5,595-line build compiles is unknown.
+current build (v14: Master 5,850 lines) compiles is unknown.
 
 1. Open the Pine editor, paste `XAUUSD_Quantum_5_0_Master.pine` over the **whole** script
    body (select all first — do not splice).
@@ -59,19 +59,19 @@ context readout near the decision log). It is display-only.
 
 ## Step 2 — Run the Edge Case harness  *(closes §8.2)*
 
-72 assertions that have never been run. The last recorded attempt hit a runtime error
+92 assertions that have never been run (v14: 72 original + 20 in GROUP K). The last recorded attempt hit a runtime error
 (`Row 70 is out of table bounds`), which was fixed — but the corrected build's result was
 never recorded.
 
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 72`, or `<n> FAIL / 72`.
+   `ALL PASS 92`, or `<n> FAIL / 92`. The header cell must read `§16 EDGE CASE v14`.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
 4. Remove it afterwards — it is diagnostic only.
 
-A green `ALL PASS 72` establishes how Pine evaluates the arithmetic. It does **not**
+A green `ALL PASS 92` establishes how Pine evaluates the arithmetic. It does **not**
 establish that the Master is wired to those expressions — that is a separate, known limit.
 
 ---
