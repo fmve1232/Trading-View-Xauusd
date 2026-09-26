@@ -20,7 +20,8 @@
 > the Master, and is recorded as **F-A07** below.
 >
 > **Applied:** F-A01/F-A03/F-A04/F-A06 (v2), F-A07 (v3), **F-A02 + F-A05 (v4)**.
-> All seven are now applied. **F-A02's wiring is not a validation** — see the
+> All seven are now applied; F-A08 … F-A20 followed, status per row in the Summary
+> table below. **F-A02's wiring is not a validation** — see the
 > revised Question B below.
 > Build v2 hashes are in `audit/MANIFEST.sha256`; v1→v2 line mapping in
 > `audit/LINE_MAP_v2.md`.

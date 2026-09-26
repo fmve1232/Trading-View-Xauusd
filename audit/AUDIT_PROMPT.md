@@ -36,7 +36,7 @@ scope, and no other build of these scripts is in scope.
 > **F-A13 in v10** — the first REAL COMPILER ERROR, reported by the operator: the Master
 > and both twins failed with `Undeclared identifier "OUTCOME_N"`. **§8.1 is now CLOSED as
 > a fact rather than an assumption: the Master had never compiled, and the defect is
-> present in the originally audited v1 build.** All thirteen findings applied.
+> present in the originally audited v1 build.** All thirteen findings applied as of v10.
 > **F-A15 in v12** (calibration map evaluated on the wrong variable). **F-A14 in v13**
 > (the rolling win rate's ±x% interval suppressed on the dashboard, completing F-037).
 > **v14: F-A16 … F-A20** — bear calibration and a conditional-probability gate, plan

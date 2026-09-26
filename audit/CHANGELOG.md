@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v9
+# Build changelog — v1 → … → v14
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
