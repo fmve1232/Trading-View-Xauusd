@@ -87,7 +87,10 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
    slow to load as a strategy arm.
 2. Screenshot the panel (top right by default; there's a position input). The header must
-   read `QUANTUM DIAGNOSTICS v21 Q7.2 B5`. Bottom-left: the dashboard mirror (the Master's
+   read `QUANTUM DIAGNOSTICS v22 Q7.2 B5`. Row **Volume (free plan)** compares OANDA tick
+   volume with real COMEX GC1! volume (delayed on a free plan, so compared on closed bars):
+   `corr` near 1 means the volume filters can be trusted; a WEAK reading means treat
+   volume-based signals with caution. Bottom-left: the dashboard mirror (the Master's
    dashboard values recomputed from the same engine); bottom-right: the MT5 plan. Input
    *Engine zones overlay* draws the engine's own OB / FVG / liquidity levels to compare with
    Visuals. The **Gate funnel** rows show how many
