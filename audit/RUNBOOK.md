@@ -77,6 +77,20 @@ establish that the Master is wired to those expressions — that is a separate, 
 
 ---
 
+## Step 2b — Diagnostics companion (v17)
+
+`XAUUSD_Quantum_5_0_Diagnostics.pine` runs the Treatment engine and shows the six diagnostic
+features that no longer fit in the Master: forecast cone, V1/V2 shadow audit, reliability
+buckets, rolling 95% intervals, what-if scenario scores and the data-source census.
+
+1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
+   slow to load as a strategy arm.
+2. Screenshot the panel (top right by default; there's a position input). The header must
+   read `QUANTUM DIAGNOSTICS v17 B4`.
+3. It trades and alerts nothing. Keep it or remove it; nothing else depends on it.
+
+---
+
 ## Step 3 — Record the run configuration
 
 Before any strategy run, capture this. Without it the export is not reproducible and I
@@ -239,7 +253,7 @@ runbook, is a diagnostic. Useful, worth doing — but not validation.
 
 | Priority | Item |
 |---|---|
-| 1 | Compile result for all five files — clean, or the exact error text |
+| 1 | Compile result for all six files — clean, or the exact error text |
 | 2 | Screenshot of the Edge Case harness table |
 | 3 | Symbol, timeframe, date range, `mintick`, Inputs screenshots |
 | 4 | Four Performance Summary screenshots (runs A–D) |

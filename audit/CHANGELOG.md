@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v16
+# Build changelog — v1 → … → v17
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -747,3 +747,14 @@ hunk headers) · `EdgeCases` 343 → 367 (97 assertions) · Visuals unchanged.
 
 **Nothing tuned.** Compile of v16 NOT RUN. EdgeCases' 3 v14 failures still undiagnosed
 (screenshot not legible).
+
+---
+
+# Build v16 → v17 — no feature deleted: Diagnostics companion
+
+New sixth artefact `XAUUSD_Quantum_5_0_Diagnostics.pine`: the Treatment engine verbatim plus
+a panel showing the six features v15/v16 took out of the Master (cone, V1/V2 shadow,
+reliability buckets, rolling intervals, what-if scores, data-source census). Two of them
+were never visible before and are now wired. Master, twins, Visuals and EdgeCases are
+**unchanged**. New `audit/tools/diag_parity.py` enforces engine identity. deadcode: 0 dead.
+Details in `FINDINGS_TRACEABILITY.md` ("v17"). Compile of Diagnostics NOT RUN.

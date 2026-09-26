@@ -9,8 +9,10 @@ The operator pastes these into TradingView by hand. Sending only the changed fil
 mismatched set on the chart, and there is no way to tell from the TradingView side which
 build a given script is on. A full set every time removes that class of mistake.
 
-There are **five** artefacts. Four are permanent chart scripts; `EdgeCases.pine` is a
-run-once diagnostic that is removed after reading its table. Send all five unless the
+There are **six** artefacts (since v17). Five are chart scripts; `EdgeCases.pine` is a
+run-once diagnostic that is removed after reading its table. `Diagnostics.pine` (v17)
+carries the features that no longer fit under the Master's compiled-token limit, on the
+Treatment twin's engine verbatim. Send all six unless the
 operator says to drop EdgeCases.
 
 **The chat record must include**, every time:
@@ -30,6 +32,8 @@ sha256sum artefacts/*.pine
 python3 audit/tools/precheck.py   artefacts/*.pine
 python3 audit/tools/undeclared.py artefacts/*.pine
 python3 audit/tools/order.py      artefacts/*.pine
+python3 audit/tools/deadcode.py   artefacts/*.pine
+python3 audit/tools/diag_parity.py
 sha256sum -c audit/MANIFEST.sha256
 ```
 
@@ -42,7 +46,10 @@ sha256sum -c audit/MANIFEST.sha256
   them — that tests the reconstruction, not the original.
 - **Never mark anything PASS that was not executed.** `NOT RUN` is the honest verdict.
 - Changes to the strategy twins go to **both arms identically**, or the A/B breaks. The
-  diff between them must stay at its five hunk headers.
+  diff between them must stay at its five hunk headers. Engine changes also go into
+  `Diagnostics.pine` (outside its `DIAG` fences); `diag_parity.py` fails otherwise.
+- **Do not delete features** (operator instruction, 2026-09-26). Wire them; if a file has
+  no room, move the feature to a companion that runs the same engine, never drop it.
 - The checkers narrow the search; **they do not replace the compiler.** Three static passes
   gave false confidence this session, including one syntax error introduced by a fix.
 
@@ -50,7 +57,7 @@ sha256sum -c audit/MANIFEST.sha256
 
 | Path | What |
 |---|---|
-| `artefacts/` | The five Pine v6 files. |
+| `artefacts/` | The six Pine v6 files. |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
 | `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A26. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |

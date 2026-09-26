@@ -661,6 +661,35 @@ every timeout as a loss.
 
 ---
 
+## v17 — features restored, not deleted (operator instruction)
+
+v15 and v16 removed six **features** from the Master: v15 to get under the compiled-token
+limit, v16 as dead code. The operator's rule is to wire features, never delete them.
+Measured: the Master has about 1,430 lexical tokens of headroom, and restoring and wiring all
+six costs about 1,300–1,500, so they cannot all fit back safely. Converting the engine's
+repeated code into arrays was measured too, and it *adds* tokens: each `x += y` becomes an
+`array.set(…array.get…)` call. So they live in `Diagnostics.pine`, which runs the
+Treatment twin's engine verbatim and draws them in a panel:
+
+| Feature | v14 state | v17 |
+|---|---|---|
+| Forecast cone + clean/professional hide switches | shown | shown, restored verbatim |
+| V1/V2 schema shadow audit | shown (default OFF) | shown, default ON |
+| Rolling reliability buckets + base rate + Brier | shown (default OFF) | shown; observed = raw frequency, as in the v16 Brier |
+| What-if scenarios (PDH/PDL continuation, VWAP hold/fail) | **computed, never shown** | **wired**, with the [10, 90] clamp the R5.1 note promised but never applied |
+| Rolling 95% intervals (WR, OOS) | suppressed (F-037/F-A14) | shown only under the panel's "ROLL, NOT A HOLDOUT" heading |
+| Data-source census (`hDataStatus`) | **write-only** | **wired**: % of stored observations where GC / OI contributed |
+
+**Not restored, because they were not features** (no visible output in any build): the
+dashboard code copied into the strategy twins, which never draw a dashboard; `calBrier`,
+which duplicated the Brier reliability term; and two exact complements (100 − x) of values
+already shown. Any of these can be restored on request.
+
+`diag_parity.py` fails if the Diagnostics engine differs from the Treatment engine by one
+code line (verified by injecting a one-character change).
+
+---
+
 ## Confirmed clean
 
 | Check | Result |
