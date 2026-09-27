@@ -1,6 +1,7 @@
-# Independent price cross-check: the site's Twelve Data XAU/USD bars vs Yahoo spot (XAUUSD=X) and Dukascopy.
-# Dukascopy refuses GitHub's cloud addresses (run 2: timeout / reset / timeout), so on GitHub it reports
-# NOT RUN and Yahoo is the working reference; run the tool on a home PC for the Dukascopy comparison.
+# Independent price cross-check of the site's Twelve Data XAU/USD bars.
+# Default reference: COMEX gold futures GC=F already in the store (no download; premium removed per
+# New York trading day) -- tests bar timing, gaps, spikes and bad bars. Spot references: Dukascopy
+# refuses GitHub's cloud addresses (run 2) -- run it from a home PC; Yahoo XAUUSD=X returns 404 (run 3).
 # Audit only: read-only permissions; the report goes to the run summary and a run artifact,
 # never to the public site (Dukascopy's terms restrict redistribution of its data).
 name: xcheck-prices
@@ -12,8 +13,8 @@ on:
         description: "Complete days to compare (most recent first)"
         default: "20"
       ref:
-        description: "Reference: yahoo, dukascopy or both"
-        default: "both"
+        description: "Reference: gc (futures, default), dukascopy, yahoo or all"
+        default: "gc"
   schedule:
     - cron: "17 6 * * 6"          # Saturdays 06:17 UTC, market closed, the week complete
 
@@ -35,7 +36,7 @@ jobs:
       - name: Load the market-data store (read-only)
         run: git clone -q --depth 1 --branch market-data --single-branch "https://github.com/${{ github.repository }}.git" store
       - name: Cross-check
-        run: python audit/tools/xcheck_dukascopy.py --store store --days "${{ github.event.inputs.days || '20' }}" --ref "${{ github.event.inputs.ref || 'both' }}" --out xcheck
+        run: python audit/tools/xcheck_dukascopy.py --store store --days "${{ github.event.inputs.days || '20' }}" --ref "${{ github.event.inputs.ref || 'gc' }}" --out xcheck
       - uses: actions/upload-artifact@v4
         if: always()
         with:

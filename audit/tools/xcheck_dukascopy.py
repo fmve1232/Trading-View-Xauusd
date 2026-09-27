@@ -14,10 +14,12 @@ Dukascopy day file (LZMA "alone" format, .bi5), per side:
   Prices are integers in instrument points; the divisor is detected (not assumed) by matching the
   Twelve Data price level, and the decode is rejected if the candles fail OHLC sanity checks.
 
-  python3 audit/tools/xcheck_dukascopy.py --store store --days 20 [--ref yahoo|dukascopy|both] --out xcheck
+  python3 audit/tools/xcheck_dukascopy.py --store store --days 20 [--ref gc|dukascopy|yahoo|all] --out xcheck
 
-Yahoo (XAUUSD=X) is the reference that GitHub's runners can reach: Dukascopy refuses cloud
-addresses (run 2 of the workflow: read timeout, connection reset, connect timeout).
+References: gc = COMEX futures GC=F from the store (no download; premium removed per trading day;
+the default, runs anywhere); dukascopy = spot, but it refuses GitHub's cloud addresses (run 2:
+timeout / reset / timeout) -- run it from a home PC; yahoo = XAUUSD=X spot, which Yahoo no longer
+serves (run 3: HTTP 404) -- kept in case it returns.
 """
 from __future__ import annotations
 
@@ -91,6 +93,14 @@ def to_bars(m: pd.DataFrame, rule: str) -> pd.DataFrame:
                          "spread": g["spread"].median()}).dropna(subset=["close"])
 
 
+def rank_corr(a: pd.Series, b: pd.Series) -> float:
+    """Spearman correlation (Pearson on ranks) over the bars both series have. No SciPy needed."""
+    m = a.notna() & b.notna()
+    if m.sum() < 3:
+        return float("nan")
+    return float(a[m].rank().corr(b[m].rank()))
+
+
 def compare(td: pd.DataFrame, dk: pd.DataFrame, bar_min: int) -> dict:
     """Per-bar agreement of two OHLC frames on the same UTC open-time index."""
     full = dk[dk["minutes"] >= bar_min * 0.9]                      # only bars Dukascopy saw almost completely
@@ -106,7 +116,7 @@ def compare(td: pd.DataFrame, dk: pd.DataFrame, bar_min: int) -> dict:
     r_td, r_dk = j["close_td"].pct_change(), j["close_dk"].pct_change()
     lag = {}
     for k in (-2, -1, 0, 1, 2):                                    # a grid-label offset shows up as a better lag
-        c = r_td.corr(r_dk.shift(k))
+        c = rank_corr(r_td, r_dk.shift(k))                 # one bad bar cannot mask or fake agreement
         lag[str(k)] = None if pd.isna(c) else round(float(c), 4)
     worst = ad.sort_values(ascending=False).head(10)
     res.update({
@@ -150,12 +160,16 @@ def report_md(doc: dict) -> str:
     for tf, r in doc["timeframes"].items():
         L += [f"## {tf}", "", f"**{r['verdict']}**", "", "| Metric | Value |", "|---|---|"]
         for k, v in r.items():
-            if k in ("verdict", "largest_close_diffs"):
+            if k in ("verdict", "largest_close_diffs", "unexplained_outliers"):
                 continue
             L.append(f"| {k} | {json.dumps(v) if isinstance(v, dict) else v} |")
         if r.get("largest_close_diffs"):
             L += ["", "Largest close differences (bar open, UTC):", "", f"| Bar | Twelve Data | {ref} | Diff |", "|---|---|---|---|"]
-            L += [f"| {x['bar_open_utc']} | {x['td_close']} | {x['ref_close']} | {x['diff']:+} |" for x in r["largest_close_diffs"]]
+            if any("window" in x for x in r["largest_close_diffs"]):
+                L[-2:] = [f"| Bar | Twelve Data | {ref} (premium removed) | Diff | Window |", "|---|---|---|---|---|"]
+                L += [f"| {x['bar_open_utc']} | {x['td_close']} | {x['ref_close']} | {x['diff']:+} | {x.get('window') or '**unexplained**'} |" for x in r["largest_close_diffs"]]
+            else:
+                L += [f"| {x['bar_open_utc']} | {x['td_close']} | {x['ref_close']} | {x['diff']:+} |" for x in r["largest_close_diffs"]]
         L.append("")
     L.append(f"{ref} data is used for this audit only and is not republished.")
     return "\n".join(L)
@@ -217,6 +231,82 @@ def run_yahoo(store_dir: str, days: int, fetch=None, now: datetime | None = None
         t = td[tf][(td[tf].index >= y.index.min()) & (td[tf].index <= y.index.max())]
         r = compare(t, y, mins)
         r["verdict"] = verdict(r)
+        doc["timeframes"][tf] = r
+    return doc
+
+
+NY_TZ = "America/New_York"
+
+
+def trading_day(idx: pd.DatetimeIndex) -> np.ndarray:
+    """New York trading date: the session opens at 17:00 New York, so 17:00-23:59 belongs to the next day."""
+    ny = idx.tz_convert(NY_TZ)
+    return (ny + pd.Timedelta(hours=7)).date
+
+
+def event_window(t: pd.Timestamp) -> str:
+    """Heuristic label for WHY two feeds may disagree on a bar (New York time). Not a calendar."""
+    ny = t.tz_convert(NY_TZ)
+    hm = ny.hour * 60 + ny.minute
+    if ny.weekday() == 4 and hm >= 15 * 60:
+        return "Friday close"
+    if 8 * 60 <= hm < 9 * 60 + 30:
+        return "08:30 data (NFP/CPI/...)"
+    if 14 * 60 <= hm < 16 * 60:
+        return "14:00-16:00 (FOMC decision + press conference / minutes)"
+    if 16 * 60 + 45 <= hm < 18 * 60 + 15:
+        return "COMEX daily break"
+    return ""
+
+
+def run_gc(store_dir: str, days: int, now: datetime | None = None) -> dict:
+    """Twelve Data spot vs COMEX gold futures (Yahoo GC=F, already in the store; no download).
+
+    Futures trade at a premium to spot (carry), so levels differ by tens of dollars. The premium
+    is removed once per New York trading day (its median); what remains tests bar timing, gaps,
+    spikes and bad bars -- not the spot level itself (that needs a spot reference).
+    """
+    now = now or datetime.now(timezone.utc)
+    doc = {"generated_utc": now.isoformat(), "symbol": "GC=F", "timeframes": {}, "reference": "COMEX futures GC=F",
+           "reference_note": "Yahoo GC=F from the store; futures premium removed per New York trading day"}
+    td, err = load_td(store_dir)
+    if err:
+        doc["error"] = err
+        return doc
+    start = pd.Timestamp(now) - pd.Timedelta(days=days)
+    doc["from"], doc["to"] = start.date().isoformat(), now.date().isoformat()
+    for tf, name, mins in (("15m", "GC=F_15m", 15), ("1h", "GC=F_60m", 60)):
+        gc = store.load(store_dir, name)
+        if gc is None or not len(gc):
+            doc["error"] = f"no {name} in the store at {store_dir}"
+            return doc
+        gc = sources.trading_week_only(gc[["open", "high", "low", "close"]].astype(float).dropna())
+        gc = gc[(gc.index >= start) & (gc.index + pd.Timedelta(minutes=mins) <= pd.Timestamp(now))]
+        t = td[tf][td[tf].index >= start]
+        j = t[["close"]].join(gc[["close"]], lsuffix="_td", rsuffix="_gc", how="inner")
+        if len(j) < 10:
+            doc["error"] = f"{tf}: fewer than 10 bars in both feeds"
+            return doc
+        basis_bar = j["close_gc"] - j["close_td"]
+        rel = float((basis_bar / j["close_td"]).median())
+        if not math.isfinite(rel) or not (-0.02 <= rel <= 0.05):
+            doc["error"] = f"{tf}: futures premium {rel:.2%} of spot is outside -2%..+5%: not the same underlying"
+            return doc
+        day_basis = basis_bar.groupby(trading_day(j.index)).median()
+        per_bar = pd.Series(trading_day(gc.index), index=gc.index).map(day_basis)
+        ref = gc.sub(per_bar, axis=0).dropna().assign(minutes=mins, spread=np.nan)
+        r = compare(t, ref, mins)
+        jumps = day_basis.diff().abs()
+        r["premium_by_day"] = {str(k): round(float(v), 2) for k, v in day_basis.tail(10).items()}
+        r["premium_median"] = round(float(basis_bar.median()), 2)
+        r["probable_rolls"] = [str(k) for k, v in jumps.items() if v > 5]
+        big = [x for x in r.get("largest_close_diffs", []) if abs(x["diff"]) > max(5.0, 6 * r.get("close_absdiff_median", 1))]
+        for x in r.get("largest_close_diffs", []):
+            x["window"] = event_window(pd.Timestamp(x["bar_open_utc"]))
+        r["unexplained_outliers"] = [x for x in big if not event_window(pd.Timestamp(x["bar_open_utc"]))]
+        r["verdict"] = verdict(r)
+        if r["unexplained_outliers"] and r["verdict"].startswith("CONSISTENT"):
+            r["verdict"] += f"; {len(r['unexplained_outliers'])} large difference(s) outside event windows -- review"
         doc["timeframes"][tf] = r
     return doc
 
@@ -294,12 +384,12 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--store", required=True)
     ap.add_argument("--days", type=int, default=20)
-    ap.add_argument("--ref", choices=("dukascopy", "yahoo", "both"), default="both")
+    ap.add_argument("--ref", choices=("gc", "dukascopy", "yahoo", "all"), default="gc")
     ap.add_argument("--out", default="xcheck")
     a = ap.parse_args(argv)
     os.makedirs(a.out, exist_ok=True)
-    for ref in (("yahoo", "dukascopy") if a.ref == "both" else (a.ref,)):
-        doc = run_yahoo(a.store, a.days) if ref == "yahoo" else run(a.store, a.days)
+    for ref in (("gc", "yahoo", "dukascopy") if a.ref == "all" else (a.ref,)):
+        doc = {"gc": run_gc, "yahoo": run_yahoo, "dukascopy": run}[ref](a.store, a.days)
         with open(os.path.join(a.out, f"xcheck_{ref}.json"), "w") as f:
             json.dump(doc, f, indent=1, default=str)
         md = report_md(doc)
