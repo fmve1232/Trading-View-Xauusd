@@ -2,7 +2,7 @@
 
 Ordered by value. **Steps 1 and 2 are worth more than everything else combined**, because
 they close gaps that no amount of analysis here can: the Master has never been compiled and
-the 97 assertions (72 until v13, +20 in v14, +5 in v16) have never been run.
+the 99 assertions (72 until v13, +20 in v14, +5 in v16, +2 in v29) had not been run until the 2026-09-27 chart run.
 
 Read §9 at the end before running the strategies. It is short and it changes what the data
 is allowed to do.
@@ -67,13 +67,13 @@ never recorded.
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v21`. Since v20
+   `ALL PASS 99`, or `<n> FAIL / 99`. The header cell must read `§16 EDGE CASE v29`. Since v20
    **failing rows are drawn first**, and a *Table text size* input (default Small) keeps them legible.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
 4. Remove it afterwards — it is diagnostic only.
 
-A green `ALL PASS 97` establishes how Pine evaluates the arithmetic. It does **not**
+A green `ALL PASS 99` establishes how Pine evaluates the arithmetic. It does **not**
 establish that the Master is wired to those expressions — that is a separate, known limit.
 
 ---
@@ -107,7 +107,7 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
    depends on it.
 
 > **EdgeCases (v28):** the red header cell names the first failing test with its GOT / WANT,
-> e.g. `1 FAIL / 97 · I4 got 5 want na`. Send that cell.
+> e.g. `1 FAIL / 99 · I4 got 5 want na`. Send that cell.
 >
 > **Saving a paste.** After pasting, press **Save** (Ctrl+S). A chart keeps running the last
 > *saved* version: the v21 EdgeCases showed "3 FAIL / 97" in natural row order because the
@@ -274,7 +274,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v21`, **97** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v29`, **99** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 

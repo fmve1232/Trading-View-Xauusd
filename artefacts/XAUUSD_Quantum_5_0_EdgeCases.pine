@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v28   (first failure named in header)║
+// ║  BUILD STAMP — this file last CHANGED in v29   (I7 measured; I9, I10)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -243,9 +243,16 @@ if barstate.islastconfirmedhistory
     chk("I4  math.max(na, 5) propagates na",f(math.max(_nan, 5.0)), "na", "NUM")
     chk("I5  nz() substitutes",             f(nz(_nan, 7.0)), "7", "NUM")
     chk("I6  safeDiv by zero -> 0",         f(safeDiv(10.0, 0.0)), "0", "NUM")
-    chk("I7  safeDiv near-zero NOT guarded",b(safeDiv(10.0, 1e-12) > 1e9), "true", "NUM")
-    // I7 is the real finding: the guard is `== 0`, so 1e-12 passes and explodes.
+    // v29 -- I7 CORRECTED FROM A MEASUREMENT. It asserted IEEE semantics ("the `== 0` guard
+    // lets 1e-12 through and explodes", want true). On the operator's chart (2026-09-27) it
+    // returned FALSE: Pine's float `==` is tolerance-based, so 1e-12 == 0 and the plain guard
+    // already catches it. I7 now asserts the measured behaviour; I9/I10 test the explanation
+    // (I9: tolerant equality; I10: the literal is NOT read as zero). If I9 or I10 fails, the
+    // explanation is wrong, not the engine -- whose safeDiv uses abs(b) > 1e-10 either way.
+    chk("I7  == 0 guard also catches 1e-12",   b(safeDiv(10.0, 1e-12) > 1e9), "false", "NUM")
     chk("I8  0/0 guarded to 0",             f(safeDiv(0.0, 0.0)), "0", "NUM")
+    chk("I9  Pine float == is tolerant",      b(1e-12 == 0.0), "true", "NUM")
+    chk("I10 1e-12 literal is not zero",       b(1e-12 > 0.0), "true", "NUM")
 
 // =============================================================================
 // GROUP J — SCORE EXTREMES AND VOTE POOL
@@ -362,7 +369,7 @@ if barstate.islastconfirmedhistory
             _fail += 1
             if _firstFail == ""
                 _firstFail := array.get(str.split(array.get(tName, _q), " "), 0) + " got " + array.get(tGot, _q) + " want " + array.get(tWant, _q)
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v28", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v29", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())

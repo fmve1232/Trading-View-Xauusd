@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v28
+# Build changelog — v1 → … → v29
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -997,4 +997,33 @@ New Diagnostics row **Missed moves**: move episodes of at least 30 (input) withi
 **Change (EdgeCases only):** the red header cell now reads `N FAIL / 97 · <id> got <x> want
 <y>` for the first failure. It changes no assertion. Master, Diagnostics, the twins and
 Visuals are unchanged. Compile NOT RUN.
+
+---
+
+# Build v28 → v29 — EdgeCases I7 corrected from the chart (F-A37)
+
+The operator's photo of the v21 harness shows the one failure:
+- test: `I7  safeDiv near-zero NOT guarded`;
+- got `false`, want `true`, class NUM.
+
+96 of 97 passed.
+
+**Cause: the assertion, not the engine.**
+- I7 assumed IEEE equality: that `b == 0` lets b = 1e-12 through, so 10 / 1e-12 ≈ 1e13
+  "explodes".
+- Pine returned 0 from that guard, so its float `==` treated 1e-12 as equal to 0.
+- The harness had asserted a premise that was never executed in Pine (FORENSIC_AUDIT_Q5
+  §351 already said so).
+- The engine's `safeDiv` uses `abs(b) > 1e-10` and is unaffected either way.
+
+**Change:**
+- I7 now asserts the measured result.
+- Two new tests check the explanation:
+  - I9 `1e-12 == 0.0` → true (tolerant equality);
+  - I10 `1e-12 > 0.0` → true (the literal is not read as zero).
+- If either fails, the explanation is wrong and I7 is reopened.
+- Now 99 assertions + header = 100 rows, exactly the table's capacity; the `_row <= 99` guard
+  holds. A 100th assertion needs a larger table.
+
+Only EdgeCases changed. Compile NOT RUN.
 
