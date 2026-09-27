@@ -1,0 +1,39 @@
+# Independent price cross-check: the site's Twelve Data XAU/USD bars vs Dukascopy.
+# Audit only: read-only permissions; the report goes to the run summary and a run artifact,
+# never to the public site (Dukascopy's terms restrict redistribution of its data).
+name: xcheck-dukascopy
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Complete days to compare (most recent first)"
+        default: "20"
+  schedule:
+    - cron: "17 6 * * 6"          # Saturdays 06:17 UTC, market closed, the week complete
+
+permissions:
+  contents: read
+
+jobs:
+  xcheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Load the market-data store (read-only)
+        run: git clone -q --depth 1 --branch market-data --single-branch "https://github.com/${{ github.repository }}.git" store
+      - name: Cross-check
+        run: python audit/tools/xcheck_dukascopy.py --store store --days "${{ github.event.inputs.days || '20' }}" --out xcheck
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: xcheck-dukascopy
+          path: xcheck/
+          retention-days: 90
