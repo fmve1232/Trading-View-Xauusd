@@ -50,8 +50,27 @@ jobs:
 
       - name: Load the market-data store
         run: |
-          git clone -q --depth 1 --branch market-data --single-branch \
-            "https://github.com/${{ github.repository }}.git" store || mkdir -p store
+          # A failed clone must STOP the run: carrying on with an empty store would force-push a
+          # store without its history or forward ledger over the good one in the save step.
+          URL="https://github.com/${{ github.repository }}.git"
+          set +e; git ls-remote --exit-code --heads "$URL" market-data >/dev/null; rc=$?; set -e
+          if [ $rc -eq 0 ]; then git clone -q --depth 1 --branch market-data --single-branch "$URL" store
+          elif [ $rc -eq 2 ]; then echo "market-data branch does not exist yet: starting a new store"; mkdir -p store
+          else echo "::error::cannot reach the market-data branch (rc=$rc)"; exit 1; fi
+          touch store-loaded.flag   # outside store/ and site/: never committed or published
+
+      - name: Load the forward ledger (git history kept; restores the store's copy if it is missing)
+        run: |
+          URL="https://github.com/${{ github.repository }}.git"
+          set +e; git ls-remote --exit-code --heads "$URL" forward-ledger >/dev/null; rc=$?; set -e
+          if [ $rc -eq 0 ]; then git clone -q --depth 1 --branch forward-ledger --single-branch "$URL" ledger
+          elif [ $rc -eq 2 ]; then mkdir -p ledger && git -C ledger init -q -b forward-ledger
+          else echo "::error::cannot reach the forward-ledger branch (rc=$rc)"; exit 1; fi
+          if [ ! -f store/holdout_manifest.json ] && [ -f ledger/holdout_manifest.json ]; then
+            echo "::warning::store had no holdout manifest: restored from forward-ledger"
+            cp ledger/holdout_manifest.json store/ && mkdir -p store/holdout && cp -r ledger/holdout/. store/holdout/
+          fi
+          touch ledger-loaded.flag
 
       - name: Run pipeline
         env:
@@ -65,7 +84,7 @@ jobs:
         run: python -m quantum.pipeline --store store --out site/data --tfs 15m,1h,4h,5m
 
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
-        if: always()
+        if: always() && hashFiles('store-loaded.flag') != ''
         run: |
           cd store
           if [ ! -d .git ]; then git init -q -b market-data; fi
@@ -76,6 +95,18 @@ jobs:
           git commit -q -m "market data $(date -u +%FT%TZ)" || exit 0
           # the shallow clone still knows the old tip, so unchanged blobs are not re-sent
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot:market-data
+
+      - name: Save the forward ledger (normal commits, never force-pushed)
+        if: always() && hashFiles('ledger-loaded.flag') != '' && hashFiles('store/holdout_manifest.json') != ''
+        run: |
+          cp store/holdout_manifest.json ledger/
+          mkdir -p ledger/holdout && cp -r store/holdout/. ledger/holdout/ 2>/dev/null || true
+          cd ledger
+          git config user.name "quantum-pipeline"
+          git config user.email "quantum-pipeline@users.noreply.github.com"
+          git add -A
+          git commit -q -m "forward ledger $(date -u +%FT%TZ)" || exit 0
+          git push -q "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:forward-ledger
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

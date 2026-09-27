@@ -1,6 +1,6 @@
 <h2>What this site is</h2>
 <p>The XAUUSD Quantum 5.0 engine — the Pine Master at build v21 — ported line for line to Python and run on free market data by a scheduled
-GitHub Actions job. The job downloads data, runs the engine on every timeframe, backtests both A/B arms, and publishes the results here as static JSON.
+GitHub Actions job. The job downloads data, runs the engine on every timeframe, backtests all three arms, and publishes the results here as static JSON.
 The page itself makes no decisions. It shows what the engine concluded, and how it got there.</p>
 
 <h2>How it runs</h2>
@@ -11,7 +11,7 @@ The page itself makes no decisions. It shows what the engine concluded, and how 
   <li><b>Engine</b>: on every confirmed bar: trend, regime, sessions, structure (BOS / CHoCH / MSS), displacement, order blocks, fair value gaps, liquidity pools and sweeps,
     macro votes and correlations, the weighted evidence composite, the historical-analog engine and its Platt calibration, the trade plan,
     trade quality, the vetoes and the account-state risk tracker.</li>
-  <li><b>Backtest</b> of both arms of the A/B test: <i>treatment</i> (the live gate) and <i>control</i> (the pre-Q5.5 gates).</li>
+  <li><b>Backtest</b> of the three arms: <i>treatment</i> (the live gate), <i>control</i> (the pre-Q5.5 gates) and <i>challenger</i> (pre-registered hypothesis H1: the fast trend term EMA20 in the entry gate).</li>
   <li><b>Publish</b> to GitHub Pages; alerts go out for newly confirmed signals (ntfy / Telegram / Discord, optional).</li>
 </ol>
 
@@ -32,8 +32,8 @@ The page itself makes no decisions. It shows what the engine concluded, and how 
 <h2>What is honest to claim, and what is not</h2>
 <ul>
   <li><b>The historical window is contaminated.</b> Quantum 5.x thresholds, weights and gates were selected while looking at gold's history. No re-slicing of that history — walk-forward, purged k-fold or ROLL — is out of sample.</li>
-  <li><b>The only out-of-sample evidence is the frozen forward holdout.</b> The configuration is hashed, and every trade entered after the freeze was decided by parameters that could not have seen its outcome.
-    Change any parameter and the holdout restarts; the earlier one is kept in the manifest and never merged.</li>
+  <li><b>The only out-of-sample evidence is the frozen forward holdout.</b> It is pre-registered (start 2026-09-28 00:00 UTC; 1H decides; N &ge; 50 per arm; decision rules fixed in advance) and keyed on the configuration hash <i>and</i> a hash of the engine's source code, so every trade entered after the freeze was decided by parameters and code that could not have seen its outcome.
+    Change any parameter or any engine file and the holdout restarts; the earlier one is kept in the manifest, its trades archived, and never merged. It is independent of the operator's own Excel log.</li>
   <li><b>ROLL is not a holdout.</b> The engine's rolling IS/ROLL split is a trailing slice that is redrawn every bar (F-037). It is labelled ROLL everywhere.</li>
   <li><b>Scores are not probabilities.</b> Confidence, trade quality, the bias composite and the what-if scores are heuristic 0–100 scores. The probability-shaped numbers are the calibrated P (after a Platt fit, marked <i>unfitted</i> before one exists), the race rates and the analog touch rates, each with its sample size.</li>
   <li><b>No parameter here has been tuned against results.</b> The defaults are the Pine Master's input defaults. That is a rule, not an accident (audit §9).</li>

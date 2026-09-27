@@ -478,36 +478,38 @@ function renderAnalog() {
       `<p class="note">Pine's definition, kept: percentage points above 50%, with timed-out analogs in the denominator. A feature with no edge therefore reads about −(timeout share ÷ 2), not 0 — compare features with each other, not with zero.</p>`) +
     card("Similarity weights", kv(Object.entries(sc.weights || {}).map(([k, v]) => [k, f(v, 1) + "%"]).concat([["zone (fixed)", "8.0%"]])));
 }
-function mRow(label, a, b, fmt = (x) => f(x, 2)) {
-  return `<tr><td>${label}</td><td>${a && a.n ? fmt(a) : "—"}</td><td>${b && b.n ? fmt(b) : "—"}</td></tr>`;
+function mRow(label, a, b, fmt = (x) => f(x, 2), c = undefined) {
+  const cell = (m) => `<td>${m && m.n ? fmt(m) : "—"}</td>`;
+  return `<tr><td>${label}</td>${cell(a)}${cell(b)}${c === undefined ? "" : cell(c)}</tr>`;
 }
 let EQ = null;
 function renderBacktest() {
   const B = S.data.backtest, H = S.data.holdout;
   if (!B || !B.treatment) { $("#tab-backtest").innerHTML = card("Backtest", "<p class='muted'>No backtest yet.</p>"); return; }
-  const tr = B.treatment, ct = B.control || {};
-  const rows = (x, y) => `<table class="t"><tr><th>Metric</th><th>Treatment (live gate)</th><th>Control (old gates)</th></tr>
-    <tr><td>Trades</td><td>${x ? x.n : 0}</td><td>${y ? y.n : 0}</td></tr>${mRow("Win rate", x, y, (m) => pct(m.win_rate, 1))}${mRow("Expectancy (R/trade)", x, y, (m) => fs(m.expectancy_r, 3))}
-    ${mRow("t-stat of mean R", x, y, (m) => f(m.t_stat, 2))}${mRow("Profit factor", x, y, (m) => f(m.profit_factor, 2))}${mRow("Net points ($/oz)", x, y, (m) => fs(m.net_pts, 1))}
-    ${mRow("Sum R", x, y, (m) => fs(m.sum_r, 2))}${mRow("Max DD (1% risk)", x, y, (m) => pct(m.max_dd_pct, 1))}${mRow("Max DD (R)", x, y, (m) => f(m.max_dd_r, 2))}
-    ${mRow("Final equity (1% risk)", x, y, (m) => fs(m.final_equity_pct, 1) + "%")}${mRow("Sharpe / Sortino per trade", x, y, (m) => `${f(m.sharpe_per_trade, 2)} / ${f(m.sortino_per_trade, 2)}`)}
-    ${mRow("TP1 hit rate", x, y, (m) => pct(m.tp1_rate, 0))}${mRow("Longest losing streak", x, y, (m) => m.longest_losing_streak)}${mRow("Longs / shorts", x, y, (m) => `${m.longs} / ${m.shorts}`)}
-    ${mRow("Avg bars held", x, y, (m) => f(m.avg_bars, 1))}</table>`;
-  const hold = tr.holdout && tr.holdout.n ? rows(tr.holdout, ct.holdout) : `<p class="muted">No trade has been entered since the freeze (${H.freeze_utc ? H.freeze_utc.slice(0, 16).replace("T", " ") : "—"} UTC). This is the only evidence that is genuinely out of sample; it fills with time.</p>`;
+  const tr = B.treatment, ct = B.control || {}, ch = B.challenger || {};
+  const rows = (x, y, z) => { const R = (lab, fmt) => mRow(lab, x, y, fmt, z); return `<table class="t"><tr><th>Metric</th><th>Treatment (live gate)</th><th>Control (old gates)</th><th>Challenger (H1)</th></tr>
+    <tr><td>Trades</td><td>${x ? x.n : 0}</td><td>${y ? y.n : 0}</td><td>${z ? z.n : 0}</td></tr>${R("Win rate", (m) => pct(m.win_rate, 1))}${R("Expectancy (R/trade)", (m) => fs(m.expectancy_r, 3))}
+    ${R("t-stat of mean R", (m) => f(m.t_stat, 2))}${R("Profit factor", (m) => f(m.profit_factor, 2))}${R("Net points ($/oz)", (m) => fs(m.net_pts, 1))}
+    ${R("Sum R", (m) => fs(m.sum_r, 2))}${R("Max DD (1% risk)", (m) => pct(m.max_dd_pct, 1))}${R("Max DD (R)", (m) => f(m.max_dd_r, 2))}
+    ${R("Final equity (1% risk)", (m) => fs(m.final_equity_pct, 1) + "%")}${R("Sharpe / Sortino per trade", (m) => `${f(m.sharpe_per_trade, 2)} / ${f(m.sortino_per_trade, 2)}`)}
+    ${R("TP1 hit rate", (m) => pct(m.tp1_rate, 0))}${R("Longest losing streak", (m) => m.longest_losing_streak)}${R("Longs / shorts", (m) => `${m.longs} / ${m.shorts}`)}
+    ${R("Avg bars held", (m) => f(m.avg_bars, 1))}</table>`; };
+  const anyPost = [tr, ct, ch].some((a) => a.holdout && a.holdout.n);
+  const hold = anyPost ? rows(tr.holdout, ct.holdout, ch.holdout) : `<p class="muted">${H.status === "PENDING" ? "The forward test starts" : "No trade has been entered since the freeze"} (${H.freeze_utc ? H.freeze_utc.slice(0, 16).replace("T", " ") : "—"} UTC). This is the only evidence that is genuinely out of sample; it fills with time. Pre-registered in audit/PREREGISTRATION.md §7: 1H decides; three arms; N ≥ 50.</p>`;
   const wf = (tr.walk_forward || []).map((w, k) => `<tr><td>F${k + 1} ${w.from.slice(0, 10)}</td><td>${w.n}</td><td>${w.n ? pct(w.win_rate, 0) : "—"}</td><td>${w.n ? fs(w.expectancy_r, 3) : "—"}</td><td>${w.n ? f(w.profit_factor, 2) : "—"}</td></tr>`).join("");
   const mc = tr.monte_carlo && tr.monte_carlo.runs ? kv([["Runs × trades", `${tr.monte_carlo.runs} × ${tr.monte_carlo.trades}`], ["Final equity p5 / p50 / p95", `${fs(tr.monte_carlo.final_equity_pct.p5, 1)} / ${fs(tr.monte_carlo.final_equity_pct.p50, 1)} / ${fs(tr.monte_carlo.final_equity_pct.p95, 1)}%`],
     ["Max DD p5 / p50 / p95", `${f(tr.monte_carlo.max_dd_pct.p5, 1)} / ${f(tr.monte_carlo.max_dd_pct.p50, 1)} / ${f(tr.monte_carlo.max_dd_pct.p95, 1)}%`], ["P(loss)", pct(tr.monte_carlo.prob_loss, 1)]]) + `<p class="note">${esc(tr.monte_carlo.note)}</p>` : "<p class='muted'>Needs ≥ 5 closed trades.</p>";
   const cal = tr.calibration && tr.calibration.bins ? `<table class="t"><tr><th>P at entry</th><th>n</th><th>Predicted</th><th>TP1 hit</th></tr>${tr.calibration.bins.map((b) => `<tr><td>${f(b.lo, 1)}–${f(b.hi, 1)}</td><td>${b.n}</td><td>${f(b.pred, 0)}%</td><td>${f(b.obs, 0)}%</td></tr>`).join("")}</table>${kv([["Brier", f(tr.calibration.brier, 3)], ["Base rate", pct(tr.calibration.base_rate, 0)]])}` : `<p class="muted">Needs ≥ 10 trades with a calibrated P (n=${tr.calibration ? tr.calibration.n : 0}).</p>`;
   const brk = (o) => `<table class="t"><tr><th></th><th>n</th><th>Win</th><th>E[R]</th></tr>${Object.entries(o || {}).map(([k, m]) => `<tr><td>${esc(k)}</td><td>${m.n}</td><td>${m.n ? pct(m.win_rate, 0) : "—"}</td><td>${m.n ? fs(m.expectancy_r, 2) : "—"}</td></tr>`).join("")}</table>`;
-  const arm = S.btArm === "control" ? ct : tr;
+  const arm = S.btArm === "control" ? ct : S.btArm === "challenger" ? ch : tr;
   const trades = (arm.trades || []).slice().reverse().map((x) => `<tr><td>${tfmt(Date.parse(x.entry_time) / 1000)}</td><td class="${x.dir === "LONG" ? "bull" : "bear"}">${x.dir}</td><td>${f(x.entry)}</td><td>${f(x.sl)}</td><td>${f(x.tp1)}</td><td>${f(x.exit)}</td><td>${esc(x.exit_reason)}</td><td class="${x.r >= 0 ? "bull" : "bear"}">${fs(x.r, 2)}</td><td>${fs(x.pts, 2)}</td><td>${x.tq}</td><td>${isNum(x.p) ? f(x.p * 100, 0) : "—"}</td><td>${x.bars}</td></tr>`).join("");
   $("#tab-backtest").innerHTML = `
     <div class="grid wide">
       ${card("Frozen forward holdout", hold, pill(H.status || "—", H.status === "ACTIVE" ? "bull" : "warn"))}
-      ${card("Whole sample (contaminated by development — read as diagnostics)", rows(tr.metrics, ct.metrics))}
+      ${card("Whole sample (contaminated by development — read as diagnostics)", rows(tr.metrics, ct.metrics, ch.metrics))}
     </div>
     <div style="height:12px"></div>
-    ${card("Cumulative R", `<div id="equity"></div><p class="note">Closed trades, both arms. Entry at signal close; stop first on same-bar ties; 50% at TP1 then breakeven; rest at TP2; costs = session spread + 2×slippage + commission.</p>`)}
+    ${card("Cumulative R", `<div id="equity"></div><p class="note">Closed trades: treatment (gold), control (blue), challenger (violet). Entry at signal close; stop first on same-bar ties; 50% at TP1 then breakeven; rest at TP2; costs = session spread + 2×slippage + commission.</p>`)}
     <div style="height:12px"></div>
     <div class="grid wide">
       ${card("Walk-forward stability (treatment)", `<table class="t"><tr><th>Fold</th><th>n</th><th>Win</th><th>E[R]</th><th>PF</th></tr>${wf}</table><p class="note">Equal time slices; nothing is refitted between folds.</p>`)}
@@ -517,7 +519,7 @@ function renderBacktest() {
     </div>
     <div style="height:12px"></div>
     ${card("Trades", `<div class="scroll"><table class="t"><tr><th>Entry</th><th>Dir</th><th>Entry</th><th>SL</th><th>TP1</th><th>Exit</th><th>Why</th><th>R</th><th>Pts</th><th>TQ</th><th>P%</th><th>Bars</th></tr>${trades || "<tr><td colspan=12 class='muted'>no trades</td></tr>"}</table></div>`,
-      `<span><span class="toggle ${S.btArm === "treatment" ? "on" : ""}" data-arm="treatment">Treatment</span> <span class="toggle ${S.btArm === "control" ? "on" : ""}" data-arm="control">Control</span></span>`)}`;
+      `<span><span class="toggle ${S.btArm === "treatment" ? "on" : ""}" data-arm="treatment">Treatment</span> <span class="toggle ${S.btArm === "control" ? "on" : ""}" data-arm="control">Control</span> <span class="toggle ${S.btArm === "challenger" ? "on" : ""}" data-arm="challenger">Challenger</span></span>`)}`;
   document.querySelectorAll("[data-arm]").forEach((b) => (b.onclick = () => { S.btArm = b.dataset.arm; renderBacktest(); }));
   if (EQ) { EQ.remove(); EQ = null; }
   if (!document.querySelector("#tab-backtest").classList.contains("hidden")) renderEquity();
@@ -532,7 +534,7 @@ function renderEquity() {
     for (const e of (B[arm] && B[arm].equity) || []) { let t = Math.floor(Date.parse(e.t) / 1000); if (t <= last) t = last + 1; last = t; pts.push({ time: t, value: e.r }); }
     const s = EQ.addLineSeries({ color, lineWidth: 2, priceLineVisible: false }); s.setData(pts);
   };
-  mk("treatment", css("--accent")); mk("control", css("--info"));
+  mk("treatment", css("--accent")); mk("control", css("--info")); mk("challenger", css("--arm3"));
   EQ.timeScale().fitContent();
 }
 function renderDiagnostics() {

@@ -124,7 +124,8 @@ def sr_scanner(F, scan_len=100, max_sr=6):
     return {"res": res, "sup": sup}
 
 
-def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, store_dir: str | None = None) -> dict:
+def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, store_dir: str | None = None,
+          res_chal=None) -> dict:
     now = now or datetime.now(timezone.utc)
     F, R, L = res.F, res.rows, res.last
     n = F["n"]
@@ -242,12 +243,12 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
 
     # backtests
     bt = {}
-    for name, rr in (("treatment", res), ("control", res_ctrl)):
+    for name, rr in (("treatment", res), ("control", res_ctrl), ("challenger", res_chal)):
         if rr is None:
             continue
         trades = backtest.simulate(rr, cfg)
         pre, _ = holdout.split(trades, man["freeze_utc"])
-        post = holdout.update_ledger(store_dir, market.tf, name, trades, man["freeze_utc"], cfg.hash()) \
+        post = holdout.update_ledger(store_dir, market.tf, name, trades, man["freeze_utc"], man.get("freeze_key") or holdout.freeze_key(cfg), market.price_source) \
             if not market.synthetic else holdout.split(trades, man["freeze_utc"])[1]
         m_all = backtest.metrics(trades, cfg.risk_percent)
         eq = []
@@ -284,7 +285,7 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
             "forming": forming, "config": cfg.to_dict(),
         },
         "data_status": [st.to_dict() for st in market.status.values()],
-        "holdout": {k: man.get(k) for k in ("config_hash", "engine_version", "freeze_utc", "status", "history")},
+        "holdout": {k: man.get(k) for k in ("freeze_key", "config_hash", "engine_code_hash", "engine_version", "freeze_utc", "status", "history")},
         "chart": chart, "markers": markers, "zones": zones, "sr": sr_scanner(F), "decisions": decisions, "cone": cone,
         "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks},
         "analog": {**A, "scan": L["analog_scan"], "hit_prob": L["hit_prob"], "hit_n": L["hit_n"],
