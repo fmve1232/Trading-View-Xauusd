@@ -62,7 +62,7 @@ sha256sum -c audit/MANIFEST.sha256
 |---|---|
 | `artefacts/` | The six Pine v6 files. |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A35. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A36. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |

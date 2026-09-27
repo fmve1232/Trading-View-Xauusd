@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v24   (Auction row + correlation fix)║
+// ║  BUILD STAMP — this file last CHANGED in v27   (missed-move audit row)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5462,6 +5462,47 @@ float dgVolCorr = gcValid ? dgVolCorrAll : na
 bool dgPrevDisp = displacementUp[1] or displacementDown[1]
 string volLine = not gcValid ? "COMEX feed not valid — tick volume unverified (" + gcState + ")" : "tick vs COMEX corr(100) " + (na(dgVolCorr) ? "—" : str.tostring(dgVolCorr, "#.##") + (dgVolCorr >= 0.7 ? " GOOD" : dgVolCorr >= 0.4 ? " PARTIAL" : " WEAK")) + "  |  prev-bar displacement " + (dgPrevDisp ? (gcVolExp ? "CONFIRMED by COMEX volume" : "NOT confirmed by COMEX volume") : "none") + (timeframe.in_seconds() < 1800 ? "  |  <30M: COMEX bar may be incomplete" : "")
 
+// ---- 13. MISSED-MOVE AUDIT (v27) -- why the decision said WAIT while price moved -------
+// Operator report: DECISION "mostly remained WAIT although the market moved 30 to 50 dollars".
+// A MOVE starts at bar s when, within the next dgMoveBars bars, the high rises (or the low
+// falls) at least dgMoveUSD from close[s]. Consecutive start bars form one EPISODE. For
+// each episode this records the FURTHEST the Treatment entry chain got in the move's
+// direction on any start bar, in gate order:
+//   trend > HTF > sess/news/DD > trigger (structure or displacement) > TQ floor > EV<0 >
+//   P<min > risk lock > ENTRY
+// "ENTRY" means a trade in the move's direction would have been signalled while the move was
+// still ahead -- NOT that it won (the stop can still be hit first). Evaluated only on
+// confirmed bars, from values already computed; it changes no gate. It measures; it does
+// not propose thresholds (AUDIT_PROMPT §9).
+dgMoveUSD = input.float(30.0, "Missed-move audit: move size (price units)", minval=1.0, group=grpDiag)
+dgMoveBars = input.int(12, "Missed-move audit: within N bars", minval=2, maxval=100, group=grpDiag)
+_dgStage(bool _tr, bool _htfBlk, bool _pre, bool _sig) => not _tr ? 0 : _htfBlk ? 1 : not _pre ? 2 : not _sig ? 3 : effTqMinCot > 0 and tradeQuality < effTqMinCot ? 4 : not na(planExpectancy) and planExpectancy < 0.0 ? 5 : _calVeto ? 6 : useRiskLimits and riskLock ? 7 : 8
+int dgStL = _dgStage(bullTrend, htfBearScoreGate, buyPreFilters, shouldBuy)
+int dgStS = _dgStage(bearTrend, htfBullScoreGate, sellPreFilters, shouldSell)
+float dgFwdHi = ta.highest(high, dgMoveBars)
+float dgFwdLo = ta.lowest(low, dgMoveBars)
+bool dgMvU = bar_index > dgMoveBars and dgFwdHi - close[dgMoveBars] >= dgMoveUSD
+bool dgMvD = bar_index > dgMoveBars and close[dgMoveBars] - dgFwdLo >= dgMoveUSD
+var int[] dgMiss = array.new_int(9, 0)
+var int dgEpU = -1
+var int dgEpD = -1
+var int dgNU = 0
+var int dgND = 0
+if barstate.isconfirmed
+    if dgMvU
+        dgEpU := math.max(dgEpU, dgStL[dgMoveBars])
+    else if dgEpU >= 0
+        array.set(dgMiss, dgEpU, array.get(dgMiss, dgEpU) + 1)
+        dgNU += 1
+        dgEpU := -1
+    if dgMvD
+        dgEpD := math.max(dgEpD, dgStS[dgMoveBars])
+    else if dgEpD >= 0
+        array.set(dgMiss, dgEpD, array.get(dgMiss, dgEpD) + 1)
+        dgND += 1
+        dgEpD := -1
+string missLine = "moves >=" + str.tostring(dgMoveUSD, "#") + " in " + str.tostring(dgMoveBars) + " bars: up " + str.tostring(dgNU) + " / down " + str.tostring(dgND) + "  ENTRY " + str.tostring(array.get(dgMiss, 8)) + "  |  stopped at: trend " + str.tostring(array.get(dgMiss, 0)) + "  HTF " + str.tostring(array.get(dgMiss, 1)) + "  sess/news/DD " + str.tostring(array.get(dgMiss, 2)) + "  trigger " + str.tostring(array.get(dgMiss, 3)) + "  TQ " + str.tostring(array.get(dgMiss, 4)) + "  EV " + str.tostring(array.get(dgMiss, 5)) + "  P " + str.tostring(array.get(dgMiss, 6)) + "  risk " + str.tostring(array.get(dgMiss, 7))
+
 // ---- PANEL -----------------------------------------------------------------------------
 var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 24, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 _dRow(int _r, string _k, string _v, color _c) =>
@@ -5469,7 +5510,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v24 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v27 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5495,6 +5536,7 @@ if barstate.islast
     if debugMode
         _dRow(21, "Gate booleans", xDebug, _cT)
     _dRow(22, "Volume (free plan)", volLine, _cT)
+    _dRow(23, "Missed moves", missLine, _cT)
     _dRow(14, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
 // Pine rejects an indicator with no output function call ("Script must have at least one
 // output function call"); tables do not count. Same fix as the EdgeCases harness.

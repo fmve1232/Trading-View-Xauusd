@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v26
+# Build changelog — v1 → … → v27
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -949,4 +949,22 @@ always agrees with the B/S numbers shown next to it.
 
 Also verified: the plan's SL/TP geometry against a $10–20 target. On 1H (ATR ≈ $16) the SL is
 about $10–25 and TP1 about $10–20. Twins and Diagnostics are unchanged. Compile NOT RUN.
+
+---
+
+# Build v26 → v27 — missed-move audit (Diagnostics only)
+
+Operator report: DECISION "mostly remained WAIT although the market moved 30 to 50 dollars".
+Diagnosed as F-A36 from the operator's own gate funnel:
+- the chain passes 1.5% of bars;
+- the trigger stage (structure break or displacement) removes 86% of eligible bars;
+- the vetoes remove two thirds of what is left.
+
+Not tuned (§9): the trades the chain takes already break even (F-A34).
+
+New Diagnostics row **Missed moves**: move episodes of at least 30 (input) within 12 bars
+(input), each tallied at the furthest gate the entry chain reached in that direction.
+- It is DIAG-fenced and reads only existing values; `diag_parity` passes.
+- Diagnostics ~38,810 lexical, ~97,600 compiled at 2.515.
+- Master, twins, EdgeCases and Visuals are unchanged. Compile NOT RUN.
 

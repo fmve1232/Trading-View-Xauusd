@@ -59,6 +59,7 @@
 | F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
 | F-A32 | **P0** | `BUG` | *(compiler-reported)* Master v23: `too many tokens: 100820` (limit 100,256); the lexical estimator's ratio had drifted 2.466 → 2.515 — **FIXED v24** (auction layer moved to Diagnostics) |
 | F-A33 | P3 | `NUM` | *(compiler-reported)* Diagnostics: `ta.correlation` in a ternary skipped bars in its window; `_v` shadowed a global — **FIXED v24** |
+| F-A36 | **P1** | `STAT` | *(operator report)* DECISION "mostly WAIT" while price moved $30–50: the entry chain passes 1.5% of bars (152 / 10,269 on 1H); the trigger stage alone removes 86% of eligible bars — **MEASURED v27** (missed-move audit), **not tuned** (§9) |
 | F-A35 | P2 | `PRES` | *(sequence audit)* `biasLabel` and the WAIT reason were computed from the evidence-stage scores but shown beside the final scores (label could contradict the numbers; alert text too) — **FIXED v26** |
 | F-A34 | **P1** | `STAT` | *(first chart data)* raw score buckets predict 21→54% but observe 18–24%: no resolution on this history; Treatment PF 0.989 over 90 trades — **OPEN, not fixable by code** (needs a frozen holdout, §9) |
 | F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
@@ -838,6 +839,42 @@ triaged by hand.
     negligibly.
   - Re-ordering would move the 7,000-token engine in all four engine copies.
   - Not changed.
+
+---
+
+## F-A36 — "WAIT while the market moved $30–50" *(operator report; MEASURED v27, OPEN)*
+
+The gate funnel from the operator's Diagnostics screenshot (1H, 10,269 confirmed bars,
+Treatment engine = the Master's gate):
+
+| Stage | Bars left | Share of the previous stage |
+|---|---:|---:|
+| trend (EMA stack) | 7,436 | 72% |
+| + HTF not opposed | 5,838 | 79% |
+| + session ≥ 30, no news, no DD breach | 3,377 | 58% |
+| + trigger: structure break (8-bar life) or displacement | **481** | **14%** |
+| − vetoes (TQ 162, EV<0 230, P<min 149; they overlap) | **152** | 32% |
+
+So DECISION reads BUY/SELL on 1.5% of bars and WAIT on the rest. That is the design: DECISION
+answers "enter now?", and the trigger is an EVENT, so inside a trend it is false between
+structure breaks. A sustained $30–50 leg can pass through with no new break, or with its only
+break rejected by a veto.
+
+**Why it is not loosened here.**
+- The trades the chain DOES take break even: 90 trades, PF 0.989 (F-A34).
+- Opening the trigger or lowering the veto floors on this history is exactly the §9
+  prohibition. It would add trades whose value is unknown, chosen by looking at the moves.
+
+**What v27 adds instead.** A *Missed moves* row in Diagnostics.
+- It counts every move episode of at least `dgMoveUSD` (default 30) within `dgMoveBars`
+  (default 12) bars.
+- For each episode it records the furthest the entry chain got in that direction.
+- That turns the complaint into a count per gate, measured on the operator's own chart.
+- A change to that gate can then be pre-registered and tested on data collected AFTER it is
+  frozen. That is the only test that would show it helps.
+
+Pre-v21 note: before F-A30 (v21), displacement detection was OFF by default, so half the trigger
+never fired. Experience from those builds overstates today's WAIT rate.
 
 ---
 

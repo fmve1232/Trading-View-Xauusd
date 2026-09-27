@@ -98,6 +98,11 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
    Visuals. The **Gate funnel** rows show how many
    historical bars pass each entry stage and how often each veto fires; send them with any
    backtest that takes few or no trades.
+   Row **Missed moves** (v27): for every move of at least *move size* (default 30) within
+   *N bars* (default 12) on the loaded history, where the entry chain stopped in that
+   direction (trend, HTF, sess/news/DD, trigger, TQ, EV, P, risk), or ENTRY if a signal
+   fired while the move was still ahead. ENTRY does not mean the trade won. Send this row
+   with the gate funnel.
 3. It trades and alerts nothing. Keep it if you want the auction read (v24); nothing else
    depends on it.
 
