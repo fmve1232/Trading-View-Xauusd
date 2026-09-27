@@ -1092,3 +1092,12 @@ Operator request: "what can we do to achieve 100/100" → both the log and the c
 - The Master, twins, Diagnostics, EdgeCases and Visuals are unchanged. Compile of the
   Challenger NOT RUN.
 
+**Chart result (operator screenshot, 2026-09-27 14:35 UTC+5):**
+- The Challenger saved, compiled and was added to the chart. Its only warning is the benign
+  `barstate.islast` one at L5196, the same as the twins' (F-A33 note).
+- Compile: PASS by execution.
+- The first report frame, still marked "Updating report", showed figures identical to the
+  Treatment's (86 trades, PF 0.957, −$39.57). This is presumed to be a stale frame and
+  awaits a settled screenshot: identical settled figures would mean the H1 gate is not
+  taking effect.
+
