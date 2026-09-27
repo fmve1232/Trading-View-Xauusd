@@ -57,7 +57,7 @@ The deliberate differences, all removals of TradingView limits and none chosen b
 | D-05 | COT keyed on its Tuesday as-of date; percentile over chart bars | keyed on Friday release; percentile over weeks | no look-ahead |
 | D-06 | volume profile on the last bar only (F-A07) | every bar | historical plans can use VAL/VAH/POC; the `°` markers go |
 | D-07 | OANDA tick volume | COMEX GC futures volume, bar for bar; missing = 0 (counted). While an anchor period has no volume yet, VWAP is the equal-weighted mean price rather than na | real traded volume; a na VWAP would disable the analog scan for 100 bars after every COMEX daily break |
-| D-08 | Cornish-Fisher inverse by 6 Newton steps, accepted whatever they return | accepted only where it solves q(w) = z, else the raw z | the cubic has no inverse for thin tails or strong skew; Newton ran to 1e213 on live data and pinned mrComposite at ±100 (the Pine loop is identical, so TradingView presumably shows the same saturation on those bars) |
+| D-08 | Cornish-Fisher inverse by 6 Newton steps, accepted whatever they return | accepted only where it solves q(w) = z, else the raw z | the cubic has no inverse for thin tails or strong skew; Newton ran to 1e213 on live data and pinned mrComposite at ±100 — **fixed in Pine v32 too (F-A38)**, so this is parity now, not a difference |
 | — | daily open interest | weekly CFTC open interest | no free daily OI; labelled |
 | — | `pivothigh` tie-break unknown | strict pivot (a plateau is not a pivot) | unverified on exact ties |
 
@@ -112,4 +112,4 @@ configuration hash and therefore restarts the holdout — that is intended.
 |---|---|
 | web.1 | First release (Pine v21 engine). |
 | web.1 + data fixes | Market-closed bars dropped; 4h DST grid; Twelve Data daily index; VWAP with no volume yet (D-07); Cornish-Fisher guard (D-08). Found on the first live run: 1h sat in WARMUP because the analog scan was disabled daily, and 30% of 15m bars were weekend quotes. The configuration hash is unchanged, so the holdout continues; its ledgers were still empty. |
-
+| web.2 | Pine v32: the Cornish-Fisher guard is now in Pine as well (D-08 → parity); bias label and WAIT reason computed from the final scores (Pine v26, display only). `SCHEMA_BUILD` 6. Config hash unchanged, so the web holdout continues. |

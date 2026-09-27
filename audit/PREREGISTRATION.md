@@ -1,4 +1,4 @@
-# Forward-test pre-registration — XAUUSD Quantum (build v31)
+# Forward-test pre-registration — XAUUSD Quantum (build v32)
 
 Written **2026-09-27**, before any holdout data exists. Everything below is fixed until the
 decision in §5. Changing a rule after seeing forward results turns the test back into a
@@ -26,10 +26,10 @@ Only trades that happen **after** the rules are frozen can show an edge.
 
 | File | SHA-256 |
 |---|---|
-| `XAUUSD_Quantum_5_0_Master.pine` | `1fe5e5a828742f11a7f56d583314d3e3d29f8d110d8fd8b92de64514307dd2f0` |
-| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
-| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
-| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `0748a41fa479f78f8af56c16dabf56e610ef071dcdd86cc3dc309f312346b770` |
+| `XAUUSD_Quantum_5_0_Master.pine` | `0506208a373b4b60745443f966c63081d156de3d0f5d19d28601167a4f424f7a` |
+| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `f43b6882b250c1a1401a14b73ee898122b107e37e782dea2aad13cc62834abf1` |
+| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `2f0d987e2b715e636657c2b5e7cc0ef28b70f697bac2a635df04bdc499e14030` |
+| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `b5762a04fc0b647f01ec85de40e9839bef2f34b1df358c7271a339bd2745449a` |
 
 Settings stay at the script defaults, except `MT5 Price Offset`, which is display only.
 Strategy Properties stay at the code defaults: initial capital 10,000, 1 oz fixed, costs as
@@ -42,6 +42,20 @@ pinned in the code.
 
 **Not allowed:** any threshold, weight, gate, input default or engine change in the four
 files above.
+
+## Amendment before the start (2026-09-27, build v32)
+
+Made **before the holdout start**, so no holdout data exists and no result was seen.
+
+- **What changed:** the Cornish-Fisher guard (F-A38) in the Master and all three arms,
+  identically. It only affects bars where the inverse does not exist; there the raw z is kept
+  instead of a runaway value (up to 1e213) that pinned `mrComposite` at ±100.
+- **What did not change:** the holdout start, the chart, the metrics, the decision rules,
+  H1, and every threshold, weight, gate and input default.
+- **Hashes:** the table in §2 now lists the v32 files. The v31 hashes are superseded, and the
+  v31 files must not be used for the forward test.
+- **Why now:** the defect was found on the first live data. Fixing it after the start would
+  have restarted the clock; fixing it now costs nothing.
 
 ## 3. What is measured
 

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v31   (NEW: challenger arm, H1)      ║
+// ║  BUILD STAMP — this file last CHANGED in v32   (H1 arm; CF guard F-A38)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -850,8 +850,12 @@ float retSkewC = math.min(math.max(retSkew, -1.0), 1.0)
 // Measured on a skewed, fat-tailed sample (S 0.62, K 3): at the 99th percentile the true
 // normal-equivalent is 2.33; the inverse gives 2.29, the old forward map gave 6.64.
 // Inverted exactly by Newton's method (6 steps, from w = x) rather than a truncated inverse
-// series, whose error grows with K. q'(w) is positive over the clamped (S, K) region; the 0.1
-// floor on it only guards the step.
+// series, whose error grows with K.
+// v32 FIX (F-A38): the claim that q'(w) stays positive over the clamped (S, K) region was
+// false. With thin tails (K < 0) q'(w) = 1 + wS/3 + (w²-1)K/8 - ... turns negative for |w|
+// above ~3, so q has no inverse there and Newton runs away: on live 5M data 147 bars, one of
+// them z 3.18 with K -1 -> w ~1e213, pinning mrComposite at +/-100. The inverse is now kept
+// only where it actually solves q(w) = z (relative error 1e-6); otherwise the raw z is used.
 float _cfK = math.min(math.max(retKurt, -1.0), 3.0)
 float retZScore = retZScoreRaw
 if _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(retZScoreRaw)
@@ -862,7 +866,8 @@ if _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(r
         float _q = _w + (_w2 - 1.0) * retSkewC / 6.0 + (_w3 - 3.0 * _w) * _cfK / 24.0 - (2.0 * _w3 - 5.0 * _w) * retSkewC * retSkewC / 36.0
         float _dq = 1.0 + _w * retSkewC / 3.0 + (3.0 * _w2 - 3.0) * _cfK / 24.0 - (6.0 * _w2 - 5.0) * retSkewC * retSkewC / 36.0
         _w := _w - (_q - retZScoreRaw) / math.max(_dq, 0.1)
-    retZScore := _w
+    float _w2f = _w * _w
+    retZScore := math.abs(_w + (_w2f - 1.0) * retSkewC / 6.0 + (_w2f * _w - 3.0 * _w) * _cfK / 24.0 - (2.0 * _w2f * _w - 5.0 * _w) * retSkewC * retSkewC / 36.0 - retZScoreRaw) < 1e-6 * math.max(1.0, math.abs(retZScoreRaw)) ? _w : retZScoreRaw
 
 // Distance from VWAP, EMAs in ATR terms (mean reversion gauges)
 float distVwapATR = adaptiveATR > 0 ? (close - vwapVal) / adaptiveATR : 0.0
@@ -2934,7 +2939,9 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 // (an analog feature via mrComposite) change what the gate acts on.
 // v21: 4 -> 5. OB / FVG / displacement / SMT / climax are engine inputs again (F-A30), which
 // changes which trades fire; exports from B4 and B5 must never be pooled.
-int SCHEMA_BUILD = 5
+// v32: 5 -> 6. The Cornish-Fisher guard (F-A38) changes mrComposite on the bars where the inverse
+// did not exist, which feeds the composite and the analog features; B5 and B6 exports must not be pooled.
+int SCHEMA_BUILD = 6
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
 int barDataStatus = ((gcConfirmsBull or gcConfirmsBear) ? 1 : 0) + ((oiValid and oiConviction != 0) ? 2 : 0) + (US2Y_STATUS == 0 ? 4 : 0) + (COT_STATUS == 0 ? 8 : 0) + (GC_STATUS != 0 ? 16 : 0) + (OI_STATUS != 0 ? 32 : 0)
 var int[] hSchemaVer = array.new_int(HIST_MAX, 1)

@@ -69,7 +69,7 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A37. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A38. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |
@@ -83,7 +83,7 @@ sha256sum -c audit/MANIFEST.sha256
 - The same non-negotiables apply: defaults in `quantum/config.py` are the Pine input defaults and are
   **not tuned**. Changing any of them changes the config hash, which restarts the frozen forward
   holdout — by design.
-- Deliberate differences from Pine are listed in `docs/PLATFORM.md` (D-01 … D-07). Any other
+- Deliberate differences from Pine are listed in `docs/PLATFORM.md` (D-01 … D-07; D-08 is now shared with Pine v32). Any other
   difference is a bug.
 - The artefact delivery rule above applies to the `.pine` files only; the site deploys itself.
 

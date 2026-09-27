@@ -18,15 +18,15 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5728 | 369391 | `1fe5e5a828742f11a7f56d583314d3e3d29f8d110d8fd8b92de64514307dd2f0` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5277 | 329997 | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5277 | 330062 | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5288 | 330981 | `0748a41fa479f78f8af56c16dabf56e610ef071dcdd86cc3dc309f312346b770` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5735 | 370215 | `0506208a373b4b60745443f966c63081d156de3d0f5d19d28601167a4f424f7a` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5284 | 330821 | `f43b6882b250c1a1401a14b73ee898122b107e37e782dea2aad13cc62834abf1` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5284 | 330886 | `2f0d987e2b715e636657c2b5e7cc0ef28b70f697bac2a635df04bdc499e14030` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5295 | 331805 | `b5762a04fc0b647f01ec85de40e9839bef2f34b1df358c7271a339bd2745449a` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 394 | 28440 | `411a73e6deb72a87af279ec0f132c2fce9dcffeb896ed98375930fd0b17029fe` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5544 | 349654 | `6ea54f6332401872912bc483dfca545e7a8f23b054cfffe9eeb806f316e4fa4c` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5551 | 350478 | `3e1707bd3c6ab9309c458e6ba6625eff9ee8e1a5d657c066a96bc0e923845bc0` |
 
-> **BUILD v31 — this prompt pins the current build.** The originally audited build
+> **BUILD v32 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and

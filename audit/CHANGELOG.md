@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v31
+# Build changelog — v1 → … → v32
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1092,3 +1092,35 @@ Operator request: "what can we do to achieve 100/100" → both the log and the c
 - The Master, twins, Diagnostics, EdgeCases and Visuals are unchanged. Compile of the
   Challenger NOT RUN.
 
+# Build v31 → v32 — Cornish-Fisher guard (F-A38); pre-registration re-pinned before the start
+
+Found on the first live data by the web engine (`quantum/`), which runs the same engine on
+Twelve Data spot bars. Operator decision: fix now, before the 2026-09-28 00:00 UTC start.
+
+- **F-A38 (P2).** The Newton inverse of the Cornish-Fisher map ran away where the cubic has
+  no inverse: with thin tails (K < 0) q'(w) turns negative for |w| above ~3, contradicting
+  the v16 comment. Live 5M data: 147 of ~3,500 bars, one with z 3.18, K -1 → w ~1e213, which
+  pinned `mrComposite` at ±100. The inverse is now kept only where it solves q(w) = z
+  (relative 1e-6), otherwise the raw z. Two code lines; the wrong comment is corrected.
+- **Files:** Master, Treatment, Control and Challenger, identically; Diagnostics regenerated
+  with `build_diag.py`. `SCHEMA_BUILD` 5 → 6 (B5 and B6 exports must not be pooled).
+- **Pre-registration:** §2 re-pinned to the v32 hashes, with an amendment note. Nothing
+  else in it changed.
+- **Checks:** precheck, undeclared, order, deadcode (0 dead), pinelimits, diag_parity PASS;
+  A/B diff 5 hunks (Control), 4 hunks (Challenger); MANIFEST updated.
+- **Web engine:** already carried the guard (docs/PLATFORM.md D-08, now shared with Pine);
+  it also takes the v26 bias-label sequence fix. 53 Python tests pass.
+- **Token ceiling:** Master 38,890 → 38,959 lexical (+69) on a lexer that reads 28 below the
+  v23–v25 figures in this log, i.e. ~38,987 on that scale: ~98,050 compiled at 2.515
+  (~2.2% headroom), ~99,340 at the worst ratio seen (2.548). Still an estimate.
+- **Unchanged:** EdgeCases (its table holds 99 rows), Visuals. **Compile of v32 NOT RUN.**
+
+| File | Lines | Bytes | SHA-256 |
+|---|---:|---:|---|
+| `XAUUSD_Quantum_5_0_Diagnostics.pine` | 5551 | 350478 | `3e1707bd3c6ab9309c458e6ba6625eff9ee8e1a5d657c066a96bc0e923845bc0` |
+| `XAUUSD_Quantum_5_0_EdgeCases.pine` | 394 | 28440 | `411a73e6deb72a87af279ec0f132c2fce9dcffeb896ed98375930fd0b17029fe` |
+| `XAUUSD_Quantum_5_0_Master.pine` | 5735 | 370215 | `0506208a373b4b60745443f966c63081d156de3d0f5d19d28601167a4f424f7a` |
+| `XAUUSD_Quantum_5_0_Strategy.pine` | 5284 | 330821 | `f43b6882b250c1a1401a14b73ee898122b107e37e782dea2aad13cc62834abf1` |
+| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5295 | 331805 | `b5762a04fc0b647f01ec85de40e9839bef2f34b1df358c7271a339bd2745449a` |
+| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5284 | 330886 | `2f0d987e2b715e636657c2b5e7cc0ef28b70f697bac2a635df04bdc499e14030` |
+| `XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |

@@ -1135,6 +1135,17 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
             f_bull = max(100.0 * r_, 5.0)
             f_bear = 100.0 - f_bull
         bull_score, bear_score, range_score = normalize_scores(f_bull, f_bear, f_rng, 1.0)
+        # Pine v26 (F-A35): the bias label and the WAIT reason are shown beside the FINAL scores,
+        # so they are computed from them (same formulas; no gate reads either).
+        bias_label = ("BULL" if bull_score >= 62 else "BEAR" if bear_score >= 62 else "RANGE" if range_score >= 62
+                      else "BULL-ISH" if (bull_score > bear_score and bull_score > range_score)
+                      else "BEAR-ISH" if (bear_score > bull_score and bear_score > range_score) else "NEUTRAL")
+        if not should_buy and not should_sell:
+            bull_side = bull_score >= bear_score
+            blk_why = ("DD" if dd_breach else "NEWS" if news_blk else "OLD-BAR" if not recent
+                       else f"SESS {int(sq)}/30" if sq < 30
+                       else (f"TREND {bull_ts[i] if bull_side else bear_ts[i]}/{cfg.trend_threshold}" if (not bt if bull_side else not brt)
+                             else "HTF-OPP" if (hgs if bull_side else hgb) else "NO-TRIGGER"))
         if recorded:
             H["pred"][i] = bull_score
             H["calbin"][i] = 4.0 if bull_score >= cal_q[3] else 3.0 if bull_score >= cal_q[2] else 2.0 if bull_score >= cal_q[1] else 1.0 if bull_score >= cal_q[0] else 0.0
