@@ -75,6 +75,31 @@ independent Python website, not on TradingView.
 - **What did not change:** the start (2026-09-28 00:00 UTC), the decision rules and
   thresholds, the decision date, H1, and the website's freeze key in §7.
 
+## Amendment 3 before the start (2026-09-27 20:10 UTC): the primary decision and shared defects
+
+Made **before the holdout start**: no holdout data exists and no result was seen. It clarifies how the
+results are read. No rule, threshold, arm, timeframe or data source changes, and the website's freeze key
+(§7) is unchanged.
+
+- **Primary decision: the Treatment arm on 1H.** Whether the live system has an edge is answered by the
+  Treatment arm's §4 verdict alone.
+- **Challenger: one directional hypothesis (H1).** It is decided only by the ADOPT H1 rule in §4 (EDGE SHOWN
+  *and* a higher mean than Treatment over the same window). It is not a second, independent chance to
+  declare that the system has an edge.
+- **Control: a comparison arm.** Its verdict is reported and decides nothing.
+- **Multiplicity.** Three 95% intervals are computed and no family-wise correction is applied, because only
+  the Treatment verdict and the H1 rule are decisions. Reading "any arm shows EDGE SHOWN" as evidence for the
+  system is not allowed: with three arms and no real edge, at least one interval lies above 0 by chance up to
+  about 7% of the time (one-sided, 3 × 2.5%, before the profit-factor filter), against 2.5% for the primary
+  arm alone.
+- **Shared defects.** The arms differ only in the entry gate. Everything upstream (scores, calibration,
+  trade quality, plan) is computed once and shared, so the known defects affect all three arms identically:
+  `mrComposite` at ±100 on about 60% of bars, the open outcome-horizon issue (F-035), and the score's lack of
+  resolution on the history (F-A34). No arm's result is free of them, and a difference between arms is not
+  evidence about them.
+- **Timeframes.** Only 1H decides (§7). Price-check outliers on 5m/15m (the weekly `xcheck-prices` report)
+  cannot affect a decision; they are tracked so that affected trades can be identified.
+
 ## 3. What is measured
 
 | Arm | Source | Unit |
@@ -179,6 +204,7 @@ Display-only files (`report.py`, `notify.py`, `site/`) and documents are outside
   Master has not been shown. It is scheduled for the first week.
   - If it reveals a website bug, fixing it restarts this arm (by the rule above).
   - It does not restart the TradingView arms.
-- **Mean-reversion saturation.** `mrComposite` sits at ±100 on about 60% of bars.
+- **Mean-reversion saturation.** `mrComposite` sits at ±100 on about 60% of bars. It is computed once and
+  shared, so it affects all three arms identically (Amendment 3).
 - **Open horizon mismatch.** F-035 is open.
 - **No-resolution score.** Calibration has no resolution on the history (F-A34).
