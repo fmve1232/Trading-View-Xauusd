@@ -100,3 +100,23 @@ def test_4h_grid_stays_on_17h_new_york_across_dst():
     later = sources.resample_ny_session(df[df.index >= "2026-03-20"], 4)   # starts after the change
     common = r.index.intersection(later.index)
     assert len(common) == len(later)                                     # same grid whatever the start date
+
+
+def test_api_key_never_reaches_published_errors(monkeypatch):
+    """A requests network error quotes the full URL; the key must not survive into status notes."""
+    from quantum.data import sources
+    secret = "abcdef0123456789abcdef0123456789"
+    monkeypatch.setenv("TWELVEDATA_API_KEY", secret)
+    raw = ("ConnectionError: HTTPSConnectionPool(host='api.twelvedata.com', port=443): Max retries "
+           f"exceeded with url: /time_series?symbol=XAU%2FUSD&interval=1h&apikey={secret}&order=ASC")
+    out = sources.redact(raw)
+    assert secret not in out and "apikey=***" in out and "symbol=XAU%2FUSD" in out
+    assert secret not in sources.redact(f"bare {secret} in text")
+    monkeypatch.setattr(sources, "requests", type("R", (), {"get": staticmethod(lambda *a, **k: (_ for _ in ()).throw(OSError(raw)))}))
+    monkeypatch.setattr(sources.time, "sleep", lambda s: None)
+    try:
+        sources._get("https://api.twelvedata.com/time_series", params={"apikey": secret}, tries=1)
+    except sources.FetchError as e:
+        assert secret not in str(e)
+    else:
+        raise AssertionError("expected FetchError")
