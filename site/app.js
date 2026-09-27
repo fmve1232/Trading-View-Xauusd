@@ -114,6 +114,12 @@ setInterval(async () => {
 const LIVE_URL = "https://api.gold-api.com/price/XAU";
 const LIVE_TITLE = "Live spot from gold-api.com, read by your browser. DISPLAY ONLY: the engine never uses it; signals come from closed bars.";
 const LIVE = { px: null, t: null, err: "" };
+// Spot gold is shut from Friday 17:00 to Sunday 17:00 New York (the same rule the pipeline uses).
+function marketClosed(d) {
+  const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
+  const dow = ny.getDay(), h = ny.getHours();
+  return dow === 6 || (dow === 5 && h >= 17) || (dow === 0 && h < 17);
+}
 async function pollLive() {
   if (document.hidden) return;
   try {
@@ -139,10 +145,12 @@ function renderLive() {
   }
   const ageMin = (Date.now() - LIVE.t) / 60000;
   const ref = S.data && S.data.dashboard ? S.data.dashboard.close : null;
+  const closed = marketClosed(new Date());
   $("#live").textContent = LIVE.px.toFixed(2);
-  $("#live-meta").textContent = `${ageMin < 1 ? "<1" : Math.round(ageMin)} min${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
-  chip.classList.add(!LIVE.err && ageMin < 10 ? "ok" : "stale");
-  chip.title = LIVE_TITLE + ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
+  $("#live-meta").textContent = closed ? "market closed · last quote" : `${ageMin < 1 ? "<1" : Math.round(ageMin)} min${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
+  chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
+  chip.title = LIVE_TITLE + (closed ? " The market is closed (Friday 17:00 to Sunday 17:00 New York): the feed repeats the last quote with a fresh timestamp." : "") +
+    ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
 }
 setInterval(pollLive, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
@@ -173,9 +181,10 @@ function renderEvents() {
     return `<div class="evl news"><span class="mono">${tfmt(h.t)}</span><span>${l ? `<a href="${esc(l)}" target="_blank" rel="noopener noreferrer nofollow">${t}</a>` : t}</span><span class="dim">${esc(h.source)}</span></div>`;
   }).join("");
   const feeds = (E.feeds || []).map((x) => `<span class="${x.ok ? "" : "warn"}" title="${esc(x.host + ": " + x.note)}">${esc(x.name)} ${x.ok ? x.n : "✕"}</span>`).join(" · ");
-  el.innerHTML = (rows || '<span class="muted">No USD high/medium-impact events left this week.</span>') +
-    `<p class="note">${esc(E.source)} · fetched ${ago(E.generated_utc)}.${E.ok ? "" : " " + esc(E.note) + "."} Display only: the engine's news window is its own rule, and news suppression is off by default.</p>` +
-    (E.feeds ? `<h4 class="evh">News <span class="dim">(gold / USD / rates, last 48 h)</span></h4>${hl || '<span class="muted">No relevant headlines in the last 48 h.</span>'}<p class="note">Feeds: ${feeds || "—"}. Hover a feed for its status. Headlines link to the publisher; display only.</p>` : "");
+  el.innerHTML = `<div class="cal-news"><div><h4 class="evh">Calendar <span class="dim">(high / medium impact)</span></h4>` +
+    (rows || '<span class="muted">No USD high/medium-impact events left this week.</span>') +
+    `<p class="note">${esc(E.source)} · fetched ${ago(E.generated_utc)}.${E.ok ? "" : " " + esc(E.note) + "."} Display only: the engine's news window is its own rule, and news suppression is off by default.</p></div>` +
+    (E.feeds ? `<div><h4 class="evh">News <span class="dim">(gold / USD / rates, last 48 h)</span></h4>${hl || '<span class="muted">No relevant headlines in the last 48 h.</span>'}<p class="note">Feeds: ${feeds || "—"}. Hover a feed for its status. Headlines link to the publisher; display only.</p></div>` : "") + `</div>`;
 }
 
 /* ---------- header / banners ---------- */
@@ -191,7 +200,9 @@ function renderHeader() {
   chip.classList.add(M.synthetic ? "bad" : staleMin > 90 ? "stale" : "ok");
   chip.title = `Last confirmed ${M.tf} bar closed ${new Date(M.last_bar_close).toUTCString()}. Markets close at weekends, so a weekend gap is expected.`;
   $("#source").textContent = M.synthetic ? "SYNTHETIC" : M.price_source.replace("yahoo:", "Yahoo ").replace("twelvedata:", "Twelve Data ");
-  $("#freeze").textContent = D.holdout && D.holdout.freeze_utc ? new Date(D.holdout.freeze_utc).toISOString().slice(0, 10) : "—";
+  $("#freeze").textContent = D.holdout && D.holdout.freeze_utc ? new Date(D.holdout.freeze_utc).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "—";
+  const pend = D.holdout && D.holdout.freeze_utc && Date.now() < Date.parse(D.holdout.freeze_utc);
+  $("#freeze-lbl").textContent = pend ? "holdout starts" : "holdout since";
   const b = [];
   if (M.synthetic) b.push(`<div class="banner synthetic"><b>SYNTHETIC DATA.</b> This build was generated offline from simulated prices to exercise the engine. Nothing on this page describes the real gold market.</div>`);
   if (S.index && S.index.errors && Object.keys(S.index.errors).length) b.push(`<div class="banner error"><b>Pipeline errors:</b> ${Object.entries(S.index.errors).map(([k, v]) => esc(k + ": " + v)).join(" · ")}</div>`);
@@ -221,8 +232,10 @@ function renderSide() {
     <div class="sub mono">L ${f(b, 0)} · R ${f(r, 0)} · S ${f(s, 0)} · bias <b>${esc(d.bias_label)}</b> · ${esc(d.regime.label)} ${esc(d.regime.vol_tag)} · ${esc(d.session.label)}</div>
     <div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>`;
 
-  $("#plan-dir").textContent = p.long ? "LONG" : "SHORT";
-  $("#plan-dir").className = "pill " + (p.long ? "bull" : "bear");
+  const sig = dec === "BUY" || dec === "SELL";
+  $("#plan-dir").textContent = (p.long ? "LONG" : "SHORT") + (sig ? "" : " · no signal");
+  $("#plan-dir").className = "pill " + (sig ? (p.long ? "bull" : "bear") : "");
+  $("#plan-dir").title = sig ? "Side of the current signal." : `No signal: a hypothetical plan on the regime-call side (L${f(d.bull_bias, 0)} ${p.long ? "≥" : "<"} S${f(d.bear_bias, 0)}). The bias label uses the final scores (L${f(d.bull_score, 0)} / S${f(d.bear_score, 0)}), so the two can differ. WAIT means no trade.`;
   $("#plan-mt5").textContent = Number(S.mt5) ? `(MT5 ${fs(Number(S.mt5))})` : "";
   const planTxt = `XAUUSD ${M.tf} ${p.long ? "BUY" : "SELL"} | entry ${px(p.entry)} SL ${px(p.sl)} TP1 ${px(p.tp1)} TP2 ${px(p.tp2)} TP3 ${px(p.tp3)}`;
   const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}%` : "—";
@@ -238,19 +251,20 @@ function renderSide() {
     ${kv([["R multiples", `1:${f(p.rr1, 1)} / 1:${f(p.rr2, 1)} / 1:${f(p.rr3, 1)}`],
       ["Race EV (TP1 vs SL)", isNum(p.ev) ? `<span class="${p.ev >= 0 ? "bull" : "bear"}">${fs(p.ev, 2)} R</span> <span class="dim">n${f(p.race_n, 0)}</span>` : "—"],
       [`Touch within ${p.horizon_bars} bars`, touch]])}
-    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the expectancy. Plan direction follows the signal, or the stronger bias when there is none.</p>
+    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the expectancy. ${sig ? "Plan direction follows the signal." : `<b>No signal:</b> this is a hypothetical plan on the regime-call side (L${f(d.bull_bias, 0)} vs S${f(d.bear_bias, 0)}), not a trade. The bias label above uses the final scores, so it can point the other way.`}</p>
     <button class="icon-btn copy" id="copy-plan" style="margin-top:8px;width:100%">Copy plan for MT5</button>`;
   $("#copy-plan").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(planTxt); $("#copy-plan").textContent = "Copied"; setTimeout(() => ($("#copy-plan").textContent = "Copy plan for MT5"), 1500); };
 
   const fitted = d.cal_fit && isNum(d.cal_fit[0]);
-  $("#p-state").textContent = fitted ? (d.cal_drift ? "DRIFT → raw" : "calibrated") : "unfitted";
-  $("#p-state").className = "pill " + (fitted ? (d.cal_drift ? "warn" : "bull") : "warn");
+  $("#p-state").textContent = fitted ? (d.cal_drift ? "DRIFT → raw" : "fitted in-sample") : "unfitted";
+  $("#p-state").className = "pill " + (fitted && !d.cal_drift ? "" : "warn");
+  $("#p-state").title = "A calibration curve fitted on the development history. It is not validated out of sample, and on that history the scores did not separate winners from losers (F-A34). Only the forward holdout can show whether these probabilities hold.";
   $("#prob").innerHTML = kv([
     ["P(long resolves up)", isNum(d.p_long) ? pct(d.p_long * 100) : "—"],
     ["P(short resolves down)", isNum(d.p_short) ? pct(d.p_short * 100) : "—"],
     ["Calibration gate", d.cal_gate_ready ? `live · min P ${pct(M.config.cal_gate_min_p * 100)}` : "inactive (needs a fit and ROLL N≥10)"],
     ["Analog EV / match", `${fs(a.ev, 2)} R · A${a.match}${a.match < 30 ? " LOW" : ""}`],
-    ["Win rate (ROLL)", `${pct(a.oos_wr)} ${isNum(a.oos_ci) ? "±" + f(a.oos_ci, 0) : ""} · n${a.oos_n}`],
+    ["Win rate (ROLL)", `${pct(a.oos_wr)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
     ["IS vs ROLL", `${pct(a.is_wr)} / ${pct(a.oos_wr)}${a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
     ["Calibration grade", `${esc(a.cal_grade)} ${a.cal_grade_pct}/100 ${esc(a.cal_detail || "")}`],
   ]) + `<p class="note">ROLL is a rolling trailing slice, <b>not</b> a holdout (F-037). The only out-of-sample evidence is the frozen forward holdout in the Backtest tab.</p>`;
@@ -260,7 +274,7 @@ function renderSide() {
   $("#tq-grade").className = "pill " + (tq >= d.eff_tq_min ? "bull" : "warn");
   $("#tq").innerHTML = `<div style="display:flex;align-items:baseline;gap:8px"><div style="font:800 26px var(--mono)">${tq}</div><div class="muted">/100 ${esc(d.tq_basis || "")}</div></div>
     <div class="meter" style="margin:6px 0 10px"><span style="width:${tq}%"></span></div>` +
-    kv([["Vetoes", [d.tq_floor_veto ? "TQ<floor" : "", d.ev_veto ? "EV<0" : "", d.cal_veto ? "P<min" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(" · ") || '<span class="bull">none</span>'],
+    kv([["Vetoes", esc([d.tq_floor_veto ? "TQ<floor" : "", d.ev_veto ? "EV<0" : "", d.cal_veto ? "P<min" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(" · ")) || '<span class="bull">none</span>'],
       ["Confidence", `${d.confidence}/100 ${esc(d.conf_label)}`], ["Structure", esc(structStr(d.struct))], ["Auction", `${esc(d.auction.state)} ${d.auction.prob}% ${esc(d.auction.cycle)}`]]);
 
   const k = d.kelly;
@@ -468,7 +482,8 @@ function renderOverview() {
     card("Session", kv([["Session", `${esc(se.label)} · quality ${se.quality}/100`], ["Spread model", f(se.spread, 2) + " pts"], ["Range vs avg", pct(se.exp_pct)],
       ["Manipulation / continuation", `${pct(se.manip_prob)} / ${pct(se.cont_prob)}`], ["Opening type", esc(se.open_type || "—")], ["Conf. multiplier", f(se.conf_mult, 2)]])),
     card("Multi-timeframe", kv([["Agreement", `${esc(mtf.tier)} (${mtf.conf_score})`], ["Align long / short", `${mtf.align_long} / ${mtf.align_short}`],
-      ...Object.entries(mtf.scores).map(([k, v]) => [`HTF ${k === "60" ? "1h" : k === "240" ? "4h" : k === "D" ? "1D" : k + "m"}`, `<span class="${v >= 60 ? "bull" : v <= 40 ? "bear" : ""}">${f(v, 0)}</span>`])])),
+      ...Object.entries(mtf.scores).filter(([k]) => ({ 5: 300, 15: 900, 60: 3600, 240: 14400, D: 86400 }[k] || 0) > M.tf_sec)
+        .map(([k, v]) => [`HTF ${k === "60" ? "1h" : k === "240" ? "4h" : k === "D" ? "1D" : k + "m"}`, `<span class="${v >= 60 ? "bull" : v <= 40 ? "bear" : ""}" title="0-100: price vs EMA200 (40) + EMA20 vs EMA100 (40) + price vs EMA20 (20)">${f(v, 0)}</span>`])])),
     card("Macro", kv([["Macro", `${esc(mac.label)} (${fs(mac.strength, 0)})`], ["Votes bull / bear", `${mac.bull_votes} / ${mac.bear_votes}`], ["Confidence", mac.conf],
       ["DXY / US10Y", `${arrow(D.macro.DXY)} / ${arrow(D.macro.US10Y)}`], ["EUR / XAG / SPX / TIPS", `${arrow(D.macro.EURUSD)} ${arrow(D.macro.XAG)} ${arrow(D.macro.SPX)} ${arrow(D.macro.TIPS)}`],
       ["VIX", f(D.macro.vix, 1)]])),
