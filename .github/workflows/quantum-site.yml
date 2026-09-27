@@ -85,6 +85,10 @@ jobs:
 
       - name: Upcoming events (display only; outside the freeze key; never fails the run)
         continue-on-error: true
+        env:   # optional repository variables override the feed URLs without a code change
+          MYFXBOOK_CAL_RSS: ${{ vars.MYFXBOOK_CAL_RSS }}
+          MYFXBOOK_NEWS_RSS: ${{ vars.MYFXBOOK_NEWS_RSS }}
+          FXSTREET_NEWS_RSS: ${{ vars.FXSTREET_NEWS_RSS }}
         run: python -m quantum.events --out site/data/events.json
 
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)

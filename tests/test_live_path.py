@@ -140,3 +140,39 @@ def test_events_parse_and_fallback():
     assert not doc["ok"] and doc["events"][0]["estimated"] and doc["events"][0]["iso"] == "2026-10-02T12:30:00+00:00"
     assert events.next_nfp(datetime(2026, 11, 1, tzinfo=timezone.utc))["iso"] == "2026-11-06T13:30:00+00:00"   # EST
     assert "events.py" not in holdout.ENGINE_SOURCES                                      # display only: outside the freeze key
+
+
+def test_headline_feeds_rss_atom_filter_and_isolation():
+    from datetime import datetime, timezone
+    from quantum import events
+    now = datetime(2026, 9, 28, 12, 0, tzinfo=timezone.utc)
+    rss = b"""<?xml version="1.0"?><rss version="2.0"><channel><title>x</title>
+      <item><title>Gold slips as US dollar firms</title><link>https://example.com/a</link><pubDate>Mon, 28 Sep 2026 10:00:00 GMT</pubDate></item>
+      <item><title>EUR/JPY consolidates</title><link>https://example.com/b</link><pubDate>Mon, 28 Sep 2026 09:00:00 GMT</pubDate></item>
+      <item><title>Fed minutes (old)</title><link>https://example.com/c</link><pubDate>Thu, 24 Sep 2026 09:00:00 GMT</pubDate></item>
+      <item><title>U.S. CPI preview</title><link>javascript:alert(1)</link><pubDate>Mon, 28 Sep 2026 08:00:00 +0000</pubDate></item>
+      <item><title>no date gold</title><link>https://example.com/d</link></item>
+    </channel></rss>"""
+    atom = b"""<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
+      <entry><title>Powell: rates to stay higher</title><link href="https://example.org/p"/><updated>2026-09-28T11:30:00Z</updated></entry>
+      <entry><title>Gold slips as US dollar firms</title><link href="https://example.org/dup"/><updated>2026-09-28T10:05:00Z</updated></entry>
+    </feed>"""
+    feeds = {"myfxbook.com/rss/forex-economic-calendar-events": rss, "myfxbook.com/rss/latest-forex-news": atom}
+    def fetch(url):
+        for k, v in feeds.items():
+            if k in url:
+                return v
+        raise OSError("HTTP 403")                                   # FXStreet blocked: must not affect the others
+    hl, st = events.headlines(fetch, now)
+    assert [h["title"] for h in hl] == ["Powell: rates to stay higher", "Gold slips as US dollar firms", "U.S. CPI preview"]
+    assert hl[2]["link"] == ""                                      # non-http(s) link dropped
+    assert [s["ok"] for s in st] == [True, True, False] and "403" in st[2]["note"]
+    bomb = b'<?xml version="1.0"?><!DOCTYPE x [<!ENTITY a "aaaa">]><rss><channel><item><title>&a;</title></item></channel></rss>'
+    try:
+        events.parse_feed(bomb, "x")
+    except ValueError as e:
+        assert "entities" in str(e)
+    else:
+        raise AssertionError("entity declarations must be refused")
+    doc = events.build(now, fetch=lambda: [], fetch_feed=fetch)
+    assert doc["ok"] and len(doc["feeds"]) == 3 and doc["headlines"]
