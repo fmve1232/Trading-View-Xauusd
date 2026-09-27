@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v32   (Cornish-Fisher guard F-A38)   ║
+// ║  BUILD STAMP — this file last CHANGED in v32   (H1 arm; CF guard F-A38)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -8,13 +8,84 @@
 // ║  The stamp only moves when THIS file changes, so an unchanged file keeps its  ║
 // ║  old number and still matches the record.                                     ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
-indicator("XAUUSD Quantum 5.0", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000)
+// A/B COST MODEL (pinned in code, NOT left to the Properties tab). Commission and
+// slippage default to ZERO in TradingView, and zero costs systematically FLATTER the
+// Treatment arm specifically: it is designed to fire materially more trades, so it pays
+// more spread, and a costless test hides exactly the degradation the acceptance criteria
+// are meant to measure. Pinning them here also removes the risk of the two arms being
+// run under different Properties settings, which would invalidate the comparison
+// outright. slippage is in TICKS; commission is cash per contract per side. TUNE BOTH
+// to your own broker's XAUUSD fill quality before trusting absolute P&L — but keep them
+// IDENTICAL across the two arms, which is what actually matters for a gate-only A/B.
+//
+// CHANGE ID: P0-CAL-002 — SELF-CORRECTION of the values pinned in the previous pass, and
+// reconciliation of the TWO cost models that were silently disagreeing.
+//   (1) UNIT ERROR (mine): strategy()'s `slippage` is denominated in TICKS, while the
+//       Master's internal analog-cost model uses slippagePts in POINTS. `slippage=2` was
+//       therefore 0.02 points/side at a 0.01 mintick — 10x too small (100x at 0.001) —
+//       against the 0.2 points/side the expectancy engine assumes. Now 20 ticks = 0.20
+//       points/side at mintick 0.01, matching slippagePts exactly.
+//   (2) COMMISSION DIVERGENCE: commissionL defaulted to 0.0, so the Master's EV/veto
+//       priced commission at ZERO while the backtest charged it. Both now assume the
+//       same ~$7/lot round turn (commissionL=7.0; 3.50 per contract per SIDE here).
+// WHY THIS MATTERS beyond tidiness: the Master's cost model feeds _costATR, which feeds
+// analog expectancy, which drives the negative-expectancy VETO. Mispricing cost there
+// means the system SELECTS trades under one cost assumption and is SCORED under another
+// — an A/B measured on that basis is not measuring the gates. Selector and scorer must
+// agree.
+//
+// CHANGE ID: P0-CAL-004 — values above DERIVED, not guessed, and proven equal by the
+// cost-equivalence harness (cost_invariant.py). Two further faults this exposed:
+//
+//   (A) QTY UNIT ERROR (100x). strategy() qty is in UNITS OF THE BASE INSTRUMENT; for
+//       spot XAUUSD the base is XAU = ONE TROY OUNCE, so qty=1 is 1 oz, NOT one 100oz
+//       lot. commission_value=3.50 "per contract" therefore charged $3.50 per OUNCE per
+//       side = $700 round turn per lot — 100x the intended $7/lot. Since pointValue=100
+//       encodes 100 oz/lot, the correct figure is 7.00/100/2 = 0.035 per contract PER SIDE.
+//
+//   (B) THE ENGINE HAS NO SPREAD PARAMETER. The selector charges _sessSpread; the scorer
+//       charged nothing for it. Spread is therefore FOLDED INTO slippage here. With the
+//       spreadCost input at its 0.3 default, _sessSpread = max(floor, 0.3) collapses to
+//       0.30 for killzone/NY/London alike, so one constant matches every in-session bar
+//       exactly: (0.30 spread + 0.40 slip round trip) / 2 / 0.01 = 35 ticks.
+//
+// DERIVATION — recompute these if you change ANY of spreadCost, slippagePts, commissionL,
+// pointValue or mintick, or the two models silently desynchronise again:
+//   commission_value = commissionL / (pointValue) / 2
+//   slippage_ticks   = (spreadCost + 2*slippagePts) / 2 / syminfo.mintick
+//
+// KNOWN RESIDUAL (accepted, documented): off-session bars carry a 0.50 spread floor in
+// the selector vs the 0.30 folded in here — the scorer under-charges them by 0.20 points.
+// strategy() takes ONE constant, so no single value can match a session-varying spread.
+// The sessionQuality >= 30 hard gate excludes off-session bars in practice, so this
+// residual should affect no trade the A/B actually takes; if you lower that gate, revisit.
+//
+// CHANGE ID: P0-CAL-006 (v15) — THE COST MODEL NO LONGER DEPENDS ON TICK SIZE.
+//   strategy()'s `slippage` is a CONSTANT count of TICKS, so it could only be right for
+//   one mintick: OANDA:XAUUSD quotes to 0.001, and the 35-tick constant would have charged
+//   0.035 pts/side instead of 0.35 -- which is why the P0-CAL-005 gate blocked every entry.
+//   The same cost is now charged as CASH per contract (1 contract = 1 oz, 1 pt = $1/oz):
+//       commission_value = commissionL / pointValue / 2  +  (spreadCost + 2*slippagePts) / 2
+//                        = 7 / 100 / 2 + (0.30 + 0.40) / 2 = 0.035 + 0.35 = 0.385 per side
+//   and slippage = 0. P&L is identical for market fills at any tick size. KNOWN, ACCEPTED:
+//   TradingView applies `slippage` to market/stop fills but not to LIMIT fills, whereas cash
+//   commission applies to every fill -- so TP-limit exits are now charged up to 0.35 pts/oz
+//   more than before. Conservative, and stated.
+//   The gate now checks what this model actually depends on: 1 contract = $1 per point
+//   (syminfo.pointvalue == 1) quoted in USD. Tick size no longer matters.
+// These are BROKER-SPECIFIC, not universal truths. $7/lot round turn and 0.2 pts/side are
+// mid-range retail ECN gold figures. Replace with your own fills, rerun the derivation
+// above, and keep BOTH arms identical.
+strategy("XAUUSD Quantum 5.0 — Challenger (fast trend)", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, initial_capital=10000, default_qty_type=strategy.fixed, default_qty_value=1, calc_on_every_tick=false, process_orders_on_close=true, commission_type=strategy.commission.cash_per_contract, commission_value=0.385, slippage=0)
+// ═══════════════════════════════════════════════════════════════════════════════
+// FILE ROLE: CHALLENGER ARM (v31, pre-registered in audit/PREREGISTRATION.md) — FORWARD TEST ONLY.
+// Identical to the Treatment arm except the TREND term of the two entry pre-filters. Canonical
+// live file = the Master. Only trades from the freeze date (2026-09-28 00:00 UTC) count.
+// ═══════════════════════════════════════════════════════════════════════════════
 // XAUUSD Quantum 4.0 — Post-Audit Remediation
-// F-025: was stale at "Q5.0" while the build was Q7.x. The schema build is appended at
-// render time from SCHEMA_BUILD, so the footer label cannot silently drift again.
 string QVERSION = "Q7.2"
 // ═══════════════════════════════════════════════════════════════════════════════
-// FILE ROLE: CANONICAL LIVE INDICATOR. This is the production decision engine and
+// Master notes follow:
 // dashboard — the file to trade from. Two strategy TWINS exist for backtesting
 // only (Strategy = current gates, Strategy_OLDGATES = pre-Q5.5 control); neither
 // is a deployment target. See each twin's header.
@@ -26,7 +97,6 @@ string QVERSION = "Q7.2"
 // BOS/CHoCH labels, forecast cone, key-level lines, session shading, EMA/VWAP/BB
 // overlays) can be provided as a separate lightweight companion script on request. ═══ // Version: Quantum 5.0 MASTER — R6.0 + quant-audit statistical-integrity pass
 // ═══════════════ Q5.4-AuctionIQ — interpretive auction layer (final AMT spec) ═══════════════
-// v24: this layer now runs in XAUUSD_Quantum_5_0_Diagnostics.pine (row "Auction"), not here.
 //  B1  Directional states: ACCEPT -> ACC-HI/ACC-LO; REJECTION -> REJ-HI/REJ-LO.
 //  B2  7-stage cycle: BAL > INIT > DISC > TEST > ACPT > TRND > EXH.
 //  B3  Acceptance grade (A+/A/B/C/D); rejection tier (WEAK/MOD/STRONG/INST).
@@ -245,21 +315,15 @@ string QVERSION = "Q7.2"
 //  F22 liq hierarchy check removed (penalized normal early-week states)
 //  F23 "P=" renamed "mP=" — mapped, not fitted, probability
 // Q4.0-R5.1 traceability pass (F24): every computed value now has a consumer.
-//  Wired: QVERSION/_symStr/_tfLabel→footer; avgCorrSPX→adaptive wSPX;
-//  ratePressure (yield ROC) + EURUSD ROC→macro momentum msRate; (VWAP what-if scenarios removed v16: never read);
+//  Wired: QVERSION/_symStr/_tfLabel→footer; _coneStatus+_csLabel→RISK row2; avgCorrSPX→adaptive wSPX;
+//  ratePressure (yield ROC) + EURUSD ROC→macro momentum msRate; vwapSlope/vwapAccel→VWAP scenarios;
 //  vwapRejectBull/Bear→aligned-signal counters; climaxUp/Down→plotshape markers; cvdBull/Bear+vdK+
 //  session vol EWMA→MARKET row2; mtfAgreementHigh/Med + _htfBias→BIAS row2; calProbStr→SIGNAL row2;
 //  _structActiveBg/_macroBg/_macro2Col/_volCol/_biasCol→cell colors; per-target reach scores→TGT suffix;
-//  (dead transfer vars oPdh1stPct/oPdl1stPct/oBosFail/oCalDetail/oMaxAdverseATR/oBosCont
-//   REMOVED — their dashboard consumers no longer existed; this comment claimed otherwise.)
+//  oPdh1stPct/oPdl1stPct→Brk line; oBosFail+oCalDetail→advanced FUT line; oMaxAdverseATR→risk row3;
 //  (wrCIStr: computed, NOT rendered — F-A14); liqHealthScore→liquidity row3; vpocPrice/vaPos/vaRatio→PRICE row3;
-//  (F-A04: obBull/BearVolPct + fvgVolPctAtDetect REMOVED. They were assigned every bar and
-//   read by nothing: their OB/FVG label consumers went with the drawing layer in Q5.4-CORE,
-//   and this file now contains ZERO label.new calls. The Visuals companion draws those zones
-//   but carries no volume term, so the value reached no output in either file. volPercentile
-//   itself is untouched and still feeds climaxUp/Down and sweep quality.)
-//  tpDirStr/tpCol/tp*Str/tpRRStr->plan panel;
-//  (debugMode input REMOVED — the DECISION debug line it gated no longer exists.) density→table width scaling.
+//  obBull/BearVolPct→OB labels; fvgVolPctAtDetect→FVG label; tpDirStr/tpCol/tp*Str/tpRRStr→plan panel;
+//  debugMode→DECISION debug line; density→table width scaling.
 //  Removed (pure leftovers, no coherent consumer): unused palette constants, macro1..5Color,
 //  dxyC/yldC/eurC/slvC, _stateCol/_qualCol/_mtfCol/_tfArrows/_nearAboveCol/_nearBelowCol/_rrCol/_prVal,
 //  cvdMA50, volRatio, obBull/BearAtr, fvgAtrAtDetect, _csEnd/_csEndBand/_fcCurr/_csSlope,
@@ -288,57 +352,36 @@ bayesRate(w, t) => t > 0 ? (w + 1) / (t + 2) : 0.5
 // AUDIT FIX (R4): separate arrays per side, each with an independent cap, so a support
 // slot can never silently hold a resistance level.
 // Bloomberg Terminal palette (dashboard only — chart visuals unchanged)
-// TOKEN RECLAMATION: fully-transparent panel background, used at 6 sites.
-color cTransp = color.new(#0F172A, 100)
-color cBloomBg = color.new(#0d0d1a, 40)
 color cBloomBull = color.new(#00C853, 0)
 color cBloomBear = color.new(#FF5252, 0)
 color cBloomWarn = color.new(#FFC107, 0)
 color cBloomNeut = color.new(#9E9E9E, 0)
 // Extended color system for visual hierarchy
-color cBloomBull_D = color.new(#00C853, 55)
-color cBloomBear_D = color.new(#FF5252, 55)
 color C_TEXT = color.white
 
 // MODULE TOGGLES (reduced)
 grpModules = "MODULES"
 perfMode = input.bool(false, "Institutional Performance Mode", group=grpModules)
-showDashboard = input.bool(true, "Dashboard", group=grpModules)
-showTradePlan = input.bool(true, "Trade Plan", group=grpModules)
-// showSR RETAINED AND REWIRED (not deleted — the scanner moved, the control did not).
-// It now reports where the feature lives, so a user toggling it is told the truth instead
-// of flipping a switch wired to nothing. The dashboard reads it via _srWhere below.
-showSR = input.bool(false, "Support / Resistance (drawn by the Visuals companion)", group=grpModules, tooltip="The S/R scanner now runs in the Visuals companion, which has the token budget for it. Enable it THERE. This switch only annotates the Master dashboard so the two files cannot disagree about who owns the feature.")
-showSignals = input.bool(true, "BOS alerts", group=grpModules, tooltip="Enables the Bull/Bear BOS alertconditions (confirmed bars). An alertcondition fires only if you create an alert for it; this switch was OFF by default, so a created BOS alert never fired.")
 showFVG = input.bool(true, "Fair Value Gaps (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). FVG detection feeds trade quality, the analog zone feature and the plan. It was gated by this switch at OFF since the drawing moved to Visuals, so the decision ignored the FVGs Visuals draws. Same definition as Visuals (gap > 0.3 x ATR). Drawing is done by Visuals.")
 showOB = input.bool(true, "Order Blocks (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Order-block detection feeds SL/TP candidates, trade quality and the analog zone feature. It was gated OFF, so the decision ignored the OBs Visuals draws. Same definition as Visuals (F-A08 parity). Drawing is done by Visuals.")
 showSMT = input.bool(true, "SMT Divergence (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Gold/silver SMT divergence feeds the confluence signal count. It was gated OFF. Needs the silver feed.")
-showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax: shown as CLIMAX▲/▼ on the dashboard cross-check line; it also feeds the auction exhaustion read, which runs in Diagnostics since v24. It was gated OFF.")
+showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax feeds the auction exhaustion read. It was gated OFF.")
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
 showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
+showForecastCone = input.bool(false, "Forecast Cone", group=grpModules)
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
+forecastZ = input.float(2.0, "Forecast Band (Z multiple of ATR)", minval=1.0, maxval=3.0, step=0.1, group="V17 PREDICTIVE ENHANCEMENTS")
 showStatsEngine = input.bool(true, "Statistical Engines", group=grpModules)
 
 grpLayout = "LAYOUT"
-dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group=grpLayout, tooltip="Pine cannot detect screen size, so \"Auto\" resolves to Desktop -- it is not detection. On a phone pick Mobile (or tick Mobile Layout below): a 4-section card -- 1 TREND, 2 TARGET, 3 PREV -> NEXT, 4 DECISION -- with the plan listed vertically underneath. Density sets the depth: Compact = the four headlines only; Standard = + every detail the old MobileLand/MobilePort/MobileBrief views showed; Spacious = + the engine cross-check line. (v25: those three modes merged into this one.)")
-mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Same as Dash Mode = Mobile")
-_resolvedMode = mobileOverride ? "Mobile" : dashMode
+dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "MobileLand", "MobilePort"], group=grpLayout)
+mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Force mobile-optimized dashboard for phones/tablets")
 textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group=grpLayout)
 density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group=grpLayout)
-// F-A11 (v8) gave phones a real layout (5-column MobileLand, 2-row MobilePort); v23 added the
-// MobileBrief card. v25 MERGES all three into one "Mobile" mode: the 4-section card, whose
-// detail rows carry every value those views showed (and the LIQUIDITY/MACRO columns they had
-// dropped), plus the full trade plan listed vertically. Density picks the depth. Nothing on
-// the phone is recalculated: the card reads the strings the desktop renderer builds.
-// NOTE ON "Auto": Pine cannot detect viewport size, so Auto resolves to Desktop and
-// always has. On a phone you must set this yourself -- that is a platform limit, not a
-// preference. The tooltip now says so instead of implying detection.
-bool _dashMobile = _resolvedMode == "Mobile"
-showDowTracker = input.bool(true, "Show Day-of-Week Bias Tracker", group=grpLayout)
+debugMode = input.bool(false, "Debug Mode (Show All Scores)", group=grpLayout)
 
 grpRisk = "RISK MANAGEMENT"
 riskPercent = input.float(1.0, "Risk % per Trade", minval=0.1, maxval=2.0, step=0.1, group=grpRisk, tooltip="Capped at 2%: 5-loss streak at 2% = -10% drawdown; at 5% = -25%. Prop firm 8-12% drawdown limits require 2% max per trade under normal conditions.")
-accountSize = input.float(10000, "Account Size (USD)", minval=100, group=grpRisk)
 pointValue = input.float(100, "Value per Point per Lot (USD)", minval=1, group=grpRisk)
 // Transaction cost model — affects backtest metrics, NOT signal generation
 useDDBreaker = input.bool(false, "Max Drawdown Signal Breaker", group=grpRisk, tooltip="When enabled, blocks new signals if historical max drawdown (oMaxDD, previous bar) exceeds the threshold below.")
@@ -358,6 +401,9 @@ slippagePts = input.float(0.2, "Slippage (points)", minval=0.0, maxval=2.0, step
 // constants per the derivation in the twin headers.
 commissionL = input.float(7.0, "Commission per Lot (USD, round turn) [BROKER CONFIG]", minval=0.0, maxval=50.0, step=0.5, group=grpRisk, tooltip="Per-lot commission. 0 for spread-only brokers; ~$5-15 for ECN.")
 
+grpClean = "CHART CLEANUP"
+cleanInstitutional = input.bool(false, "Clean Institutional Appearance", group=grpClean)
+professionalMode = input.bool(false, "Professional Execution Mode", group=grpClean)
 holdoutRatio = input.float(0.20, "Holdout Ratio (OOS validation)", minval=0.0, maxval=0.5, step=0.05, group=grpRisk)
 useNewsSuppress = input.bool(false, "Suppress Signals on News Events", group=grpRisk, tooltip="Blocks signals during FOMC/NFP windows")
 newsSession = input.session("", "News Event Window (UTC)", group=grpRisk, tooltip="Session during which signals are suppressed, e.g. 1300-1500:4 for FOMC Wednesdays. Leave empty to disable.")
@@ -384,20 +430,6 @@ eqAtrMult = input.float(0.25, "EQ Tolerance (ATR mult)", minval=0.05, maxval=1.0
 volLookback = input.int(50, "Volume Climax Lookback", minval=20, maxval=100, group=grpCore)
 fvgMaxBars = input.int(30, "FVG Max Bars", minval=10, maxval=100, group=grpCore)
 obMaxBars = input.int(20, "OB Max Bars", minval=10, maxval=50, group=grpCore)
-// CHANGE ID: F-014 — MT5 EXECUTION OFFSET. Workflow-specific: TradingView is the
-// DECISION surface, execution is MANUAL on MT5. TradingView's XAUUSD feed and an MT5
-// broker's XAUUSD feed are different price series — they routinely sit $0.10-$0.50 apart
-// and the gap drifts. Transcribing Entry/SL/TP straight off this panel therefore places
-// them at slightly wrong prices on MT5. At a 3.6-point stop a $0.45 feed gap is 12.5% of
-// the stop, which is not a rounding error.
-// Set this to (MT5 price - TradingView price), read off both platforms at the same
-// instant. Default 0.0 = unchanged behaviour.
-// SCOPE: shifts the five DISPLAYED level strings ONLY. Every calculation — RR,
-// probabilities, distances, position size — continues to use the raw TradingView levels
-// and is provably unaffected, because RR and all distances are DIFFERENCES and a constant
-// offset cancels in a difference. The panel labels itself when the offset is non-zero so
-// it can never be applied silently.
-mt5Offset = input.float(0.0, "MT5 Price Offset (MT5 - TradingView)", minval=-50.0, maxval=50.0, step=0.01, group=grpCore, tooltip="Feed difference between your MT5 broker and TradingView. Shifts DISPLAYED Entry/SL/TP so they can be typed straight into MT5. Affects display only — never any calculation.")
 liqProxMult = input.float(1.5, "Liq Proximity (ATR)", minval=0.5, maxval=4.0, step=0.1, group=grpCore)
 // P2-CAL-003: the round-number magnet grid was HARDCODED at 50.0 in two places (the
 // stop-cluster nudge and the RN take-profit candidate). 50 is a sound WEEKLY/DAILY gold
@@ -541,6 +573,8 @@ float vwapSd = ta.stdev(close - vwapVal, 20)
 float vwapUpper2 = vwapVal + vwapSd * 2.0
 float vwapLower2 = vwapVal - vwapSd * 2.0
 // VWAP slope (10-bar change) and acceleration (slope rate-of-change)
+float vwapSlope = vwapVal - nz(vwapVal[10], vwapVal)
+float vwapAccel = vwapSlope - nz(vwapSlope[5], vwapSlope)
 // VWAP rejection: price touched ±2σ band then closed back on VWAP side
 bool vwapRejectBull = low <= vwapLower2 and close > vwapVal
 // Bollinger Bands (20,2)
@@ -549,7 +583,12 @@ float bbDev = ta.stdev(close, 20) * 2.0
 rsiVal = ta.rsi(close, rsiLen)
 volSma20 = ta.sma(volume, 20)
 highVolume = not na(volume) and volume > volSma20
-recentBars = bar_index > last_bar_index - recentBarsLen
+// F-A29 (v20): recentBars is a LIVE-DISPLAY filter -- it lets signals fire only in the last
+// recentBarsLen bars (120 = ~5 days on 1H). In a strategy it confined the entire backtest to
+// those bars, so Jan 2025 - Sep 2026 produced "This report requires trade data". The filter is
+// kept (no feature removed) and made switchable; the strategy arms evaluate every bar.
+backtestAllBars = input.bool(true, "Backtest all bars (ignore Signal Lookback Bars)", group=grpCore, tooltip="ON for backtests: the entry gate is evaluated on every historical bar. OFF reproduces the live indicator's behaviour, where signals are shown only in the last 'Signal Lookback Bars'.")
+recentBars = backtestAllBars or bar_index > last_bar_index - recentBarsLen
 // Winsorized gold return: clamp extreme gaps (±5%) to prevent Z-score distortion after gap opens
 float _rawGoldRet = safeDiv(close, nz(close[1], close)) - 1
 // Q5.0-S6: TF-scaled winsorization (±6 sigma, prev-bar window; ±5% hard outer bound).
@@ -909,7 +948,6 @@ sessionQuality += inNYKZ ? int((10.0 + regimeStrength * 10.0)) : 0
 sessionQuality += (not inAsian or inLondonKZ) ? int((10.0)) : 0
 sessionQuality += (inLondon and not inLondonKZ) ? int((10.0 - regimeStrength * 5.0)) : 0
 sessionQuality := math.min(int(math.round(sessionQuality / (80.0) * 100.0)), 100)
-sessionLabel = inKillzone ? (inLondonFixKZ ? "LON-FIX" : inLondonKZ ? "LON-KZ" : inLondonCloseKZ ? "LON-CL" : inNYKZ ? "NY-KZ" : "KZ") : inLondon ? "LONDON" : inNY ? "NY" : inAsian ? "ASIAN" : "OFF"
 f_sessionIntel() =>
     // ═══════════════ R6.0 SESSION INTELLIGENCE ═══════════════
     // Per-session-class rolling statistics (Asian=0, London=1, NY=2), confirmed bars only.
@@ -961,9 +999,6 @@ f_sessionIntel() =>
 // ═══════════════ END SESSION INTELLIGENCE ═══════════════
 
 // Session volume accumulators — per-session EWMA for anomaly detection (α=0.01, ~100 bar half-life)
-var float volAsianEWMA = 0.0
-var float volLondonEWMA = 0.0
-var float volNyEWMA = 0.0
 
 // Session-aware confidence multipliers — XAUUSD-specific (heuristic)
 float sessionConfMult = 1.0
@@ -976,17 +1011,17 @@ else if inNY
 else if inAsian
     sessionConfMult := 0.92
 // Session-adaptive spread: XAUUSD spread varies significantly by session
-// CHANGE ID: P1-CAL-001 — spread tier ORDERING was inverted against liquidity.
-// The tiers are evaluated killzone -> NY -> London -> other, so the FIRST match wins.
-// A killzone bar therefore never reaches the NY tier. But the killzone IS the
-// London/NY overlap — the deepest, tightest-spread window of the gold day — and it was
-// being charged 0.25 while plain NY (thinner, later in the session) was charged 0.20.
-// The model was assessing a HIGHER transaction cost on the CHEAPEST hours, which biases
-// the analog expectancy engine against exactly the sessions the strategy most wants to
-// trade (sessionQuality peaks in the same window). Reordered so cost falls monotonically
-// with liquidity depth: killzone (tightest) < NY < London < off-session.
-// These remain FLOORS under the user's spreadCost input, so raising spreadCost still
-// dominates. Values are conservative retail XAUUSD spreads in POINTS (not ticks).
+// D-006: P1-CAL-001 PROPAGATED. This ladder was left at the pre-fix values here while the
+// Master was corrected, so the SELECTOR and the SCORER used different session economics.
+// old 0.25/0.20/0.30/0.50 -> new 0.18/0.22/0.30/0.50 (Master's values, unchanged).
+// The original ordering was INVERTED against liquidity: killzone is the London/NY overlap,
+// the deepest and tightest window of the gold day, yet it was charged MORE (0.25) than
+// plain NY (0.20) — and because killzone is tested FIRST a killzone bar never reached the
+// cheaper tier. Cost now falls monotonically with liquidity depth.
+// MASKED AT THE DEFAULT: _sessSpread = max(floor, spreadCost), so at spreadCost=0.3 every
+// floor <=0.3 is dominated and both files collapse to 0.30 — which is why the cost
+// invariant passed and the divergence stayed invisible. Below spreadCost 0.25 they differ
+// by up to 0.07 points. Propagating the value, NOT retuning it.
 float _sessSpread = inKillzone ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : math.max(0.50, spreadCost)
 
 
@@ -1056,7 +1091,6 @@ eurusdValid = not na(eurusdClose) and not na(_rawEURFast) and not na(_rawEURSlow
 spxValid = not na(spxClose) and not na(_rawSPXFast) and not na(_rawSPXSlow) and spxStaleCount < MACRO_STALE_MAX
 tipsValid = not na(tipsClose) and not na(_rawTIPSFast) and not na(_rawTIPSSlow) and tipsStaleCount < MACRO_STALE_MAX
 
-float dxyRSI = _rawDXYRSI
 dxyEMAFast = _rawDXYFast
 dxyEMASlow = _rawDXYSlow
 yieldEMAFast = _rawYieldFast
@@ -1111,13 +1145,8 @@ float _cotNetRaw = cotEnable ? request.security(_cotL, "W", close[1], barmerge.g
 bool cotValid = cotEnable and not na(_cotNetRaw)
 // Percentile rank of current net positioning within its own lookback — the absolute
 // contract count is meaningless without that context.
-// F-032: ta.percentrank was called INSIDE the ternary, so it only evaluated when
-// cotValid was true. ta.* functions maintain internal series state that is only correct
-// when called on every calculation; a conditionally-evaluated percentrank returns an
-// unreliable rank. Currently latent because COT ships OFF (cotValid is always false), but
-// it would silently corrupt the crowding read the moment COT is enabled -- which is
-// exactly when nobody would be looking for it. Hoisted so the call is unconditional; the
-// na-gating behaviour is unchanged.
+// F-032: hoisted out of the ternary so ta.percentrank is evaluated on every calculation.
+// Kept identical to the Master -- the twins must not diverge in feature semantics.
 float _cotPctRaw = ta.percentrank(_cotNetRaw, cotLen)
 float cotPct = cotValid ? _cotPctRaw : na
 bool cotCrowdedLong = cotValid and cotPct >= cotExtreme
@@ -1182,20 +1211,12 @@ bool gcValid = gcEnabled and gcResolved and gcFinite and gcFresh and gcPlausible
 // Named failure reason — a silent disable is how a feature becomes an unnoticed orphan.
 string gcFailWhy = not gcEnabled ? "" : not gcResolved ? "!UNRESOLVED" : not gcFinite ? "!BADPRICE" : not gcFresh ? "!STALE" : not gcPlausible ? "!SYMBOL?" : ""
 // ===== UNIVERSAL DATA-SOURCE STATUS SEMANTICS (reviewer §10) ==================
-// D-011 named GC's failure modes. Generalised here so EVERY external source reports under
-// the SAME vocabulary, which is what makes future debugging and backtesting comparable.
-//   0 = VALID       source resolved, finite, fresh and plausible
-//   1 = UNAVAILABLE not requested, or the feed returned nothing
-//   2 = STALE       resolved but its last bar is too old to be trusted
-//   3 = INVALID     resolved but the VALUES are wrong (bad price, wrong instrument)
-// INVARIANT: a non-zero status can only DISABLE a layer. No status value anywhere below
-// is ever read as a direction. A failed source becomes context-only, never a vote.
+// Same vocabulary for every external source: 0=VALID 1=UNAVAILABLE 2=STALE 3=INVALID.
+// INVARIANT: a non-zero status can only DISABLE a layer, never supply a direction.
 int GC_STATUS   = gcValid ? 0 : not gcEnabled ? 1 : not gcResolved ? 1 : not gcFinite ? 3 : not gcFresh ? 2 : 3
 int OI_STATUS   = oiValid ? 0 : oiSymbol == "" ? 1 : (na(_oiNow) or na(_oiPrev)) ? 1 : 3
 int US2Y_STATUS = y2Valid ? 0 : 1
-int COT_STATUS  = cotValid ? 0 : not cotEnable ? 1 : 1
-_statusTag(int _c) => _c == 0 ? "OK" : _c == 1 ? "NA" : _c == 2 ? "STALE" : "BAD"
-string dataStatusLine = "GC:" + _statusTag(GC_STATUS) + " OI:" + _statusTag(OI_STATUS) + " 2Y:" + _statusTag(US2Y_STATUS) + " COT:" + _statusTag(COT_STATUS)
+int COT_STATUS  = cotValid ? 0 : 1
 // Direction: GC vs its own 20-EMA — a self-referential test, so the spot/futures basis
 // cancels and never enters the comparison.
 bool gcBull = gcValid and _gcC > _gcEma
@@ -1476,16 +1497,10 @@ float strongBody = adaptiveATR * 0.30
 bool strongVol = not na(volume) and volume > volSma20 * 1.20 * regBOSMult // R6.0: BOS volume requirement scales with volatility regime
 intBullBOS = not na(bosResistanceSnap) and close > bosResistanceSnap and close[1] <= bosResistanceSnap[1] and bosResistanceSnap != lastBrokenRes and adxGate and (close - bosResistanceSnap) > breakBuffer and bodySize > strongBody and bodyPct > 70 and strongVol
 intBearBOS = not na(bosSupportSnap) and close < bosSupportSnap and close[1] >= bosSupportSnap[1] and bosSupportSnap != lastBrokenSup and adxGate and (bosSupportSnap - close) > breakBuffer and bodySize > strongBody and bodyPct > 70 and strongVol
-intBosLabelBull = not na(bosResistanceSnap) and close > bosResistanceSnap and close[1] <= bosResistanceSnap[1] and bosResistanceSnap != lastBrokenRes
-intBosLabelBear = not na(bosSupportSnap) and close < bosSupportSnap and close[1] >= bosSupportSnap[1] and bosSupportSnap != lastBrokenSup
 swingBullBOS = not na(swingBosResSnap) and close > swingBosResSnap and close[1] <= swingBosResSnap[1] and swingBosResSnap != swingLastBrokenRes and adxGate and (close - swingBosResSnap) > breakBuffer and bodySize > strongBody and bodyPct > 70 and strongVol
 swingBearBOS = not na(swingBosSupSnap) and close < swingBosSupSnap and close[1] >= swingBosSupSnap[1] and swingBosSupSnap != swingLastBrokenSup and adxGate and (swingBosSupSnap - close) > breakBuffer and bodySize > strongBody and bodyPct > 70 and strongVol
-swingBosLabelBull = not na(swingBosResSnap) and close > swingBosResSnap and close[1] <= swingBosResSnap[1] and swingBosResSnap != swingLastBrokenRes
-swingBosLabelBear = not na(swingBosSupSnap) and close < swingBosSupSnap and close[1] >= swingBosSupSnap[1] and swingBosSupSnap != swingLastBrokenSup
 bullBOS = intBullBOS or swingBullBOS
 bearBOS = intBearBOS or swingBearBOS
-bosLabelBull = intBosLabelBull or swingBosLabelBull
-bosLabelBear = intBosLabelBear or swingBosLabelBear
 
 // Breakout state update (after BOS evaluation so snap != lastBrokenRes works)
 if not na(activeResistance) and close > activeResistance and close[1] <= activeResistance[1] and not na(volume) and volume > volSma20
@@ -1665,6 +1680,7 @@ fvgDetected = showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0]
 var float fvgHighUpper = na
 var float fvgLowLower = na
 var int fvgBarIndex = -1
+var float fvgVolPctAtDetect = na
 var bool fvgActive = false
 var bool fvgWasBullish = false
 // R5.2-C2: three fixes. (1) Bearish gap bounds were [low[0], high[2]] — the entire
@@ -1683,14 +1699,13 @@ if fvgDetected and not fvgActive
         fvgHighUpper := gapHigh
         fvgLowLower := gapLow
         fvgBarIndex := bar_index
+        fvgVolPctAtDetect := volPercentile
         fvgActive := true
         fvgWasBullish := low[0] > high[2]
 fvgActive := fvgActive and bar_index - fvgBarIndex <= fvgMaxBars
 fvgMitigated = fvgActive and bar_index > fvgBarIndex and ((fvgWasBullish and low < fvgHighUpper) or (not fvgWasBullish and high > fvgLowLower))
 if fvgMitigated
     fvgActive := false
-fvgUpperLine = fvgActive ? fvgHighUpper : na
-fvgLowerLine = fvgActive ? fvgLowLower : na
 
 // ORDER BLOCK DETECTION — ICT standard: candle before displacement + multi-OB tracking + mitigation
 var float obBullLow = na
@@ -1841,17 +1856,10 @@ if _obBearSz2 > 0
             array.remove(obBearMitA, i)
         i := i - 1
 
-// ===== SUPPORT / RESISTANCE SCANNER — MOVED TO THE VISUALS COMPANION =====
-// NOT a feature removal, and NOT a decision change. Traced before moving: srResLevels /
-// srSupLevels were consumed ONLY by scanSRLevels() itself and by the drawing block. They
-// never reached a decision. The activeResistance / activeSupport that DO feed the trade
-// plan come from the PIVOT path, which is untouched and stays here.
-// So the whole SR system was display-only inside a file that is ~95% of the Pine token
-// ceiling, while the companion sits at ~14%. Moving it frees ~1,587 compiled tokens in the
-// Master for inputs that actually affect decisions (GC divergence, OI, COT).
-// The function is ported to Visuals VERBATIM with identical parameters (maxSR 6, scanLen
-// 100, same ATR proximity), so the levels drawn are bit-identical to the ones drawn here.
-
+var float[] srResLevels = array.new_float()
+var float[] srResStrengths = array.new_float()
+var float[] srSupLevels = array.new_float()
+var float[] srSupStrengths = array.new_float()
 // SMT DIVERGENCE — Gold vs Silver (correlated pair), pivot-based
 goldRSI = rsiVal
 bool smtDataValid = showSMT and silverValid and not na(goldRSI) and not na(_silverRSI)
@@ -1888,23 +1896,15 @@ structureRegime = (htfAlignmentLong >= 2 or htfAlignmentShort >= 2) ? 100 : (htf
 _macroRegimeBase = (macroBull or macroBear) ? 100 : (macroBullVotes >= 2 or macroBearVotes >= 2) ? 60 : 30
 macroRegime = math.max(0, math.min(100, _macroRegimeBase + (oiConviction != 0 and (macroBull or macroBear) ? 10 : oiConviction != 0 ? 5 : 0)))
 sessionRegime = sessionQuality >= 60 ? 100 : sessionQuality >= 30 ? 60 : 30
-// CHANGE ID: F-021 | Rounding was load-bearing for regime CLASSIFICATION.
-// DEFECT. int(math.round(...)) ran BEFORE the >= 70 / >= 40 tests, so a raw composite of
-// 69.50 rounded to 70 and classified STRONG while 69.49 classified MODERATE. The effective
-// boundaries were 69.5 and 39.5 -- the system did not apply the thresholds it documents,
-// and §15 requires rounding to be presentation-only.
-// FIX. Threshold on the unrounded float; keep the rounded int for display and storage.
-// The displayed number does not change. Only bars whose raw composite fell in [69.5, 70)
-// or [39.5, 40) change category, and for those the NEW result is the documented one.
-// STATISTICAL CORRECTION (behavioural). Shipped ALONE so attribution stays unambiguous.
+// F-021: threshold on the UNROUNDED composite; the rounded int stays for display.
+// Rounding before the >= 70 / >= 40 tests made the real boundaries 69.5 and 39.5.
+// Kept identical to the Master -- the A/B scorers must not diverge in feature semantics.
 float regimeCompositeRaw = (regimeScore * 0.30) + (volRegime * 0.15) + (structureRegime * 0.20) + (macroRegime * 0.20) + (sessionRegime * 0.15)
 regimeComposite = int(math.round(regimeCompositeRaw))
 // Regime thresholds (70/40): heuristic breakpoints on 0-100 composite.
 bool strongTrend = regimeCompositeRaw >= 70
 bool moderateTrend = regimeCompositeRaw >= 40 and regimeCompositeRaw < 70
 bool weakTrend = regimeCompositeRaw < 40
-// v15 (token ceiling): the V1/V2 same-bar shadow (default OFF, fed nothing) was removed
-// to bring the Master under the 100,256 compiled-token limit. Recoverable from git (v14).
 
 // VOLUME DELTA — directional bar-volume proxy (buying vs selling pressure)
 float volDelta = close > open ? volume : close < open ? -volume : 0.0
@@ -1915,6 +1915,19 @@ float volDelta50 = math.sum(volDelta, 50)
 // below means these values do not exist on historical bars, so a "°" basis is one a
 // backtest could never have reproduced. Relax that guard and those markers must be removed.
 // VOLUME PROFILE — price-level volume distribution (100-bar lookback)
+// F-A01 PARITY FIX. This arm previously carried ONLY the declarations below: vpocPrice,
+// vahPrice and valPrice were declared `na` and never assigned, because the computation
+// block was absent from this file entirely (vpBuckets/bucketSize: 12 references in the
+// Master, 0 here). Both were still CONSUMED by the stop-loss candidate array (_slC) and
+// the take-profit candidate array (_tpLvls), whose loops guard with `if not na(_lv)` --
+// so the value-area and POC candidates were skipped silently rather than erroring.
+// The Master's block is reproduced below VERBATIM so the twins compute the same levels
+// from the same code. NOTE the guard is `barstate.islast`: in the Master too these
+// values exist only on the chart's final bar, so this port changes almost nothing on
+// historical bars -- its purpose is structural parity, not a change in backtest results.
+// The live-vs-history asymmetry that guard creates is recorded separately as F-A07 and
+// is deliberately NOT changed here (making it per-bar is a performance decision that
+// needs a measured runtime baseline, which does not yet exist).
 int vpLookback = 100
 int vpBuckets = 40
 var float[] vpVolumes = array.new_float(40, 0.0)
@@ -1971,15 +1984,7 @@ if barstate.islast and barstate.isconfirmed and not perfMode
             vaRatio := totalV > 0.0 and vpRange > 0.0 ? (vahPrice - valPrice) / vpRange * 100.0 : 0.0
             vaPos := close > vahPrice ? "▲" : close < valPrice ? "▼" : "●"
     vpRefresh += 1
-
 // Session volume modeling — per-session rolling averages for anomaly detection
-if barstate.isconfirmed and not na(volume)
-    if inAsian
-        volAsianEWMA := volAsianEWMA > 0 ? 0.99 * volAsianEWMA + 0.01 * volume : volume
-    else if inLondon
-        volLondonEWMA := volLondonEWMA > 0 ? 0.99 * volLondonEWMA + 0.01 * volume : volume
-    else if inNY
-        volNyEWMA := volNyEWMA > 0 ? 0.99 * volNyEWMA + 0.01 * volume : volume
 
 // ORDER FLOW — CVD (proxy-based)
 var float cvd = 0.0
@@ -1990,7 +1995,6 @@ cvd := cvd + barDelta
 float cvdEma20 = ta.ema(cvd, 20)
 float cvdEma100 = ta.ema(cvd, 100)
 bool cvdBull = cvdEma20 > cvdEma100
-bool cvdBear = cvdEma20 < cvdEma100
 
 // LIQUIDITY POOL TRACKING — previous period extremes (last completed candle only)
 [monthlyH, monthlyL] = request.security(syminfo.tickerid, "M", [high[1], low[1]], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
@@ -2070,8 +2074,8 @@ else
     cdh := math.max(nz(cdh, high), high)
     cdl := math.min(nz(cdl, low), low)
 
-// (S/R line store and its cleaner moved to Visuals with the scanner.)
-
+// S/R LEVELS TABLE PLOT — draws from dedicated arrays, color-coded per side
+var line[] srLines = array.new_line()
 // V26 ENGINE 1: STRUCTURE PERSISTENCE SCORE
 // Measures directional continuation after BOS/CHOCH (HH+HL after bull BOS, LH+LL after bear BOS)
 var float structPersistEntryHigh = na
@@ -2181,7 +2185,6 @@ string liqDestLabel = "—"
 int liqDestScore = 0
 float liqDestDist = 1e10
 int liqDestScoreSecondary = 0
-string liqDestConfidence = ""
 // TOKEN RECLAMATION (no feature change): liqMaxScore was one nested-max chain and
 // liqSecondScore was recomputed by EIGHT more chains, one per branch, each taking the max
 // of all scores EXCEPT the selected one. "Max excluding the winner" IS the second-highest,
@@ -2245,8 +2248,6 @@ if liqMaxScore >= 25
         else if liqScoreEQL > 0 and liqScoreEQL >= liqSecondScore and liqDestLabel != "EQL"
             liqDestScoreSecondary := int(math.round(liqScoreEQL))
 // Destination confidence: difference between primary and secondary
-int liqScoreDiff = liqDestScore - liqDestScoreSecondary
-liqDestConfidence := liqDestScore > 0 ? (liqScoreDiff >= 30 ? "HIGH" : liqScoreDiff >= 15 ? "MEDIUM" : "LOW") : ""
 
 // ---- Liquidity Destination Probability (Part 9) ----
 // liqReachScore: ordinal composite (0–100), heuristic pool proximity model.
@@ -2289,11 +2290,9 @@ mtfAgreementMed = mtfConfluenceMag >= 30 and mtfConfluenceMag < 60
 mtfAgreementLow = mtfConfluenceMag < 30
 
 // V26 ENGINE 4: MACRO INTELLIGENCE ENGINE
-macroIntelScore = macroStrengthScore
 macroIntelConf = macroStrengthConf
 macroIntelValid = dxyValid or yieldValid or spxValid or eurusdValid or silverValid
 // Macro label thresholds (±40/±15) — heuristic bins.
-string macroIntelLabel = macroIntelValid ? (macroIntelScore >= 40 ? "BULL" : macroIntelScore <= -40 ? "BEAR" : macroIntelScore >= 15 ? "BULL-ISH" : macroIntelScore <= -15 ? "BEAR-ISH" : "MIXED") : "N/A"
 
 // V27 ENGINE 5: BIAS SCORES (ordinal evidence-weighted, NOT probabilities)
 biasStructBull = bullTrend ? 30 : chochBullScore
@@ -2472,11 +2471,55 @@ if bearScore > 95.0
     bearScore := 95.0
     bullScore := math.max(bullScore, 5.0)
     rangeScore := 100.0 - bullScore - bearScore
-// v26: biasLabel moved below the final normalisation (search "v26 SEQUENCE").
+// Bias label using normalized scores (0-100, same scale as dashboard)
+// SSOT: SHARED — consumed by dashboard TREND column, alert messages, and evidence display
 
 // HISTORICAL ANALOG ANALYSIS (Part 6) — outputs populated below from stats engine
 
-// (v16: the what-if scenario factors below this heading were computed and never read; removed.)
+// SCENARIO ANALYSIS — WHAT-IF ENGINE (Part 8)
+// v21: the factors are published (wi*, clamped [10, 90] as the R5.1 note specifies) and shown
+// by the Diagnostics panel, which runs this engine. na when the scenario does not apply.
+float wiPdhCont = na
+float wiPdlCont = na
+float wiVwapHold = na
+float wiVwapFail = na
+if not na(poolPdH)
+    float pdhContFactor = 50.0
+    pdhContFactor += bullTrend ? 15.0 : bearTrend ? -10.0 : 0.0
+    pdhContFactor += htfBullScoreGate ? 12.0 : htfBearScoreGate ? -8.0 : 0.0
+    pdhContFactor += macroStrengthScore > 0 ? 10.0 : macroStrengthScore < 0 ? -10.0 : 0.0
+    pdhContFactor += adxVal > adxThreshold ? 5.0 : 0.0
+    wiPdhCont := math.min(math.max(pdhContFactor, 10.0), 90.0)
+if not na(poolPdL)
+    float pdlContFactor = 50.0
+    pdlContFactor += bearTrend ? 15.0 : bullTrend ? -10.0 : 0.0
+    pdlContFactor += htfBearScoreGate ? 12.0 : htfBullScoreGate ? -8.0 : 0.0
+    pdlContFactor += macroStrengthScore < 0 ? 10.0 : macroStrengthScore > 0 ? -10.0 : 0.0
+    pdlContFactor += adxVal > adxThreshold ? 5.0 : 0.0
+    wiPdlCont := math.min(math.max(pdlContFactor, 10.0), 90.0)
+// VWAP hold/fail scenarios
+float vwapDist = math.abs(distVwapATR)
+if vwapDist < 1.0 and not na(vwapVal)
+    float holdFactor = 50.0
+    holdFactor += bullTrend ? 12.0 : bearTrend ? -12.0 : 0.0
+    holdFactor += htfBullScoreGate ? 10.0 : htfBearScoreGate ? -10.0 : 0.0
+    holdFactor += macroStrengthScore > 0 ? 8.0 : macroStrengthScore < 0 ? -8.0 : 0.0
+    holdFactor += evLiqBull > evLiqBear ? 8.0 : -8.0
+    holdFactor += adxVal > adxThreshold ? 5.0 : 0.0
+    // R5.1: VWAP slope/acceleration wired in (small heuristic weights; clamp keeps [10,90])
+    holdFactor += vwapSlope > 0 ? 5.0 : vwapSlope < 0 ? -5.0 : 0.0
+    holdFactor += vwapAccel > 0 ? 3.0 : vwapAccel < 0 ? -3.0 : 0.0
+    float failFactor = 50.0
+    failFactor += bearTrend ? 12.0 : bullTrend ? -12.0 : 0.0
+    failFactor += htfBearScoreGate ? 10.0 : htfBullScoreGate ? -10.0 : 0.0
+    failFactor += macroStrengthScore < 0 ? 8.0 : macroStrengthScore > 0 ? -8.0 : 0.0
+    failFactor += evLiqBear > evLiqBull ? 8.0 : -8.0
+    failFactor += adxVal > adxThreshold ? 5.0 : 0.0
+    failFactor += vwapSlope < 0 ? 5.0 : vwapSlope > 0 ? -5.0 : 0.0
+    failFactor += vwapAccel < 0 ? 3.0 : vwapAccel > 0 ? -3.0 : 0.0
+    wiVwapHold := math.min(math.max(holdFactor, 10.0), 90.0)
+    wiVwapFail := math.min(math.max(failFactor, 10.0), 90.0)
+// PDH/PDL Reach — uses rawBullScore/rawBearScore (same 8-factor weighted sum)
 float totalR = rawBullScore + rawBearScore
 float pdhReachScore = totalR > 0 ? math.round(rawBullScore / totalR * 100.0) : 50.0
 float pdlReachScore = 100.0 - pdhReachScore
@@ -2487,18 +2530,9 @@ if pdlReachScore < 5.0
     pdlReachScore := 5.0
     pdhReachScore := 95.0
 // Per-target reach scores (distributed proportionally to liq scores)
-float bullPoolTotal = liqScorePDH + liqScorePWH + liqScorePMH + liqScoreEQH + 1.0
-float bearPoolTotal = liqScorePDL + liqScorePWL + liqScorePML + liqScoreEQL + 1.0
-float pwhReachScore = bullPoolTotal > 1.0 ? math.round(liqScorePWH / bullPoolTotal * pdhReachScore) : 12.0
-float pwlReachScore = bearPoolTotal > 1.0 ? math.round(liqScorePWL / bearPoolTotal * pdlReachScore) : 12.0
-float pmhReachScore = bullPoolTotal > 1.0 ? math.round(liqScorePMH / bullPoolTotal * pdhReachScore) : 12.0
-float pmlReachScore = bearPoolTotal > 1.0 ? math.round(liqScorePML / bearPoolTotal * pdlReachScore) : 12.0
-float eqhReachScore = bullPoolTotal > 1.0 ? math.round(liqScoreEQH / bullPoolTotal * pdhReachScore) : 12.0
-float eqlReachScore = bearPoolTotal > 1.0 ? math.round(liqScoreEQL / bearPoolTotal * pdlReachScore) : 12.0
 
 // Cost-to-target ratio (display only — does not gate signals)
 // R5-F15: spread is a round-trip cost paid once; only slippage occurs on both sides.
-float _liveCostATR = adaptiveATR > 0 ? ((spreadCost + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)) / adaptiveATR : 0.0
 // R5-F21: empty session string guarded.
 bool inNewsWindow = useNewsSuppress and newsSession != "" and not na(time(timeframe.period, newsSession))
 // R5-F4: persistent DD mirror — declared before the signal gate, updated after the
@@ -2522,69 +2556,48 @@ bool _ddBreach = useDDBreaker and _ddForBreaker >= maxDdPct
 // which are the calibrated, regime-adaptive filters. Protection shifts from
 // "everything must agree" to "quality must clear the bar and nothing safety-critical
 // objects" — responsiveness rises without loosening the statistical gates.
-bool buyPreFilters = bullTrend and not htfBearScoreGate and recentBars and sessionQuality >= 30 and not inNewsWindow and not _ddBreach
-bool sellPreFilters = bearTrend and not htfBullScoreGate and recentBars and sessionQuality >= 30 and not inNewsWindow and not _ddBreach
+// ═══ CHALLENGER HYPOTHESIS H1 (pre-registered 2026-09-27, frozen; see audit/PREREGISTRATION.md)
+// The Treatment trend gate is bullTrendScore >= 60 of 100, and 50 of those 100 points are slow
+// terms: close vs EMA200 (20), EMA20 vs EMA100 (20), close vs EMA100 (10). F-A36 measured 60% of
+// $30+ move episodes stopping at that gate. H1 keeps ONLY the fast terms the score already
+// contains -- close vs EMA20 and the EMA20 3-bar slope -- with no new parameter and no new
+// threshold. Nothing else differs from the Treatment arm; bullTrend/bearTrend still feed every
+// other engine component unchanged, so only the ENTRY GATE is being tested.
+bool chBullTrend = close > ema20 and ema20 > ema20[3]
+bool chBearTrend = close < ema20 and ema20 < ema20[3]
+bool buyPreFilters = chBullTrend and not htfBearScoreGate and recentBars and sessionQuality >= 30 and not inNewsWindow and not _ddBreach
+bool sellPreFilters = chBearTrend and not htfBullScoreGate and recentBars and sessionQuality >= 30 and not inNewsWindow and not _ddBreach
 // Q5.8: windowed structure (BOS/CHoCH/MSS) replaces the momentary BOS-only trigger.
 shouldBuy = buyPreFilters and (bullStructActive or displacementUp)
 
 shouldSell = sellPreFilters and (bearStructActive or displacementDown)
 
-// CHANGE ID: F-006 — BLOCK-REASON TELEMETRY. Diagnostic only; changes NO gate, NO
-// threshold and NO execution. Reported problem: "DECISION stays on WAIT while price
-// moves $30". Traced, and the gates are behaving correctly — WAIT means shouldBuy and
-// shouldSell are both false (a veto would read NO TRADE, a lock RISK LOCK), so the block
-// is at SIGNAL level. The dominant cause is structural, not a fault: the trigger term
-// (structActive OR displacement) is an EVENT with a structWindow(8)-bar life = 40 minutes
-// on 5M. Between structure breaks it is false even inside a strong trend, so DECISION
-// reads WAIT for most bars BY DESIGN. DECISION answers "enter now?", never "which way?".
-// Until now there was no way to tell WHICH of the seven conditions was missing, so every
-// WAIT looked identical and uninformative. This names the first failing one, in gate
-// order, for whichever side has the stronger evidence score.
-// v26: _blkWhy is computed just below biasLabel (search "v26 SEQUENCE"), so the side it
-// explains is the side the label names.
-
-// ---- Decision Log: which gate terms are passing ----
-// F-A03 FIX. This block previously scored against the PRE-Q5.5 filter set
-// (htfBullScoreGate/macroBull/regimeConfHigh/bullRsiDiv) -- the CONTROL arm's gate, not
-// this file's. Three of those terms are absent from the live gate and a fourth was
-// inverted: the gate tests `not htfBearScoreGate`, the log tested `htfBullScoreGate`,
-// and those are NOT complements (htfAlignmentLong>=2 vs htfAlignmentShort>=2 at
-// L702-703 -- both can be false at once). The readout therefore named filters that had
-// not blocked anything, while never naming the one that had.
-// Now mirrored term-for-term on buyPreFilters/sellPreFilters (L2544-2545) plus the
-// structure/displacement trigger (L2547/L2549), so log and gate cannot drift apart.
+// ---- Decision Log: which pre-filters are passing ----
 string _buyFilterLog = ""
 string _sellFilterLog = ""
 _buyFilterLog := bullTrend ? _buyFilterLog : _buyFilterLog + "Trend "
-_buyFilterLog := not htfBearScoreGate ? _buyFilterLog : _buyFilterLog + "HTF-Bear "
+_buyFilterLog := htfBullScoreGate ? _buyFilterLog : _buyFilterLog + "HTF "
+_buyFilterLog := macroBull ? _buyFilterLog : _buyFilterLog + "Macro "
+_buyFilterLog := regimeConfHigh ? _buyFilterLog : _buyFilterLog + "Regime "
+_buyFilterLog := bullRsiDiv ? _buyFilterLog : _buyFilterLog + "RSI "
 _buyFilterLog := recentBars ? _buyFilterLog : _buyFilterLog + "Recent "
 _buyFilterLog := sessionQuality >= 30 ? _buyFilterLog : _buyFilterLog + "Sess "
-_buyFilterLog := not inNewsWindow ? _buyFilterLog : _buyFilterLog + "News "
-_buyFilterLog := not _ddBreach ? _buyFilterLog : _buyFilterLog + "DD "
-_buyFilterLog := (bullStructActive or displacementUp) ? _buyFilterLog : _buyFilterLog + "Trig "
-int _buyPass = (bullTrend ? 1 : 0) + (not htfBearScoreGate ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0) + (not inNewsWindow ? 1 : 0) + (not _ddBreach ? 1 : 0) + ((bullStructActive or displacementUp) ? 1 : 0)
+int _buyPass = (bullTrend ? 1 : 0) + (htfBullScoreGate ? 1 : 0) + (macroBull ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bullRsiDiv ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0)
 string _buyLog = "▲" + str.tostring(_buyPass) + "/7" + (_buyPass < 7 ? " [✗" + _buyFilterLog + "]" : "")
 _sellFilterLog := bearTrend ? _sellFilterLog : _sellFilterLog + "Trend "
-_sellFilterLog := not htfBullScoreGate ? _sellFilterLog : _sellFilterLog + "HTF-Bull "
+_sellFilterLog := htfBearScoreGate ? _sellFilterLog : _sellFilterLog + "HTF "
+_sellFilterLog := macroBear ? _sellFilterLog : _sellFilterLog + "Macro "
+_sellFilterLog := regimeConfHigh ? _sellFilterLog : _sellFilterLog + "Regime "
+_sellFilterLog := bearRsiDiv ? _sellFilterLog : _sellFilterLog + "RSI "
 _sellFilterLog := recentBars ? _sellFilterLog : _sellFilterLog + "Recent "
 _sellFilterLog := sessionQuality >= 30 ? _sellFilterLog : _sellFilterLog + "Sess "
-_sellFilterLog := not inNewsWindow ? _sellFilterLog : _sellFilterLog + "News "
-_sellFilterLog := not _ddBreach ? _sellFilterLog : _sellFilterLog + "DD "
-_sellFilterLog := (bearStructActive or displacementDown) ? _sellFilterLog : _sellFilterLog + "Trig "
-int _sellPass = (bearTrend ? 1 : 0) + (not htfBullScoreGate ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0) + (not inNewsWindow ? 1 : 0) + (not _ddBreach ? 1 : 0) + ((bearStructActive or displacementDown) ? 1 : 0)
+int _sellPass = (bearTrend ? 1 : 0) + (htfBearScoreGate ? 1 : 0) + (macroBear ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bearRsiDiv ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0)
 string _sellLog = "▼" + str.tostring(_sellPass) + "/7" + (_sellPass < 7 ? " [✗" + _sellFilterLog + "]" : "")
-// Non-gating CONTEXT. regimeConfHigh / macroBull / macroBear / bullRsiDiv / bearRsiDiv were
-// in the OLD (control-arm) filter list and are NOT in this file's gate -- they feed the
-// evidence score and bias, not the entry decision. They are surfaced here behind a "ctx:"
-// marker so that correcting the pass/fail count (F-A03) does not make them invisible on the
-// dashboard. Upper case = true. regimeConfHigh has no other consumer in this file, so this
-// is also what keeps it wired rather than orphaned.
-string _ctxLog = " ctx:" + (regimeConfHigh ? "Rg" : "rg") + (macroBull ? "M+" : macroBear ? "M-" : "M=") + (bullRsiDiv ? "R+" : bearRsiDiv ? "R-" : "R=")
-string _trigLog = (bullStructActive or displacementUp or bearStructActive or displacementDown) ? "" : " NO-TRIG"
+string _trigLog = (bullBOS or displacementUp or bearBOS or displacementDown) ? "" : " NO-TRIG"
 string _newsLog = inNewsWindow ? " NEWS-BLK" : ""
 string _ddLog = _ddBreach ? " DD-BREACH" : ""
 string _conflictLog = _pipelineConflict ? " CONFLICT" : ""
-string decisionLog = rangeDominant ? "RANGE " + str.tostring(int(rangeBiasScore)) + "/130 [no dir. edge]" : bullBiasScore >= bearBiasScore ? _buyLog + _trigLog + _newsLog + _ddLog + _conflictLog + _ctxLog : _sellLog + _trigLog + _newsLog + _ddLog + _conflictLog + _ctxLog
+string decisionLog = rangeDominant ? "RANGE " + str.tostring(int(rangeBiasScore)) + "/130 [no dir. edge]" : bullBiasScore >= bearBiasScore ? _buyLog + _trigLog + _newsLog + _ddLog + _conflictLog : _sellLog + _trigLog + _newsLog + _ddLog + _conflictLog
 
 // Q5.2-F3: per-direction analog hit probabilities [L>=1R, L>=2R, L>=3R, L SL1R,
 // S>=1R, S>=2R, S>=3R, S SL1R], written by the stats engine (N>=20), read by the plan.
@@ -2767,14 +2780,11 @@ f_tradePlan() =>
     float tpRR3 = tpDist > 0 ? math.abs(tp3 - tpEntry) / tpDist : 0.0
     string tpDirStr = tpIsLong ? "LONG" : "SHORT"
     color tpCol = tpIsLong ? #00D084 : #FF4D4D
-    // F-014: MT5-adjusted DISPLAY strings. The underlying tpEntry/tpSL/tp1..tp3 floats are
-    // deliberately NOT modified — everything downstream (RR, R-distances, pSLhit/pTP*,
-    // position size) keeps using the raw TradingView values.
-    string tpEntryStr = str.tostring(tpEntry + mt5Offset, "#.##")
-    string tpSLStr = str.tostring(tpSL + mt5Offset, "#.##")
-    string tp1Str = str.tostring(tp1 + mt5Offset, "#.##")
-    string tp2Str = str.tostring(tp2 + mt5Offset, "#.##")
-    string tp3Str = str.tostring(tp3 + mt5Offset, "#.##")
+    string tpEntryStr = str.tostring(tpEntry, "#.##")
+    string tpSLStr = str.tostring(tpSL, "#.##")
+    string tp1Str = str.tostring(tp1, "#.##")
+    string tp2Str = str.tostring(tp2, "#.##")
+    string tp3Str = str.tostring(tp3, "#.##")
     string tpRRStr = "1:" + str.tostring(tpRR1, "#.#") + "/1:" + str.tostring(tpRR2, "#.#") + "/1:" + str.tostring(tpRR3, "#.#")
     // R6.0 explainability: how the plan was built, shown on the plan panel.
     // Q5.2-F4: P(reach TP_k) and P(SL) from analog MFE/MAE distributions; 1R expectancy.
@@ -2865,11 +2875,6 @@ f_tradePlan() =>
 // enough near them because the +3 in the denominator shrinks toward the prior.
 // N is the EFFECTIVE sample: analog outcomes overlap over OUTCOME_N bars, so raw
 // N overstates independent information and would understate the interval.
-float _ciN = nz(array.get(gHitN, 0), 0.0) / math.max(OUTCOME_N, 1)
-f_ciHalf(_pPct) =>
-    float _p = math.min(math.max(_pPct / 100.0, 0.0), 1.0)
-    _ciN >= 3 ? 164.5 * math.sqrt(_p * (1.0 - _p) / (_ciN + 3.0)) : na
-
 // Calibration bin edges (quantile-adaptive, initialized to defaults)
 var float calQ20 = 20.0
 var float calQ40 = 40.0
@@ -2923,22 +2928,11 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 // the thing we are trying to measure); the metadata is captured so the migration is
 // OBSERVABLE and can be filtered later without re-collecting history.
 // V1 = pre-integration definition. V2 = GC/OI able to influence the regime.
-// THREE-LAYER SCHEMA MODEL (reviewer, approved revision). These are three DIFFERENT
-// questions and collapsing them would create a second hidden definition of "equivalent":
-//
-//   SCHEMA_BUILD  -- IMPLEMENTATION identity. Which version of the feature-definition CODE
-//                    is deployed. A build constant. It answers "what software produced
-//                    this?" It is NOT the migration census and MUST NOT filter analogs:
-//                    using it alone would mark every observation V2 from the first bar,
-//                    which would silently destroy the MIXED_SCHEMA measurement.
-//   barDataStatus -- SOURCE-CONTRIBUTION identity: bitmask of which external sources
-//                    reached the calculation on that bar. Computed and exported per trade
-//                    (D field) by the strategy twins; the Master had no reader, so v16
-//                    removed it here along with the write-only hDataStatus buffer.
-//   hSchemaVer    -- FEATURE-DEFINITION EQUIVALENCE, availability-derived. Answers "is this
-//                    observation mathematically equivalent to V1 for analog matching?"
-//                    When GC/OI contribute exactly zero the bar IS effectively V1, because
-//                    rCurr is then bit-identical. This is what the census uses. UNCHANGED.
+// THREE-LAYER SCHEMA MODEL (reviewer, approved revision) — kept IDENTICAL to the Master
+// so the A/B scorers store observations under the same feature semantics.
+//   SCHEMA_BUILD = implementation identity (never the census, never a filter)
+//   hDataStatus  = which external sources actually CONTRIBUTED on that bar
+//   hSchemaVer   = feature-definition equivalence for analog matching (drives the census)
 // v14: 2 -> 3. The race label (hRace), the bear calibration and the race expectancy
 // change what the gate acts on, so exported trades must be separable by build.
 // v16: 3 -> 4. Berkson-weighted calibration fits and the inverted Cornish-Fisher z-score
@@ -2949,7 +2943,9 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 // did not exist, which feeds the composite and the analog features; B5 and B6 exports must not be pooled.
 int SCHEMA_BUILD = 6
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
+int barDataStatus = ((gcConfirmsBull or gcConfirmsBear) ? 1 : 0) + ((oiValid and oiConviction != 0) ? 2 : 0) + (US2Y_STATUS == 0 ? 4 : 0) + (COT_STATUS == 0 ? 8 : 0) + (GC_STATUS != 0 ? 16 : 0) + (OI_STATUS != 0 ? 32 : 0)
 var int[] hSchemaVer = array.new_int(HIST_MAX, 1)
+var int[] hDataStatus = array.new_int(HIST_MAX, 0)
 var int migV2Count = 0
 var int[] hRegime = array.new_int(HIST_MAX, 0)
 var float[] hSess = array.new_float(HIST_MAX, 0.5)
@@ -2971,7 +2967,6 @@ var float _calDriftSlow = 50.0
 // Dashboard tables
 var table tblA = na
 var table tblPlan = na
-var table tblBrief = na
 
 // Regime: first-order Markov with duration tracking
 int rCurr = strongTrend ? 0 : moderateTrend ? 1 : 2
@@ -2995,7 +2990,6 @@ if barstate.isconfirmed and rPrev >= 0
         else if rCurr == 1
             rDR += 1
 rPrev := rCurr
-
 
 float highOutcome = ta.highest(high, OUTCOME_N)
 float lowOutcome = ta.lowest(low, OUTCOME_N)
@@ -3037,6 +3031,7 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
     if _prevVer != 2 and REGIME_FEATURE_VERSION == 2
         migV2Count := migV2Count + 1
     array.set(hSchemaVer, hW, REGIME_FEATURE_VERSION)
+    array.set(hDataStatus, hW, barDataStatus)
     float _sessVal = inNY ? 1.0 : inLondon ? 0.67 : inAsian ? 0.33 : 0.0
     array.set(hSess, hW, _sessVal)
     int oP = (hW - OUTCOME_N + HIST_MAX) % HIST_MAX
@@ -3157,33 +3152,17 @@ if barstate.isconfirmed and REGIME_FEATURE_VERSION == 2 and na(migStartTime)
 // SCHEMA_V2 becomes the valid evaluation population; below that the analog statistics are
 // MIXED_SCHEMA and must not be used to judge whether the new layers helped.
 float migPct = hN > 0 ? math.min(migV2Count * 100.0 / math.min(hN, HIST_MAX), 100.0) : 0.0
-// The census reports EFFECTIVE schema (hSchemaVer), never SCHEMA_BUILD. Both are shown so
-// software identity and mathematical equivalence are separately observable, as required.
-// CLEAN is claimed only at V1 = 0%; anything else is MIXED and is NOT performance evidence.
-float migV1Pct = 100.0 - migPct
-string migState = migPct >= 99.5 ? "  SCHEMA_V2 CLEAN" : migV2Count == 0 ? "  V1 100%" : "  MIXED_SCHEMA V1 " + str.tostring(int(migV1Pct)) + "% V2 " + str.tostring(int(migPct)) + "%"
-string schemaLine = "BUILD v" + str.tostring(SCHEMA_BUILD) + migState + "  " + dataStatusLine
+string migState = REGIME_FEATURE_VERSION == 1 ? "" : migPct >= 99.5 ? "  SCHEMA_V2" : "  MIXED_SCHEMA " + str.tostring(int(migPct)) + "%"
 float oBull = 50.0
 float oBear = 50.0
 float oRange = 0.0
 int oMatch = 0
-// F-008: RESTORED. These were removed as "dead" in the token pass — wrongly. They are not
-// junk: the engine computes each of them every cycle from the matched-analog set, and the
-// cost of computing them is ALREADY PAID inside runStatsEngines() whether or not anything
-// reads them. Deleting the readers saved ~135 tokens while throwing away finished analytics.
-// Correct action is to WIRE them, not delete them. (oBosCont is display-only by design:
-// R5.3 deliberately removed it from fAdj because it re-used the same historical DB already
-// blended elsewhere — showing it does not reintroduce that double-count.)
 int oPdh1stPct = na
 int oPdl1stPct = na
-float oMaxAdverseATR = na
-float oBosCont = 50.0
-float oBosFail = 50.0
-string oCalDetail = ""
-int oEvLabel = na
-float oEvVal = 0.0
 int oCalGrade = 0
+string oCalDetail = ""
 float oRegPer = 50.0
+float oBosCont = 50.0
 // Q5.0-S2: Platt fit [slope per score-unit, intercept] — written by the calibration
 // block inside the stats engine, consumed by the mP= mapping. na until fit qualifies.
 var float[] gCalFit = array.from(float(na), float(na))
@@ -3192,7 +3171,8 @@ var float[] gCalFitBear = array.from(float(na), float(na))
 float oWr = 50.0
 float oAvgW = 0.5
 float oAvgL = 1.0
-float oProfitFactor = na
+float oBosFail = 50.0
+float oMaxAdverseATR = na
 float oMaxDD = 0.0
 int oOosN = 0
 float oOosWr = 50.0
@@ -3214,12 +3194,6 @@ runStatsEngines() =>
     var float _cWr = 50.0
     var float _cAvgW = 0.5
     var float _cAvgL = 1.0
-    // CALIBRATION GRADE, NOT A PROBABILITY (F-022). This is 100 - 2 x mean absolute
-    // calibration error across the qualifying bins. It answers "how well calibrated is the
-    // model?", never "how likely is this trade?". The estimated P(TP1 before SL) is
-    // _calibratedProb, a DIFFERENT quantity. The old name oCalPct invited exactly the
-    // false semantic link between calibration quality and event probability that §7 warns
-    // about. Calculation UNCHANGED by the rename; Kelly behaviour UNCHANGED.
     var int _cCalGradePct = 0
     var string _cCalGrade = "N/A"
     var float _cCalBrier = na
@@ -3340,7 +3314,7 @@ runStatsEngines() =>
     _cec := _cec + 1
     var int _lastGuardBar = -1
     int _rb = chartTFSeconds <= 180 ? 2 : chartTFSeconds <= 900 ? 4 : chartTFSeconds <= 3600 ? 8 : 12
-    bool _guard = showStatsEngine and hN > OUTCOME_N * 2 and (_cec % _rb == 0 or barstate.islast) and barstate.isconfirmed and bar_index != _lastGuardBar
+    bool _guard = showStatsEngine and hN > OUTCOME_N * 2 and (_cec % _rb == 0) and barstate.isconfirmed and bar_index != _lastGuardBar
     // Reset/decay accumulators at start of a new scan
     if _rsp == 0 and _guard
         _gWb := 0.0
@@ -3603,27 +3577,12 @@ runStatsEngines() =>
             // genuinely unseen data. Computed early here (duplicating the later
             // per-match _isOos, which still gates win-rate accounting) so it is
             // available before the calibration/hit-probability blocks run.
-            // ===== F-037 (P0) — THIS IS NOT A FIXED HOLDOUT. READ BEFORE TRUSTING. ====
-            // _sbMin/_sbMax are RECOMPUTED EVERY CYCLE from the live rolling buffer, so the
-            // boundary SLIDES: an observation that is "OOS" today becomes training data
-            // tomorrow as the buffer rolls. There is no held-out set here -- there is a
-            // continuously re-drawn trailing slice. Consequences, all real:
-            //   * SELECTION BIAS  the OOS population is re-drawn every bar, never fixed
-            //   * MULTIPLE TESTING  thousands of implicit re-tests, uncorrected at this layer
-            //   * NOT INDEPENDENT  the same rows alternate between train and test over time
-            // Therefore everything derived from _isOosEarly is a ROLLING DIAGNOSTIC estimate,
-            // never independent out-of-sample validation, and the presentation layer labels
-            // it ROLL rather than OOS for exactly that reason.
-            //
-            // SEPARATELY, AND WORSE: the historical window itself is CONTAMINATED BY
-            // DEVELOPMENT. Quantum 5.x thresholds, weights, gates, TP caps, spread ladders
-            // and OUTCOME_N were all selected while looking at this instrument's history.
-            // A technically perfect purged K-fold over this same history inherits that
-            // contamination, because the STRATEGY was fitted to it even where the
-            // CALIBRATOR was not. A genuine final holdout requires data collected AFTER a
-            // parameter freeze. Do not call this data "final OOS" under any circumstances.
-            // NOT FIXED BY RELABELLING: the label is corrected because the claim was false;
-            // the underlying statistic is deliberately left EXACTLY as it was.
+            // F-037 (P0): _sbMin/_sbMax are recomputed each cycle from the ROLLING buffer,
+            // so this boundary SLIDES -- today's "OOS" row becomes tomorrow's training row.
+            // This is a rolling diagnostic estimate, NOT independent out-of-sample validation.
+            // The historical window is ALSO contaminated by development: Quantum 5.x
+            // parameters were selected against this instrument's history. A genuine final
+            // holdout needs data collected AFTER a parameter freeze. Calculation UNCHANGED.
             float _oosPctEarly = 1.0 - holdoutRatio
             bool _isOosEarly = _sbRng > 0 and (sb - _sbMin) / _sbRng >= _oosPctEarly and (sb - _sbMin) - _oosPctEarly * _sbRng >= OUTCOME_N
             // Cosine similarity on weighted 9-dim vector (7 orig + session + regime)
@@ -3718,10 +3677,6 @@ runStatsEngines() =>
                 p1 += 1
                 pT += 1
                 wp1 += sim
-                wpT += sim
-            else if fh_ == 2
-                p2 += 1
-                pT += 1
                 wpT += sim
             float fr = array.get(hRet, i)
             // Cost-adjusted return: subtract round-trip cost from raw return
@@ -4061,7 +4016,7 @@ runStatsEngines() =>
         _lastGuardBar := bar_index
     if not showStatsEngine or hN <= OUTCOME_N * 2
         [50.0, 50.0, 0.0, 0, int(na), int(na), 0.0, int(na), 50.0, 0.5, 1.0, 0, "N/A", float(na), "", 50.0, 50.0, 50.0, float(na), float(na), float(na), float(na), float(na), float(na), float(na), 0.0, 50.0, 0, 50.0, 0, 0.5, 1.0]
-    else if not barstate.isconfirmed or (chartTFSeconds < 300 and not barstate.islast) or not (_cec % _rb == 0 or barstate.islast) or _rsp > 0
+    else if not barstate.isconfirmed or (timeframe.in_seconds() < 300) or not (_cec % _rb == 0) or _rsp > 0
         [_cBull, _cBear, _cRange, _cMatch, _cPdh1stPct, _cPdl1stPct, _cEvVal, _cEvLabel, _cWr, _cAvgW, _cAvgL, _cCalGradePct, _cCalGrade, _cCalBrier, _cCalDetail, _cBosCont, _cBosFail, _cRegPer, _cFeatStr, _cFeatHtf, _cFeatLiq, _cFeatMr, _cFeatCor, _cProfitFactor, _cMaxAdverseATR, _cMaxDD, _cOosWr, _cOosN, _cIsWr, _cIsN, _cAvgWOos, _cAvgLOos]
     else
         // F-009: RATIOS now use the weighted sums (wb/wt); GATES and the displayed
@@ -4109,11 +4064,6 @@ runStatsEngines() =>
         float calBrier = 0.0
         float calN = 0.0
         int calBins = 0
-        // OOS RELIABILITY CAPTURE (observability only). Every value stored below is
-        // ALREADY computed in this block for the grade/Brier maths — nothing is
-        // recalculated for the dashboard. Layout per bucket: [N, predictedPct, observedPct]
-        // with predicted/observed left na until the bucket meets its existing N>=30 bar,
-        // so an under-sampled bucket reports N<30 rather than a misleading statistic.
         float calErr = 0.0
         if c0t >= 30
             float a0 = bayesRate(c0b, c0t)
@@ -4347,7 +4297,7 @@ runStatsEngines() =>
 // Quantile-based calibration bin edges — after engine call so historical scan uses prior bins
 var int _qcec = -1
 _qcec := _qcec + 1
-if showStatsEngine and hN >= 50 and (_qcec % 10 == 0 or barstate.islast) and barstate.isconfirmed
+if showStatsEngine and hN >= 50 and (_qcec % 10 == 0) and barstate.isconfirmed
     float[] _tmpQ = array.new<float>()
     for _qi = 0 to hN - 1
         array.push(_tmpQ, array.get(hPred, _qi))
@@ -4368,46 +4318,26 @@ oRange := __r
 oMatch := __m
 oPdh1stPct := __p1
 oPdl1stPct := __p2
-oMaxAdverseATR := __ma
-oBosCont := __bc
-oBosFail := __bf
-oCalDetail := __cd
-oEvVal := __ev
-oEvLabel := __el
 oWr := __wr
 oAvgW := __aw
 oAvgL := __al
 oCalGrade := __cp
+oCalDetail := __cd
+oBosCont := __bc
+oBosFail := __bf
 oRegPer := __rp
-oProfitFactor := __pf
+oMaxAdverseATR := __ma
 oMaxDD := __md
 oOosWr := __ow
-// CHANGE ID: F-036 | READ-BEFORE-ASSIGN. oOosN was CONSUMED by _wNeffD and oOosNeff
-// BEFORE the line `oOosN := __on` gave it the engine's value. oOosN is a non-var global,
-// so it reinitialises to 0 every bar -- meaning oOosNeff evaluated to 0 on EVERY bar,
-// permanently, no matter what the stats engine returned. That is the "0/10eff at 100%hist"
-// the dashboard showed on every timeframe: never a sample-size problem, an ordering bug.
-// Knock-on: _statsWarm = (hN > OUTCOME_N*2 and oOosNeff >= 10) could never go true, so the
-// panel was pinned in WARMUP and oOosCI was always na. The stats engine itself was correct
-// throughout -- oOosWr above is assigned before use; only the effective-N chain read a
-// zeroed variable. FIX: assign first, then derive. No formula, threshold or gate altered.
-// Classification: BUG (restores intended behaviour), not a statistical correction.
+// F-036: oOosN was CONSUMED by oOosNeff BEFORE `oOosN := __on` assigned it. As a non-var
+// global it reinitialises to 0 each bar, so oOosNeff was permanently 0 no matter what the
+// engine returned -- pinning _statsWarm false. Assign first, then derive. Kept identical
+// to the Master: the A/B scorers must not diverge in feature semantics.
 oOosN := __on
+// Q5.0-S1: 95% half-width of the OOS win rate at EFFECTIVE (overlap-corrected) N.
 // Q6.9 (plan item 3): effective sample size for every count-based gate below.
 // Kelly already used this correction; the display and drift gates did not.
 int oOosNeff = int(oOosN / math.max(OUTCOME_N, 1))
-// F-037: the CI is SUPPRESSED in the presentation layer. A +/-x% interval is the
-// standard notation for a fixed independent holdout; rendering one over a continuously
-// re-drawn population is a false validity claim, and of the two options (suppress vs
-// relabel) suppression is the one least able to mislead. The formula is UNCHANGED and
-// still computed, so nothing downstream breaks and it can be restored the day a genuine
-// frozen holdout exists -- see the ROLL readout.
-// AUDIT NOTE: after suppression this variable is DELIBERATELY WRITE-ONLY. Verified by
-// full-file search: 1 declaration, 0 reads. It feeds NO gate, confidence, signal,
-// probability, risk term or alert -- suppression was therefore sufficient, not cosmetic.
-// v16 (no dead code): the unread computation is removed; the implementation is kept here
-// for F-037B, to be restored with a render the day a genuine frozen holdout exists:
-//     oOosCI = oOosNeff >= 10 ? 1.96 * sqrt(max(p(1-p), 0.0025) / max(oOosN / OUTCOME_N, 1)) * 100 : na
 oAvgWOos := __awo
 oAvgLOos := __alo
 // R5-F4: update the persistent DD mirror used by the signal-gate breaker.
@@ -4545,20 +4475,6 @@ rangeScore := fRngScore
 bullScore := nb2_
 bearScore := nbe2_
 rangeScore := nr2_
-// v26 SEQUENCE FIX: biasLabel was computed ~2,000 lines earlier, from the EVIDENCE-stage
-// scores, before the analog blend (L~4465), the forecast engine and this normalisation. Every
-// reader (DECISION box BIAS row, Mobile TREND row, BUY/SELL alert text) comes later and
-// prints it beside the FINAL scores, so the label could contradict the numbers next to it
-// (e.g. BEAR-ISH beside B55/S40). Same formula, same 62 threshold, now on the final scores
-// -- the ones the dashboard shows and the calibration validates (R5.3-M3). No gate reads it.
-// SSOT: SHARED — consumed by dashboard TREND column, alert messages, and evidence display
-biasLabel = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 62 ? "RANGE" : bullScore > bearScore and bullScore > rangeScore ? "BULL-ISH" : bearScore > bullScore and bearScore > rangeScore ? "BEAR-ISH" : "NEUTRAL"
-// v26 SEQUENCE: the WAIT reason, moved here from the decision-log block so that _bullSide
-// uses the same final scores as biasLabel; the only reader is the DECISION box BIAS row.
-string _blkWhy = ""
-if not shouldBuy and not shouldSell
-    bool _bullSide = bullScore >= bearScore
-    _blkWhy := _ddBreach ? "DD" : inNewsWindow ? "NEWS" : not recentBars ? "OLD-BAR" : sessionQuality < 30 ? "SESS " + str.tostring(int(sessionQuality)) + "/30" : (_bullSide ? not bullTrend : not bearTrend) ? "TREND " + str.tostring(_bullSide ? bullTrendScore : bearTrendScore) + "/" + str.tostring(trendThreshold) : (_bullSide ? htfBearScoreGate : htfBullScoreGate) ? "HTF-OPP" : "NO-TRIGGER"
 // R5.3-M3: calibration now tracks the FINAL displayed bullScore. The record written
 // earlier this bar stored the pre-blend evidence score, so the Cal grade / Brier /
 // mP= sigmoid were validating a variable the user never sees. The slot is overwritten
@@ -4656,7 +4572,6 @@ if showStatsEngine and oMatch >= 30
     calProbStr := not na(array.get(gCalFit, 0)) or useRawScores ? "mP=" + str.tostring(math.round(_calibratedProb * 100.0)) + (na(_calibratedProbBear) ? "" : "/S" + str.tostring(math.round(_calibratedProbBear * 100.0))) + "%" : "mP unfit"
 
 // V27 ENGINE 8: INSTITUTIONAL DASHBOARD — Titled metrics + breakdown
-color cGray = color.new(#A0A0A0, 0)
 // Regime label with Volatile
 f_tqEngine() =>
     // ═══════════════ R6.0 TRADE QUALITY SCORE ═══════════════
@@ -4728,12 +4643,72 @@ f_tqEngine() =>
     string tqBasis = (_tqHasHist ? "" : "-H") + (_tqHasFc ? "" : "-F")
     [tradeQuality, tqBasis]
 [tradeQuality, tqBasis] = f_tqEngine()
-// v24 (F-A32, measured token ceiling): the Q5.3/Q5.4 AUCTION INTELLIGENCE layer
-// (f_auctionIntel: value migration, acceptance, sweep quality, discovery, auction state,
-// cycle, opening type; aucBias) MOVED to XAUUSD_Quantum_5_0_Diagnostics.pine, row
-// "Auction", where the same function runs verbatim on the Treatment-twin engine. It was
-// display-only here (block-level slice: it fed no gate, alert, plot or plan value), so no
-// decision, alert or trade-plan number changes. Moved, not deleted -- CLAUDE.md rule.
+f_auctionIntel() =>
+    // ═══════════════ Q5.3 AUCTION INTELLIGENCE (A1-A7) ═══════════════
+    // Value proxy = daily-anchored VWAP (labeled approximation — no exchange profile).
+    var float prevDayValue = na
+    if crossedNYDay
+        prevDayValue := nz(vwapVal[1], vwapVal)
+    float valueMigATR = not na(prevDayValue) and adaptiveATR > 0 ? (vwapVal - prevDayValue) / adaptiveATR : na
+    string valueMigStr = na(valueMigATR) ? "VAL n/a" : valueMigATR > 0.8 ? "VAL⇈" : valueMigATR > 0.3 ? "VAL↑" : valueMigATR < -0.8 ? "VAL⇊" : valueMigATR < -0.3 ? "VAL↓" : "VAL="
+    // A3 ACCEPTANCE: time on side of value + close location + volume + follow-through.
+    bool aboveValue = close > vwapVal
+    var int barsOnSide = 0
+    barsOnSide := aboveValue == (nz(close[1], close) > nz(vwapVal[1], vwapVal)) ? math.min(barsOnSide + 1, 40) : 1
+    float _closeLoc = high > low ? (close - low) / (high - low) : 0.5
+    float _ftATR = adaptiveATR > 0 ? math.min(math.abs(close - nz(close[5], close)) / adaptiveATR, 2.0) : 0.0
+    int acceptScore = int(math.min(math.min(barsOnSide, 40) * 1.0 + (relVol > 1.0 ? 20 : relVol > 0.7 ? 10 : 0) + (aboveValue ? _closeLoc : 1.0 - _closeLoc) * 20 + _ftATR * 10, 100))
+    string acceptGrade = acceptScore >= 85 ? "A+" : acceptScore >= 70 ? "A" : acceptScore >= 55 ? "B" : acceptScore >= 40 ? "C" : "D"
+    // A7 SWEEP QUALITY: graded at sweep event, persisted for display.
+    var int lastSweepQ = 0
+    var string lastSweepGrade = ""
+    if (liqSweepBull or liqSweepBear) and barstate.isconfirmed
+        float _pen = adaptiveATR > 0 ? math.min((liqSweepBull ? math.abs(low - close) : math.abs(high - close)) / adaptiveATR, 1.5) : 0.0
+        float _revEff = high > low ? (liqSweepBull ? (close - low) / (high - low) : (high - close) / (high - low)) : 0.5
+        lastSweepQ := int(math.min(_pen * 30 + volPercentile * 0.3 + _revEff * 30 + ((liqSweepBull and displacementUp) or (liqSweepBear and displacementDown) ? 10 : 0), 100))
+        lastSweepGrade := lastSweepQ >= 80 ? "INST" : lastSweepQ >= 65 ? "STRONG" : lastSweepQ >= 50 ? "MOD" : "WEAK"
+    // A5 PRICE DISCOVERY.
+    float _valDistA = adaptiveATR > 0 ? math.abs(close - vwapVal) / adaptiveATR : 0.0
+    float discScore = math.min(_valDistA * 25 + atrPercentile * 0.25 + math.min(adxVal, 40) * 1.0 + acceptScore * 0.25, 100)
+// Q5.4: ta.highest hoisted out of the ternary (compiler consistency warning).
+    float _discHi10 = ta.highest(discScore, 10)
+    string discStr = discScore >= 70 and (regAbnormal or climaxUp or climaxDown) ? "DISC:EXH" : discScore >= 70 and acceptScore >= 60 ? "DISC:ACCPT" : discScore >= 70 ? "DISC:CONF" : discScore >= 50 ? "DISC:DEV" : discScore < 30 and _discHi10 >= 50 ? "DISC:FAIL" : discScore >= 30 ? "DISC:WEAK" : "ROTATION"
+    // A1 AUCTION STATE: score all, pick dominant, probability = share of total.
+    float stBal = (regCompression or (not regStrongTrend and not regExpansion and adxVal < adxThreshold) ? 50.0 : 0.0) + (_valDistA < 0.8 ? 30.0 : 0.0) + (atrPercentile <= 40 ? 20.0 : 0.0)
+    float stTrendA = (regStrongTrend ? 45.0 : regWeakTrend ? 20.0 : 0.0) + acceptScore * 0.3 + (discScore >= 50 ? 25.0 : 0.0)
+    float stRot = (rangeScore > math.max(bullScore, bearScore) ? 45.0 : 0.0) + (_valDistA < 1.0 ? 25.0 : 0.0) + (adxVal < adxThreshold ? 20.0 : 0.0)
+    float stDisc = (regExpansion ? 40.0 : 0.0) + (_valDistA >= 1.0 ? 30.0 : 0.0) + (atrPercentile >= 60 ? 20.0 : 0.0)
+    float stAcc = acceptScore >= 60 and _valDistA >= 0.8 ? 40.0 + acceptScore * 0.4 : 0.0
+    float stRej = ((liqSweepBull or liqSweepBear) ? 50.0 : sesManip ? 30.0 : 0.0) + (lastSweepQ >= 65 and (liqSweepBull or liqSweepBear) ? 25.0 : 0.0)
+    float stExh = (regAbnormal ? 40.0 : 0.0) + ((climaxUp or climaxDown) ? 35.0 : 0.0) + (atrPercentile >= 90 ? 15.0 : 0.0)
+    // vdKQ = 50-bar volume delta in thousands (computed here from volDelta50, which is
+    // defined earlier; the display-scope vdK alias is declared later in the file).
+    float vdKQ = volDelta50 / 1000.0
+    float stAD = stBal > 30 and math.abs(vdKQ) > 1.0 ? 35.0 + math.min(math.abs(vdKQ) * 5.0, 25.0) : 0.0
+    float _stSum = stBal + stTrendA + stRot + stDisc + stAcc + stRej + stExh + stAD
+    float _stMax = math.max(stBal, math.max(stTrendA, math.max(stRot, math.max(stDisc, math.max(stAcc, math.max(stRej, math.max(stExh, stAD)))))))
+    string aucState = _stSum <= 0 ? "BALANCE" : _stMax == stRej ? (liqSweepBear or (sesManip and not liqSweepBull) ? "REJ-HI" : "REJ-LO") : _stMax == stExh ? "EXHAUST" : _stMax == stTrendA ? "TREND-AUC" : _stMax == stAcc ? (aboveValue ? "ACC-HI" : "ACC-LO") : _stMax == stDisc ? "DISCOVERY" : _stMax == stAD ? (vdKQ > 0 ? "ACCUM" : "DISTRIB") : _stMax == stRot ? "ROTATE" : "BALANCE"
+    int aucProb = _stSum > 0 ? int(_stMax / _stSum * 100.0) : 0
+    // A2 AUCTION CYCLE stage from dominant state + regime.
+    string aucCycle = aucState == "BALANCE" or aucState == "ACCUM" or aucState == "DISTRIB" ? "①BAL" : aucState == "ROTATE" ? "②INIT" : aucState == "DISCOVERY" ? "③DISC" : aucState == "REJ-HI" or aucState == "REJ-LO" ? "④TEST" : aucState == "ACC-HI" or aucState == "ACC-LO" ? "⑤ACPT" : aucState == "TREND-AUC" ? "⑥TRND" : "⑦EXH"
+    // A6 OPENING TYPE (live session geometry; needs >=3 session bars).
+    // Q5.4: ta.barssince hoisted out of the ternary (compiler consistency warning).
+    int _sessAge = nz(ta.barssince(sessId != nz(sessId[1], sessId)), 0)
+    string openType = ""
+    if not na(sesOpenPx) and not na(sesHi) and curSessId >= 0 and curSessId <= 2
+        float _upX = sesHi - sesOpenPx
+        float _dnX = sesOpenPx - sesLo
+        float _rngX = math.max(sesHi - sesLo, syminfo.mintick)
+        float _oneSide = math.max(_upX, _dnX) / _rngX
+        bool _pastOpen = (close - sesOpenPx) * (_upX > _dnX ? 1 : -1) < 0
+        bool _gapUp = not na(prevSesHi) and sesOpenPx > prevSesHi
+        bool _gapDn = not na(prevSesLo) and sesOpenPx < prevSesLo
+        bool _gapFilled = (_gapUp and low <= prevSesHi) or (_gapDn and high >= prevSesLo)
+        openType := _gapUp or _gapDn ? (_gapFilled ? "GAP-FILL" : _oneSide >= 0.7 ? "GAP-DRV" : "O-AUC") : _rngX < adaptiveATR * 0.7 ? "O-NEU" : _rngX < adaptiveATR ? "O-AUC" : _oneSide >= 0.85 ? (_sessAge > 12 ? "DLY-DRV" : "O-DRV") : _oneSide >= 0.7 and _pastOpen ? "O-REJ" : _oneSide >= 0.7 ? "O-TDR" : "O-AUC"
+    // B7 Market Personality (day type). Double-distribution excluded (needs profile splits).
+    [aucState, aucProb, aucCycle, discStr, acceptScore, acceptGrade, valueMigStr, openType, lastSweepQ, lastSweepGrade]
+[aucState, aucProb, aucCycle, discStr, acceptScore, acceptGrade, valueMigStr, openType, lastSweepQ, lastSweepGrade] = f_auctionIntel()
+// B10 aucBias/auctionStr moved below tqVeto (declaration-order fix).
 // ═══════════════ END AUCTION INTELLIGENCE ═══════════════
 // Q5.2-F6: regime-adaptive TQ floor; Q5.2-F4: negative analog expectancy is a hard veto.
 int effTqMin = tqMinScore == 0 ? 0 : math.min(math.max(tqMinScore + (regAbnormal ? 15 : regCompression ? 10 : regStrongTrend or regExpansion ? -5 : 0), 0), 90)
@@ -4827,8 +4802,6 @@ if not na(rkEntry) and barstate.isconfirmed
     bool _rkTp = rkLong ? high >= rkTP : low <= rkTP
     if _rkSl or _rkTp
         float _rkRes = _rkSl ? -1.0 : math.min(math.abs(rkTP - rkEntry) / _rkR, 5.0)
-        if not perfMode
-            alert("XAUUSD " + timeframe.period + " tracked " + (rkLong ? "BUY" : "SELL") + (_rkSl ? " STOPPED at SL " : " reached TP1 ") + str.tostring((_rkSl ? rkSL : rkTP) + mt5Offset, "#.##") + " (MT5) = " + str.tostring(_rkRes, "#.##") + "R", alert.freq_once_per_bar_close)
         rkDayR := rkDayR + _rkRes
         rkConsec := _rkRes < 0 ? rkConsec + 1 : 0
         rkEntry := na
@@ -4896,16 +4869,7 @@ tqVeto := tqVeto or (useRiskLimits and riskLock)
 // analogs are clearing the similarity threshold — a different problem with a different
 // fix, and one that was previously indistinguishable from simply needing more bars.
 bool _statsWarm = not showStatsEngine or (hN > OUTCOME_N * 2 and oOosNeff >= 10)
-
-// ----- HISTORY-GATE DIAGNOSTIC (observability; no algorithm touched) -----------
-// hN has NO reset path -- it is monotonic to HIST_MAX -- so hN == 0 proves the write at
-// L2988 never executed, not that a sample was collected and lost. Its gate is:
-//     not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50
-//         and showStatsEngine
-// Static analysis cannot say WHICH term failed, because all four hold on a normal chart
-// with default inputs -- the remaining candidates (chart replay, a non-default saved
-// setting) differ only at runtime. So report each term's live value instead of guessing.
-// Shown ONLY while the buffer is empty; it disappears the moment collection starts.
+// v21: history-gate hint, identical to the Master's, so the dashboard builder matches it.
 int _histFloor = OUTCOME_N * 3 + 50
 string _histGate = hN > 0 ? "" : "  HIST-GATE[" + (perfMode ? "PERF-MODE-ON!" : "perf:ok") + " " + (showStatsEngine ? "stats:ok" : "STATS-ENGINE-OFF!") + " bars:" + str.tostring(bar_index) + "/" + str.tostring(_histFloor) + (bar_index > _histFloor ? ":ok" : ":TOO-FEW-BARS!") + " N" + str.tostring(hN) + "]"
 var string _confDirLabel = "WAIT"
@@ -4933,7 +4897,8 @@ if barstate.isconfirmed
     //   hN > OUTCOME_N * 2  -> the scan guard's own minimum history requirement
     //   oOosNeff >= 10      -> the effective-N floor used by the OOS/TQ-history path
     _confDirLabel := _rkBlockedConf ? "RISK LOCK" : _tqBlockedConf ? "NO TRADE" : shouldBuy ? "BUY" : shouldSell ? "SELL" : not _statsWarm ? "WARMUP" : "WAIT"
-// B10 auction bias: moved to Diagnostics with the auction layer (v24).
+// B10 Auction bias (replaces raw signal wording at the auction layer).
+string aucBias = shouldBuy and not tqVeto ? (aucState == "REJ-LO" ? "LONG-REV" : "LONG-CONT") : shouldSell and not tqVeto ? (aucState == "REJ-HI" ? "SHORT-REV" : "SHORT-CONT") : shouldBuy or shouldSell ? "NO-TRADE" : "WAIT"
 string structStr = bullStructActive ? "▲" + bullStructType + " " + str.tostring(bullStructAge) + "b" : bearStructActive ? "▼" + bearStructType + " " + str.tostring(bearStructAge) + "b" : "no-struct"
 // ═══ Q6.3 CROSS-CHECK / TRACEABILITY (DISPLAY ONLY) ═══
 // Each engine reports what IT concluded, from variables already computed above —
@@ -4947,140 +4912,37 @@ string _xS = bullStructActive ? "S▲" + bullStructType : bearStructActive ? "S�
 string _xL = evLiqBull > evLiqBear + 3 ? "L▲" : evLiqBear > evLiqBull + 3 ? "L▼" : "L="
 string _xM = mtfConfluenceScore > 20 ? "M▲" : mtfConfluenceScore < -20 ? "M▼" : "M="
 string _xQ = riskLock ? "R✗" : _calVeto ? "P✗" : tqVeto ? "Q✗" : "R✓"
-// CHANGE ID: F-007 — EXPOSE THE ANALOG EVIDENCE BASE. Display-only; no gate, threshold
-// or execution change. The engine already answers "how did the market react previously in
-// this same situation": every bar it scans up to HIST_MAX stored past states, scores each
-// on a 9-feature similarity vector (ADX, ATR percentile, HTF alignment, structure,
-// liquidity, mean-reversion, correlation, session, regime + a price-zone term), keeps only
-// those above the adaptive similarity threshold, and derives the "~X%" hit probabilities
-// already shown on the SL/TP rows from what those matches actually DID over the next
-// OUTCOME_N bars. oMatch (how many analogs) and oWr (what fraction won) are the evidence
-// base for every one of those percentages — and BOTH were computed but never displayed.
-// That is a safety gap, not just an information gap: "~68%" is unreadable without N.
-// 68% from 9 analogs and 68% from 600 look identical on screen and mean entirely
-// different things. A<30 is flagged LOW because the engine's own machinery already treats
-// 30 as the floor for credible-interval and Wilson work (see oMatch >= 30 guards).
-string _evidence = showStatsEngine ? "  A" + str.tostring(oMatch) + (oMatch < 30 ? "!LOW" : "") + " WR" + str.tostring(int(oWr)) + "% ROLL" + str.tostring(oOosN) : ""
-// F-008: oCalDetail wired — the calibration engine's own worked example ("P72>65%" = the
-// bin it PREDICTED 72% for actually resolved 65%). That single string is the most direct
-// read on whether the displayed probabilities can be trusted, and it was computed every
-// cycle and shown nowhere. Declared HERE, above crossCheck, because crossCheck consumes it
-// (Pine requires declaration before use — placing it near the calibration block further
-// down produced a forward reference).
-// oBosFail is the exact arithmetic complement of oBosCont (they sum to 100 by construction
-// at L4096), so it is intentionally NOT printed twice; BOScont carries both.
-string calStr = showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : ""
-// v15 (token ceiling): the rolling reliability readout (default OFF, observability only,
-// appended to the crossCheck line) was removed. It recalculated nothing; recoverable from git.
-// CHANGE ID: F-011 — the last 9 orphans, all wired. These were destructured from the
-// stats tuple at global scope and then consumed by nothing. No new globals are needed:
-// __cg/__cb/__iw/__in/__fs.. are already in scope here, so wiring them costs display only.
-//   Cal grade + Brier — the engine's own verdict on whether its probabilities are
-//     trustworthy. Brier is a PROPER SCORING RULE (lower = better; 0.25 = coin-flip), and
-//     it was computed every cycle and shown nowhere, which is why "is the probability
-//     calibrated?" had no on-screen answer at all.
-//   IS vs OOS win rate — the OOS pair was already displayed but the IN-SAMPLE pair was
-//     not, so the two could never be COMPARED. Side by side they are the overfitting
-//     detector: IS >> OOS means the engine fits its own history and does not generalise.
-//     This is the single most decision-relevant number on the whole dashboard and it was
-//     one destructured variable away from existing.
-//   Feature weights — the ADAPTIVE per-dimension similarity weights the engine actually
-//     converged on (Str/Htf/Liq/Mr/Cor), i.e. what it currently thinks matters. Folded
-//     into one compact string rather than five fields.
-string _calQ = showStatsEngine and __cg != "N/A" ? "  Cal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : ""
-string _isOos = showStatsEngine and __in >= 10 and oOosN >= 10 ? "  IS" + str.tostring(int(__iw)) + "%/ROLL" + str.tostring(int(oOosWr)) + "%" + (__iw - oOosWr > 15 ? "!FIT" : "") : ""
-string _featW = showStatsEngine and oMatch >= 30 ? "  W" + str.tostring(int(__fs)) + "/" + str.tostring(int(__fh)) + "/" + str.tostring(int(__fl)) + "/" + str.tostring(int(__fm)) + "/" + str.tostring(int(__fc)) : ""
-// F-008 (cont): vaPos / vaRatio wired. Both were computed every profile rebuild and read
-// by nothing — another finished feature with no consumer. vaPos states where price sits
-// relative to the volume-profile Value Area (ABOVE / BELOW / INSIDE), which is a direct
-// liquidity read: inside the VA means balanced two-sided auction, outside means the
-// auction is exploring and acceptance has not been established. vaRatio is the VA width as
-// a % of profile range — low = concentrated/coiled, high = distributed.
-// Gated on vaPos != "—" (its seeded default) rather than on any show* input: there is no
-// showVolumeProfile input in this build — I assumed one and the compile check caught it.
-// The seed value is the correct guard anyway; it stays "—" until the profile is first
-// built, so a cold engine prints nothing instead of a fabricated zero.
-string _vaStr = vaPos != "—" ? "  VA" + vaPos + str.tostring(int(vaRatio)) + "%" : ""
-// F-008: the restored analytics, now actually reaching the screen. Each is na/So-guarded so
-// a cold engine prints nothing rather than a misleading default.
-//   PDH1st  — of matched analogs, how often PDH was tagged BEFORE PDL. A directional read
-//             straight from history: 70 means 7 in 10 comparable states went for the high
-//             first. Complement (oPdl1stPct) is implied, so only one is shown.
-//   MAE     — mean Max Adverse Excursion in ATR across those analogs, i.e. how far price
-//             typically went AGAINST the setup before resolving. This is the number that
-//             tells you whether a stop is inside the historical noise band.
-//   BOScont — BOS continuation rate. DISPLAY ONLY: R5.3 removed it from fAdj to kill a
-//             double-count, and it must never be fed back into a score.
-string _analytics = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "/PDL" + str.tostring(oPdl1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "/fail" + str.tostring(int(oBosFail)) + "%" : ""
-// showSR consumer: annotates the readout when the user has toggled the Master switch for a
-// feature that now lives in the companion, so the control is wired to something truthful.
-string _srWhere = showSR ? "  SR@Visuals" : ""
-// GC confirmation state on the readout. Silent inputs are how features become orphans —
-// if it can move a macro vote, it must be visible. "GC DIV" is the one to watch: spot and
-// the centralised futures market disagreeing on direction.
-string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "") + cotState + curveState + "  " + schemaLine
-// WIRED (was assigned and never read — a pre-existing orphan, not introduced by the futures
-// work). It resolves the layout mode to a concrete name, which is genuinely useful on a
-// manual-execution dashboard: "Auto" tells you nothing about which layout you are actually
-// looking at, and layout drives how much of the panel is visible. Appended to the readout
-// so the value has a consumer and the mode is never ambiguous.
-string __resolvedModeResp = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
-string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]"
-string xcheckStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + (not na(vixD) ? "VIX" + str.tostring(vixD, "#.#") : "") + (climaxUp ? " CLIMAX▲" : climaxDown ? " CLIMAX▼" : "")
-string tqGrade = tradeQuality >= 80 ? "A" : tradeQuality >= 65 ? "B" : tradeQuality >= 50 ? "C" : "D"
+string crossCheck = _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100  [~ = analog estimate, /100 = heuristic score]"
+string auctionStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + "»" + aucBias + " " + aucState + str.tostring(aucProb) + "% " + aucCycle + " " + discStr + " A" + str.tostring(acceptScore) + acceptGrade + " " + valueMigStr + (openType != "" ? " " + openType : "") + (lastSweepQ > 0 ? " SW:" + lastSweepGrade + str.tostring(lastSweepQ) : "") + (not na(vixD) ? " VIX" + str.tostring(vixD, "#.#") : "")
 // ═══════════════ END TRADE QUALITY ═══════════════
 // R6.0: regime cell now shows the named adaptive regime + volatility tag.
-string regLabel = mktRegime + " " + volTag
 // Correlation directional magnitude — Strong/Moderate/Weak per asset
-string dxyMag = dxyValid ? (math.abs(avgCorrDXY) > 0.5 ? "Strong" : math.abs(avgCorrDXY) > 0.25 ? "Moderate" : "Weak") : "—"
-string eurMag = eurusdValid ? (math.abs(avgCorrEUR) > 0.5 ? "Strong" : math.abs(avgCorrEUR) > 0.25 ? "Moderate" : "Weak") : "—"
-string yldMag = yieldValid ? (math.abs(avgCorrYld) > 0.5 ? "Strong" : math.abs(avgCorrYld) > 0.25 ? "Moderate" : "Weak") : "—"
-string xagMag = silverValid ? (math.abs(avgCorrSlv) > 0.5 ? "Strong" : math.abs(avgCorrSlv) > 0.25 ? "Moderate" : "Weak") : "—"
 string tipsMag = tipsValid ? (math.abs(avgCorrTIPS) > 0.5 ? "Strong" : math.abs(avgCorrTIPS) > 0.25 ? "Moderate" : "Weak") : "—"
 // EFFECTIVE-N RECONCILED: this used N/(1 + 2rho/(1-rho)) with a hardcoded rho = 0.3,
 // while every other effective-N in the file uses N / OUTCOME_N (outcomes overlap over
 // OUTCOME_N bars). Two unreconciled methods for one quantity; the overlap form is the one
 // derived from how the labels are built, so it is used here too.
 // Win rate display
-string wrStr = "—"
-// F-A14 / v16 (no dead code): the +/-x% interval on this win rate is NOT displayed -- a
-// +/-x% reads as a fixed-holdout claim and oMatch is a rolling population (F-037). v13-v15
-// kept it computed but unread; v16 removes the dead computation. To restore it once a
-// frozen holdout exists (F-037B), the formula, at the overlap-corrected effective N, is:
-//     effN = max(oMatch / OUTCOME_N, 1);  half95 = 1.96 * sqrt(p(1-p) / effN) * 100
+string wrCIStr = ""
 if showStatsEngine and oMatch >= 30
     float _wrR = oWr / 100.0
     // F-A28 (v20): a bearish bias showed 1 - P(bull), i.e. "bear OR timeout" -- 80% on a chart
     // whose bear rate is ~20%. The bear direction now shows its own rate, oBear (the engine's
     // weighted bear-resolution share), so both directions are win rates on the same basis.
     float _wrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _wrR
-    wrStr := str.tostring(int(_wrDir * 100.0)) + "%"
+    float _effN = math.max(oMatch / math.max(OUTCOME_N, 1), 1.0)
+    float _wrCI95 = oMatch >= 30 ? 1.96 * math.sqrt(_wrDir * (1.0 - _wrDir) / _effN) * 100.0 : 0.0
+    wrCIStr := _wrCI95 > 1.0 ? "+/-" + str.tostring(int(_wrCI95 + 0.5)) + "%" : ""
 // Reliability label — sample-size bins for historical analog confidence
 // Feature contribution breakdown: directional accuracy lift per factor
 // EV + N + Cal (shared by dashboard + bottom strip)
-string evStr = "—"
-color evCol = cGray
-if not na(oEvLabel)
-    evCol := oEvLabel > 0 ? #00D084 : oEvLabel < 0 ? #FF4D4D : cGray
-    evStr := oEvLabel > 0 ? "+" + str.tostring(oEvVal, "#.#") : str.tostring(oEvVal, "#.#")
 // OOS validation: chronological holdout split (last holdoutRatio of bar_index range = OOS)
 // Effective-N corrected Sharpe confidence interval: SE(Sharpe) ~ sqrt((1 + 0.5*SR^2)/N_eff) (Lo 2002)
-string pfStr = not na(oProfitFactor) ? str.tostring(oProfitFactor, "#.##") : "—"
-color pfCol = not na(oProfitFactor) ? (oProfitFactor >= 1.5 ? #00D084 : oProfitFactor >= 1.0 ? #FF8C00 : #FF4D4D) : cGray
 // Effective-N corrected MaxDD significance flag
 // Compact macro colors
 // Correlation: impact arrows on XAUUSD — ▲▲/▲ (gold-bullish), ▼▼/▼ (gold-bearish), ≈ (neutral)
-_arrowStr(bool valid, bool up, string mag) =>
-    valid ? (mag == "Strong" ? (up ? "▲▲" : "▼▼") : mag == "Moderate" ? (up ? "▲" : "▼") : "≈") : "—"
 // R5-F13: arrows show IMPACT ON GOLD per the legend contract:
 // DXY falling / yields falling / TIPS falling → ▲ (gold-bullish)
-string _dxyArrow = _arrowStr(dxyValid, dxyBear, dxyMag)
-string _yldArrow = _arrowStr(yieldValid, yieldFalling, yldMag)
-string _eurArrow = _arrowStr(eurusdValid, eurusdBull, eurMag)
-string _xagArrow = _arrowStr(silverValid, silverClose > silverEMA, xagMag)
-string _spxArrow = spxValid ? (spxBull ? "▲" : spxBear ? "▼" : "≈") : "—"
-string _tipsArrow = _arrowStr(tipsValid, tipsFalling, tipsMag)
-string tipsC = tipsValid ? "TIP" + _tipsArrow : "—"
 
 // Day-of-week tracker: cumulative bullish/bearish bar count per weekday
 // R5-F2: undefined regimeBull/regimeBear references removed.
@@ -5100,44 +4962,35 @@ if _dow >= 2 and _dow <= 6
     else
         array.set(_dowBull, _dow, array.get(_dowBull, _dow) * _dowDecay)
         array.set(_dowBear, _dow, array.get(_dowBear, _dow) * _dowDecay)
-_dowBiasStr() =>
-    string[] _names = array.from("", "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa")
-    string _res = ""
-    for _d = 2 to 6
-        float _b = array.get(_dowBull, _d)
-        float _r = array.get(_dowBear, _d)
-        float _tot = _b + _r
-        if _tot > 5.0
-            string _pct = str.tostring(int(_b / _tot * 100.0))
-            _res := _res + array.get(_names, _d) + _pct + " "
-    _res := _res != "" ? _res : ""
-    _res
-
 float vdK = volDelta50 / 1000.0
 
 // ══════════════════════════════════════════════════════════════════════
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
 // ══════════════════════════════════════════════════════════════════════
 // R5.3-L8: parameter renamed tc -> tcol (it shadowed the function's own name — fragile).
-// v25: in Mobile the desktop table is not created; the renderer still runs (the card reads
-// its strings) and these helpers simply skip the desktop cells. The v8 column map (_dCol) and
-// the portrait row cut went with the merged MobileLand/MobilePort layouts.
-tc(col, row, txt, tcol, ts, w) =>
-    if not _dashMobile
-        table.cell(tblA, col, row, txt, text_color=tcol, text_size=ts, width=w)
-tcb(col, row, txt, tcol, bg, ts, w) =>
-    if not _dashMobile
-        table.cell(tblA, col, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
-// v25: in Mobile the plan is written into the card itself (rows 8-15, one line per cell), so
-// the card and the plan can never overlap on a narrow screen.
-tcp(col, row, txt, bg, ts, w) => table.cell(_dashMobile ? tblBrief : tblPlan, _dashMobile ? 1 : col, _dashMobile ? 8 + col : row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
+tc(col, row, txt, tcol, ts, w) => table.cell(tblA, col, row, txt, text_color=tcol, text_size=ts, width=w)
+tcb(col, row, txt, tcol, bg, ts, w) => table.cell(tblA, col, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
+tcp(col, row, txt, bg, ts, w) => table.cell(tblPlan, col, row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
 
-// v15 (token ceiling): forecast-cone breach state and status removed (default OFF).
+var bool[] gBreach = array.from(false, false)
+// R5.2-M5: breach state moved to main scope — it was written only inside
+// renderDashboard, so the cone breach markers in runVisuals depended on the dashboard
+// toggle. Also fixes a degenerate test: the old check compared close against a band
+// centered on the CURRENT close (close > close + band — never true), so breaches
+// could never fire. Breach is now a 1-bar move beyond the Z*ATR band from the prior
+// bar's cone origin.
+if showForecastCone
+    float _fcBandNow = math.max(adaptiveATR, atr) * forecastZ
+    array.set(gBreach, 0, not na(close[1]) and close > close[1] + _fcBandNow)
+    array.set(gBreach, 1, not na(close[1]) and close < close[1] - _fcBandNow)
+else
+    array.set(gBreach, 0, false)
+    array.set(gBreach, 1, false)
 
 // Q5.4-P1: dashboard split into three functions to satisfy the 254 external-
 // elements-per-function limit (was 338). Cross-function locals move through
 // global transfer arrays (arrays count once). Behavior identical.
-var string[] gDashS = array.new_string(35, "")
+var string[] gDashS = array.new_string(25, "")
 var color[] gDashC = array.new_color(12, color.gray)
 var float[] gDashF = array.new_float(10, 0.0)
 f_dashData1() =>
@@ -5145,6 +4998,18 @@ f_dashData1() =>
     string _tfLabel = timeframe.period
     string _symStr = syminfo.ticker
     float _chgPct = not na(close[1]) and close[1] != 0 ? (close - close[1]) / close[1] * 100.0 : 0.0
+    // Cone status string — computed from main-scope f* scores for RISK column
+    string _coneStatus = "Cone: —"
+    if showForecastCone and not cleanInstitutional and not professionalMode
+        // R5.1: dead sub-calculations removed (_csEnd/_csEndBand/_fcCurr/_csSlope duplicated the
+        // cone geometry drawn in runVisuals); this block now only classifies direction and
+        // detects band breaches at the CURRENT bar. _csLabel is wired into the status string.
+        string _csLabel = fBullScore >= fBearScore and fBullScore >= fRngScore ? "BULL" : fBearScore >= fBullScore and fBearScore >= fRngScore ? "BEAR" : "RNG"
+        // R5.2-M5: gBreach is now computed in main scope (see declaration site).
+        // Confidence % from validated OOS win rate; minimum N=10
+        string _coneConf = oOosNeff >= 10 ? " C:" + str.tostring(int(oOosWr)) + "%" : " C:LowN"
+        // R5-F11: display the Z multiple, not a coverage %.
+        _coneStatus := not array.get(gBreach, 0) and not array.get(gBreach, 1) ? "Cone " + _csLabel + ": Inside (Z" + str.tostring(forecastZ, "#.#") + _coneConf + ")" : array.get(gBreach, 0) ? "Cone: Breached ↑" : "Cone: Breached ↓"
     string _chgStr = (_chgPct >= 0 ? "+" : "") + str.tostring(_chgPct, "#.##") + "%"
     color _chgCol = _chgPct >= 0 ? cBloomBull : cBloomBear
     // SSOT: SHARED — consumed by DECISION block, direction color, and multi-column display
@@ -5206,15 +5071,9 @@ f_dashData1() =>
     int _setupScore = math.min(math.max(int(confidenceScore / 20), 0), 5)
     string _gradeLabel = _setupScore >= 4 ? "A" : _setupScore >= 3 ? "B" : _setupScore >= 2 ? "C" : "D"
     // Kelly-optimal sizing with tail-risk penalty and DD circuit breaker
-    // v16 -- KELLY FOR THE BET ACTUALLY PLACED. The label has three outcomes over the horizon:
-    // win (+b), loss (-1) and timeout (~0). Maximising p ln(1+fb) + q ln(1-f) gives
-    //     f* = (p b - q) / (b (p + q)) = (p' b - q') / b,   p' = p / (p + q),  q' = 1 - p'
-    // i.e. binary Kelly on the probability CONDITIONAL on resolution. The old form used the
-    // bull win rate for shorts as well, and 1 - p as the loss probability, which counts
-    // every timeout as a full loss. p' is taken in the plan's direction, and its Wilson 95%
-    // lower bound is computed at the effective number of RESOLVED observations.
-    // b is the long-side win/loss magnitude ratio, (1 - c)/(1 + c) in R. Under a constant
-    // cost c it is identical for a short.
+    // NOTE (design): p = oOosWr is the rate of bullish 1h drift among state-similar bars,
+    // NOT the win rate of this trade structure (1.5 ATR SL, 1:1/1:2 TP). Half-Kelly plus the
+    // haircuts below keep this conservative; a trade-level outcome log is the proper base.
     float _kellyPct = riskPercent
     if showStatsEngine and oOosNeff >= 10 and not na(oOosWr) and not na(oAvgW) and not na(oAvgL) and oAvgL > 0
         // Q5.0-S1: p = Wilson 95% LOWER bound at EFFECTIVE sample size (overlap-corrected
@@ -5253,6 +5112,7 @@ f_dashData1() =>
     array.set(gDashF, 1, _bullPct)
     array.set(gDashC, 1, _chgCol)
     array.set(gDashS, 2, _chgStr)
+    array.set(gDashS, 3, _coneStatus)
     array.set(gDashS, 4, _ctLabel)
     array.set(gDashC, 2, _dirBg)
     array.set(gDashS, 5, _dirConfLabel)
@@ -5266,413 +5126,7 @@ f_dashData1() =>
     array.set(gDashS, 9, _symStr)
     array.set(gDashS, 10, _tfLabel)
     true
-f_dashData2() =>
-    float _kellyPct = array.get(gDashF, 4)
-    float _riskUSD = accountSize * math.max(_kellyPct, 0.0) / 100.0
-    float _rawLots = tpDist > 0 and pointValue > 0 ? _riskUSD / (tpDist * pointValue) : 0.0
-    // CHANGE ID: F-002 (frozen forensic audit). DISPLAY/ADVISORY PATH ONLY — the scorer
-    // twins trade a fixed 1-unit qty and never read _lots, so no backtest number moves.
-    // OLD: math.round(_rawLots / 0.01) * 0.01 rounds to NEAREST, so realised risk could
-    // EXCEED intended risk — measured +20% at (acct 10k, kelly 0.5%, tpDist 30) and again
-    // at kelly 0.05%. Risk sizing must treat intended risk as a CEILING, never a target to
-    // round through, so this floors instead. The cost is under-risking by at most one lot
-    // step, which is the correct direction to err.
-    // Clamps added (none existed — verified absent): lot step 0.01, broker minimum 0.01,
-    // and a sanity maximum. Below the minimum the old code silently displayed "0.00L",
-    // which reads as a valid instruction to trade nothing rather than as "this trade is
-    // too small to place at your account size" — _lotsBelowMin now distinguishes them.
-    // NOTE ON UNITS: pointValue=100 makes this "lot" = 100 oz. The scorer's qty=1 is ONE
-    // OUNCE. Both are internally correct but they are DIFFERENT UNITS and must never be
-    // compared — that conflation is exactly the historical 100x error (P0-CAL-004).
-    float _lotsFloored = math.floor(_rawLots / 0.01) * 0.01
-    bool _lotsBelowMin = _rawLots > 0.0 and _lotsFloored < 0.01
-    float _lots = math.min(math.max(_lotsFloored, 0.0), 100.0)
-    // Structure
-    string _bosStr = bosLabelBull ? "BOS▲" : bosLabelBear ? "BOS▼" : "BOS—"
-    color _bosCol = bosLabelBull ? cBloomBull : bosLabelBear ? cBloomBear : cBloomNeut
-    color _bosBg = bosLabelBull ? cBloomBull_D : bosLabelBear ? cBloomBear_D : cTransp
-    string _chochStr = chochLabelBull ? "CHoCH▲" : chochLabelBear ? "CHoCH▼" : "CHoCH—"
-    color _chochCol = chochLabelBull ? cBloomBull : chochLabelBear ? cBloomBear : cBloomNeut
-    color _chochBg = chochLabelBull ? cBloomBull_D : chochLabelBear ? cBloomBear_D : cTransp
-    string _mssStr = mssLabelBull ? "MSS▲" : mssLabelBear ? "MSS▼" : "MSS—"
-    color _mssCol = mssLabelBull ? cBloomBull : mssLabelBear ? cBloomBear : cBloomNeut
-    color _mssBg = mssLabelBull ? cBloomBull_D : mssLabelBear ? cBloomBear_D : cTransp
-    string _structActive = mssLabelBull or mssLabelBear ? _mssStr : chochLabelBull or chochLabelBear ? _chochStr : _bosStr
-    color _structActiveCol = mssLabelBull or mssLabelBear ? _mssCol : chochLabelBull or chochLabelBear ? _chochCol : _bosCol
-    color _structActiveBg = mssLabelBull or mssLabelBear ? _mssBg : chochLabelBull or chochLabelBear ? _chochBg : _bosBg
-    // Liquidity — nearest level above (bearish draw) + below (bullish draw)
-    float _nearAbove = na
-    string _nearAboveLbl = ""
-    if not na(poolPdH) and close < poolPdH and (na(_nearAbove) or poolPdH < _nearAbove)
-        _nearAbove := poolPdH
-        _nearAboveLbl := "PDH"
-    if not na(poolPwH) and close < poolPwH and (na(_nearAbove) or poolPwH < _nearAbove)
-        _nearAbove := poolPwH
-        _nearAboveLbl := "PWH"
-    if not na(poolPmH) and close < poolPmH and (na(_nearAbove) or poolPmH < _nearAbove)
-        _nearAbove := poolPmH
-        _nearAboveLbl := "PMH"
-    float _nearBelow = na
-    string _nearBelowLbl = ""
-    if not na(poolPdL) and close > poolPdL and (na(_nearBelow) or poolPdL > _nearBelow)
-        _nearBelow := poolPdL
-        _nearBelowLbl := "PDL"
-    if not na(poolPwL) and close > poolPwL and (na(_nearBelow) or poolPwL > _nearBelow)
-        _nearBelow := poolPwL
-        _nearBelowLbl := "PWL"
-    if not na(poolPmL) and close > poolPmL and (na(_nearBelow) or poolPmL > _nearBelow)
-        _nearBelow := poolPmL
-        _nearBelowLbl := "PML"
-    string _nearAboveStr = not na(_nearAbove) ? _nearAboveLbl + str.tostring(int(_nearAbove)) : "—"
-    string _nearBelowStr = not na(_nearBelow) ? _nearBelowLbl + str.tostring(int(_nearBelow)) : "—"
-    // Price metrics
-    string _priceStr = str.tostring(close, "#.##")
-    string _vwapStr = not na(vwapVal) ? str.tostring(vwapVal, "#.##") : "—"
-    // Macro engine — DXY, 10Y, corr health
-    string _dxyStr = dxyValid ? "DXY" + _dxyArrow + (not na(dxyRSI) ? " R" + str.tostring(int(dxyRSI)) : "") : "DXY—"
-    string _yldStr = yieldValid ? "10Y" + _yldArrow : "10Y—"
-    string _macroLine2 = "Corr " + (eurusdValid ? "EUR" + _eurArrow : "EUR—") + " " + (silverValid ? "XAG" + _xagArrow : "XAG—") + " " + (spxValid ? "SPX" + _spxArrow : "SPX—") + " " + (tipsValid ? "TIP" + _tipsArrow : "TIP—")
-    color _crCol = not na(avgCorrHealth) ? (avgCorrHealth >= 60 ? cBloomBull : avgCorrHealth >= 40 ? cBloomWarn : cBloomBear) : cBloomNeut
-    // Macro gold-direction colors
-    int _macroVote = (dxyBear ? 1 : dxyBull ? -1 : 0) + (yieldFalling ? 1 : yieldRising ? -1 : 0)
-    color _dxyYldCol = _macroVote >= 1 ? cBloomBull : _macroVote <= -1 ? cBloomBear : cBloomNeut
-    int _macro2Vote = (eurusdBull ? 1 : eurusdBear ? -1 : 0) + (not na(silverClose) and silverClose > silverEMA ? 1 : not na(silverClose) and silverClose < silverEMA ? -1 : 0) + (spxBear ? 1 : spxBull ? -1 : 0) + (tipsFalling ? 1 : tipsRising ? -1 : 0)
-    color _macro2Col = _macro2Vote >= 1 ? cBloomBull : _macro2Vote <= -1 ? cBloomBear : cBloomNeut
-    color _macroBg = macroIntelLabel == "BULL" ? cBloomBull : macroIntelLabel == "BEAR" ? cBloomBear : macroIntelLabel == "N/A" ? cBloomNeut : cBloomWarn
-    // Risk framework
-    string _rrStr = "RR 1:" + str.tostring(tpRR2, "#.#")
-    color _volCol = atrPercentile > 75 ? cBloomWarn : atrPercentile < 25 ? cBloomBull : cBloomNeut
-    color _sessCol = sessionLabel == "LONDON" or sessionLabel == "NY" ? cBloomBull : sessionLabel == "ASIAN" ? cBloomWarn : cBloomNeut
-    color _evCol = evCol
-    array.set(gDashS, 11, _bosStr)
-    array.set(gDashS, 12, _chochStr)
-    array.set(gDashC, 3, _crCol)
-    array.set(gDashS, 13, _dxyStr)
-    array.set(gDashC, 4, _dxyYldCol)
-    array.set(gDashC, 5, _evCol)
-    // F-002: transport the below-minimum state as a -1.0 SENTINEL through the EXISTING
-    // slot. Adding a slot would renumber every downstream index — the transfer arrays were
-    // swept clean in Phase 2D and that survey should stay valid. Lots are non-negative by
-    // construction, so -1.0 is unambiguous. Both readers below decode it.
-    array.set(gDashF, 6, _lotsBelowMin ? -1.0 : _lots)
-    array.set(gDashC, 6, _macro2Col)
-    array.set(gDashC, 7, _macroBg)
-    array.set(gDashS, 14, _macroLine2)
-    array.set(gDashS, 15, _mssStr)
-    array.set(gDashF, 7, _nearAbove)
-    array.set(gDashS, 16, _nearAboveLbl)
-    array.set(gDashS, 17, _nearAboveStr)
-    array.set(gDashF, 8, _nearBelow)
-    array.set(gDashS, 18, _nearBelowLbl)
-    array.set(gDashS, 19, _nearBelowStr)
-    array.set(gDashS, 20, _priceStr)
-    array.set(gDashF, 9, _riskUSD)
-    array.set(gDashS, 21, _rrStr)
-    array.set(gDashC, 8, _sessCol)
-    array.set(gDashS, 22, _structActive)
-    array.set(gDashC, 9, _structActiveBg)
-    array.set(gDashC, 10, _structActiveCol)
-    array.set(gDashC, 11, _volCol)
-    array.set(gDashS, 23, _vwapStr)
-    array.set(gDashS, 24, _yldStr)
-    true
-f_dashRender() =>
-    string _agreeTier = array.get(gDashS, 0)
-    int _bearPct = int(array.get(gDashF, 0))
-    string _biasBreakdown = array.get(gDashS, 1)
-    color _biasCol = array.get(gDashC, 0)
-    int _bullPct = int(array.get(gDashF, 1))
-    color _chgCol = array.get(gDashC, 1)
-    string _chgStr = array.get(gDashS, 2)
-    string _ctLabel = array.get(gDashS, 4)
-    color _dirBg = array.get(gDashC, 2)
-    string _dirConfLabel = array.get(gDashS, 5)
-    string _dirLabel = array.get(gDashS, 6)
-    string _gradeLabel = array.get(gDashS, 7)
-    string _htfBias = array.get(gDashS, 8)
-    bool _isBear = array.get(gDashF, 2) > 0.5
-    bool _isBull = array.get(gDashF, 3) > 0.5
-    float _kellyPct = array.get(gDashF, 4)
-    int _rngPct = int(array.get(gDashF, 5))
-    string _symStr = array.get(gDashS, 9)
-    string _tfLabel = array.get(gDashS, 10)
-    string _bosStr = array.get(gDashS, 11)
-    string _chochStr = array.get(gDashS, 12)
-    color _crCol = array.get(gDashC, 3)
-    string _dxyStr = array.get(gDashS, 13)
-    color _dxyYldCol = array.get(gDashC, 4)
-    color _evCol = array.get(gDashC, 5)
-    float _lots = array.get(gDashF, 6)
-    color _macro2Col = array.get(gDashC, 6)
-    color _macroBg = array.get(gDashC, 7)
-    string _macroLine2 = array.get(gDashS, 14)
-    string _mssStr = array.get(gDashS, 15)
-    float _nearAbove = array.get(gDashF, 7)
-    string _nearAboveLbl = array.get(gDashS, 16)
-    string _nearAboveStr = array.get(gDashS, 17)
-    float _nearBelow = array.get(gDashF, 8)
-    string _nearBelowLbl = array.get(gDashS, 18)
-    string _nearBelowStr = array.get(gDashS, 19)
-    string _priceStr = array.get(gDashS, 20)
-    float _riskUSD = array.get(gDashF, 9)
-    string _rrStr = array.get(gDashS, 21)
-    color _sessCol = array.get(gDashC, 8)
-    string _structActive = array.get(gDashS, 22)
-    color _structActiveBg = array.get(gDashC, 9)
-    color _structActiveCol = array.get(gDashC, 10)
-    color _volCol = array.get(gDashC, 11)
-    string _vwapStr = array.get(gDashS, 23)
-    string _yldStr = array.get(gDashS, 24)
-    // ── Layout sizing ──
-    // R5-F14: "Medium" now maps to a valid size constant ("small") instead of leaking
-    // the raw option string into table.cell.
-    string _hdSize = textSize == "Auto" ? "small" : textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
-    string _prSize = textSize == "Auto" ? "normal" : textSize == "Large" ? "large" : textSize == "Small" ? "small" : "normal"
-    string _seSize = textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"
-    // R5.1: density input wired — scales all table column widths
-    float _densW = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
-    int _w0 = int(10 * _densW)
-    int _w1 = int(10 * _densW)
-    int _w2 = int(12 * _densW)
-    int _w3 = int(11 * _densW)
-    int _w4 = int(13 * _densW)
-    int _w5 = int(10 * _densW)
-    int _w6 = int(11 * _densW)
-    int _w7 = int(11 * _densW)
-    int _w8 = int(13 * _densW)
-    // F-037: was `OOS nn%+/-x N../..eff`. Two false claims in one field: the name OOS,
-    // and a confidence interval implying a fixed sample. Now reports the rolling win rate
-    // and its counts with NO interval, under a name that says what it is.
-    string _oosFixed = oOosNeff >= 10 ? str.tostring(int(oOosWr)) + "% N" + str.tostring(oOosN) + "/" + str.tostring(oOosNeff) + "eff" : "—"
-    string _dirStrength = _isBear ? "BEAR " + str.tostring(_bearPct) : _isBull ? "BULL " + str.tostring(_bullPct) : "MIXED"
-    string _sessTicks = (inNY ? "NY" : inLondon ? "LDN" : inAsian ? "ASN" : "CLS") + " " + (bullBOS ? "▲" : "·") + (bearBOS ? "▼" : "·")
-    // R5.1: session volume anomaly (vs per-session EWMA), CVD direction, and 50-bar volume
-    // delta wired into MARKET row 2 (all previously computed but never displayed)
-    float _sessVolBase = inAsian ? volAsianEWMA : inLondon ? volLondonEWMA : inNY ? volNyEWMA : 0.0
-    string _sessVolStr = _sessVolBase > 0 and not na(volume) ? " x" + str.tostring(volume / _sessVolBase, "#.#") : ""
-    string _cvdStr = cvdBull ? " CVD▲" : cvdBear ? " CVD▼" : " CVD·"
-    string _dltStr = " Δ" + (vdK >= 0 ? "+" : "") + str.tostring(vdK, "#.#") + "k"
-    // F-028: confidenceScore is a weighted heuristic of structure/MTF/liquidity/macro/session
-    // and is NEVER gated on statistical readiness, so it printed "83/100 HI" next to EV—,
-    // WR—, OOS— and PF— on a warm-up bar. Confidence is evidence STRENGTH, not probability;
-    // an unqualified "HI" beside four dashes is the single most misleading pairing on the
-    // panel. A "~" prefix marks it as heuristic while the stats engine is not ready.
-    // PRESENTATION ONLY -- the score, its weights and every gate are untouched.
-    string _confLabel = (_statsWarm ? "CONF " : "~CONF ") + str.tostring(na(confidenceScore) ? 0 : int(confidenceScore)) + "/100 " + (confLabel == "MEDIUM" ? "MED" : confLabel == "HIGH" ? "HI" : confLabel == "LOW" ? "LO" : confLabel)
-    string _evDisp = "EV " + evStr
-    string _pfDisp = "PF " + pfStr
-    float _crVal = na(avgCorrHealth) ? 50 : avgCorrHealth
-    // Footer data
-    int _agreeCount = shouldBuy ? (htf5mBull ? 1 : 0) + (htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0) + (htf1dBull ? 1 : 0) : shouldSell ? (htf5mBear ? 1 : 0) + (htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0) + (htf1dBear ? 1 : 0) : 0
-    string _agreePct = "Agree " + str.tostring(int(_agreeCount / 5.0 * 100)) + "%"
-    // F-024: this field was labelled "Upd", which reads as "this panel is current as of".
-    // It is built from `hour`/`minute`/`second`, which are BAR time, not wall time -- on a
-    // throttled panel it can sit hours behind the clock (observed: 06:15 against a 15:17
-    // chart). Relabelled "Bar" so it states what it actually is. PRESENTATION ONLY.
-    string _updTime = _symStr + " " + _tfLabel + " " + QVERSION + "-B" + str.tostring(SCHEMA_BUILD) + " Bar " + str.tostring(hour, "00") + ":" + str.tostring(minute, "00") + ":" + str.tostring(second, "00")
-    // ── ENRICHMENT VARIABLES ──
-    string _liqTargetLbl = liqDestLabel != "—" ? "TGT " + liqDestLabel : "TGT —"
-    color _liqTargetCol = liqDestLabel == "PDL" or liqDestLabel == "PWL" or liqDestLabel == "PML" or liqDestLabel == "EQL" ? cBloomBull : liqDestLabel == "PDH" or liqDestLabel == "PWH" or liqDestLabel == "PMH" or liqDestLabel == "EQH" ? cBloomBear : cBloomNeut
-    // Decision enrichment
-    // ── DESKTOP/TABLET LAYOUT ──
-    if true // Q5.4-CORE: mobile branch removed (token limit); desktop layout serves all modes
-        // ROW 0 — COLUMN HEADERS
-        tc(0, 0, "MARKET", C_TEXT, _hdSize, _w0)
-        tc(1, 0, "BIAS", C_TEXT, _hdSize, _w1)
-        tc(2, 0, "SIGNAL", C_TEXT, _hdSize, _w2)
-        tc(3, 0, "STRUCTURE", C_TEXT, _hdSize, _w3)
-        tc(4, 0, "LIQUIDITY", C_TEXT, _hdSize, _w4)
-        tc(5, 0, "PRICE", C_TEXT, _hdSize, _w5)
-        tc(6, 0, "MACRO", C_TEXT, _hdSize, _w6)
-        tc(7, 0, "RISK", C_TEXT, _hdSize, _w7)
-        tc(8, 0, "DECISION", C_TEXT, _hdSize, _w8)
-        // ROW 1 — PRIMARY METRICS
-        tc(0, 1, _priceStr + " " + _chgStr, _chgCol, _prSize, _w0)
-        tc(1, 1, _dirStrength, _biasCol, _prSize, _w1) // R5.1: wires _biasCol (WARN amber when mixed)
-        color _fDomCol = fBullScore >= fBearScore and fBullScore >= fRngScore ? cBloomBull : fBearScore >= fBullScore and fBearScore >= fRngScore ? cBloomBear : cBloomNeut
-        string _probDisp = _confDirLabel + "\nL " + str.tostring(int(na(fBullScore) ? 50 : fBullScore)) + "% S " + str.tostring(int(na(fBearScore) ? 50 : fBearScore)) + "% R " + str.tostring(int(na(fRngScore) ? 0 : fRngScore)) + "%"
-        tc(2, 1, _probDisp, _fDomCol, _prSize, _w2)
-        tc(3, 1, _bosStr + " " + _chochStr + " " + _mssStr, _structActiveCol, _prSize, _w3)
-        tc(4, 1, not na(_nearAbove) or not na(_nearBelow) ? _nearAboveStr + "/" + _nearBelowStr : "LIQ —", cBloomNeut, _prSize, _w4)
-        tc(5, 1, "V " + _vwapStr, C_TEXT, _prSize, _w5)
-        tcb(6, 1, "Corr " + _dxyStr + " " + _yldStr + " " + tipsC, _dxyYldCol, color.new(_macroBg, 85), _prSize, _w6)
-        float _costToTargetPct = tpDist > 0 and not na(_liveCostATR) ? _liveCostATR * adaptiveATR / tpDist * 100.0 : 0.0
-        _kellyPct := _kellyPct * regSizeMult // R6.0: size guidance haircut in high-vol/abnormal regimes
-        string _riskPrimary = "RRg " + (not na(tpRR2) ? "1:" + str.tostring(tpRR2, "#.#") : "—") + " SL " + (not na(tpSL) and not na(tpEntry) ? str.tostring(math.abs(tpSL - tpEntry) / adaptiveATR, "#.#") + " ATR" : "—") + "\nRisk " + str.tostring(int(_kellyPct)) + "% $" + str.tostring(int(_riskUSD)) + " " + str.tostring(_lots, "#.00") + "L Cst " + str.tostring(_costToTargetPct, "#.#") + "%"
-        tc(7, 1, _riskPrimary, _volCol, _prSize, _w7) // R5.1: tinted by volatility percentile (wires _volCol)
-        // RED-2C-FIX: _dirLabel here is still the LIVE per-tick decision (unchanged,
-        // via gDashS[6]). Template selection now branches on _confDirLabel (global,
-        // read directly — no transfer needed) so the box's wording matches the
-        // confirmed-based _dirConfLabel/_dirBg set above. A LIVE tag is appended
-        // ONLY when the live state has actually diverged from the confirmed one —
-        // on any historical bar this is always false, since every historical bar is
-        // by definition confirmed; it can only be true on a live chart's
-        // currently-forming bar.
-        string _liveTag = _confDirLabel != _dirLabel ? "\nLIVE:" + _dirLabel : ""
-        // F-006: surface the CONTINUOUS DIRECTIONAL BIAS alongside the momentary decision.
-        // biasLabel (BULL / BULL-ISH / RANGE / BEAR-ISH / BEAR) has existed since B10 and is
-        // computed every bar from the weighted evidence engine — but it was only ever emitted
-        // into ALERT STRINGS and never rendered on the dashboard. So the only directional
-        // field visible was DECISION, which is an entry-TIMING field that reads WAIT for most
-        // bars by design. That is the gap behind "bias stays on waiting during a $30 move":
-        // the bias was BULL the whole time, there was just nowhere to see it.
-        // Shown on non-actionable states only (WAIT / NO TRADE / WARMUP) — when DECISION is
-        // BUY or SELL the direction is already unambiguous and the row stays uncluttered.
-        // The block reason follows it, so a WAIT now says WHY it is waiting.
-        string _biasRow = (_confDirLabel == "WAIT" or _confDirLabel == "NO TRADE" or _confDirLabel == "WARMUP") ? "\nBIAS " + biasLabel + (_blkWhy != "" ? "  · " + _blkWhy : "") : ""
-        string _decBox = _confDirLabel == "RISK LOCK" ? riskLockStr : _confDirLabel == "WAIT" or _confDirLabel == "NO TRADE" or _confDirLabel == "WARMUP" ? _dirConfLabel + " TQ" + str.tostring(tradeQuality) + tqGrade + _biasRow + _liveTag : _dirConfLabel + " " + _gradeLabel + " TQ" + str.tostring(tradeQuality) + tqGrade + _liveTag
-        tcb(8, 1, _decBox, C_TEXT, _dirBg, _prSize, _w8)
-        // ROW 2 — SECONDARY / DIAGNOSTIC METRICS
-        string _mtfArrows = "5M" + (htf5mBull ? "▲" : htf5mBear ? "▼" : "·") + " 15M" + (htf15mBull ? "▲" : htf15mBear ? "▼" : "·") + " 1H" + (htf1hBull ? "▲" : htf1hBear ? "▼" : "·") + " 4H" + (htf4hBull ? "▲" : htf4hBear ? "▼" : "·") + " 1D" + (htf1dBull ? "▲" : htf1dBear ? "▼" : "·")
-        // R6.0: session intelligence appended — Exp = current range vs avg session range,
-        // M = historical manipulation frequency, C = directional-continuation frequency.
-        string _sessStats = (not na(sessExpansionPct) ? " Exp" + str.tostring(int(sessExpansionPct)) + "%" : "") + (not na(sessManipProb) ? " M" + str.tostring(int(sessManipProb)) + "%" : "") + (not na(sessContProb) ? " C" + str.tostring(int(sessContProb)) + "%" : "")
-        string _mktLine = _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats
-        tc(0, 2, _mktLine + "\n" + xcheckStr, _sessCol, _seSize, _w0)
-        string _biasLine = _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : "")
-        tc(1, 2, _biasLine, cBloomNeut, _seSize, _w1)
-        string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel
-        tc(2, 2, _evConf, _evCol, _seSize, _w2)
-        tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)
-        // R5.1: per-target reach scores wired — the suffix now shows the reach score of the
-        // ACTUAL destination pool (previously it always displayed PDH's number)
-        float _destReach = liqDestLabel == "PDH" ? pdhReachScore : liqDestLabel == "PDL" ? pdlReachScore : liqDestLabel == "PWH" ? pwhReachScore : liqDestLabel == "PWL" ? pwlReachScore : liqDestLabel == "PMH" ? pmhReachScore : liqDestLabel == "PML" ? pmlReachScore : liqDestLabel == "EQH" ? eqhReachScore : liqDestLabel == "EQL" ? eqlReachScore : na
-        string _pdhReachSuffix = not na(_destReach) ? " P" + str.tostring(int(_destReach)) : ""
-        // WIRED (was a write-only orphan pair): fvgUpperLine/fvgLowerLine held the bounds of
-        // the currently-ACTIVE, unmitigated fair-value gap and were computed every bar but
-        // never read. An open FVG is live liquidity context, so it belongs in this cell.
-        // Per the standing rule the values were NOT deleted -- they are now consumed.
-        // na when no gap is active, so the row simply disappears rather than printing na.
-        string _fvgZone = not na(fvgUpperLine) and not na(fvgLowerLine) ? "\nFVG " + str.tostring(math.min(fvgLowerLine, fvgUpperLine), format.mintick) + "-" + str.tostring(math.max(fvgLowerLine, fvgUpperLine), format.mintick) + (fvgWasBullish ? " BULL" : " BEAR") : ""
-        string _liqReachDisp = (liqDestLabel != "—" ? "TGT " + liqDestLabel + " R" + str.tostring(liqDestScore) + _pdhReachSuffix + "\nRCH " + str.tostring(int(na(liqReachScore) ? 50 : liqReachScore)) + "% " + liqDestConfidence : _liqTargetLbl) + _fvgZone
-        tc(4, 2, _liqReachDisp, _liqTargetCol, _seSize, _w4)
-        tc(5, 2, "E200 " + (not na(ema200) ? str.tostring(ema200, "#.##") : "—") + " " + _updTime, cBloomNeut, _seSize, _w5)
-        string _macroVerdict = "Macro " + (macroIntelLabel == "BULL" ? "BULL" : macroIntelLabel == "BEAR" ? "BEAR" : macroIntelLabel == "BULL-ISH" ? "BULL+" : macroIntelLabel == "BEAR-ISH" ? "BEAR+" : macroIntelLabel == "N/A" ? "—" : "MIX")
-        string _dowStr = showDowTracker ? _dowBiasStr() : ""
-        string _macroRow2 = _macroVerdict + (_dowStr != "" ? "\n" + _dowStr : "")
-        tcb(6, 2, _macroLine2 + " CR" + str.tostring(int(_crVal)) + "%\n" + _macroRow2, _crCol, color.new(_macro2Col, 88), _seSize, _w6)
-        string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp
-        tc(7, 2, _riskSec, pfCol, _seSize, _w7)
-        // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement
-        // that the trade cannot be placed at this account size; "0.00L" read as a valid
-        // instruction to trade nothing, which is a different and misleading claim.
-        string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "#.00") + "L"
-        string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + str.tostring(int(_riskUSD)) + " " + _lotStr : ""
-        string _decFoot = _rrStr + _riskDisp + " " + decisionLog + " " + _agreePct
-        tc(8, 2, _decFoot, C_TEXT, _seSize, _w8)
-        // v25: hand the composite strings to the Mobile card (slots 25-34), so the phone shows
-        // exactly what the desktop cells show, built once.
-        array.set(gDashS, 25, _mktLine)
-        array.set(gDashS, 26, _biasLine)
-        array.set(gDashS, 27, _probDisp)
-        array.set(gDashS, 28, _evConf)
-        array.set(gDashS, 29, _riskSec)
-        array.set(gDashS, 30, _decBox)
-        array.set(gDashS, 31, _riskPrimary)
-        array.set(gDashS, 32, _decFoot)
-        array.set(gDashS, 33, _liqReachDisp)
-        array.set(gDashS, 34, _macroRow2)
-    true
 // Detect responsive mode for table creation and indicator visibility
-var string _prevDashMode = "Desktop"
-var bool modeChanged = false
-// MOBILE CARD (v23 MobileBrief; v25 the single Mobile mode). Every value below is one the
-// engine already computes for the full dashboard; nothing is recalculated, so the card cannot
-// disagree with the desktop view or with the alerts. Rows 0/2/4/6 are the four headlines;
-// rows 1/3/5/7 their details (hidden at Compact density).
-_bc(int _r, string _k, string _v, color _c, _ts) =>
-    table.cell(tblBrief, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=_ts, text_halign=text.align_left)
-    table.cell(tblBrief, 1, _r, _v, text_color=_c, text_size=_ts, text_halign=text.align_left)
-if showDashboard and barstate.islast
-    string _mode2 = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
-    bool _mDet = density != "Compact"
-    // Mobile shows the plan (inside the card) unless Compact; desktop follows showTradePlan.
-    bool _planOn = showTradePlan and (_mDet or not _dashMobile)
-    // Recreate tables if mode changed
-    // v25: density is part of the key -- it changes the Mobile card's row count and the plan.
-    if _mode2 + density != _prevDashMode
-        modeChanged := true
-        _prevDashMode := _mode2 + density
-    if modeChanged
-        if not na(tblA)
-            table.delete(tblA)
-            tblA := na
-        if not na(tblPlan)
-            table.delete(tblPlan)
-            tblPlan := na
-        if not na(tblBrief)
-            table.delete(tblBrief)
-            tblBrief := na
-        modeChanged := false
-    if na(tblA) and not _dashMobile
-        // Q6.7: dashboard top, plan bottom -- collision-proof on any screen width.
-        tblA := table.new(_mode2 == "Desktop" ? position.top_right : position.top_left, 9, 4, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if _planOn and na(tblPlan) and not _dashMobile
-        tblPlan := table.new(_mode2 == "Tablet" ? position.bottom_left : position.bottom_right, 8, 1, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if (not _planOn or _dashMobile) and not na(tblPlan)
-        table.delete(tblPlan)
-        tblPlan := na
-    f_dashData1()
-    f_dashData2()
-    f_dashRender()
-    if _dashMobile
-        if na(tblBrief)
-            tblBrief := table.new(position.top_right, 2, _planOn ? 16 : _mDet ? 8 : 4, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
-        _bts = textSize == "Large" ? size.large : textSize == "Medium" ? size.normal : size.small
-        // Compact: headlines on rows 0-3. Otherwise headline k on row 2k, its detail on 2k+1.
-        int _hs = _mDet ? 2 : 1
-        _bds = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.tiny
-        // Details (Standard / Spacious). Each is the desktop cell's own string:
-        //   TREND   bias strength, C/S/I breakdown, agreement, HTF | MTF arrows, session, volume,
-        //           CVD, delta, regime, session stats | macro verdict + day-of-week tracker
-        //   TARGET  nearest liquidity above / below | target score, reach, open FVG (TradingView
-        //           prices, as on desktop; the headline and the plan carry the MT5 offset)
-        //   PREV>NEXT  price + change | forecast L/S/R | EV, calibrated P, confidence | WR/ROLL/PF
-        //           | (Spacious) engine cross-check line
-        //   DECISION   (headline = the desktop DECISION box: label, grade, TQ, bias + block reason,
-        //           LIVE tag) | RR, SL in ATR, risk %, $, lots, cost | RR, risk, decision log,
-        //           MTF agreement
-        if _mDet
-            _bc(1, "", array.get(gDashS, 26) + "\n" + array.get(gDashS, 25) + "\n" + array.get(gDashS, 34), C_TEXT, _bds)
-            _bc(3, "", "TV price: above " + array.get(gDashS, 17) + " / below " + array.get(gDashS, 19) + "\n" + array.get(gDashS, 33), C_TEXT, _bds)
-            _bc(5, "", array.get(gDashS, 20) + " " + array.get(gDashS, 2) + "\n" + array.get(gDashS, 27) + "\n" + array.get(gDashS, 28) + "\n" + array.get(gDashS, 29) + (density == "Spacious" ? "\n" + xcheckStr : ""), C_TEXT, _bds)
-            _bc(7, "", array.get(gDashS, 31) + "\n" + array.get(gDashS, 32), C_TEXT, _bds)
-        // 1 TREND: composite bias, regime, higher-timeframe bias, bull/bear score split
-        _bc(0, "1 TREND", biasLabel + " · " + mktRegime + " · HTF " + array.get(gDashS, 8) + " · B" + str.tostring(bullScore, "#") + "/S" + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
-        // 2 TARGET: the engine's liquidity destination, at the MT5 price, with its reach score
-        float _bTgt = liqDestLabel == "PDH" ? poolPdH : liqDestLabel == "PDL" ? poolPdL : liqDestLabel == "PWH" ? poolPwH : liqDestLabel == "PWL" ? poolPwL : liqDestLabel == "PMH" ? poolPmH : liqDestLabel == "PML" ? poolPmL : liqDestLabel == "EQH" ? poolEqH : liqDestLabel == "EQL" ? poolEqL : na
-        _bc(_hs, "2 TARGET", na(_bTgt) ? "no dominant liquidity target" : liqDestLabel + " " + str.tostring(_bTgt + mt5Offset, "#.##") + " MT5 · reach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
-        // 3 PREVIOUS -> NEXT: last structure event and last bar's change; calibrated
-        // probability that the next 1R move goes up vs down (the gate's own probability)
-        _bc(2 * _hs, "3 PREV → NEXT", (structStr == "" ? "no active structure" : structStr) + " · last " + array.get(gDashS, 2) + "  →  next 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : " · EV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
-        // 4 DECISION: the CONFIRMED decision (same as alerts); the MT5 plan when it is a trade
-        bool _bTrade = _confDirLabel == "BUY" or _confDirLabel == "SELL"
-        _bc(3 * _hs, "4 DECISION", array.get(gDashS, 30) + (_bTrade ? " | MT5 " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
-    // ═══ Q5.9: TRADE PLAN PANEL POPULATION (regression fix) ═══
-    // The cell-writing block for tblPlan was swept together with the ROW 3 removal
-    // during the token-limit cuts: the table was still being CREATED each bar, so the
-    // panel rendered as an empty strip at the bottom of the chart. Restored here, and
-    // placed AFTER f_dashData1() because the lot size arrives via gDashF slot 6.
-    if _planOn and not na(_dashMobile ? tblBrief : tblPlan)
-        float _pLots = array.get(gDashF, 6)
-        color _pBg = tpIsLong ? cBloomBull_D : cBloomBear_D
-        string _pSz = textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
-        tcp(0, 0, tpDirStr, _pBg, _pSz, 0)
-        tcp(1, 0, "ENTRY " + tpEntryStr + (mt5Offset != 0.0 ? "  [MT5" + (mt5Offset > 0 ? "+" : "") + str.tostring(mt5Offset, "#.##") + "]" : ""), cBloomBg, _pSz, 0)
-        tcp(2, 0, "SL " + tpSLStr + (not na(pSLhit) ? "  ~" + str.tostring(int(pSLhit)) + "%" + (not na(f_ciHalf(pSLhit)) ? "±" + str.tostring(int(f_ciHalf(pSLhit))) : "") : ""), cBloomBg, _pSz, 0)
-        tcp(3, 0, "TP1 " + tp1Str + (not na(pTP1) ? "  ~" + str.tostring(int(pTP1)) + "%" + (not na(f_ciHalf(pTP1)) ? "±" + str.tostring(int(f_ciHalf(pTP1))) : "") : ""), cBloomBg, _pSz, 0)
-        tcp(4, 0, "TP2 " + tp2Str + (not na(pTP2) ? "  ~" + str.tostring(int(pTP2)) + "%" : ""), cBloomBg, _pSz, 0)
-        tcp(5, 0, "TP3 " + tp3Str + (not na(pTP3) ? "  ~" + str.tostring(int(pTP3)) + "%" : ""), cBloomBg, _pSz, 0)
-        // F-002 decode + F-003 relabel. RR is GROSS: tpRR = |tp-entry|/|entry-SL| and
-        // NEITHER term carries spread, commission or slippage, so a displayed 1:1.5 is an
-        // executable 1:0.99 at a 3-point stop (-34%), or 1:0.48 at 0.75 points (-76%).
-        // Labelled rather than net-adjusted ON PURPOSE: a net figure would have to be
-        // computed from broker economics that are still ASSUMPTIONS, and a confidently
-        // wrong number is worse than an honestly qualified one. Switch to true net once
-        // the user's own fills replace the [BROKER CONFIG] defaults.
-        string _pLotStr = _pLots < 0.0 ? "<min" : str.tostring(_pLots, "#.00") + "L"
-        tcp(6, 0, "RRg " + tpRRStr + "  " + _pLotStr, cBloomBg, _pSz, 0)
-        tcp(7, 0, planReason, cBloomBg, _pSz, 0)
 
 
 
@@ -5694,42 +5148,148 @@ if showDashboard and barstate.islast
 // R5-F5: hline() cannot take a series expression — replaced with a hidden plot.
 
 // ---- Order Block Visuals ----
-// ===== OB / FVG CHART RENDERING — MOVED TO THE VISUALS COMPANION =====
-// NOT a feature removal. The Visuals companion ALREADY renders both zone types, and as
-// FILLED BOXES (box.new for FVG and for bull/bear order blocks) rather than the pair of
-// boundary lines plus a label that lived here — an equivalent, arguably clearer
-// representation of exactly the same zones. Running both scripts therefore drew each zone
-// TWICE, in two different styles.
-// Consolidating the rendering in Visuals removes that duplication, and moves the cost to
-// the file that has the room: Visuals sits near 12k of its 100,256 budget while the Master
-// was OVER the limit at 101,016.
-// THE ENGINE IS UNTOUCHED. Detection still runs here and still feeds the decision path —
-// obBullActive / obBullLow / obBullHigh / obBearActive continue to supply the SL/TP
-// candidate arrays and the liquidity map exactly as before. Only the drawing left.
-// F-A30 (v21) CORRECTION: that was not true at default settings. Detection was gated by
-// showOB / showFVG / showDisplacement (and SMT / Climax by their switches), all OFF by
-// default, so the decision ignored the zones Visuals draws. They are engine inputs again,
-// default ON, with the same definitions Visuals uses.
+var line bullOBLowLine = na
+var line bullOBHighLine = na
+var line bearOBLowLine = na
+var line bearOBHighLine = na
+var label bullOBLabel = na
+var label bearOBLabel = na
+// Historical OB zone lines
+var line[] bullOBHistLowA = array.new_line()
+var line[] bullOBHistHighA = array.new_line()
+var line[] bearOBHistLowA = array.new_line()
+var line[] bearOBHistHighA = array.new_line()
+// ---- FVG Quality Filter (max 3 active) ----
+var int fvgActiveCount = 0
+if fvgDetected and not fvgActive[1]
+    fvgActiveCount += 1
+if fvgMitigated and fvgActive[1]
+    fvgActiveCount := math.max(0, fvgActiveCount - 1)
+// R5.2: gaps that expire via fvgMaxBars (without mitigation) previously leaked the
+// counter upward until fvgShowQuality locked false permanently.
+if not fvgMitigated and fvgActive[1] and not fvgActive
+    fvgActiveCount := math.max(0, fvgActiveCount - 1)
+bool fvgShowQuality = fvgActiveCount <= 3 or not showFVG
+// ---- FVG Visuals (quality-filtered) ----
+var line fvgUpperLineObj = na
+var line fvgLowerLineObj = na
+var label fvgLabel = na
+// ---- Macro Strength Score as subplot ----
+// R5.1: volume climax markers wired to the showClimax toggle (previously computed, never shown)
+// ---- Corr Breakdown ----
 
 // Shared label cleaner helper
 // Helper: apply vertical offset bidirectionally (push up OR down, whichever is closer to base)
 // R5-F12: alertcondition messages use only valid built-in placeholders; the dynamic
 // alert() calls below carry the full bias detail.
-// F-A31 (v21): the two alertconditions were not confirmed-bar gated -- with "Once per bar"
-// they could fire mid-candle on a signal gone by the close. The alert() texts now carry the
-// MT5-adjusted plan (entry / SL / TP1-3), directional P and race EV, for manual execution.
-alertcondition(shouldBuy and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Buy Signal", message="XAUUSD {{ticker}} {{interval}}: BUY signal @ {{close}}")
-alertcondition(shouldSell and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Sell Signal", message="XAUUSD {{ticker}} {{interval}}: SELL signal @ {{close}}")
-string _mt5Plan = "MT5 entry " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str + " TP3 " + tp3Str + " (" + tpRRStr + ") P" + str.tostring(math.round((tpIsLong ? _calPLong : _calPShort) * 100.0)) + "% EV" + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##") + "R")
-if shouldBuy and not tqVeto and barstate.isconfirmed and not perfMode
-    alert("XAUUSD " + timeframe.period + " BUY | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar_close)
-if shouldSell and not tqVeto and barstate.isconfirmed and not perfMode
-    alert("XAUUSD " + timeframe.period + " SELL | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel, alert.freq_once_per_bar_close)
-alertcondition(showSignals and barstate.isconfirmed and bullBOS and not perfMode, "Bull BOS", "XAUUSD Bull BOS @ {{close}}")
-alertcondition(showSignals and barstate.isconfirmed and bearBOS and not perfMode, "Bear BOS", "XAUUSD Bear BOS @ {{close}}")
-// v21: every CONFIRMED change of the DECISION cell raises an alert (e.g. BUY -> NO TRADE when a
-// veto engages, WAIT -> SELL), carrying the MT5 plan when the new state is a trade.
-if barstate.isconfirmed and not perfMode and _confDirLabel != _confDirLabel[1]
-    alert("XAUUSD " + timeframe.period + " DECISION " + _confDirLabel[1] + " -> " + _confDirLabel + (_confDirLabel == "BUY" or _confDirLabel == "SELL" ? " | " + _mt5Plan : _confDirLabel == "RISK LOCK" ? " | " + riskLockStr : ""), alert.freq_once_per_bar_close)
-if barstate.isconfirmed and not perfMode and useRiskLimits and riskLock and not riskLock[1]
-    alert("XAUUSD " + timeframe.period + " RISK LOCK engaged: " + riskLockStr + " -- new entries blocked", alert.freq_once_per_bar_close)
+
+
+// ═══════════════ STRATEGY EXECUTION LAYER (twin only) ═══════════════
+// Constant contract size for the A/B. Change it here if your instrument's contract
+// unit differs; do NOT switch back to percent-of-equity while comparing arms.
+// CHANGE ID: P0-CAL-005 — HARD calibration gate (upgraded from advisory).
+// (v15: the gate below now tests pointvalue/currency, not mintick -- see P0-CAL-006.)
+// The slippage/commission constants in the strategy() declaration are derived against
+// syminfo.mintick == 0.01. If the loaded feed quotes gold to a different precision, the
+// scorer's costs silently desynchronise from the selector's and the A/B stops measuring
+// the gates — while still producing clean-looking, entirely invalid numbers.
+// A warning label alone is not enough: a run that LOOKS finished is worse than one that
+// visibly refuses, because the invalid result gets recorded and compared. So this now
+// BLOCKS EXECUTION — _costModelValid gates both entries — and the run is unqualified by
+// construction rather than by the operator remembering to check a banner.
+// Recompute per the derivation in the header, set the constants, and it re-enables.
+bool _costModelValid = syminfo.pointvalue == 1.0 and syminfo.currency == "USD"
+var label _mtWarn = na
+if barstate.islast and not _costModelValid
+    label.delete(_mtWarn)
+    _mtWarn := label.new(bar_index, high, "A/B INVALID — COST MODEL MISMATCH\npointvalue=" + str.tostring(syminfo.pointvalue) + " currency=" + syminfo.currency + "\n(cash costs derived for 1 contract = $1/pt, USD)\nENTRIES BLOCKED until corrected", color=color.new(color.red, 0), textcolor=color.white, style=label.style_label_down, size=size.large)
+
+float abTestQty = 1.0
+// Q5.6: entries additionally blocked by the account-state risk lockout, so the twin
+// backtests EXACTLY what the indicator recommends (tqVeto already folds in riskLock).
+// P0-CAL-005: `and _costModelValid` is the HARD GATE. On a feed whose tick size the
+// declared cost constants were not derived for, the twin takes NO trades at all, so the
+// Strategy Tester reports a visibly empty run instead of a plausible but invalid one.
+bool execBuyS = shouldBuy and not tqVeto and barstate.isconfirmed and _costModelValid
+bool execSellS = shouldSell and not tqVeto and barstate.isconfirmed and _costModelValid
+var float stEntry = na
+var float stSL = na
+var float stTP1 = na
+var float stTP2 = na
+var bool stBE = false
+if execBuyS and strategy.position_size <= 0
+    strategy.close_all(comment="flip")
+    stEntry := close
+    stSL := tpSL
+    stTP1 := tp1
+    stTP2 := tp2
+    stBE := false
+    // P0-EXEC-001 (external audit): qty is now EXPLICIT. Previously omitted, so the
+    // order fell through to default_qty_type=percent_of_equity/5 — i.e. 5% of equity
+    // notional, which is neither the dashboard's risk-based lot nor a constant size.
+    // Worse for an A/B: percent_of_equity COMPOUNDS, so the two arms would trade
+    // different sizes as their equity curves diverged, contaminating the very
+    // comparison the twins exist to make. Fixed size makes trade outcomes additive in
+    // R and the gate change the only variable. Absolute P&L is therefore NOT a
+    // risk-model simulation — it is a like-for-like gate comparison, which is the
+    // twins' only purpose.
+    // CHANGE ID: F-013 — stamp the engine's own per-trade estimates into the entry
+    // COMMENT, which TradingView writes to the Signal column of the List of Trades
+    // export. This is METADATA ONLY: comment has zero effect on fills, sizing, or any
+    // result. It is applied to BOTH arms so the A/B delta is unchanged.
+    // WHY IT MUST PRECEDE THE BASELINE: validate.py's calibration test needs a `prob`
+    // and `tq` per trade, and those are internal engine values absent from the standard
+    // export. alert() CANNOT supply them — alerts fire only forward in real time and
+    // never on historical bars, so they can never backfill a backtest. The entry comment
+    // is the only mechanism that attaches them to every historical trade. Without this,
+    // the baseline export cannot support the calibration test and a second full run
+    // F-A12 FIX. That format was NEVER EMITTED: the comment shipped TQ|CG|B..V..|D and
+    // carried no probability at all, so the one field the calibration test actually needs
+    // was the one field missing -- and the defect hid behind a comment describing the
+    // intended format rather than the real one. P is now appended, and it is the
+    // DIRECTIONAL probability: _calibratedProb for longs, 1 - _calibratedProb for shorts,
+    // i.e. P(this trade wins) rather than P(bullish). A reliability curve needs the
+    // former. Emitted format is now "TQ<n>|CG<n>|B<n>V<n>|D<n>|P<pct>".
+    // This had to land BEFORE the baseline run for the reason stated just above: alerts
+    // cannot backfill history, so without it the export cannot support the calibration
+    // test and a second full backtest would be needed to get it.
+    strategy.entry("L", strategy.long, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round(_calPLong * 100.0)))
+if execSellS and strategy.position_size >= 0
+    strategy.close_all(comment="flip")
+    stEntry := close
+    stSL := tpSL
+    stTP1 := tp1
+    stTP2 := tp2
+    stBE := false
+    strategy.entry("S", strategy.short, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round(_calPShort * 100.0)))
+// CHANGE ID: P0-EXEC-002-FIX | FILE: Strategy execution layer (both twins)
+// OLD LOGIC: on the bar where high>=stTP1, stSL was mutated to breakeven BEFORE
+// being passed to strategy.exit() the SAME bar, with no check for whether the
+// ORIGINAL stop was also touched this bar. TradingView cannot determine intrabar
+// touch order from OHLC alone (documented limitation, not fixable by
+// calc_on_every_tick) — so a bar whose low breached the original stop AND whose
+// high reached TP1 was silently resolved as "TP1 then breakeven," which is
+// optimistic if the stop was actually touched first.
+// NEW LOGIC: only move to breakeven if TP1 was touched AND the ORIGINAL stop was
+// NOT also touched this same bar. If both were touched, stSL is left unmutated
+// (original stop stays live) — this matches the stop-first convention already
+// used elsewhere in this codebase (Q5.6 risk tracker: "SL assumed first if both
+// hit in one bar"), applied here for consistency rather than invented fresh.
+// EXPECTED EFFECT: fewer/later breakeven transitions on bars with a same-bar
+// stop/TP1 conflict; no change on bars where only one level was touched.
+// REGRESSION TESTS: (A) TP1 only, no stop touch -> BE as before. (B) stop only ->
+// unaffected (existing branch). (C) both touched same bar -> stop wins, no BE.
+if strategy.position_size > 0
+    bool _slTouchedL = low <= stSL
+    if not stBE and high >= stTP1 and not _slTouchedL
+        stBE := true
+        stSL := stEntry
+    strategy.exit("Lx1", "L", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Lx2", "L", stop=stSL, limit=stTP2)
+if strategy.position_size < 0
+    bool _slTouchedS = high >= stSL
+    if not stBE and low <= stTP1 and not _slTouchedS
+        stBE := true
+        stSL := stEntry
+    strategy.exit("Sx1", "S", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Sx2", "S", stop=stSL, limit=stTP2)

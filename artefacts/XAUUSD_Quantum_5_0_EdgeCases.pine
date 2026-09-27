@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v21   (citations re-anchored)        ║
+// ║  BUILD STAMP — this file last CHANGED in v30   (I10 separates the causes)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -243,9 +243,20 @@ if barstate.islastconfirmedhistory
     chk("I4  math.max(na, 5) propagates na",f(math.max(_nan, 5.0)), "na", "NUM")
     chk("I5  nz() substitutes",             f(nz(_nan, 7.0)), "7", "NUM")
     chk("I6  safeDiv by zero -> 0",         f(safeDiv(10.0, 0.0)), "0", "NUM")
-    chk("I7  safeDiv near-zero NOT guarded",b(safeDiv(10.0, 1e-12) > 1e9), "true", "NUM")
-    // I7 is the real finding: the guard is `== 0`, so 1e-12 passes and explodes.
+    // v29 -- I7 CORRECTED FROM A MEASUREMENT. It asserted IEEE semantics ("the `== 0` guard
+    // lets 1e-12 through and explodes", want true). On the operator's chart (2026-09-27) it
+    // returned FALSE: Pine's float `==` is tolerance-based, so 1e-12 == 0 and the plain guard
+    // already catches it. I7 now asserts the measured behaviour; I9/I10 test the explanation
+    // (I9: tolerant equality; I10: the literal is NOT read as zero). If I9 or I10 fails, the
+    // explanation is wrong, not the engine -- whose safeDiv uses abs(b) > 1e-10 either way.
+    chk("I7  == 0 guard also catches 1e-12",   b(safeDiv(10.0, 1e-12) > 1e9), "false", "NUM")
     chk("I8  0/0 guarded to 0",             f(safeDiv(0.0, 0.0)), "0", "NUM")
+    chk("I9  Pine float == is tolerant",      b(1e-12 == 0.0), "true", "NUM")
+    // v30: measured 2026-09-27 -- `1e-12 > 0.0` returned FALSE (the v29 I10). Either the
+    // literal is read as 0, or `>` is tolerant too. The table is full (99 + header = 100 rows),
+    // so I10 is REPLACED by the test that separates the two: 1e-12 * 1e12 is 1 if the literal
+    // keeps its value (then `>` is tolerant as well), 0 if it was read as zero.
+    chk("I10 1e-12 * 1e12 (literal kept?)",   f(1e-12 * 1e12), "1", "NUM")
 
 // =============================================================================
 // GROUP J — SCORE EXTREMES AND VOTE POOL
@@ -353,14 +364,20 @@ _hts() => harnessText == "Tiny" ? size.tiny : harnessText == "Normal" ? size.nor
 if barstate.islastconfirmedhistory
     int _n = array.size(tName)
     int _fail = 0
+    // v28: the header also names the FIRST failing assertion with its GOT / WANT. On the
+    // operator's screenshots the failing row itself was too small to read, while this red
+    // header cell stayed legible even on a phone.
+    string _firstFail = ""
     for _q = 0 to (_n > 0 ? _n - 1 : 0)
         if not array.get(tPass, _q)
             _fail += 1
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v21", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+            if _firstFail == ""
+                _firstFail := array.get(str.split(array.get(tName, _q), " "), 0) + " got " + array.get(tGot, _q) + " want " + array.get(tWant, _q)
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v30", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
-    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n), bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = _hts())
+    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n) + " · " + _firstFail, bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = _hts())
     int _row = 1
     for _pass = 0 to 1
         for _q = 0 to (_n > 0 ? _n - 1 : 0)

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v22   (free-plan volume check)       ║
+// ║  BUILD STAMP — this file last CHANGED in v32   (Cornish-Fisher guard F-A38)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -848,8 +848,12 @@ float retSkewC = math.min(math.max(retSkew, -1.0), 1.0)
 // Measured on a skewed, fat-tailed sample (S 0.62, K 3): at the 99th percentile the true
 // normal-equivalent is 2.33; the inverse gives 2.29, the old forward map gave 6.64.
 // Inverted exactly by Newton's method (6 steps, from w = x) rather than a truncated inverse
-// series, whose error grows with K. q'(w) is positive over the clamped (S, K) region; the 0.1
-// floor on it only guards the step.
+// series, whose error grows with K.
+// v32 FIX (F-A38): the claim that q'(w) stays positive over the clamped (S, K) region was
+// false. With thin tails (K < 0) q'(w) = 1 + wS/3 + (w²-1)K/8 - ... turns negative for |w|
+// above ~3, so q has no inverse there and Newton runs away: on live 5M data 147 bars, one of
+// them z 3.18 with K -1 -> w ~1e213, pinning mrComposite at +/-100. The inverse is now kept
+// only where it actually solves q(w) = z (relative error 1e-6); otherwise the raw z is used.
 float _cfK = math.min(math.max(retKurt, -1.0), 3.0)
 float retZScore = retZScoreRaw
 if _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(retZScoreRaw)
@@ -860,7 +864,8 @@ if _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(r
         float _q = _w + (_w2 - 1.0) * retSkewC / 6.0 + (_w3 - 3.0 * _w) * _cfK / 24.0 - (2.0 * _w3 - 5.0 * _w) * retSkewC * retSkewC / 36.0
         float _dq = 1.0 + _w * retSkewC / 3.0 + (3.0 * _w2 - 3.0) * _cfK / 24.0 - (6.0 * _w2 - 5.0) * retSkewC * retSkewC / 36.0
         _w := _w - (_q - retZScoreRaw) / math.max(_dq, 0.1)
-    retZScore := _w
+    float _w2f = _w * _w
+    retZScore := math.abs(_w + (_w2f - 1.0) * retSkewC / 6.0 + (_w2f * _w - 3.0 * _w) * _cfK / 24.0 - (2.0 * _w2f * _w - 5.0 * _w) * retSkewC * retSkewC / 36.0 - retZScoreRaw) < 1e-6 * math.max(1.0, math.abs(retZScoreRaw)) ? _w : retZScoreRaw
 
 // Distance from VWAP, EMAs in ATR terms (mean reversion gauges)
 float distVwapATR = adaptiveATR > 0 ? (close - vwapVal) / adaptiveATR : 0.0
@@ -2923,7 +2928,9 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 // (an analog feature via mrComposite) change what the gate acts on.
 // v21: 4 -> 5. OB / FVG / displacement / SMT / climax are engine inputs again (F-A30), which
 // changes which trades fire; exports from B4 and B5 must never be pooled.
-int SCHEMA_BUILD = 5
+// v32: 5 -> 6. The Cornish-Fisher guard (F-A38) changes mrComposite on the bars where the inverse
+// did not exist, which feeds the composite and the analog features; B5 and B6 exports must not be pooled.
+int SCHEMA_BUILD = 6
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
 int barDataStatus = ((gcConfirmsBull or gcConfirmsBear) ? 1 : 0) + ((oiValid and oiConviction != 0) ? 2 : 0) + (US2Y_STATUS == 0 ? 4 : 0) + (COT_STATUS == 0 ? 8 : 0) + (GC_STATUS != 0 ? 16 : 0) + (OI_STATUS != 0 ? 32 : 0)
 var int[] hSchemaVer = array.new_int(HIST_MAX, 1)
@@ -5289,10 +5296,12 @@ int dsGC = 0
 int dsOI = 0
 if barstate.islast and showDataCensus
     for _s = 0 to math.max(math.min(hN, HIST_MAX) - 1, 0)
-        int _v = array.get(hDataStatus, _s)
+        // v24: was `_v`, which shadowed the engine's global `_v` (return variance) -- compiler
+        // warning at the operator's first Diagnostics save. Behaviour unchanged; name only.
+        int _dsv = array.get(hDataStatus, _s)
         dsN += 1
-        dsGC += _v % 2
-        dsOI += int(math.floor(_v / 2.0)) % 2
+        dsGC += _dsv % 2
+        dsOI += int(math.floor(_dsv / 2.0)) % 2
 string censusLine = hN > 0 ? "GC " + str.tostring(dsGC * 100.0 / math.max(dsN, 1), "#") + "%  OI " + str.tostring(dsOI * 100.0 / math.max(dsN, 1), "#") + "%  of " + str.tostring(dsN) + " stored obs  (now D" + str.tostring(barDataStatus) + ")" : "no stored observations yet"
 
 // ---- 7. GATE FUNNEL (v20) -- why a backtest does or does not trade ---------------------
@@ -5328,7 +5337,7 @@ string funnel2 = "TQ<floor " + str.tostring(fnTQ) + "  EV<0 " + str.tostring(fnE
 
 // ---- 8. LAYOUT INPUTS (engine's dashboard inputs, wired here in v21) --------------------
 // textSize -> text size; density -> how many rows (Compact: core, Standard: + cross-check,
-// Spacious: + auction line); mobileOverride / dashMode Mobile* -> compact, mirror hidden;
+// Spacious: the auction row carries the full cross-check prefix as well); mobileOverride / dashMode Mobile* -> compact, mirror hidden;
 // debugMode -> raw gate booleans row.
 dgTs = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.tiny
 bool dgCompact = mobileOverride or dashMode == "MobilePort" or dashMode == "MobileLand" or density == "Compact"
@@ -5340,6 +5349,7 @@ string xSignal = calProbStr + "  conf " + confLabel + "  cal " + oCalDetail
 string xMacro = gcState + "  " + oiState + cotState + curveState + migState + "  DXY-RSI " + (na(_rawDXYRSI) ? "—" : str.tostring(_rawDXYRSI, "#")) + "  EURcorr " + str.tostring(avgCorrEUR, "#.##") + "  TIPS " + tipsMag
 string xStruct = "PDH1st " + (na(oPdh1stPct) ? "—" : str.tostring(oPdh1stPct) + "/PDL " + str.tostring(oPdl1stPct) + "%") + "  BOS cont " + str.tostring(int(oBosCont)) + "/fail " + str.tostring(int(oBosFail)) + "%  MAE " + (na(oMaxAdverseATR) ? "—" : str.tostring(oMaxAdverseATR, "#.#")) + "  2nd-target " + str.tostring(liqDestScoreSecondary) + "  hitN " + (na(array.get(gHitN, 0)) ? "—" : str.tostring(array.get(gHitN, 0), "#"))
 string xFlow = "CVD " + (cvdBull ? "bull" : "bear") + "  vdK " + str.tostring(vdK, "#.#") + "  VA " + vaPos + " " + str.tostring(vaRatio, "#.##") + "  WR" + (wrCIStr == "" ? "" : " " + wrCIStr) + " (ROLL)"
+string xAuction = "»" + aucBias + " " + aucState + " " + str.tostring(aucProb) + "%  " + aucCycle + "  " + discStr + "  accept " + str.tostring(acceptScore) + acceptGrade + "  " + valueMigStr + (openType != "" ? "  open " + openType : "") + (lastSweepQ > 0 ? "  sweep " + lastSweepGrade + " " + str.tostring(lastSweepQ) : "")
 string xDebug = "trend " + (bullTrend ? "B" : bearTrend ? "S" : "-") + "  htfGate " + (htfBullScoreGate ? "B" : htfBearScoreGate ? "S" : "-") + "  sess " + str.tostring(int(sessionQuality)) + "  trig " + (bullStructActive or displacementUp ? "B" : "") + (bearStructActive or displacementDown ? "S" : "") + "  TQ " + str.tostring(tradeQuality) + "/" + str.tostring(effTqMinCot) + "  EV " + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##")) + "  P " + str.tostring(math.round(_calPLong * 100.0)) + "/" + str.tostring(math.round(_calPShort * 100.0))
 
 // ---- 10. DASHBOARD MIRROR (engine's dashboard builder + table helpers, wired v21) --------
@@ -5450,9 +5460,55 @@ if dgZones and obBearActive and not obBearActive[1]
 //              (engine's gcVolExp). Available one bar late, by construction.
 // Display only: nothing here feeds a gate. The GOOD / PARTIAL / WEAK words are reading aids
 // for the correlation, not thresholds of the strategy.
-float dgVolCorr = gcValid ? ta.correlation(volume[1], _gcVol, 100) : na
+// v24 FIX (compiler warning at the first save): ta.correlation was called INSIDE a ternary,
+// so on bars where gcValid was false it did not run and its 100-bar window skipped them --
+// the correlation could then span more than 100 bars. It now runs on every bar and the
+// ternary only chooses what to show.
+float dgVolCorrAll = ta.correlation(volume[1], _gcVol, 100)
+float dgVolCorr = gcValid ? dgVolCorrAll : na
 bool dgPrevDisp = displacementUp[1] or displacementDown[1]
 string volLine = not gcValid ? "COMEX feed not valid — tick volume unverified (" + gcState + ")" : "tick vs COMEX corr(100) " + (na(dgVolCorr) ? "—" : str.tostring(dgVolCorr, "#.##") + (dgVolCorr >= 0.7 ? " GOOD" : dgVolCorr >= 0.4 ? " PARTIAL" : " WEAK")) + "  |  prev-bar displacement " + (dgPrevDisp ? (gcVolExp ? "CONFIRMED by COMEX volume" : "NOT confirmed by COMEX volume") : "none") + (timeframe.in_seconds() < 1800 ? "  |  <30M: COMEX bar may be incomplete" : "")
+
+// ---- 13. MISSED-MOVE AUDIT (v27) -- why the decision said WAIT while price moved -------
+// Operator report: DECISION "mostly remained WAIT although the market moved 30 to 50 dollars".
+// A MOVE starts at bar s when, within the next dgMoveBars bars, the high rises (or the low
+// falls) at least dgMoveUSD from close[s]. Consecutive start bars form one EPISODE. For
+// each episode this records the FURTHEST the Treatment entry chain got in the move's
+// direction on any start bar, in gate order:
+//   trend > HTF > sess/news/DD > trigger (structure or displacement) > TQ floor > EV<0 >
+//   P<min > risk lock > ENTRY
+// "ENTRY" means a trade in the move's direction would have been signalled while the move was
+// still ahead -- NOT that it won (the stop can still be hit first). Evaluated only on
+// confirmed bars, from values already computed; it changes no gate. It measures; it does
+// not propose thresholds (AUDIT_PROMPT §9).
+dgMoveUSD = input.float(30.0, "Missed-move audit: move size (price units)", minval=1.0, group=grpDiag)
+dgMoveBars = input.int(12, "Missed-move audit: within N bars", minval=2, maxval=100, group=grpDiag)
+_dgStage(bool _tr, bool _htfBlk, bool _pre, bool _sig) => not _tr ? 0 : _htfBlk ? 1 : not _pre ? 2 : not _sig ? 3 : effTqMinCot > 0 and tradeQuality < effTqMinCot ? 4 : not na(planExpectancy) and planExpectancy < 0.0 ? 5 : _calVeto ? 6 : useRiskLimits and riskLock ? 7 : 8
+int dgStL = _dgStage(bullTrend, htfBearScoreGate, buyPreFilters, shouldBuy)
+int dgStS = _dgStage(bearTrend, htfBullScoreGate, sellPreFilters, shouldSell)
+float dgFwdHi = ta.highest(high, dgMoveBars)
+float dgFwdLo = ta.lowest(low, dgMoveBars)
+bool dgMvU = bar_index > dgMoveBars and dgFwdHi - close[dgMoveBars] >= dgMoveUSD
+bool dgMvD = bar_index > dgMoveBars and close[dgMoveBars] - dgFwdLo >= dgMoveUSD
+var int[] dgMiss = array.new_int(9, 0)
+var int dgEpU = -1
+var int dgEpD = -1
+var int dgNU = 0
+var int dgND = 0
+if barstate.isconfirmed
+    if dgMvU
+        dgEpU := math.max(dgEpU, dgStL[dgMoveBars])
+    else if dgEpU >= 0
+        array.set(dgMiss, dgEpU, array.get(dgMiss, dgEpU) + 1)
+        dgNU += 1
+        dgEpU := -1
+    if dgMvD
+        dgEpD := math.max(dgEpD, dgStS[dgMoveBars])
+    else if dgEpD >= 0
+        array.set(dgMiss, dgEpD, array.get(dgMiss, dgEpD) + 1)
+        dgND += 1
+        dgEpD := -1
+string missLine = "moves >=" + str.tostring(dgMoveUSD, "#") + " in " + str.tostring(dgMoveBars) + " bars: up " + str.tostring(dgNU) + " / down " + str.tostring(dgND) + "  ENTRY " + str.tostring(array.get(dgMiss, 8)) + "  |  stopped at: trend " + str.tostring(array.get(dgMiss, 0)) + "  HTF " + str.tostring(array.get(dgMiss, 1)) + "  sess/news/DD " + str.tostring(array.get(dgMiss, 2)) + "  trigger " + str.tostring(array.get(dgMiss, 3)) + "  TQ " + str.tostring(array.get(dgMiss, 4)) + "  EV " + str.tostring(array.get(dgMiss, 5)) + "  P " + str.tostring(array.get(dgMiss, 6)) + "  risk " + str.tostring(array.get(dgMiss, 7))
 
 // ---- PANEL -----------------------------------------------------------------------------
 var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 24, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
@@ -5461,7 +5517,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v22 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v32 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5479,11 +5535,15 @@ if barstate.islast
         _dRow(17, "Macro feeds", xMacro, _cT)
         _dRow(18, "Structure stats", xStruct, _cT)
         _dRow(19, "Flow / VA", xFlow, _cT)
-    if dgWide
-        _dRow(20, "Auction", auctionStr, _cT)
+    // v24: the auction layer moved here from the Master (token ceiling, F-A32), so this row is
+    // its only display and is no longer Spacious-only. Standard shows the auction read alone;
+    // Spacious shows the engine's full auctionStr (cross-check prefix + auction read).
+    if not dgCompact
+        _dRow(20, "Auction", dgWide ? auctionStr : xAuction, _cT)
     if debugMode
         _dRow(21, "Gate booleans", xDebug, _cT)
     _dRow(22, "Volume (free plan)", volLine, _cT)
+    _dRow(23, "Missed moves", missLine, _cT)
     _dRow(14, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
 // Pine rejects an indicator with no output function call ("Script must have at least one
 // output function call"); tables do not count. Same fix as the EdgeCases harness.
