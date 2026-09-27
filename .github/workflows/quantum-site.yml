@@ -83,6 +83,10 @@ jobs:
           ALERT_TFS: ${{ vars.ALERT_TFS || '15m,1h' }}
         run: python -m quantum.pipeline --store store --out site/data --tfs 15m,1h,4h,5m
 
+      - name: Upcoming events (display only; outside the freeze key; never fails the run)
+        continue-on-error: true
+        run: python -m quantum.events --out site/data/events.json
+
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
         if: always() && hashFiles('store-loaded.flag') != ''
         run: |

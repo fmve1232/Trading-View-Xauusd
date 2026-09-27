@@ -99,6 +99,8 @@ async function load() {
     return;
   }
   renderAll();
+  loadEvents();
+  pollLive();
 }
 setInterval(async () => {
   try {
@@ -107,6 +109,67 @@ setInterval(async () => {
     else renderHeader();
   } catch (e) { /* offline: keep what we have */ }
 }, 60000);
+
+/* ---------- live spot ticker (DISPLAY ONLY: the engine never reads it) ---------- */
+const LIVE_URL = "https://api.gold-api.com/price/XAU";
+const LIVE_TITLE = "Live spot from gold-api.com, read by your browser. DISPLAY ONLY: the engine never uses it; signals come from closed bars.";
+const LIVE = { px: null, t: null, err: "" };
+async function pollLive() {
+  if (document.hidden) return;
+  try {
+    const r = await fetch(LIVE_URL, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    const j = await r.json();
+    const p = Number(j && j.price);
+    const ts = j && j.updatedAt ? Date.parse(j.updatedAt) : NaN;
+    const ref = S.data && S.data.dashboard ? S.data.dashboard.close : null;
+    if (!isNum(p) || p <= 0) throw new Error("no price in the response");
+    // a feed glitch must not look like a market move: reject anything >5% from the engine's last close
+    if (isNum(ref) && Math.abs(p / ref - 1) > 0.05) throw new Error(`rejected ${p.toFixed(2)} (more than 5% from the engine close ${ref.toFixed(2)})`);
+    Object.assign(LIVE, { px: p, t: isFinite(ts) ? ts : Date.now(), err: "" });
+  } catch (e) { LIVE.err = (e && e.message) || "unavailable"; }
+  renderLive();
+}
+function renderLive() {
+  const chip = $("#chip-live"); if (!chip) return;
+  chip.classList.remove("ok", "stale", "bad");
+  if (LIVE.px === null) {
+    $("#live").textContent = "unavailable"; $("#live-meta").textContent = "";
+    chip.classList.add("bad"); chip.title = LIVE_TITLE + (LIVE.err ? " Last error: " + LIVE.err : ""); return;
+  }
+  const ageMin = (Date.now() - LIVE.t) / 60000;
+  const ref = S.data && S.data.dashboard ? S.data.dashboard.close : null;
+  $("#live").textContent = LIVE.px.toFixed(2);
+  $("#live-meta").textContent = `${ageMin < 1 ? "<1" : Math.round(ageMin)} min${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
+  chip.classList.add(!LIVE.err && ageMin < 10 ? "ok" : "stale");
+  chip.title = LIVE_TITLE + ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
+}
+setInterval(pollLive, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
+
+/* ---------- upcoming events (DISPLAY ONLY) ---------- */
+async function loadEvents() {
+  try { S.events = await getJSON("data/events.json"); } catch (e) { S.events = null; }
+  renderEvents();
+}
+const until = (sec) => (sec < 3600 ? Math.max(1, Math.round(sec / 60)) + " min" : sec < 86400 ? (sec / 3600).toFixed(1) + " h" : (sec / 86400).toFixed(1) + " d");
+function renderEvents() {
+  const E = S.events, el = $("#events"), st = $("#ev-state"); if (!el) return;
+  if (!E || !Array.isArray(E.events)) {
+    el.innerHTML = '<span class="muted">No calendar published yet; it appears after the next pipeline run.</span>';
+    st.textContent = "—"; st.className = "pill"; return;
+  }
+  const now = Date.now() / 1000;
+  const up = E.events.filter((e) => e.t > now - 3 * 3600).slice(0, 12);
+  const next = up.find((e) => e.t > now && e.impact === "High");
+  st.textContent = !E.ok ? "estimate only" : next ? "high-impact in " + until(next.t - now) : "no high-impact left";
+  st.className = "pill " + (!E.ok || (next && next.t - now < 3600) ? "warn" : "");
+  const rows = up.map((e) => `<div class="evl${e.t < now ? " past" : ""}${e.impact === "High" ? " hi" : ""}"><span class="mono">${tfmt(e.t)}</span>
+    <span>${esc(e.title)}${e.estimated ? ' <span class="dim">(estimate)</span>' : ""}</span>
+    <span class="dim">${e.forecast ? "f " + esc(e.forecast) : ""}${e.previous ? " · p " + esc(e.previous) : ""}</span></div>`).join("");
+  el.innerHTML = (rows || '<span class="muted">No USD high/medium-impact events left this week.</span>') +
+    `<p class="note">${esc(E.source)} · fetched ${ago(E.generated_utc)}.${E.ok ? "" : " " + esc(E.note) + "."} Display only: the engine's news window is its own rule, and news suppression is off by default.</p>`;
+}
 
 /* ---------- header / banners ---------- */
 function renderHeader() {
@@ -570,7 +633,7 @@ async function renderMethod() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderOverview); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderOverview); safe(renderEvents); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
