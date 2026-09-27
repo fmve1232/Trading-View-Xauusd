@@ -101,6 +101,7 @@ async function load() {
   renderAll();
   loadEvents();
   pollLive();
+  startStream();
 }
 setInterval(async () => {
   try {
@@ -121,7 +122,7 @@ function marketClosed(d) {
   return dow === 6 || (dow === 5 && h >= 17) || (dow === 0 && h < 17);
 }
 async function pollLive() {
-  if (document.hidden) return;
+  if (document.hidden || streaming()) return;
   try {
     const r = await fetch(LIVE_URL, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
@@ -132,7 +133,7 @@ async function pollLive() {
     if (!isNum(p) || p <= 0) throw new Error("no price in the response");
     // a feed glitch must not look like a market move: reject anything >5% from the engine's last close
     if (isNum(ref) && Math.abs(p / ref - 1) > 0.05) throw new Error(`rejected ${p.toFixed(2)} (more than 5% from the engine close ${ref.toFixed(2)})`);
-    Object.assign(LIVE, { px: p, t: isFinite(ts) ? ts : Date.now(), err: "" });
+    Object.assign(LIVE, { px: p, t: isFinite(ts) ? ts : Date.now(), err: "", src: "gold-api" });
   } catch (e) { LIVE.err = (e && e.message) || "unavailable"; }
   renderLive();
 }
@@ -147,13 +148,74 @@ function renderLive() {
   const ref = S.data && S.data.dashboard ? S.data.dashboard.close : null;
   const closed = marketClosed(new Date());
   $("#live").textContent = LIVE.px.toFixed(2);
-  $("#live-meta").textContent = closed ? "market closed · last quote" : `${ageMin < 1 ? "<1" : Math.round(ageMin)} min${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
+  const src = LIVE.src === "stream" && streaming() ? "stream" : "gold-api";
+  const age = src === "stream" ? (ageMin < 1 ? Math.max(0, Math.round(ageMin * 60)) + " s" : Math.round(ageMin) + " min") : (ageMin < 1 ? "<1 min" : Math.round(ageMin) + " min");
+  $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
-  chip.title = LIVE_TITLE + (closed ? " The market is closed (Friday 17:00 to Sunday 17:00 New York): the feed repeats the last quote with a fresh timestamp." : "") +
+  chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
+    (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 17:00 New York): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
 }
 setInterval(pollLive, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
+
+/* ---------- streaming ticks via the relay (DISPLAY ONLY; never read by the engine) ---------- */
+// data/stream.json carries the relay address (repository variable STREAM_URL). Without it, or
+// while the stream is down, the chip falls back to the 60 s gold-api poll above.
+const STREAM = { url: "", ws: null, status: "", rx: 0, retry: 2000, bar: null };
+async function startStream() {
+  let cfg = null;
+  try { cfg = await getJSON("data/stream.json"); } catch (e) { return; }
+  const u = String((cfg && cfg.url) || "").trim();
+  if (!/^wss:\/\/[^\s"'<>]+$/.test(u) || STREAM.url === u) return;
+  STREAM.url = u; connectStream();
+}
+function connectStream() {
+  let ws;
+  try { ws = new WebSocket(STREAM.url); } catch (e) { STREAM.status = "cannot connect"; renderLive(); return; }
+  STREAM.ws = ws; STREAM.status = "connecting";
+  ws.onopen = () => { STREAM.retry = 2000; };
+  ws.onmessage = (ev) => {
+    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    if (m.type === "hello" || m.type === "status") { STREAM.status = String(m.status || "").slice(0, 80); if (m.last) onTick(m.last, true); renderLive(); }
+    else if (m.type === "tick") onTick(m, false);
+  };
+  ws.onclose = () => {
+    STREAM.ws = null; STREAM.status = "disconnected"; renderLive();
+    setTimeout(connectStream, STREAM.retry); STREAM.retry = Math.min(STREAM.retry * 2, 60000);
+  };
+}
+const streaming = () => STREAM.ws && Date.now() - STREAM.rx < 90000;
+function onTick(k, replay) {
+  const p = Number(k.p), t = Number(k.t);
+  if (!isNum(p) || p <= 0 || !isNum(t)) return;
+  const ref = S.data && S.data.dashboard ? S.data.dashboard.close : null;
+  if (isNum(ref) && Math.abs(p / ref - 1) > 0.05) { STREAM.status = `rejected ${p.toFixed(2)} (>5% from the engine close)`; renderLive(); return; }
+  if (!replay) STREAM.rx = Date.now();
+  Object.assign(LIVE, { px: p, t, err: "", src: "stream" });
+  if (!replay) updateLiveBar({ p, t, h: Number(k.h), l: Number(k.l) });
+  renderLive();
+}
+// The forming candle only: bars the engine has closed are never touched.
+function updateLiveBar(k) {
+  if (!C || !S.data) return;
+  const D = S.data, tf = D.meta.tf_sec, ts = D.chart.t, lastClosed = ts[ts.length - 1];
+  const open = Math.floor(k.t / 1000 / tf) * tf;
+  if (open <= lastClosed) return;
+  let b = STREAM.bar && STREAM.bar.time === open ? STREAM.bar : null;
+  if (!b) {
+    const fb = D.meta.forming;
+    b = fb && fb.t === open ? { time: open, open: fb.o, high: fb.h, low: fb.l, close: fb.c } : { time: open, open: k.p, high: k.p, low: k.p, close: k.p };
+  }
+  b.high = Math.max(b.high, isNum(k.h) ? k.h : k.p); b.low = Math.min(b.low, isNum(k.l) ? k.l : k.p); b.close = k.p;
+  STREAM.bar = b;
+  applyLiveBar();
+}
+function applyLiveBar(lastTime) {
+  const b = STREAM.bar; if (!C || !b) return;
+  if (isNum(lastTime) && b.time < lastTime) return;           // an engine update has moved past it
+  try { C.candles.update({ ...b, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") }); } catch (e) { /* older than the series end */ }
+}
 
 /* ---------- upcoming events (DISPLAY ONLY) ---------- */
 async function loadEvents() {
@@ -395,6 +457,7 @@ function renderChart() {
     const fb = D.meta.forming; bars.push({ time: fb.t, open: fb.o, high: fb.h, low: fb.l, close: fb.c, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") });
   }
   C.candles.setData(bars);
+  if (bars.length) applyLiveBar(bars[bars.length - 1].time);
   const set = (k, on) => C.L[k].setData(on ? series(t, ch[k], ch.anchor && ch.anchor[k]) : []);
   ["ema20", "ema100", "ema200"].forEach((k) => set(k, T.ema));
   ["vwap", "wvwap", "mvwap"].forEach((k) => set(k, T.vwap));

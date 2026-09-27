@@ -154,8 +154,22 @@ def report_md(doc: dict) -> str:
     return "\n".join(L)
 
 
-def run(store_dir: str, days: int, sym: str = "XAUUSD", get=None, today: date | None = None) -> dict:
-    get = get or (lambda url: sources._get(url, timeout=30, tries=3).content)
+FAIL_FAST_DAYS = 3        # stop when the first days attempted all fail: the feed is unreachable, not flaky
+
+
+def _default_get(url: str) -> bytes:
+    """One short attempt per file (20 s). The public feed either answers quickly or not at all."""
+    import requests
+    r = requests.get(url, headers=sources.UA, timeout=20)
+    if r.status_code == 404:
+        return b""                                                    # no file for that day
+    if r.status_code != 200:
+        raise sources.FetchError(f"{url} -> HTTP {r.status_code}")
+    return r.content
+
+
+def run(store_dir: str, days: int, sym: str = "XAUUSD", get=None, today: date | None = None, log=print) -> dict:
+    get = get or _default_get
     today = today or datetime.now(timezone.utc).date()
     doc = {"generated_utc": datetime.now(timezone.utc).isoformat(), "symbol": sym, "timeframes": {}}
     td = {}
@@ -169,15 +183,23 @@ def run(store_dir: str, days: int, sym: str = "XAUUSD", get=None, today: date | 
     last_full = today - timedelta(days=1)                            # only complete UTC days
     span = [last_full - timedelta(days=k) for k in range(days)][::-1]
     doc["from"], doc["to"], doc["days_tried"] = span[0].isoformat(), span[-1].isoformat(), len(span)
-    parts, ok = [], 0
+    parts, ok, tried = [], 0, 0
     for day in span:
         if day.weekday() == 5:                                        # Saturday: no market
             continue
+        tried += 1
+        t0 = time.time()
         try:
             b, a = fetch_day(sym, day, "BID", get), fetch_day(sym, day, "ASK", get)
             ok += 1
+            log(f"[xcheck] {day}: {len(b)} bid / {len(a)} ask minutes ({time.time() - t0:.1f}s)", flush=True)
         except Exception as e:  # noqa: BLE001
-            doc.setdefault("fetch_errors", []).append(f"{day}: {sources.redact(str(e))[:140]}")
+            msg = f"{day}: {type(e).__name__}: {sources.redact(str(e))[:140]}"
+            doc.setdefault("fetch_errors", []).append(msg)
+            log(f"[xcheck] FAILED {msg} ({time.time() - t0:.1f}s)", flush=True)
+            if ok == 0 and tried >= FAIL_FAST_DAYS:
+                doc["error"] = f"Dukascopy feed unreachable from this runner: the first {tried} days all failed ({msg})"
+                return doc
             continue
         if len(b) and len(a):
             parts.append(mid_minutes(b, a))

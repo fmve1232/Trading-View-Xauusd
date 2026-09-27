@@ -116,7 +116,12 @@ def test_scale_is_detected_and_bad_decodes_are_refused(st):
     assert "NOT RUN" in xc.report_md(doc)
 
 
-def test_unreachable_feed_is_not_run(st):
+def test_unreachable_feed_fails_fast_and_is_not_run(st):
     path, _ = st
-    doc = xc.run(path, 5, get=lambda url: (_ for _ in ()).throw(OSError("blocked")), today=TODAY)
-    assert "no Dukascopy data" in doc["error"] and "NOT RUN" in xc.report_md(doc)
+    calls = []
+    def get(url):
+        calls.append(url)
+        raise OSError("blocked")
+    doc = xc.run(path, 20, get=get, today=TODAY, log=lambda *a, **k: None)
+    assert "unreachable" in doc["error"] and "NOT RUN" in xc.report_md(doc)
+    assert len(calls) == xc.FAIL_FAST_DAYS                          # one BID attempt per day, then stop

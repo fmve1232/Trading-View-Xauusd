@@ -91,6 +91,12 @@ jobs:
           FXSTREET_NEWS_RSS: ${{ vars.FXSTREET_NEWS_RSS }}
         run: python -m quantum.events --out site/data/events.json
 
+      - name: Stream relay address for the page (display only; empty = no streaming)
+        env:
+          STREAM_URL: ${{ vars.STREAM_URL }}
+        run: |
+          python3 -c "import json,os; json.dump({'url': os.environ.get('STREAM_URL','').strip()}, open('site/data/stream.json','w'))"
+
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
         if: always() && hashFiles('store-loaded.flag') != ''
         run: |

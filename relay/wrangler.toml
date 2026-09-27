@@ -1,0 +1,16 @@
+# XAU/USD tick relay (display only). Deployed by .github/workflows/stream-relay.yml.
+name = "xau-stream"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+SYMBOL = "OANDA:XAU_USD"
+ALLOWED_ORIGINS = "https://fmve1232.github.io"
+
+[[durable_objects.bindings]]
+name = "HUB"
+class_name = "Hub"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Hub"]   # SQLite-backed class: available on the Workers free plan
