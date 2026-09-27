@@ -181,9 +181,10 @@ function renderEvents() {
     return `<div class="evl news"><span class="mono">${tfmt(h.t)}</span><span>${l ? `<a href="${esc(l)}" target="_blank" rel="noopener noreferrer nofollow">${t}</a>` : t}</span><span class="dim">${esc(h.source)}</span></div>`;
   }).join("");
   const feeds = (E.feeds || []).map((x) => `<span class="${x.ok ? "" : "warn"}" title="${esc(x.host + ": " + x.note)}">${esc(x.name)} ${x.ok ? x.n : "✕"}</span>`).join(" · ");
-  el.innerHTML = (rows || '<span class="muted">No USD high/medium-impact events left this week.</span>') +
-    `<p class="note">${esc(E.source)} · fetched ${ago(E.generated_utc)}.${E.ok ? "" : " " + esc(E.note) + "."} Display only: the engine's news window is its own rule, and news suppression is off by default.</p>` +
-    (E.feeds ? `<h4 class="evh">News <span class="dim">(gold / USD / rates, last 48 h)</span></h4>${hl || '<span class="muted">No relevant headlines in the last 48 h.</span>'}<p class="note">Feeds: ${feeds || "—"}. Hover a feed for its status. Headlines link to the publisher; display only.</p>` : "");
+  el.innerHTML = `<div class="cal-news"><div><h4 class="evh">Calendar <span class="dim">(high / medium impact)</span></h4>` +
+    (rows || '<span class="muted">No USD high/medium-impact events left this week.</span>') +
+    `<p class="note">${esc(E.source)} · fetched ${ago(E.generated_utc)}.${E.ok ? "" : " " + esc(E.note) + "."} Display only: the engine's news window is its own rule, and news suppression is off by default.</p></div>` +
+    (E.feeds ? `<div><h4 class="evh">News <span class="dim">(gold / USD / rates, last 48 h)</span></h4>${hl || '<span class="muted">No relevant headlines in the last 48 h.</span>'}<p class="note">Feeds: ${feeds || "—"}. Hover a feed for its status. Headlines link to the publisher; display only.</p></div>` : "") + `</div>`;
 }
 
 /* ---------- header / banners ---------- */

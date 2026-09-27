@@ -95,7 +95,10 @@ header.top {
 .banner.info { background: color-mix(in srgb, var(--info) 10%, transparent); border-color: color-mix(in srgb, var(--info) 40%, transparent); }
 
 main { padding: 12px 16px 40px; max-width: 1680px; margin: 0 auto; }
-.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; align-items: start; }   /* start: the chart card must not stretch to the side column's height */
+.main-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cal-news { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 28px; }
+.cal-news .evh:first-child { margin-top: 0; }
 @media (max-width: 1100px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
 .card h3 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
@@ -184,7 +187,10 @@ footer { padding: 20px 16px 40px; color: var(--dim); font-size: 12px; text-align
 }
 /* narrow screens: decision first, then the chart, then the other side cards (kept last so it wins) */
 @media (max-width: 1100px) {
-  .side { display: contents; }
+  .side, .main-col { display: contents; }
   #decision { order: -2; }
   .chart-card { order: -1; }
+  #cal-card { order: 1; }
+  .cal-news { grid-template-columns: minmax(0, 1fr); }
+  .cal-news > div + div .evh:first-child { margin-top: 14px; }
 }
