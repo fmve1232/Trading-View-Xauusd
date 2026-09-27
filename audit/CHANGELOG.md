@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v23
+# Build changelog — v1 → … → v24
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -863,3 +863,47 @@ unchanged; no feature is removed; no decision logic touched.
 
 Master estimate ~98,850 compiled (~1.4% headroom), the tightest yet. If the save overflows,
 apply `CONCURRENCY_AND_MIGRATION.md` B5a. Compile NOT RUN.
+
+---
+
+# Build v23 → v24 — act on the v21–v23 chart run (Master token ceiling, Diagnostics warnings)
+
+**Measured on the operator's chart (2026-09-27):**
+
+| Script | Result |
+|---|---|
+| Master v23 | **`Compiled code contains too many tokens: 100820. The limit is 100256`** |
+| Treatment / Control twins (v21) | Compiled. Two warnings each: `barstate.islast` without `calc_on_every_tick` (L1936 volume-profile refresh, L5185 cost-model warning label). Both benign: the twins run on bar close, where `islast` and `isconfirmed` are both true. |
+| Diagnostics v22 | Compiled. Warnings: `ta.correlation` inside a ternary (L5453), `_v` shadows a global (L5292). |
+| Visuals | Compiled. |
+| EdgeCases | "3 FAIL / 97", rows in natural order and no `v21` header, so the chart was still running a pre-v21 copy (the editor showed the v21 code as **Unsaved version**). |
+
+**F-A32, Master over the ceiling.** v23 is 40,081 lexical tokens, so the true ratio is
+**2.515** compiled per lexical, not the 2.466 measured on v14; the estimate (~98,850) was
+~2,000 low. **Fix:** the Q5.3/Q5.4 auction layer (`f_auctionIntel` and `aucBias`) moves to
+Diagnostics, which already runs the identical function on the Treatment engine. A block-level
+backward slice from every `alert`, `alertcondition` and `plot` showed that nothing in it feeds a
+gate, alert, plot or plan value. Moved, not deleted:
+- Diagnostics' "Auction" row is now shown in Standard density too (auction read only);
+  Spacious adds the full cross-check prefix, as before.
+- `climaxUp` / `climaxDown` fed only the auction layer in the Master. They are now shown as
+  `CLIMAX▲/▼` on the dashboard cross-check line (`xcheckStr`, formerly `auctionStr`).
+
+Master: 40,081 → 38,759 lexical. At the measured 2.515 that is **~97,480 compiled (~2.8%
+headroom)**. Even at 2.548, the highest ratio consistent with v20 compiling, it is ~98,760.
+
+**F-A33, Diagnostics warnings.**
+- `ta.correlation` was called only on bars where `gcValid`, so its 100-bar window skipped the
+  other bars. It now runs every bar, and the ternary only chooses what to display.
+- The census loop's `_v` is renamed `_dsv`; there is no behaviour change.
+- The generator is now committed as `audit/tools/build_diag.py`.
+
+**Observed, not fixed (F-A34, `STAT`).** From Diagnostics' reliability rows:
+- The raw-score buckets predicted 21/29/34/41/54% but observed 18/24/18/22/19% (n 439–632 each).
+- The score has **no resolution** on this history.
+- The Treatment backtest agrees: 90 trades, PF 0.989, −$9.55 at 1 oz.
+- Control: 12 trades, PF 1.72, +$60.58. That is too few trades to tell apart from zero.
+
+Nothing is tuned in response (§9); the remedy is a frozen holdout.
+
+Unchanged: Strategy, Strategy_OLDGATES, EdgeCases, Visuals. Compile of v24 NOT RUN.

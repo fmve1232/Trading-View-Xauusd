@@ -51,6 +51,8 @@ sha256sum -c audit/MANIFEST.sha256
   `Diagnostics.pine` (outside its `DIAG` fences); `diag_parity.py` fails otherwise.
 - **Do not delete features** (operator instruction, 2026-09-26). Wire them; if a file has
   no room, move the feature to a companion that runs the same engine, never drop it.
+- **Token estimates are estimates.** Compiled ≈ lexical × 2.515 (measured on v23: 100,820 /
+  40,081; v14 gave 2.466). Keep the Master ≥ 2% under 100,256 at that ratio.
 - The checkers narrow the search; **they do not replace the compiler.** Three static passes
   gave false confidence this session, including one syntax error introduced by a fix.
 
@@ -60,8 +62,8 @@ sha256sum -c audit/MANIFEST.sha256
 |---|---|
 | `artefacts/` | The six Pine v6 files. |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A31. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A34. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |
-| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`; `race_model_check.py` / `formula_check.py` (test the maths on synthetic data, not the Pine); `deadcode.py` (unread / self-only / write-only / uncalled symbols; `retained.txt` lists code kept on operator instruction); `diag_parity.py`; `pinelimits.py` (compile-error classes the others miss, incl. "no output call"). |
+| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`; `race_model_check.py` / `formula_check.py` (test the maths on synthetic data, not the Pine); `deadcode.py` (unread / self-only / write-only / uncalled symbols; `retained.txt` lists code kept on operator instruction); `diag_parity.py`; `build_diag.py` (regenerates `Diagnostics.pine` from the Treatment twin — edit DIAG blocks there, not in the artefact); `pinelimits.py` (compile-error classes the others miss, incl. "no output call"). |

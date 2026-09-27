@@ -178,6 +178,13 @@ state is exactly how definitions drift apart.
 
 ### B5a. Ready contingency (v19): Master → Visuals, if the save reports a ceiling problem
 
+> **Measured 2026-09-27 on v23: 100,820 > 100,256 (ratio 2.515, not 2.466).** Acted on in v24
+> with a larger, cleaner move than this list: the auction layer went to **Diagnostics**. It
+> already ran the identical function on the Treatment engine, so no second definition was
+> created and no F-A08-style drift is possible. See `FINDINGS_TRACEABILITY.md` F-A32. The list
+> below stays as the next reserve. `liqReachScore` is no longer movable: it now feeds the
+> forecast and the MobileBrief card.
+
 v19 estimates (lexical × 2.466): Master ~97,000, Diagnostics ~89,300, twins ~85,300 (v14's
 ~85,100 compiled and ran), Visuals ~17,800. Only the Master is tight. If its save reports
 more than 100,256, these move to Visuals. Each was traced mechanically: it reads **no engine

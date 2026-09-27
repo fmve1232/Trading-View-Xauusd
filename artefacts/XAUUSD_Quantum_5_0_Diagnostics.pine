@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v22   (free-plan volume check)       ║
+// ║  BUILD STAMP — this file last CHANGED in v24   (Auction row + correlation fix)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5289,10 +5289,12 @@ int dsGC = 0
 int dsOI = 0
 if barstate.islast and showDataCensus
     for _s = 0 to math.max(math.min(hN, HIST_MAX) - 1, 0)
-        int _v = array.get(hDataStatus, _s)
+        // v24: was `_v`, which shadowed the engine's global `_v` (return variance) -- compiler
+        // warning at the operator's first Diagnostics save. Behaviour unchanged; name only.
+        int _dsv = array.get(hDataStatus, _s)
         dsN += 1
-        dsGC += _v % 2
-        dsOI += int(math.floor(_v / 2.0)) % 2
+        dsGC += _dsv % 2
+        dsOI += int(math.floor(_dsv / 2.0)) % 2
 string censusLine = hN > 0 ? "GC " + str.tostring(dsGC * 100.0 / math.max(dsN, 1), "#") + "%  OI " + str.tostring(dsOI * 100.0 / math.max(dsN, 1), "#") + "%  of " + str.tostring(dsN) + " stored obs  (now D" + str.tostring(barDataStatus) + ")" : "no stored observations yet"
 
 // ---- 7. GATE FUNNEL (v20) -- why a backtest does or does not trade ---------------------
@@ -5328,7 +5330,7 @@ string funnel2 = "TQ<floor " + str.tostring(fnTQ) + "  EV<0 " + str.tostring(fnE
 
 // ---- 8. LAYOUT INPUTS (engine's dashboard inputs, wired here in v21) --------------------
 // textSize -> text size; density -> how many rows (Compact: core, Standard: + cross-check,
-// Spacious: + auction line); mobileOverride / dashMode Mobile* -> compact, mirror hidden;
+// Spacious: the auction row carries the full cross-check prefix as well); mobileOverride / dashMode Mobile* -> compact, mirror hidden;
 // debugMode -> raw gate booleans row.
 dgTs = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.tiny
 bool dgCompact = mobileOverride or dashMode == "MobilePort" or dashMode == "MobileLand" or density == "Compact"
@@ -5340,6 +5342,7 @@ string xSignal = calProbStr + "  conf " + confLabel + "  cal " + oCalDetail
 string xMacro = gcState + "  " + oiState + cotState + curveState + migState + "  DXY-RSI " + (na(_rawDXYRSI) ? "—" : str.tostring(_rawDXYRSI, "#")) + "  EURcorr " + str.tostring(avgCorrEUR, "#.##") + "  TIPS " + tipsMag
 string xStruct = "PDH1st " + (na(oPdh1stPct) ? "—" : str.tostring(oPdh1stPct) + "/PDL " + str.tostring(oPdl1stPct) + "%") + "  BOS cont " + str.tostring(int(oBosCont)) + "/fail " + str.tostring(int(oBosFail)) + "%  MAE " + (na(oMaxAdverseATR) ? "—" : str.tostring(oMaxAdverseATR, "#.#")) + "  2nd-target " + str.tostring(liqDestScoreSecondary) + "  hitN " + (na(array.get(gHitN, 0)) ? "—" : str.tostring(array.get(gHitN, 0), "#"))
 string xFlow = "CVD " + (cvdBull ? "bull" : "bear") + "  vdK " + str.tostring(vdK, "#.#") + "  VA " + vaPos + " " + str.tostring(vaRatio, "#.##") + "  WR" + (wrCIStr == "" ? "" : " " + wrCIStr) + " (ROLL)"
+string xAuction = "»" + aucBias + " " + aucState + " " + str.tostring(aucProb) + "%  " + aucCycle + "  " + discStr + "  accept " + str.tostring(acceptScore) + acceptGrade + "  " + valueMigStr + (openType != "" ? "  open " + openType : "") + (lastSweepQ > 0 ? "  sweep " + lastSweepGrade + " " + str.tostring(lastSweepQ) : "")
 string xDebug = "trend " + (bullTrend ? "B" : bearTrend ? "S" : "-") + "  htfGate " + (htfBullScoreGate ? "B" : htfBearScoreGate ? "S" : "-") + "  sess " + str.tostring(int(sessionQuality)) + "  trig " + (bullStructActive or displacementUp ? "B" : "") + (bearStructActive or displacementDown ? "S" : "") + "  TQ " + str.tostring(tradeQuality) + "/" + str.tostring(effTqMinCot) + "  EV " + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##")) + "  P " + str.tostring(math.round(_calPLong * 100.0)) + "/" + str.tostring(math.round(_calPShort * 100.0))
 
 // ---- 10. DASHBOARD MIRROR (engine's dashboard builder + table helpers, wired v21) --------
@@ -5450,7 +5453,12 @@ if dgZones and obBearActive and not obBearActive[1]
 //              (engine's gcVolExp). Available one bar late, by construction.
 // Display only: nothing here feeds a gate. The GOOD / PARTIAL / WEAK words are reading aids
 // for the correlation, not thresholds of the strategy.
-float dgVolCorr = gcValid ? ta.correlation(volume[1], _gcVol, 100) : na
+// v24 FIX (compiler warning at the first save): ta.correlation was called INSIDE a ternary,
+// so on bars where gcValid was false it did not run and its 100-bar window skipped them --
+// the correlation could then span more than 100 bars. It now runs on every bar and the
+// ternary only chooses what to show.
+float dgVolCorrAll = ta.correlation(volume[1], _gcVol, 100)
+float dgVolCorr = gcValid ? dgVolCorrAll : na
 bool dgPrevDisp = displacementUp[1] or displacementDown[1]
 string volLine = not gcValid ? "COMEX feed not valid — tick volume unverified (" + gcState + ")" : "tick vs COMEX corr(100) " + (na(dgVolCorr) ? "—" : str.tostring(dgVolCorr, "#.##") + (dgVolCorr >= 0.7 ? " GOOD" : dgVolCorr >= 0.4 ? " PARTIAL" : " WEAK")) + "  |  prev-bar displacement " + (dgPrevDisp ? (gcVolExp ? "CONFIRMED by COMEX volume" : "NOT confirmed by COMEX volume") : "none") + (timeframe.in_seconds() < 1800 ? "  |  <30M: COMEX bar may be incomplete" : "")
 
@@ -5461,7 +5469,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v22 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v24 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5479,8 +5487,11 @@ if barstate.islast
         _dRow(17, "Macro feeds", xMacro, _cT)
         _dRow(18, "Structure stats", xStruct, _cT)
         _dRow(19, "Flow / VA", xFlow, _cT)
-    if dgWide
-        _dRow(20, "Auction", auctionStr, _cT)
+    // v24: the auction layer moved here from the Master (token ceiling, F-A32), so this row is
+    // its only display and is no longer Spacious-only. Standard shows the auction read alone;
+    // Spacious shows the engine's full auctionStr (cross-check prefix + auction read).
+    if not dgCompact
+        _dRow(20, "Auction", dgWide ? auctionStr : xAuction, _cT)
     if debugMode
         _dRow(21, "Gate booleans", xDebug, _cT)
     _dRow(22, "Volume (free plan)", volLine, _cT)

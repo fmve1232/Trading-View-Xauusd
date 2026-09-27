@@ -57,6 +57,9 @@
 | F-A29 | **P0** | `BUG` | Strategy entries required `recentBars` (last 120 bars): the backtest could only trade the final ~5 days, so it took 0 trades — **FIXED v20** (switchable, default all bars) |
 | F-A30 | **P0** | `BUG` | OB, FVG, displacement, SMT and climax DETECTION were gated by display toggles defaulting OFF: the decision ignored the zones Visuals draws, and half the entry trigger was disabled — **FIXED v21** (engine inputs, default ON) |
 | F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
+| F-A32 | **P0** | `BUG` | *(compiler-reported)* Master v23: `too many tokens: 100820` (limit 100,256); the lexical estimator's ratio had drifted 2.466 → 2.515 — **FIXED v24** (auction layer moved to Diagnostics) |
+| F-A33 | P3 | `NUM` | *(compiler-reported)* Diagnostics: `ta.correlation` in a ternary skipped bars in its window; `_v` shadowed a global — **FIXED v24** |
+| F-A34 | **P1** | `STAT` | *(first chart data)* raw score buckets predict 21→54% but observe 18–24%: no resolution on this history; Treatment PF 0.989 over 90 trades — **OPEN, not fixable by code** (needs a frozen holdout, §9) |
 | F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
@@ -758,6 +761,47 @@ displacement thresholds, FVG size). `SCHEMA_BUILD` 4 → 5.
 `deadcode.py` now counts drawing handles redrawn via delete/new as live. It also treats a twin
 symbol read by Diagnostics as wired through the companion. Result: 0 dead, 0 retained in all
 six files; `retained.txt` is empty.
+
+---
+
+## F-A32 … F-A34 — from the v21–v23 chart run *(F-A32, F-A33 FIXED v24; F-A34 OPEN)*
+
+**F-A32 (P0), Master over the token ceiling.** The save reported 100,820 against 100,256. The
+estimate was ~98,850 because the ratio measured on v14 (2.466) no longer held; v23 gives
+2.515. A block-level backward slice from every `alert`, `alertcondition` and `plot` in the
+Master found the auction layer (`f_auctionIntel`, `aucBias`; ~1,330 lexical) outside it. It
+feeds only the dashboard text.
+
+Diagnostics already carries the identical function on the Treatment engine. The layer moved
+there; its "Auction" row now shows by default. `climaxUp/Down` lost their only Master reader,
+so they are now displayed (`CLIMAX▲/▼`) instead of dropped.
+
+Result: the Master drops to 38,759 lexical, ~97,480 compiled at 2.515. The B5a list
+(`CONCURRENCY_AND_MIGRATION.md`) was not used: its items are small, and `liqReachScore` now
+feeds the forecast and the MobileBrief card.
+
+**F-A33 (P3), Diagnostics.** A `ta.*` call inside a ternary does not run on the bars the other
+branch is taken, so its window is not the last 100 bars. The call is hoisted. `_v` → `_dsv`.
+The twins' two `barstate.islast` warnings are benign: they run on bar close only, where the
+last bar is both `islast` and `isconfirmed`.
+
+**F-A34 (P1, OPEN), the score does not discriminate.** Diagnostics reliability, 1H, 2,624
+resolved observations:
+
+| Bucket | N | Predicted | Observed |
+|---|---:|---:|---:|
+| 0 | 534 | 21% | 18% |
+| 1 | 506 | 29% | 24% |
+| 2 | 513 | 34% | 18% |
+| 3 | 439 | 41% | 22% |
+| 4 | 632 | 54% | 19% |
+
+Base rate 20%, Brier 0.202. The Platt map therefore pulls the calibrated probability toward
+the base rate, which is the honest output, and the calibration gate blocks accordingly. The
+Treatment backtest agrees: 90 trades, 44% winners, PF 0.989.
+
+This is a statement about the *signal*, not the code. Per §9 nothing is re-weighted against
+it; the only valid test is data collected after a parameter freeze.
 
 ---
 

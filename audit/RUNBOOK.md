@@ -87,7 +87,9 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
    slow to load as a strategy arm.
 2. Screenshot the panel (top right by default; there's a position input). The header must
-   read `QUANTUM DIAGNOSTICS v22 Q7.2 B5`. Row **Volume (free plan)** compares OANDA tick
+   read `QUANTUM DIAGNOSTICS v24 Q7.2 B5`. Row **Auction** (v24) carries the auction layer
+   that moved out of the Master for the token limit: auction bias, state and cycle, discovery,
+   acceptance, value migration, opening type and sweep quality. Row **Volume (free plan)** compares OANDA tick
    volume with real COMEX GC1! volume (delayed on a free plan, so compared on closed bars):
    `corr` near 1 means the volume filters can be trusted; a WEAK reading means treat
    volume-based signals with caution. Bottom-left: the dashboard mirror (the Master's
@@ -96,7 +98,13 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
    Visuals. The **Gate funnel** rows show how many
    historical bars pass each entry stage and how often each veto fires; send them with any
    backtest that takes few or no trades.
-3. It trades and alerts nothing. Keep it or remove it; nothing else depends on it.
+3. It trades and alerts nothing. Keep it if you want the auction read (v24); nothing else
+   depends on it.
+
+> **Saving a paste.** After pasting, press **Save** (Ctrl+S). A chart keeps running the last
+> *saved* version: the v21 EdgeCases showed "3 FAIL / 97" in natural row order because the
+> editor still said *Unsaved version*. A saved v21+ harness draws failing rows first and its
+> header reads `v21`.
 
 ---
 

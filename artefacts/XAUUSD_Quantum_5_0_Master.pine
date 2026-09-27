@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v23   (MobileBrief card)             ║
+// ║  BUILD STAMP — this file last CHANGED in v24   (auction layer -> Diagnostics) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -26,6 +26,7 @@ string QVERSION = "Q7.2"
 // BOS/CHoCH labels, forecast cone, key-level lines, session shading, EMA/VWAP/BB
 // overlays) can be provided as a separate lightweight companion script on request. ═══ // Version: Quantum 5.0 MASTER — R6.0 + quant-audit statistical-integrity pass
 // ═══════════════ Q5.4-AuctionIQ — interpretive auction layer (final AMT spec) ═══════════════
+// v24: this layer now runs in XAUUSD_Quantum_5_0_Diagnostics.pine (row "Auction"), not here.
 //  B1  Directional states: ACCEPT -> ACC-HI/ACC-LO; REJECTION -> REJ-HI/REJ-LO.
 //  B2  7-stage cycle: BAL > INIT > DISC > TEST > ACPT > TRND > EXH.
 //  B3  Acceptance grade (A+/A/B/C/D); rejection tier (WEAK/MOD/STRONG/INST).
@@ -312,7 +313,7 @@ showSignals = input.bool(true, "BOS alerts", group=grpModules, tooltip="Enables 
 showFVG = input.bool(true, "Fair Value Gaps (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). FVG detection feeds trade quality, the analog zone feature and the plan. It was gated by this switch at OFF since the drawing moved to Visuals, so the decision ignored the FVGs Visuals draws. Same definition as Visuals (gap > 0.3 x ATR). Drawing is done by Visuals.")
 showOB = input.bool(true, "Order Blocks (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Order-block detection feeds SL/TP candidates, trade quality and the analog zone feature. It was gated OFF, so the decision ignored the OBs Visuals draws. Same definition as Visuals (F-A08 parity). Drawing is done by Visuals.")
 showSMT = input.bool(true, "SMT Divergence (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Gold/silver SMT divergence feeds the confluence signal count. It was gated OFF. Needs the silver feed.")
-showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax feeds the auction exhaustion read. It was gated OFF.")
+showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax: shown as CLIMAX▲/▼ on the dashboard cross-check line; it also feeds the auction exhaustion read, which runs in Diagnostics since v24. It was gated OFF.")
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
 showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
@@ -4715,72 +4716,12 @@ f_tqEngine() =>
     string tqBasis = (_tqHasHist ? "" : "-H") + (_tqHasFc ? "" : "-F")
     [tradeQuality, tqBasis]
 [tradeQuality, tqBasis] = f_tqEngine()
-f_auctionIntel() =>
-    // ═══════════════ Q5.3 AUCTION INTELLIGENCE (A1-A7) ═══════════════
-    // Value proxy = daily-anchored VWAP (labeled approximation — no exchange profile).
-    var float prevDayValue = na
-    if crossedNYDay
-        prevDayValue := nz(vwapVal[1], vwapVal)
-    float valueMigATR = not na(prevDayValue) and adaptiveATR > 0 ? (vwapVal - prevDayValue) / adaptiveATR : na
-    string valueMigStr = na(valueMigATR) ? "VAL n/a" : valueMigATR > 0.8 ? "VAL⇈" : valueMigATR > 0.3 ? "VAL↑" : valueMigATR < -0.8 ? "VAL⇊" : valueMigATR < -0.3 ? "VAL↓" : "VAL="
-    // A3 ACCEPTANCE: time on side of value + close location + volume + follow-through.
-    bool aboveValue = close > vwapVal
-    var int barsOnSide = 0
-    barsOnSide := aboveValue == (nz(close[1], close) > nz(vwapVal[1], vwapVal)) ? math.min(barsOnSide + 1, 40) : 1
-    float _closeLoc = high > low ? (close - low) / (high - low) : 0.5
-    float _ftATR = adaptiveATR > 0 ? math.min(math.abs(close - nz(close[5], close)) / adaptiveATR, 2.0) : 0.0
-    int acceptScore = int(math.min(math.min(barsOnSide, 40) * 1.0 + (relVol > 1.0 ? 20 : relVol > 0.7 ? 10 : 0) + (aboveValue ? _closeLoc : 1.0 - _closeLoc) * 20 + _ftATR * 10, 100))
-    string acceptGrade = acceptScore >= 85 ? "A+" : acceptScore >= 70 ? "A" : acceptScore >= 55 ? "B" : acceptScore >= 40 ? "C" : "D"
-    // A7 SWEEP QUALITY: graded at sweep event, persisted for display.
-    var int lastSweepQ = 0
-    var string lastSweepGrade = ""
-    if (liqSweepBull or liqSweepBear) and barstate.isconfirmed
-        float _pen = adaptiveATR > 0 ? math.min((liqSweepBull ? math.abs(low - close) : math.abs(high - close)) / adaptiveATR, 1.5) : 0.0
-        float _revEff = high > low ? (liqSweepBull ? (close - low) / (high - low) : (high - close) / (high - low)) : 0.5
-        lastSweepQ := int(math.min(_pen * 30 + volPercentile * 0.3 + _revEff * 30 + ((liqSweepBull and displacementUp) or (liqSweepBear and displacementDown) ? 10 : 0), 100))
-        lastSweepGrade := lastSweepQ >= 80 ? "INST" : lastSweepQ >= 65 ? "STRONG" : lastSweepQ >= 50 ? "MOD" : "WEAK"
-    // A5 PRICE DISCOVERY.
-    float _valDistA = adaptiveATR > 0 ? math.abs(close - vwapVal) / adaptiveATR : 0.0
-    float discScore = math.min(_valDistA * 25 + atrPercentile * 0.25 + math.min(adxVal, 40) * 1.0 + acceptScore * 0.25, 100)
-// Q5.4: ta.highest hoisted out of the ternary (compiler consistency warning).
-    float _discHi10 = ta.highest(discScore, 10)
-    string discStr = discScore >= 70 and (regAbnormal or climaxUp or climaxDown) ? "DISC:EXH" : discScore >= 70 and acceptScore >= 60 ? "DISC:ACCPT" : discScore >= 70 ? "DISC:CONF" : discScore >= 50 ? "DISC:DEV" : discScore < 30 and _discHi10 >= 50 ? "DISC:FAIL" : discScore >= 30 ? "DISC:WEAK" : "ROTATION"
-    // A1 AUCTION STATE: score all, pick dominant, probability = share of total.
-    float stBal = (regCompression or (not regStrongTrend and not regExpansion and adxVal < adxThreshold) ? 50.0 : 0.0) + (_valDistA < 0.8 ? 30.0 : 0.0) + (atrPercentile <= 40 ? 20.0 : 0.0)
-    float stTrendA = (regStrongTrend ? 45.0 : regWeakTrend ? 20.0 : 0.0) + acceptScore * 0.3 + (discScore >= 50 ? 25.0 : 0.0)
-    float stRot = (rangeScore > math.max(bullScore, bearScore) ? 45.0 : 0.0) + (_valDistA < 1.0 ? 25.0 : 0.0) + (adxVal < adxThreshold ? 20.0 : 0.0)
-    float stDisc = (regExpansion ? 40.0 : 0.0) + (_valDistA >= 1.0 ? 30.0 : 0.0) + (atrPercentile >= 60 ? 20.0 : 0.0)
-    float stAcc = acceptScore >= 60 and _valDistA >= 0.8 ? 40.0 + acceptScore * 0.4 : 0.0
-    float stRej = ((liqSweepBull or liqSweepBear) ? 50.0 : sesManip ? 30.0 : 0.0) + (lastSweepQ >= 65 and (liqSweepBull or liqSweepBear) ? 25.0 : 0.0)
-    float stExh = (regAbnormal ? 40.0 : 0.0) + ((climaxUp or climaxDown) ? 35.0 : 0.0) + (atrPercentile >= 90 ? 15.0 : 0.0)
-    // vdKQ = 50-bar volume delta in thousands (computed here from volDelta50, which is
-    // defined earlier; the display-scope vdK alias is declared later in the file).
-    float vdKQ = volDelta50 / 1000.0
-    float stAD = stBal > 30 and math.abs(vdKQ) > 1.0 ? 35.0 + math.min(math.abs(vdKQ) * 5.0, 25.0) : 0.0
-    float _stSum = stBal + stTrendA + stRot + stDisc + stAcc + stRej + stExh + stAD
-    float _stMax = math.max(stBal, math.max(stTrendA, math.max(stRot, math.max(stDisc, math.max(stAcc, math.max(stRej, math.max(stExh, stAD)))))))
-    string aucState = _stSum <= 0 ? "BALANCE" : _stMax == stRej ? (liqSweepBear or (sesManip and not liqSweepBull) ? "REJ-HI" : "REJ-LO") : _stMax == stExh ? "EXHAUST" : _stMax == stTrendA ? "TREND-AUC" : _stMax == stAcc ? (aboveValue ? "ACC-HI" : "ACC-LO") : _stMax == stDisc ? "DISCOVERY" : _stMax == stAD ? (vdKQ > 0 ? "ACCUM" : "DISTRIB") : _stMax == stRot ? "ROTATE" : "BALANCE"
-    int aucProb = _stSum > 0 ? int(_stMax / _stSum * 100.0) : 0
-    // A2 AUCTION CYCLE stage from dominant state + regime.
-    string aucCycle = aucState == "BALANCE" or aucState == "ACCUM" or aucState == "DISTRIB" ? "①BAL" : aucState == "ROTATE" ? "②INIT" : aucState == "DISCOVERY" ? "③DISC" : aucState == "REJ-HI" or aucState == "REJ-LO" ? "④TEST" : aucState == "ACC-HI" or aucState == "ACC-LO" ? "⑤ACPT" : aucState == "TREND-AUC" ? "⑥TRND" : "⑦EXH"
-    // A6 OPENING TYPE (live session geometry; needs >=3 session bars).
-    // Q5.4: ta.barssince hoisted out of the ternary (compiler consistency warning).
-    int _sessAge = nz(ta.barssince(sessId != nz(sessId[1], sessId)), 0)
-    string openType = ""
-    if not na(sesOpenPx) and not na(sesHi) and curSessId >= 0 and curSessId <= 2
-        float _upX = sesHi - sesOpenPx
-        float _dnX = sesOpenPx - sesLo
-        float _rngX = math.max(sesHi - sesLo, syminfo.mintick)
-        float _oneSide = math.max(_upX, _dnX) / _rngX
-        bool _pastOpen = (close - sesOpenPx) * (_upX > _dnX ? 1 : -1) < 0
-        bool _gapUp = not na(prevSesHi) and sesOpenPx > prevSesHi
-        bool _gapDn = not na(prevSesLo) and sesOpenPx < prevSesLo
-        bool _gapFilled = (_gapUp and low <= prevSesHi) or (_gapDn and high >= prevSesLo)
-        openType := _gapUp or _gapDn ? (_gapFilled ? "GAP-FILL" : _oneSide >= 0.7 ? "GAP-DRV" : "O-AUC") : _rngX < adaptiveATR * 0.7 ? "O-NEU" : _rngX < adaptiveATR ? "O-AUC" : _oneSide >= 0.85 ? (_sessAge > 12 ? "DLY-DRV" : "O-DRV") : _oneSide >= 0.7 and _pastOpen ? "O-REJ" : _oneSide >= 0.7 ? "O-TDR" : "O-AUC"
-    // B7 Market Personality (day type). Double-distribution excluded (needs profile splits).
-    [aucState, aucProb, aucCycle, discStr, acceptScore, acceptGrade, valueMigStr, openType, lastSweepQ, lastSweepGrade]
-[aucState, aucProb, aucCycle, discStr, acceptScore, acceptGrade, valueMigStr, openType, lastSweepQ, lastSweepGrade] = f_auctionIntel()
-// B10 aucBias/auctionStr moved below tqVeto (declaration-order fix).
+// v24 (F-A32, measured token ceiling): the Q5.3/Q5.4 AUCTION INTELLIGENCE layer
+// (f_auctionIntel: value migration, acceptance, sweep quality, discovery, auction state,
+// cycle, opening type; aucBias) MOVED to XAUUSD_Quantum_5_0_Diagnostics.pine, row
+// "Auction", where the same function runs verbatim on the Treatment-twin engine. It was
+// display-only here (block-level slice: it fed no gate, alert, plot or plan value), so no
+// decision, alert or trade-plan number changes. Moved, not deleted -- CLAUDE.md rule.
 // ═══════════════ END AUCTION INTELLIGENCE ═══════════════
 // Q5.2-F6: regime-adaptive TQ floor; Q5.2-F4: negative analog expectancy is a hard veto.
 int effTqMin = tqMinScore == 0 ? 0 : math.min(math.max(tqMinScore + (regAbnormal ? 15 : regCompression ? 10 : regStrongTrend or regExpansion ? -5 : 0), 0), 90)
@@ -4980,8 +4921,7 @@ if barstate.isconfirmed
     //   hN > OUTCOME_N * 2  -> the scan guard's own minimum history requirement
     //   oOosNeff >= 10      -> the effective-N floor used by the OOS/TQ-history path
     _confDirLabel := _rkBlockedConf ? "RISK LOCK" : _tqBlockedConf ? "NO TRADE" : shouldBuy ? "BUY" : shouldSell ? "SELL" : not _statsWarm ? "WARMUP" : "WAIT"
-// B10 Auction bias (replaces raw signal wording at the auction layer).
-string aucBias = shouldBuy and not tqVeto ? (aucState == "REJ-LO" ? "LONG-REV" : "LONG-CONT") : shouldSell and not tqVeto ? (aucState == "REJ-HI" ? "SHORT-REV" : "SHORT-CONT") : shouldBuy or shouldSell ? "NO-TRADE" : "WAIT"
+// B10 auction bias: moved to Diagnostics with the auction layer (v24).
 string structStr = bullStructActive ? "▲" + bullStructType + " " + str.tostring(bullStructAge) + "b" : bearStructActive ? "▼" + bearStructType + " " + str.tostring(bearStructAge) + "b" : "no-struct"
 // ═══ Q6.3 CROSS-CHECK / TRACEABILITY (DISPLAY ONLY) ═══
 // Each engine reports what IT concluded, from variables already computed above —
@@ -5074,7 +5014,7 @@ string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "
 // so the value has a consumer and the mode is never ambiguous.
 string __resolvedModeResp = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
 string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]"
-string auctionStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + "»" + aucBias + " " + aucState + str.tostring(aucProb) + "% " + aucCycle + " " + discStr + " A" + str.tostring(acceptScore) + acceptGrade + " " + valueMigStr + (openType != "" ? " " + openType : "") + (lastSweepQ > 0 ? " SW:" + lastSweepGrade + str.tostring(lastSweepQ) : "") + (not na(vixD) ? " VIX" + str.tostring(vixD, "#.#") : "")
+string xcheckStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + (not na(vixD) ? "VIX" + str.tostring(vixD, "#.#") : "") + (climaxUp ? " CLIMAX▲" : climaxDown ? " CLIMAX▼" : "")
 string tqGrade = tradeQuality >= 80 ? "A" : tradeQuality >= 65 ? "B" : tradeQuality >= 50 ? "C" : "D"
 // ═══════════════ END TRADE QUALITY ═══════════════
 // R6.0: regime cell now shows the named adaptive regime + volatility tag.
@@ -5582,7 +5522,7 @@ f_dashRender() =>
         // R6.0: session intelligence appended — Exp = current range vs avg session range,
         // M = historical manipulation frequency, C = directional-continuation frequency.
         string _sessStats = (not na(sessExpansionPct) ? " Exp" + str.tostring(int(sessExpansionPct)) + "%" : "") + (not na(sessManipProb) ? " M" + str.tostring(int(sessManipProb)) + "%" : "") + (not na(sessContProb) ? " C" + str.tostring(int(sessContProb)) + "%" : "")
-        tc(0, 2, _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats + "\n" + auctionStr, _sessCol, _seSize, _w0)
+        tc(0, 2, _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats + "\n" + xcheckStr, _sessCol, _seSize, _w0)
         tc(1, 2, _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _seSize, _w1)
         tc(2, 2, _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel, _evCol, _seSize, _w2)
         tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)

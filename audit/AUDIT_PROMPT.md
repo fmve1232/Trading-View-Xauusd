@@ -18,14 +18,14 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5768 | 374324 | `2b951dcf91f7d42b7749678eedfaf293db04e453fb3eeec12b1698d6dea6214b` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5708 | 367787 | `f108b55fc3cd821735a08c2203ff59af8f811f3782d5cf2e21e0de754876697e` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5277 | 329997 | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5277 | 330062 | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 377 | 26980 | `8ffaf61c8a56db77cc9efff13aacef90b2166c068cff6398fe105d5aa384ef5c` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5491 | 345431 | `4c5bef5e7f2a7e13a0cbd310937848ee56ac8d3a76ad677a1c9a799a83010bd9` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5502 | 346649 | `c8385245ca2b03a6a7327187a38c40ed1ac678b88411a16c97e8f64217e053ec` |
 
-> **BUILD v23 — this prompt pins the current build.** The originally audited build
+> **BUILD v24 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -50,6 +50,9 @@ scope, and no other build of these scripts is in scope.
 > **v17:** the six features v15/v16 removed from the Master are restored and wired in a new
 > `Diagnostics.pine` companion on the Treatment engine verbatim (`diag_parity.py`).
 > **v18:** the removed non-features restored as well (listed in `audit/tools/retained.txt`).
+> **v24: F-A32 … F-A34** — the Master's measured token overflow (100,820) fixed by moving the
+> auction layer to Diagnostics; two Diagnostics compiler warnings fixed; the first reliability
+> data recorded as an open statistical finding.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
