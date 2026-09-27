@@ -1,7 +1,7 @@
 # XAUUSD Quantum — Independent Audit Prompt
 
 **Status:** binding instructions for the auditor.
-**Scope:** the six Pine v6 artefacts listed in §1 and nothing else (six since v17).
+**Scope:** the seven Pine v6 artefacts listed in §1 and nothing else (six since v17, seven since v31).
 **Generated against:** the artefact set committed under `artefacts/`.
 
 This is not a generic code-review template. It is pinned to this project's
@@ -13,19 +13,20 @@ traps in §4 are findings that already cost this project weeks to locate. Read
 
 ## §1 — Artefact manifest and the stop rule
 
-You are auditing exactly these six files. Nothing else in the repository is in
+You are auditing exactly these seven files. Nothing else in the repository is in
 scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5741 | 371153 | `db4c24df8a018e8ca732348a2b6e8c75d153c01508891d1e6036df5a77718503` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5728 | 369391 | `1fe5e5a828742f11a7f56d583314d3e3d29f8d110d8fd8b92de64514307dd2f0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5277 | 329997 | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5277 | 330062 | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 377 | 26980 | `8ffaf61c8a56db77cc9efff13aacef90b2166c068cff6398fe105d5aa384ef5c` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5288 | 330981 | `0748a41fa479f78f8af56c16dabf56e610ef071dcdd86cc3dc309f312346b770` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 394 | 28440 | `411a73e6deb72a87af279ec0f132c2fce9dcffeb896ed98375930fd0b17029fe` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5491 | 345431 | `4c5bef5e7f2a7e13a0cbd310937848ee56ac8d3a76ad677a1c9a799a83010bd9` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5544 | 349654 | `6ea54f6332401872912bc483dfca545e7a8f23b054cfffe9eeb806f316e4fa4c` |
 
-> **BUILD v22 — this prompt pins the current build.** The originally audited build
+> **BUILD v31 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -50,6 +51,21 @@ scope, and no other build of these scripts is in scope.
 > **v17:** the six features v15/v16 removed from the Master are restored and wired in a new
 > `Diagnostics.pine` companion on the Treatment engine verbatim (`diag_parity.py`).
 > **v18:** the removed non-features restored as well (listed in `audit/tools/retained.txt`).
+> **v24: F-A32 … F-A34** — the Master's measured token overflow (100,820) fixed by moving the
+> auction layer to Diagnostics; two Diagnostics compiler warnings fixed; the first reliability
+> data recorded as an open statistical finding.
+> **v25:** the three phone views merged into one Mobile mode (display only, Master only).
+> **v26: F-A35** — same-bar sequence audit (`sequence.py`); the bias label and WAIT reason moved
+> after the final score stage.
+> **v27: F-A36** — the operator's "mostly WAIT during $30–50 moves" measured, not tuned: a
+> missed-move audit row in Diagnostics.
+> **v28:** first chart run of v24–v27 recorded (all six compile); EdgeCases names its first failure.
+> **v29: F-A37** — EdgeCases I7 measured on the chart: its IEEE premise is false in Pine; corrected, +I9/I10.
+> **v30:** I7/I9 pass on the chart; `1e-12 > 0.0` is false; I10 now separates literal-as-zero from a tolerant `>`.
+> **§8.2 CLOSED by execution (2026-09-27): the v30 harness reports ALL PASS 99 on the operator's chart.**
+> Pine float comparisons are tolerance-based; literals keep their value.
+> **v31:** forward test pre-registered (`PREREGISTRATION.md`, holdout from 2026-09-28 00:00 UTC); Challenger arm H1
+> (fast trend gate) added; forward-test workbook with verified formulas.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
@@ -544,7 +560,7 @@ does.**
 Does each computation do what its author intended? Are there `BUG`/`NUM`
 defects: truncation, rounding at boundaries, `na` leaking into a silent number,
 saturation destroying information, division by a near-zero that the `== 0`
-guard misses (EdgeCases I7), off-by-one in a forward window, an uncapped
+guard misses (EdgeCases I7 -- measured v29: Pine's float `==` is tolerant, so it does not), off-by-one in a forward window, an uncapped
 drawing object, a desynchronised `ta.*` call evaluated inside a conditional?
 
 Question A is answerable by reading code and running the harness.

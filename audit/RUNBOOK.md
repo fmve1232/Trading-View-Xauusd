@@ -2,7 +2,7 @@
 
 Ordered by value. **Steps 1 and 2 are worth more than everything else combined**, because
 they close gaps that no amount of analysis here can: the Master has never been compiled and
-the 97 assertions (72 until v13, +20 in v14, +5 in v16) have never been run.
+the 99 assertions (72 until v13, +20 in v14, +5 in v16, +2 in v29) had not been run until the 2026-09-27 chart run.
 
 Read §9 at the end before running the strategies. It is short and it changes what the data
 is allowed to do.
@@ -67,13 +67,13 @@ never recorded.
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 97`, or `<n> FAIL / 97`. The header cell must read `§16 EDGE CASE v21`. Since v20
+   `ALL PASS 99`, or `<n> FAIL / 99`. The header cell must read `§16 EDGE CASE v30`. Since v20
    **failing rows are drawn first**, and a *Table text size* input (default Small) keeps them legible.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
 4. Remove it afterwards — it is diagnostic only.
 
-A green `ALL PASS 97` establishes how Pine evaluates the arithmetic. It does **not**
+A green `ALL PASS 99` establishes how Pine evaluates the arithmetic. It does **not**
 establish that the Master is wired to those expressions — that is a separate, known limit.
 
 ---
@@ -87,7 +87,9 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 1. Add it to the XAUUSD chart and let it load fully. It runs the full engine, so it's as
    slow to load as a strategy arm.
 2. Screenshot the panel (top right by default; there's a position input). The header must
-   read `QUANTUM DIAGNOSTICS v22 Q7.2 B5`. Row **Volume (free plan)** compares OANDA tick
+   read `QUANTUM DIAGNOSTICS v24 Q7.2 B5`. Row **Auction** (v24) carries the auction layer
+   that moved out of the Master for the token limit: auction bias, state and cycle, discovery,
+   acceptance, value migration, opening type and sweep quality. Row **Volume (free plan)** compares OANDA tick
    volume with real COMEX GC1! volume (delayed on a free plan, so compared on closed bars):
    `corr` near 1 means the volume filters can be trusted; a WEAK reading means treat
    volume-based signals with caution. Bottom-left: the dashboard mirror (the Master's
@@ -96,7 +98,43 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
    Visuals. The **Gate funnel** rows show how many
    historical bars pass each entry stage and how often each veto fires; send them with any
    backtest that takes few or no trades.
-3. It trades and alerts nothing. Keep it or remove it; nothing else depends on it.
+   Row **Missed moves** (v27): for every move of at least *move size* (default 30) within
+   *N bars* (default 12) on the loaded history, where the entry chain stopped in that
+   direction (trend, HTF, sess/news/DD, trigger, TQ, EV, P, risk), or ENTRY if a signal
+   fired while the move was still ahead. ENTRY does not mean the trade won. Send this row
+   with the gate funnel.
+3. It trades and alerts nothing. Keep it if you want the auction read (v24); nothing else
+   depends on it.
+
+> **EdgeCases (v28):** the red header cell names the first failing test with its GOT / WANT,
+> e.g. `1 FAIL / 99 · I4 got 5 want na`. Send that cell.
+>
+> **Saving a paste.** After pasting, press **Save** (Ctrl+S). A chart keeps running the last
+> *saved* version: the v21 EdgeCases showed "3 FAIL / 97" in natural row order because the
+> editor still said *Unsaved version*. A saved v21+ harness draws failing rows first and its
+> header reads `v21`.
+
+---
+
+## Step 2b′ — Phone view (v23; one Mobile mode since v25)
+
+On the Master's settings choose **Dash Mode → Mobile** (or tick *☰ Mobile Layout*). v25 merged
+the old MobileLand, MobilePort and MobileBrief into this one mode. If a saved chart still
+holds an old option name, pick **Mobile** again. The card has four sections, and everything
+in it is built from the same engine values and strings as the desktop view:
+
+| Section | Headline | Detail (Standard / Spacious) |
+|---|---|---|
+| 1 TREND | composite bias · regime · HTF bias · bull/bear score | bias strength and C/S/I breakdown, agreement · 5M–1D arrows, session, volume, CVD, delta, regime, session stats · macro verdict, day-of-week tracker |
+| 2 TARGET | liquidity destination at its **MT5** price, reach % | nearest liquidity above/below and target score/reach/open FVG, both at TradingView prices |
+| 3 PREV → NEXT | last structure event, last bar's change → calibrated 1R UP vs DOWN, race EV | price + change · forecast L/S/R · EV, calibrated P, confidence · WR/ROLL/PF · (Spacious) engine cross-check line |
+| 4 DECISION | the desktop DECISION box (confirmed label, grade, TQ, bias + block reason, LIVE tag); on BUY/SELL the MT5 entry, SL, TP1, TP2 | RR, SL in ATR, risk %, $, lots, cost · decision log, MTF agreement |
+
+Below it, the **full trade plan** (direction, entry, SL/TP1–3 with hit probabilities, RR and
+lots, plan reason) is listed inside the same card, so nothing can overlap on a narrow
+screen. **Density → Compact** shows the four headlines only, which is the old MobileBrief.
+TradingView keeps settings per chart layout, so use a separate layout for the phone.
+*Text Size* enlarges the card.
 
 ---
 
@@ -116,6 +154,21 @@ notification channel (app / e-mail / webhook). It fires only on **closed bars**,
 MT5 prices use the **MT5 Price Offset** input (MT5 − TradingView). Set it from your broker's
 quote before trading. The separate "Nexus Buy/Sell Signal" and "Bull/Bear BOS" alertconditions
 remain available and are confirmed-bar gated too.
+
+---
+
+## Step 2d — Forward test (v31, from 2026-09-28 00:00 UTC)
+
+The rules are frozen in `audit/PREREGISTRATION.md`. Only trades opened after the freeze count.
+
+1. **Add the Challenger** (`Strategy_CHALLENGER.pine`) to the same 1H chart as Treatment and
+   Control. Leave all three at their code defaults, 10K capital.
+2. **Live trades:** for every MT5 trade taken from a confirmed Master BUY/SELL alert, add a
+   row to *Live Log* in `audit/XAUUSD_Forward_Test_Log.xlsx`. Fill the blue columns only.
+3. **Weekly:** in each arm's Strategy Tester open *List of Trades* and paste the arm name,
+   entry time and net P&L of any new trades into *Arm Trades*.
+4. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
+   setting or rule before the decision date in PREREGISTRATION §5.
 
 ---
 
@@ -226,7 +279,7 @@ whether that distinction behaves as documented.
 
 Quick visual confirmations that the fixes behave:
 
-- **Dashboard**: set Dash Mode → `MobileLand`. Five columns, readable, no clipping.
+- **Dashboard**: set Dash Mode → `Mobile`. One card, four sections, readable, no clipping.
 - **Order blocks**: visibly fewer than before — the threshold was 2.5× too loose.
 - **Analog EV**: lower than the previous build, most in chop.
 - **Plan basis**: look for a `°` suffix (e.g. `SL:VAL°`). It marks a level that exists only
@@ -236,7 +289,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v21`, **97** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v30`, **99** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v21   (engine inputs on; MT5 alerts) ║
+// ║  BUILD STAMP — this file last CHANGED in v26   (bias label sequence fix)      ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -26,6 +26,7 @@ string QVERSION = "Q7.2"
 // BOS/CHoCH labels, forecast cone, key-level lines, session shading, EMA/VWAP/BB
 // overlays) can be provided as a separate lightweight companion script on request. ═══ // Version: Quantum 5.0 MASTER — R6.0 + quant-audit statistical-integrity pass
 // ═══════════════ Q5.4-AuctionIQ — interpretive auction layer (final AMT spec) ═══════════════
+// v24: this layer now runs in XAUUSD_Quantum_5_0_Diagnostics.pine (row "Auction"), not here.
 //  B1  Directional states: ACCEPT -> ACC-HI/ACC-LO; REJECTION -> REJ-HI/REJ-LO.
 //  B2  7-stage cycle: BAL > INIT > DISC > TEST > ACPT > TRND > EXH.
 //  B3  Acceptance grade (A+/A/B/C/D); rejection tier (WEAK/MOD/STRONG/INST).
@@ -312,33 +313,27 @@ showSignals = input.bool(true, "BOS alerts", group=grpModules, tooltip="Enables 
 showFVG = input.bool(true, "Fair Value Gaps (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). FVG detection feeds trade quality, the analog zone feature and the plan. It was gated by this switch at OFF since the drawing moved to Visuals, so the decision ignored the FVGs Visuals draws. Same definition as Visuals (gap > 0.3 x ATR). Drawing is done by Visuals.")
 showOB = input.bool(true, "Order Blocks (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Order-block detection feeds SL/TP candidates, trade quality and the analog zone feature. It was gated OFF, so the decision ignored the OBs Visuals draws. Same definition as Visuals (F-A08 parity). Drawing is done by Visuals.")
 showSMT = input.bool(true, "SMT Divergence (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Gold/silver SMT divergence feeds the confluence signal count. It was gated OFF. Needs the silver feed.")
-showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax feeds the auction exhaustion read. It was gated OFF.")
+showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax: shown as CLIMAX▲/▼ on the dashboard cross-check line; it also feeds the auction exhaustion read, which runs in Diagnostics since v24. It was gated OFF.")
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
 showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
 showStatsEngine = input.bool(true, "Statistical Engines", group=grpModules)
 
 grpLayout = "LAYOUT"
-dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "MobileLand", "MobilePort"], group=grpLayout, tooltip="Pine cannot detect screen size, so \"Auto\" resolves to Desktop -- it is not detection. On a phone pick MobileLand or MobilePort (or tick Mobile Layout below): those drop the four context columns so the remaining cells actually fit. MobilePort also drops the two dense sub-rows.")
-mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Force mobile-optimized dashboard for phones/tablets")
-_resolvedMode = mobileOverride ? "MobilePort" : dashMode
+dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group=grpLayout, tooltip="Pine cannot detect screen size, so \"Auto\" resolves to Desktop -- it is not detection. On a phone pick Mobile (or tick Mobile Layout below): a 4-section card -- 1 TREND, 2 TARGET, 3 PREV -> NEXT, 4 DECISION -- with the plan listed vertically underneath. Density sets the depth: Compact = the four headlines only; Standard = + every detail the old MobileLand/MobilePort/MobileBrief views showed; Spacious = + the engine cross-check line. (v25: those three modes merged into this one.)")
+mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Same as Dash Mode = Mobile")
+_resolvedMode = mobileOverride ? "Mobile" : dashMode
 textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group=grpLayout)
 density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group=grpLayout)
-// F-A11. "Mobile Layout" previously changed ONLY the font size: _respCols was set to 9
-// unconditionally and every column 0-8 was still written, so a phone got the full
-// nine-column desktop table in tiny type -- every cell overflowing into its neighbour and
-// both edges clipped off screen. These two flags drive a real layout reduction below.
-//   _dashMobile  drops the CONTEXT columns (STRUCTURE / LIQUIDITY / PRICE / MACRO) and
-//                keeps the five that answer "what do I do": MARKET, BIAS, SIGNAL, RISK,
-//                DECISION. The dropped columns are not lost -- switch Dash Mode to
-//                Desktop to see them.
-//   _dashPort    additionally drops the two dense sub-rows, which are unreadable on a
-//                portrait phone. Landscape keeps them.
+// F-A11 (v8) gave phones a real layout (5-column MobileLand, 2-row MobilePort); v23 added the
+// MobileBrief card. v25 MERGES all three into one "Mobile" mode: the 4-section card, whose
+// detail rows carry every value those views showed (and the LIQUIDITY/MACRO columns they had
+// dropped), plus the full trade plan listed vertically. Density picks the depth. Nothing on
+// the phone is recalculated: the card reads the strings the desktop renderer builds.
 // NOTE ON "Auto": Pine cannot detect viewport size, so Auto resolves to Desktop and
 // always has. On a phone you must set this yourself -- that is a platform limit, not a
 // preference. The tooltip now says so instead of implying detection.
-bool _dashMobile = _resolvedMode == "MobilePort" or _resolvedMode == "MobileLand"
-bool _dashPort   = _resolvedMode == "MobilePort"
+bool _dashMobile = _resolvedMode == "Mobile"
 showDowTracker = input.bool(true, "Show Day-of-Week Bias Tracker", group=grpLayout)
 
 grpRisk = "RISK MANAGEMENT"
@@ -2472,9 +2467,7 @@ if bearScore > 95.0
     bearScore := 95.0
     bullScore := math.max(bullScore, 5.0)
     rangeScore := 100.0 - bullScore - bearScore
-// Bias label using normalized scores (0-100, same scale as dashboard)
-// SSOT: SHARED — consumed by dashboard TREND column, alert messages, and evidence display
-biasLabel = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 62 ? "RANGE" : bullScore > bearScore and bullScore > rangeScore ? "BULL-ISH" : bearScore > bullScore and bearScore > rangeScore ? "BEAR-ISH" : "NEUTRAL"
+// v26: biasLabel moved below the final normalisation (search "v26 SEQUENCE").
 
 // HISTORICAL ANALOG ANALYSIS (Part 6) — outputs populated below from stats engine
 
@@ -2542,10 +2535,8 @@ shouldSell = sellPreFilters and (bearStructActive or displacementDown)
 // Until now there was no way to tell WHICH of the seven conditions was missing, so every
 // WAIT looked identical and uninformative. This names the first failing one, in gate
 // order, for whichever side has the stronger evidence score.
-string _blkWhy = ""
-if not shouldBuy and not shouldSell
-    bool _bullSide = bullScore >= bearScore
-    _blkWhy := _ddBreach ? "DD" : inNewsWindow ? "NEWS" : not recentBars ? "OLD-BAR" : sessionQuality < 30 ? "SESS " + str.tostring(int(sessionQuality)) + "/30" : (_bullSide ? not bullTrend : not bearTrend) ? "TREND " + str.tostring(_bullSide ? bullTrendScore : bearTrendScore) + "/" + str.tostring(trendThreshold) : (_bullSide ? htfBearScoreGate : htfBullScoreGate) ? "HTF-OPP" : "NO-TRIGGER"
+// v26: _blkWhy is computed just below biasLabel (search "v26 SEQUENCE"), so the side it
+// explains is the side the label names.
 
 // ---- Decision Log: which gate terms are passing ----
 // F-A03 FIX. This block previously scored against the PRE-Q5.5 filter set
@@ -2973,6 +2964,7 @@ var float _calDriftSlow = 50.0
 // Dashboard tables
 var table tblA = na
 var table tblPlan = na
+var table tblBrief = na
 
 // Regime: first-order Markov with duration tracking
 int rCurr = strongTrend ? 0 : moderateTrend ? 1 : 2
@@ -4546,6 +4538,20 @@ rangeScore := fRngScore
 bullScore := nb2_
 bearScore := nbe2_
 rangeScore := nr2_
+// v26 SEQUENCE FIX: biasLabel was computed ~2,000 lines earlier, from the EVIDENCE-stage
+// scores, before the analog blend (L~4465), the forecast engine and this normalisation. Every
+// reader (DECISION box BIAS row, Mobile TREND row, BUY/SELL alert text) comes later and
+// prints it beside the FINAL scores, so the label could contradict the numbers next to it
+// (e.g. BEAR-ISH beside B55/S40). Same formula, same 62 threshold, now on the final scores
+// -- the ones the dashboard shows and the calibration validates (R5.3-M3). No gate reads it.
+// SSOT: SHARED — consumed by dashboard TREND column, alert messages, and evidence display
+biasLabel = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 62 ? "RANGE" : bullScore > bearScore and bullScore > rangeScore ? "BULL-ISH" : bearScore > bullScore and bearScore > rangeScore ? "BEAR-ISH" : "NEUTRAL"
+// v26 SEQUENCE: the WAIT reason, moved here from the decision-log block so that _bullSide
+// uses the same final scores as biasLabel; the only reader is the DECISION box BIAS row.
+string _blkWhy = ""
+if not shouldBuy and not shouldSell
+    bool _bullSide = bullScore >= bearScore
+    _blkWhy := _ddBreach ? "DD" : inNewsWindow ? "NEWS" : not recentBars ? "OLD-BAR" : sessionQuality < 30 ? "SESS " + str.tostring(int(sessionQuality)) + "/30" : (_bullSide ? not bullTrend : not bearTrend) ? "TREND " + str.tostring(_bullSide ? bullTrendScore : bearTrendScore) + "/" + str.tostring(trendThreshold) : (_bullSide ? htfBearScoreGate : htfBullScoreGate) ? "HTF-OPP" : "NO-TRIGGER"
 // R5.3-M3: calibration now tracks the FINAL displayed bullScore. The record written
 // earlier this bar stored the pre-blend evidence score, so the Cal grade / Brier /
 // mP= sigmoid were validating a variable the user never sees. The slot is overwritten
@@ -4715,72 +4721,12 @@ f_tqEngine() =>
     string tqBasis = (_tqHasHist ? "" : "-H") + (_tqHasFc ? "" : "-F")
     [tradeQuality, tqBasis]
 [tradeQuality, tqBasis] = f_tqEngine()
-f_auctionIntel() =>
-    // ═══════════════ Q5.3 AUCTION INTELLIGENCE (A1-A7) ═══════════════
-    // Value proxy = daily-anchored VWAP (labeled approximation — no exchange profile).
-    var float prevDayValue = na
-    if crossedNYDay
-        prevDayValue := nz(vwapVal[1], vwapVal)
-    float valueMigATR = not na(prevDayValue) and adaptiveATR > 0 ? (vwapVal - prevDayValue) / adaptiveATR : na
-    string valueMigStr = na(valueMigATR) ? "VAL n/a" : valueMigATR > 0.8 ? "VAL⇈" : valueMigATR > 0.3 ? "VAL↑" : valueMigATR < -0.8 ? "VAL⇊" : valueMigATR < -0.3 ? "VAL↓" : "VAL="
-    // A3 ACCEPTANCE: time on side of value + close location + volume + follow-through.
-    bool aboveValue = close > vwapVal
-    var int barsOnSide = 0
-    barsOnSide := aboveValue == (nz(close[1], close) > nz(vwapVal[1], vwapVal)) ? math.min(barsOnSide + 1, 40) : 1
-    float _closeLoc = high > low ? (close - low) / (high - low) : 0.5
-    float _ftATR = adaptiveATR > 0 ? math.min(math.abs(close - nz(close[5], close)) / adaptiveATR, 2.0) : 0.0
-    int acceptScore = int(math.min(math.min(barsOnSide, 40) * 1.0 + (relVol > 1.0 ? 20 : relVol > 0.7 ? 10 : 0) + (aboveValue ? _closeLoc : 1.0 - _closeLoc) * 20 + _ftATR * 10, 100))
-    string acceptGrade = acceptScore >= 85 ? "A+" : acceptScore >= 70 ? "A" : acceptScore >= 55 ? "B" : acceptScore >= 40 ? "C" : "D"
-    // A7 SWEEP QUALITY: graded at sweep event, persisted for display.
-    var int lastSweepQ = 0
-    var string lastSweepGrade = ""
-    if (liqSweepBull or liqSweepBear) and barstate.isconfirmed
-        float _pen = adaptiveATR > 0 ? math.min((liqSweepBull ? math.abs(low - close) : math.abs(high - close)) / adaptiveATR, 1.5) : 0.0
-        float _revEff = high > low ? (liqSweepBull ? (close - low) / (high - low) : (high - close) / (high - low)) : 0.5
-        lastSweepQ := int(math.min(_pen * 30 + volPercentile * 0.3 + _revEff * 30 + ((liqSweepBull and displacementUp) or (liqSweepBear and displacementDown) ? 10 : 0), 100))
-        lastSweepGrade := lastSweepQ >= 80 ? "INST" : lastSweepQ >= 65 ? "STRONG" : lastSweepQ >= 50 ? "MOD" : "WEAK"
-    // A5 PRICE DISCOVERY.
-    float _valDistA = adaptiveATR > 0 ? math.abs(close - vwapVal) / adaptiveATR : 0.0
-    float discScore = math.min(_valDistA * 25 + atrPercentile * 0.25 + math.min(adxVal, 40) * 1.0 + acceptScore * 0.25, 100)
-// Q5.4: ta.highest hoisted out of the ternary (compiler consistency warning).
-    float _discHi10 = ta.highest(discScore, 10)
-    string discStr = discScore >= 70 and (regAbnormal or climaxUp or climaxDown) ? "DISC:EXH" : discScore >= 70 and acceptScore >= 60 ? "DISC:ACCPT" : discScore >= 70 ? "DISC:CONF" : discScore >= 50 ? "DISC:DEV" : discScore < 30 and _discHi10 >= 50 ? "DISC:FAIL" : discScore >= 30 ? "DISC:WEAK" : "ROTATION"
-    // A1 AUCTION STATE: score all, pick dominant, probability = share of total.
-    float stBal = (regCompression or (not regStrongTrend and not regExpansion and adxVal < adxThreshold) ? 50.0 : 0.0) + (_valDistA < 0.8 ? 30.0 : 0.0) + (atrPercentile <= 40 ? 20.0 : 0.0)
-    float stTrendA = (regStrongTrend ? 45.0 : regWeakTrend ? 20.0 : 0.0) + acceptScore * 0.3 + (discScore >= 50 ? 25.0 : 0.0)
-    float stRot = (rangeScore > math.max(bullScore, bearScore) ? 45.0 : 0.0) + (_valDistA < 1.0 ? 25.0 : 0.0) + (adxVal < adxThreshold ? 20.0 : 0.0)
-    float stDisc = (regExpansion ? 40.0 : 0.0) + (_valDistA >= 1.0 ? 30.0 : 0.0) + (atrPercentile >= 60 ? 20.0 : 0.0)
-    float stAcc = acceptScore >= 60 and _valDistA >= 0.8 ? 40.0 + acceptScore * 0.4 : 0.0
-    float stRej = ((liqSweepBull or liqSweepBear) ? 50.0 : sesManip ? 30.0 : 0.0) + (lastSweepQ >= 65 and (liqSweepBull or liqSweepBear) ? 25.0 : 0.0)
-    float stExh = (regAbnormal ? 40.0 : 0.0) + ((climaxUp or climaxDown) ? 35.0 : 0.0) + (atrPercentile >= 90 ? 15.0 : 0.0)
-    // vdKQ = 50-bar volume delta in thousands (computed here from volDelta50, which is
-    // defined earlier; the display-scope vdK alias is declared later in the file).
-    float vdKQ = volDelta50 / 1000.0
-    float stAD = stBal > 30 and math.abs(vdKQ) > 1.0 ? 35.0 + math.min(math.abs(vdKQ) * 5.0, 25.0) : 0.0
-    float _stSum = stBal + stTrendA + stRot + stDisc + stAcc + stRej + stExh + stAD
-    float _stMax = math.max(stBal, math.max(stTrendA, math.max(stRot, math.max(stDisc, math.max(stAcc, math.max(stRej, math.max(stExh, stAD)))))))
-    string aucState = _stSum <= 0 ? "BALANCE" : _stMax == stRej ? (liqSweepBear or (sesManip and not liqSweepBull) ? "REJ-HI" : "REJ-LO") : _stMax == stExh ? "EXHAUST" : _stMax == stTrendA ? "TREND-AUC" : _stMax == stAcc ? (aboveValue ? "ACC-HI" : "ACC-LO") : _stMax == stDisc ? "DISCOVERY" : _stMax == stAD ? (vdKQ > 0 ? "ACCUM" : "DISTRIB") : _stMax == stRot ? "ROTATE" : "BALANCE"
-    int aucProb = _stSum > 0 ? int(_stMax / _stSum * 100.0) : 0
-    // A2 AUCTION CYCLE stage from dominant state + regime.
-    string aucCycle = aucState == "BALANCE" or aucState == "ACCUM" or aucState == "DISTRIB" ? "①BAL" : aucState == "ROTATE" ? "②INIT" : aucState == "DISCOVERY" ? "③DISC" : aucState == "REJ-HI" or aucState == "REJ-LO" ? "④TEST" : aucState == "ACC-HI" or aucState == "ACC-LO" ? "⑤ACPT" : aucState == "TREND-AUC" ? "⑥TRND" : "⑦EXH"
-    // A6 OPENING TYPE (live session geometry; needs >=3 session bars).
-    // Q5.4: ta.barssince hoisted out of the ternary (compiler consistency warning).
-    int _sessAge = nz(ta.barssince(sessId != nz(sessId[1], sessId)), 0)
-    string openType = ""
-    if not na(sesOpenPx) and not na(sesHi) and curSessId >= 0 and curSessId <= 2
-        float _upX = sesHi - sesOpenPx
-        float _dnX = sesOpenPx - sesLo
-        float _rngX = math.max(sesHi - sesLo, syminfo.mintick)
-        float _oneSide = math.max(_upX, _dnX) / _rngX
-        bool _pastOpen = (close - sesOpenPx) * (_upX > _dnX ? 1 : -1) < 0
-        bool _gapUp = not na(prevSesHi) and sesOpenPx > prevSesHi
-        bool _gapDn = not na(prevSesLo) and sesOpenPx < prevSesLo
-        bool _gapFilled = (_gapUp and low <= prevSesHi) or (_gapDn and high >= prevSesLo)
-        openType := _gapUp or _gapDn ? (_gapFilled ? "GAP-FILL" : _oneSide >= 0.7 ? "GAP-DRV" : "O-AUC") : _rngX < adaptiveATR * 0.7 ? "O-NEU" : _rngX < adaptiveATR ? "O-AUC" : _oneSide >= 0.85 ? (_sessAge > 12 ? "DLY-DRV" : "O-DRV") : _oneSide >= 0.7 and _pastOpen ? "O-REJ" : _oneSide >= 0.7 ? "O-TDR" : "O-AUC"
-    // B7 Market Personality (day type). Double-distribution excluded (needs profile splits).
-    [aucState, aucProb, aucCycle, discStr, acceptScore, acceptGrade, valueMigStr, openType, lastSweepQ, lastSweepGrade]
-[aucState, aucProb, aucCycle, discStr, acceptScore, acceptGrade, valueMigStr, openType, lastSweepQ, lastSweepGrade] = f_auctionIntel()
-// B10 aucBias/auctionStr moved below tqVeto (declaration-order fix).
+// v24 (F-A32, measured token ceiling): the Q5.3/Q5.4 AUCTION INTELLIGENCE layer
+// (f_auctionIntel: value migration, acceptance, sweep quality, discovery, auction state,
+// cycle, opening type; aucBias) MOVED to XAUUSD_Quantum_5_0_Diagnostics.pine, row
+// "Auction", where the same function runs verbatim on the Treatment-twin engine. It was
+// display-only here (block-level slice: it fed no gate, alert, plot or plan value), so no
+// decision, alert or trade-plan number changes. Moved, not deleted -- CLAUDE.md rule.
 // ═══════════════ END AUCTION INTELLIGENCE ═══════════════
 // Q5.2-F6: regime-adaptive TQ floor; Q5.2-F4: negative analog expectancy is a hard veto.
 int effTqMin = tqMinScore == 0 ? 0 : math.min(math.max(tqMinScore + (regAbnormal ? 15 : regCompression ? 10 : regStrongTrend or regExpansion ? -5 : 0), 0), 90)
@@ -4980,8 +4926,7 @@ if barstate.isconfirmed
     //   hN > OUTCOME_N * 2  -> the scan guard's own minimum history requirement
     //   oOosNeff >= 10      -> the effective-N floor used by the OOS/TQ-history path
     _confDirLabel := _rkBlockedConf ? "RISK LOCK" : _tqBlockedConf ? "NO TRADE" : shouldBuy ? "BUY" : shouldSell ? "SELL" : not _statsWarm ? "WARMUP" : "WAIT"
-// B10 Auction bias (replaces raw signal wording at the auction layer).
-string aucBias = shouldBuy and not tqVeto ? (aucState == "REJ-LO" ? "LONG-REV" : "LONG-CONT") : shouldSell and not tqVeto ? (aucState == "REJ-HI" ? "SHORT-REV" : "SHORT-CONT") : shouldBuy or shouldSell ? "NO-TRADE" : "WAIT"
+// B10 auction bias: moved to Diagnostics with the auction layer (v24).
 string structStr = bullStructActive ? "▲" + bullStructType + " " + str.tostring(bullStructAge) + "b" : bearStructActive ? "▼" + bearStructType + " " + str.tostring(bearStructAge) + "b" : "no-struct"
 // ═══ Q6.3 CROSS-CHECK / TRACEABILITY (DISPLAY ONLY) ═══
 // Each engine reports what IT concluded, from variables already computed above —
@@ -5074,7 +5019,7 @@ string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "
 // so the value has a consumer and the mode is never ambiguous.
 string __resolvedModeResp = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
 string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]"
-string auctionStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + "»" + aucBias + " " + aucState + str.tostring(aucProb) + "% " + aucCycle + " " + discStr + " A" + str.tostring(acceptScore) + acceptGrade + " " + valueMigStr + (openType != "" ? " " + openType : "") + (lastSweepQ > 0 ? " SW:" + lastSweepGrade + str.tostring(lastSweepQ) : "") + (not na(vixD) ? " VIX" + str.tostring(vixD, "#.#") : "")
+string xcheckStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + (not na(vixD) ? "VIX" + str.tostring(vixD, "#.#") : "") + (climaxUp ? " CLIMAX▲" : climaxDown ? " CLIMAX▼" : "")
 string tqGrade = tradeQuality >= 80 ? "A" : tradeQuality >= 65 ? "B" : tradeQuality >= 50 ? "C" : "D"
 // ═══════════════ END TRADE QUALITY ═══════════════
 // R6.0: regime cell now shows the named adaptive regime + volatility tag.
@@ -5167,28 +5112,25 @@ float vdK = volDelta50 / 1000.0
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
 // ══════════════════════════════════════════════════════════════════════
 // R5.3-L8: parameter renamed tc -> tcol (it shadowed the function's own name — fragile).
-// F-A11: logical column -> physical column. On mobile the four context columns collapse
-// out and the survivors close up, so the table is created with 5 columns and nothing is
-// ever written past index 4. Returning -1 means "skip this cell" -- writing past the
-// declared column count is a RUNTIME error in Pine (the same class as the harness's
-// "Row 70 is out of table bounds"), so the guard and _respCols must stay in step.
-_dCol(int _c) => not _dashMobile ? _c : _c == 0 ? 0 : _c == 1 ? 1 : _c == 2 ? 2 : _c == 7 ? 3 : _c == 8 ? 4 : -1
+// v25: in Mobile the desktop table is not created; the renderer still runs (the card reads
+// its strings) and these helpers simply skip the desktop cells. The v8 column map (_dCol) and
+// the portrait row cut went with the merged MobileLand/MobilePort layouts.
 tc(col, row, txt, tcol, ts, w) =>
-    int _pc = _dCol(col)
-    if _pc >= 0 and not (_dashPort and row >= 2)
-        table.cell(tblA, _pc, row, txt, text_color=tcol, text_size=ts, width=w)
+    if not _dashMobile
+        table.cell(tblA, col, row, txt, text_color=tcol, text_size=ts, width=w)
 tcb(col, row, txt, tcol, bg, ts, w) =>
-    int _pc = _dCol(col)
-    if _pc >= 0 and not (_dashPort and row >= 2)
-        table.cell(tblA, _pc, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
-tcp(col, row, txt, bg, ts, w) => table.cell(tblPlan, col, row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
+    if not _dashMobile
+        table.cell(tblA, col, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
+// v25: in Mobile the plan is written into the card itself (rows 8-15, one line per cell), so
+// the card and the plan can never overlap on a narrow screen.
+tcp(col, row, txt, bg, ts, w) => table.cell(_dashMobile ? tblBrief : tblPlan, _dashMobile ? 1 : col, _dashMobile ? 8 + col : row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
 
 // v15 (token ceiling): forecast-cone breach state and status removed (default OFF).
 
 // Q5.4-P1: dashboard split into three functions to satisfy the 254 external-
 // elements-per-function limit (was 338). Cross-function locals move through
 // global transfer arrays (arrays count once). Behavior identical.
-var string[] gDashS = array.new_string(25, "")
+var string[] gDashS = array.new_string(35, "")
 var color[] gDashC = array.new_color(12, color.gray)
 var float[] gDashF = array.new_float(10, 0.0)
 f_dashData1() =>
@@ -5477,24 +5419,20 @@ f_dashRender() =>
     // ── Layout sizing ──
     // R5-F14: "Medium" now maps to a valid size constant ("small") instead of leaking
     // the raw option string into table.cell.
-    // Q6.3: mobile forces the compact size ladder regardless of the textSize input.
-    bool _mobUI = _resolvedMode == "MobilePort" or _resolvedMode == "MobileLand"
-    string _hdSize = _mobUI ? "tiny" : textSize == "Auto" ? "small" : textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
+    string _hdSize = textSize == "Auto" ? "small" : textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
     string _prSize = textSize == "Auto" ? "normal" : textSize == "Large" ? "large" : textSize == "Small" ? "small" : "normal"
-    string _seSize = _mobUI ? "tiny" : textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"
+    string _seSize = textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"
     // R5.1: density input wired — scales all table column widths
     float _densW = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
-    // F-A11: mobile widths sum to 100 across the five surviving columns, weighted toward
-    // SIGNAL/RISK/DECISION. The desktop nine keep their original values untouched.
-    int _w0 = _dashMobile ? 16 : int(10 * _densW)
-    int _w1 = _dashMobile ? 14 : int(10 * _densW)
-    int _w2 = _dashMobile ? 22 : int(12 * _densW)
+    int _w0 = int(10 * _densW)
+    int _w1 = int(10 * _densW)
+    int _w2 = int(12 * _densW)
     int _w3 = int(11 * _densW)
     int _w4 = int(13 * _densW)
     int _w5 = int(10 * _densW)
     int _w6 = int(11 * _densW)
-    int _w7 = _dashMobile ? 20 : int(11 * _densW)
-    int _w8 = _dashMobile ? 28 : int(13 * _densW)
+    int _w7 = int(11 * _densW)
+    int _w8 = int(13 * _densW)
     // F-037: was `OOS nn%+/-x N../..eff`. Two false claims in one field: the name OOS,
     // and a confidence interval implying a fixed sample. Now reports the rolling win rate
     // and its counts with NO interval, under a name that says what it is.
@@ -5582,9 +5520,12 @@ f_dashRender() =>
         // R6.0: session intelligence appended — Exp = current range vs avg session range,
         // M = historical manipulation frequency, C = directional-continuation frequency.
         string _sessStats = (not na(sessExpansionPct) ? " Exp" + str.tostring(int(sessExpansionPct)) + "%" : "") + (not na(sessManipProb) ? " M" + str.tostring(int(sessManipProb)) + "%" : "") + (not na(sessContProb) ? " C" + str.tostring(int(sessContProb)) + "%" : "")
-        tc(0, 2, _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats + "\n" + auctionStr, _sessCol, _seSize, _w0)
-        tc(1, 2, _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _seSize, _w1)
-        tc(2, 2, _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel, _evCol, _seSize, _w2)
+        string _mktLine = _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats
+        tc(0, 2, _mktLine + "\n" + xcheckStr, _sessCol, _seSize, _w0)
+        string _biasLine = _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : "")
+        tc(1, 2, _biasLine, cBloomNeut, _seSize, _w1)
+        string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel
+        tc(2, 2, _evConf, _evCol, _seSize, _w2)
         tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)
         // R5.1: per-target reach scores wired — the suffix now shows the reach score of the
         // ACTUAL destination pool (previously it always displayed PDH's number)
@@ -5610,27 +5551,41 @@ f_dashRender() =>
         // instruction to trade nothing, which is a different and misleading claim.
         string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "#.00") + "L"
         string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + str.tostring(int(_riskUSD)) + " " + _lotStr : ""
-        tc(8, 2, _rrStr + _riskDisp + " " + decisionLog + " " + _agreePct, C_TEXT, _seSize, _w8)
+        string _decFoot = _rrStr + _riskDisp + " " + decisionLog + " " + _agreePct
+        tc(8, 2, _decFoot, C_TEXT, _seSize, _w8)
+        // v25: hand the composite strings to the Mobile card (slots 25-34), so the phone shows
+        // exactly what the desktop cells show, built once.
+        array.set(gDashS, 25, _mktLine)
+        array.set(gDashS, 26, _biasLine)
+        array.set(gDashS, 27, _probDisp)
+        array.set(gDashS, 28, _evConf)
+        array.set(gDashS, 29, _riskSec)
+        array.set(gDashS, 30, _decBox)
+        array.set(gDashS, 31, _riskPrimary)
+        array.set(gDashS, 32, _decFoot)
+        array.set(gDashS, 33, _liqReachDisp)
+        array.set(gDashS, 34, _macroRow2)
     true
 // Detect responsive mode for table creation and indicator visibility
 var string _prevDashMode = "Desktop"
 var bool modeChanged = false
-var int _respRows = 4
-var int _respCols = 9
+// MOBILE CARD (v23 MobileBrief; v25 the single Mobile mode). Every value below is one the
+// engine already computes for the full dashboard; nothing is recalculated, so the card cannot
+// disagree with the desktop view or with the alerts. Rows 0/2/4/6 are the four headlines;
+// rows 1/3/5/7 their details (hidden at Compact density).
+_bc(int _r, string _k, string _v, color _c, _ts) =>
+    table.cell(tblBrief, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=_ts, text_halign=text.align_left)
+    table.cell(tblBrief, 1, _r, _v, text_color=_c, text_size=_ts, text_halign=text.align_left)
 if showDashboard and barstate.islast
     string _mode2 = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
-    bool _isMobile = _mode2 == "MobilePort" or _mode2 == "MobileLand"
-    // Q6.3 FIX: the renderer unconditionally writes tc(0..8, ...) — nine columns.
-    // Allocating 4 columns in mobile mode meant every write to columns 4-8 went
-    // out of bounds (dropped content / runtime error). The table is now always
-    // allocated at full size; the mobile toggle changes POSITION and TEXT SIZE
-    // only, so no dashboard information is ever lost on a phone.
-    _respRows := _dashPort ? 2 : 4
-    _respCols := _dashMobile ? 5 : 9
+    bool _mDet = density != "Compact"
+    // Mobile shows the plan (inside the card) unless Compact; desktop follows showTradePlan.
+    bool _planOn = showTradePlan and (_mDet or not _dashMobile)
     // Recreate tables if mode changed
-    if _mode2 != _prevDashMode
+    // v25: density is part of the key -- it changes the Mobile card's row count and the plan.
+    if _mode2 + density != _prevDashMode
         modeChanged := true
-        _prevDashMode := _mode2
+        _prevDashMode := _mode2 + density
     if modeChanged
         if not na(tblA)
             table.delete(tblA)
@@ -5638,28 +5593,60 @@ if showDashboard and barstate.islast
         if not na(tblPlan)
             table.delete(tblPlan)
             tblPlan := na
+        if not na(tblBrief)
+            table.delete(tblBrief)
+            tblBrief := na
         modeChanged := false
-    if na(tblA)
-        // Q6.7 MOBILE FIX: tblA and tblPlan were BOTH anchored bottom_right in mobile
-        // mode, so the 4x9 dashboard and the 8-cell plan strip competed for the same
-        // corner and overlapped. Mobile now uses the same vertical separation as
-        // Desktop (dashboard top, plan bottom), which is collision-proof regardless of
-        // how wide the table renders on a narrow portrait screen.
-        tblA := table.new(_isMobile ? position.top_right : _mode2 == "Desktop" ? position.top_right : position.top_left, _respCols, _respRows, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if showTradePlan and na(tblPlan)
-        tblPlan := table.new(_isMobile ? position.bottom_right : _mode2 == "Desktop" ? position.bottom_right : position.bottom_left, 8, 1, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if not showTradePlan and not na(tblPlan)
+    if na(tblA) and not _dashMobile
+        // Q6.7: dashboard top, plan bottom -- collision-proof on any screen width.
+        tblA := table.new(_mode2 == "Desktop" ? position.top_right : position.top_left, 9, 4, bgcolor=cBloomBg, border_width=0, frame_width=0)
+    if _planOn and na(tblPlan) and not _dashMobile
+        tblPlan := table.new(_mode2 == "Tablet" ? position.bottom_left : position.bottom_right, 8, 1, bgcolor=cBloomBg, border_width=0, frame_width=0)
+    if (not _planOn or _dashMobile) and not na(tblPlan)
         table.delete(tblPlan)
         tblPlan := na
     f_dashData1()
     f_dashData2()
     f_dashRender()
+    if _dashMobile
+        if na(tblBrief)
+            tblBrief := table.new(position.top_right, 2, _planOn ? 16 : _mDet ? 8 : 4, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
+        _bts = textSize == "Large" ? size.large : textSize == "Medium" ? size.normal : size.small
+        // Compact: headlines on rows 0-3. Otherwise headline k on row 2k, its detail on 2k+1.
+        int _hs = _mDet ? 2 : 1
+        _bds = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.tiny
+        // Details (Standard / Spacious). Each is the desktop cell's own string:
+        //   TREND   bias strength, C/S/I breakdown, agreement, HTF | MTF arrows, session, volume,
+        //           CVD, delta, regime, session stats | macro verdict + day-of-week tracker
+        //   TARGET  nearest liquidity above / below | target score, reach, open FVG (TradingView
+        //           prices, as on desktop; the headline and the plan carry the MT5 offset)
+        //   PREV>NEXT  price + change | forecast L/S/R | EV, calibrated P, confidence | WR/ROLL/PF
+        //           | (Spacious) engine cross-check line
+        //   DECISION   (headline = the desktop DECISION box: label, grade, TQ, bias + block reason,
+        //           LIVE tag) | RR, SL in ATR, risk %, $, lots, cost | RR, risk, decision log,
+        //           MTF agreement
+        if _mDet
+            _bc(1, "", array.get(gDashS, 26) + "\n" + array.get(gDashS, 25) + "\n" + array.get(gDashS, 34), C_TEXT, _bds)
+            _bc(3, "", "TV price: above " + array.get(gDashS, 17) + " / below " + array.get(gDashS, 19) + "\n" + array.get(gDashS, 33), C_TEXT, _bds)
+            _bc(5, "", array.get(gDashS, 20) + " " + array.get(gDashS, 2) + "\n" + array.get(gDashS, 27) + "\n" + array.get(gDashS, 28) + "\n" + array.get(gDashS, 29) + (density == "Spacious" ? "\n" + xcheckStr : ""), C_TEXT, _bds)
+            _bc(7, "", array.get(gDashS, 31) + "\n" + array.get(gDashS, 32), C_TEXT, _bds)
+        // 1 TREND: composite bias, regime, higher-timeframe bias, bull/bear score split
+        _bc(0, "1 TREND", biasLabel + " · " + mktRegime + " · HTF " + array.get(gDashS, 8) + " · B" + str.tostring(bullScore, "#") + "/S" + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
+        // 2 TARGET: the engine's liquidity destination, at the MT5 price, with its reach score
+        float _bTgt = liqDestLabel == "PDH" ? poolPdH : liqDestLabel == "PDL" ? poolPdL : liqDestLabel == "PWH" ? poolPwH : liqDestLabel == "PWL" ? poolPwL : liqDestLabel == "PMH" ? poolPmH : liqDestLabel == "PML" ? poolPmL : liqDestLabel == "EQH" ? poolEqH : liqDestLabel == "EQL" ? poolEqL : na
+        _bc(_hs, "2 TARGET", na(_bTgt) ? "no dominant liquidity target" : liqDestLabel + " " + str.tostring(_bTgt + mt5Offset, "#.##") + " MT5 · reach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
+        // 3 PREVIOUS -> NEXT: last structure event and last bar's change; calibrated
+        // probability that the next 1R move goes up vs down (the gate's own probability)
+        _bc(2 * _hs, "3 PREV → NEXT", (structStr == "" ? "no active structure" : structStr) + " · last " + array.get(gDashS, 2) + "  →  next 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : " · EV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
+        // 4 DECISION: the CONFIRMED decision (same as alerts); the MT5 plan when it is a trade
+        bool _bTrade = _confDirLabel == "BUY" or _confDirLabel == "SELL"
+        _bc(3 * _hs, "4 DECISION", array.get(gDashS, 30) + (_bTrade ? " | MT5 " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
     // ═══ Q5.9: TRADE PLAN PANEL POPULATION (regression fix) ═══
     // The cell-writing block for tblPlan was swept together with the ROW 3 removal
     // during the token-limit cuts: the table was still being CREATED each bar, so the
     // panel rendered as an empty strip at the bottom of the chart. Restored here, and
     // placed AFTER f_dashData1() because the lot size arrives via gDashF slot 6.
-    if showTradePlan and not na(tblPlan)
+    if _planOn and not na(_dashMobile ? tblBrief : tblPlan)
         float _pLots = array.get(gDashF, 6)
         color _pBg = tpIsLong ? cBloomBull_D : cBloomBear_D
         string _pSz = textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"

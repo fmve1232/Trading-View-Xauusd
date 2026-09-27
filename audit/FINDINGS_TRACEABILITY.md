@@ -57,6 +57,12 @@
 | F-A29 | **P0** | `BUG` | Strategy entries required `recentBars` (last 120 bars): the backtest could only trade the final ~5 days, so it took 0 trades — **FIXED v20** (switchable, default all bars) |
 | F-A30 | **P0** | `BUG` | OB, FVG, displacement, SMT and climax DETECTION were gated by display toggles defaulting OFF: the decision ignored the zones Visuals draws, and half the entry trigger was disabled — **FIXED v21** (engine inputs, default ON) |
 | F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
+| F-A32 | **P0** | `BUG` | *(compiler-reported)* Master v23: `too many tokens: 100820` (limit 100,256); the lexical estimator's ratio had drifted 2.466 → 2.515 — **FIXED v24** (auction layer moved to Diagnostics) |
+| F-A33 | P3 | `NUM` | *(compiler-reported)* Diagnostics: `ta.correlation` in a ternary skipped bars in its window; `_v` shadowed a global — **FIXED v24** |
+| F-A37 | P3 | `PRES` | *(first executed harness result)* EdgeCases I7 asserted IEEE semantics ("`== 0` lets 1e-12 through"); Pine returned false — its float `==` is tolerant. The premise was never executed — **CORRECTED v29**; chart run of v29: I7 and I9 PASS (`1e-12 == 0.0` is true), I10 `1e-12 > 0.0` FALSE. **Resolved on the chart (v30, 2026-09-27): ALL PASS 99.** `1e-12 * 1e12` = 1, so the literal keeps its value and Pine's `==` AND `>` are tolerance-based. `safeDiv`'s `abs(b) > 1e-10` needs no change — **CLOSED** |
+| F-A36 | **P1** | `STAT` | *(operator report)* DECISION "mostly WAIT" while price moved $30–50: the entry chain passes 1.5% of bars (152 / 10,269 on 1H); the trigger stage alone removes 86% of eligible bars — **MEASURED v27** (missed-move audit), **not tuned** (§9) |
+| F-A35 | P2 | `PRES` | *(sequence audit)* `biasLabel` and the WAIT reason were computed from the evidence-stage scores but shown beside the final scores (label could contradict the numbers; alert text too) — **FIXED v26** |
+| F-A34 | **P1** | `STAT` | *(first chart data)* raw score buckets predict 21→54% but observe 18–24%: no resolution on this history; Treatment PF 0.989 over 90 trades — **OPEN, not fixable by code** (needs a frozen holdout, §9) |
 | F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
 | F-A12 | **HIGH** | `BUG` | *(new)* Entry comment promised `P<pct>` per trade for the calibration test but never emitted it — **FIXED before the baseline run** |
@@ -758,6 +764,141 @@ displacement thresholds, FVG size). `SCHEMA_BUILD` 4 → 5.
 `deadcode.py` now counts drawing handles redrawn via delete/new as live. It also treats a twin
 symbol read by Diagnostics as wired through the companion. Result: 0 dead, 0 retained in all
 six files; `retained.txt` is empty.
+
+---
+
+## F-A32 … F-A34 — from the v21–v23 chart run *(F-A32, F-A33 FIXED v24; F-A34 OPEN)*
+
+**F-A32 (P0), Master over the token ceiling.** The save reported 100,820 against 100,256. The
+estimate was ~98,850 because the ratio measured on v14 (2.466) no longer held; v23 gives
+2.515. A block-level backward slice from every `alert`, `alertcondition` and `plot` in the
+Master found the auction layer (`f_auctionIntel`, `aucBias`; ~1,330 lexical) outside it. It
+feeds only the dashboard text.
+
+Diagnostics already carries the identical function on the Treatment engine. The layer moved
+there; its "Auction" row now shows by default. `climaxUp/Down` lost their only Master reader,
+so they are now displayed (`CLIMAX▲/▼`) instead of dropped.
+
+Result: the Master drops to 38,759 lexical, ~97,480 compiled at 2.515. The B5a list
+(`CONCURRENCY_AND_MIGRATION.md`) was not used: its items are small, and `liqReachScore` now
+feeds the forecast and the MobileBrief card.
+
+**F-A33 (P3), Diagnostics.** A `ta.*` call inside a ternary does not run on the bars the other
+branch is taken, so its window is not the last 100 bars. The call is hoisted. `_v` → `_dsv`.
+The twins' two `barstate.islast` warnings are benign: they run on bar close only, where the
+last bar is both `islast` and `isconfirmed`.
+
+**F-A34 (P1, OPEN), the score does not discriminate.** Diagnostics reliability, 1H, 2,624
+resolved observations:
+
+| Bucket | N | Predicted | Observed |
+|---|---:|---:|---:|
+| 0 | 534 | 21% | 18% |
+| 1 | 506 | 29% | 24% |
+| 2 | 513 | 34% | 18% |
+| 3 | 439 | 41% | 22% |
+| 4 | 632 | 54% | 19% |
+
+Base rate 20%, Brier 0.202. The Platt map therefore pulls the calibrated probability toward
+the base rate, which is the honest output, and the calibration gate blocks accordingly. The
+Treatment backtest agrees: 90 trades, 44% winners, PF 0.989.
+
+This is a statement about the *signal*, not the code. Per §9 nothing is re-weighted against
+it; the only valid test is data collected after a parameter freeze.
+
+---
+
+## F-A35 — engine sequence audit *(FIXED v26)*
+
+`audit/tools/sequence.py` lists every read of a global that runs **before a later write of it
+on the same bar**, with function bodies placed at their call site. Master v25: 65 hits,
+triaged by hand.
+
+- **Defect (fixed).** `bullScore/bearScore/rangeScore` pass through four stages: evidence
+  (L~2446), analog blend (L~4465), forecast (L~4537), normalisation (L~4542).
+  - `biasLabel` was computed after stage 1.
+  - All its readers come after stage 4: the DECISION box BIAS row, the Mobile TREND row and
+    the BUY/SELL alert text. They print it beside the final scores, so "BEAR-ISH" could
+    appear next to "B55/S40".
+  - The WAIT reason `_blkWhy` chose its side from stage 1 too. After the label moved, it
+    could have explained the bull side under a bearish label.
+  - Both now run after stage 4, with the same formula and thresholds. They feed no gate.
+    The twins do not carry them, so the A/B is untouched.
+- **Intended, verified.**
+  - The forecast reads the blended score, and normalisation reads the forecast.
+  - The calibration record stores the stage-1 score, then R5.3-M3 overwrites it with the
+    final one.
+  - Every `var` hit is a state machine that reads last bar's state, then updates it:
+    structure breaks, order-block arrays, FVG, calibration quantiles, the risk tracker.
+  - The risk tracker reads `tqVeto` before the lock is folded in, but checks `riskLock`
+    itself.
+  - `pdh/pdlReachScore` is a paired clamp.
+- **Accepted lag.** The trade plan (L~2636) reads `gRaceProb`/`gHitProb` written by the stats
+  engine (L~3201), so the plan's hit probabilities and race EV are from the previous refresh.
+  - The engine refreshes periodically anyway (every `_rb` bars or on the last bar).
+  - Each refresh aggregates hundreds of outcomes, so one refresh moves the numbers
+    negligibly.
+  - Re-ordering would move the 7,000-token engine in all four engine copies.
+  - Not changed.
+
+---
+
+## F-A36 — "WAIT while the market moved $30–50" *(operator report; MEASURED v27, OPEN)*
+
+The gate funnel from the operator's Diagnostics screenshot (1H, 10,269 confirmed bars,
+Treatment engine = the Master's gate):
+
+| Stage | Bars left | Share of the previous stage |
+|---|---:|---:|
+| trend (EMA stack) | 7,436 | 72% |
+| + HTF not opposed | 5,838 | 79% |
+| + session ≥ 30, no news, no DD breach | 3,377 | 58% |
+| + trigger: structure break (8-bar life) or displacement | **481** | **14%** |
+| − vetoes (TQ 162, EV<0 230, P<min 149; they overlap) | **152** | 32% |
+
+So DECISION reads BUY/SELL on 1.5% of bars and WAIT on the rest. That is the design: DECISION
+answers "enter now?", and the trigger is an EVENT, so inside a trend it is false between
+structure breaks. A sustained $30–50 leg can pass through with no new break, or with its only
+break rejected by a veto.
+
+**Why it is not loosened here.**
+- The trades the chain DOES take break even: 90 trades, PF 0.989 (F-A34).
+- Opening the trigger or lowering the veto floors on this history is exactly the §9
+  prohibition. It would add trades whose value is unknown, chosen by looking at the moves.
+
+**What v27 adds instead.** A *Missed moves* row in Diagnostics.
+- It counts every move episode of at least `dgMoveUSD` (default 30) within `dgMoveBars`
+  (default 12) bars.
+- For each episode it records the furthest the entry chain got in that direction.
+- That turns the complaint into a count per gate, measured on the operator's own chart.
+- A change to that gate can then be pre-registered and tested on data collected AFTER it is
+  frozen. That is the only test that would show it helps.
+- **v31:** done: hypothesis H1 (fast trend gate) is pre-registered in `PREREGISTRATION.md` as the
+  Challenger arm, and will be judged on the holdout from 2026-09-28 only.
+
+**Measured (operator's chart, 1H, v27, 2026-09-27).**
+Row text: `moves >=30 in 12 bars: up 544 / down 512  ENTRY 22 | stopped at: trend 632 HTF 93
+sess/news/DD 77 trigger 202 TQ 20 EV 7 P 3 risk 0`. The stages sum to 1,056 = 544 + 512.
+
+| Furthest stage reached in the move's direction | Episodes | Share |
+|---|---:|---:|
+| trend score below threshold on every start bar | 632 | 60% |
+| HTF opposed | 93 | 9% |
+| session / news / DD | 77 | 7% |
+| no trigger (structure break or displacement) | 202 | 19% |
+| TQ / EV / P vetoes | 30 | 3% |
+| ENTRY signalled while the move was ahead | 22 | 2% |
+
+**Reading.** The vetoes are NOT what misses the big moves; **the trend filter is**.
+- It is an EMA20/100/200 and ADX score (≥ 60 of 100), so it lags by construction.
+- A $30 leg that starts as a reversal begins while the score still points the old way.
+- The trigger is the second cause.
+- This is a diagnosis. A different trend definition would be a new, pre-registered hypothesis,
+  to be frozen and judged only on bars after the freeze (§9). It would not be a fix measured
+  on these 1,056 episodes.
+
+Pre-v21 note: before F-A30 (v21), displacement detection was OFF by default, so half the trigger
+never fired. Experience from those builds overstates today's WAIT rate.
 
 ---
 

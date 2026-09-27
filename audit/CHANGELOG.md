@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v22
+# Build changelog — v1 → … → v31
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -850,3 +850,245 @@ Operator request: "actual" volume, liquidity and order-block data via free API k
 - whether the previous bar's displacement was backed by real COMEX volume expansion.
 
 It is display only; no engine, gate or Master change. Compile NOT RUN.
+
+---
+
+# Build v22 → v23 — MobileBrief phone card (Master only)
+
+New Dash Mode option **MobileBrief**: a 4-row card (TREND, TARGET, PREV → NEXT, DECISION) in
+place of the dashboard and plan strip. It uses only values the engine already computes: bias,
+regime, HTF bias, liquidity destination (MT5 price), structure event, calibrated 1R
+probabilities, race EV, the confirmed decision and the MT5 plan. Every other mode is
+unchanged; no feature is removed; no decision logic touched.
+
+Master estimate ~98,850 compiled (~1.4% headroom), the tightest yet. If the save overflows,
+apply `CONCURRENCY_AND_MIGRATION.md` B5a. Compile NOT RUN.
+
+---
+
+# Build v23 → v24 — act on the v21–v23 chart run (Master token ceiling, Diagnostics warnings)
+
+**Measured on the operator's chart (2026-09-27):**
+
+| Script | Result |
+|---|---|
+| Master v23 | **`Compiled code contains too many tokens: 100820. The limit is 100256`** |
+| Treatment / Control twins (v21) | Compiled. Two warnings each: `barstate.islast` without `calc_on_every_tick` (L1936 volume-profile refresh, L5185 cost-model warning label). Both benign: the twins run on bar close, where `islast` and `isconfirmed` are both true. |
+| Diagnostics v22 | Compiled. Warnings: `ta.correlation` inside a ternary (L5453), `_v` shadows a global (L5292). |
+| Visuals | Compiled. |
+| EdgeCases | "3 FAIL / 97", rows in natural order and no `v21` header, so the chart was still running a pre-v21 copy (the editor showed the v21 code as **Unsaved version**). |
+
+**F-A32, Master over the ceiling.** v23 is 40,081 lexical tokens, so the true ratio is
+**2.515** compiled per lexical, not the 2.466 measured on v14; the estimate (~98,850) was
+~2,000 low. **Fix:** the Q5.3/Q5.4 auction layer (`f_auctionIntel` and `aucBias`) moves to
+Diagnostics, which already runs the identical function on the Treatment engine. A block-level
+backward slice from every `alert`, `alertcondition` and `plot` showed that nothing in it feeds a
+gate, alert, plot or plan value. Moved, not deleted:
+- Diagnostics' "Auction" row is now shown in Standard density too (auction read only);
+  Spacious adds the full cross-check prefix, as before.
+- `climaxUp` / `climaxDown` fed only the auction layer in the Master. They are now shown as
+  `CLIMAX▲/▼` on the dashboard cross-check line (`xcheckStr`, formerly `auctionStr`).
+
+Master: 40,081 → 38,759 lexical. At the measured 2.515 that is **~97,480 compiled (~2.8%
+headroom)**. Even at 2.548, the highest ratio consistent with v20 compiling, it is ~98,760.
+
+**F-A33, Diagnostics warnings.**
+- `ta.correlation` was called only on bars where `gcValid`, so its 100-bar window skipped the
+  other bars. It now runs every bar, and the ternary only chooses what to display.
+- The census loop's `_v` is renamed `_dsv`; there is no behaviour change.
+- The generator is now committed as `audit/tools/build_diag.py`.
+
+**Observed, not fixed (F-A34, `STAT`).** From Diagnostics' reliability rows:
+- The raw-score buckets predicted 21/29/34/41/54% but observed 18/24/18/22/19% (n 439–632 each).
+- The score has **no resolution** on this history.
+- The Treatment backtest agrees: 90 trades, PF 0.989, −$9.55 at 1 oz.
+- Control: 12 trades, PF 1.72, +$60.58. That is too few trades to tell apart from zero.
+
+Nothing is tuned in response (§9); the remedy is a frozen holdout.
+
+Unchanged: Strategy, Strategy_OLDGATES, EdgeCases, Visuals. Compile of v24 NOT RUN.
+
+---
+
+# Build v24 → v25 — one Mobile mode (Master only)
+
+Operator request: merge the phone views into one without losing any feature.
+- **Dash Mode** options are now `Auto / Desktop / Tablet / Mobile`. `MobileLand`,
+  `MobilePort` and `MobileBrief` are merged into `Mobile`, and *☰ Mobile Layout* = `Mobile`.
+- The card keeps the four MobileBrief headlines. Each section gains a detail row made of the
+  desktop cells' **own strings**: the renderer names them and hands them over in `gDashS`
+  slots 25–34, so nothing is recomputed. The detail rows carry everything MobileLand showed
+  (MARKET, BIAS, SIGNAL, RISK, DECISION) plus the LIQUIDITY and MACRO columns it dropped.
+- The DECISION headline is now the desktop DECISION box (grade, TQ, bias + block reason,
+  LIVE tag), not the bare label.
+- The trade plan is written **into the card** (rows 8–15) rather than a second table, so the
+  two cannot overlap on a phone.
+- Density: `Compact` shows the headlines only (the old MobileBrief); `Standard` adds the
+  details and the plan; `Spacious` adds the engine cross-check line.
+- Removed as layout plumbing, not features: the 5-column map `_dCol`, the portrait row cut
+  `_dashPort`, the mobile widths and size ladder, and `_respRows/_respCols`.
+- Desktop and Tablet output is unchanged: the same cells, positions, sizes and widths.
+
+Master 38,759 → 38,918 lexical, ~97,880 compiled at 2.515 (~2.4% headroom). Twins and
+Diagnostics are untouched: their layout inputs only size the Diagnostics panel. Compile NOT RUN.
+
+---
+
+# Build v25 → v26 — engine sequence audit (Master only)
+
+A new tool, `audit/tools/sequence.py`, lists every read of a value that runs before a later
+write of it on the same bar. Of 65 hits in the Master, one was a real defect (F-A35):
+- `biasLabel`, and the WAIT reason beside it, were computed from the evidence-stage scores.
+- They were displayed beside the final (blended, forecast, normalised) scores, and also used
+  in the BUY/SELL alert text.
+- Both now run after the final stage. The formula and thresholds are unchanged, and no gate
+  reads either.
+
+**Visible change:** the BIAS word on the DECISION box, the Mobile TREND row and in alerts now
+always agrees with the B/S numbers shown next to it.
+
+Also verified: the plan's SL/TP geometry against a $10–20 target. On 1H (ATR ≈ $16) the SL is
+about $10–25 and TP1 about $10–20. Twins and Diagnostics are unchanged. Compile NOT RUN.
+
+---
+
+# Build v26 → v27 — missed-move audit (Diagnostics only)
+
+Operator report: DECISION "mostly remained WAIT although the market moved 30 to 50 dollars".
+Diagnosed as F-A36 from the operator's own gate funnel:
+- the chain passes 1.5% of bars;
+- the trigger stage (structure break or displacement) removes 86% of eligible bars;
+- the vetoes remove two thirds of what is left.
+
+Not tuned (§9): the trades the chain takes already break even (F-A34).
+
+New Diagnostics row **Missed moves**: move episodes of at least 30 (input) within 12 bars
+(input), each tallied at the furthest gate the entry chain reached in that direction.
+- It is DIAG-fenced and reads only existing values; `diag_parity` passes.
+- Diagnostics ~38,810 lexical, ~97,600 compiled at 2.515.
+- Master, twins, EdgeCases and Visuals are unchanged. Compile NOT RUN.
+
+---
+
+# Build v27 → v28 — review of the first v24–v27 chart run
+
+**Measured on the operator's chart (2026-09-27, 1H):**
+- **Compile:** all six scripts compiled and were added to the chart, including the Master
+  (v26) that overflowed at v23. This closes F-A32. Its real token count is not reported on a
+  successful save.
+- **Master dashboard:** BIAS MIXED (L34 / S37 / R27) and DECISION `WAIT TQ34D`, with
+  `BIAS BEAR-ISH · SESS 13/30`. The label agrees with the final scores (the v26 fix).
+  - The WAIT reason is the session (weekend, market closed).
+  - Plan: SHORT, SL hit ~40% vs TP1 ~13%, race EV −0.01R, Kelly 0% → 0.00 lots.
+  - Consistent with F-A34.
+- **Diagnostics v27:** all rows render. Auction (Standard density) and Missed moves are
+  populated, and the Missed-moves stages sum to their episode count. The numbers are in
+  F-A36: the trend filter, not the vetoes, is where 60% of $30+ moves stop.
+- **Strategy arms at 10K:**
+  - Treatment: 86 trades, 39.5% winners, PF 0.957, −$39.57, max DD $479.95.
+  - Control: 12 trades, PF 1.718, +$60.58.
+  - Treatment was 90 trades / PF 0.989 at 25K. No gate reads capital (`_ddBreach` is OFF by
+    default and reads the analog drawdown), so the difference is unexplained.
+  - Other Properties settings, or the loaded history, are the candidates. Operator asked for
+    the Properties tab.
+- **EdgeCases:** `1 FAIL / 97` with failing rows first, so the harness is now saved at v21.
+  The failing row is unreadable in both screenshots.
+
+**Change (EdgeCases only):** the red header cell now reads `N FAIL / 97 · <id> got <x> want
+<y>` for the first failure. It changes no assertion. Master, Diagnostics, the twins and
+Visuals are unchanged. Compile NOT RUN.
+
+---
+
+# Build v28 → v29 — EdgeCases I7 corrected from the chart (F-A37)
+
+The operator's photo of the v21 harness shows the one failure:
+- test: `I7  safeDiv near-zero NOT guarded`;
+- got `false`, want `true`, class NUM.
+
+96 of 97 passed.
+
+**Cause: the assertion, not the engine.**
+- I7 assumed IEEE equality: that `b == 0` lets b = 1e-12 through, so 10 / 1e-12 ≈ 1e13
+  "explodes".
+- Pine returned 0 from that guard, so its float `==` treated 1e-12 as equal to 0.
+- The harness had asserted a premise that was never executed in Pine (FORENSIC_AUDIT_Q5
+  §351 already said so).
+- The engine's `safeDiv` uses `abs(b) > 1e-10` and is unaffected either way.
+
+**Change:**
+- I7 now asserts the measured result.
+- Two new tests check the explanation:
+  - I9 `1e-12 == 0.0` → true (tolerant equality);
+  - I10 `1e-12 > 0.0` → true (the literal is not read as zero).
+- If either fails, the explanation is wrong and I7 is reopened.
+- Now 99 assertions + header = 100 rows, exactly the table's capacity; the `_row <= 99` guard
+  holds. A 100th assertion needs a larger table.
+
+Only EdgeCases changed. Compile NOT RUN.
+
+---
+
+# Build v29 → v30 — EdgeCases I10 made discriminating
+
+Chart run of v29 (operator photo, 2026-09-27): `1 FAIL / 99 · I10 got false want true`.
+- I7 PASS: the `== 0` guard catches 1e-12.
+- I9 PASS: `1e-12 == 0.0` is true.
+- I10 FAIL: `1e-12 > 0.0` is false.
+
+Two explanations fit: Pine reads the literal `1e-12` as 0, or `>` is tolerant as well as `==`.
+With the table full (99 + header = 100 rows), I10 is replaced by `1e-12 * 1e12`: "1" means
+the literal is kept, so comparisons are tolerant; "0" means the literal is read as zero.
+
+**Engine relevance, pending that answer:**
+- If the literal is read as zero, `safeDiv`'s `abs(b) > 1e-10` (Master L278, and the engine
+  copies) degrades to `abs(b) > 0`. The fix would then be a decimal-form constant.
+- The Platt variance floors (`> 1e-6`) are also bounded by the slope clamps, and F8
+  ("near-zero variance rejected") PASSED on the chart.
+- No engine change until measured.
+
+Only EdgeCases changed. Compile NOT RUN.
+
+**Result (operator photo, 2026-09-27): `ALL PASS 99`.**
+- `1e-12 * 1e12` = 1, so Pine keeps the literal, and its `==` and `>` compare with a
+  tolerance.
+- Engine consequence: none. `safeDiv`'s guard stays as it is.
+- This is the first complete executed pass of the harness: §8.2 is closed by execution, not
+  by assumption.
+- No artefact changed after v30.
+
+---
+
+# Build v30 → v31 — forward test pre-registered; Challenger arm; forward-test workbook
+
+Operator request: "what can we do to achieve 100/100" → both the log and the challenger.
+
+- **`audit/PREREGISTRATION.md`** fixes, before any holdout data exists:
+  - the holdout start (2026-09-28 00:00 UTC) and the frozen SHA-256 of the Master,
+    Treatment, Control and Challenger;
+  - the metrics;
+  - the decision rules: N ≥ 50, the 95% t-interval of the mean above 0, and PF ≥ 1.2;
+  - the Challenger adoption rule;
+  - the decision date, 2027-03-31.
+- **`Strategy_CHALLENGER.pine`** (new artefact, H1): identical to Treatment except the entry
+  trend gate.
+  - The gate becomes `close > EMA20 and EMA20 > EMA20[3]`, mirrored for shorts. These are
+    the fast terms of the existing trend score; no new parameter or threshold is added.
+  - Motivated by F-A36: 60% of $30+ move episodes stop at the trend gate.
+  - Diff vs Treatment: 4 hunks (stamp, title, role, gate).
+  - About 34,860 lexical tokens, ~87,700 compiled.
+  - All checkers clean; 0 dead.
+- **`audit/XAUUSD_Forward_Test_Log.xlsx`** has four sheets: Read Me with the pre-registered
+  settings, Live Log (R), Arm Trades ($ at 1 oz) and Stats. Stats reports:
+  - N, win rate with Wilson interval, mean R with t-interval, profit factor;
+  - max drawdown in R;
+  - the dashboard's TP1 % against the realised rate;
+  - the verdicts and the Challenger decision.
+- **Workbook checks:**
+  - 11,046 formulas, 0 errors on LibreOffice recalculation.
+  - Filled with 60 synthetic live trades and 3 × 55 arm trades: all 26 statistics match an
+    independent Python calculation.
+  - The pre-freeze example rows are excluded, as designed.
+- The Master, twins, Diagnostics, EdgeCases and Visuals are unchanged. Compile of the
+  Challenger NOT RUN.
+
