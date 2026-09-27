@@ -167,8 +167,15 @@ function renderEvents() {
   const rows = up.map((e) => `<div class="evl${e.t < now ? " past" : ""}${e.impact === "High" ? " hi" : ""}"><span class="mono">${tfmt(e.t)}</span>
     <span>${esc(e.title)}${e.estimated ? ' <span class="dim">(estimate)</span>' : ""}</span>
     <span class="dim">${e.forecast ? "f " + esc(e.forecast) : ""}${e.previous ? " · p " + esc(e.previous) : ""}</span></div>`).join("");
+  const safeLink = (u) => (/^https?:\/\//.test(u || "") ? u : "");
+  const hl = (E.headlines || []).slice(0, 10).map((h) => {
+    const l = safeLink(h.link), t = esc(h.title);
+    return `<div class="evl news"><span class="mono">${tfmt(h.t)}</span><span>${l ? `<a href="${esc(l)}" target="_blank" rel="noopener noreferrer nofollow">${t}</a>` : t}</span><span class="dim">${esc(h.source)}</span></div>`;
+  }).join("");
+  const feeds = (E.feeds || []).map((x) => `<span class="${x.ok ? "" : "warn"}" title="${esc(x.host + ": " + x.note)}">${esc(x.name)} ${x.ok ? x.n : "✕"}</span>`).join(" · ");
   el.innerHTML = (rows || '<span class="muted">No USD high/medium-impact events left this week.</span>') +
-    `<p class="note">${esc(E.source)} · fetched ${ago(E.generated_utc)}.${E.ok ? "" : " " + esc(E.note) + "."} Display only: the engine's news window is its own rule, and news suppression is off by default.</p>`;
+    `<p class="note">${esc(E.source)} · fetched ${ago(E.generated_utc)}.${E.ok ? "" : " " + esc(E.note) + "."} Display only: the engine's news window is its own rule, and news suppression is off by default.</p>` +
+    (E.feeds ? `<h4 class="evh">News <span class="dim">(gold / USD / rates, last 48 h)</span></h4>${hl || '<span class="muted">No relevant headlines in the last 48 h.</span>'}<p class="note">Feeds: ${feeds || "—"}. Hover a feed for its status. Headlines link to the publisher; display only.</p>` : "");
 }
 
 /* ---------- header / banners ---------- */
