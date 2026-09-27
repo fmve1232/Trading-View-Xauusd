@@ -41,6 +41,7 @@ The page itself makes no decisions. It shows what the engine concluded, and how 
 
 <h2>Limits you should know</h2>
 <ul>
+  <li><b>The spot price level is not independently verified yet.</b> The weekly price check compares this site's bars with COMEX gold futures after removing the futures premium. It verifies timing and bar-to-bar moves (median difference about 2 bps), not the absolute spot price. Entry, stop and target levels are therefore unverified against a second spot source until the Dukascopy check is run from a home connection.</li>
   <li><b>Data is free, so it is delayed and occasionally wrong.</b> Yahoo intraday data can arrive late, have gaps, or be revised. GitHub's scheduler can delay a run by several minutes, and occasionally skips one. Every source, its row count and last timestamp are in Diagnostics.</li>
   <li><b>Price scale.</b> If spot is unavailable the engine falls back to COMEX futures, which trade at a premium to spot. Set the MT5 offset (top bar) to your broker's difference. It shifts displayed prices only, as in Pine.</li>
   <li><b>Parity with TradingView is not proven.</b> The port follows the Pine source line by line and is covered by unit tests, but no TradingView chart was available to compare against. Differences D-01 to D-07 are intentional; anything else is a bug worth reporting.</li>
