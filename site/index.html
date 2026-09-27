@@ -21,6 +21,7 @@
   <div class="chips">
     <span class="chip" id="chip-updated"><span class="dot"></span><span>updated <b id="updated">—</b></span></span>
     <span class="chip" id="chip-source"><span>price <b id="source">—</b></span></span>
+    <span class="chip" id="chip-live" title="Live spot from gold-api.com, read by your browser. DISPLAY ONLY: the engine never uses it; signals come from closed bars."><span class="dot"></span><span>live <b id="live">—</b> <span class="dim" id="live-meta"></span></span></span>
     <span class="chip" id="chip-holdout" title="Frozen forward holdout: evidence collected after the configuration was frozen"><span>holdout since <b id="freeze">—</b></span></span>
     <label class="ctrl" title="MT5 minus this feed, in price points. Shifts DISPLAYED entry/SL/TP only; nothing is recalculated.">MT5 offset <input id="mt5" type="number" step="0.01" value="0"></label>
     <label class="ctrl">Time <select id="tz"><option value="local">Local</option><option value="UTC">UTC</option><option value="America/New_York">New York</option><option value="Europe/London">London</option></select></label>
@@ -41,6 +42,7 @@
       <div class="card"><div class="hd"><h3>Probability &amp; edge</h3><span class="pill" id="p-state">—</span></div><div class="bd" id="prob"></div></div>
       <div class="card"><div class="hd"><h3>Trade quality</h3><span class="pill" id="tq-grade">—</span></div><div class="bd" id="tq"></div></div>
       <div class="card"><div class="hd"><h3>Risk &amp; sizing</h3><span class="pill" id="risk-state">—</span></div><div class="bd" id="risk"></div></div>
+      <div class="card"><div class="hd"><h3>Upcoming events <span class="dim">(USD)</span></h3><span class="pill" id="ev-state">—</span></div><div class="bd" id="events"><span class="muted">loading…</span></div></div>
     </aside>
   </div>
 

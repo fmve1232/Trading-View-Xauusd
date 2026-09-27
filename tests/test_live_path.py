@@ -120,3 +120,23 @@ def test_api_key_never_reaches_published_errors(monkeypatch):
         assert secret not in str(e)
     else:
         raise AssertionError("expected FetchError")
+
+
+def test_events_parse_and_fallback():
+    from datetime import datetime, timezone
+    from quantum import events, holdout
+    rows = [{"title": "Non-Farm Employment Change", "country": "USD", "date": "2026-10-02T08:30:00-04:00", "impact": "High",
+             "forecast": "120K", "previous": "98K"},
+            {"title": "CPI m/m", "country": "USD", "date": "2026-09-29T08:30:00-04:00", "impact": "Medium", "forecast": "0.3%", "previous": "0.2%"},
+            {"title": "German CPI", "country": "EUR", "date": "2026-09-29T08:00:00+02:00", "impact": "High"},
+            {"title": "Bank Holiday", "country": "USD", "date": "2026-09-30T00:00:00-04:00", "impact": "Holiday"},
+            {"title": "naive time", "country": "USD", "date": "2026-09-30T10:00:00", "impact": "High"},
+            "junk"]
+    ev = events.parse_ff(rows)
+    assert [e["title"] for e in ev] == ["CPI m/m", "Non-Farm Employment Change"]          # USD high/medium, sorted
+    assert ev[1]["iso"] == "2026-10-02T12:30:00+00:00"                                    # EDT -> UTC
+    now = datetime(2026, 9, 27, 18, 0, tzinfo=timezone.utc)
+    doc = events.build(now, fetch=lambda: (_ for _ in ()).throw(OSError("blocked")))
+    assert not doc["ok"] and doc["events"][0]["estimated"] and doc["events"][0]["iso"] == "2026-10-02T12:30:00+00:00"
+    assert events.next_nfp(datetime(2026, 11, 1, tzinfo=timezone.utc))["iso"] == "2026-11-06T13:30:00+00:00"   # EST
+    assert "events.py" not in holdout.ENGINE_SOURCES                                      # display only: outside the freeze key
