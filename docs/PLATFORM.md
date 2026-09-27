@@ -8,7 +8,8 @@ full-history backtests).
 **The website is the production system. TradingView/Pine is the reference implementation used
 to validate it.** Nothing on the site needs TradingView at run time: data, signals,
 probability, risk, backtests, Monte Carlo, the forward test and alerts all come from this
-engine.
+engine. Since `PREREGISTRATION.md` Amendment 2 (before the start) the website's forward test is the
+primary one and the TradingView arms are withdrawn.
 
 ```
 GitHub Actions (every 15 min, Sun 22:00 – Fri 21:00 UTC)

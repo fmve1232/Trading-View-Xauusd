@@ -57,6 +57,24 @@ Made **before the holdout start**, so no holdout data exists and no result was s
 - **Why now:** the defect was found on the first live data. Fixing it after the start would
   have restarted the clock; fixing it now costs nothing.
 
+## Amendment 2 before the start (2026-09-27 18:20 UTC): the website is the primary test
+
+Made **before the holdout start**, so no holdout data exists and no result was seen. On the
+operator's instruction ("website primary, TradingView withdrawn"), production runs on the
+independent Python website, not on TradingView.
+
+- **Primary forward test:** §7, the website engine (1H decides; Treatment, Control and
+  Challenger; R per trade).
+- **TradingView arms (§2 to §5): withdrawn, not run.** No TradingView trades are counted, and
+  the *Arm Trades* sheet of the workbook is not used.
+- **Pine v32 stays at the §2 hashes as the reference implementation of the model.** It is
+  used, if at all, to validate the website (same-bar parity), never to trade or to decide.
+- **Live arm:** the trades the operator actually executes, now on the website's 1H decisions.
+  They are still logged by hand in the workbook's *Live Log*, in R, independent of the
+  website's own log, with the same §4 rules and minimum-lot sizing until it shows EDGE SHOWN.
+- **What did not change:** the start (2026-09-28 00:00 UTC), the decision rules and
+  thresholds, the decision date, H1, and the website's freeze key in §7.
+
 ## 3. What is measured
 
 | Arm | Source | Unit |
@@ -110,7 +128,7 @@ than 50 trades on that date, it is reported as "insufficient data", not as a pas
 ## 7. Website arm — the independent Python engine (added 2026-09-27, before the start)
 
 Added **before the holdout start**, like the amendment above: no holdout data exists and no
-result was seen. The TradingView test in §2–§6 is unchanged. This section registers a second,
+result was seen. Since Amendment 2 this is the **primary** forward test. This section registers an
 independent forward test run by the website engine (`quantum/`), which does not depend on
 TradingView.
 

@@ -1,5 +1,13 @@
 # Working conventions for this repo
 
+## Production vs reference (operator decision, 2026-09-27)
+
+**The Python website (`quantum/`, `site/`) is the production system and the primary forward
+test** (`audit/PREREGISTRATION.md` Amendment 2 and §7). TradingView is **not** a dependency:
+the operator does not paste builds into TradingView. The Pine artefacts are the frozen
+reference implementation of the model (v32), used only to validate the website. The delivery
+rule below applies only when a `.pine` file is actually changed.
+
 ## Delivery (operator instruction, 2026-09-09)
 
 **After every code change, send ALL artefact files together — not only the changed ones —
@@ -41,8 +49,9 @@ sha256sum -c audit/MANIFEST.sha256
 
 ## Non-negotiables carried from the audit
 
-- **HOLDOUT FREEZE (from 2026-09-28 00:00 UTC):** the Master, Treatment, Control and Challenger
-  are frozen at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
+- **HOLDOUT FREEZE (from 2026-09-28 00:00 UTC):** the website engine is frozen by its freeze key
+  (`PREREGISTRATION.md` §7; any change to `holdout.ENGINE_SOURCES` or `config.py` restarts it). The Pine
+  reference files (Master, Treatment, Control, Challenger) stay at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
   fixes and display-only changes are allowed; any other change restarts the forward test.
 - **Do not tune** thresholds, weights or gates against results measured on this price
   history. The IS/OOS boundary slides and the window already had parameters selected on it.
