@@ -167,3 +167,53 @@ def test_yahoo_wrong_instrument_and_outage_are_not_run(st):
         {"open": [4300.0], "high": [4301.0], "low": [4299.0], "close": [4300.5], "volume": [0.0]},
         index=pd.DatetimeIndex(["2027-02-26 10:00"], tz="UTC")), now=later)
     assert "error" in doc                                                            # NaN level must not pass
+
+
+# ---------------- COMEX futures reference (from the store) ----------------
+def _gc_store(tmp_path, m15, premium_fn, spike_at=None):
+    days = pd.Series(xc.trading_day(m15.index), index=m15.index)
+    prem = days.map(premium_fn).astype(float)
+    gc15 = m15[["open", "high", "low", "close"]].add(prem, axis=0)
+    if spike_at is not None:
+        gc15.loc[spike_at, ["close", "high"]] += 25.0
+    gc15 = gc15.assign(volume=100.0)
+    brk = gc15.index.tz_convert("America/New_York")
+    gc15 = gc15[~((brk.hour == 17))]                                  # COMEX daily break: no futures bars
+    g = gc15.resample("1h", label="left", closed="left")
+    gc60 = pd.DataFrame({"open": g["open"].first(), "high": g["high"].max(), "low": g["low"].min(), "close": g["close"].last(),
+                         "volume": g["volume"].sum()}).dropna()
+    store.save(str(tmp_path), "GC=F_15m", gc15)
+    store.save(str(tmp_path), "GC=F_60m", gc60)
+
+
+def test_gc_premium_removed_per_trading_day_and_rolls_flagged(st, tmp_path):
+    path, m15 = st
+    roll = date(2026, 9, 21)
+    _gc_store(tmp_path, m15, lambda d: 40.0 if d < roll else 28.0,
+              spike_at=pd.Timestamp("2026-09-22 08:00", tz="UTC"))            # 04:00 New York: no event window
+    doc = xc.run_gc(path, 20, now=datetime(2026, 9, 26, 12, 0, tzinfo=timezone.utc))
+    assert "error" not in doc
+    r15, r1 = doc["timeframes"]["15m"], doc["timeframes"]["1h"]
+    assert abs(r1["close_diff_mean"]) < 0.1 and r1["best_lag_bars"] == 0
+    assert "2026-09-21" in r1["probable_rolls"]                               # the 40 -> 28 premium drop
+    assert r15["td_only"] > 0                                                 # the COMEX break: spot-only bars
+    assert any(x["bar_open_utc"].startswith("2026-09-22T08:00") for x in r15["unexplained_outliers"])
+    assert "review" in r15["verdict"]
+    assert xc.event_window(pd.Timestamp("2026-09-04 12:45", tz="UTC")).startswith("08:30")
+    assert xc.event_window(pd.Timestamp("2026-09-16 19:00", tz="UTC")).startswith("14:00-16:00")
+    assert xc.event_window(pd.Timestamp("2026-09-11 20:45", tz="UTC")) == "Friday close"
+    assert "**unexplained**" in xc.report_md(doc)
+
+
+def test_gc_trading_day_starts_at_1700_new_york():
+    idx = pd.DatetimeIndex(["2026-09-21 20:59", "2026-09-21 21:00"], tz="UTC")     # 16:59 / 17:00 New York (EDT)
+    assert list(xc.trading_day(idx)) == [date(2026, 9, 21), date(2026, 9, 22)]
+
+
+def test_gc_wrong_underlying_and_missing_series(st, tmp_path):
+    path, m15 = st
+    doc = xc.run_gc(path, 20, now=datetime(2026, 9, 26, 12, tzinfo=timezone.utc))
+    assert "no GC=F_15m" in doc["error"]
+    _gc_store(tmp_path, m15, lambda d: 900.0)                                  # ~20% "premium": not gold futures
+    doc = xc.run_gc(path, 20, now=datetime(2026, 9, 26, 12, tzinfo=timezone.utc))
+    assert "not the same underlying" in doc["error"]
