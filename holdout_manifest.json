@@ -1,0 +1,18 @@
+{
+  "freeze_key": "5e4630924d663fc5:32babc71ed938b30",
+  "config_hash": "5e4630924d663fc5",
+  "engine_code_hash": "32babc71ed938b30",
+  "engine_version": "Q7.2-web.3",
+  "freeze_utc": "2026-09-28T00:00:00+00:00",
+  "status": "PENDING",
+  "history": [
+    {
+      "freeze_key": null,
+      "config_hash": "5e4630924d663fc5",
+      "engine_code_hash": null,
+      "engine_version": "Q7.2-web.1",
+      "freeze_utc": "2026-09-26T22:55:02.297050+00:00",
+      "ended_utc": "2026-09-27T18:12:23.592210+00:00"
+    }
+  ]
+}
