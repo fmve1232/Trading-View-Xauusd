@@ -56,7 +56,8 @@ The deliberate differences, all removals of TradingView limits and none chosen b
 | D-04 | calibration / regime counts kept across cycles with 0.7 / 0.5 decay: each analog counted ~3.3× | distinct analogs only | `N ≥ 30` means 30 observations |
 | D-05 | COT keyed on its Tuesday as-of date; percentile over chart bars | keyed on Friday release; percentile over weeks | no look-ahead |
 | D-06 | volume profile on the last bar only (F-A07) | every bar | historical plans can use VAL/VAH/POC; the `°` markers go |
-| D-07 | OANDA tick volume | COMEX GC futures volume, bar for bar; missing = 0 (counted) | real traded volume |
+| D-07 | OANDA tick volume | COMEX GC futures volume, bar for bar; missing = 0 (counted). While an anchor period has no volume yet, VWAP is the equal-weighted mean price rather than na | real traded volume; a na VWAP would disable the analog scan for 100 bars after every COMEX daily break |
+| D-08 | Cornish-Fisher inverse by 6 Newton steps, accepted whatever they return | accepted only where it solves q(w) = z, else the raw z | the cubic has no inverse for thin tails or strong skew; Newton ran to 1e213 on live data and pinned mrComposite at ±100 (the Pine loop is identical, so TradingView presumably shows the same saturation on those bars) |
 | — | daily open interest | weekly CFTC open interest | no free daily OI; labelled |
 | — | `pivothigh` tie-break unknown | strict pivot (a plateau is not a pivot) | unverified on exact ties |
 
@@ -91,3 +92,24 @@ these to every visitor.
 A change to the engine in the Pine artefacts must be ported to `quantum/` in the same build (and the
 reverse), and `python -m pytest -q tests` must pass. Any change to `quantum/config.py` changes the
 configuration hash and therefore restarts the holdout — that is intended.
+
+## Data handling
+
+- **Market-closed bars are dropped** (Friday 17:00 → Sunday 17:00 New York; daily bars dated Saturday
+  or Sunday). Twelve Data's free XAU/USD feed prints flat quotes 24/7; on the first live week those were
+  ~30% of the 15-minute chart and corrupted ATR, PDH/PDL (fake weekend "days"), VWAP and the return
+  volatility. The data-status panel reports how many were dropped per series. The raw store keeps them.
+- **4-hour bars sit on the 17:00 New York grid through DST** (bucketed on New York wall-clock time).
+- **Daily bars:** Yahoo futures dailies are re-indexed to their 17:00 New York session open; Twelve Data
+  dailies are UTC calendar days and keep their 00:00 UTC open. Either way the alignment rule reads only
+  the previous completed day.
+- The COMEX daily break (17:00–18:00 New York) has no futures volume while spot keeps printing; those bars
+  get volume 0 and are counted as imputed in Diagnostics.
+
+## Web changelog
+
+| Build | Change |
+|---|---|
+| web.1 | First release (Pine v21 engine). |
+| web.1 + data fixes | Market-closed bars dropped; 4h DST grid; Twelve Data daily index; VWAP with no volume yet (D-07); Cornish-Fisher guard (D-08). Found on the first live run: 1h sat in WARMUP because the analog scan was disabled daily, and 30% of 15m bars were weekend quotes. The configuration hash is unchanged, so the holdout continues; its ledgers were still empty. |
+

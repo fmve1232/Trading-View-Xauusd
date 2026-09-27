@@ -278,16 +278,22 @@ def anchored_vwap(src: np.ndarray, volume: np.ndarray, new_anchor: np.ndarray) -
     """ta.vwap(src, anchor): cumulative since the last bar where new_anchor is true."""
     src, volume = arr(src), arr(volume)
     out = np.full_like(src, np.nan)
-    pv = 0.0
-    vv = 0.0
+    pv = vv = ps = 0.0
+    k = 0
     for i in range(len(src)):
         if new_anchor[i] or i == 0:
-            pv = 0.0
-            vv = 0.0
+            pv = vv = ps = 0.0
+            k = 0
         v = volume[i]
         s = src[i]
-        if not (math.isnan(v) or math.isnan(s)):
-            pv += s * v
-            vv += v
-        out[i] = pv / vv if vv > 0 else np.nan
+        if not math.isnan(s):
+            ps += s
+            k += 1
+            if not math.isnan(v):
+                pv += s * v
+                vv += v
+        # D-07 addendum: while an anchor period has no volume yet (spot bars during the COMEX
+        # daily break), use the equal-weighted mean price instead of na. A na VWAP made
+        # mrComposite na, which disables the analog scan for the next 100 bars (every day on 1h).
+        out[i] = pv / vv if vv > 0 else (ps / k if k > 0 else np.nan)
     return out

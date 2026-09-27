@@ -192,8 +192,18 @@ def compute(m: Market, cfg: Config) -> dict:
     w = np.where(ok, rz_raw, 0.0)   # iterate only where the expansion is used
     with np.errstate(over="ignore", invalid="ignore"):
         w = _cf_iterate(w, np.where(ok, rz_raw, 0.0), skc, cfk)
-    # A Newton step can diverge on a pathological moment set; fall back to the raw z there.
-    F["ret_z"] = np.where(ok & np.isfinite(w), w, rz)
+    # D-08 (web-01): the Cornish-Fisher cubic is not monotone for every (skew, kurtosis), so it
+    # can have no inverse at the observed z. Newton then runs away (live 5m data: 128 bars, up
+    # to 1e288), and Pine's identical loop pins mrComposite at +/-100 on those bars. Accept the
+    # inverse only where it actually solves q(w) = z; otherwise keep the raw z.
+    tgt = np.where(ok, rz_raw, 0.0)
+    with np.errstate(over="ignore", invalid="ignore"):
+        w2 = w * w
+        resid = np.abs(w + (w2 - 1.0) * skc / 6.0 + (w2 * w - 3.0 * w) * cfk / 24.0
+                       - (2.0 * w2 * w - 5.0 * w) * skc * skc / 36.0 - tgt)
+    solved = ok & np.isfinite(w) & (resid < 1e-6 * np.maximum(1.0, np.abs(tgt)))
+    F["ret_z"] = np.where(solved, w, rz)
+    F["cf_unsolved"] = int((ok & ~solved).sum())
     return _rest(F, m, cfg, c, h, l, o, v, c1, aatr, atr, adx, dip, dim, vwap, bb_basis, bb_dev,
                  gold_ret, cal, close_t, close_epoch, open_epoch, tf_sec, atr_pct)
 

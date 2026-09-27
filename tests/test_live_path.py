@@ -78,3 +78,25 @@ def test_live_pipeline_offline(fake_net, tmp_path):
     assert pipeline.main(["--out", str(out), "--store", str(store), "--tfs", "15m"]) == 0
     df = mk.store.load(str(store), "GC=F_15m")
     assert df.index.is_unique
+
+
+def test_market_closed_bars_are_dropped():
+    idx = pd.date_range("2026-09-25 18:00", "2026-09-27 23:00", freq="1h", tz="UTC")   # Fri 14:00 NY .. Sun 19:00 NY
+    df = pd.DataFrame({c: 1.0 for c in sources.COLS}, index=idx)
+    kept = sources.trading_week_only(df).index.tz_convert("America/New_York")
+    assert kept.min().hour == 14 and kept.min().dayofweek == 4           # Friday before 17:00 kept
+    assert not ((kept.dayofweek == 5).any())                             # no Saturday
+    assert ((kept.dayofweek == 6) & (kept.hour < 17)).sum() == 0          # Sunday only from 17:00
+    assert ((kept.dayofweek == 6) & (kept.hour >= 17)).sum() == 3
+    d = pd.DataFrame({c: 1.0 for c in sources.COLS}, index=pd.date_range("2026-09-21", periods=7, freq="D", tz="UTC"))
+    assert list(sources.trading_week_only(d, daily=True).index.dayofweek) == [0, 1, 2, 3, 4]
+
+
+def test_4h_grid_stays_on_17h_new_york_across_dst():
+    idx = pd.date_range("2026-02-20", "2026-04-10", freq="1h", tz="UTC")   # spans the 2026-03-08 US DST change
+    df = pd.DataFrame({"open": 1.0, "high": 1.0, "low": 1.0, "close": 1.0, "volume": 1.0}, index=idx)
+    r = sources.resample_ny_session(df, 4)
+    assert sorted(set(r.index.tz_convert("America/New_York").hour)) == [1, 5, 9, 13, 17, 21]
+    later = sources.resample_ny_session(df[df.index >= "2026-03-20"], 4)   # starts after the change
+    common = r.index.intersection(later.index)
+    assert len(common) == len(later)                                     # same grid whatever the start date
