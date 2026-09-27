@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v25   (one Mobile mode)              ║
+// ║  BUILD STAMP — this file last CHANGED in v26   (bias label sequence fix)      ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -2467,9 +2467,7 @@ if bearScore > 95.0
     bearScore := 95.0
     bullScore := math.max(bullScore, 5.0)
     rangeScore := 100.0 - bullScore - bearScore
-// Bias label using normalized scores (0-100, same scale as dashboard)
-// SSOT: SHARED — consumed by dashboard TREND column, alert messages, and evidence display
-biasLabel = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 62 ? "RANGE" : bullScore > bearScore and bullScore > rangeScore ? "BULL-ISH" : bearScore > bullScore and bearScore > rangeScore ? "BEAR-ISH" : "NEUTRAL"
+// v26: biasLabel moved below the final normalisation (search "v26 SEQUENCE").
 
 // HISTORICAL ANALOG ANALYSIS (Part 6) — outputs populated below from stats engine
 
@@ -2537,10 +2535,8 @@ shouldSell = sellPreFilters and (bearStructActive or displacementDown)
 // Until now there was no way to tell WHICH of the seven conditions was missing, so every
 // WAIT looked identical and uninformative. This names the first failing one, in gate
 // order, for whichever side has the stronger evidence score.
-string _blkWhy = ""
-if not shouldBuy and not shouldSell
-    bool _bullSide = bullScore >= bearScore
-    _blkWhy := _ddBreach ? "DD" : inNewsWindow ? "NEWS" : not recentBars ? "OLD-BAR" : sessionQuality < 30 ? "SESS " + str.tostring(int(sessionQuality)) + "/30" : (_bullSide ? not bullTrend : not bearTrend) ? "TREND " + str.tostring(_bullSide ? bullTrendScore : bearTrendScore) + "/" + str.tostring(trendThreshold) : (_bullSide ? htfBearScoreGate : htfBullScoreGate) ? "HTF-OPP" : "NO-TRIGGER"
+// v26: _blkWhy is computed just below biasLabel (search "v26 SEQUENCE"), so the side it
+// explains is the side the label names.
 
 // ---- Decision Log: which gate terms are passing ----
 // F-A03 FIX. This block previously scored against the PRE-Q5.5 filter set
@@ -4542,6 +4538,20 @@ rangeScore := fRngScore
 bullScore := nb2_
 bearScore := nbe2_
 rangeScore := nr2_
+// v26 SEQUENCE FIX: biasLabel was computed ~2,000 lines earlier, from the EVIDENCE-stage
+// scores, before the analog blend (L~4465), the forecast engine and this normalisation. Every
+// reader (DECISION box BIAS row, Mobile TREND row, BUY/SELL alert text) comes later and
+// prints it beside the FINAL scores, so the label could contradict the numbers next to it
+// (e.g. BEAR-ISH beside B55/S40). Same formula, same 62 threshold, now on the final scores
+// -- the ones the dashboard shows and the calibration validates (R5.3-M3). No gate reads it.
+// SSOT: SHARED — consumed by dashboard TREND column, alert messages, and evidence display
+biasLabel = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 62 ? "RANGE" : bullScore > bearScore and bullScore > rangeScore ? "BULL-ISH" : bearScore > bullScore and bearScore > rangeScore ? "BEAR-ISH" : "NEUTRAL"
+// v26 SEQUENCE: the WAIT reason, moved here from the decision-log block so that _bullSide
+// uses the same final scores as biasLabel; the only reader is the DECISION box BIAS row.
+string _blkWhy = ""
+if not shouldBuy and not shouldSell
+    bool _bullSide = bullScore >= bearScore
+    _blkWhy := _ddBreach ? "DD" : inNewsWindow ? "NEWS" : not recentBars ? "OLD-BAR" : sessionQuality < 30 ? "SESS " + str.tostring(int(sessionQuality)) + "/30" : (_bullSide ? not bullTrend : not bearTrend) ? "TREND " + str.tostring(_bullSide ? bullTrendScore : bearTrendScore) + "/" + str.tostring(trendThreshold) : (_bullSide ? htfBearScoreGate : htfBullScoreGate) ? "HTF-OPP" : "NO-TRIGGER"
 // R5.3-M3: calibration now tracks the FINAL displayed bullScore. The record written
 // earlier this bar stored the pre-blend evidence score, so the Cal grade / Brier /
 // mP= sigmoid were validating a variable the user never sees. The slot is overwritten

@@ -18,14 +18,14 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5718 | 368521 | `2fcbae2ae56113bde364b7c16182ece4144ae618333ccfd014db5badaa9995fb` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5728 | 369391 | `1fe5e5a828742f11a7f56d583314d3e3d29f8d110d8fd8b92de64514307dd2f0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5277 | 329997 | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5277 | 330062 | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 377 | 26980 | `8ffaf61c8a56db77cc9efff13aacef90b2166c068cff6398fe105d5aa384ef5c` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5502 | 346649 | `c8385245ca2b03a6a7327187a38c40ed1ac678b88411a16c97e8f64217e053ec` |
 
-> **BUILD v25 — this prompt pins the current build.** The originally audited build
+> **BUILD v26 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -54,6 +54,8 @@ scope, and no other build of these scripts is in scope.
 > auction layer to Diagnostics; two Diagnostics compiler warnings fixed; the first reliability
 > data recorded as an open statistical finding.
 > **v25:** the three phone views merged into one Mobile mode (display only, Master only).
+> **v26: F-A35** — same-bar sequence audit (`sequence.py`); the bias label and WAIT reason moved
+> after the final score stage.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

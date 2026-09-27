@@ -59,6 +59,7 @@
 | F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
 | F-A32 | **P0** | `BUG` | *(compiler-reported)* Master v23: `too many tokens: 100820` (limit 100,256); the lexical estimator's ratio had drifted 2.466 → 2.515 — **FIXED v24** (auction layer moved to Diagnostics) |
 | F-A33 | P3 | `NUM` | *(compiler-reported)* Diagnostics: `ta.correlation` in a ternary skipped bars in its window; `_v` shadowed a global — **FIXED v24** |
+| F-A35 | P2 | `PRES` | *(sequence audit)* `biasLabel` and the WAIT reason were computed from the evidence-stage scores but shown beside the final scores (label could contradict the numbers; alert text too) — **FIXED v26** |
 | F-A34 | **P1** | `STAT` | *(first chart data)* raw score buckets predict 21→54% but observe 18–24%: no resolution on this history; Treatment PF 0.989 over 90 trades — **OPEN, not fixable by code** (needs a frozen holdout, §9) |
 | F-A26 | P3 | `NUM` | t-quantile Fisher expansion evaluated one term at an already-corrected z (numerically ~1e-5) — **FIXED v16** |
 | F-A13 | **CRITICAL** | `BUG` | *(compiler-reported)* `Undeclared identifier "OUTCOME_N"` — the Master and both twins never compiled — **FIXED** |
@@ -802,6 +803,41 @@ Treatment backtest agrees: 90 trades, 44% winners, PF 0.989.
 
 This is a statement about the *signal*, not the code. Per §9 nothing is re-weighted against
 it; the only valid test is data collected after a parameter freeze.
+
+---
+
+## F-A35 — engine sequence audit *(FIXED v26)*
+
+`audit/tools/sequence.py` lists every read of a global that runs **before a later write of it
+on the same bar**, with function bodies placed at their call site. Master v25: 65 hits,
+triaged by hand.
+
+- **Defect (fixed).** `bullScore/bearScore/rangeScore` pass through four stages: evidence
+  (L~2446), analog blend (L~4465), forecast (L~4537), normalisation (L~4542).
+  - `biasLabel` was computed after stage 1.
+  - All its readers come after stage 4: the DECISION box BIAS row, the Mobile TREND row and
+    the BUY/SELL alert text. They print it beside the final scores, so "BEAR-ISH" could
+    appear next to "B55/S40".
+  - The WAIT reason `_blkWhy` chose its side from stage 1 too. After the label moved, it
+    could have explained the bull side under a bearish label.
+  - Both now run after stage 4, with the same formula and thresholds. They feed no gate.
+    The twins do not carry them, so the A/B is untouched.
+- **Intended, verified.**
+  - The forecast reads the blended score, and normalisation reads the forecast.
+  - The calibration record stores the stage-1 score, then R5.3-M3 overwrites it with the
+    final one.
+  - Every `var` hit is a state machine that reads last bar's state, then updates it:
+    structure breaks, order-block arrays, FVG, calibration quantiles, the risk tracker.
+  - The risk tracker reads `tqVeto` before the lock is folded in, but checks `riskLock`
+    itself.
+  - `pdh/pdlReachScore` is a paired clamp.
+- **Accepted lag.** The trade plan (L~2636) reads `gRaceProb`/`gHitProb` written by the stats
+  engine (L~3201), so the plan's hit probabilities and race EV are from the previous refresh.
+  - The engine refreshes periodically anyway (every `_rb` bars or on the last bar).
+  - Each refresh aggregates hundreds of outcomes, so one refresh moves the numbers
+    negligibly.
+  - Re-ordering would move the 7,000-token engine in all four engine copies.
+  - Not changed.
 
 ---
 

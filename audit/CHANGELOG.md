@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v25
+# Build changelog — v1 → … → v26
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -931,4 +931,22 @@ Operator request: merge the phone views into one without losing any feature.
 
 Master 38,759 → 38,918 lexical, ~97,880 compiled at 2.515 (~2.4% headroom). Twins and
 Diagnostics are untouched: their layout inputs only size the Diagnostics panel. Compile NOT RUN.
+
+---
+
+# Build v25 → v26 — engine sequence audit (Master only)
+
+A new tool, `audit/tools/sequence.py`, lists every read of a value that runs before a later
+write of it on the same bar. Of 65 hits in the Master, one was a real defect (F-A35):
+- `biasLabel`, and the WAIT reason beside it, were computed from the evidence-stage scores.
+- They were displayed beside the final (blended, forecast, normalised) scores, and also used
+  in the BUY/SELL alert text.
+- Both now run after the final stage. The formula and thresholds are unchanged, and no gate
+  reads either.
+
+**Visible change:** the BIAS word on the DECISION box, the Mobile TREND row and in alerts now
+always agrees with the B/S numbers shown next to it.
+
+Also verified: the plan's SL/TP geometry against a $10–20 target. On 1H (ATR ≈ $16) the SL is
+about $10–25 and TP1 about $10–20. Twins and Diagnostics are unchanged. Compile NOT RUN.
 
