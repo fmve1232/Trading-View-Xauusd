@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v30
+# Build changelog — v1 → … → v31
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1056,4 +1056,39 @@ Only EdgeCases changed. Compile NOT RUN.
 - This is the first complete executed pass of the harness: §8.2 is closed by execution, not
   by assumption.
 - No artefact changed after v30.
+
+---
+
+# Build v30 → v31 — forward test pre-registered; Challenger arm; forward-test workbook
+
+Operator request: "what can we do to achieve 100/100" → both the log and the challenger.
+
+- **`audit/PREREGISTRATION.md`** fixes, before any holdout data exists:
+  - the holdout start (2026-09-28 00:00 UTC) and the frozen SHA-256 of the Master,
+    Treatment, Control and Challenger;
+  - the metrics;
+  - the decision rules: N ≥ 50, the 95% t-interval of the mean above 0, and PF ≥ 1.2;
+  - the Challenger adoption rule;
+  - the decision date, 2027-03-31.
+- **`Strategy_CHALLENGER.pine`** (new artefact, H1): identical to Treatment except the entry
+  trend gate.
+  - The gate becomes `close > EMA20 and EMA20 > EMA20[3]`, mirrored for shorts. These are
+    the fast terms of the existing trend score; no new parameter or threshold is added.
+  - Motivated by F-A36: 60% of $30+ move episodes stop at the trend gate.
+  - Diff vs Treatment: 4 hunks (stamp, title, role, gate).
+  - About 34,860 lexical tokens, ~87,700 compiled.
+  - All checkers clean; 0 dead.
+- **`audit/XAUUSD_Forward_Test_Log.xlsx`** has four sheets: Read Me with the pre-registered
+  settings, Live Log (R), Arm Trades ($ at 1 oz) and Stats. Stats reports:
+  - N, win rate with Wilson interval, mean R with t-interval, profit factor;
+  - max drawdown in R;
+  - the dashboard's TP1 % against the realised rate;
+  - the verdicts and the Challenger decision.
+- **Workbook checks:**
+  - 11,046 formulas, 0 errors on LibreOffice recalculation.
+  - Filled with 60 synthetic live trades and 3 × 55 arm trades: all 26 statistics match an
+    independent Python calculation.
+  - The pre-freeze example rows are excluded, as designed.
+- The Master, twins, Diagnostics, EdgeCases and Visuals are unchanged. Compile of the
+  Challenger NOT RUN.
 

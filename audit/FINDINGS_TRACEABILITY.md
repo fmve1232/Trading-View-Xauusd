@@ -873,6 +873,8 @@ break rejected by a veto.
 - That turns the complaint into a count per gate, measured on the operator's own chart.
 - A change to that gate can then be pre-registered and tested on data collected AFTER it is
   frozen. That is the only test that would show it helps.
+- **v31:** done: hypothesis H1 (fast trend gate) is pre-registered in `PREREGISTRATION.md` as the
+  Challenger arm, and will be judged on the holdout from 2026-09-28 only.
 
 **Measured (operator's chart, 1H, v27, 2026-09-27).**
 Row text: `moves >=30 in 12 bars: up 544 / down 512  ENTRY 22 | stopped at: trend 632 HTF 93

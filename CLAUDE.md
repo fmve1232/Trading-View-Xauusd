@@ -9,10 +9,11 @@ The operator pastes these into TradingView by hand. Sending only the changed fil
 mismatched set on the chart, and there is no way to tell from the TradingView side which
 build a given script is on. A full set every time removes that class of mistake.
 
-There are **six** artefacts (since v17). Five are chart scripts; `EdgeCases.pine` is a
+There are **seven** artefacts (since v31). Six are chart scripts; `EdgeCases.pine` is a
 run-once diagnostic that is removed after reading its table. `Diagnostics.pine` (v17)
 carries the features that no longer fit under the Master's compiled-token limit, on the
-Treatment twin's engine verbatim. Send all six unless the
+Treatment twin's engine verbatim. `Strategy_CHALLENGER.pine` (v31) is the pre-registered
+forward-test arm H1. Send all seven unless the
 operator says to drop EdgeCases.
 
 **The chat record must include**, every time:
@@ -40,6 +41,9 @@ sha256sum -c audit/MANIFEST.sha256
 
 ## Non-negotiables carried from the audit
 
+- **HOLDOUT FREEZE (from 2026-09-28 00:00 UTC):** the Master, Treatment, Control and Challenger
+  are frozen at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
+  fixes and display-only changes are allowed; any other change restarts the forward test.
 - **Do not tune** thresholds, weights or gates against results measured on this price
   history. The IS/OOS boundary slides and the window already had parameters selected on it.
   See `audit/AUDIT_PROMPT.md` §9. Diagnose instead; the only real fix is a frozen holdout.
@@ -47,7 +51,8 @@ sha256sum -c audit/MANIFEST.sha256
   them — that tests the reconstruction, not the original.
 - **Never mark anything PASS that was not executed.** `NOT RUN` is the honest verdict.
 - Changes to the strategy twins go to **both arms identically**, or the A/B breaks. The
-  diff between them must stay at its five hunk headers. Engine changes also go into
+  diff between them must stay at its five hunk headers; Treatment vs Challenger must stay at
+  four (stamp, title, role, trend gate) and engine changes go into the Challenger too. Engine changes also go into
   `Diagnostics.pine` (outside its `DIAG` fences); `diag_parity.py` fails otherwise.
 - **Do not delete features** (operator instruction, 2026-09-26). Wire them; if a file has
   no room, move the feature to a companion that runs the same engine, never drop it.
@@ -60,7 +65,9 @@ sha256sum -c audit/MANIFEST.sha256
 
 | Path | What |
 |---|---|
-| `artefacts/` | The six Pine v6 files. |
+| `artefacts/` | The seven Pine v6 files. |
+| `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
+| `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
 | `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A37. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |

@@ -157,6 +157,21 @@ remain available and are confirmed-bar gated too.
 
 ---
 
+## Step 2d — Forward test (v31, from 2026-09-28 00:00 UTC)
+
+The rules are frozen in `audit/PREREGISTRATION.md`. Only trades opened after the freeze count.
+
+1. **Add the Challenger** (`Strategy_CHALLENGER.pine`) to the same 1H chart as Treatment and
+   Control. Leave all three at their code defaults, 10K capital.
+2. **Live trades:** for every MT5 trade taken from a confirmed Master BUY/SELL alert, add a
+   row to *Live Log* in `audit/XAUUSD_Forward_Test_Log.xlsx`. Fill the blue columns only.
+3. **Weekly:** in each arm's Strategy Tester open *List of Trades* and paste the arm name,
+   entry time and net P&L of any new trades into *Arm Trades*.
+4. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
+   setting or rule before the decision date in PREREGISTRATION §5.
+
+---
+
 ## Step 3 — Record the run configuration
 
 Before any strategy run, capture this. Without it the export is not reproducible and I
