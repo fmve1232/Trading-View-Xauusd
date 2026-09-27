@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v24   (auction layer -> Diagnostics) ║
+// ║  BUILD STAMP — this file last CHANGED in v25   (one Mobile mode)              ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -320,26 +320,20 @@ forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="
 showStatsEngine = input.bool(true, "Statistical Engines", group=grpModules)
 
 grpLayout = "LAYOUT"
-dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "MobileLand", "MobilePort", "MobileBrief"], group=grpLayout, tooltip="Pine cannot detect screen size, so \"Auto\" resolves to Desktop -- it is not detection. On a phone pick MobileLand or MobilePort (or tick Mobile Layout below): those drop the four context columns so the remaining cells actually fit. MobilePort also drops the two dense sub-rows. MobileBrief (v23) replaces the dashboard and plan strip with a 4-row card: TREND, TARGET, PREVIOUS -> NEXT and DECISION, all from the same engine values.")
-mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Force mobile-optimized dashboard for phones/tablets")
-_resolvedMode = mobileOverride ? "MobilePort" : dashMode
+dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group=grpLayout, tooltip="Pine cannot detect screen size, so \"Auto\" resolves to Desktop -- it is not detection. On a phone pick Mobile (or tick Mobile Layout below): a 4-section card -- 1 TREND, 2 TARGET, 3 PREV -> NEXT, 4 DECISION -- with the plan listed vertically underneath. Density sets the depth: Compact = the four headlines only; Standard = + every detail the old MobileLand/MobilePort/MobileBrief views showed; Spacious = + the engine cross-check line. (v25: those three modes merged into this one.)")
+mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Same as Dash Mode = Mobile")
+_resolvedMode = mobileOverride ? "Mobile" : dashMode
 textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group=grpLayout)
 density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group=grpLayout)
-// F-A11. "Mobile Layout" previously changed ONLY the font size: _respCols was set to 9
-// unconditionally and every column 0-8 was still written, so a phone got the full
-// nine-column desktop table in tiny type -- every cell overflowing into its neighbour and
-// both edges clipped off screen. These two flags drive a real layout reduction below.
-//   _dashMobile  drops the CONTEXT columns (STRUCTURE / LIQUIDITY / PRICE / MACRO) and
-//                keeps the five that answer "what do I do": MARKET, BIAS, SIGNAL, RISK,
-//                DECISION. The dropped columns are not lost -- switch Dash Mode to
-//                Desktop to see them.
-//   _dashPort    additionally drops the two dense sub-rows, which are unreadable on a
-//                portrait phone. Landscape keeps them.
+// F-A11 (v8) gave phones a real layout (5-column MobileLand, 2-row MobilePort); v23 added the
+// MobileBrief card. v25 MERGES all three into one "Mobile" mode: the 4-section card, whose
+// detail rows carry every value those views showed (and the LIQUIDITY/MACRO columns they had
+// dropped), plus the full trade plan listed vertically. Density picks the depth. Nothing on
+// the phone is recalculated: the card reads the strings the desktop renderer builds.
 // NOTE ON "Auto": Pine cannot detect viewport size, so Auto resolves to Desktop and
 // always has. On a phone you must set this yourself -- that is a platform limit, not a
 // preference. The tooltip now says so instead of implying detection.
-bool _dashMobile = _resolvedMode == "MobilePort" or _resolvedMode == "MobileLand"
-bool _dashPort   = _resolvedMode == "MobilePort"
+bool _dashMobile = _resolvedMode == "Mobile"
 showDowTracker = input.bool(true, "Show Day-of-Week Bias Tracker", group=grpLayout)
 
 grpRisk = "RISK MANAGEMENT"
@@ -2974,6 +2968,7 @@ var float _calDriftSlow = 50.0
 // Dashboard tables
 var table tblA = na
 var table tblPlan = na
+var table tblBrief = na
 
 // Regime: first-order Markov with duration tracking
 int rCurr = strongTrend ? 0 : moderateTrend ? 1 : 2
@@ -5107,28 +5102,25 @@ float vdK = volDelta50 / 1000.0
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
 // ══════════════════════════════════════════════════════════════════════
 // R5.3-L8: parameter renamed tc -> tcol (it shadowed the function's own name — fragile).
-// F-A11: logical column -> physical column. On mobile the four context columns collapse
-// out and the survivors close up, so the table is created with 5 columns and nothing is
-// ever written past index 4. Returning -1 means "skip this cell" -- writing past the
-// declared column count is a RUNTIME error in Pine (the same class as the harness's
-// "Row 70 is out of table bounds"), so the guard and _respCols must stay in step.
-_dCol(int _c) => not _dashMobile ? _c : _c == 0 ? 0 : _c == 1 ? 1 : _c == 2 ? 2 : _c == 7 ? 3 : _c == 8 ? 4 : -1
+// v25: in Mobile the desktop table is not created; the renderer still runs (the card reads
+// its strings) and these helpers simply skip the desktop cells. The v8 column map (_dCol) and
+// the portrait row cut went with the merged MobileLand/MobilePort layouts.
 tc(col, row, txt, tcol, ts, w) =>
-    int _pc = _dCol(col)
-    if _pc >= 0 and not (_dashPort and row >= 2)
-        table.cell(tblA, _pc, row, txt, text_color=tcol, text_size=ts, width=w)
+    if not _dashMobile
+        table.cell(tblA, col, row, txt, text_color=tcol, text_size=ts, width=w)
 tcb(col, row, txt, tcol, bg, ts, w) =>
-    int _pc = _dCol(col)
-    if _pc >= 0 and not (_dashPort and row >= 2)
-        table.cell(tblA, _pc, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
-tcp(col, row, txt, bg, ts, w) => table.cell(tblPlan, col, row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
+    if not _dashMobile
+        table.cell(tblA, col, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
+// v25: in Mobile the plan is written into the card itself (rows 8-15, one line per cell), so
+// the card and the plan can never overlap on a narrow screen.
+tcp(col, row, txt, bg, ts, w) => table.cell(_dashMobile ? tblBrief : tblPlan, _dashMobile ? 1 : col, _dashMobile ? 8 + col : row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)
 
 // v15 (token ceiling): forecast-cone breach state and status removed (default OFF).
 
 // Q5.4-P1: dashboard split into three functions to satisfy the 254 external-
 // elements-per-function limit (was 338). Cross-function locals move through
 // global transfer arrays (arrays count once). Behavior identical.
-var string[] gDashS = array.new_string(25, "")
+var string[] gDashS = array.new_string(35, "")
 var color[] gDashC = array.new_color(12, color.gray)
 var float[] gDashF = array.new_float(10, 0.0)
 f_dashData1() =>
@@ -5417,24 +5409,20 @@ f_dashRender() =>
     // ── Layout sizing ──
     // R5-F14: "Medium" now maps to a valid size constant ("small") instead of leaking
     // the raw option string into table.cell.
-    // Q6.3: mobile forces the compact size ladder regardless of the textSize input.
-    bool _mobUI = _resolvedMode == "MobilePort" or _resolvedMode == "MobileLand"
-    string _hdSize = _mobUI ? "tiny" : textSize == "Auto" ? "small" : textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
+    string _hdSize = textSize == "Auto" ? "small" : textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
     string _prSize = textSize == "Auto" ? "normal" : textSize == "Large" ? "large" : textSize == "Small" ? "small" : "normal"
-    string _seSize = _mobUI ? "tiny" : textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"
+    string _seSize = textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"
     // R5.1: density input wired — scales all table column widths
     float _densW = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
-    // F-A11: mobile widths sum to 100 across the five surviving columns, weighted toward
-    // SIGNAL/RISK/DECISION. The desktop nine keep their original values untouched.
-    int _w0 = _dashMobile ? 16 : int(10 * _densW)
-    int _w1 = _dashMobile ? 14 : int(10 * _densW)
-    int _w2 = _dashMobile ? 22 : int(12 * _densW)
+    int _w0 = int(10 * _densW)
+    int _w1 = int(10 * _densW)
+    int _w2 = int(12 * _densW)
     int _w3 = int(11 * _densW)
     int _w4 = int(13 * _densW)
     int _w5 = int(10 * _densW)
     int _w6 = int(11 * _densW)
-    int _w7 = _dashMobile ? 20 : int(11 * _densW)
-    int _w8 = _dashMobile ? 28 : int(13 * _densW)
+    int _w7 = int(11 * _densW)
+    int _w8 = int(13 * _densW)
     // F-037: was `OOS nn%+/-x N../..eff`. Two false claims in one field: the name OOS,
     // and a confidence interval implying a fixed sample. Now reports the rolling win rate
     // and its counts with NO interval, under a name that says what it is.
@@ -5522,9 +5510,12 @@ f_dashRender() =>
         // R6.0: session intelligence appended — Exp = current range vs avg session range,
         // M = historical manipulation frequency, C = directional-continuation frequency.
         string _sessStats = (not na(sessExpansionPct) ? " Exp" + str.tostring(int(sessExpansionPct)) + "%" : "") + (not na(sessManipProb) ? " M" + str.tostring(int(sessManipProb)) + "%" : "") + (not na(sessContProb) ? " C" + str.tostring(int(sessContProb)) + "%" : "")
-        tc(0, 2, _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats + "\n" + xcheckStr, _sessCol, _seSize, _w0)
-        tc(1, 2, _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _seSize, _w1)
-        tc(2, 2, _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel, _evCol, _seSize, _w2)
+        string _mktLine = _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats
+        tc(0, 2, _mktLine + "\n" + xcheckStr, _sessCol, _seSize, _w0)
+        string _biasLine = _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : "")
+        tc(1, 2, _biasLine, cBloomNeut, _seSize, _w1)
+        string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel
+        tc(2, 2, _evConf, _evCol, _seSize, _w2)
         tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)
         // R5.1: per-target reach scores wired — the suffix now shows the reach score of the
         // ACTUAL destination pool (previously it always displayed PDH's number)
@@ -5550,35 +5541,41 @@ f_dashRender() =>
         // instruction to trade nothing, which is a different and misleading claim.
         string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "#.00") + "L"
         string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + str.tostring(int(_riskUSD)) + " " + _lotStr : ""
-        tc(8, 2, _rrStr + _riskDisp + " " + decisionLog + " " + _agreePct, C_TEXT, _seSize, _w8)
+        string _decFoot = _rrStr + _riskDisp + " " + decisionLog + " " + _agreePct
+        tc(8, 2, _decFoot, C_TEXT, _seSize, _w8)
+        // v25: hand the composite strings to the Mobile card (slots 25-34), so the phone shows
+        // exactly what the desktop cells show, built once.
+        array.set(gDashS, 25, _mktLine)
+        array.set(gDashS, 26, _biasLine)
+        array.set(gDashS, 27, _probDisp)
+        array.set(gDashS, 28, _evConf)
+        array.set(gDashS, 29, _riskSec)
+        array.set(gDashS, 30, _decBox)
+        array.set(gDashS, 31, _riskPrimary)
+        array.set(gDashS, 32, _decFoot)
+        array.set(gDashS, 33, _liqReachDisp)
+        array.set(gDashS, 34, _macroRow2)
     true
 // Detect responsive mode for table creation and indicator visibility
 var string _prevDashMode = "Desktop"
 var bool modeChanged = false
-var int _respRows = 4
-// v23 MOBILE BRIEF: a 4-row card for phones. Every value below is one the engine already
-// computes for the full dashboard; nothing is recalculated, so the card cannot disagree
-// with the desktop view or with the alerts. The full dashboard is unchanged in every other mode.
-var table tblBrief = na
+// MOBILE CARD (v23 MobileBrief; v25 the single Mobile mode). Every value below is one the
+// engine already computes for the full dashboard; nothing is recalculated, so the card cannot
+// disagree with the desktop view or with the alerts. Rows 0/2/4/6 are the four headlines;
+// rows 1/3/5/7 their details (hidden at Compact density).
 _bc(int _r, string _k, string _v, color _c, _ts) =>
     table.cell(tblBrief, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=_ts, text_halign=text.align_left)
     table.cell(tblBrief, 1, _r, _v, text_color=_c, text_size=_ts, text_halign=text.align_left)
-var int _respCols = 9
 if showDashboard and barstate.islast
     string _mode2 = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
-    bool _isMobile = _mode2 == "MobilePort" or _mode2 == "MobileLand"
-    bool _brief = _mode2 == "MobileBrief"
-    // Q6.3 FIX: the renderer unconditionally writes tc(0..8, ...) — nine columns.
-    // Allocating 4 columns in mobile mode meant every write to columns 4-8 went
-    // out of bounds (dropped content / runtime error). The table is now always
-    // allocated at full size; the mobile toggle changes POSITION and TEXT SIZE
-    // only, so no dashboard information is ever lost on a phone.
-    _respRows := _dashPort ? 2 : 4
-    _respCols := _dashMobile ? 5 : 9
+    bool _mDet = density != "Compact"
+    // Mobile shows the plan (inside the card) unless Compact; desktop follows showTradePlan.
+    bool _planOn = showTradePlan and (_mDet or not _dashMobile)
     // Recreate tables if mode changed
-    if _mode2 != _prevDashMode
+    // v25: density is part of the key -- it changes the Mobile card's row count and the plan.
+    if _mode2 + density != _prevDashMode
         modeChanged := true
-        _prevDashMode := _mode2
+        _prevDashMode := _mode2 + density
     if modeChanged
         if not na(tblA)
             table.delete(tblA)
@@ -5590,43 +5587,56 @@ if showDashboard and barstate.islast
             table.delete(tblBrief)
             tblBrief := na
         modeChanged := false
-    if na(tblA) and not _brief
-        // Q6.7 MOBILE FIX: tblA and tblPlan were BOTH anchored bottom_right in mobile
-        // mode, so the 4x9 dashboard and the 8-cell plan strip competed for the same
-        // corner and overlapped. Mobile now uses the same vertical separation as
-        // Desktop (dashboard top, plan bottom), which is collision-proof regardless of
-        // how wide the table renders on a narrow portrait screen.
-        tblA := table.new(_isMobile ? position.top_right : _mode2 == "Desktop" ? position.top_right : position.top_left, _respCols, _respRows, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if showTradePlan and na(tblPlan) and not _brief
-        tblPlan := table.new(_isMobile ? position.bottom_right : _mode2 == "Desktop" ? position.bottom_right : position.bottom_left, 8, 1, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if not showTradePlan and not na(tblPlan)
+    if na(tblA) and not _dashMobile
+        // Q6.7: dashboard top, plan bottom -- collision-proof on any screen width.
+        tblA := table.new(_mode2 == "Desktop" ? position.top_right : position.top_left, 9, 4, bgcolor=cBloomBg, border_width=0, frame_width=0)
+    if _planOn and na(tblPlan) and not _dashMobile
+        tblPlan := table.new(_mode2 == "Tablet" ? position.bottom_left : position.bottom_right, 8, 1, bgcolor=cBloomBg, border_width=0, frame_width=0)
+    if (not _planOn or _dashMobile) and not na(tblPlan)
         table.delete(tblPlan)
         tblPlan := na
     f_dashData1()
     f_dashData2()
-    if not _brief
-        f_dashRender()
-    if _brief
+    f_dashRender()
+    if _dashMobile
         if na(tblBrief)
-            tblBrief := table.new(position.top_right, 2, 4, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
+            tblBrief := table.new(position.top_right, 2, _planOn ? 16 : _mDet ? 8 : 4, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
         _bts = textSize == "Large" ? size.large : textSize == "Medium" ? size.normal : size.small
+        // Compact: headlines on rows 0-3. Otherwise headline k on row 2k, its detail on 2k+1.
+        int _hs = _mDet ? 2 : 1
+        _bds = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.tiny
+        // Details (Standard / Spacious). Each is the desktop cell's own string:
+        //   TREND   bias strength, C/S/I breakdown, agreement, HTF | MTF arrows, session, volume,
+        //           CVD, delta, regime, session stats | macro verdict + day-of-week tracker
+        //   TARGET  nearest liquidity above / below | target score, reach, open FVG (TradingView
+        //           prices, as on desktop; the headline and the plan carry the MT5 offset)
+        //   PREV>NEXT  price + change | forecast L/S/R | EV, calibrated P, confidence | WR/ROLL/PF
+        //           | (Spacious) engine cross-check line
+        //   DECISION   (headline = the desktop DECISION box: label, grade, TQ, bias + block reason,
+        //           LIVE tag) | RR, SL in ATR, risk %, $, lots, cost | RR, risk, decision log,
+        //           MTF agreement
+        if _mDet
+            _bc(1, "", array.get(gDashS, 26) + "\n" + array.get(gDashS, 25) + "\n" + array.get(gDashS, 34), C_TEXT, _bds)
+            _bc(3, "", "TV price: above " + array.get(gDashS, 17) + " / below " + array.get(gDashS, 19) + "\n" + array.get(gDashS, 33), C_TEXT, _bds)
+            _bc(5, "", array.get(gDashS, 20) + " " + array.get(gDashS, 2) + "\n" + array.get(gDashS, 27) + "\n" + array.get(gDashS, 28) + "\n" + array.get(gDashS, 29) + (density == "Spacious" ? "\n" + xcheckStr : ""), C_TEXT, _bds)
+            _bc(7, "", array.get(gDashS, 31) + "\n" + array.get(gDashS, 32), C_TEXT, _bds)
         // 1 TREND: composite bias, regime, higher-timeframe bias, bull/bear score split
         _bc(0, "1 TREND", biasLabel + " · " + mktRegime + " · HTF " + array.get(gDashS, 8) + " · B" + str.tostring(bullScore, "#") + "/S" + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
         // 2 TARGET: the engine's liquidity destination, at the MT5 price, with its reach score
         float _bTgt = liqDestLabel == "PDH" ? poolPdH : liqDestLabel == "PDL" ? poolPdL : liqDestLabel == "PWH" ? poolPwH : liqDestLabel == "PWL" ? poolPwL : liqDestLabel == "PMH" ? poolPmH : liqDestLabel == "PML" ? poolPmL : liqDestLabel == "EQH" ? poolEqH : liqDestLabel == "EQL" ? poolEqL : na
-        _bc(1, "2 TARGET", na(_bTgt) ? "no dominant liquidity target" : liqDestLabel + " " + str.tostring(_bTgt + mt5Offset, "#.##") + " MT5 · reach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
+        _bc(_hs, "2 TARGET", na(_bTgt) ? "no dominant liquidity target" : liqDestLabel + " " + str.tostring(_bTgt + mt5Offset, "#.##") + " MT5 · reach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
         // 3 PREVIOUS -> NEXT: last structure event and last bar's change; calibrated
         // probability that the next 1R move goes up vs down (the gate's own probability)
-        _bc(2, "3 PREV → NEXT", (structStr == "" ? "no active structure" : structStr) + " · last " + array.get(gDashS, 2) + "  →  next 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : " · EV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
+        _bc(2 * _hs, "3 PREV → NEXT", (structStr == "" ? "no active structure" : structStr) + " · last " + array.get(gDashS, 2) + "  →  next 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : " · EV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
         // 4 DECISION: the CONFIRMED decision (same as alerts); the MT5 plan when it is a trade
         bool _bTrade = _confDirLabel == "BUY" or _confDirLabel == "SELL"
-        _bc(3, "4 DECISION", array.get(gDashS, 5) + (_bTrade ? " | MT5 " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
+        _bc(3 * _hs, "4 DECISION", array.get(gDashS, 30) + (_bTrade ? " | MT5 " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
     // ═══ Q5.9: TRADE PLAN PANEL POPULATION (regression fix) ═══
     // The cell-writing block for tblPlan was swept together with the ROW 3 removal
     // during the token-limit cuts: the table was still being CREATED each bar, so the
     // panel rendered as an empty strip at the bottom of the chart. Restored here, and
     // placed AFTER f_dashData1() because the lot size arrives via gDashF slot 6.
-    if showTradePlan and not na(tblPlan)
+    if _planOn and not na(_dashMobile ? tblBrief : tblPlan)
         float _pLots = array.get(gDashF, 6)
         color _pBg = tpIsLong ? cBloomBull_D : cBloomBear_D
         string _pSz = textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"

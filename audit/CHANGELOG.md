@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v24
+# Build changelog — v1 → … → v25
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -907,3 +907,28 @@ headroom)**. Even at 2.548, the highest ratio consistent with v20 compiling, it 
 Nothing is tuned in response (§9); the remedy is a frozen holdout.
 
 Unchanged: Strategy, Strategy_OLDGATES, EdgeCases, Visuals. Compile of v24 NOT RUN.
+
+---
+
+# Build v24 → v25 — one Mobile mode (Master only)
+
+Operator request: merge the phone views into one without losing any feature.
+- **Dash Mode** options are now `Auto / Desktop / Tablet / Mobile`. `MobileLand`,
+  `MobilePort` and `MobileBrief` are merged into `Mobile`, and *☰ Mobile Layout* = `Mobile`.
+- The card keeps the four MobileBrief headlines. Each section gains a detail row made of the
+  desktop cells' **own strings**: the renderer names them and hands them over in `gDashS`
+  slots 25–34, so nothing is recomputed. The detail rows carry everything MobileLand showed
+  (MARKET, BIAS, SIGNAL, RISK, DECISION) plus the LIQUIDITY and MACRO columns it dropped.
+- The DECISION headline is now the desktop DECISION box (grade, TQ, bias + block reason,
+  LIVE tag), not the bare label.
+- The trade plan is written **into the card** (rows 8–15) rather than a second table, so the
+  two cannot overlap on a phone.
+- Density: `Compact` shows the headlines only (the old MobileBrief); `Standard` adds the
+  details and the plan; `Spacious` adds the engine cross-check line.
+- Removed as layout plumbing, not features: the 5-column map `_dCol`, the portrait row cut
+  `_dashPort`, the mobile widths and size ladder, and `_respRows/_respCols`.
+- Desktop and Tablet output is unchanged: the same cells, positions, sizes and widths.
+
+Master 38,759 → 38,918 lexical, ~97,880 compiled at 2.515 (~2.4% headroom). Twins and
+Diagnostics are untouched: their layout inputs only size the Diagnostics panel. Compile NOT RUN.
+

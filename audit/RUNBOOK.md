@@ -108,20 +108,27 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 
 ---
 
-## Step 2b′ — Phone view (v23)
+## Step 2b′ — Phone view (v23; one Mobile mode since v25)
 
-On the Master's settings choose **Dash Mode → MobileBrief**. The dashboard and plan strip are
-replaced by a 4-row card, built from the same engine values as the desktop view:
+On the Master's settings choose **Dash Mode → Mobile** (or tick *☰ Mobile Layout*). v25 merged
+the old MobileLand, MobilePort and MobileBrief into this one mode. If a saved chart still
+holds an old option name, pick **Mobile** again. The card has four sections, and everything
+in it is built from the same engine values and strings as the desktop view:
 
-| Row | Shows |
-|---|---|
-| 1 TREND | composite bias · regime · higher-timeframe bias · bull/bear score |
-| 2 TARGET | the engine's liquidity destination at its **MT5** price, with reach % |
-| 3 PREV → NEXT | last structure event and last bar's change → calibrated probability the next 1R move is UP vs DOWN, and race EV |
-| 4 DECISION | the **confirmed** decision (same as the alerts); on BUY/SELL the MT5 entry, SL, TP1, TP2 |
+| Section | Headline | Detail (Standard / Spacious) |
+|---|---|---|
+| 1 TREND | composite bias · regime · HTF bias · bull/bear score | bias strength and C/S/I breakdown, agreement · 5M–1D arrows, session, volume, CVD, delta, regime, session stats · macro verdict, day-of-week tracker |
+| 2 TARGET | liquidity destination at its **MT5** price, reach % | nearest liquidity above/below and target score/reach/open FVG, both at TradingView prices |
+| 3 PREV → NEXT | last structure event, last bar's change → calibrated 1R UP vs DOWN, race EV | price + change · forecast L/S/R · EV, calibrated P, confidence · WR/ROLL/PF · (Spacious) engine cross-check line |
+| 4 DECISION | the desktop DECISION box (confirmed label, grade, TQ, bias + block reason, LIVE tag); on BUY/SELL the MT5 entry, SL, TP1, TP2 | RR, SL in ATR, risk %, $, lots, cost · decision log, MTF agreement |
 
-TradingView keeps indicator settings per chart layout, so keep a separate layout for the phone
-if you want the full dashboard on desktop. *Text Size* enlarges the card.
+Below it, the **full trade plan** (direction, entry, SL/TP1–3 with hit probabilities, RR and
+lots, plan reason) is listed inside the same card, so nothing can overlap on a narrow
+screen. **Density → Compact** shows the four headlines only, which is the old MobileBrief.
+TradingView keeps settings per chart layout, so use a separate layout for the phone.
+*Text Size* enlarges the card.
+
+---
 
 ## Step 2c — Alerts for manual MT5 execution (v21)
 
@@ -249,7 +256,7 @@ whether that distinction behaves as documented.
 
 Quick visual confirmations that the fixes behave:
 
-- **Dashboard**: set Dash Mode → `MobileLand`. Five columns, readable, no clipping.
+- **Dashboard**: set Dash Mode → `Mobile`. One card, four sections, readable, no clipping.
 - **Order blocks**: visibly fewer than before — the threshold was 2.5× too loose.
 - **Analog EV**: lower than the previous build, most in chop.
 - **Plan basis**: look for a `°` suffix (e.g. `SL:VAL°`). It marks a level that exists only
