@@ -873,6 +873,27 @@ break rejected by a veto.
 - A change to that gate can then be pre-registered and tested on data collected AFTER it is
   frozen. That is the only test that would show it helps.
 
+**Measured (operator's chart, 1H, v27, 2026-09-27).**
+Row text: `moves >=30 in 12 bars: up 544 / down 512  ENTRY 22 | stopped at: trend 632 HTF 93
+sess/news/DD 77 trigger 202 TQ 20 EV 7 P 3 risk 0`. The stages sum to 1,056 = 544 + 512.
+
+| Furthest stage reached in the move's direction | Episodes | Share |
+|---|---:|---:|
+| trend score below threshold on every start bar | 632 | 60% |
+| HTF opposed | 93 | 9% |
+| session / news / DD | 77 | 7% |
+| no trigger (structure break or displacement) | 202 | 19% |
+| TQ / EV / P vetoes | 30 | 3% |
+| ENTRY signalled while the move was ahead | 22 | 2% |
+
+**Reading.** The vetoes are NOT what misses the big moves; **the trend filter is**.
+- It is an EMA20/100/200 and ADX score (≥ 60 of 100), so it lags by construction.
+- A $30 leg that starts as a reversal begins while the score still points the old way.
+- The trigger is the second cause.
+- This is a diagnosis. A different trend definition would be a new, pre-registered hypothesis,
+  to be frozen and judged only on bars after the freeze (§9). It would not be a fix measured
+  on these 1,056 episodes.
+
 Pre-v21 note: before F-A30 (v21), displacement detection was OFF by default, so half the trigger
 never fired. Experience from those builds overstates today's WAIT rate.
 

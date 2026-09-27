@@ -106,6 +106,9 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 3. It trades and alerts nothing. Keep it if you want the auction read (v24); nothing else
    depends on it.
 
+> **EdgeCases (v28):** the red header cell names the first failing test with its GOT / WANT,
+> e.g. `1 FAIL / 97 · I4 got 5 want na`. Send that cell.
+>
 > **Saving a paste.** After pasting, press **Save** (Ctrl+S). A chart keeps running the last
 > *saved* version: the v21 EdgeCases showed "3 FAIL / 97" in natural row order because the
 > editor still said *Unsaved version*. A saved v21+ harness draws failing rows first and its

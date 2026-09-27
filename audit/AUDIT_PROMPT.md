@@ -21,11 +21,11 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5728 | 369391 | `1fe5e5a828742f11a7f56d583314d3e3d29f8d110d8fd8b92de64514307dd2f0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5277 | 329997 | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5277 | 330062 | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 377 | 26980 | `8ffaf61c8a56db77cc9efff13aacef90b2166c068cff6398fe105d5aa384ef5c` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 383 | 27440 | `3c2b3897e744e97c5656e51a07f50a431b4fe69a02a607a2826544fb802e2cec` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5544 | 349654 | `6ea54f6332401872912bc483dfca545e7a8f23b054cfffe9eeb806f316e4fa4c` |
 
-> **BUILD v27 — this prompt pins the current build.** The originally audited build
+> **BUILD v28 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -58,6 +58,7 @@ scope, and no other build of these scripts is in scope.
 > after the final score stage.
 > **v27: F-A36** — the operator's "mostly WAIT during $30–50 moves" measured, not tuned: a
 > missed-move audit row in Diagnostics.
+> **v28:** first chart run of v24–v27 recorded (all six compile); EdgeCases names its first failure.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

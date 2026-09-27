@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v21   (citations re-anchored)        ║
+// ║  BUILD STAMP — this file last CHANGED in v28   (first failure named in header)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -353,14 +353,20 @@ _hts() => harnessText == "Tiny" ? size.tiny : harnessText == "Normal" ? size.nor
 if barstate.islastconfirmedhistory
     int _n = array.size(tName)
     int _fail = 0
+    // v28: the header also names the FIRST failing assertion with its GOT / WANT. On the
+    // operator's screenshots the failing row itself was too small to read, while this red
+    // header cell stayed legible even on a phone.
+    string _firstFail = ""
     for _q = 0 to (_n > 0 ? _n - 1 : 0)
         if not array.get(tPass, _q)
             _fail += 1
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v21", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+            if _firstFail == ""
+                _firstFail := array.get(str.split(array.get(tName, _q), " "), 0) + " got " + array.get(tGot, _q) + " want " + array.get(tWant, _q)
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v28", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
-    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n), bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = _hts())
+    table.cell(tT, 4, 0, _fail == 0 ? "ALL PASS " + str.tostring(_n) : str.tostring(_fail) + " FAIL / " + str.tostring(_n) + " · " + _firstFail, bgcolor = _fail == 0 ? color.new(color.green, 50) : color.new(color.red, 40), text_color = color.white, text_size = _hts())
     int _row = 1
     for _pass = 0 to 1
         for _q = 0 to (_n > 0 ? _n - 1 : 0)

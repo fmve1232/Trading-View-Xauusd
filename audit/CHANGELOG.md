@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v27
+# Build changelog — v1 → … → v28
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -967,4 +967,34 @@ New Diagnostics row **Missed moves**: move episodes of at least 30 (input) withi
 - It is DIAG-fenced and reads only existing values; `diag_parity` passes.
 - Diagnostics ~38,810 lexical, ~97,600 compiled at 2.515.
 - Master, twins, EdgeCases and Visuals are unchanged. Compile NOT RUN.
+
+---
+
+# Build v27 → v28 — review of the first v24–v27 chart run
+
+**Measured on the operator's chart (2026-09-27, 1H):**
+- **Compile:** all six scripts compiled and were added to the chart, including the Master
+  (v26) that overflowed at v23. This closes F-A32. Its real token count is not reported on a
+  successful save.
+- **Master dashboard:** BIAS MIXED (L34 / S37 / R27) and DECISION `WAIT TQ34D`, with
+  `BIAS BEAR-ISH · SESS 13/30`. The label agrees with the final scores (the v26 fix).
+  - The WAIT reason is the session (weekend, market closed).
+  - Plan: SHORT, SL hit ~40% vs TP1 ~13%, race EV −0.01R, Kelly 0% → 0.00 lots.
+  - Consistent with F-A34.
+- **Diagnostics v27:** all rows render. Auction (Standard density) and Missed moves are
+  populated, and the Missed-moves stages sum to their episode count. The numbers are in
+  F-A36: the trend filter, not the vetoes, is where 60% of $30+ moves stop.
+- **Strategy arms at 10K:**
+  - Treatment: 86 trades, 39.5% winners, PF 0.957, −$39.57, max DD $479.95.
+  - Control: 12 trades, PF 1.718, +$60.58.
+  - Treatment was 90 trades / PF 0.989 at 25K. No gate reads capital (`_ddBreach` is OFF by
+    default and reads the analog drawdown), so the difference is unexplained.
+  - Other Properties settings, or the loaded history, are the candidates. Operator asked for
+    the Properties tab.
+- **EdgeCases:** `1 FAIL / 97` with failing rows first, so the harness is now saved at v21.
+  The failing row is unreadable in both screenshots.
+
+**Change (EdgeCases only):** the red header cell now reads `N FAIL / 97 · <id> got <x> want
+<y>` for the first failure. It changes no assertion. Master, Diagnostics, the twins and
+Visuals are unchanged. Compile NOT RUN.
 
