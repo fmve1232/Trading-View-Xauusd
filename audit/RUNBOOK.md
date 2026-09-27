@@ -100,6 +100,21 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 
 ---
 
+## Step 2b′ — Phone view (v23)
+
+On the Master's settings choose **Dash Mode → MobileBrief**. The dashboard and plan strip are
+replaced by a 4-row card, built from the same engine values as the desktop view:
+
+| Row | Shows |
+|---|---|
+| 1 TREND | composite bias · regime · higher-timeframe bias · bull/bear score |
+| 2 TARGET | the engine's liquidity destination at its **MT5** price, with reach % |
+| 3 PREV → NEXT | last structure event and last bar's change → calibrated probability the next 1R move is UP vs DOWN, and race EV |
+| 4 DECISION | the **confirmed** decision (same as the alerts); on BUY/SELL the MT5 entry, SL, TP1, TP2 |
+
+TradingView keeps indicator settings per chart layout, so keep a separate layout for the phone
+if you want the full dashboard on desktop. *Text Size* enlarges the card.
+
 ## Step 2c — Alerts for manual MT5 execution (v21)
 
 One alert on the **Master** delivers everything. In TradingView choose **Create Alert**, then

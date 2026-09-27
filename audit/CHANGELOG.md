@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v22
+# Build changelog — v1 → … → v23
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -850,3 +850,16 @@ Operator request: "actual" volume, liquidity and order-block data via free API k
 - whether the previous bar's displacement was backed by real COMEX volume expansion.
 
 It is display only; no engine, gate or Master change. Compile NOT RUN.
+
+---
+
+# Build v22 → v23 — MobileBrief phone card (Master only)
+
+New Dash Mode option **MobileBrief**: a 4-row card (TREND, TARGET, PREV → NEXT, DECISION) in
+place of the dashboard and plan strip. It uses only values the engine already computes: bias,
+regime, HTF bias, liquidity destination (MT5 price), structure event, calibrated 1R
+probabilities, race EV, the confirmed decision and the MT5 plan. Every other mode is
+unchanged; no feature is removed; no decision logic touched.
+
+Master estimate ~98,850 compiled (~1.4% headroom), the tightest yet. If the save overflows,
+apply `CONCURRENCY_AND_MIGRATION.md` B5a. Compile NOT RUN.
