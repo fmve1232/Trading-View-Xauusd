@@ -97,7 +97,7 @@ def test_consistent_feeds_report_the_known_bias(st):
     assert r["matched"] > 500 and r["best_lag_bars"] == 0
     assert abs(r["close_diff_mean"] - 0.20) < 0.005                      # TD prints 0.20 above Dukascopy mid
     assert r["return_corr"] > 0.99 and r["verdict"].startswith("CONSISTENT")
-    assert abs(r["dukascopy_spread_median"] - 0.30) < 0.005
+    assert abs(r["ref_spread_median"] - 0.30) < 0.005
     assert doc["timeframes"]["1h"]["verdict"].startswith("CONSISTENT")
 
 
@@ -125,3 +125,45 @@ def test_unreachable_feed_fails_fast_and_is_not_run(st):
     doc = xc.run(path, 20, get=get, today=TODAY, log=lambda *a, **k: None)
     assert "unreachable" in doc["error"] and "NOT RUN" in xc.report_md(doc)
     assert len(calls) == xc.FAIL_FAST_DAYS                          # one BID attempt per day, then stop
+
+
+# ---------------- Yahoo reference ----------------
+NOW = datetime(2026, 9, 26, 12, 0, tzinfo=timezone.utc)
+
+
+def _yahoo_fetch(m15, offset=0.0, scale=1.0, forming=True):
+    def fetch(sym, interval, rng):
+        assert sym == "XAUUSD=X" and rng == "60d"
+        df = m15 if interval == "15m" else m15.resample("1h", label="left", closed="left").agg(
+            {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}).dropna()
+        out = (df[["open", "high", "low", "close"]] + offset) * scale
+        if forming:                                   # Yahoo also returns the still-forming bar: must be dropped
+            out.loc[pd.Timestamp("2026-09-26 11:45", tz="UTC")] = [9999.0, 9999.0, 9999.0, 9999.0]
+        return out.assign(volume=0.0)
+    return fetch
+
+
+def test_yahoo_consistent_feed(st):
+    path, m15 = st
+    doc = xc.run_yahoo(path, 20, fetch=_yahoo_fetch(m15, offset=0.35), now=NOW)
+    assert "error" not in doc and doc["reference"] == "Yahoo XAUUSD=X"
+    r = doc["timeframes"]["1h"]
+    assert abs(r["close_diff_mean"] + 0.35) < 0.005 and r["best_lag_bars"] == 0      # TD 0.35 below Yahoo
+    assert r["ref_spread_median"] is None and r["verdict"].startswith("CONSISTENT")
+    assert doc["timeframes"]["15m"]["matched"] > 500
+    assert all(x["ref_close"] < 9000 for x in r["largest_close_diffs"])              # the forming bar was excluded
+    md = xc.report_md(doc)
+    assert "Twelve Data vs Yahoo XAUUSD=X" in md and "| Yahoo XAUUSD=X |" in md
+
+
+def test_yahoo_wrong_instrument_and_outage_are_not_run(st):
+    path, m15 = st
+    doc = xc.run_yahoo(path, 20, fetch=_yahoo_fetch(m15, scale=1.5), now=NOW)
+    assert "different instrument" in doc["error"] and "NOT RUN" in xc.report_md(doc)
+    doc = xc.run_yahoo(path, 20, fetch=lambda *a: (_ for _ in ()).throw(OSError("HTTP 429")), now=NOW)
+    assert "unavailable" in doc["error"] and "429" in doc["error"]
+    later = datetime(2027, 3, 1, tzinfo=timezone.utc)                                # store has nothing that recent
+    doc = xc.run_yahoo(path, 20, fetch=lambda *a: pd.DataFrame(
+        {"open": [4300.0], "high": [4301.0], "low": [4299.0], "close": [4300.5], "volume": [0.0]},
+        index=pd.DatetimeIndex(["2027-02-26 10:00"], tz="UTC")), now=later)
+    assert "error" in doc                                                            # NaN level must not pass

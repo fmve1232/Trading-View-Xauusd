@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent price cross-check: the site's Twelve Data XAU/USD bars vs Dukascopy.
+"""Independent price cross-check: the site's Twelve Data XAU/USD bars vs Dukascopy and Yahoo spot.
 
 AUDIT TOOL -- not part of the engine or the website. It reads the market-data store (read-only),
 downloads Dukascopy's public 1-minute BID and ASK candles for complete past days, builds MID bars
@@ -14,7 +14,10 @@ Dukascopy day file (LZMA "alone" format, .bi5), per side:
   Prices are integers in instrument points; the divisor is detected (not assumed) by matching the
   Twelve Data price level, and the decode is rejected if the candles fail OHLC sanity checks.
 
-  python3 audit/tools/xcheck_dukascopy.py --store store --days 20 --out xcheck
+  python3 audit/tools/xcheck_dukascopy.py --store store --days 20 [--ref yahoo|dukascopy|both] --out xcheck
+
+Yahoo (XAUUSD=X) is the reference that GitHub's runners can reach: Dukascopy refuses cloud
+addresses (run 2 of the workflow: read timeout, connection reset, connect timeout).
 """
 from __future__ import annotations
 
@@ -92,8 +95,8 @@ def compare(td: pd.DataFrame, dk: pd.DataFrame, bar_min: int) -> dict:
     """Per-bar agreement of two OHLC frames on the same UTC open-time index."""
     full = dk[dk["minutes"] >= bar_min * 0.9]                      # only bars Dukascopy saw almost completely
     j = td.join(full, lsuffix="_td", rsuffix="_dk", how="inner")
-    res = {"bars_td": int(len(td)), "bars_dukascopy_complete": int(len(full)), "matched": int(len(j)),
-           "td_only": int(len(td.index.difference(full.index))), "dukascopy_only": int(len(full.index.difference(td.index)))}
+    res = {"bars_td": int(len(td)), "bars_ref_complete": int(len(full)), "matched": int(len(j)),
+           "td_only": int(len(td.index.difference(full.index))), "ref_only": int(len(full.index.difference(td.index)))}
     if len(j) < 10:
         res["note"] = "fewer than 10 matched bars; nothing to conclude"
         return res
@@ -115,9 +118,9 @@ def compare(td: pd.DataFrame, dk: pd.DataFrame, bar_min: int) -> dict:
         "close_diff_vs_bar_range_median": round(float((ad / rng).median()), 3),
         "return_corr": lag["0"], "return_sign_agreement": round(float((np.sign(r_td) == np.sign(r_dk))[r_td.notna() & r_dk.notna()].mean()), 4),
         "return_corr_by_lag_bars": lag, "best_lag_bars": int(max((k for k in lag if lag[k] is not None), key=lambda k: lag[k])),
-        "dukascopy_spread_median": round(float(j["spread"].median()), 3),
+        "ref_spread_median": None if j["spread"].isna().all() else round(float(j["spread"].median()), 3),
         "largest_close_diffs": [{"bar_open_utc": t.isoformat(), "td_close": round(float(j.at[t, "close_td"]), 3),
-                                 "dk_close": round(float(j.at[t, "close_dk"]), 3), "diff": round(float(d["close"][t]), 3)} for t in worst.index],
+                                 "ref_close": round(float(j.at[t, "close_dk"]), 3), "diff": round(float(d["close"][t]), 3)} for t in worst.index],
     })
     return res
 
@@ -135,11 +138,15 @@ def verdict(r: dict) -> str:
 
 
 def report_md(doc: dict) -> str:
-    L = [f"# Twelve Data vs Dukascopy — XAU/USD cross-check", "",
-         f"Run {doc['generated_utc']} · days {doc['from']} → {doc['to']} · Dukascopy MID = (BID+ASK)/2 · divisor {doc.get('divisor')}", ""]
+    ref = doc.get("reference", "Dukascopy")
+    L = [f"# Twelve Data vs {ref} — XAU/USD cross-check", "",
+         f"Run {doc['generated_utc']} · {doc.get('from', '?')} → {doc.get('to', '?')} · {doc.get('reference_note', '')}", ""]
     if doc.get("error"):
         return "\n".join(L + [f"**NOT RUN:** {doc['error']}"])
-    L += [f"Dukascopy minutes decoded: {doc['dukascopy_minutes']} · OHLC sanity {doc['sanity_share']:.2%} · days fetched {doc['days_ok']}/{doc['days_tried']}", ""]
+    if "dukascopy_minutes" in doc:
+        L += [f"Dukascopy minutes decoded: {doc['dukascopy_minutes']} · OHLC sanity {doc['sanity_share']:.2%} · days fetched {doc['days_ok']}/{doc['days_tried']}", ""]
+    elif "sanity_share" in doc:
+        L += [f"{ref} bars: {doc.get('ref_bars')} · OHLC sanity {doc['sanity_share']:.2%} · price level vs Twelve Data {doc.get('level_ratio')}", ""]
     for tf, r in doc["timeframes"].items():
         L += [f"## {tf}", "", f"**{r['verdict']}**", "", "| Metric | Value |", "|---|---|"]
         for k, v in r.items():
@@ -147,11 +154,71 @@ def report_md(doc: dict) -> str:
                 continue
             L.append(f"| {k} | {json.dumps(v) if isinstance(v, dict) else v} |")
         if r.get("largest_close_diffs"):
-            L += ["", "Largest close differences (bar open, UTC):", "", "| Bar | Twelve Data | Dukascopy | Diff |", "|---|---|---|---|"]
-            L += [f"| {x['bar_open_utc']} | {x['td_close']} | {x['dk_close']} | {x['diff']:+} |" for x in r["largest_close_diffs"]]
+            L += ["", "Largest close differences (bar open, UTC):", "", f"| Bar | Twelve Data | {ref} | Diff |", "|---|---|---|---|"]
+            L += [f"| {x['bar_open_utc']} | {x['td_close']} | {x['ref_close']} | {x['diff']:+} |" for x in r["largest_close_diffs"]]
         L.append("")
-    L.append("Dukascopy data is used for this audit only and is not republished (its terms restrict redistribution).")
+    L.append(f"{ref} data is used for this audit only and is not republished.")
     return "\n".join(L)
+
+
+def load_td(store_dir: str):
+    """The site's stored Twelve Data bars (weekend quotes dropped with the pipeline's own rule)."""
+    td = {}
+    for tf, name in (("15m", "XAU_USD_15m"), ("1h", "XAU_USD_60m")):
+        df = store.load(store_dir, name)
+        if df is None or not len(df):
+            return None, f"no {name} in the store at {store_dir}"
+        df = sources.trading_week_only(df)
+        td[tf] = df[["open", "high", "low", "close"]].astype(float)
+    return td, None
+
+
+YAHOO_SYMBOL = "XAUUSD=X"          # Yahoo's spot gold quote: independent of Twelve Data
+
+
+def run_yahoo(store_dir: str, days: int, fetch=None, now: datetime | None = None, symbol: str = YAHOO_SYMBOL) -> dict:
+    """Twelve Data vs Yahoo spot bars. Yahoo serves 15m/60m bars directly (60 days), no bid/ask."""
+    fetch = fetch or (lambda sym, interval, rng: sources.yahoo(sym, interval, rng))
+    now = now or datetime.now(timezone.utc)
+    doc = {"generated_utc": now.isoformat(), "symbol": symbol, "timeframes": {}, "reference": f"Yahoo {symbol}",
+           "reference_note": "Yahoo chart bars (no bid/ask; completed bars only)"}
+    td, err = load_td(store_dir)
+    if err:
+        doc["error"] = err
+        return doc
+    start = pd.Timestamp(now) - pd.Timedelta(days=min(days, 59))
+    doc["from"], doc["to"] = start.date().isoformat(), now.date().isoformat()
+    frames, sanity, n = {}, [], 0
+    for tf, interval, mins in (("15m", "15m", 15), ("1h", "60m", 60)):
+        try:
+            y = fetch(symbol, interval, "60d")
+        except Exception as e:  # noqa: BLE001
+            doc["error"] = f"Yahoo {symbol} {interval} unavailable: {type(e).__name__}: {sources.redact(str(e))[:140]}"
+            return doc
+        y = sources.trading_week_only(y[["open", "high", "low", "close"]].astype(float).dropna())
+        y = y[(y.index >= start) & (y.index + pd.Timedelta(minutes=mins) <= pd.Timestamp(now))]   # completed bars only
+        if not len(y):
+            doc["error"] = f"Yahoo {symbol} {interval}: no completed bars in the window"
+            return doc
+        ratio = float(y["close"].median() / td["1h"]["close"].loc[start:].median())
+        if not math.isfinite(ratio) or abs(ratio - 1.0) > 0.05:
+            doc["error"] = f"Yahoo {symbol} price level is {ratio:.3f}x Twelve Data: a different instrument or scale, not comparable"
+            return doc
+        doc["level_ratio"] = round(ratio, 5)
+        ok = (y["low"] <= y[["open", "close"]].min(axis=1) + 1e-9) & (y["high"] >= y[["open", "close"]].max(axis=1) - 1e-9)
+        sanity.append(float(ok.mean())); n += len(y)
+        frames[tf] = y.assign(minutes=mins, spread=np.nan)
+    doc["ref_bars"], doc["sanity_share"] = n, round(min(sanity), 4)
+    if doc["sanity_share"] < 0.98:
+        doc["error"] = f"Yahoo bars fail OHLC sanity on {1 - doc['sanity_share']:.1%} of bars"
+        return doc
+    for tf, mins in (("15m", 15), ("1h", 60)):
+        y = frames[tf]
+        t = td[tf][(td[tf].index >= y.index.min()) & (td[tf].index <= y.index.max())]
+        r = compare(t, y, mins)
+        r["verdict"] = verdict(r)
+        doc["timeframes"][tf] = r
+    return doc
 
 
 FAIL_FAST_DAYS = 3        # stop when the first days attempted all fail: the feed is unreachable, not flaky
@@ -171,15 +238,12 @@ def _default_get(url: str) -> bytes:
 def run(store_dir: str, days: int, sym: str = "XAUUSD", get=None, today: date | None = None, log=print) -> dict:
     get = get or _default_get
     today = today or datetime.now(timezone.utc).date()
-    doc = {"generated_utc": datetime.now(timezone.utc).isoformat(), "symbol": sym, "timeframes": {}}
-    td = {}
-    for tf, name in (("15m", "XAU_USD_15m"), ("1h", "XAU_USD_60m")):
-        df = store.load(store_dir, name)
-        if df is None or not len(df):
-            doc["error"] = f"no {name} in the store at {store_dir}"
-            return doc
-        df = sources.trading_week_only(df)
-        td[tf] = df[["open", "high", "low", "close"]].astype(float)
+    doc = {"generated_utc": datetime.now(timezone.utc).isoformat(), "symbol": sym, "timeframes": {},
+           "reference": "Dukascopy", "reference_note": "Dukascopy MID = (BID+ASK)/2 from 1-minute candles"}
+    td, err = load_td(store_dir)
+    if err:
+        doc["error"] = err
+        return doc
     last_full = today - timedelta(days=1)                            # only complete UTC days
     span = [last_full - timedelta(days=k) for k in range(days)][::-1]
     doc["from"], doc["to"], doc["days_tried"] = span[0].isoformat(), span[-1].isoformat(), len(span)
@@ -230,19 +294,21 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--store", required=True)
     ap.add_argument("--days", type=int, default=20)
+    ap.add_argument("--ref", choices=("dukascopy", "yahoo", "both"), default="both")
     ap.add_argument("--out", default="xcheck")
     a = ap.parse_args(argv)
-    doc = run(a.store, a.days)
     os.makedirs(a.out, exist_ok=True)
-    with open(os.path.join(a.out, "xcheck.json"), "w") as f:
-        json.dump(doc, f, indent=1, default=str)
-    md = report_md(doc)
-    with open(os.path.join(a.out, "xcheck.md"), "w") as f:
-        f.write(md)
-    if os.environ.get("GITHUB_STEP_SUMMARY"):
-        with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
-            f.write(md + "\n")
-    print(md)
+    for ref in (("yahoo", "dukascopy") if a.ref == "both" else (a.ref,)):
+        doc = run_yahoo(a.store, a.days) if ref == "yahoo" else run(a.store, a.days)
+        with open(os.path.join(a.out, f"xcheck_{ref}.json"), "w") as f:
+            json.dump(doc, f, indent=1, default=str)
+        md = report_md(doc)
+        with open(os.path.join(a.out, f"xcheck_{ref}.md"), "w") as f:
+            f.write(md)
+        if os.environ.get("GITHUB_STEP_SUMMARY"):
+            with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+                f.write(md + "\n\n")
+        print(md, flush=True)
     return 0
 
 
