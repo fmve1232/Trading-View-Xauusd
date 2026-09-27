@@ -30,7 +30,8 @@ def run_tf(m, cfg, man, now, store_dir=None):
     F = compute_features(m, cfg)
     res = engine.run(m, cfg, "treatment", F)
     ctrl = engine.run(m, cfg, "control", F)
-    payload = report.build(m, res, ctrl, cfg, man, now, store_dir)
+    chal = engine.run(m, cfg, "challenger", F)   # pre-registered H1 arm (Pine v31 Strategy_CHALLENGER)
+    payload = report.build(m, res, ctrl, cfg, man, now, store_dir, res_chal=chal)
     payload["meta"]["runtime_sec"] = round(time.time() - t0, 1)
     return payload
 

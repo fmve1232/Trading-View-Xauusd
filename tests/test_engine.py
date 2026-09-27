@@ -2,6 +2,7 @@
 not against a re-model of them (the v6 harness passed while testing its own model -- F-A10).
 Plus the invariant that matters most for a backtest: nothing from the future leaks in."""
 import dataclasses
+from datetime import timedelta
 import json
 import math
 
@@ -246,13 +247,72 @@ def test_bt_entry_bar_range_is_not_used():
 
 
 # ---------------- holdout ----------------
+AFTER = holdout.HOLDOUT_START + timedelta(days=1)
+
+
 def test_holdout_resets_on_config_change(tmp_path):
-    a = holdout.load_or_freeze(str(tmp_path), DEFAULT)
+    a = holdout.load_or_freeze(str(tmp_path), DEFAULT, AFTER)
     assert a["status"] == "STARTED"
-    b = holdout.load_or_freeze(str(tmp_path), DEFAULT)
+    b = holdout.load_or_freeze(str(tmp_path), DEFAULT, AFTER + timedelta(hours=1))
     assert b["status"] == "ACTIVE" and b["freeze_utc"] == a["freeze_utc"]
-    c = holdout.load_or_freeze(str(tmp_path), dataclasses.replace(DEFAULT, tq_min_score=60))
+    c = holdout.load_or_freeze(str(tmp_path), dataclasses.replace(DEFAULT, tq_min_score=60), AFTER + timedelta(hours=2))
     assert c["status"] == "RESET" and c["history"][0]["config_hash"] == DEFAULT.hash()
+
+
+def test_holdout_waits_for_the_preregistered_start(tmp_path):
+    before = holdout.HOLDOUT_START - timedelta(hours=5)
+    a = holdout.load_or_freeze(str(tmp_path), DEFAULT, before)
+    assert a["status"] == "PENDING" and a["freeze_utc"] == holdout.HOLDOUT_START.isoformat()
+    b = holdout.load_or_freeze(str(tmp_path), DEFAULT, holdout.HOLDOUT_START + timedelta(minutes=15))
+    assert b["status"] == "ACTIVE" and b["freeze_utc"] == holdout.HOLDOUT_START.isoformat()
+
+
+def test_holdout_resets_on_engine_code_change(tmp_path, monkeypatch):
+    a = holdout.load_or_freeze(str(tmp_path), DEFAULT, AFTER)
+    assert a["freeze_key"] == f"{DEFAULT.hash()}:{holdout.engine_code_hash()}"
+    monkeypatch.setattr(holdout, "engine_code_hash", lambda: "0" * 16)
+    b = holdout.load_or_freeze(str(tmp_path), DEFAULT, AFTER + timedelta(hours=1))
+    assert b["status"] == "RESET" and b["config_hash"] == DEFAULT.hash()          # same parameters...
+    assert b["history"][0]["engine_code_hash"] == a["engine_code_hash"]          # ...different engine
+
+
+def test_engine_code_hash_covers_the_signal_path():
+    for f in ("engine.py", "features.py", "analog.py", "backtest.py", "config.py", "data/market.py"):
+        assert f in holdout.ENGINE_SOURCES
+    for f in ("report.py", "notify.py", "holdout.py"):
+        assert f not in holdout.ENGINE_SOURCES
+
+
+def test_ledger_is_append_only_and_archives_on_reset(tmp_path):
+    fz = holdout.HOLDOUT_START.isoformat()
+    t1 = {"entry_time": "2026-09-28T01:00:00+00:00", "dir": "LONG", "r": 1.0}
+    t0 = {"entry_time": "2026-09-27T23:00:00+00:00", "dir": "LONG", "r": 2.0}     # before the start
+    led = holdout.update_ledger(str(tmp_path), "1h", "treatment", [t0, t1, {**t1, "dir": "SHORT", "open": True}], fz, "K1")
+    assert [t["r"] for t in led] == [1.0]
+    led = holdout.update_ledger(str(tmp_path), "1h", "treatment", [{**t1, "r": -1.0}], fz, "K1")
+    assert [t["r"] for t in led] == [1.0]                                          # never rewritten
+    led = holdout.update_ledger(str(tmp_path), "1h", "treatment", [], fz, "K2")
+    assert led == []
+    with open(tmp_path / "holdout" / "archive" / "1h_treatment.json") as f:
+        assert [t["freeze_key"] for t in json.load(f)] == ["K1"]                   # archived, not lost
+
+
+# ---------------- challenger arm (pre-registered H1) ----------------
+def test_challenger_gate_is_the_fast_trend_term_only(mkt, res):
+    ch = engine.run(mkt, DEFAULT, "challenger", res.F)
+    c, e20 = res.F["c"], res.F["ema20"]
+    e20_3 = np.concatenate([np.full(3, np.nan), e20[:-3]])
+    fast_bull = (c > e20) & (e20 > e20_3)
+    fast_bear = (c < e20) & (e20 < e20_3)
+    sb = ch.rows["should_buy"].astype(bool)
+    ss = ch.rows["should_sell"].astype(bool)
+    assert not (sb & ~fast_bull).any() and not (ss & ~fast_bear).any()
+    # the gate is really different (H1 admits bars the slow trend score rejects) ...
+    tb = res.rows["should_buy"].astype(bool) | res.rows["should_sell"].astype(bool)
+    assert ((sb | ss) & ~tb).any()
+    # ... and nothing upstream of it differs: scores, TQ and the plan are the treatment arm's
+    for k in ("bull", "bear", "range", "tq", "plan_sl", "plan_tp1", "cal_p_long", "cal_p_short"):
+        np.testing.assert_array_equal(np.asarray(res.rows[k], float), np.asarray(ch.rows[k], float))
 
 
 def test_config_hash_is_stable():
@@ -262,8 +322,10 @@ def test_config_hash_is_stable():
 # ---------------- report ----------------
 def test_report_is_strict_json(mkt, res):
     ctrl = engine.run(mkt, DEFAULT, "control", res.F)
+    chal = engine.run(mkt, DEFAULT, "challenger", res.F)
     man = holdout.load_or_freeze(None, DEFAULT)
-    p = report.build(mkt, res, ctrl, DEFAULT, man)
+    p = report.build(mkt, res, ctrl, DEFAULT, man, res_chal=chal)
+    assert set(p["backtest"]) >= {"treatment", "control", "challenger"}
     s = json.dumps(p, allow_nan=False)
     assert '"synthetic":true' in s.replace(" ", "")
     t = p["chart"]["t"]

@@ -106,3 +106,61 @@ than 50 trades on that date, it is reported as "insufficient data", not as a pas
   that is the conservative error, chosen deliberately.
 - Only one hypothesis (H1) is tested, so no multiple-testing correction is needed. Adding
   another arm later needs its own pre-registration.
+
+## 7. Website arm — the independent Python engine (added 2026-09-27, before the start)
+
+Added **before the holdout start**, like the amendment above: no holdout data exists and no
+result was seen. The TradingView test in §2–§6 is unchanged. This section registers a second,
+independent forward test run by the website engine (`quantum/`), which does not depend on
+TradingView.
+
+| Item | Value |
+|---|---|
+| Start | **2026-09-28 00:00 UTC**, the same as §2 (`quantum/holdout.py: HOLDOUT_START`) |
+| Engine | `quantum/`, `ENGINE_VERSION` Q7.2-web.3, the port of the v32 Master and its three arms |
+| Freeze key | config hash `5e4630924d663fc5` + engine code hash `32babc71ed938b30` |
+| Price data | Twelve Data spot XAU/USD (`twelvedata:XAU/USD`); each logged trade records its price source |
+| Deciding timeframe | **1H**. 5m, 15m and 4h are logged and shown, but they are descriptive only and decide nothing |
+| Arms | Treatment, Control and Challenger (H1), with the same definitions as §3 |
+| Unit | R per trade, net of the modelled costs (session spread + 2 × slippage + commission) |
+| Log | append-only per timeframe and arm; on the `market-data` branch, and with full git history on `forward-ledger` |
+
+**Counted trades.**
+- Only closed trades **entered at or after the start**, recorded under the freeze key above,
+  with price source `twelvedata:XAU/USD`, are counted.
+- A trade logged while the pipeline had fallen back to another price source is reported
+  separately. It is never counted.
+
+**Decision rules.** These are §4 and §5 applied to the 1H log in R:
+- COLLECTING while N < 50.
+- EDGE SHOWN when N ≥ 50, the 95% t-interval of mean R lies entirely above 0, and PF ≥ 1.2.
+- ADOPT H1 only if the Challenger is EDGE SHOWN and its mean R exceeds the Treatment's over
+  the same window.
+- Decide at 50 trades per arm or on 2027-03-31, whichever comes first. With fewer than 50
+  trades on that date, the arm is "insufficient data".
+
+**What restarts it.** It restarts automatically, and nobody can skip that.
+- A change to the configuration, or to any source file in
+  `holdout.ENGINE_SOURCES`, changes the freeze key.
+- The next run then starts a new holdout from that moment.
+- The old one is kept in the manifest's `history`, and its log entries move to
+  `holdout/archive/`.
+
+Display-only files (`report.py`, `notify.py`, `site/`) and documents are outside the key.
+
+**Independence from the Excel log.**
+- The pipeline alone writes the website log. The operator alone writes
+  `XAUUSD_Forward_Test_Log.xlsx`.
+- Neither reads the other.
+- At the decision, both are reported side by side. Differences are expected: OANDA versus
+  Twelve Data prices, and the differences D-01 … D-08 in `docs/PLATFORM.md`. They are listed,
+  never merged.
+
+**Known before the start. None of these may be tuned during the holdout.**
+- **Parity not demonstrated.** Same-bar parity between the website and the TradingView
+  Master has not been shown. It is scheduled for the first week.
+  - If it reveals a website bug, fixing it restarts this arm (by the rule above).
+  - It does not restart the TradingView arms.
+- **Mean-reversion saturation.** `mrComposite` sits at ±100 on about 60% of bars.
+- **Open horizon mismatch.** F-035 is open.
+- **No-resolution score.** Calibration has no resolution on the history (F-A34).

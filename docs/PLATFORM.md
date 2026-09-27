@@ -1,14 +1,21 @@
 # XAUUSD Quantum — web platform
 
-The Pine Master (build v21), ported to Python and run on free market data by GitHub Actions,
-published to GitHub Pages. No server, no paid feed, no TradingView limits (no compiled-token
-ceiling, no per-bar loop budget, no chunked scans, full-history backtests).
+The Pine Master (build v32) and its three strategy arms, ported to Python and run on free
+market data by GitHub Actions, published to GitHub Pages. No server, no paid feed, no
+TradingView limits (no compiled-token ceiling, no per-bar loop budget, no chunked scans,
+full-history backtests).
+
+**The website is the production system. TradingView/Pine is the reference implementation used
+to validate it.** Nothing on the site needs TradingView at run time: data, signals,
+probability, risk, backtests, Monte Carlo, the forward test and alerts all come from this
+engine.
 
 ```
 GitHub Actions (every 15 min, Sun 22:00 – Fri 21:00 UTC)
   ├─ download   Yahoo · FRED · CFTC (+ Twelve Data if keyed)   → market-data branch (monthly CSVs)
-  ├─ engine     quantum/  (treatment arm + control arm, 5m · 15m · 1h · 4h)
-  ├─ backtest   A/B, walk-forward, Monte Carlo, calibration, frozen forward holdout
+  ├─ engine     quantum/  (treatment · control · challenger arms, 5m · 15m · 1h · 4h)
+  ├─ backtest   3 arms, walk-forward, Monte Carlo, calibration, frozen forward holdout
+  ├─ ledger     forward-test log → forward-ledger branch (normal commits, full history)
   ├─ alerts     ntfy / Telegram / Discord (optional, confirmed bars only, never repeated)
   └─ publish    site/ + site/data/*.json  → GitHub Pages
 ```
@@ -37,7 +44,7 @@ Optional, in **Settings → Secrets and variables → Actions**:
 
 ```sh
 pip install -r requirements.txt
-python -m pytest -q tests                                        # 49 tests, ~15 s
+python -m pytest -q tests                                        # 59 tests, ~60 s
 python -m quantum.pipeline --synthetic --out site/data           # offline, labelled SYNTHETIC
 python -m quantum.pipeline --store store --out site/data         # live free data
 cd site && python -m http.server 8000                            # http://localhost:8000
@@ -69,9 +76,15 @@ bars, which 2/2 pivots cannot produce, so SMT is dormant here as it is in Pine),
 
 ## What is new beyond the Pine version
 
-- **Frozen forward holdout.** The configuration is hashed; trades entered after the freeze are appended
-  once to a ledger on the `market-data` branch and never rewritten. Changing a parameter restarts the
-  holdout and keeps the old one in the manifest's history. It is the only out-of-sample evidence.
+- **Frozen forward holdout, pre-registered** (`audit/PREREGISTRATION.md` §7). It starts at
+  2026-09-28 00:00 UTC. The freeze key is the configuration hash plus a hash of every
+  signal-producing source file (`holdout.ENGINE_SOURCES`), so a parameter change **or** an engine
+  code change restarts it automatically. Trades entered after the freeze are appended once, with
+  their price source, and never rewritten. On a restart the old entries move to
+  `holdout/archive/` and the old freeze stays in the manifest's history. The log is kept on
+  `market-data` and also, with full git history, on `forward-ledger`; a run restores it from
+  there if the store ever loses it. 1H decides; the other timeframes are descriptive. It is the
+  only out-of-sample evidence, and it is independent of the operator's Excel log.
 - **History that accumulates.** Each run merges into the store, so 5m/15m history grows past Yahoo's
   60-day window.
 - **No-look-ahead is tested.** `tests/test_engine.py::test_no_lookahead` truncates the data at bar k and
@@ -80,10 +93,25 @@ bars, which 2/2 pivots cannot produce, so SMT is dormant here as it is in Pine),
   per-session / regime / direction breakdowns, and the F-A12 calibration test of P at entry.
 - **Alerts** on confirmed bars only, deduplicated across runs.
 
+## Known, not tuned (holdout rules)
+
+- `mrComposite` sits at ±100 on about 60% of bars. This is a research item for the next build,
+  after the forward test.
+- F-035 (outcome horizon) is open. Same-bar SL/TP ties count as the stop.
+- The score has no resolution on the development history (F-A34), so calibration is shown, not
+  trusted.
+- Macro votes overlap (DXY/EURUSD, US10Y/TIPS). Their weights come from each series' own
+  correlation with gold, not from their overlap with each other.
+- Costs are a fixed session spread + slippage + commission. There is no widened news spread yet.
+- The engine runs on a rolling window of the last 16,000 bars, and providers can revise a
+  stored bar (the newer download wins). Either can shift *backtest* history slightly between
+  runs. The forward log is immune: each trade is written once.
+
 ## Limits
 
 Free data is delayed and occasionally wrong; GitHub's scheduler can run late or skip a run; parity
-with a TradingView chart has not been demonstrated (no chart was available to compare against); fills
+with a TradingView chart has not been demonstrated yet (scheduled for the first holdout week, bar by bar,
+every difference classified as D-xx or a bug; a bug fix restarts the website holdout); fills
 are modelled (entry at signal close, stop first on same-bar ties). The Method tab on the site states
 these to every visitor.
 
@@ -113,3 +141,5 @@ configuration hash and therefore restarts the holdout — that is intended.
 | web.1 | First release (Pine v21 engine). |
 | web.1 + data fixes | Market-closed bars dropped; 4h DST grid; Twelve Data daily index; VWAP with no volume yet (D-07); Cornish-Fisher guard (D-08). Found on the first live run: 1h sat in WARMUP because the analog scan was disabled daily, and 30% of 15m bars were weekend quotes. The configuration hash is unchanged, so the holdout continues; its ledgers were still empty. |
 | web.2 | Pine v32: the Cornish-Fisher guard is now in Pine as well (D-08 → parity); bias label and WAIT reason computed from the final scores (Pine v26, display only). `SCHEMA_BUILD` 6. Config hash unchanged, so the web holdout continues. |
+| web.2 + fix | API keys redacted from every error text that can reach the published site. |
+| web.3 | **Challenger arm** (Pine v31 H1) on every timeframe. Freeze key = config hash + engine code hash; first freeze pinned to 2026-09-28 00:00 UTC; ledger entries archived on a restart, not dropped; price source recorded per trade; `forward-ledger` branch with history. Workflow: a failed store clone now stops the run, so it can no longer force-push an empty store over the history. Pre-registered in `PREREGISTRATION.md` §7. The earlier web freeze (2026-09-26, no trades) is closed in the manifest's history. |

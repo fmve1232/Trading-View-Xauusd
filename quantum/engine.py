@@ -4,6 +4,7 @@
 `arm` selects the entry gate:
   "treatment"  the Master / Strategy gate (live system)
   "control"    the OLDGATES A/B arm (pre-Q5.5 gates) -- backtest comparison only
+  "challenger" the v31 CHALLENGER arm (pre-registered H1: fast trend term in the entry gate)
 
 Differences from Pine are deliberate, few, and listed in docs/PLATFORM.md ("Parity"):
   D-01 HTF values use real-time semantics on every bar (no historical/real-time asymmetry).
@@ -949,6 +950,17 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
             sell_pre = brt and hgs and mr_b and regime_conf_high and bear_rsi_div and recent and sq >= 30 and not news_blk and not dd_breach
             trig_b = bull_bos or disp_up
             trig_s = bear_bos or disp_dn
+        elif arm == "challenger":
+            # Pine v31 Strategy_CHALLENGER, pre-registered H1: only the TREND term of the two entry
+            # pre-filters differs from the treatment arm -- the fast terms the trend score already
+            # contains (close vs EMA20, EMA20 3-bar slope); bt/brt still feed everything else.
+            e20_3 = ema20[i - 3] if i >= 3 else NaN
+            ch_bull = not isn(ema20[i]) and not isn(e20_3) and c[i] > ema20[i] and ema20[i] > e20_3
+            ch_bear = not isn(ema20[i]) and not isn(e20_3) and c[i] < ema20[i] and ema20[i] < e20_3
+            buy_pre = ch_bull and not hgs and recent and sq >= 30 and not news_blk and not dd_breach
+            sell_pre = ch_bear and not hgb and recent and sq >= 30 and not news_blk and not dd_breach
+            trig_b = bull_struct_act or disp_up
+            trig_s = bear_struct_act or disp_dn
         else:
             buy_pre = bt and not hgs and recent and sq >= 30 and not news_blk and not dd_breach
             sell_pre = brt and not hgb and recent and sq >= 30 and not news_blk and not dd_breach
