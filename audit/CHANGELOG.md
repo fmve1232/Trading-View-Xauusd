@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v29
+# Build changelog — v1 → … → v30
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1024,6 +1024,28 @@ The operator's photo of the v21 harness shows the one failure:
 - If either fails, the explanation is wrong and I7 is reopened.
 - Now 99 assertions + header = 100 rows, exactly the table's capacity; the `_row <= 99` guard
   holds. A 100th assertion needs a larger table.
+
+Only EdgeCases changed. Compile NOT RUN.
+
+---
+
+# Build v29 → v30 — EdgeCases I10 made discriminating
+
+Chart run of v29 (operator photo, 2026-09-27): `1 FAIL / 99 · I10 got false want true`.
+- I7 PASS: the `== 0` guard catches 1e-12.
+- I9 PASS: `1e-12 == 0.0` is true.
+- I10 FAIL: `1e-12 > 0.0` is false.
+
+Two explanations fit: Pine reads the literal `1e-12` as 0, or `>` is tolerant as well as `==`.
+With the table full (99 + header = 100 rows), I10 is replaced by `1e-12 * 1e12`: "1" means
+the literal is kept, so comparisons are tolerant; "0" means the literal is read as zero.
+
+**Engine relevance, pending that answer:**
+- If the literal is read as zero, `safeDiv`'s `abs(b) > 1e-10` (Master L278, and the engine
+  copies) degrades to `abs(b) > 0`. The fix would then be a decimal-form constant.
+- The Platt variance floors (`> 1e-6`) are also bounded by the slope clamps, and F8
+  ("near-zero variance rejected") PASSED on the chart.
+- No engine change until measured.
 
 Only EdgeCases changed. Compile NOT RUN.
 

@@ -67,7 +67,7 @@ never recorded.
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 99`, or `<n> FAIL / 99`. The header cell must read `§16 EDGE CASE v29`. Since v20
+   `ALL PASS 99`, or `<n> FAIL / 99`. The header cell must read `§16 EDGE CASE v30`. Since v20
    **failing rows are drawn first**, and a *Table text size* input (default Small) keeps them legible.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
@@ -274,7 +274,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v29`, **99** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v30`, **99** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 
