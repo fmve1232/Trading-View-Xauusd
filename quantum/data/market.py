@@ -117,7 +117,7 @@ def _fetch_merge(store_dir: str | None, name: str, fn, status: dict) -> pd.DataF
         df = fn()
         st.source = "live"
     except Exception as e:  # noqa: BLE001 - the reason is reported, never swallowed
-        st.note = str(e)[:200]
+        st.note = sources.redact(str(e))[:200]
     old = store.load(store_dir, name) if store_dir else None
     if df is not None and len(df):
         df = store.merge(old, df)
@@ -198,13 +198,13 @@ def download_all(store_dir: str | None = None, intervals=("5m", "15m", "60m")) -
             # A FRED value is published after the observation day; usable from the next day.
             daily[sid] = pd.DataFrame({"close": s.values}, index=s.index + pd.Timedelta(days=1))
         except Exception as e:  # noqa: BLE001
-            status[sid] = SeriesStatus(sid, note=str(e)[:200])
+            status[sid] = SeriesStatus(sid, note=sources.redact(str(e))[:200])
     cot = None
     try:
         cot = sources.cftc_gold_cot()
         status["COT"] = SeriesStatus("COT", "cftc", True, len(cot), cot.index[-1].isoformat())
     except Exception as e:  # noqa: BLE001
-        status["COT"] = SeriesStatus("COT", note=str(e)[:200])
+        status["COT"] = SeriesStatus("COT", note=sources.redact(str(e))[:200])
     return Downloads(prim, psrc, gc, chart_ext, macro, daily, cot, status)
 
 

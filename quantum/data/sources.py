@@ -14,6 +14,8 @@ Sources
 from __future__ import annotations
 
 import io
+import re
+import os
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -33,6 +35,23 @@ class FetchError(RuntimeError):
     pass
 
 
+_SECRET_ENV = ("TWELVEDATA_API_KEY",)
+
+
+def redact(text: str) -> str:
+    """Strip credentials from text that may be published (site JSON, status notes).
+
+    A network error from `requests` quotes the full URL, query string included, so a failed
+    Twelve Data call would otherwise carry the API key into `data_status` on the public site.
+    """
+    text = re.sub(r"(?i)(api_?key|token|access_token|key)=[^&\s'\")]+", r"\1=***", str(text))
+    for name in _SECRET_ENV:
+        v = os.environ.get(name, "").strip()
+        if len(v) >= 8:
+            text = text.replace(v, "***")
+    return text
+
+
 def _get(url: str, params: dict | None = None, timeout: int = 30, tries: int = 4) -> "requests.Response":
     if requests is None:
         raise FetchError("python 'requests' is not installed")
@@ -46,9 +65,9 @@ def _get(url: str, params: dict | None = None, timeout: int = 30, tries: int = 4
             if r.status_code in (400, 401, 403, 404):
                 break
         except Exception as e:  # network error: retry with backoff
-            last = f"{type(e).__name__}: {e}"
+            last = redact(f"{type(e).__name__}: {e}")
         time.sleep(2 ** i)
-    raise FetchError(f"{url} -> {last}")
+    raise FetchError(redact(f"{url} -> {last}"))
 
 
 def _empty() -> pd.DataFrame:

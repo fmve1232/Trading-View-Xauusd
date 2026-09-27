@@ -58,7 +58,7 @@ def main(argv=None) -> int:
             need = sorted({("60m" if TIMEFRAMES[tf].get("resample_from") else TIMEFRAMES[tf]["yahoo"]) for tf in tfs} | {"60m"})
             dl = mk.download_all(args.store, tuple(need))
         except Exception as e:  # noqa: BLE001
-            index["errors"]["download"] = f"{type(e).__name__}: {e}"
+            index["errors"]["download"] = mk.sources.redact(f"{type(e).__name__}: {e}")
             traceback.print_exc()
     jobs = {}
     for tf in tfs:
@@ -68,7 +68,7 @@ def main(argv=None) -> int:
             elif dl is not None:
                 jobs[tf] = mk.build_market(tf, dl, now)
         except Exception as e:  # noqa: BLE001
-            index["errors"][tf] = f"{type(e).__name__}: {e}"
+            index["errors"][tf] = mk.sources.redact(f"{type(e).__name__}: {e}")
             traceback.print_exc()
     store_dir = None if args.synthetic else args.store
     workers = max(1, min(len(jobs), os.cpu_count() or 1, 4))
@@ -78,7 +78,7 @@ def main(argv=None) -> int:
             try:
                 p = fut.result()
             except Exception as e:  # noqa: BLE001
-                index["errors"][tf] = f"{type(e).__name__}: {e}"
+                index["errors"][tf] = mk.sources.redact(f"{type(e).__name__}: {e}")
                 traceback.print_exc()
                 continue
             payloads[tf] = p
