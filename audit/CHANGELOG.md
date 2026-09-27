@@ -1049,3 +1049,11 @@ the literal is kept, so comparisons are tolerant; "0" means the literal is read 
 
 Only EdgeCases changed. Compile NOT RUN.
 
+**Result (operator photo, 2026-09-27): `ALL PASS 99`.**
+- `1e-12 * 1e12` = 1, so Pine keeps the literal, and its `==` and `>` compare with a
+  tolerance.
+- Engine consequence: none. `safeDiv`'s guard stays as it is.
+- This is the first complete executed pass of the harness: §8.2 is closed by execution, not
+  by assumption.
+- No artefact changed after v30.
+

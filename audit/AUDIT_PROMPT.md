@@ -61,6 +61,8 @@ scope, and no other build of these scripts is in scope.
 > **v28:** first chart run of v24–v27 recorded (all six compile); EdgeCases names its first failure.
 > **v29: F-A37** — EdgeCases I7 measured on the chart: its IEEE premise is false in Pine; corrected, +I9/I10.
 > **v30:** I7/I9 pass on the chart; `1e-12 > 0.0` is false; I10 now separates literal-as-zero from a tolerant `>`.
+> **§8.2 CLOSED by execution (2026-09-27): the v30 harness reports ALL PASS 99 on the operator's chart.**
+> Pine float comparisons are tolerance-based; literals keep their value.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
