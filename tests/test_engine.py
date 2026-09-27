@@ -268,3 +268,17 @@ def test_report_is_strict_json(mkt, res):
     assert '"synthetic":true' in s.replace(" ", "")
     t = p["chart"]["t"]
     assert len(t) == len(set(t)) and t == sorted(t)
+
+
+def test_cornish_fisher_unsolvable_falls_back_to_raw_z():
+    import warnings
+    from quantum.features import _cf_iterate
+    # A real case from live 5m data: thin tails (kurtosis -1) make the cubic non-monotone,
+    # so there is no inverse at z = 3.18 and Newton runs away (to ~1e213).
+    x, sk, ku = np.array([3.182508230756222]), np.array([0.02617390158674234]), np.array([-1.0])
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        w = _cf_iterate(x.copy(), x, sk, ku)
+        w2 = w * w
+        resid = np.abs(w + (w2 - 1) * sk / 6 + (w2 * w - 3 * w) * ku / 24 - (2 * w2 * w - 5 * w) * sk * sk / 36 - x)
+    assert not (np.isfinite(w) & (resid < 1e-6)).any()                  # unsolved -> features keeps the raw z

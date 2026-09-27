@@ -143,15 +143,23 @@ def resample_ohlc(df: pd.DataFrame, rule: str, offset: str | None = None) -> pd.
 
 
 def resample_ny_session(df: pd.DataFrame, hours: int) -> pd.DataFrame:
-    """N-hour bars aligned to the 17:00 New York session start, as TradingView aligns FX."""
-    ny = df.tz_convert("America/New_York")
-    shifted = ny.copy()
-    shifted.index = ny.index + pd.Timedelta(hours=7)   # session start -> 00:00
+    """N-hour bars aligned to the 17:00 New York session start, as TradingView aligns FX.
+
+    Buckets are taken on New York WALL-CLOCK time, so the grid stays on 17:00 / 21:00 / 01:00 ...
+    through every DST change. (A fixed-frequency resample drifts by an hour across DST, and two
+    series that start in different seasons land on different grids.)
+    """
     agg = {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
-    out = shifted.resample(f"{hours}h", label="left", closed="left").agg(agg)
+    if len(df) == 0:
+        return df
+    wall = (df.index.tz_convert("America/New_York").tz_localize(None) + pd.Timedelta(hours=7))
+    bucket = wall.floor(f"{hours}h")
+    out = df.groupby(bucket.values).agg(agg)
     out = out.dropna(subset=["open", "high", "low", "close"])
-    out.index = (out.index - pd.Timedelta(hours=7)).tz_convert("UTC")
-    return out
+    lab = pd.DatetimeIndex(out.index) - pd.Timedelta(hours=7)
+    lab = lab.tz_localize("America/New_York", ambiguous=np.zeros(len(lab), dtype=bool), nonexistent="shift_forward")
+    out.index = lab.tz_convert("UTC")
+    return out[~out.index.duplicated(keep="last")].sort_index()
 
 
 def daily_ny_session(df: pd.DataFrame) -> pd.DataFrame:
@@ -163,6 +171,25 @@ def daily_ny_session(df: pd.DataFrame) -> pd.DataFrame:
     start = [ts.tz_localize("America/New_York") - pd.Timedelta(hours=7) for ts in pd.to_datetime(g.index)]
     g.index = pd.DatetimeIndex(start).tz_convert("UTC")
     return g.dropna(subset=["open", "high", "low", "close"])
+
+
+def trading_week_only(df: pd.DataFrame | None, daily: bool = False) -> pd.DataFrame | None:
+    """Drop bars printed while the market is shut (Friday 17:00 -> Sunday 17:00 New York).
+
+    Twelve Data's free XAU/USD feed prints flat quotes 24/7. On a live week those weekend
+    bars were ~30% of a 15-minute chart: they shrank the ATR, created fake Saturday/Sunday
+    "days" for PDH/PDL, carried no volume (blank VWAP) and drove the return volatility to
+    near zero. TradingView's OANDA feed has no weekend bars, so they also broke parity.
+    Daily bars dated Saturday or Sunday are dropped for the same reason.
+    """
+    if df is None or len(df) == 0:
+        return df
+    if daily:
+        return df[df.index.dayofweek < 5]
+    ny = df.index.tz_convert("America/New_York")
+    wd, hr = ny.dayofweek, ny.hour
+    shut = (wd == 5) | ((wd == 4) & (hr >= 17)) | ((wd == 6) & (hr < 17))
+    return df[~shut]
 
 
 def drop_incomplete(df: pd.DataFrame, bar_sec: int, now: datetime | None = None) -> tuple[pd.DataFrame, pd.Series | None]:

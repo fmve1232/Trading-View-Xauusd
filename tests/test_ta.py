@@ -84,6 +84,8 @@ def test_anchored_vwap_resets():
     vol = np.array([1, 1, 1, 3.0])
     v = ta.anchored_vwap(src, vol, np.array([False, False, True, False]))
     assert v[1] == 15 and v[2] == 30 and v[3] == (30 + 120) / 4
+    z = ta.anchored_vwap(src, np.array([0, 0, 2, 0.0]), np.array([False, False, False, False]))
+    assert z[0] == 10 and z[1] == 15 and z[2] == 30 and z[3] == 30   # no volume yet -> equal-weight mean
 
 
 @pytest.mark.parametrize("x,want", [(0.5, 1), (1.5, 2), (2.5, 3), (-2.5, -3), (-0.4, 0), (69.49, 69)])

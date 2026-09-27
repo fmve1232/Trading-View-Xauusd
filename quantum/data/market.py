@@ -127,9 +127,13 @@ def _fetch_merge(store_dir: str | None, name: str, fn, status: dict) -> pd.DataF
         df = old
         st.source = "store (live fetch failed)"
     if df is not None and len(df):
-        st.ok = True
+        n0 = len(df)
+        df = sources.trading_week_only(df, daily=name.endswith("_1d"))
+        st.ok = len(df) > 0
         st.rows = len(df)
-        st.last = df.index[-1].isoformat()
+        st.last = df.index[-1].isoformat() if len(df) else ""
+        if len(df) < n0:
+            st.note = (st.note + " " if st.note else "") + f"{n0 - len(df)} market-closed bars dropped"
     status[name] = st
     return df
 
@@ -231,15 +235,16 @@ def build_market(tf: str, dl: Downloads, now: datetime | None = None) -> Market:
 
     h1 = dl.prim["60m"]
     d1 = dl.prim.get("1d")
-    if d1 is not None and len(d1):
-        # Yahoo / Twelve Data date a daily bar by its trade date D. The FX/metals session
-        # for D opens at 17:00 New York on D-1; index it there so the alignment rule sees
-        # the session boundary where TradingView does.
+    if d1 is not None and len(d1) and psrc.startswith("yahoo"):
+        # Yahoo dates a futures daily bar by its trade date D, whose session opens at 17:00
+        # New York on D-1; index it there so the alignment rule sees the session boundary
+        # where TradingView does. (Twelve Data daily bars are UTC calendar days and already
+        # carry their true 00:00 UTC open, so they are left as they are.)
         d1 = d1.copy()
         d1.index = pd.DatetimeIndex([
             (pd.Timestamp(ts.date()) - pd.Timedelta(days=1) + pd.Timedelta(hours=17)).tz_localize("America/New_York")
             for ts in d1.index]).tz_convert("UTC")
-    else:
+    elif d1 is None or not len(d1):
         d1 = sources.daily_ny_session(h1)
     htf = {"60": h1, "240": sources.resample_ny_session(h1, 4), "D": d1}
     if tf_sec < 900:
