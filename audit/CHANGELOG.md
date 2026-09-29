@@ -1101,3 +1101,21 @@ Operator request: "what can we do to achieve 100/100" → both the log and the c
   awaits a settled screenshot: identical settled figures would mean the H1 gate is not
   taking effect.
 
+**Chart result (operator screenshots, 2026-09-29, 15M chart, tester range 2026-07-01 → 09-29):**
+- **H1 gate confirmed live.** At identical settings:
+  - Challenger: +$66.09, PF 1.516, max DD $59.08, 15/34 winners.
+  - Treatment: +$71.74, PF 1.539, max DD $56.91, 15/34 winners.
+  - Different P&L means different trades, so the stale-frame concern above is closed.
+- **Protocol deviation:** the screenshots are on **15M**; PREREGISTRATION §2 registers 1H.
+  - The operator was advised to return to 1H.
+  - A switch to 15M would be a documented amendment, with the holdout clock restarted at
+    that moment. It must not be judged on the 15M history already seen (Jul–Sep, PF ~1.5).
+- **Diagnostics on 15M (v27):** the same picture as 1H.
+  - Missed moves: up 148 / down 168, ENTRY 7; stopped at trend 183 (58%), HTF 49,
+    sess/news/DD 26, trigger 44, TQ 5, EV 1, P 1.
+  - Reliability buckets: predicted 22/30/36/42/54%, observed 19/29/25/18/15%. There is no
+    resolution; the top bucket is the worst (F-A34 holds on 15M).
+- **EdgeCases:** ALL PASS 99 (saved v30 confirmed).
+- **Master DECISION box:** `WAIT TQ49D · BIAS BEAR-ISH · TREND 50/60`. The block reason
+  names the trend gate, consistent with F-A36.
+
