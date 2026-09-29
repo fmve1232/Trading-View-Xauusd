@@ -68,6 +68,8 @@ The deliberate differences, all removals of TradingView limits and none chosen b
 | D-06 | volume profile on the last bar only (F-A07) | every bar | historical plans can use VAL/VAH/POC; the `°` markers go |
 | D-07 | OANDA tick volume | COMEX GC futures volume, bar for bar; missing = 0 (counted). While an anchor period has no volume yet, VWAP is the equal-weighted mean price rather than na | real traded volume; a na VWAP would disable the analog scan for 100 bars after every COMEX daily break |
 | D-08 | Cornish-Fisher inverse by 6 Newton steps, accepted whatever they return | accepted only where it solves q(w) = z, else the raw z | the cubic has no inverse for thin tails or strong skew; Newton ran to 1e213 on live data and pinned mrComposite at ±100 — **fixed in Pine v32 too (F-A38)**, so this is parity now, not a difference |
+| D-09 | OANDA's first print after a reopen is a real trade | Twelve Data's is the quote carried through the closure; the session's first bar is rebuilt from repaired 5-minute bars | on 27 Sep the stale print set Monday's high at 4287.25; repaired 4275.33 = OANDA 4275.325 (web.4) |
+| D-10 | TradingView bars only | Yahoo's latest-quote snapshots at off-minute times are dropped from every Yahoo series | they were being stored as bars; one carried Friday's close into Sunday (web.4) |
 | — | daily open interest | weekly CFTC open interest | no free daily OI; labelled |
 | — | `pivothigh` tie-break unknown | strict pivot (a plateau is not a pivot) | unverified on exact ties |
 
@@ -126,16 +128,21 @@ configuration hash and therefore restarts the holdout — that is intended.
 
 ## Data handling
 
-- **Market-closed bars are dropped** (Friday 17:00 → Sunday 17:00 New York; daily bars dated Saturday
-  or Sunday). Twelve Data's free XAU/USD feed prints flat quotes 24/7; on the first live week those were
+- **Market-closed bars are dropped** (since web.4: Friday 17:00 → **Sunday 18:00** New York, and the
+  **daily 17:00–18:00 break**, Monday–Thursday; daily bars dated Saturday or Sunday). Twelve Data's free
+  XAU/USD feed prints the last quote with a few cents of jitter 24/7; on the first live week those were
   ~30% of the 15-minute chart and corrupted ATR, PDH/PDL (fake weekend "days"), VWAP and the return
   volatility. The data-status panel reports how many were dropped per series. The raw store keeps them.
+- **The first bar of each session is repaired** (web.4). Its first print is the quote carried through the
+  closure, not a trade; it is removed and the bar is rebuilt from 5-minute bars (D-09).
+- **Off-minute rows are dropped** (web.4). Yahoo's latest-quote snapshots (e.g. 22:04:41) were being stored
+  as bars (D-10); the store is cleaned as each series is re-saved.
 - **4-hour bars sit on the 17:00 New York grid through DST** (bucketed on New York wall-clock time).
 - **Daily bars:** Yahoo futures dailies are re-indexed to their 17:00 New York session open; Twelve Data
   dailies are UTC calendar days and keep their 00:00 UTC open. Either way the alignment rule reads only
   the previous completed day.
-- The COMEX daily break (17:00–18:00 New York) has no futures volume while spot keeps printing; those bars
-  get volume 0 and are counted as imputed in Diagnostics.
+- The daily break (17:00–18:00 New York) is shut for spot gold as well as COMEX futures (web.4). Until web.3
+  the site assumed spot kept trading there; the stored quotes show it only repeats the last price.
 
 ## Web changelog
 
@@ -153,3 +160,4 @@ configuration hash and therefore restarts the holdout — that is intended.
 | web.3 + stream | **Streaming ticks (display only).** `relay/` is a Cloudflare Worker with one Durable Object hub. It holds a single Finnhub WebSocket while anyone is watching and relays ticks, at most 4 a second, carrying the high and low since the previous update. Only the site's origin may connect; the key stays a Worker secret. The page reads the relay address from `data/stream.json` (repository variable `STREAM_URL`). Ticks update the live chip and the **forming** candle only; closed bars are never touched. A tick more than 5% from the engine close is rejected, and the 60 s gold-api poll stands down while ticks arrive and resumes if they stop. Deployed by the `stream-relay` workflow, which skips cleanly until its secrets exist. Also: `xcheck_dukascopy.py` now fails fast (one 20 s attempt per file; stops after 3 failed days) and logs each day. The first run stalled on retries without printing why. |
 | audit: xcheck + Yahoo | Run 2 showed that **Dukascopy refuses GitHub's cloud addresses** (read timeout, connection reset, connect timeout), so it reports NOT RUN there; run the tool on a home PC for Dukascopy. **Yahoo spot `XAUUSD=X`** is added as a reference that runs on GitHub: 15m/60m bars from the last ≤ 60 days, completed bars only, weekend quotes dropped. It must be within 5% of Twelve Data's price level (catches a different instrument or scale; a NaN level fails) and pass OHLC sanity on ≥ 98% of bars, or it reports NOT RUN. The same comparison and verdict as Dukascopy. The workflow is renamed `xcheck-prices` (input `ref`: yahoo / dukascopy / both; default both). |
 | audit: xcheck GC | Run 3: Yahoo no longer serves `XAUUSD=X` (HTTP 404), so it reports NOT RUN. **New default reference: COMEX gold futures GC=F**, already in the store, so nothing is downloaded and it runs anywhere. The futures premium is removed per New York trading day (the session starts at 17:00 NY); days whose premium jumps by more than $5 are listed as probable contract rolls; a premium outside −2%…+5% of spot means NOT RUN. The largest differences are tagged with a heuristic window (08:30 data, 14:00–16:00 FOMC + press conference, Friday close, COMEX break) or **unexplained**; unexplained differences above max($5, 6 × median) add "review" to the verdict. Correlation is now rank (Spearman), so one bad bar shows as an outlier instead of dragging the correlation down. **First result (1–27 Sep):** timing correct (best lag 0), median difference 2.1 bps, rank correlation 0.976 (1h) and 0.905 (15m), no rolls, and three 15m differences of about $7.6 outside event windows to review. It tests timing and integrity, not the spot level (that needs Dukascopy from a home PC). |
+| web.4 | From a same-minute comparison with TradingView (28 Sep, 02:02 UTC). **Engine inputs:** gold's hours corrected (Sunday reopen 18:00 NY, daily 17:00–18:00 break shut); the stale first print of each session repaired (D-09; Monday high 4287.25 → 4275.33 = OANDA); Yahoo off-minute snapshot rows dropped (D-10). The engine code hash changes, so the **website forward test restarted** (Amendment 4: decided with no 1H trades; one −1.021R 1H trade in Treatment and Challenger arrived before the delayed merge and is archived and must be reported with the final result). **Schedule:** runs at :02/:17/:32/:47, just after each bar closes (at 02:02 the site was one hourly bar behind). **Display:** PDH/PDL/PWH/PWL price labels on the chart; a one-line summary strip (Signal / Structure / Liquidity / Price / Macro / Risk / Decision) above the chart. Same-minute agreement before the fixes: decision, bias and session identical; PDH/PDL within $0.20, PWL within $0.95, price within $1.4. |

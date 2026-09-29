@@ -12,7 +12,10 @@ name: quantum-site
 
 on:
   schedule:
-    - cron: "*/15 * * * 0-5"      # UTC. Gold trades Sun 22:00 -> Fri 21:00 UTC; Saturday is skipped
+    # UTC. Two minutes after each 15-minute bar closes, so the provider has the finished bar
+    # (at :00 the hourly bar was often not yet final, leaving the site a bar behind TradingView).
+    # Gold trades Sun 22:00 -> Fri 21:00 UTC; Saturday is skipped. GitHub may still start runs late.
+    - cron: "2,17,32,47 * * * 0-5"
   workflow_dispatch:
   push:
     branches: [main, master]

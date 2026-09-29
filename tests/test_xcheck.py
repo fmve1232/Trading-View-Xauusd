@@ -196,7 +196,7 @@ def test_gc_premium_removed_per_trading_day_and_rolls_flagged(st, tmp_path):
     r15, r1 = doc["timeframes"]["15m"], doc["timeframes"]["1h"]
     assert abs(r1["close_diff_mean"]) < 0.1 and r1["best_lag_bars"] == 0
     assert "2026-09-21" in r1["probable_rolls"]                               # the 40 -> 28 premium drop
-    assert r15["td_only"] > 0                                                 # the COMEX break: spot-only bars
+    assert r15["td_only"] == 0                                                # spot now skips the daily break too (web.4)
     assert any(x["bar_open_utc"].startswith("2026-09-22T08:00") for x in r15["unexplained_outliers"])
     assert "review" in r15["verdict"]
     assert xc.event_window(pd.Timestamp("2026-09-04 12:45", tz="UTC")).startswith("08:30")

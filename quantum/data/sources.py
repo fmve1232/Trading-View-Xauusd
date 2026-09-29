@@ -192,23 +192,86 @@ def daily_ny_session(df: pd.DataFrame) -> pd.DataFrame:
     return g.dropna(subset=["open", "high", "low", "close"])
 
 
-def trading_week_only(df: pd.DataFrame | None, daily: bool = False) -> pd.DataFrame | None:
-    """Drop bars printed while the market is shut (Friday 17:00 -> Sunday 17:00 New York).
+def gold_shut(idx: pd.DatetimeIndex) -> np.ndarray:
+    """True where spot gold does not trade: Friday 17:00 -> Sunday 18:00 New York, and the daily
+    break 17:00-18:00 New York (Monday-Thursday). New York wall-clock time, so DST is handled."""
+    ny = idx.tz_convert("America/New_York")
+    wd, hr = ny.dayofweek, ny.hour
+    return np.asarray((wd == 5) | ((wd == 4) & (hr >= 17)) | ((wd == 6) & (hr < 18)) | ((wd <= 3) & (hr == 17)))
 
-    Twelve Data's free XAU/USD feed prints flat quotes 24/7. On a live week those weekend
-    bars were ~30% of a 15-minute chart: they shrank the ATR, created fake Saturday/Sunday
-    "days" for PDH/PDL, carried no volume (blank VWAP) and drove the return volatility to
-    near zero. TradingView's OANDA feed has no weekend bars, so they also broke parity.
+
+def trading_week_only(df: pd.DataFrame | None, daily: bool = False) -> pd.DataFrame | None:
+    """Drop bars printed while spot gold is shut (see `gold_shut`).
+
+    Twelve Data's free XAU/USD feed prints quotes 24/7. While the market is shut they are the
+    last price carried forward with a few cents of jitter: on a live week the weekend bars were
+    ~30% of a 15-minute chart and shrank the ATR, created fake Saturday/Sunday "days" for
+    PDH/PDL, carried no volume and drove the return volatility to near zero. The same carried
+    quote fills the Sunday 17:00-18:00 hour and the daily 17:00-18:00 break (seen 20, 24 and
+    27 Sep 2026: 55 minutes inside a $0.60 range). TradingView's OANDA feed shows none of these.
     Daily bars dated Saturday or Sunday are dropped for the same reason.
     """
     if df is None or len(df) == 0:
         return df
     if daily:
         return df[df.index.dayofweek < 5]
-    ny = df.index.tz_convert("America/New_York")
-    wd, hr = ny.dayofweek, ny.hour
-    shut = (wd == 5) | ((wd == 4) & (hr >= 17)) | ((wd == 6) & (hr < 17))
-    return df[~shut]
+    return df[~gold_shut(df.index)]
+
+
+def drop_offgrid(df: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Drop rows whose timestamp is not on a whole minute.
+
+    Yahoo appends its latest quote to intraday chart data with that quote's own time
+    (e.g. 22:04:41). Stored as if they were bars, these rows reached the futures, silver, EUR/USD
+    and dollar-index series (about 30 per series in September 2026); one carried Friday's stale
+    close into Sunday's open. Real bars start on a whole minute (on :00 or :30 for Yahoo's
+    60-minute equity and yield bars), so they are kept.
+    """
+    if df is None or len(df) == 0:
+        return df
+    sec = np.asarray(df.index.as_unit("s").asi8)
+    return df[sec % 60 == 0]
+
+
+def reopen_bars(idx: pd.DatetimeIndex) -> np.ndarray:
+    """Bars that open a session: 18:00 New York, Sunday to Thursday (after the weekend or the daily break)."""
+    ny = idx.tz_convert("America/New_York")
+    return np.asarray((ny.hour == 18) & (ny.minute == 0) & ((ny.dayofweek == 6) | (ny.dayofweek <= 3)))
+
+
+def _cap_stale_open(o: float, h: float, l: float, c: float) -> tuple[float, float, float, float]:
+    """Remove the stale first print: the open becomes the close, and a high or low set by that print is capped at it."""
+    h2 = c if np.isclose(h, o, rtol=0, atol=1e-6) else max(h, c)
+    l2 = c if np.isclose(l, o, rtol=0, atol=1e-6) else min(l, c)
+    return c, h2, l2, c
+
+
+def repair_reopen(df: pd.DataFrame | None, bar_sec: int, m5: pd.DataFrame | None = None) -> pd.DataFrame | None:
+    """Repair the first bar of each session in Twelve Data's feed.
+
+    The first print after the market reopens is the quote carried through the closure, not a
+    trade (20 Sep: 4380.22 against a weekend quote of 4380.05; 27 Sep: 4287.25 against 4287.3,
+    while OANDA opened near 4275). It set the Monday high 12 dollars too high on 27 Sep.
+    5-minute bars: the stale open is replaced and a high or low it set is capped (`_cap_stale_open`).
+    Longer bars are rebuilt from the repaired 5-minute bars when those cover the bar's start;
+    otherwise the same cap is applied to the bar itself. The close is always the feed's own.
+    On 27 Sep this gives the 1-hour high 4275.33 (TradingView/OANDA: 4275.325).
+    """
+    if df is None or len(df) == 0:
+        return df
+    out = df.copy()
+    starts = out.index[reopen_bars(out.index)]
+    for t in starts:
+        o, h, l, c = (float(out.at[t, k]) for k in ("open", "high", "low", "close"))
+        if bar_sec > 300 and m5 is not None and t in m5.index:
+            sub = m5[(m5.index >= t) & (m5.index < t + pd.Timedelta(seconds=bar_sec))]
+            out.at[t, "open"] = float(sub["open"].iloc[0])
+            out.at[t, "high"] = max(float(sub["high"].max()), c)
+            out.at[t, "low"] = min(float(sub["low"].min()), c)
+        else:
+            o2, h2, l2, _ = _cap_stale_open(o, h, l, c)
+            out.at[t, "open"], out.at[t, "high"], out.at[t, "low"] = o2, h2, l2
+    return out
 
 
 def drop_incomplete(df: pd.DataFrame, bar_sec: int, now: datetime | None = None) -> tuple[pd.DataFrame, pd.Series | None]:

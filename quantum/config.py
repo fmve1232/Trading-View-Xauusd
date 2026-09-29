@@ -12,7 +12,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 
-ENGINE_VERSION = "Q7.2-web.3"   # Pine QVERSION this engine ports, plus the web build
+ENGINE_VERSION = "Q7.2-web.4"   # Pine QVERSION this engine ports, plus the web build
 SCHEMA_BUILD = 6                 # same schema build as Pine v32 (F-A38 Cornish-Fisher guard)
 
 

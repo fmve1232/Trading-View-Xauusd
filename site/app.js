@@ -501,6 +501,8 @@ function renderChart() {
   }
   if (T.levels) {
     const lq = d.liquidity.pools;
+    pl(lq.PDH, "#f0b04a", "PDH", 2); pl(lq.PDL, "#f0b04a", "PDL", 2);
+    pl(lq.PWH, "#c79bff", "PWH", 2); pl(lq.PWL, "#c79bff", "PWL", 2);
     pl(lq.PMH, "#9aa5b1", "PMH", 1); pl(lq.PML, "#9aa5b1", "PML", 1);
     pl(d.liquidity.cdh, "#4dd0e1", "CDH", 3); pl(d.liquidity.cdl, "#4dd0e1", "CDL", 3);
     pl(lq.EQH, "#ef5350", "EQH", 3); pl(lq.EQL, "#26a69a", "EQL", 3);
@@ -715,10 +717,27 @@ async function renderMethod() {
     $("#tab-method").dataset.loaded = "1";
   } catch (e) { $("#tab-method").innerHTML = card("Method", "Could not load method.html"); }
 }
+/* ---------- one-line summary strip (the Master's top table, read left to right) ---------- */
+function renderStrip() {
+  const el = $("#sumstrip"); const D = S.data; if (!el || !D) return;
+  const d = D.dashboard, p = d.plan || {}, lq = (d.liquidity && d.liquidity.pools) || {}, ch = D.chart || {};
+  const vw = ch.vwap && ch.vwap.length ? ch.vwap[ch.vwap.length - 1] : null;
+  const dec = d.decision, sig = dec === "BUY" || dec === "SELL";
+  const cell = (k, v, sub, cls = "") => `<div class="sc ${cls}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
+  el.innerHTML = [
+    cell("Signal", esc(dec), `L ${f(d.bull_score, 0)} · S ${f(d.bear_score, 0)} · R ${f(d.range_score, 0)}`, dec === "BUY" ? "bull" : dec === "SELL" ? "bear" : ""),
+    cell("Structure", esc(structStr(d.struct)), esc(d.regime ? d.regime.label : "")),
+    cell("Liquidity", esc(d.liquidity ? d.liquidity.dest : "—"), `PDH ${px(lq.PDH)} · PDL ${px(lq.PDL)}`),
+    cell("Price", px(d.close), `VWAP D ${px(vw)}`),
+    cell("Macro", esc(d.macro ? d.macro.label : "—"), d.macro ? `${fs(d.macro.strength, 0)} · votes ${d.macro.bull_votes}/${d.macro.bear_votes}` : ""),
+    cell("Risk", isNum(p.rr1) ? `1:${f(p.rr1, 1)} · SL ${f(p.dist, 2)}` : "—", `Kelly ${d.kelly ? f(d.kelly.kelly_pct, 2) : "—"}%${sig ? "" : " · no signal"}`),
+    cell("Decision", `${esc(dec)} · TQ ${d.trade_quality}${esc(d.tq_grade || "")}`, `${esc(d.bias_label)} · ${esc(d.session.label)} ${d.session.quality}/30`, dec === "NO TRADE" || dec === "RISK LOCK" ? "warn" : ""),
+  ].join("");
+}
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderOverview); safe(renderEvents); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

@@ -100,6 +100,39 @@ results are read. No rule, threshold, arm, timeframe or data source changes, and
 - **Timeframes.** Only 1H decides (§7). Price-check outliers on 5m/15m (the weekly `xcheck-prices` report)
   cannot affect a decision; they are tracked so that affected trades can be identified.
 
+## Amendment 4 (2026-09-28, after the start): data-integrity fixes and a restart of the website test
+
+Made **after** the start, so it follows the restart rule instead of editing history: the fixes change the
+engine's inputs, which changes the freeze key, and the website test **restarts from the first run of the new
+code**. The earlier freeze (2026-09-28 00:00 UTC, code hash `32babc71ed938b30`) is kept in the manifest's
+history and its log entries are archived, not deleted.
+
+- **When it was decided:** the restart was recommended and approved at about 10:00 UTC on 28 Sep, when the
+  earlier freeze had **no 1H trades** (only one 5m trade each in Treatment and Challenger). A tooling outage
+  delayed the merge to 29 Sep.
+- **What the earlier freeze holds at the merge:** on 1H, one trade each in Treatment and Challenger, the same
+  SHORT entered 28 Sep 16:00 UTC and stopped out 29 Sep 14:00 UTC at **-1.021R** (price source
+  `twelvedata:XAU/USD`); Control has none. It was entered after the decision.
+- **Rule, so a restart can never hide a result:** the final report lists every archived trade of every
+  earlier freeze next to the result of the counted test. The -1.021R trades above are part of that record.
+
+Found by comparing the website with TradingView (OANDA) on the same minute (02:02 UTC, 28 Sep) and checking the
+stored bars:
+
+- **Gold's trading hours.** Twelve Data prints the last quote with a few cents of jitter while spot gold is
+  shut. The site treated Sunday 17:00-18:00 New York and the daily 17:00-18:00 break as trading (about one fake
+  hourly bar a day). Gold is now shut Friday 17:00 -> Sunday 18:00 and daily 17:00-18:00 New York.
+- **The first print of each session is stale.** It is the quote carried through the closure. On 27 Sep it set
+  Monday's high at 4287.25 against OANDA's 4275.33. The session's first bar is repaired from 5-minute data; the
+  repaired high is 4275.33, the same as TradingView.
+- **Yahoo quote snapshots stored as bars.** Rows at off-minute times (e.g. 22:04:41; about 20-34 per series in
+  September) in the futures, silver, EUR/USD and dollar-index series, one carrying Friday's close into Sunday.
+  They are now dropped.
+
+Unchanged: every rule, threshold, arm, timeframe, the decision date, H1 and the configuration hash. Only the
+data the engine reads is corrected. Pine is unaffected (OANDA has none of these artefacts); the website's
+differences D-09 and D-10 in `docs/PLATFORM.md` record them.
+
 ## 3. What is measured
 
 | Arm | Source | Unit |
@@ -160,8 +193,8 @@ TradingView.
 | Item | Value |
 |---|---|
 | Start | **2026-09-28 00:00 UTC**, the same as §2 (`quantum/holdout.py: HOLDOUT_START`) |
-| Engine | `quantum/`, `ENGINE_VERSION` Q7.2-web.3, the port of the v32 Master and its three arms |
-| Freeze key | config hash `5e4630924d663fc5` + engine code hash `32babc71ed938b30` |
+| Engine | `quantum/`, `ENGINE_VERSION` Q7.2-web.4, the port of the v32 Master and its three arms (web.3 until the Amendment 4 restart) |
+| Freeze key | config hash `5e4630924d663fc5` + engine code hash `3252a9f0d312db75` (was `32babc71ed938b30` until Amendment 4) |
 | Price data | Twelve Data spot XAU/USD (`twelvedata:XAU/USD`); each logged trade records its price source |
 | Deciding timeframe | **1H**. 5m, 15m and 4h are logged and shown, but they are descriptive only and decide nothing |
 | Arms | Treatment, Control and Challenger (H1), with the same definitions as §3 |
