@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v34   (challenger H1; scorecard)     ║
+// ║  BUILD STAMP — this file last CHANGED in v35   (challenger H1; scorecard fix) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5359,15 +5359,17 @@ if fwdShow and barstate.islast
     float _fwlo = _fwn >= 10 ? _fwm - _fwt * _fwsd / math.sqrt(_fwn) : na
     float _fwhi = _fwn >= 10 ? _fwm + _fwt * _fwsd / math.sqrt(_fwn) : na
     float _fwpf = _fwgl > 0 ? _fwgw / _fwgl : na
-    string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpf >= 1.2 ? "EDGE SHOWN" : "NOT SHOWN"
+    // no losing position at all: PF is infinite, which passes the >= 1.2 rule (it is na above)
+    bool _fwpfOk = _fwgl > 0 ? _fwpf >= 1.2 : _fwgw > 0
+    string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpfOk ? "EDGE SHOWN" : "NOT SHOWN"
     bool _fwtfOk = timeframe.in_seconds() == 900
     color _fwcT = color.new(#E6EDF3, 0)
-    table.cell(fwdTbl, 0, 0, "FORWARD TEST  v34", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    table.cell(fwdTbl, 0, 0, "FORWARD TEST  v35", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
     table.cell(fwdTbl, 1, 0, "from " + str.format_time(fwdStart, "yyyy-MM-dd HH:mm", "UTC") + " UTC  ·  " + timeframe.period + (_fwtfOk ? " (registered)" : "  NOT 15M: does not count"), text_color=_fwtfOk ? color.white : color.orange, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
     _fwRow(1, "Positions (N)", str.tostring(_fwn) + (_fwn > 0 ? "   wins " + str.tostring(_fww) + " = " + str.tostring(_fww * 100.0 / _fwn, "#") + "%" : ""), _fwcT)
     _fwRow(2, "Mean $ / position", na(_fwm) ? "—" : str.tostring(_fwm, "#.##"), _fwcT)
     _fwRow(3, "95% CI of mean", na(_fwlo) ? "needs 10+ positions" : str.tostring(_fwlo, "#.##") + "  to  " + str.tostring(_fwhi, "#.##"), _fwcT)
-    _fwRow(4, "Profit factor", na(_fwpf) ? "—" : str.tostring(_fwpf, "#.##") + "  (rule >= 1.2)", _fwcT)
+    _fwRow(4, "Profit factor", na(_fwpf) ? (_fwgw > 0 ? "no losses yet (infinite)" : "—") : str.tostring(_fwpf, "#.##") + "  (rule >= 1.2)", _fwcT)
     _fwRow(5, "Net $ (1 oz, pinned costs)", str.tostring(_fws, "#.##"), _fwcT)
     _fwRow(6, "VERDICT (pre-registered)", _fwv, _fwv == "EDGE SHOWN" ? color.lime : _fwv == "NOT SHOWN" ? color.orange : _fwcT)
     _fwRow(7, "Coverage", fwdBar0 > fwdStart ? "loaded history starts " + str.format_time(fwdBar0, "yyyy-MM-dd", "UTC") + " AFTER the test start: incomplete, use the weekly log" : _fwn == 0 ? "no closed position since the start yet" : "first counted entry " + str.format_time(_fwfirst, "yyyy-MM-dd HH:mm", "UTC"), fwdBar0 > fwdStart ? color.orange : _fwcT)

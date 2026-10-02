@@ -12,6 +12,9 @@
 The holdout start (2026-10-05 00:00 UTC), the decision rules (§4) and the decision date (§5)
 are unchanged. The new hashes replace those in §2.
 
+A2.5 (v35, display only): the scorecard verdict treats a record with no losing position as PF = ∞
+(passes the PF rule) instead of na (failed it). No signal changes; the arms' hashes in §2 are updated.
+
 , operator decision; the holdout clock restarts
 
 | # | Change | Why |
@@ -55,9 +58,9 @@ Only trades that happen **after** the rules are frozen can show an edge.
 | File | SHA-256 |
 |---|---|
 | `XAUUSD_Quantum_5_0_Master.pine` | `043410047ff2eef03845c53c7e832bb7a873c7b7d0b8c8d55c778c3041061694` |
-| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `347cc2dca5e3f159135ab974f2e004e891b8572c567e45e4d867c7e4c23c0c01` |
-| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `a5e2dbde29c9daae1a0b0b007d2e7b10e4374887d3ae292b19947f697ec503b2` |
-| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `8badcce599651d8fe0d4d6da1e076fb88ba38109e410aaef371667c6af9e2d07` |
+| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `86193648198fd1d2c947658457af811d6396f6c156215e823befeddffa3b8d38` |
+| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `256eaf50d61526bbd36897828f23d140fd5053b37e9c39d5e3d69637bb4869b7` |
+| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `8db04fbbc1db9818e6390d8c659b4183e2f93e49450d348bbdc29889272025ae` |
 
 Settings stay at the script defaults, except `MT5 Price Offset`, which is display only.
 Strategy Properties stay at the code defaults: initial capital 10,000, 1 oz fixed, costs as

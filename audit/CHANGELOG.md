@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v34
+# Build changelog — v1 → … → v35
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1239,4 +1239,23 @@ result, and make the system right on both 5M and 15M, which the operator watches
   - Arms ~35,800 lexical, ~90,000 compiled.
   - Diagnostics ~39,270 lexical, ~98,800 compiled; tightest.
   - Compile NOT RUN.
+
+---
+
+# Build v34 → v35 — validation pass; scorecard verdict edge case
+
+Operator request: review and validate.
+- Full pass on v34 found everything clean except one display defect:
+  - manifest 7/7, frozen hashes, all checkers 7/7, `diag_parity`;
+  - A/B 5 hunks, T/C 4;
+  - `formula_trace` PASS in every engine copy; `formula_check` and `race_model_check` PASS;
+  - the scorecard identical in the three arms, with no shadowed names.
+- **Defect:** the scorecard verdict marked a record with N ≥ 50 and no losing position as NOT
+  SHOWN, because PF is na there.
+  - Fixed identically in the three arms: no losses means PF = ∞, which passes the PF rule.
+  - The Profit factor row says "no losses yet (infinite)".
+  - Display only (PREREGISTRATION A2.5).
+  - Executed: all-win → EDGE SHOWN, edge → EDGE SHOWN, no edge → NOT SHOWN, N 20 →
+    COLLECTING 20/50.
+- The Master, Diagnostics, EdgeCases and Visuals are unchanged. Compile NOT RUN.
 
