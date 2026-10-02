@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v30   (I10 separates the causes)     ║
+// ║  BUILD STAMP — this file last CHANGED in v33   (F group: constrained fit)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -172,28 +172,29 @@ if barstate.islastconfirmedhistory
     chk("E5  3 qualifying bins -> fit ok", b(3 >= 3), "true",  "STAT")
 
 // =============================================================================
-// GROUP F — PLATT/WLS CLAMPS AND REJECTION  (L4185-4193; bear fit L4223-4225)
-//   slope clamped [0.02, 0.25]; intercept clamped [-1, 1];
-//   fit REJECTED when slope <= 0; variance guard _pfVr > 1e-6
+// GROUP F — PLATT/WLS CONSTRAINED FIT  (v33, F-A38; Master L4192-4194, bear fit L4223-4225)
+//   slope PROJECTED onto [0, 0.25] (bear [-0.25, 0]); a slope <= 0 or a degenerate variance gives
+//   slope 0 = the weighted base rate; the fit updates on every refresh with >= 3 bins; the
+//   intercept is re-solved for the slope used (line through the weighted centroid); +-5 guard.
+//   Before v33: floor 0.02, clamp +-1, K <= 0 rejected (stale fit), intercept from the raw slope.
 // =============================================================================
-slopeClamp(float _k) => math.min(math.max(_k, 0.02), 0.25)
-interClamp(float _b) => math.min(math.max(_b, -1.0), 1.0)
-fitAccepted(float _k, float _vr, int _bins) => _bins >= 3 and _vr > 1e-6 and _k > 0
+slopeProj(float _k, float _vr) => _vr > 1e-6 ? math.min(math.max(_k, 0.0), 0.25) : 0.0
+icpt(float _my, float _mx, float _k) => math.min(math.max(_my - _k * _mx, -5.0), 5.0)
+fitUpdated(int _bins) => _bins >= 3
 
 if barstate.islastconfirmedhistory
-    chk("F1  slope 0.001 -> clamped up 0.02",   f(slopeClamp(0.001)), "0.02", "NUM")
-    chk("F2  slope 0.90  -> clamped down 0.25", f(slopeClamp(0.90)),  "0.25", "NUM")
-    chk("F3  slope 0.10  -> untouched",         f(slopeClamp(0.10)),  "0.1",  "NUM")
-    chk("F4  intercept -5 -> clamped -1",       f(interClamp(-5.0)),  "-1",   "NUM")
-    chk("F5  intercept  5 -> clamped  1",       f(interClamp(5.0)),   "1",    "NUM")
-    chk("F6  NEGATIVE slope rejected",          b(fitAccepted(-0.05, 1.0, 5)), "false", "STAT")
-    chk("F7  ZERO slope rejected",              b(fitAccepted(0.0, 1.0, 5)),   "false", "STAT")
-    chk("F8  near-zero variance rejected",      b(fitAccepted(0.1, 1e-9, 5)),  "false", "NUM")
-    chk("F9  too few bins rejected",            b(fitAccepted(0.1, 1.0, 2)),   "false", "STAT")
-    chk("F10 valid fit accepted",               b(fitAccepted(0.1, 1.0, 3)),   "true",  "STAT")
-    // SATURATION CONSEQUENCE: two genuinely different slopes become IDENTICAL after
-    // clamping. Information is destroyed. Intentional, but it must be visible.
-    chk("F11 slopes 0.5 and 0.9 collapse to one value", b(slopeClamp(0.5) == slopeClamp(0.9)), "true", "NUM")
+    chk("F1  slope 0.001 kept (no 0.02 floor)",  f(slopeProj(0.001, 1.0)), "0.001", "NUM")
+    chk("F2  slope 0.90  -> capped 0.25",        f(slopeProj(0.90, 1.0)),  "0.25",  "NUM")
+    chk("F3  slope 0.10  -> untouched",          f(slopeProj(0.10, 1.0)),  "0.1",   "NUM")
+    chk("F4  intercept -8 -> guard -5",          f(icpt(-8.0, 0.0, 0.0)),  "-5",    "NUM")
+    chk("F5  gold base rate -1.38 kept (was -1)", f(icpt(-1.38, 0.0, 0.0)), "-1.38", "STAT")
+    chk("F6  NEGATIVE slope -> 0 (not rejected)", f(slopeProj(-0.05, 1.0)), "0",     "STAT")
+    chk("F7  slope 0 fit = weighted base rate",  f(icpt(-1.2, -10.0, 0.0)), "-1.2", "STAT")
+    chk("F8  near-zero variance -> slope 0",     f(slopeProj(0.1, 1e-9)),  "0",     "NUM")
+    chk("F9  too few bins -> no update",         b(fitUpdated(2)),         "false", "STAT")
+    chk("F10 three bins -> fit updates",         b(fitUpdated(3)),         "true",  "STAT")
+    // the line passes through the weighted centroid for the slope actually used
+    chk("F11 capped slope keeps the centroid",   f(0.25 * 8.0 + icpt(-1.0, 8.0, 0.25)), "-1", "NUM")
 
 // =============================================================================
 // GROUP G — SIGMOID OUTPUT CLAMP  (sigmoid L4584, clamp L4585)  _calP clamped [0.05, 0.95]
@@ -290,7 +291,7 @@ gridInterp(float _rr, float _p0, float _p1, float _p2, float _p3, bool _decay) =
 raceEV(float _pw, float _pl, float _rr, float _tmo, float _cost) => _pw * _rr - _pl + _tmo - _cost
 condP(float _pDir, float _pOpp) => _pDir + _pOpp > 0 ? _pDir / (_pDir + _pOpp) : na
 regClamp(float _p, float _adj) => math.min(math.max(0.5 + (_p - 0.5) * _adj, 0.05), 0.95)
-bearSlope(float _k) => math.min(math.max(_k, -0.25), -0.02)
+bearSlope(float _k) => math.min(math.max(_k, -0.25), 0.0)
 
 if barstate.islastconfirmedhistory
     chk("K1  TP bar 2, SL bar 5 -> win",      i(raceOut(5, 2)),       "1", "DESIGN")
@@ -311,7 +312,7 @@ if barstate.islastconfirmedhistory
     chk("K16 timeouts: P(win|res) = 0.5",     f(condP(0.35, 0.35)), "0.5", "STAT")
     chk("K17 fits summing > 1 normalised",    f(condP(0.9, 0.6)), "0.6", "STAT")
     chk("K18 F-A18 prob stays <= 0.95",       f(regClamp(0.95, 1.5)), "0.95", "NUM")
-    chk("K19 bear slope -0.001 -> -0.02",     f(bearSlope(-0.001)), "-0.02", "NUM")
+    chk("K19 bear slope -0.001 kept (v33)",    f(bearSlope(-0.001)), "-0.001", "NUM")
     chk("K20 bear slope -0.9 -> -0.25",       f(bearSlope(-0.9)), "-0.25", "NUM")
 
 // =============================================================================
@@ -373,7 +374,7 @@ if barstate.islastconfirmedhistory
             _fail += 1
             if _firstFail == ""
                 _firstFail := array.get(str.split(array.get(tName, _q), " "), 0) + " got " + array.get(tGot, _q) + " want " + array.get(tWant, _q)
-    table.cell(tT, 0, 0, "§16 EDGE CASE  v30", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
+    table.cell(tT, 0, 0, "§16 EDGE CASE  v33", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 1, 0, "GOT",   bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 2, 0, "WANT",  bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())
     table.cell(tT, 3, 0, "CLASS", bgcolor = color.new(color.blue, 60), text_color = color.white, text_size = _hts())

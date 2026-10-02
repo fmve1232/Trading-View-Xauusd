@@ -59,8 +59,8 @@
 | F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
 | F-A32 | **P0** | `BUG` | *(compiler-reported)* Master v23: `too many tokens: 100820` (limit 100,256); the lexical estimator's ratio had drifted 2.466 → 2.515 — **FIXED v24** (auction layer moved to Diagnostics) |
 | F-A33 | P3 | `NUM` | *(compiler-reported)* Diagnostics: `ta.correlation` in a ternary skipped bars in its window; `_v` shadowed a global — **FIXED v24** |
-| F-A38 | **P1** | `STAT` | *(formula_trace, executed Pine text)* Platt/WLS calibration is not a constrained least-squares fit: K <= 0 is rejected and the previous fit kept (stale); K is floored at 0.02 (on the operator's 15M bins the data gives 0.0029, z = 0.36: P at score 70 shown 31.8% vs 24.9%); the intercept uses the unclamped slope; intercept clamp +-1 binds at base rates < 27% (1H -1.38 -> -1.0). Feeds the calibration gate — **FIX PREPARED v32, not applied (holdout)** |
-| F-A39 | P2 | `NUM` | *(formula_trace)* inverse Cornish-Fisher applied outside the monotone (Maillard) domain, where no inverse exists: the 6-step Newton diverges (to 3e43 in a test). Saturates `mrComposite` (±100) -> evidence scores, regime feature, analog distance. Frequency on gold measured by the v32 Diagnostics probe — **FIX PREPARED v32, not applied (holdout)** |
+| F-A38 | **P1** | `STAT` | *(formula_trace, executed Pine text)* Platt/WLS calibration is not a constrained least-squares fit: K <= 0 is rejected and the previous fit kept (stale); K is floored at 0.02 (on the operator's 15M bins the data gives 0.0029, z = 0.36: P at score 70 shown 31.8% vs 24.9%); the intercept uses the unclamped slope; intercept clamp +-1 binds at base rates < 27% (1H -1.38 -> -1.0). Feeds the calibration gate — **FIXED v33** (constrained LS; operator-approved, holdout restarted) |
+| F-A39 | P2 | `NUM` | *(formula_trace)* inverse Cornish-Fisher applied outside the monotone (Maillard) domain, where no inverse exists: the 6-step Newton diverges (to 3e43 in a test). Saturates `mrComposite` (±100) -> evidence scores, regime feature, analog distance. Frequency on gold measured by the Diagnostics probe — **FIXED v33** (transform only inside the domain) |
 | F-A37 | P3 | `PRES` | *(first executed harness result)* EdgeCases I7 asserted IEEE semantics ("`== 0` lets 1e-12 through"); Pine returned false — its float `==` is tolerant. The premise was never executed — **CORRECTED v29**; chart run of v29: I7 and I9 PASS (`1e-12 == 0.0` is true), I10 `1e-12 > 0.0` FALSE. **Resolved on the chart (v30, 2026-09-27): ALL PASS 99.** `1e-12 * 1e12` = 1, so the literal keeps its value and Pine's `==` AND `>` are tolerance-based. `safeDiv`'s `abs(b) > 1e-10` needs no change — **CLOSED** |
 | F-A36 | **P1** | `STAT` | *(operator report)* DECISION "mostly WAIT" while price moved $30–50: the entry chain passes 1.5% of bars (152 / 10,269 on 1H); the trigger stage alone removes 86% of eligible bars — **MEASURED v27** (missed-move audit), **not tuned** (§9) |
 | F-A35 | P2 | `PRES` | *(sequence audit)* `biasLabel` and the WAIT reason were computed from the evidence-stage scores but shown beside the final scores (label could contradict the numbers; alert text too) — **FIXED v26** |
@@ -904,7 +904,7 @@ never fired. Experience from those builds overstates today's WAIT rate.
 
 ---
 
-## F-A38, F-A39 — found by executing the formulas as written *(v32; fixes prepared, not applied)*
+## F-A38, F-A39 — found by executing the formulas as written *(v32; FIXED v33)*
 
 `formula_trace.py` reads each probability or statistics block out of the .pine and runs it in
 Python (`pine_exec.py`) against a first-principles reference, on every engine copy.
@@ -950,9 +950,9 @@ mean-reversion evidence, the regime feature and the analog distance are pinned t
   intercept for the slope used, and keep ±5 as a numerical guard only.
 - F-A39: apply the transform only inside the monotone domain; outside it, keep the observed z.
 
-Neither fix introduces a value chosen on the history. Both change signals, so applying them
-restarts the forward test (PREREGISTRATION §2) and needs the operator's decision. On patched
-copies `formula_trace.py` passes 10/10 blocks, against 8/10 on the frozen build.
+Neither fix introduces a value chosen on the history. Both change signals. **Applied in v33 on the operator's decision (2026-10-02)**, with the forward test
+restarted (PREREGISTRATION amendment A1). `formula_trace.py` now passes every block in all five engine
+copies (Master 10/10, the arms and Diagnostics 9/9 + 1 Master-only skip), against 8/10 before.
 
 **Consequence to know before applying F-A38.** With the bins showing no resolution, the fitted
 slope becomes 0, and each calibrated probability becomes its base rate. The 0.50 calibration gate

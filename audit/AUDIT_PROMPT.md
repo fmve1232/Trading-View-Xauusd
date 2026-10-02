@@ -18,15 +18,15 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5728 | 369391 | `1fe5e5a828742f11a7f56d583314d3e3d29f8d110d8fd8b92de64514307dd2f0` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5277 | 329997 | `29020c685c1ebef6a6a5e7efb4ebf9b1cd33615ca4c0b05b2fd22dd721f3980d` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5277 | 330062 | `5b35a96511886c6da25a9b964a72c22160040194416835c96613cb3a3e9a2783` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5288 | 330981 | `0748a41fa479f78f8af56c16dabf56e610ef071dcdd86cc3dc309f312346b770` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 394 | 28440 | `411a73e6deb72a87af279ec0f132c2fce9dcffeb896ed98375930fd0b17029fe` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5736 | 370454 | `6708cfb7cf51270371933cb7a194852443594445705310778cc599b1a08befed` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5285 | 331060 | `4d544c9976c1d2ff806ef84db9a8c4b8b7e86b65c45158a478d321de456b243e` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5285 | 331125 | `7da48be0e80fbe1d6d07bb48ae746f0e7b41b3b3522306880ad6bcf114cbcce3` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5296 | 332044 | `67bd4253f9e3133d1336aa906a66109a44ca6e47f8655f5cb36de1becb43f62e` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5586 | 352247 | `8f17010b03c21715f5c6f10fefcb3676cebf2ca89b0b6205ea86612c951df8df` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5594 | 353310 | `11c28d1b3501c1f11b9f1ffa616dc4b397b84695e5f2ac6c58318b85ed262690` |
 
-> **BUILD v32 — this prompt pins the current build.** The originally audited build
+> **BUILD v33 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -69,6 +69,8 @@ scope, and no other build of these scripts is in scope.
 > **v32: F-A38, F-A39** found by executing the Pine formula text (`formula_trace.py`): calibration fit
 > not a constrained LS (stale / floored / off-centroid); Cornish-Fisher inverse outside its domain.
 > Fix prepared (`audit/tools/pending_fix_v33.py`), NOT applied: it changes signals (holdout).
+> **v33:** F-A38 and F-A39 fixed in every engine copy (operator-approved); forward test restarted on
+> **15M from 2026-10-05 00:00 UTC** (PREREGISTRATION amendment A1); EdgeCases F-group rewritten.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

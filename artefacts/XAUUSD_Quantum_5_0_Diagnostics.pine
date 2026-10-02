@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v32   (math probes row)              ║
+// ║  BUILD STAMP — this file last CHANGED in v33   (engine F-A38, F-A39)          ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -852,7 +852,13 @@ float retSkewC = math.min(math.max(retSkew, -1.0), 1.0)
 // floor on it only guards the step.
 float _cfK = math.min(math.max(retKurt, -1.0), 3.0)
 float retZScore = retZScoreRaw
-if _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(retZScoreRaw)
+// v33 F-A39: q(w) is monotone -- so the inverse exists -- only if a2 = K/8 - S^2/6 > 0 and
+// (S/3)^2 - 4 a2 (1 - K/8 + 5 S^2/36) < 0 (Maillard 2012). Outside that domain the 6-step Newton
+// had no solution to converge to and the 0.1 step floor made it diverge (to 1e43 in a test).
+// There the observed z is used as is, exactly as when the moments are out of range.
+float _cfA2 = _cfK / 8.0 - retSkewC * retSkewC / 6.0
+bool _cfMono = _cfA2 > 0 and (retSkewC / 3.0) * (retSkewC / 3.0) - 4.0 * _cfA2 * (1.0 - _cfK / 8.0 + 5.0 * retSkewC * retSkewC / 36.0) < 0
+if _cfValid and _cfMono and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(retZScoreRaw)
     float _w = retZScoreRaw
     for _it = 0 to 5
         float _w2 = _w * _w
@@ -4145,11 +4151,14 @@ runStatsEngines() =>
                 float _pfMx = _pfSx / _pfSw
                 float _pfMy = _pfSy / _pfSw
                 float _pfVr = _pfSxx / _pfSw - _pfMx * _pfMx
-                if _pfVr > 1e-6
-                    float _pfK = (_pfSxy / _pfSw - _pfMx * _pfMy) / _pfVr
-                    if _pfK > 0
-                        array.set(gCalFit, 0, math.min(math.max(_pfK, 0.02), 0.25))
-                        array.set(gCalFit, 1, math.min(math.max(_pfMy - _pfK * _pfMx, -1.0), 1.0))
+                // v33 F-A38: constrained WLS. The slope is projected onto [0, 0.25] (0 = the bins show no
+                // resolution, so the fit is the weighted base rate) instead of (a) rejecting K <= 0 and
+                // keeping a stale earlier fit, and (b) flooring K at 0.02, which manufactured resolution
+                // the bins did not show. The intercept is re-solved for the slope USED, so the line still
+                // passes through the weighted centroid. +-5 on the intercept is a numerical guard only.
+                float _pfK = _pfVr > 1e-6 ? math.min(math.max((_pfSxy / _pfSw - _pfMx * _pfMy) / _pfVr, 0.0), 0.25) : 0.0
+                array.set(gCalFit, 0, _pfK)
+                array.set(gCalFit, 1, math.min(math.max(_pfMy - _pfK * _pfMx, -5.0), 5.0))
             // F-A16: the BEAR fit -- identical WLS (same Berkson weights) on the same bins and the same x (mean
             // bullScore), target = bear resolution. Slope must be NEGATIVE (a higher
             // bullScore should mean a lower chance of a bear resolution); bounds mirror
@@ -4177,11 +4186,10 @@ runStatsEngines() =>
                 float _bfMx = _bfSx / _bfSw
                 float _bfMy = _bfSy / _bfSw
                 float _bfVr = _bfSxx / _bfSw - _bfMx * _bfMx
-                if _bfVr > 1e-6
-                    float _bfK = (_bfSxy / _bfSw - _bfMx * _bfMy) / _bfVr
-                    if _bfK < 0
-                        array.set(gCalFitBear, 0, math.min(math.max(_bfK, -0.25), -0.02))
-                        array.set(gCalFitBear, 1, math.min(math.max(_bfMy - _bfK * _bfMx, -1.0), 1.0))
+                // v33 F-A38: the same constrained fit, slope projected onto [-0.25, 0].
+                float _bfK = _bfVr > 1e-6 ? math.min(math.max((_bfSxy / _bfSw - _bfMx * _bfMy) / _bfVr, -0.25), 0.0) : 0.0
+                array.set(gCalFitBear, 0, _bfK)
+                array.set(gCalFitBear, 1, math.min(math.max(_bfMy - _bfK * _bfMx, -5.0), 5.0))
             float _totalCal = c0t + c1t + c2t + c3t + c4t
             // Brier decomposition (Murphy): BS = Uncertainty + Reliability - Resolution.
             // v16: the identity holds only with RAW bin frequencies over the SAME bins as the
@@ -5551,7 +5559,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v32 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v33 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)

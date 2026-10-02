@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v32
+# Build changelog — v1 → … → v33
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1143,4 +1143,49 @@ statistics.
     save overflows, the probe row is the first to trim.
 - The Master, the three strategy arms, EdgeCases and Visuals are unchanged, so the holdout is
   intact. Compile of Diagnostics v32 NOT RUN.
+
+---
+
+# Build v32 → v33 — F-A38 and F-A39 fixed; forward test restarted on 15M (amendment A1)
+
+The operator decided (2026-10-02) to apply the fixes now and to restart the test on 15M.
+
+- **F-A38 (calibration)**, in the Master, Treatment, Control, Challenger and Diagnostics: the
+  Platt/WLS fit is now a constrained least-squares fit.
+  - The slope is projected onto [0, 0.25], or [−0.25, 0] for the bear fit; 0 means the
+    weighted base rate.
+  - The fit updates on every refresh, so no stale fit survives.
+  - The 0.02 floor is gone.
+  - The intercept is re-solved for the slope used.
+  - The intercept limit is a ±5 numerical guard, replacing the ±1 clamp.
+- **F-A39 (Cornish-Fisher)**, same files: the inverse is applied only inside the monotone
+  (Maillard) domain; elsewhere the observed z is used.
+- **Verification:**
+  - `formula_trace.py`: every block passes in all five engine copies (8/10 before).
+  - `formula_check.py` and `race_model_check.py` pass.
+  - `sequence.py`: no early reads of the changed symbols.
+  - Treatment vs Control: 5 hunks. Treatment vs Challenger: 4. `diag_parity` passes.
+- **EdgeCases v33:**
+  - The F group (11 assertions) and K19 are rewritten to the constrained fit; K20 is
+    unchanged.
+  - All 13 were executed through `pine_exec.py` with 0 mismatches; still 99 assertions.
+- **Diagnostics v33:** the regenerated engine plus the v32 *Math probes* row.
+- **PREREGISTRATION amendment A1:**
+  - holdout start 2026-10-05 00:00 UTC;
+  - 15M chart;
+  - new frozen hashes;
+  - disclosure that 15M history (Jul–Sep 2026) was seen before the switch;
+  - v31 holdout void, with no trades logged.
+  - The workbook's freeze date is updated; 0 errors on recalculation.
+- **What visibly changes:**
+  - `mP=` and the plan's calibrated probabilities move toward the base rates (about 20–25%)
+    when the bins show no resolution.
+  - The calibration gate then acts by the bull vs bear base rates rather than by the score.
+  - On bars outside the Cornish-Fisher domain, the mean-reversion evidence is no longer
+    pinned at ±100.
+- Tokens:
+  - Master ~38,970 lexical, ~98,000 compiled (2.3% headroom).
+  - Diagnostics ~39,210 lexical, ~98,600 compiled; tightest, and the first to trim if a save
+    overflows.
+  - Compile NOT RUN for the six changed files.
 

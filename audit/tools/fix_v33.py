@@ -1,4 +1,4 @@
-"""PENDING (needs operator approval: it changes signals, so it restarts the forward test).
+"""APPLIED in v33 (operator approved 2026-10-02; forward test restarted, PREREGISTRATION A1).
 F-A38 (constrained calibration fit) + F-A39 (Cornish-Fisher domain) for every engine copy.
 Usage: python3 audit/tools/pending_fix_v33.py artefacts/<engine files>; then regenerate Diagnostics."""
 import sys, re

@@ -67,7 +67,7 @@ never recorded.
 1. Add `XAUUSD_Quantum_5_0_EdgeCases.pine` to any chart. It is standalone: it imports
    nothing, trades nothing and writes nothing.
 2. A table appears top-left. The **top-right cell** is the summary:
-   `ALL PASS 99`, or `<n> FAIL / 99`. The header cell must read `§16 EDGE CASE v30`. Since v20
+   `ALL PASS 99`, or `<n> FAIL / 99`. The header cell must read `§16 EDGE CASE v33`. Since v20
    **failing rows are drawn first**, and a *Table text size* input (default Small) keeps them legible.
 3. **Screenshot the whole table.** If anything fails, I need the failing row's
    `GOT` / `WANT` / `CLASS` values.
@@ -157,16 +157,17 @@ remain available and are confirmed-bar gated too.
 
 ---
 
-## Step 2d — Forward test (v31, from 2026-09-28 00:00 UTC)
+## Step 2d — Forward test (v33, from 2026-10-05 00:00 UTC, **15M** — amendment A1)
 
 The rules are frozen in `audit/PREREGISTRATION.md`. Only trades opened after the freeze count.
 
-1. **Add the Challenger** (`Strategy_CHALLENGER.pine`) to the same 1H chart as Treatment and
+1. **Add the Challenger** (`Strategy_CHALLENGER.pine`) to the same **15M** chart as Treatment and
    Control. Leave all three at their code defaults, 10K capital.
 2. **Live trades:** for every MT5 trade taken from a confirmed Master BUY/SELL alert, add a
    row to *Live Log* in `audit/XAUUSD_Forward_Test_Log.xlsx`. Fill the blue columns only.
 3. **Weekly:** in each arm's Strategy Tester open *List of Trades* and paste the arm name,
    entry time and net P&L of any new trades into *Arm Trades*.
+   The `~X% ±Y` next to SL/TP on the plan is a **90%** interval on the effective sample.
 4. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
    setting or rule before the decision date in PREREGISTRATION §5.
 
@@ -289,7 +290,7 @@ Quick visual confirmations that the fixes behave:
   expectancy in R, net of cost, so it can exceed 1 on a good-geometry setup.
 - **v14 SIGNAL cell**: `mP=62/S31%` once the bear map fits (`/S` = the bear probability),
   and `mP unfit` before either map exists — the old heuristic value is gone.
-- **v14 EdgeCases**: header reads `§16 EDGE CASE v30`, **99** rows, all PASS expected.
+- **v14 EdgeCases**: header reads `§16 EDGE CASE v33`, **99** rows, all PASS expected.
 
 Any of these not matching means a fix did not take — tell me which.
 

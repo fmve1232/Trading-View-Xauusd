@@ -43,7 +43,27 @@ def _mn(*a):
     return NA if any(isna(v) for v in a) else min(a)
 
 
+def _tostr(x, fmt=None):
+    """str.tostring with the '#.##' style masks the artefacts use (round half away, trim zeros)."""
+    if isinstance(x, str):
+        return x
+    if isinstance(x, bool):
+        return 'true' if x else 'false'
+    if isna(x):
+        return 'NaN'
+    if fmt is None or not isinstance(fmt, str) or not set(fmt) <= set('#.0'):
+        d = 6 if fmt is None else 0
+    else:
+        d = len(fmt.split('.', 1)[1]) if '.' in fmt else 0
+    v = _round(x, d) if d else _round(x)
+    out = f"{v:.{d}f}" if d else str(int(v))
+    if '.' in out:
+        out = out.rstrip('0').rstrip('.')
+    return '0' if out in ('-0', '') else out
+
+
 BUILTINS = {
+    'str.tostring': _tostr,
     'math.sqrt': lambda x: NA if isna(x) or x < 0 else math.sqrt(x),
     'math.exp': lambda x: NA if isna(x) else math.exp(x),
     'math.log': lambda x: NA if isna(x) or x <= 0 else math.log(x),
