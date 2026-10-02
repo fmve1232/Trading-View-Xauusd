@@ -59,6 +59,8 @@
 | F-A31 | P1 | `PRES` | BUY/SELL alertconditions not confirmed-bar gated; alert text had no MT5 plan; no alert on decision change, SL/TP1 or risk lock — **FIXED v21** |
 | F-A32 | **P0** | `BUG` | *(compiler-reported)* Master v23: `too many tokens: 100820` (limit 100,256); the lexical estimator's ratio had drifted 2.466 → 2.515 — **FIXED v24** (auction layer moved to Diagnostics) |
 | F-A33 | P3 | `NUM` | *(compiler-reported)* Diagnostics: `ta.correlation` in a ternary skipped bars in its window; `_v` shadowed a global — **FIXED v24** |
+| F-A38 | **P1** | `STAT` | *(formula_trace, executed Pine text)* Platt/WLS calibration is not a constrained least-squares fit: K <= 0 is rejected and the previous fit kept (stale); K is floored at 0.02 (on the operator's 15M bins the data gives 0.0029, z = 0.36: P at score 70 shown 31.8% vs 24.9%); the intercept uses the unclamped slope; intercept clamp +-1 binds at base rates < 27% (1H -1.38 -> -1.0). Feeds the calibration gate — **FIX PREPARED v32, not applied (holdout)** |
+| F-A39 | P2 | `NUM` | *(formula_trace)* inverse Cornish-Fisher applied outside the monotone (Maillard) domain, where no inverse exists: the 6-step Newton diverges (to 3e43 in a test). Saturates `mrComposite` (±100) -> evidence scores, regime feature, analog distance. Frequency on gold measured by the v32 Diagnostics probe — **FIX PREPARED v32, not applied (holdout)** |
 | F-A37 | P3 | `PRES` | *(first executed harness result)* EdgeCases I7 asserted IEEE semantics ("`== 0` lets 1e-12 through"); Pine returned false — its float `==` is tolerant. The premise was never executed — **CORRECTED v29**; chart run of v29: I7 and I9 PASS (`1e-12 == 0.0` is true), I10 `1e-12 > 0.0` FALSE. **Resolved on the chart (v30, 2026-09-27): ALL PASS 99.** `1e-12 * 1e12` = 1, so the literal keeps its value and Pine's `==` AND `>` are tolerance-based. `safeDiv`'s `abs(b) > 1e-10` needs no change — **CLOSED** |
 | F-A36 | **P1** | `STAT` | *(operator report)* DECISION "mostly WAIT" while price moved $30–50: the entry chain passes 1.5% of bars (152 / 10,269 on 1H); the trigger stage alone removes 86% of eligible bars — **MEASURED v27** (missed-move audit), **not tuned** (§9) |
 | F-A35 | P2 | `PRES` | *(sequence audit)* `biasLabel` and the WAIT reason were computed from the evidence-stage scores but shown beside the final scores (label could contradict the numbers; alert text too) — **FIXED v26** |
@@ -899,6 +901,69 @@ sess/news/DD 77 trigger 202 TQ 20 EV 7 P 3 risk 0`. The stages sum to 1,056 = 54
 
 Pre-v21 note: before F-A30 (v21), displacement detection was OFF by default, so half the trigger
 never fired. Experience from those builds overstates today's WAIT rate.
+
+---
+
+## F-A38, F-A39 — found by executing the formulas as written *(v32; fixes prepared, not applied)*
+
+`formula_trace.py` reads each probability or statistics block out of the .pine and runs it in
+Python (`pine_exec.py`) against a first-principles reference, on every engine copy.
+
+| Block | Result |
+|---|---|
+| Wilson lower bound + Kelly f* (sizing) | PASS (1e-13); the form is the log-growth optimum |
+| race-grid interpolation | PASS (exact) |
+| race expectancy E[R] | PASS (exact) |
+| Murphy decomposition | PASS (= Brier of bin-mean forecasts, to the 3-dp display rounding) |
+| tanh squash (trade quality) | PASS |
+| plan-probability ± (`f_ciHalf`) | PASS as a formula. It is a **90%** interval (z = 1.645) on the effective N, printed as a bare "±" — a label to fix with the next Master change |
+| inverse Cornish-Fisher, monotone domain | PASS (≤ 4e-4 σ) |
+| **inverse Cornish-Fisher, outside the domain** | **FAIL → F-A39** |
+| **Platt/WLS calibration fit** | **FAIL → F-A38** |
+
+**F-A38, calibration.** The defensible estimator is Berkson-weighted WLS of logit(bin rate) on
+the bin score, with the slope constrained to the monotone direction by projection. The Pine
+departs from it in four ways:
+1. a slope ≤ 0 is rejected, and the PREVIOUS fit stays in use indefinitely;
+2. a positive slope below 0.02 is raised to 0.02;
+3. the intercept is computed from the unclamped slope, so the line misses the weighted
+   centroid;
+4. the intercept is clamped to ±1, i.e. P(score 50) ∈ [26.9%, 73.1%], which binds whenever the
+   base rate is under 27%. The 1H and 15M base rates (20–23%) both bind.
+
+Replayed on the operator's own bins:
+- 1H: K = −0.0007 (z = −0.17), so the fit is rejected and a stale fit is kept.
+- 15M: K = +0.0029 (z = +0.36) is floored to 0.02. At score 70 the probability is shown as
+  31.8%; the data gives 24.9%.
+
+The calibrated probability therefore shows resolution the history does not contain, and the
+calibration gate acts on it.
+
+**F-A39, Cornish-Fisher.** q(w) is monotone only for K > 4S²/3 with a negative discriminant
+(Maillard 2012). In the gated range (|S| < 1.5, |K| < 7, clamped to S ∈ [−1, 1], K ∈ [−1, 3])
+about 23% of random (S, K) pairs fall outside it. There no inverse exists, and the Newton with
+its 0.1 step floor diverges. `mrComposite` clamps the result to ±100, but on those bars the
+mean-reversion evidence, the regime feature and the analog distance are pinned to an extreme.
+
+**Fix (`audit/tools/pending_fix_v33.py`):**
+- F-A38: project the slope onto [0, 0.25] (bear: [−0.25, 0]), always update, re-solve the
+  intercept for the slope used, and keep ±5 as a numerical guard only.
+- F-A39: apply the transform only inside the monotone domain; outside it, keep the observed z.
+
+Neither fix introduces a value chosen on the history. Both change signals, so applying them
+restarts the forward test (PREREGISTRATION §2) and needs the operator's decision. On patched
+copies `formula_trace.py` passes 10/10 blocks, against 8/10 on the frozen build.
+
+**Consequence to know before applying F-A38.** With the bins showing no resolution, the fitted
+slope becomes 0, and each calibrated probability becomes its base rate. The 0.50 calibration gate
+then stops depending on the score and acts as a fixed long/short filter by the bull vs bear base
+rates. That is the honest output of the calibration, and it shows the gate carries no
+score-dependent information on this history (consistent with F-A34).
+
+**Diagnostics v32** adds a *Math probes* row to answer three questions on the chart:
+- the historical vs realtime lag of daily `close[1]` requests;
+- the share of bars outside the Cornish-Fisher domain, and the largest |z|;
+- the calibration fit currently in use.
 
 ---
 

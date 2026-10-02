@@ -21,7 +21,7 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v27   (missed-move audit row)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v32   (math probes row)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '
@@ -372,14 +372,55 @@ if barstate.isconfirmed
         dgEpD := -1
 string missLine = "moves >=" + str.tostring(dgMoveUSD, "#") + " in " + str.tostring(dgMoveBars) + " bars: up " + str.tostring(dgNU) + " / down " + str.tostring(dgND) + "  ENTRY " + str.tostring(array.get(dgMiss, 8)) + "  |  stopped at: trend " + str.tostring(array.get(dgMiss, 0)) + "  HTF " + str.tostring(array.get(dgMiss, 1)) + "  sess/news/DD " + str.tostring(array.get(dgMiss, 2)) + "  trigger " + str.tostring(array.get(dgMiss, 3)) + "  TQ " + str.tostring(array.get(dgMiss, 4)) + "  EV " + str.tostring(array.get(dgMiss, 5)) + "  P " + str.tostring(array.get(dgMiss, 6)) + "  risk " + str.tostring(array.get(dgMiss, 7))
 
+// ---- 14. MATH PROBES (v32) -- questions only the chart can answer ------------------------
+// (a) HTF semantics. The engine requests daily data as request.security(.., "D", close[1],
+//     lookahead_off). In theory that returns the close TWO days back on historical bars but
+//     ONE day back in realtime (an extra historical lag, not lookahead). Counted here on
+//     confirmed bars against the chart's own previous-day closes.
+// (b) Cornish-Fisher domain (F-A39). q(w) is monotone only if a2 = K/8 - S^2/6 > 0 and
+//     (S/3)^2 - 4 a2 (1 - K/8 + 5 S^2/36) < 0; outside it the Newton inverse has no solution.
+//     Counted on bars where the engine applies the transform; plus the largest |z| it produced.
+// (c) Calibration fit in use (F-A38): slope and intercept of the bull and bear fits, and
+//     read against the clamps (slope 0.02 / -0.02 / 0.25, intercept +-1).
+// Display only; nothing here feeds a gate.
+float dgHtfD = request.security(syminfo.tickerid, "D", close[1], barmerge.gaps_off, barmerge.lookahead_off)
+bool dgNewDay = ta.change(time("D")) != 0
+var float dgD1 = na
+var float dgD2 = na
+if dgNewDay
+    dgD2 := dgD1
+    dgD1 := close[1]
+var int dgHtfEq1 = 0
+var int dgHtfEq2 = 0
+var int dgHtfOth = 0
+var int dgCfApplied = 0
+var int dgCfNonMono = 0
+var float dgCfMaxZ = 0.0
+if barstate.isconfirmed and not na(dgHtfD) and not na(dgD2)
+    float _tol = syminfo.mintick * 2
+    if math.abs(dgHtfD - dgD1) <= _tol
+        dgHtfEq1 += 1
+    else if math.abs(dgHtfD - dgD2) <= _tol
+        dgHtfEq2 += 1
+    else
+        dgHtfOth += 1
+if barstate.isconfirmed and _cfValid and math.abs(retSkew) < 1.5 and math.abs(retKurt) < 7.0 and not na(retZScore)
+    float _K = math.min(math.max(retKurt, -1.0), 3.0)
+    float _a2 = _K / 8.0 - retSkewC * retSkewC / 6.0
+    float _a0 = 1.0 - _K / 8.0 + 5.0 * retSkewC * retSkewC / 36.0
+    dgCfApplied += 1
+    dgCfNonMono += _a2 > 0 and (retSkewC / 3.0) * (retSkewC / 3.0) - 4.0 * _a2 * _a0 < 0 ? 0 : 1
+    dgCfMaxZ := math.max(dgCfMaxZ, math.abs(retZScore))
+string probeLine = "D close[1]: =1d back " + str.tostring(dgHtfEq1) + " / =2d back " + str.tostring(dgHtfEq2) + " / other " + str.tostring(dgHtfOth) + "  |  CF non-monotone " + str.tostring(dgCfNonMono) + "/" + str.tostring(dgCfApplied) + " max|z| " + str.tostring(dgCfMaxZ, "#.#") + "  |  fit bull k " + str.tostring(array.get(gCalFit, 0), "#.####") + " a " + str.tostring(array.get(gCalFit, 1), "#.##") + "  bear k " + str.tostring(array.get(gCalFitBear, 0), "#.####") + " a " + str.tostring(array.get(gCalFitBear, 1), "#.##")
+
 // ---- PANEL -----------------------------------------------------------------------------
-var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 24, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 25, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=dgTs, text_halign=text.align_left)
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v27 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v32 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -406,6 +447,7 @@ if barstate.islast
         _dRow(21, "Gate booleans", xDebug, _cT)
     _dRow(22, "Volume (free plan)", volLine, _cT)
     _dRow(23, "Missed moves", missLine, _cT)
+    _dRow(24, "Math probes", probeLine, _cT)
     _dRow(14, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
 // Pine rejects an indicator with no output function call ("Script must have at least one
 // output function call"); tables do not count. Same fix as the EdgeCases harness.

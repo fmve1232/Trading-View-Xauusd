@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v31
+# Build changelog — v1 → … → v32
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1118,4 +1118,29 @@ Operator request: "what can we do to achieve 100/100" → both the log and the c
 - **EdgeCases:** ALL PASS 99 (saved v30 confirmed).
 - **Master DECISION box:** `WAIT TQ49D · BIAS BEAR-ISH · TREND 50/60`. The block reason
   names the trend gate, consistent with F-A36.
+
+---
+
+# Build v31 → v32 — formulas executed as written; F-A38, F-A39; Diagnostics probes
+
+Operator request: re-verify every value and calculation with the best available maths and
+statistics.
+
+- **New tools.** `pine_exec.py` runs Pine source lines in Python. `formula_trace.py` uses it
+  to execute 9 probability and statistics blocks from each engine copy against first-principles
+  references.
+  - 7 PASS.
+  - 2 defects, identical in the Master, Treatment, Control, Challenger and Diagnostics:
+    **F-A38** (calibration fit) and **F-A39** (Cornish-Fisher domain). See FINDINGS.
+- **Fix prepared, not applied:** `audit/tools/pending_fix_v33.py`.
+  - It changes signals, so applying it restarts the forward test; operator decision pending.
+  - Patched copies pass 10/10 blocks.
+- **Diagnostics v32** (display-only, not a frozen file) adds a *Math probes* row:
+  - daily `close[1]` historical lag;
+  - Cornish-Fisher out-of-domain count and max |z|;
+  - the calibration fit in use.
+  - About 39,170 lexical tokens, ~98,500 compiled. It is the closest file to the limit; if the
+    save overflows, the probe row is the first to trim.
+- The Master, the three strategy arms, EdgeCases and Visuals are unchanged, so the holdout is
+  intact. Compile of Diagnostics v32 NOT RUN.
 

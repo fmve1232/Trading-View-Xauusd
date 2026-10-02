@@ -24,9 +24,9 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5288 | 330981 | `0748a41fa479f78f8af56c16dabf56e610ef071dcdd86cc3dc309f312346b770` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 394 | 28440 | `411a73e6deb72a87af279ec0f132c2fce9dcffeb896ed98375930fd0b17029fe` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5544 | 349654 | `6ea54f6332401872912bc483dfca545e7a8f23b054cfffe9eeb806f316e4fa4c` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5586 | 352247 | `8f17010b03c21715f5c6f10fefcb3676cebf2ca89b0b6205ea86612c951df8df` |
 
-> **BUILD v31 — this prompt pins the current build.** The originally audited build
+> **BUILD v32 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -66,6 +66,9 @@ scope, and no other build of these scripts is in scope.
 > Pine float comparisons are tolerance-based; literals keep their value.
 > **v31:** forward test pre-registered (`PREREGISTRATION.md`, holdout from 2026-09-28 00:00 UTC); Challenger arm H1
 > (fast trend gate) added; forward-test workbook with verified formulas.
+> **v32: F-A38, F-A39** found by executing the Pine formula text (`formula_trace.py`): calibration fit
+> not a constrained LS (stale / floored / off-centroid); Cornish-Fisher inverse outside its domain.
+> Fix prepared (`audit/tools/pending_fix_v33.py`), NOT applied: it changes signals (holdout).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
