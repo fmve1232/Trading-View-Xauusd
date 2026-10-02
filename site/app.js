@@ -102,6 +102,7 @@ async function load() {
   }
   renderAll();
   loadEvents();
+  loadReference();
   pollLive();
   startStream();
 }
@@ -218,6 +219,41 @@ function applyLiveBar(lastTime) {
   const b = STREAM.bar; if (!C || !b) return;
   if (isNum(lastTime) && b.time < lastTime) return;           // an engine update has moved past it
   try { C.candles.update({ ...b, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") }); } catch (e) { /* older than the series end */ }
+}
+
+/* ---------- reference prices (DISPLAY AND VALIDATION ONLY; quantum/reference.py) ---------- */
+// Each provider is shown as it reported itself: raw values, its own timestamp precision and
+// status. A divergence is shown with both raw prices; neither is replaced or reconciled.
+async function loadReference() {
+  try { S.ref = await getJSON("data/reference.json"); } catch (e) { S.ref = null; }
+  renderReference();
+}
+const REF_CLS = { CONSISTENT: "bull", MINOR_DIVERGENCE: "", SIGNIFICANT_DIVERGENCE: "warn", CRITICAL_DIVERGENCE: "bear", UNAVAILABLE: "" };
+const nsAgo = (ns) => (isNum(ns) ? ago(new Date(ns / 1e6).toISOString()) : "—");
+function renderReference() {
+  const R = S.ref, el = $("#refs"), st = $("#ref-state"); if (!el) return;
+  if (!R || !Array.isArray(R.observations)) {
+    el.innerHTML = '<span class="muted">No reference file yet; it appears after the next pipeline run.</span>';
+    st.textContent = "—"; st.className = "pill"; return;
+  }
+  const b = R.bar_divergence_1h || {}, lv = R.live_divergence;
+  const worst = [b.status, lv && lv.status].includes("CRITICAL_DIVERGENCE") ? "CRITICAL_DIVERGENCE"
+    : [b.status, lv && lv.status].includes("SIGNIFICANT_DIVERGENCE") ? "SIGNIFICANT_DIVERGENCE" : b.n ? b.status : lv ? lv.status : "UNAVAILABLE";
+  st.textContent = worst.replace("_DIVERGENCE", "").replace("_", " "); st.className = "pill " + (REF_CLS[worst] || "");
+  const rows = R.observations.map((o) => `<tr><td>${esc(o.provider_id)}<div class="dim">${esc(String(o.market_type).replace(/_/g, " ").toLowerCase())}</div></td>
+    <td>${o.bid !== null && o.ask !== null ? `${f(o.bid)} / ${f(o.ask)}<div class="dim">spread ${f(o.spread, 2)}</div>` : isNum(o.mid) ? f(o.mid) + '<div class="dim">mid only</div>' : "—"}</td>
+    <td>${esc(o.status)}<div class="dim">${esc(o.quality)} · ${esc(o.timestamp_precision)}${isNum(o.latency_ms) ? " · age " + f(o.latency_ms / 1000, 1) + " s at receipt" : ""}</div></td></tr>
+    ${o.note ? `<tr><td colspan="3" class="dim" style="white-space:normal">${esc(o.note)}</td></tr>` : ""}`).join("");
+  const bars = b.n ? kv([
+    ["Same 1h bar vs " + esc(R.primary.replace("twelvedata:", "Twelve Data ")), `${fs(b.diff, 2)} (${fs(b.diff_pct, 3)}%) · ${esc(b.status)}`],
+    ["Over " + b.n + " bars: median / p95 |Δ| / max", `${fs(b.median_diff, 2)} / ${f(b.p95_abs_diff, 2)} / ${f(b.max_abs_diff, 2)}`],
+    ["Robust z of the last bar", isNum(b.robust_z) ? f(b.robust_z, 1) : "—"],
+    ["Observed spread median / p90", `${f(b.spread_median, 2)} / ${f(b.spread_p90, 2)}`],
+    ["Primary inside the reference spread", f(b.inside_spread_pct, 0) + "% of bars"]])
+    : `<p class="muted">Bar comparison unavailable${b.note ? ": " + esc(b.note) : ""}.</p>`;
+  const live = lv ? kv([[`${esc(lv.a)} vs ${esc(lv.b)} now`, `${fs(lv.diff, 2)} (${fs(lv.diff_pct, 3)}%) · ${esc(lv.status)}${isNum(lv.source_time_gap_ms) ? " · Δt " + f(lv.source_time_gap_ms / 1000, 1) + " s" : ""}`]]) : "";
+  el.innerHTML = `<table class="t"><tr><th>Source</th><th>Bid / ask</th><th>Status</th></tr>${rows}</table>${bars}${live}
+    <p class="note">Checked ${nsAgo(R.generated_ts_ns)}. Bands (fixed, not fitted): &lt;${R.thresholds_pct.CONSISTENT}% consistent, &lt;${R.thresholds_pct.MINOR_DIVERGENCE}% minor, &lt;${R.thresholds_pct.SIGNIFICANT_DIVERGENCE}% significant, otherwise critical. The engine never reads these prices.</p>`;
 }
 
 /* ---------- upcoming events (DISPLAY ONLY) ---------- */
@@ -741,7 +777,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
