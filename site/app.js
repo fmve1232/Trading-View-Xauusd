@@ -24,6 +24,8 @@ const isNum = (x) => typeof x === "number" && isFinite(x);
 const f = (x, d = 2) => (isNum(x) ? x.toFixed(d) : "—");
 const fs = (x, d = 2) => (isNum(x) ? (x > 0 ? "+" : "") + x.toFixed(d) : "—");
 const pct = (x, d = 0) => (isNum(x) ? x.toFixed(d) + "%" : "—");
+// A statistic over zero observations is the engine's placeholder (analog.default_outputs), not a measurement.
+const pctN = (x, n, d = 0) => (n > 0 ? pct(x, d) : "—");
 const px = (x) => (isNum(x) ? (x + Number(S.mt5 || 0)).toFixed(2) : "—");
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -115,11 +117,12 @@ setInterval(async () => {
 const LIVE_URL = "https://api.gold-api.com/price/XAU";
 const LIVE_TITLE = "Live spot from gold-api.com, read by your browser. DISPLAY ONLY: the engine never uses it; signals come from closed bars.";
 const LIVE = { px: null, t: null, err: "" };
-// Spot gold is shut from Friday 17:00 to Sunday 17:00 New York (the same rule the pipeline uses).
+// Spot gold is shut from Friday 17:00 to Sunday 18:00 New York, and 17:00-18:00 Monday to
+// Thursday: the same rule as the pipeline's sources.gold_shut (web.4).
 function marketClosed(d) {
   const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
   const dow = ny.getDay(), h = ny.getHours();
-  return dow === 6 || (dow === 5 && h >= 17) || (dow === 0 && h < 17);
+  return dow === 6 || (dow === 5 && h >= 17) || (dow === 0 && h < 18) || (dow >= 1 && dow <= 4 && h === 17);
 }
 async function pollLive() {
   if (document.hidden || streaming()) return;
@@ -153,7 +156,7 @@ function renderLive() {
   $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
-    (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 17:00 New York): the feed repeats the last quote with a fresh timestamp." : "") +
+    (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
 }
 setInterval(pollLive, 60000);
@@ -325,9 +328,9 @@ function renderSide() {
     ["P(long resolves up)", isNum(d.p_long) ? pct(d.p_long * 100) : "—"],
     ["P(short resolves down)", isNum(d.p_short) ? pct(d.p_short * 100) : "—"],
     ["Calibration gate", d.cal_gate_ready ? `live · min P ${pct(M.config.cal_gate_min_p * 100)}` : "inactive (needs a fit and ROLL N≥10)"],
-    ["Analog EV / match", `${fs(a.ev, 2)} R · A${a.match}${a.match < 30 ? " LOW" : ""}`],
-    ["Win rate (ROLL)", `${pct(a.oos_wr)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
-    ["IS vs ROLL", `${pct(a.is_wr)} / ${pct(a.oos_wr)}${a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
+    ["Analog EV / match", `${a.match > 0 ? fs(a.ev, 2) + " R" : "—"} · A${a.match}${a.match < 30 ? " LOW" : ""}`],
+    ["Win rate (ROLL)", `${pctN(a.oos_wr, a.oos_n)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
+    ["IS vs ROLL", `${pctN(a.is_wr, a.is_n)} / ${pctN(a.oos_wr, a.oos_n)}${a.is_n > 0 && a.oos_n > 0 && a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
     ["Calibration grade", `${esc(a.cal_grade)} ${a.cal_grade_pct}/100 ${esc(a.cal_detail || "")}`],
   ]) + `<p class="note">ROLL is a rolling trailing slice, <b>not</b> a holdout (F-037). The only out-of-sample evidence is the frozen forward holdout in the Backtest tab.</p>`;
 
@@ -554,9 +557,10 @@ function renderOverview() {
       ["VIX", f(D.macro.vix, 1)]])),
     card("Auction", kv([["State", `${esc(au.state)} ${au.prob}% ${esc(au.cycle)}`], ["Bias", esc(au.bias)], ["Discovery", esc(au.disc)], ["Acceptance", `${au.accept} ${esc(au.accept_grade)}`],
       ["Value migration", esc(au.value_mig)], ["Last sweep", au.sweep_q ? `${esc(au.sweep_grade)} ${au.sweep_q}` : "—"]])),
-    card("Order flow", kv([["CVD", fl.cvd_bull ? '<span class="bull">bull</span>' : '<span class="bear">bear</span>'], ["Volume delta (50)", f(fl.vd_k, 1) + "k"],
+    card("Volume (proxy, not order flow)", kv([["Bar-signed volume", fl.cvd_bull ? '<span class="bull">bull</span>' : '<span class="bear">bear</span>'], ["Volume delta (50)", f(fl.vd_k, 1) + "k"],
       ["Value area", `${esc(fl.va_pos)} POC ${f(fl.vpoc)} (${f(fl.va_ratio, 0)}%)`], ["Rel. volume", f(fl.rel_vol, 2) + "×"], ["Volume pct", pct(fl.vol_pct)],
-      ["Climax", fl.climax_up ? '<span class="bull">up</span>' : fl.climax_dn ? '<span class="bear">down</span>' : "—"]])),
+      ["Climax", fl.climax_up ? '<span class="bull">up</span>' : fl.climax_dn ? '<span class="bear">down</span>' : "—"]]) +
+      `<p class="note">${esc(M.volume_source || "")}. Volume is signed by the bar's direction (close vs open); this is a proxy, not true CVD: no trade-by-trade aggressor data is used.</p>`),
     card("Liquidity target", kv([["Destination", `${esc(li.dest)} ${li.dest_score} ${esc(li.dest_conf)}`], ["Reach score", f(li.reach, 0) + "/100"], ["Health", li.health + "/100"],
       ["PDH / PDL reach", `${f(li.reach_scores.PDH, 0)} / ${f(li.reach_scores.PDL, 0)}`], ["Sweep", li.sweep_bull ? "bull sweep" : li.sweep_bear ? "bear sweep" : "—"]])),
   ];
@@ -616,7 +620,7 @@ function renderAnalog() {
   const sc = A.scan || {};
   $("#tab-analog").innerHTML =
     card("Analog engine", kv([["Buffer / matched", `${sc.hN || 0} / ${A.match}`], ["Similarity threshold", sc.sim_thresh], ["Bull / bear / range", `${f(A.bull, 0)} / ${f(A.bear, 0)} / ${f(A.range, 0)}`],
-      ["Weighted win rate", pct(A.wr)], ["Avg win / loss (R)", `${f(A.avg_w, 2)} / ${f(A.avg_l, 2)}`], ["Expectancy", fs(A.ev, 2) + " R"],
+      ["Weighted win rate", pctN(A.wr, A.match)], ["Avg win / loss (R)", A.match > 0 ? `${f(A.avg_w, 2)} / ${f(A.avg_l, 2)}` : "—"], ["Expectancy", A.match > 0 ? fs(A.ev, 2) + " R" : "—"],
       ["Profit factor", f(A.profit_factor, 2)], ["Avg MAE", f(A.max_adverse_atr, 2) + " ATR"], ["Notional max DD", f(A.max_dd, 1) + "%"],
       ["BOS continuation / fail", `${f(A.bos_cont, 0)} / ${f(A.bos_fail, 0)}%`], ["PDH-first / PDL-first", `${A.pdh1st ?? "—"} / ${A.pdl1st ?? "—"}%`], ["Regime persistence", pct(A.reg_per)]]) +
       `<p class="note">Each confirmed bar is compared with up to ${S.data.meta.hist_max} past states on 10 weighted features; every count is a count of distinct analogs.</p>`) +
