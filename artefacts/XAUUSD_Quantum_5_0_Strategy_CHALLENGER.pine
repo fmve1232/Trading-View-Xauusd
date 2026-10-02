@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v33   (challenger H1; F-A38, F-A39)  ║
+// ║  BUILD STAMP — this file last CHANGED in v34   (challenger H1; scorecard)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -2284,7 +2284,13 @@ macroVotesBear = macroBearVotes
 mtfConfluenceBull = mtfVotesBull + macroVotesBull
 mtfConfluenceBear = mtfVotesBear + macroVotesBear
 // R5.2-M4: max votes = 4 (MTF) + 6 (macro) = 10, not 9 (score previously reached ±111).
-mtfConfluenceScore = int(math.round((mtfConfluenceBull - mtfConfluenceBear) / 10.0 * 100.0))
+// v34 F-A40: a layer at or below the chart's timeframe is not a higher timeframe and scores a
+// neutral 50, so it can never vote. The fixed /10 denominator therefore capped the score by
+// timeframe: at most 9 of 10 votes on 5M, 8 on 15M, 7 on 1H. The same market scored lower on 15M
+// than on 5M purely because of the chart. Normalised by the votes AVAILABLE on this timeframe
+// (MTF layers above the chart + the 6 macro votes); identical to before wherever all 4 layers vote.
+int mtfAvail = (htf5mAvailable ? 1 : 0) + (htf15mAvailable ? 1 : 0) + (htf1hAvailable ? 1 : 0) + (htf4hAvailable ? 1 : 0)
+mtfConfluenceScore = int(math.round((mtfConfluenceBull - mtfConfluenceBear) / (mtfAvail + 6.0) * 100.0))
 mtfConfluenceMag = math.abs(mtfConfluenceScore)
 mtfAgreementHigh = mtfConfluenceMag >= 60
 mtfAgreementMed = mtfConfluenceMag >= 30 and mtfConfluenceMag < 60
@@ -2319,7 +2325,9 @@ bool rangeDominant = biasRegimeCall == "RANGE"
 
 // V27 ENGINE 6: CONFIDENCE SCORE — equal-weight base from 5 independent dimensions
 confStruct = structureRegime >= 80 ? 100 : structureRegime >= 50 ? 60 : structureRegime >= 20 ? 30 : 10
-confMTF = int(math.round(math.max(htfFullLong, htfFullShort) * 100.0 / 5.0))
+// v34 F-A40: same normalisation for the 5-layer agreement (layers above the chart only).
+int htfFullAvail = math.max(mtfAvail + (htf1dAvailable ? 1 : 0), 1)
+confMTF = int(math.round(math.max(htfFullLong, htfFullShort) * 100.0 / htfFullAvail))
 confLiquidity = 0
 confLiquidity += bullBOS or bearBOS ? 25 : 0
 confLiquidity += fvgActive or obBullActive or obBearActive ? 25 : 0
@@ -5294,3 +5302,73 @@ if strategy.position_size < 0
         stSL := stEntry
     strategy.exit("Sx1", "S", stop=stSL, limit=stTP1, qty_percent=50)
     strategy.exit("Sx2", "S", stop=stSL, limit=stTP2)
+
+// ═══ v34 FORWARD-TEST SCORECARD (display only: reads strategy.closedtrades, feeds nothing) ═══
+// The record of THIS arm, inside TradingView. One row per POSITION: the 50% TP1 exit and the
+// remainder are summed per entry, so a position closed in two parts counts once (the Strategy
+// Tester's List of Trades shows each part as its own row). A position still partly open is left
+// out until it closes. Rule (PREREGISTRATION §4): N >= 50, the 95% t-interval of the mean $ per
+// position entirely above 0, and PF >= 1.2 -> EDGE SHOWN; below 50 -> COLLECTING. TradingView keeps
+// nothing between sessions: the card is recomputed from the LOADED bars, so it is only as deep as
+// the chart's history -- the Coverage row says when the history no longer reaches the start.
+fwdStart = input.time(timestamp("UTC", 2026, 10, 5, 0, 0), "Forward test start (PREREGISTRATION A1)", group="FORWARD TEST")
+fwdShow = input.bool(true, "Show forward-test scorecard", group="FORWARD TEST")
+fwdPos = input.string("Bottom Right", "Scorecard position", options=["Bottom Right", "Bottom Left", "Top Right", "Top Left"], group="FORWARD TEST", tooltip="With several arms visible on one chart, give each its own corner.")
+var int fwdBar0 = time
+var table fwdTbl = table.new(fwdPos == "Bottom Left" ? position.bottom_left : fwdPos == "Top Right" ? position.top_right : fwdPos == "Top Left" ? position.top_left : position.bottom_right, 2, 9, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+_fwRow(int _r, string _k, string _fwv, color _c) =>
+    table.cell(fwdTbl, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=size.small, text_halign=text.align_left)
+    table.cell(fwdTbl, 1, _r, _fwv, text_color=_c, text_size=size.small, text_halign=text.align_left)
+if fwdShow and barstate.islast
+    int _fwct = strategy.closedtrades
+    int _fwopenBar = strategy.opentrades > 0 ? strategy.opentrades.entry_bar_index(0) : -3
+    int _fwn = 0
+    int _fww = 0
+    float _fws = 0.0
+    float _fws2 = 0.0
+    float _fwgw = 0.0
+    float _fwgl = 0.0
+    float _fwpos = 0.0
+    int _fweb = -1
+    int _fwfirst = 0
+    for _fwi = 0 to _fwct
+        int _fwb = -2
+        bool _fwin = false
+        if _fwi < _fwct
+            _fwb := strategy.closedtrades.entry_bar_index(_fwi)
+            _fwin := strategy.closedtrades.entry_time(_fwi) >= fwdStart
+        if _fweb >= 0 and _fwb != _fweb and _fweb != _fwopenBar
+            _fwn += 1
+            _fww += _fwpos > 0 ? 1 : 0
+            _fws += _fwpos
+            _fws2 += _fwpos * _fwpos
+            _fwgw += math.max(_fwpos, 0.0)
+            _fwgl += math.max(-_fwpos, 0.0)
+        if _fwb != _fweb
+            _fwpos := 0.0
+            _fweb := -1
+        if _fwin
+            _fweb := _fwb
+            _fwpos += strategy.closedtrades.profit(_fwi)
+            _fwfirst := _fwfirst == 0 ? strategy.closedtrades.entry_time(_fwi) : _fwfirst
+    float _fwm = _fwn > 0 ? _fws / _fwn : na
+    float _fwsd = _fwn > 1 ? math.sqrt(math.max((_fws2 - _fwn * _fwm * _fwm) / (_fwn - 1), 0.0)) : na
+    // two-sided 95% t quantile by the Fisher expansion in z = 1.96 (error < 0.003 for df >= 10)
+    float _fwdf = math.max(_fwn - 1, 1)
+    float _fwt = 1.959964 + (7.529121 + 1.959964) / (4.0 * _fwdf) + (5.0 * 28.922809 + 16.0 * 7.529121 + 3.0 * 1.959964) / (96.0 * _fwdf * _fwdf)
+    float _fwlo = _fwn >= 10 ? _fwm - _fwt * _fwsd / math.sqrt(_fwn) : na
+    float _fwhi = _fwn >= 10 ? _fwm + _fwt * _fwsd / math.sqrt(_fwn) : na
+    float _fwpf = _fwgl > 0 ? _fwgw / _fwgl : na
+    string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpf >= 1.2 ? "EDGE SHOWN" : "NOT SHOWN"
+    bool _fwtfOk = timeframe.in_seconds() == 900
+    color _fwcT = color.new(#E6EDF3, 0)
+    table.cell(fwdTbl, 0, 0, "FORWARD TEST  v34", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    table.cell(fwdTbl, 1, 0, "from " + str.format_time(fwdStart, "yyyy-MM-dd HH:mm", "UTC") + " UTC  ·  " + timeframe.period + (_fwtfOk ? " (registered)" : "  NOT 15M: does not count"), text_color=_fwtfOk ? color.white : color.orange, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    _fwRow(1, "Positions (N)", str.tostring(_fwn) + (_fwn > 0 ? "   wins " + str.tostring(_fww) + " = " + str.tostring(_fww * 100.0 / _fwn, "#") + "%" : ""), _fwcT)
+    _fwRow(2, "Mean $ / position", na(_fwm) ? "—" : str.tostring(_fwm, "#.##"), _fwcT)
+    _fwRow(3, "95% CI of mean", na(_fwlo) ? "needs 10+ positions" : str.tostring(_fwlo, "#.##") + "  to  " + str.tostring(_fwhi, "#.##"), _fwcT)
+    _fwRow(4, "Profit factor", na(_fwpf) ? "—" : str.tostring(_fwpf, "#.##") + "  (rule >= 1.2)", _fwcT)
+    _fwRow(5, "Net $ (1 oz, pinned costs)", str.tostring(_fws, "#.##"), _fwcT)
+    _fwRow(6, "VERDICT (pre-registered)", _fwv, _fwv == "EDGE SHOWN" ? color.lime : _fwv == "NOT SHOWN" ? color.orange : _fwcT)
+    _fwRow(7, "Coverage", fwdBar0 > fwdStart ? "loaded history starts " + str.format_time(fwdBar0, "yyyy-MM-dd", "UTC") + " AFTER the test start: incomplete, use the weekly log" : _fwn == 0 ? "no closed position since the start yet" : "first counted entry " + str.format_time(_fwfirst, "yyyy-MM-dd HH:mm", "UTC"), fwdBar0 > fwdStart ? color.orange : _fwcT)
+    _fwRow(8, "Unit", "positions (partial exits summed); open positions excluded", color.new(#8FA3B8, 0))

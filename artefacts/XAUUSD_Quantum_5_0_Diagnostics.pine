@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v33   (engine F-A38, F-A39)          ║
+// ║  BUILD STAMP — this file last CHANGED in v34   (engine F-A40 MTF scale)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -2282,7 +2282,13 @@ macroVotesBear = macroBearVotes
 mtfConfluenceBull = mtfVotesBull + macroVotesBull
 mtfConfluenceBear = mtfVotesBear + macroVotesBear
 // R5.2-M4: max votes = 4 (MTF) + 6 (macro) = 10, not 9 (score previously reached ±111).
-mtfConfluenceScore = int(math.round((mtfConfluenceBull - mtfConfluenceBear) / 10.0 * 100.0))
+// v34 F-A40: a layer at or below the chart's timeframe is not a higher timeframe and scores a
+// neutral 50, so it can never vote. The fixed /10 denominator therefore capped the score by
+// timeframe: at most 9 of 10 votes on 5M, 8 on 15M, 7 on 1H. The same market scored lower on 15M
+// than on 5M purely because of the chart. Normalised by the votes AVAILABLE on this timeframe
+// (MTF layers above the chart + the 6 macro votes); identical to before wherever all 4 layers vote.
+int mtfAvail = (htf5mAvailable ? 1 : 0) + (htf15mAvailable ? 1 : 0) + (htf1hAvailable ? 1 : 0) + (htf4hAvailable ? 1 : 0)
+mtfConfluenceScore = int(math.round((mtfConfluenceBull - mtfConfluenceBear) / (mtfAvail + 6.0) * 100.0))
 mtfConfluenceMag = math.abs(mtfConfluenceScore)
 mtfAgreementHigh = mtfConfluenceMag >= 60
 mtfAgreementMed = mtfConfluenceMag >= 30 and mtfConfluenceMag < 60
@@ -2317,7 +2323,9 @@ bool rangeDominant = biasRegimeCall == "RANGE"
 
 // V27 ENGINE 6: CONFIDENCE SCORE — equal-weight base from 5 independent dimensions
 confStruct = structureRegime >= 80 ? 100 : structureRegime >= 50 ? 60 : structureRegime >= 20 ? 30 : 10
-confMTF = int(math.round(math.max(htfFullLong, htfFullShort) * 100.0 / 5.0))
+// v34 F-A40: same normalisation for the 5-layer agreement (layers above the chart only).
+int htfFullAvail = math.max(mtfAvail + (htf1dAvailable ? 1 : 0), 1)
+confMTF = int(math.round(math.max(htfFullLong, htfFullShort) * 100.0 / htfFullAvail))
 confLiquidity = 0
 confLiquidity += bullBOS or bearBOS ? 25 : 0
 confLiquidity += fvgActive or obBullActive or obBearActive ? 25 : 0
@@ -5559,7 +5567,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v33 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v34 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)

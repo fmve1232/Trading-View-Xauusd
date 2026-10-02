@@ -248,7 +248,24 @@ def test_race(path):
     ok("race expectancy E[R] = Pw*RR - Pl + E[timeout MTM] - cost", worst < 1e-9, f"L{ln}, max |diff| {worst:.1e}")
 
 
-TESTS = [test_kelly, test_grid, test_ci, test_platt, test_brier, test_tanh, test_cf, test_race]
+def test_mtf(path):
+    blk, ln = P.extract(path, r'^int mtfAvail = ', r'^mtfConfluenceScore = ')
+    worst = 0.0
+    for tf in (60, 300, 900, 3600, 14400):
+        av = {k: tf < v for k, v in (('htf5mAvailable', 300), ('htf15mAvailable', 900), ('htf1hAvailable', 3600), ('htf4hAvailable', 14400))}
+        n_av = sum(av.values())
+        for _ in range(300):
+            mb = rng.randint(0, n_av) + rng.randint(0, 6)
+            ms = rng.randint(0, n_av) + rng.randint(0, 6)
+            env = P.Env(mtfConfluenceBull=mb, mtfConfluenceBear=ms, **av)
+            P.run([l for l in blk if not l.startswith('//')], env)
+            ref = P._round((mb - ms) / (n_av + 6.0) * 100.0)
+            worst = max(worst, abs(env['mtfConfluenceScore'] - ref))
+    ok("MTF confluence normalised by the votes available on the chart TF (F-A40)", worst == 0,
+       f"L{ln}: 1M/5M/15M/1H/4H x 300 cases, max |diff| {worst}")
+
+
+TESTS = [test_mtf, test_kelly, test_grid, test_ci, test_platt, test_brier, test_tanh, test_cf, test_race]
 
 if __name__ == '__main__':
     files = sys.argv[1:] or ['artefacts/XAUUSD_Quantum_5_0_Master.pine']

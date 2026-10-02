@@ -27,7 +27,7 @@ BUILTIN=set("""open high low close volume time hl2 hlc3 ohlc4 hlcc4 bar_index la
 last_bar_time na nz true false time_close time_tradingday syminfo timeframe barstate strategy
 ta math array str color line label box table request input indicator plot plotshape plotchar
 plotcandle plotarrow plotbar hline fill bgcolor barcolor alertcondition alert fixnan dayofweek
-dayofmonth month year hour minute second weekofyear timenow dayofyear matrix map runtime chart
+dayofmonth month year hour minute second weekofyear timenow timestamp dayofyear matrix map runtime chart
 ticker adjustment session currency scale shape location size position extend xloc yloc text
 display format order barmerge float int bool string var varip switch export import method type
 enum series simple const and or not if else for while to by break continue return""".split())

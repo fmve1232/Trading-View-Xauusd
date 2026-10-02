@@ -1,6 +1,18 @@
-# Forward-test pre-registration — XAUUSD Quantum (build v33, amendment A1)
+# Forward-test pre-registration — XAUUSD Quantum (build v34, amendments A1–A2)
 
-## Amendment A1 — 2026-10-02, operator decision; the holdout clock restarts
+## Amendment A2 — before the holdout start (operator request: records inside TradingView; 5M and 15M)
+
+| # | Change | Why |
+|---|---|---|
+| A2.1 | Engine fix **F-A40**: MTF confluence and MTF confidence normalised by the layers available on the chart's timeframe (Master and all arms) | The fixed denominator capped the score by timeframe (9/10 votes on 5M, 8/10 on 15M), so the same market scored differently on the operator's two charts. It feeds trade quality, so it changes signals. Made **before** the 2026-10-05 start: no holdout data is affected. |
+| A2.2 | Each arm shows an on-chart **forward-test scorecard** (display only) | The operator wants the record inside TradingView. Its numbers follow the §4 rule exactly. |
+| A2.3 | **Unit = position.** The arms close 50% at TP1 and the rest later; the two exits of one entry are ONE observation, with their P&L summed. A position still partly open is not counted until it closes. | §3 said "$ per trade". The List of Trades shows each partial exit as its own row, which would double-count and correlate the observations. |
+| A2.4 | **15M stays the registered timeframe. 5M is for timing only:** a 15M BUY/SELL may be entered on a 5M trigger, but the record is the 15M arm. A scorecard on any other timeframe labels itself "does not count". | One registered timeframe keeps the test single-hypothesis (§6). |
+
+The holdout start (2026-10-05 00:00 UTC), the decision rules (§4) and the decision date (§5)
+are unchanged. The new hashes replace those in §2.
+
+, operator decision; the holdout clock restarts
 
 | # | Change | Why |
 |---|---|---|
@@ -42,10 +54,10 @@ Only trades that happen **after** the rules are frozen can show an edge.
 
 | File | SHA-256 |
 |---|---|
-| `XAUUSD_Quantum_5_0_Master.pine` | `6708cfb7cf51270371933cb7a194852443594445705310778cc599b1a08befed` |
-| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `4d544c9976c1d2ff806ef84db9a8c4b8b7e86b65c45158a478d321de456b243e` |
-| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `7da48be0e80fbe1d6d07bb48ae746f0e7b41b3b3522306880ad6bcf114cbcce3` |
-| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `67bd4253f9e3133d1336aa906a66109a44ca6e47f8655f5cb36de1becb43f62e` |
+| `XAUUSD_Quantum_5_0_Master.pine` | `043410047ff2eef03845c53c7e832bb7a873c7b7d0b8c8d55c778c3041061694` |
+| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `347cc2dca5e3f159135ab974f2e004e891b8572c567e45e4d867c7e4c23c0c01` |
+| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `a5e2dbde29c9daae1a0b0b007d2e7b10e4374887d3ae292b19947f697ec503b2` |
+| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `8badcce599651d8fe0d4d6da1e076fb88ba38109e410aaef371667c6af9e2d07` |
 
 Settings stay at the script defaults, except `MT5 Price Offset`, which is display only.
 Strategy Properties stay at the code defaults: initial capital 10,000, 1 oz fixed, costs as

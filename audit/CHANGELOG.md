@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v33
+# Build changelog — v1 → … → v34
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1188,4 +1188,55 @@ The operator decided (2026-10-02) to apply the fixes now and to restart the test
   - Diagnostics ~39,210 lexical, ~98,600 compiled; tightest, and the first to trim if a save
     overflows.
   - Compile NOT RUN for the six changed files.
+
+---
+
+# Build v33 → v34 — records inside TradingView; 5M/15M consistency (F-A40); amendment A2
+
+Operator request: keep the required information in TradingView, readable from each file's
+result, and make the system right on both 5M and 15M, which the operator watches together.
+
+- **F-A40 (5M/15M review).** Layers at or below the chart timeframe score a neutral 50, so they
+  never vote, yet MTF confluence (it feeds trade quality) divided by a fixed 10 and MTF
+  confidence by a fixed 5.
+  - The maximum score was 9/10 on 5M, 8/10 on 15M and 7/10 on 1H, so the same market scored
+    lower on 15M than on 5M.
+  - Now normalised by the votes available on the chart. It is identical wherever all layers
+    vote (1M).
+  - Applied to the Master, all arms and Diagnostics (`fix_v34.py`).
+  - New `formula_trace` check: 1M/5M/15M/1H/4H × 300 cases, exact.
+  - The HTF *gate* (≥ 2 opposed among the layers above the chart) was reviewed and left as is:
+    a layer at the chart's own timeframe is not a higher timeframe.
+- **On-chart FORWARD TEST scorecard**, identical in Treatment, Control and Challenger
+  (display only):
+  - It shows positions since the start, wins, mean $, a 95% t-interval (Fisher expansion,
+    error < 0.004 at df ≥ 9 vs the exact t), PF, net $, the pre-registered verdict, the
+    timeframe check and coverage.
+  - Unit = position: partial exits are summed, and open positions are excluded.
+  - The counting logic was executed through `pine_exec.py` on 400 random trade lists (partial
+    exits, a half-open position, pre-start trades): 0 mismatches.
+- **Workbook:**
+  - a **TV Snapshots** sheet, the weekly copy of each card and the permanent record;
+  - an Arm Trades note: one row per position;
+  - 0 errors on recalculation.
+- **PREREGISTRATION A2:**
+  - F-A40 and the scorecard, made before the start;
+  - unit = position;
+  - 15M registered, 5M for timing only;
+  - new hashes. Start date, rules and decision date unchanged.
+- **Checks:**
+  - precheck, undeclared, order, deadcode and pinelimits: 7/7 each (`undeclared.py` learned
+    the builtin `timestamp`).
+  - Treatment vs Control: 5 hunks. Treatment vs Challenger: 4. `diag_parity` passes.
+  - `formula_trace`: all PASS in every engine copy. `sequence`: clean.
+- **Visible:**
+  - a FORWARD TEST card in each arm, bottom right by default. On 5M it says "NOT 15M: does not
+    count".
+  - Trade-quality and MTF-agreement readings are slightly higher on 15M and 1H than before,
+    because they are no longer capped by the timeframe.
+- Tokens:
+  - Master ~39,020 lexical, ~98,100 compiled (2.1% headroom).
+  - Arms ~35,800 lexical, ~90,000 compiled.
+  - Diagnostics ~39,270 lexical, ~98,800 compiled; tightest.
+  - Compile NOT RUN.
 

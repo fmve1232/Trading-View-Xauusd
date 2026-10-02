@@ -168,7 +168,17 @@ The rules are frozen in `audit/PREREGISTRATION.md`. Only trades opened after the
 3. **Weekly:** in each arm's Strategy Tester open *List of Trades* and paste the arm name,
    entry time and net P&L of any new trades into *Arm Trades*.
    The `~X% ±Y` next to SL/TP on the plan is a **90%** interval on the effective sample.
-4. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
+4. **On-chart scorecards (v34).** Each strategy shows a FORWARD TEST card: positions since the
+   start, mean $ per position, 95% CI, PF and the pre-registered verdict. With several arms on one
+   chart, give each its own corner (input *Scorecard position*), or show one arm at a time. Every
+   week, copy each card into the workbook's **TV Snapshots** sheet. TradingView recomputes the
+   card from the loaded bars only; once the history no longer reaches the start, its Coverage row
+   turns orange, and the snapshots are then the record.
+5. **5M and 15M.** The registered decision chart is **15M**: take only 15M confirmed BUY/SELL. Use
+   the 5M chart to time the entry inside that signal (e.g. a 5M structure break in the same
+   direction). A scorecard on 5M says "NOT 15M: does not count". On a free plan, the 5M history
+   covers only ~2–3 weeks, so its statistics are thin by construction.
+6. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
    setting or rule before the decision date in PREREGISTRATION §5.
 
 ---

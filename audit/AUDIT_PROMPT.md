@@ -18,15 +18,15 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5736 | 370454 | `6708cfb7cf51270371933cb7a194852443594445705310778cc599b1a08befed` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5285 | 331060 | `4d544c9976c1d2ff806ef84db9a8c4b8b7e86b65c45158a478d321de456b243e` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5285 | 331125 | `7da48be0e80fbe1d6d07bb48ae746f0e7b41b3b3522306880ad6bcf114cbcce3` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5296 | 332044 | `67bd4253f9e3133d1336aa906a66109a44ca6e47f8655f5cb36de1becb43f62e` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5744 | 371237 | `043410047ff2eef03845c53c7e832bb7a873c7b7d0b8c8d55c778c3041061694` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5363 | 337193 | `347cc2dca5e3f159135ab974f2e004e891b8572c567e45e4d867c7e4c23c0c01` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5363 | 337258 | `a5e2dbde29c9daae1a0b0b007d2e7b10e4374887d3ae292b19947f697ec503b2` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5374 | 338177 | `8badcce599651d8fe0d4d6da1e076fb88ba38109e410aaef371667c6af9e2d07` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5594 | 353310 | `11c28d1b3501c1f11b9f1ffa616dc4b397b84695e5f2ac6c58318b85ed262690` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5602 | 354093 | `a195c954aba012bff18c0273a650688253e2afeb3b07a5e59d8d31ef48e735c7` |
 
-> **BUILD v33 — this prompt pins the current build.** The originally audited build
+> **BUILD v34 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -71,6 +71,8 @@ scope, and no other build of these scripts is in scope.
 > Fix prepared (`audit/tools/pending_fix_v33.py`), NOT applied: it changes signals (holdout).
 > **v33:** F-A38 and F-A39 fixed in every engine copy (operator-approved); forward test restarted on
 > **15M from 2026-10-05 00:00 UTC** (PREREGISTRATION amendment A1); EdgeCases F-group rewritten.
+> **v34: F-A40** (MTF scale per timeframe) fixed; on-chart forward-test scorecards (unit = position);
+> PREREGISTRATION A2 (15M registered, 5M timing only), before the 2026-10-05 start.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
