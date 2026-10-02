@@ -51,18 +51,45 @@ providers ──►  raw (as received) ──► validated (quality state per ro
 | 5 | **Research outcomes.** Re-score every frozen-arm signal with an explicit triple barrier, an AMBIGUOUS same-bar flag (resolved from 5m bars where they exist, else left AMBIGUOUS), MFE and MAE. The same-bar case is then reported as a count, not assumed. | §36, §37 | No (reads the frozen arm's signals) | — |
 | 6 | **Out-of-sample calibration study.** Walk-forward Platt and isotonic fits on the analog score, with purge and embargo. Reported metrics: Brier, log loss, ECE/MCE, a reliability curve with bootstrap CIs, and the slope and intercept. *Measured* on history and *judged* only on post-freeze data. Nothing is tuned. | §41–§44 | No | — |
 | 7 | **Volatility and regime study.** ATR vs EWMA vs GARCH(1,1), compared on out-of-sample forecast loss with `arch`. The regime labels are evaluated, not used. | §27, §34 | No | — |
-| 8 | **Reference quotes with bid/ask.** *Either* OANDA v20 (an account token as a GitHub/Worker secret, pricing stream) *or* MT5 (`MetaTrader5` is a Windows-only package with the terminal running, so it needs the operator's PC or a Windows VPS pushing to the relay). This provides the observed spread, the divergence panel (§86) and the execution reference (§110). | §7, §8, §16, §86, §110 | No, while display/reference only | An account and a host |
-| 9 | **Service layer.** FastAPI + Postgres (or Supabase) + WebSocket fan-out, *only if* phases 3–8 outgrow static JSON. Until then the Pages + Actions + Worker set-up is the cheapest design that meets §3 and §119. | §64, §65, §82 | No | A host and its cost |
+| 8 | **A second spot feed with real bid/ask, free.** OANDA v20 on a free *practice* (demo) account. The token is held only as the secret `OANDA_API_TOKEN`. (a) Each pipeline run reads bid/ask candles (`price=BA`) for M5/M15/H1/D, so every bar gets an observed spread and a second, independent spot series. (b) A pricing snapshot gives the divergence panel (§86) against Twelve Data. No server is needed. MT5 is optional: a free broker demo account on the operator's own Windows PC can push quotes to the relay while that PC is on. | §7, §8, §16, §47, §86, §110 | No, while display/reference only | A free OANDA practice account |
+| 9 | **The API stays static.** The JSON files on Pages *are* the read API (`/data/*.json`, versioned, with the freeze key). The Cloudflare Worker is the WebSocket. Versioned datasets are Parquet attached to GitHub Releases (free, 2 GB a file) and queried with DuckDB. No FastAPI or Postgres host is needed. | §64, §65, §82 | No | — |
 | 10 | **ML candidate.** Only after phases 5–6 show what an honest target and calibration look like: a logistic baseline first, then gradient boosting only if it beats the baseline out of sample after costs. It goes in as a *new pre-registered arm*. | §38–§45, §117 | It becomes its own frozen arm | A pre-registration amendment |
-| 11 | **Paper execution, then manual confirmation.** MT5 bridge with a kill switch and the §127 limits. Live execution only after the frozen-arm decision passes §7 *and* the paper results agree with the ledger. | §126–§128 | No | Broker account; written go-ahead |
+| 11 | **Paper execution, then manual confirmation.** Paper fills against the OANDA practice account's own prices (free); an MT5 bridge, with a kill switch and the §127 limits, only on the operator's PC. Live execution only after the frozen-arm decision passes §7 *and* the paper results agree with the ledger. | §126–§128 | No | Written go-ahead |
 
-## 4. Decisions only the operator can make
+## 4. Zero-cost policy (operator instruction, 2 Oct 2026)
 
-1. **The host for phases 8–9.** The options are: keep everything free (Actions + Pages + Cloudflare Worker, as now), add a small VPS, or use a managed Supabase/Fly.io.
+Every component must be free. "Professional" is delivered through the *process*: validation, cross-checks, versioning, out-of-sample testing and an audit trail. These cost nothing. Paid feeds are not used.
+
+| Need | Free component | Free-tier limit | Our use |
+|---|---|---|---|
+| Compute / schedule | GitHub Actions (public repo) | Unlimited minutes; 6 h per job. Scheduled runs can be delayed at busy times. | One run every 15 min, about 5 min each |
+| Website | GitHub Pages | 1 GB site, 100 GB/month transfer | Static JSON and the app |
+| Primary spot bars | Twelve Data free | 800 credits/day, 8/min | 4 calls a run ≈ 384/day |
+| Second spot feed with bid/ask | OANDA v20 practice account | Free; rate limits are generous for REST | Phase 8 |
+| Futures, macro | Yahoo (delayed), FRED, CFTC | Free | As now |
+| Streaming ticks | Finnhub free WebSocket via a Cloudflare Worker | Worker: 100k requests/day; SQLite Durable Objects on the free plan | Built; needs the free secrets |
+| Tick history with bid/ask | Dukascopy | Free, but blocked from GitHub's runners | From the operator's PC when wanted |
+| Storage, datasets | Git branches; Parquet on GitHub Releases; DuckDB | Free | Phases 1, 3, 9 |
+| Statistics / ML | NumPy, pandas, SciPy, statsmodels, scikit-learn, arch | Free | Phases 6, 7, 10 |
+| Alerts | GitHub e-mail on failure; the existing `notify.py` channel | Free | As now |
+
+**What free cannot buy, and how the gap is handled (§109, §125):**
+
+| Gap | How it is handled |
+|---|---|
+| CME real-time trade data with the aggressor side (true CVD, true footprint) | Volume stays labelled as a proxy. |
+| Exchange-licensed real-time GC | Yahoo's GC is delayed and labelled delayed; it is used for the daily basis and volume only. |
+| An uptime or latency guarantee | Every feed shows its measured age; a stale feed says STALE. |
+| Your own broker's exact prices | The OANDA practice feed plus the MT5 offset you enter. |
+
+None of these gaps is filled with an invented number.
+
+## 5. Decisions only the operator can make
+
+1. **Open a free OANDA practice account** and store its token in GitHub as the secret `OANDA_API_TOKEN`. The token goes straight into GitHub settings and must never be pasted in chat or committed.
 2. **The execution broker.** Its contract specification (contract size, tick value, lot step, stop and freeze levels) drives the sizing in §111. No broker is assumed.
-3. **Whether to connect OANDA and/or MT5.** Each needs an account and a credential that must be held only as a secret.
 
-## 5. What will not be built, and why
+## 6. What will not be built, and why
 
 - **Tick-by-tick "true CVD" for spot gold.** OTC spot has no central tape. True delta needs CME GC/MGC trade data with an aggressor side, which is a paid licence (§25, §109: REQUIRED PAID DATA).
 - **Any claim of nanosecond market-data latency.** See §1.
