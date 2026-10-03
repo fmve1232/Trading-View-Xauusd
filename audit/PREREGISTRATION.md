@@ -110,11 +110,22 @@ history and its log entries are archived, not deleted.
 - **When it was decided:** the restart was recommended and approved at about 10:00 UTC on 28 Sep, when the
   earlier freeze had **no 1H trades** (only one 5m trade each in Treatment and Challenger). A tooling outage
   delayed the merge to 29 Sep.
-- **What the earlier freeze holds at the merge:** on 1H, one trade each in Treatment and Challenger, the same
-  SHORT entered 28 Sep 16:00 UTC and stopped out 29 Sep 14:00 UTC at **-1.021R** (price source
-  `twelvedata:XAU/USD`); Control has none. It was entered after the decision.
+- **What the earlier freeze holds at the merge** (merged 3 Oct, market closed; `forward-ledger` as of
+  2 Oct 11:21 UTC; no open positions; price source `twelvedata:XAU/USD`). All trades below were entered
+  after the decision:
+
+  | TF | Treatment | Control | Challenger |
+  |---|---|---|---|
+  | **1H (decides)** | 1 trade, **-1.021R** | 0 | 1 trade, **-1.021R** |
+  | 15m | 3 trades, 0 wins, -3.140R | 2 trades, 0 wins, -2.093R | 3 trades, 0 wins, -3.140R |
+  | 5m | 8 trades, 4 wins, -0.762R | 2 trades, 0 wins, -2.158R | 7 trades, 3 wins, -1.128R |
+  | 4H | 0 | 0 | 0 |
+
+  The 1H trade is the same SHORT in Treatment and Challenger, entered 28 Sep 16:00 UTC and stopped out
+  29 Sep 14:00 UTC. The merge waited on the operator from 29 Sep to 3 Oct, which is when the 5m and
+  15m trades accrued.
 - **Rule, so a restart can never hide a result:** the final report lists every archived trade of every
-  earlier freeze next to the result of the counted test. The -1.021R trades above are part of that record.
+  earlier freeze next to the result of the counted test. Every trade in the table above is part of that record.
 
 Found by comparing the website with TradingView (OANDA) on the same minute (02:02 UTC, 28 Sep) and checking the
 stored bars:
