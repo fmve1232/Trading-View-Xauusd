@@ -19,27 +19,46 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
-      - name: Check the secrets are set
+      - name: Check the secrets are set (names only; values are never printed)
         id: cfg
         env:
-          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          G: ${{ secrets.GH_DISPATCH_TOKEN }}
+          S_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          V_CLOUDFLARE_API_TOKEN: ${{ vars.CLOUDFLARE_API_TOKEN }}
+          S_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          V_CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          S_GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+          V_GH_DISPATCH_TOKEN: ${{ vars.GH_DISPATCH_TOKEN }}
         run: |
-          if [ -n "$T" ] && [ -n "$A" ] && [ -n "$G" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"
-          else echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "### Scheduler not deployed: add CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and GH_DISPATCH_TOKEN secrets, then run this workflow." >> "$GITHUB_STEP_SUMMARY"; fi
-      - name: Deploy
+          ready=true
+          for n in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID GH_DISPATCH_TOKEN; do
+            s="S_$n"; v="V_$n"
+            if [ -n "${!s}" ]; then msg="$n: found"
+            elif [ -n "${!v}" ]; then ready=false; msg="$n: saved under Variables, not Secrets. Add it under Secrets -> New repository secret, then delete the variable."
+            else ready=false; msg="$n: not visible to this workflow. Check the exact name, and that it is a Repository secret (not an Environment, Codespaces or Dependabot secret)."; fi
+            echo "- $msg" >> "$GITHUB_STEP_SUMMARY"; echo "::notice title=secret check::$msg"   # names only, never values
+          done
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          if [ "$ready" != true ]; then echo "::warning::Not deployed: see the run summary for which secret is missing."; fi
+
+      - name: Deploy with wrangler 4 (deploy first, then store the secret on the existing Worker)
         id: deploy
         if: steps.cfg.outputs.ready == 'true'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: scheduler
-          secrets: GH_DISPATCH_TOKEN
+        working-directory: scheduler
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+        run: |
+          # wrangler's own messages go to annotations so a failure is readable without the log;
+          # it never prints the token values
+          fail() { echo "::error title=$1::$(echo "$2" | tail -8 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
+          out=$(npx --yes wrangler@4 deploy 2>&1) || fail "wrangler deploy" "$out"
+          url=$(echo "$out" | grep -oE 'https://[a-z0-9.-]+\.workers\.dev' | head -1)
+          echo "deployment-url=$url" >> "$GITHUB_OUTPUT"
+          echo "::notice title=deployed::$url"
+          out=$(printf '%s' "$GH_DISPATCH_TOKEN" | npx --yes wrangler@4 secret put GH_DISPATCH_TOKEN 2>&1) || fail "wrangler secret put" "$out"
+          echo "::notice title=secret stored::GH_DISPATCH_TOKEN stored as a Worker secret"
+
       - name: Report
         if: steps.cfg.outputs.ready == 'true'
         env:
