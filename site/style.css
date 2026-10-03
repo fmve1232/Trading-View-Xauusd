@@ -171,7 +171,7 @@ table.t th, table.t td { padding: 5px 8px; border-bottom: 1px solid var(--line);
 table.t th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; position: sticky; top: 0; background: var(--card); }
 table.t td:first-child, table.t th:first-child { text-align: left; }
 table.t td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
-#refs table.t th, #refs table.t td { white-space: normal; overflow-wrap: anywhere; }
+#refs table.t th, #refs table.t td, #mt5feed table.t th, #mt5feed table.t td { white-space: normal; overflow-wrap: anywhere; }
 .scroll { overflow: auto; max-height: 460px; }
 .note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
 .funnel { display: grid; gap: 6px; }

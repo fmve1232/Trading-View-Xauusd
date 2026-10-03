@@ -103,6 +103,7 @@ async function load() {
   renderAll();
   loadEvents();
   loadReference();
+  loadMt5();
   pollLive();
   startStream();
 }
@@ -255,6 +256,37 @@ function renderReference() {
   const live = lv ? kv([[`${esc(lv.a)} vs ${esc(lv.b)} now`, `${fs(lv.diff, 2)} (${fs(lv.diff_pct, 3)}%) · ${esc(lv.status)}${isNum(lv.source_time_gap_ms) ? " · Δt " + f(lv.source_time_gap_ms / 1000, 1) + " s" : ""}`]]) : "";
   el.innerHTML = `<table class="t"><tr><th>Source</th><th>Bid / ask</th><th>Status</th></tr>${rows}</table>${bars}${live}
     <p class="note">Checked ${nsAgo(R.generated_ts_ns)}. Bands (fixed, not fitted): &lt;${R.thresholds_pct.CONSISTENT}% consistent, &lt;${R.thresholds_pct.MINOR_DIVERGENCE}% minor, &lt;${R.thresholds_pct.SIGNIFICANT_DIVERGENCE}% significant, otherwise critical. The engine never reads these prices.</p>`;
+}
+
+/* ---------- the operator's MT5 broker feed via MetaApi (DISPLAY AND VALIDATION ONLY; quantum/mt5.py) ---------- */
+async function loadMt5() {
+  try { S.mt5feed = await getJSON("data/mt5.json"); } catch (e) { S.mt5feed = null; }
+  renderMt5();
+}
+function renderMt5() {
+  const X = S.mt5feed, el = $("#mt5feed"), st = $("#mt5-state"); if (!el) return;
+  if (!X) { el.innerHTML = '<span class="muted">No MT5 file yet; it appears after the next pipeline run.</span>'; st.textContent = "—"; st.className = "pill"; return; }
+  $("#mt5-sym").textContent = X.symbol ? "(" + X.symbol + (X.broker && X.broker.server ? " · " + X.broker.server : "") + ")" : "";
+  st.textContent = X.status; st.className = "pill " + (X.status === "OK" ? "bull" : X.status === "UNAVAILABLE" ? "" : "warn");
+  if (X.status !== "OK") { el.innerHTML = `<p class="muted">${esc(X.note || "unavailable")}</p>`; return; }
+  const k = X.tick || {}, h = (X.candles || {})["1h"] || {};
+  const vs = Object.entries(X.vs_primary || {}).filter(([, v]) => v && v.n).map(([tf, v]) =>
+    [`Same ${tf} bar: engine − MT5`, `${fs(v.diff, 2)} (${fs(v.diff_pct, 3)}%) · ${esc(v.status)} · median ${fs(v.median_diff, 2)} over ${v.n}`]);
+  const fp = X.footprint || {}, lv = (fp.levels || []);
+  const near = lv.slice().sort((a, b) => Math.abs(a.price - (k.mid || 0)) - Math.abs(b.price - (k.mid || 0))).slice(0, 14).sort((a, b) => b.price - a.price);
+  const mx = Math.max(1, ...near.map((r) => r.buy + r.sell));
+  const fpRows = near.map((r) => `<tr><td>${f(r.price, 2)}${r.price === fp.poc ? ' <span class="dim">POC</span>' : ""}</td><td class="bull">${f(r.buy, 0)}</td><td class="bear">${f(r.sell, 0)}</td>
+    <td class="${r.delta >= 0 ? "bull" : "bear"}">${fs(r.delta, 0)}</td><td style="width:35%"><div style="height:6px;border-radius:3px;background:var(--neutral);width:${Math.round(((r.buy + r.sell) / mx) * 100)}%"></div></td></tr>`).join("");
+  const label = fp.method === "DEAL_SIDE_VOLUME" ? "real deal side and volume from the broker" : "PROXY: ticks classed by the tick rule (up-tick = buy); spot gold has no central traded volume";
+  el.innerHTML = kv([
+    ["Bid / ask (broker)", isNum(k.bid) ? `${f(k.bid)} / ${f(k.ask)} · spread ${f(k.spread, 2)}` : "—"],
+    ["Last tick", isNum(k.source_ts_ns) ? `${tfmt(k.source_ts_ns / 1e9)} · ${esc(k.timestamp_precision)} · ${esc(k.quality)}` : "—"],
+    ["1h tick volume (last / median 100)", `${f(h.tick_volume, 0)} / ${f(h.tick_volume_median, 0)}`],
+    ...vs]) +
+    (near.length ? `<h4 class="evh" style="margin-top:10px">Footprint · last ${fp.n} ticks · step $${f(fp.step, 2)} · Δ ${fs(fp.delta, 0)}</h4>
+      <table class="t"><tr><th>Price</th><th>Buy</th><th>Sell</th><th>Δ</th><th></th></tr>${fpRows}</table>
+      <p class="note">${esc(label)}. Tick volume is the count of price changes, not traded volume.</p>` : "") +
+    `<p class="note">Read in the cloud through MetaApi on each update (about every 15 minutes); the live chip above streams OANDA. Display only: the engine never reads this feed.</p>`;
 }
 
 /* ---------- upcoming events (DISPLAY ONLY) ---------- */
@@ -826,7 +858,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
