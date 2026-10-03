@@ -265,6 +265,9 @@ async function loadMt5() {
 }
 function renderMt5() {
   const X = S.mt5feed, el = $("#mt5feed"), st = $("#mt5-state"); if (!el) return;
+  // Hidden until a MetaApi account is actually connected (MetaApi bills per account-hour,
+  // so most viewers will never connect one); nothing empty or broken is shown.
+  const card = $("#mt5-card"); if (card) card.style.display = X && X.status === "OK" ? "" : "none";
   if (!X) { el.innerHTML = '<span class="muted">No MT5 file yet; it appears after the next pipeline run.</span>'; st.textContent = "—"; st.className = "pill"; return; }
   $("#mt5-sym").textContent = X.symbol ? "(" + X.symbol + (X.broker && X.broker.server ? " · " + X.broker.server : "") + ")" : "";
   st.textContent = X.status; st.className = "pill " + (X.status === "OK" ? "bull" : X.status === "UNAVAILABLE" ? "" : "warn");

@@ -1,6 +1,7 @@
 """The operator's own MT5 broker feed, read in the cloud through MetaApi -- DISPLAY AND VALIDATION ONLY.
 
-No PC is involved: MetaApi (metaapi.cloud; one MetaTrader account is free) keeps the MT5
+No PC is involved: MetaApi (metaapi.cloud; billed per account-hour, about USD 9 a month as
+quoted on 3 Oct 2026, so it is OPTIONAL and the site hides the panel unless connected) keeps the MT5
 account connected on its servers, and this module reads it over REST on every pipeline run.
 Connect the account with the MT5 INVESTOR (read-only) password, so nothing here can trade.
 
@@ -146,7 +147,7 @@ def build(api: MetaApi | None, symbol: str, primary: dict | None = None, store_d
            "volume_kind": "TICK_VOLUME (count of price changes; not traded volume)",
            "note_display": "Display and validation only. The engine never reads this file."}
     if api is None:
-        out["note"] = "METAAPI_TOKEN / METAAPI_ACCOUNT_ID not set (free: one MetaTrader account)"
+        out["note"] = "METAAPI_TOKEN / METAAPI_ACCOUNT_ID not set (optional, paid MetaApi service)"
         return out
     try:
         acc = api.account_info()
