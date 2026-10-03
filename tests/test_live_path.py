@@ -86,10 +86,51 @@ def test_market_closed_bars_are_dropped():
     kept = sources.trading_week_only(df).index.tz_convert("America/New_York")
     assert kept.min().hour == 14 and kept.min().dayofweek == 4           # Friday before 17:00 kept
     assert not ((kept.dayofweek == 5).any())                             # no Saturday
-    assert ((kept.dayofweek == 6) & (kept.hour < 17)).sum() == 0          # Sunday only from 17:00
-    assert ((kept.dayofweek == 6) & (kept.hour >= 17)).sum() == 3
+    assert ((kept.dayofweek == 6) & (kept.hour < 18)).sum() == 0          # gold reopens Sunday 18:00 NY
+    assert ((kept.dayofweek == 6) & (kept.hour >= 18)).sum() == 2
     d = pd.DataFrame({c: 1.0 for c in sources.COLS}, index=pd.date_range("2026-09-21", periods=7, freq="D", tz="UTC"))
     assert list(sources.trading_week_only(d, daily=True).index.dayofweek) == [0, 1, 2, 3, 4]
+
+
+def test_daily_break_is_dropped_in_new_york_time():
+    # 17:00-18:00 New York, Monday-Thursday: 21:00 UTC in summer (EDT), 22:00 UTC in winter (EST)
+    idx = pd.DatetimeIndex(["2026-09-24 20:00", "2026-09-24 21:00", "2026-09-24 22:00",
+                            "2026-12-03 21:00", "2026-12-03 22:00", "2026-12-03 23:00"], tz="UTC")
+    df = pd.DataFrame({c: 1.0 for c in sources.COLS}, index=idx)
+    kept = list(sources.trading_week_only(df).index.strftime("%m-%d %H"))
+    assert kept == ["09-24 20", "09-24 22", "12-03 21", "12-03 23"]
+
+
+def test_offgrid_quote_rows_are_dropped():
+    idx = pd.DatetimeIndex(["2026-09-27 22:00:00", "2026-09-27 22:04:41", "2026-09-28 13:30:00", "2026-09-25 20:59:59"], tz="UTC")
+    df = pd.DataFrame({c: 1.0 for c in sources.COLS}, index=idx)
+    assert list(sources.drop_offgrid(df).index.strftime("%H:%M:%S")) == ["22:00:00", "13:30:00"]
+
+
+def _ohlc(rows):
+    idx = pd.DatetimeIndex([r[0] for r in rows], tz="UTC")
+    return pd.DataFrame([r[1:] for r in rows], columns=["open", "high", "low", "close"], index=idx).assign(volume=np.nan)
+
+
+def test_reopen_stale_print_is_repaired_to_match_oanda():
+    # Twelve Data, 27 Sep 2026: the first 5m bar opens at the weekend quote 4287.25 (and sets its high).
+    m5 = _ohlc([("2026-09-27 22:00", 4287.24544, 4287.24544, 4262.12678, 4270.98806),
+                ("2026-09-27 22:05", 4268.24890, 4275.33134, 4268.24890, 4273.91146),
+                ("2026-09-27 22:10", 4273.61792, 4275.05831, 4268.60425, 4269.65215),
+                ("2026-09-27 22:15", 4271.61839, 4271.61839, 4265.84762, 4267.62687),
+                ("2026-09-27 22:20", 4268.09099, 4269.35266, 4266.25926, 4268.77706),
+                ("2026-09-27 22:55", 4259.82973, 4259.91539, 4258.99653, 4259.79807),
+                ("2026-09-28 01:00", 4230.81, 4230.81, 4215.50, 4215.88)])           # 21:00 NY: not a reopen
+    h1 = _ohlc([("2026-09-27 22:00", 4287.25, 4287.25, 4259.00, 4259.80), ("2026-09-28 01:00", 4230.81, 4230.81, 4206.43, 4214.18)])
+    r5 = sources.repair_reopen(m5, 300)
+    assert r5.iloc[0].tolist()[:4] == [4270.98806, 4270.98806, 4262.12678, 4270.98806]   # stale open and high removed
+    assert r5.iloc[1:].equals(m5.iloc[1:])                                                  # nothing else touched
+    r1 = sources.repair_reopen(h1, 3600, r5)
+    assert round(r1.iloc[0]["high"], 2) == 4275.33                                          # TradingView/OANDA: 4275.325
+    assert r1.iloc[0]["open"] == 4270.98806 and r1.iloc[0]["low"] == 4258.99653 and r1.iloc[0]["close"] == 4259.80
+    assert r1.iloc[1].equals(h1.iloc[1])
+    fb = sources.repair_reopen(h1, 3600, None)                                              # no 5m: cap the bar itself
+    assert fb.iloc[0]["open"] == 4259.80 and fb.iloc[0]["high"] == 4259.80 and fb.iloc[0]["low"] == 4259.00
 
 
 def test_4h_grid_stays_on_17h_new_york_across_dst():

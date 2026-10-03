@@ -1,0 +1,12 @@
+# XAU/USD site scheduler (Cloudflare Workers free plan). Deployed by .github/workflows/scheduler.yml.
+name = "xau-scheduler"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[vars]
+REPO = "fmve1232/Trading-View-Xauusd"
+WORKFLOW = "quantum-site.yml"
+REF = "claude/audit-prompt-real-artefacts-nekqv6"   # the default branch: scheduled/dispatched runs use it
+
+[triggers]
+crons = ["1,16,31,46 * * * *"]   # UTC, one minute after each 15-minute bar closes

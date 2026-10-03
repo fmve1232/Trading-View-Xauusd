@@ -1,0 +1,50 @@
+# Deploys scheduler/ (a Cloudflare Worker cron that dispatches quantum-site every 15 minutes).
+# Secrets needed (Settings -> Secrets and variables -> Actions):
+#   CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID   as for relay/
+#   GH_DISPATCH_TOKEN   fine-grained token, this repository only, "Actions: Read and write"
+name: scheduler
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, claude/audit-prompt-real-artefacts-nekqv6]
+    paths: ["scheduler/**", ".github/workflows/scheduler.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check the secrets are set
+        id: cfg
+        env:
+          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          G: ${{ secrets.GH_DISPATCH_TOKEN }}
+        run: |
+          if [ -n "$T" ] && [ -n "$A" ] && [ -n "$G" ]; then echo "ready=true" >> "$GITHUB_OUTPUT"
+          else echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "### Scheduler not deployed: add CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and GH_DISPATCH_TOKEN secrets, then run this workflow." >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: Deploy
+        id: deploy
+        if: steps.cfg.outputs.ready == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: scheduler
+          secrets: GH_DISPATCH_TOKEN
+        env:
+          GH_DISPATCH_TOKEN: ${{ secrets.GH_DISPATCH_TOKEN }}
+      - name: Report
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          URL: ${{ steps.deploy.outputs.deployment-url }}
+        run: |
+          echo "### Scheduler deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: \`$URL/\`. quantum-site now starts at :01/:16/:31/:46 UTC while gold trades." >> "$GITHUB_STEP_SUMMARY"

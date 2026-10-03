@@ -118,9 +118,9 @@ def _fetch_merge(store_dir: str | None, name: str, fn, status: dict) -> pd.DataF
         st.source = "live"
     except Exception as e:  # noqa: BLE001 - the reason is reported, never swallowed
         st.note = sources.redact(str(e))[:200]
-    old = store.load(store_dir, name) if store_dir else None
+    old = sources.drop_offgrid(store.load(store_dir, name)) if store_dir else None
     if df is not None and len(df):
-        df = store.merge(old, df)
+        df = store.merge(old, sources.drop_offgrid(df))   # also cleans the stored copy on save
         if store_dir:
             store.save(store_dir, name, df)
     elif old is not None and len(old):
@@ -177,6 +177,14 @@ def download_all(store_dir: str | None = None, intervals=("5m", "15m", "60m")) -
     if not prim:
         raise sources.FetchError("no XAUUSD price source reachable for every interval: "
                                  + "; ".join(f"{k}: {v.note}" for k, v in status.items() if not v.ok))
+    if psrc.startswith("twelvedata"):
+        # The first print of each session is the quote carried through the closure (sources.repair_reopen).
+        m5 = sources.repair_reopen(prim.get("5m"), 300)
+        if m5 is not None:
+            prim["5m"] = m5
+        for i, sec in (("15m", 900), ("60m", 3600)):
+            if i in prim:
+                prim[i] = sources.repair_reopen(prim[i], sec, m5)
 
     gc = {}
     for i in (*intervals, "1d"):

@@ -1,4 +1,5 @@
 # XAUUSD Quantum -- data -> engine -> GitHub Pages, every 15 minutes while gold trades.
+# Triggered by scheduler/ (Cloudflare Worker cron, free) with GitHub's own cron as the backup.
 #
 # One-time setup (repository Settings):
 #   Pages   -> Build and deployment -> Source: "GitHub Actions"
@@ -12,7 +13,12 @@ name: quantum-site
 
 on:
   schedule:
-    - cron: "*/15 * * * 0-5"      # UTC. Gold trades Sun 22:00 -> Fri 21:00 UTC; Saturday is skipped
+    # UTC. Two minutes after each 15-minute bar closes, so the provider has the finished bar
+    # (at :00 the hourly bar was often not yet final, leaving the site a bar behind TradingView).
+    # Gold trades Sun 22:00 -> Fri 21:00 UTC; Saturday is skipped. GitHub starts these late or not
+    # at all (1-2 Oct: 100 of 153 runs, median gap 23 min), so they are the BACKUP: the primary
+    # trigger is the free Cloudflare Worker cron in scheduler/, which dispatches this workflow.
+    - cron: "2,17,32,47 * * * 0-5"
   workflow_dispatch:
   push:
     branches: [main, master]
@@ -28,7 +34,41 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  gate:
+    # A scheduled (backup) run stands down if a dispatched run started in the last 10 minutes, so
+    # one 15-minute slot never spends Twelve Data's free 800 calls a day twice. Without the
+    # scheduler there are no dispatched runs and every scheduled run proceeds, as before.
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      actions: read
+    outputs:
+      run: ${{ steps.g.outputs.run }}
+    steps:
+      - id: g
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          run=true
+          if [ "$EVENT" = "schedule" ]; then
+            last=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/$REPO/actions/workflows/quantum-site.yml/runs?event=workflow_dispatch&per_page=1" \
+              | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs') or []; print(r[0]['created_at'] if r else '')" || true)
+            if [ -n "$last" ]; then
+              age=$(( $(date -u +%s) - $(date -u -d "$last" +%s) ))
+              if [ "$age" -lt 600 ]; then
+                run=false
+                echo "A dispatched run started ${age}s ago, so this scheduled backup run stands down." >> "$GITHUB_STEP_SUMMARY"
+              fi
+            fi
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment:
@@ -96,6 +136,19 @@ jobs:
           STREAM_URL: ${{ vars.STREAM_URL }}
         run: |
           python3 -c "import json,os; json.dump({'url': os.environ.get('STREAM_URL','').strip()}, open('site/data/stream.json','w'))"
+
+      - name: Reference prices (OANDA practice + gold-api; display and validation only; never fails the run)
+        continue-on-error: true
+        env:   # OANDA_API_TOKEN: free practice-account token. Without it the panel says UNAVAILABLE.
+          OANDA_API_TOKEN: ${{ secrets.OANDA_API_TOKEN }}
+          OANDA_ENV: ${{ vars.OANDA_ENV || 'practice' }}
+          OANDA_ACCOUNT_ID: ${{ vars.OANDA_ACCOUNT_ID }}
+        run: python -m quantum.reference --out site/data/reference.json --chart site/data/1h.json
+
+      - name: Data-versioning manifest (bookkeeping only; before the store's orphan commit)
+        if: always() && hashFiles('store-loaded.flag') != '' && hashFiles('ledger-loaded.flag') != ''
+        continue-on-error: true
+        run: python -m quantum.manifest --store store --ledger ledger
 
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
         if: always() && hashFiles('store-loaded.flag') != ''

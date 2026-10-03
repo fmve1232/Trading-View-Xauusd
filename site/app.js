@@ -24,6 +24,8 @@ const isNum = (x) => typeof x === "number" && isFinite(x);
 const f = (x, d = 2) => (isNum(x) ? x.toFixed(d) : "—");
 const fs = (x, d = 2) => (isNum(x) ? (x > 0 ? "+" : "") + x.toFixed(d) : "—");
 const pct = (x, d = 0) => (isNum(x) ? x.toFixed(d) + "%" : "—");
+// A statistic over zero observations is the engine's placeholder (analog.default_outputs), not a measurement.
+const pctN = (x, n, d = 0) => (n > 0 ? pct(x, d) : "—");
 const px = (x) => (isNum(x) ? (x + Number(S.mt5 || 0)).toFixed(2) : "—");
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -100,6 +102,7 @@ async function load() {
   }
   renderAll();
   loadEvents();
+  loadReference();
   pollLive();
   startStream();
 }
@@ -115,11 +118,12 @@ setInterval(async () => {
 const LIVE_URL = "https://api.gold-api.com/price/XAU";
 const LIVE_TITLE = "Live spot from gold-api.com, read by your browser. DISPLAY ONLY: the engine never uses it; signals come from closed bars.";
 const LIVE = { px: null, t: null, err: "" };
-// Spot gold is shut from Friday 17:00 to Sunday 17:00 New York (the same rule the pipeline uses).
+// Spot gold is shut from Friday 17:00 to Sunday 18:00 New York, and 17:00-18:00 Monday to
+// Thursday: the same rule as the pipeline's sources.gold_shut (web.4).
 function marketClosed(d) {
   const ny = new Date(d.toLocaleString("en-US", { timeZone: "America/New_York" }));
   const dow = ny.getDay(), h = ny.getHours();
-  return dow === 6 || (dow === 5 && h >= 17) || (dow === 0 && h < 17);
+  return dow === 6 || (dow === 5 && h >= 17) || (dow === 0 && h < 18) || (dow >= 1 && dow <= 4 && h === 17);
 }
 async function pollLive() {
   if (document.hidden || streaming()) return;
@@ -153,8 +157,9 @@ function renderLive() {
   $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
-    (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 17:00 New York): the feed repeats the last quote with a fresh timestamp." : "") +
+    (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
+  renderGuard();
 }
 setInterval(pollLive, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
@@ -217,10 +222,46 @@ function applyLiveBar(lastTime) {
   try { C.candles.update({ ...b, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") }); } catch (e) { /* older than the series end */ }
 }
 
+/* ---------- reference prices (DISPLAY AND VALIDATION ONLY; quantum/reference.py) ---------- */
+// Each provider is shown as it reported itself: raw values, its own timestamp precision and
+// status. A divergence is shown with both raw prices; neither is replaced or reconciled.
+async function loadReference() {
+  try { S.ref = await getJSON("data/reference.json"); } catch (e) { S.ref = null; }
+  renderReference();
+}
+const REF_CLS = { CONSISTENT: "bull", MINOR_DIVERGENCE: "", SIGNIFICANT_DIVERGENCE: "warn", CRITICAL_DIVERGENCE: "bear", UNAVAILABLE: "" };
+const nsAgo = (ns) => (isNum(ns) ? ago(new Date(ns / 1e6).toISOString()) : "—");
+function renderReference() {
+  const R = S.ref, el = $("#refs"), st = $("#ref-state"); if (!el) return;
+  if (!R || !Array.isArray(R.observations)) {
+    el.innerHTML = '<span class="muted">No reference file yet; it appears after the next pipeline run.</span>';
+    st.textContent = "—"; st.className = "pill"; return;
+  }
+  const b = R.bar_divergence_1h || {}, lv = R.live_divergence;
+  const worst = [b.status, lv && lv.status].includes("CRITICAL_DIVERGENCE") ? "CRITICAL_DIVERGENCE"
+    : [b.status, lv && lv.status].includes("SIGNIFICANT_DIVERGENCE") ? "SIGNIFICANT_DIVERGENCE" : b.n ? b.status : lv ? lv.status : "UNAVAILABLE";
+  st.textContent = worst.replace("_DIVERGENCE", "").replace("_", " "); st.className = "pill " + (REF_CLS[worst] || "");
+  const rows = R.observations.map((o) => `<tr><td>${esc(o.provider_id)}<div class="dim">${esc(String(o.market_type).replace(/_/g, " ").toLowerCase())}</div></td>
+    <td>${o.bid !== null && o.ask !== null ? `${f(o.bid)} / ${f(o.ask)}<div class="dim">spread ${f(o.spread, 2)}</div>` : isNum(o.mid) ? f(o.mid) + '<div class="dim">mid only</div>' : "—"}</td>
+    <td>${esc(o.status)}<div class="dim">${esc(o.quality)} · ${esc(o.timestamp_precision)}${isNum(o.latency_ms) ? " · age " + f(o.latency_ms / 1000, 1) + " s at receipt" : ""}</div></td></tr>
+    ${o.note ? `<tr><td colspan="3" class="dim" style="white-space:normal">${esc(o.note)}</td></tr>` : ""}`).join("");
+  const bars = b.n ? kv([
+    ["Same 1h bar vs " + esc(R.primary.replace("twelvedata:", "Twelve Data ")), `${fs(b.diff, 2)} (${fs(b.diff_pct, 3)}%) · ${esc(b.status)}`],
+    ["Over " + b.n + " bars: median / p95 |Δ| / max", `${fs(b.median_diff, 2)} / ${f(b.p95_abs_diff, 2)} / ${f(b.max_abs_diff, 2)}`],
+    ["Robust z of the last bar", isNum(b.robust_z) ? f(b.robust_z, 1) : "—"],
+    ["Observed spread median / p90", `${f(b.spread_median, 2)} / ${f(b.spread_p90, 2)}`],
+    ["Primary inside the reference spread", f(b.inside_spread_pct, 0) + "% of bars"]])
+    : `<p class="muted">Bar comparison unavailable${b.note ? ": " + esc(b.note) : ""}.</p>`;
+  const live = lv ? kv([[`${esc(lv.a)} vs ${esc(lv.b)} now`, `${fs(lv.diff, 2)} (${fs(lv.diff_pct, 3)}%) · ${esc(lv.status)}${isNum(lv.source_time_gap_ms) ? " · Δt " + f(lv.source_time_gap_ms / 1000, 1) + " s" : ""}`]]) : "";
+  el.innerHTML = `<table class="t"><tr><th>Source</th><th>Bid / ask</th><th>Status</th></tr>${rows}</table>${bars}${live}
+    <p class="note">Checked ${nsAgo(R.generated_ts_ns)}. Bands (fixed, not fitted): &lt;${R.thresholds_pct.CONSISTENT}% consistent, &lt;${R.thresholds_pct.MINOR_DIVERGENCE}% minor, &lt;${R.thresholds_pct.SIGNIFICANT_DIVERGENCE}% significant, otherwise critical. The engine never reads these prices.</p>`;
+}
+
 /* ---------- upcoming events (DISPLAY ONLY) ---------- */
 async function loadEvents() {
   try { S.events = await getJSON("data/events.json"); } catch (e) { S.events = null; }
   renderEvents();
+  renderGuard();
 }
 const until = (sec) => (sec < 3600 ? Math.max(1, Math.round(sec / 60)) + " min" : sec < 86400 ? (sec / 3600).toFixed(1) + " h" : (sec / 86400).toFixed(1) + " d");
 function renderEvents() {
@@ -249,17 +290,55 @@ function renderEvents() {
     (E.feeds ? `<div><h4 class="evh">News <span class="dim">(gold / USD / rates, last 48 h)</span></h4>${hl || '<span class="muted">No relevant headlines in the last 48 h.</span>'}<p class="note">Feeds: ${feeds || "—"}. Hover a feed for its status. Headlines link to the publisher; display only.</p></div>` : "") + `</div>`;
 }
 
+/* ---------- freshness and event guard (DISPLAY ONLY) ---------- */
+// The decision and the plan describe the last PROCESSED bar. When bars have closed since, or the
+// live price has moved far from that bar's close, or a high-impact USD release is near, say so
+// above them and dim the plan. Nothing is recomputed in the browser and no price is changed.
+const GUARD_ATR = 1.5;           // fixed a priori (display only): a move this large makes the plan's levels moot
+const GUARD_EVENT_MIN = 30;      // minutes either side of a high-impact USD release
+function freshness() {
+  const D = S.data; if (!D) return null;
+  const tf = D.meta.tf_sec, last = Date.parse(D.meta.last_bar_close) / 1000, now = Date.now() / 1000;
+  const closed = marketClosed(new Date());
+  const behind = closed || !isNum(last) ? 0 : Math.max(0, Math.floor((now - last) / tf));   // bars closed since
+  const atr = D.dashboard.atr, ref = D.dashboard.close;
+  const liveOk = LIVE.px !== null && !LIVE.err && Date.now() - LIVE.t < 10 * 60000 && !closed;
+  const move = liveOk && isNum(ref) ? LIVE.px - ref : null;
+  return { behind, move, moveAtr: isNum(move) && isNum(atr) && atr > 0 ? Math.abs(move) / atr : null, last };
+}
+function nearEvent() {
+  const E = S.events; if (!E || !Array.isArray(E.events)) return null;
+  const now = Date.now() / 1000;
+  return E.events.find((e) => e.impact === "High" && Math.abs(e.t - now) <= GUARD_EVENT_MIN * 60) || null;
+}
+function renderGuard() {
+  const el = $("#guard"); if (!el || !S.data) return;
+  const fr = freshness(), ev = nearEvent(), out = [];
+  const old = fr && (fr.behind >= 2 || (isNum(fr.moveAtr) && fr.moveAtr >= GUARD_ATR));
+  if (old) {
+    const why = [fr.behind >= 2 ? `${fr.behind} ${S.data.meta.tf} bars have closed` : "", isNum(fr.move) ? `price has moved ${fs(fr.move, 2)} (${f(fr.moveAtr, 1)} × ATR)` : ""].filter(Boolean).join(" and ");
+    out.push(`<div class="banner error"><b>OUT OF DATE.</b> The decision and plan below are for the bar that closed at ${tfmt(fr.last)}. Since then ${why}. Do not act on this plan; wait for the next update.</div>`);
+  }
+  if (ev) {
+    const now = Date.now() / 1000;
+    out.push(`<div class="banner info"><b>High-impact USD release${ev.estimated ? " (estimated time)" : ""}:</b> ${esc(ev.title)} at ${tfmt(ev.t)} (${ev.t > now ? "in " + until(ev.t - now) : until(now - ev.t) + " ago"}). Spreads widen and stops can be skipped; the engine's news filter is off (Pine default).</div>`);
+  }
+  el.innerHTML = out.join("");
+  const planCard = $("#plan") && $("#plan").closest(".card");
+  if (planCard) planCard.classList.toggle("outdated", !!old);
+}
+setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
+
 /* ---------- header / banners ---------- */
 function renderHeader() {
   const D = S.data; if (!D) return;
   const M = D.meta;
   $("#engine-ver").textContent = `engine ${M.engine_version} · schema B${M.schema_build} · cfg ${M.config_hash}`;
-  const closeT = new Date(M.last_bar_close).getTime();
-  const staleMin = (Date.now() - closeT) / 60000 - M.tf_sec / 60;
-  $("#updated").textContent = ago(M.generated_utc);
+  const fr = freshness();
+  $("#updated").textContent = ago(M.generated_utc) + (fr && fr.behind >= 2 ? ` · ${fr.behind} bars behind` : "");
   const chip = $("#chip-updated");
   chip.classList.remove("ok", "stale", "bad");
-  chip.classList.add(M.synthetic ? "bad" : staleMin > 90 ? "stale" : "ok");
+  chip.classList.add(M.synthetic ? "bad" : fr && fr.behind >= 2 ? "stale" : "ok");
   chip.title = `Last confirmed ${M.tf} bar closed ${new Date(M.last_bar_close).toUTCString()}. Markets close at weekends, so a weekend gap is expected.`;
   $("#source").textContent = M.synthetic ? "SYNTHETIC" : M.price_source.replace("yahoo:", "Yahoo ").replace("twelvedata:", "Twelve Data ");
   $("#freeze").textContent = D.holdout && D.holdout.freeze_utc ? new Date(D.holdout.freeze_utc).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "—";
@@ -325,9 +404,9 @@ function renderSide() {
     ["P(long resolves up)", isNum(d.p_long) ? pct(d.p_long * 100) : "—"],
     ["P(short resolves down)", isNum(d.p_short) ? pct(d.p_short * 100) : "—"],
     ["Calibration gate", d.cal_gate_ready ? `live · min P ${pct(M.config.cal_gate_min_p * 100)}` : "inactive (needs a fit and ROLL N≥10)"],
-    ["Analog EV / match", `${fs(a.ev, 2)} R · A${a.match}${a.match < 30 ? " LOW" : ""}`],
-    ["Win rate (ROLL)", `${pct(a.oos_wr)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
-    ["IS vs ROLL", `${pct(a.is_wr)} / ${pct(a.oos_wr)}${a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
+    ["Analog EV / match", `${a.match > 0 ? fs(a.ev, 2) + " R" : "—"} · A${a.match}${a.match < 30 ? " LOW" : ""}`],
+    ["Win rate (ROLL)", `${pctN(a.oos_wr, a.oos_n)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
+    ["IS vs ROLL", `${pctN(a.is_wr, a.is_n)} / ${pctN(a.oos_wr, a.oos_n)}${a.is_n > 0 && a.oos_n > 0 && a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
     ["Calibration grade", `${esc(a.cal_grade)} ${a.cal_grade_pct}/100 ${esc(a.cal_detail || "")}`],
   ]) + `<p class="note">ROLL is a rolling trailing slice, <b>not</b> a holdout (F-037). The only out-of-sample evidence is the frozen forward holdout in the Backtest tab.</p>`;
 
@@ -393,13 +472,22 @@ class ZonesPrimitive {
     }];
   }
 }
+// Axis tick labels follow the Time selector (the library's default labels are UTC, which put the
+// axis five hours away from the legend and the decision card for a UTC+5 viewer).
+function tickFmt(t, type) {
+  if (!isNum(t)) return "";
+  const opt = type === 0 ? { year: "numeric" } : type === 1 ? { month: "short" } : type === 2 ? { day: "numeric", month: "short" }
+    : { hour: "2-digit", minute: "2-digit", hour12: false, ...(type === 4 ? { second: "2-digit" } : {}) };
+  if (S.tz !== "local") opt.timeZone = S.tz;
+  try { return new Intl.DateTimeFormat(LOCALE, opt).format(new Date(t * 1000)); } catch (e) { return ""; }
+}
 function chartOpts() {
-  const tf = (t) => tfmt(t, true);
+  const tf = (t) => { try { return isNum(t) ? tfmt(t, true) : ""; } catch (e) { return ""; } };
   return {
     layout: { background: { type: "solid", color: css("--card") }, textColor: css("--muted"), fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
     grid: { vertLines: { color: css("--line") + "80" }, horzLines: { color: css("--line") + "80" } },
     rightPriceScale: { borderColor: css("--line") },
-    timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false, rightOffset: 14 },
+    timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false, rightOffset: 14, tickMarkFormatter: tickFmt },
     crosshair: { mode: 0 },
     localization: { timeFormatter: tf, locale: LOCALE },
     handleScroll: true, handleScale: true,
@@ -501,6 +589,8 @@ function renderChart() {
   }
   if (T.levels) {
     const lq = d.liquidity.pools;
+    pl(lq.PDH, "#f0b04a", "PDH", 2); pl(lq.PDL, "#f0b04a", "PDL", 2);
+    pl(lq.PWH, "#c79bff", "PWH", 2); pl(lq.PWL, "#c79bff", "PWL", 2);
     pl(lq.PMH, "#9aa5b1", "PMH", 1); pl(lq.PML, "#9aa5b1", "PML", 1);
     pl(d.liquidity.cdh, "#4dd0e1", "CDH", 3); pl(d.liquidity.cdl, "#4dd0e1", "CDL", 3);
     pl(lq.EQH, "#ef5350", "EQH", 3); pl(lq.EQL, "#26a69a", "EQL", 3);
@@ -552,9 +642,10 @@ function renderOverview() {
       ["VIX", f(D.macro.vix, 1)]])),
     card("Auction", kv([["State", `${esc(au.state)} ${au.prob}% ${esc(au.cycle)}`], ["Bias", esc(au.bias)], ["Discovery", esc(au.disc)], ["Acceptance", `${au.accept} ${esc(au.accept_grade)}`],
       ["Value migration", esc(au.value_mig)], ["Last sweep", au.sweep_q ? `${esc(au.sweep_grade)} ${au.sweep_q}` : "—"]])),
-    card("Order flow", kv([["CVD", fl.cvd_bull ? '<span class="bull">bull</span>' : '<span class="bear">bear</span>'], ["Volume delta (50)", f(fl.vd_k, 1) + "k"],
+    card("Volume (proxy, not order flow)", kv([["Bar-signed volume", fl.cvd_bull ? '<span class="bull">bull</span>' : '<span class="bear">bear</span>'], ["Volume delta (50)", f(fl.vd_k, 1) + "k"],
       ["Value area", `${esc(fl.va_pos)} POC ${f(fl.vpoc)} (${f(fl.va_ratio, 0)}%)`], ["Rel. volume", f(fl.rel_vol, 2) + "×"], ["Volume pct", pct(fl.vol_pct)],
-      ["Climax", fl.climax_up ? '<span class="bull">up</span>' : fl.climax_dn ? '<span class="bear">down</span>' : "—"]])),
+      ["Climax", fl.climax_up ? '<span class="bull">up</span>' : fl.climax_dn ? '<span class="bear">down</span>' : "—"]]) +
+      `<p class="note">${esc(M.volume_source || "")}. Volume is signed by the bar's direction (close vs open); this is a proxy, not true CVD: no trade-by-trade aggressor data is used.</p>`),
     card("Liquidity target", kv([["Destination", `${esc(li.dest)} ${li.dest_score} ${esc(li.dest_conf)}`], ["Reach score", f(li.reach, 0) + "/100"], ["Health", li.health + "/100"],
       ["PDH / PDL reach", `${f(li.reach_scores.PDH, 0)} / ${f(li.reach_scores.PDL, 0)}`], ["Sweep", li.sweep_bull ? "bull sweep" : li.sweep_bear ? "bear sweep" : "—"]])),
   ];
@@ -614,7 +705,7 @@ function renderAnalog() {
   const sc = A.scan || {};
   $("#tab-analog").innerHTML =
     card("Analog engine", kv([["Buffer / matched", `${sc.hN || 0} / ${A.match}`], ["Similarity threshold", sc.sim_thresh], ["Bull / bear / range", `${f(A.bull, 0)} / ${f(A.bear, 0)} / ${f(A.range, 0)}`],
-      ["Weighted win rate", pct(A.wr)], ["Avg win / loss (R)", `${f(A.avg_w, 2)} / ${f(A.avg_l, 2)}`], ["Expectancy", fs(A.ev, 2) + " R"],
+      ["Weighted win rate", pctN(A.wr, A.match)], ["Avg win / loss (R)", A.match > 0 ? `${f(A.avg_w, 2)} / ${f(A.avg_l, 2)}` : "—"], ["Expectancy", A.match > 0 ? fs(A.ev, 2) + " R" : "—"],
       ["Profit factor", f(A.profit_factor, 2)], ["Avg MAE", f(A.max_adverse_atr, 2) + " ATR"], ["Notional max DD", f(A.max_dd, 1) + "%"],
       ["BOS continuation / fail", `${f(A.bos_cont, 0)} / ${f(A.bos_fail, 0)}%`], ["PDH-first / PDL-first", `${A.pdh1st ?? "—"} / ${A.pdl1st ?? "—"}%`], ["Regime persistence", pct(A.reg_per)]]) +
       `<p class="note">Each confirmed bar is compared with up to ${S.data.meta.hist_max} past states on 10 weighted features; every count is a count of distinct analogs.</p>`) +
@@ -715,10 +806,27 @@ async function renderMethod() {
     $("#tab-method").dataset.loaded = "1";
   } catch (e) { $("#tab-method").innerHTML = card("Method", "Could not load method.html"); }
 }
+/* ---------- one-line summary strip (the Master's top table, read left to right) ---------- */
+function renderStrip() {
+  const el = $("#sumstrip"); const D = S.data; if (!el || !D) return;
+  const d = D.dashboard, p = d.plan || {}, lq = (d.liquidity && d.liquidity.pools) || {}, ch = D.chart || {};
+  const vw = ch.vwap && ch.vwap.length ? ch.vwap[ch.vwap.length - 1] : null;
+  const dec = d.decision, sig = dec === "BUY" || dec === "SELL";
+  const cell = (k, v, sub, cls = "") => `<div class="sc ${cls}"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${sub}</span></div>`;
+  el.innerHTML = [
+    cell("Signal", esc(dec), `L ${f(d.bull_score, 0)} · S ${f(d.bear_score, 0)} · R ${f(d.range_score, 0)}`, dec === "BUY" ? "bull" : dec === "SELL" ? "bear" : ""),
+    cell("Structure", esc(structStr(d.struct)), esc(d.regime ? d.regime.label : "")),
+    cell("Liquidity", esc(d.liquidity ? d.liquidity.dest : "—"), `PDH ${px(lq.PDH)} · PDL ${px(lq.PDL)}`),
+    cell("Price", px(d.close), `VWAP D ${px(vw)}`),
+    cell("Macro", esc(d.macro ? d.macro.label : "—"), d.macro ? `${fs(d.macro.strength, 0)} · votes ${d.macro.bull_votes}/${d.macro.bear_votes}` : ""),
+    cell("Risk", isNum(p.rr1) ? `1:${f(p.rr1, 1)} · SL ${f(p.dist, 2)}` : "—", `Kelly ${d.kelly ? f(d.kelly.kelly_pct, 2) : "—"}%${sig ? "" : " · no signal"}`),
+    cell("Decision", `${esc(dec)} · TQ ${d.trade_quality}${esc(d.tq_grade || "")}`, `${esc(d.bias_label)} · ${esc(d.session.label)} ${d.session.quality}/30`, dec === "NO TRADE" || dec === "RISK LOCK" ? "warn" : ""),
+  ].join("");
+}
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderOverview); safe(renderEvents); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

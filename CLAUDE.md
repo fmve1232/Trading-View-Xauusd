@@ -93,7 +93,7 @@ sha256sum -c audit/MANIFEST.sha256
 - The same non-negotiables apply: defaults in `quantum/config.py` are the Pine input defaults and are
   **not tuned**. Changing any of them changes the config hash, which restarts the frozen forward
   holdout — by design.
-- Deliberate differences from Pine are listed in `docs/PLATFORM.md` (D-01 … D-07; D-08 is now shared with Pine v32). Any other
+- Deliberate differences from Pine are listed in `docs/PLATFORM.md` (D-01 … D-07 and D-09 … D-10; D-08 is now shared with Pine v32). Any other
   difference is a bug.
 - The artefact delivery rule above applies to the `.pine` files only; the site deploys itself.
 
