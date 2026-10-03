@@ -150,7 +150,7 @@ def test_manifest_records_tree_hash_and_keeps_revised_closed_bars(tmp_path):
 
 # ------------------------------------------------------------------ forbidden patterns
 def test_no_random_or_synthetic_price_paths_in_production():
-    for rel in ("site/app.js", "relay/worker.js"):
+    for rel in ("site/app.js", "relay/worker.js", "scheduler/worker.js"):
         src = _read(rel)
         assert not re.search(r"Math\.(random|sin|cos)\s*\(", src), rel
     allowed = {"backtest.py", "market.py"}          # seeded bootstrap; the labelled offline test generator

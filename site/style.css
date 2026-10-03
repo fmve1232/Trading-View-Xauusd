@@ -203,3 +203,7 @@ footer { padding: 20px 16px 40px; color: var(--dim); font-size: 12px; text-align
   .cal-news { grid-template-columns: minmax(0, 1fr); }
   .cal-news > div + div .evh:first-child { margin-top: 14px; }
 }
+/* freshness / event guard above the decision (display only) */
+#guard .banner { margin: 0 0 10px; }
+.card.outdated { opacity: 0.45; }
+@media (max-width: 1100px) { #guard { order: -3; } }   /* phones: the warning sits directly above the decision */

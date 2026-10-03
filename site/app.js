@@ -159,6 +159,7 @@ function renderLive() {
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
     (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
+  renderGuard();
 }
 setInterval(pollLive, 60000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
@@ -260,6 +261,7 @@ function renderReference() {
 async function loadEvents() {
   try { S.events = await getJSON("data/events.json"); } catch (e) { S.events = null; }
   renderEvents();
+  renderGuard();
 }
 const until = (sec) => (sec < 3600 ? Math.max(1, Math.round(sec / 60)) + " min" : sec < 86400 ? (sec / 3600).toFixed(1) + " h" : (sec / 86400).toFixed(1) + " d");
 function renderEvents() {
@@ -288,17 +290,55 @@ function renderEvents() {
     (E.feeds ? `<div><h4 class="evh">News <span class="dim">(gold / USD / rates, last 48 h)</span></h4>${hl || '<span class="muted">No relevant headlines in the last 48 h.</span>'}<p class="note">Feeds: ${feeds || "—"}. Hover a feed for its status. Headlines link to the publisher; display only.</p></div>` : "") + `</div>`;
 }
 
+/* ---------- freshness and event guard (DISPLAY ONLY) ---------- */
+// The decision and the plan describe the last PROCESSED bar. When bars have closed since, or the
+// live price has moved far from that bar's close, or a high-impact USD release is near, say so
+// above them and dim the plan. Nothing is recomputed in the browser and no price is changed.
+const GUARD_ATR = 1.5;           // fixed a priori (display only): a move this large makes the plan's levels moot
+const GUARD_EVENT_MIN = 30;      // minutes either side of a high-impact USD release
+function freshness() {
+  const D = S.data; if (!D) return null;
+  const tf = D.meta.tf_sec, last = Date.parse(D.meta.last_bar_close) / 1000, now = Date.now() / 1000;
+  const closed = marketClosed(new Date());
+  const behind = closed || !isNum(last) ? 0 : Math.max(0, Math.floor((now - last) / tf));   // bars closed since
+  const atr = D.dashboard.atr, ref = D.dashboard.close;
+  const liveOk = LIVE.px !== null && !LIVE.err && Date.now() - LIVE.t < 10 * 60000 && !closed;
+  const move = liveOk && isNum(ref) ? LIVE.px - ref : null;
+  return { behind, move, moveAtr: isNum(move) && isNum(atr) && atr > 0 ? Math.abs(move) / atr : null, last };
+}
+function nearEvent() {
+  const E = S.events; if (!E || !Array.isArray(E.events)) return null;
+  const now = Date.now() / 1000;
+  return E.events.find((e) => e.impact === "High" && Math.abs(e.t - now) <= GUARD_EVENT_MIN * 60) || null;
+}
+function renderGuard() {
+  const el = $("#guard"); if (!el || !S.data) return;
+  const fr = freshness(), ev = nearEvent(), out = [];
+  const old = fr && (fr.behind >= 2 || (isNum(fr.moveAtr) && fr.moveAtr >= GUARD_ATR));
+  if (old) {
+    const why = [fr.behind >= 2 ? `${fr.behind} ${S.data.meta.tf} bars have closed` : "", isNum(fr.move) ? `price has moved ${fs(fr.move, 2)} (${f(fr.moveAtr, 1)} × ATR)` : ""].filter(Boolean).join(" and ");
+    out.push(`<div class="banner error"><b>OUT OF DATE.</b> The decision and plan below are for the bar that closed at ${tfmt(fr.last)}. Since then ${why}. Do not act on this plan; wait for the next update.</div>`);
+  }
+  if (ev) {
+    const now = Date.now() / 1000;
+    out.push(`<div class="banner info"><b>High-impact USD release${ev.estimated ? " (estimated time)" : ""}:</b> ${esc(ev.title)} at ${tfmt(ev.t)} (${ev.t > now ? "in " + until(ev.t - now) : until(now - ev.t) + " ago"}). Spreads widen and stops can be skipped; the engine's news filter is off (Pine default).</div>`);
+  }
+  el.innerHTML = out.join("");
+  const planCard = $("#plan") && $("#plan").closest(".card");
+  if (planCard) planCard.classList.toggle("outdated", !!old);
+}
+setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
+
 /* ---------- header / banners ---------- */
 function renderHeader() {
   const D = S.data; if (!D) return;
   const M = D.meta;
   $("#engine-ver").textContent = `engine ${M.engine_version} · schema B${M.schema_build} · cfg ${M.config_hash}`;
-  const closeT = new Date(M.last_bar_close).getTime();
-  const staleMin = (Date.now() - closeT) / 60000 - M.tf_sec / 60;
-  $("#updated").textContent = ago(M.generated_utc);
+  const fr = freshness();
+  $("#updated").textContent = ago(M.generated_utc) + (fr && fr.behind >= 2 ? ` · ${fr.behind} bars behind` : "");
   const chip = $("#chip-updated");
   chip.classList.remove("ok", "stale", "bad");
-  chip.classList.add(M.synthetic ? "bad" : staleMin > 90 ? "stale" : "ok");
+  chip.classList.add(M.synthetic ? "bad" : fr && fr.behind >= 2 ? "stale" : "ok");
   chip.title = `Last confirmed ${M.tf} bar closed ${new Date(M.last_bar_close).toUTCString()}. Markets close at weekends, so a weekend gap is expected.`;
   $("#source").textContent = M.synthetic ? "SYNTHETIC" : M.price_source.replace("yahoo:", "Yahoo ").replace("twelvedata:", "Twelve Data ");
   $("#freeze").textContent = D.holdout && D.holdout.freeze_utc ? new Date(D.holdout.freeze_utc).toISOString().slice(0, 16).replace("T", " ") + " UTC" : "—";
@@ -432,13 +472,22 @@ class ZonesPrimitive {
     }];
   }
 }
+// Axis tick labels follow the Time selector (the library's default labels are UTC, which put the
+// axis five hours away from the legend and the decision card for a UTC+5 viewer).
+function tickFmt(t, type) {
+  if (!isNum(t)) return "";
+  const opt = type === 0 ? { year: "numeric" } : type === 1 ? { month: "short" } : type === 2 ? { day: "numeric", month: "short" }
+    : { hour: "2-digit", minute: "2-digit", hour12: false, ...(type === 4 ? { second: "2-digit" } : {}) };
+  if (S.tz !== "local") opt.timeZone = S.tz;
+  try { return new Intl.DateTimeFormat(LOCALE, opt).format(new Date(t * 1000)); } catch (e) { return ""; }
+}
 function chartOpts() {
-  const tf = (t) => tfmt(t, true);
+  const tf = (t) => { try { return isNum(t) ? tfmt(t, true) : ""; } catch (e) { return ""; } };
   return {
     layout: { background: { type: "solid", color: css("--card") }, textColor: css("--muted"), fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
     grid: { vertLines: { color: css("--line") + "80" }, horzLines: { color: css("--line") + "80" } },
     rightPriceScale: { borderColor: css("--line") },
-    timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false, rightOffset: 14 },
+    timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false, rightOffset: 14, tickMarkFormatter: tickFmt },
     crosshair: { mode: 0 },
     localization: { timeFormatter: tf, locale: LOCALE },
     handleScroll: true, handleScale: true,
@@ -777,7 +826,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
