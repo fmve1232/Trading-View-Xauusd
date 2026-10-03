@@ -43,17 +43,25 @@ jobs:
           echo "ready=$ready" >> "$GITHUB_OUTPUT"
           if [ "$ready" != true ]; then echo "::warning::Not deployed: see the run summary for which secret is missing."; fi
 
-      - name: Deploy
+      - name: Deploy with wrangler 4 (deploy first, then store the secret on the existing Worker)
         id: deploy
         if: steps.cfg.outputs.ready == 'true'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: relay
-          secrets: FINNHUB_KEY
+        working-directory: relay
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+        run: |
+          # wrangler's own messages go to annotations so a failure is readable without the log;
+          # it never prints the token values
+          fail() { echo "::error title=$1::$(echo "$2" | tail -8 | tr '\n' ' ' | cut -c1-900)"; exit 1; }
+          out=$(npx --yes wrangler@4 deploy 2>&1) || fail "wrangler deploy" "$out"
+          url=$(echo "$out" | grep -oE 'https://[a-z0-9.-]+\.workers\.dev' | head -1)
+          echo "deployment-url=$url" >> "$GITHUB_OUTPUT"
+          echo "::notice title=deployed::$url"
+          out=$(printf '%s' "$FINNHUB_KEY" | npx --yes wrangler@4 secret put FINNHUB_KEY 2>&1) || fail "wrangler secret put" "$out"
+          echo "::notice title=secret stored::FINNHUB_KEY stored as a Worker secret"
+
       - name: Report the stream URL
         if: steps.cfg.outputs.ready == 'true'
         env:
@@ -67,3 +75,4 @@ jobs:
             echo ""
             echo "Set the repository **variable** \`STREAM_URL\` to: \`$WSS\`"
           } >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=STREAM_URL::$WSS"
