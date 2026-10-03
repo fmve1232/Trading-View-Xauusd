@@ -615,7 +615,14 @@ function renderChart() {
   C.candles.setMarkers(mk);
   // price lines
   C.priceLines.forEach((p) => C.candles.removePriceLine(p)); C.priceLines = [];
-  const pl = (price, color, title, style = 2, w = 1) => { if (isNum(price)) C.priceLines.push(C.candles.createPriceLine({ price, color, lineWidth: w, lineStyle: style, axisLabelVisible: true, title })); };
+  // One line per price: a level the plan already names ("TP1 CDL") is not drawn again ("CDL"),
+  // which stacked two labels on the same price.
+  const drawn = [];
+  const pl = (price, color, title, style = 2, w = 1) => {
+    if (!isNum(price) || drawn.some((x) => Math.abs(x - price) < 0.005)) return;
+    drawn.push(price);
+    C.priceLines.push(C.candles.createPriceLine({ price, color, lineWidth: w, lineStyle: style, axisLabelVisible: true, title }));
+  };
   const d = D.dashboard;
   if (T.plan) {
     const p = d.plan;
