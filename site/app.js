@@ -16,7 +16,7 @@ const S = {
   account: store.get("account", null),
   tab: store.get("tab", "overview"),
   btArm: "treatment",
-  toggles: store.get("toggles", { ema: true, vwap: true, bb: false, levels: true, zones: true, sr: false, signals: true, structure: true, sweeps: false, plan: true, cone: true, vp: false }),
+  toggles: store.get("toggles", { ema: true, vwap: true, bb: false, levels: true, zones: true, sr: false, signals: true, structure: true, sweeps: false, plan: true, cone: true, vp: false, h2: true }),
 };
 
 /* ---------- formatting ---------- */
@@ -74,7 +74,8 @@ function showTab(t) {
   if (t === "backtest") setTimeout(renderEquity, 0);
 }
 const TOGGLES = [["ema", "EMA 20/100/200"], ["vwap", "VWAP D/W/M"], ["bb", "Bollinger"], ["levels", "Levels"], ["zones", "OB / FVG"],
-  ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"]];
+  ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"], ["h2", "H2 signals"]];
+if (S.toggles.h2 === undefined) S.toggles.h2 = true;   // added after viewers saved their toggles
 $("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${l}</span>`).join("");
 $("#toolbar").onclick = (e) => {
   const k = e.target.dataset.k; if (!k) return;
@@ -388,6 +389,28 @@ function renderHeader() {
 }
 
 /* ---------- side panels ---------- */
+/* ---------- arm H2 "Sweep and Value" (pre-registered, Amendment 5; computed by quantum/arm_h2.py) ---------- */
+function renderH2() {
+  const D = S.data, el = $("#h2"), st = $("#h2-state"); if (!el || !D) return;
+  const H = D.h2;
+  if (!H || H.error) { el.innerHTML = `<p class="muted">${esc((H && H.error) || "not published yet")}</p>`; st.textContent = "—"; st.className = "pill"; return; }
+  const now = H.signal_now, ck = H.checklist || {};
+  st.textContent = now ? `${now.dir} signal` : "no setup"; st.className = "pill " + (now ? (now.dir === "LONG" ? "bull" : "bear") : "");
+  const score = (c) => (c ? Object.values(c).filter(Boolean).length : 0);
+  const side = score(ck.long) >= score(ck.short) ? "long" : "short", c = ck[side] || {};
+  const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}">${c[k] ? "✓" : "✗"} ${esc(side === "short" ? stx : lt)}</li>`).join("");
+  const p = now || H.last_signal;
+  const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(sweep bar ${tfmt(p.sweep_t)})</span></div>` : "";
+  const open = (H.open || [])[0];
+  const openHtml = open ? `<div class="why"><b>Open H2 trade:</b> ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)} · entry ${px(open.entry)} · SL ${px(open.sl)} · TP1 ${px(open.tp1)}</div>` : "";
+  const nm = H.next_move_in_sample || {}, fw = H.forward || {}, fr = H.freeze || {};
+  const next = nm.n ? `After ${nm.n} past H2 signals on ${esc(D.meta.tf)} (in-sample): TP1 reached first ${f(nm.tp1_first_pct, 0)}%, stop first ${f(nm.stop_first_pct, 0)}%, mean ${fs(nm.mean_r, 2)} R, median ${fs(nm.median_r, 2)} R, about ${f(nm.avg_bars, 0)} bars to the exit.` : "No past H2 signals on this timeframe yet.";
+  const fwd = fw.n ? `${fw.n} closed · win ${f(fw.win_rate, 0)}% · mean ${fs(fw.avg_r, 2)} R · PF ${f(fw.profit_factor, 2)}` : "no closed trades yet";
+  el.innerHTML = `<div class="why"><b>${esc(side === "long" ? "Long" : "Short")} side, ${score(c)}/5 rules met</b><ul class="gates">${rows}</ul></div>` + planHtml + openHtml +
+    `<div class="why"><b>Next movement:</b> ${next} <span class="dim">Small samples: a pattern, not a forecast.</span></div>` +
+    `<div class="why"><b>Forward record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${fwd}. Decision on 1H after 50 trades (Amendment 5).</div>`;
+}
+
 /* ---------- decision transparency (DISPLAY ONLY; reads what the engine already published) ---------- */
 // The engine's decision log, e.g. "▼5/7 [✗Sess Trig] NO-TRIG ctx:RgM+R+", in plain words.
 const GATES = [["Trend", "Trend strong enough"], ["HTF", "Higher timeframe not against it"], ["Sess", "Active session (London / New York)"],
@@ -648,6 +671,12 @@ function renderChart() {
     else if (m.type === "SWEEP" && T.sweeps) mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: "#e040fb", shape: "circle", size: 0.4, text: "sweep" });
   }
   mk.sort((a, b) => a.time - b.time);
+  if (T.h2 && D.h2 && Array.isArray(D.h2.signals)) {                     // arm H2 (toggle on by default)
+    const t0 = D.chart.t[0];
+    D.h2.signals.filter((g) => g.t >= t0).forEach((g) => mk.push({ time: g.t, position: g.dir === "LONG" ? "belowBar" : "aboveBar", color: "#b084ff",
+      shape: g.dir === "LONG" ? "arrowUp" : "arrowDown", text: `H2 ${g.dir === "LONG" ? "BUY" : "SELL"}` }));
+    mk.sort((a, b) => a.time - b.time);
+  }
   C.candles.setMarkers(mk);
   // price lines
   C.priceLines.forEach((p) => C.candles.removePriceLine(p)); C.priceLines = [];
@@ -904,7 +933,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderStrip); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderH2); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

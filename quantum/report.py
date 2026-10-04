@@ -9,7 +9,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import backtest, holdout, ta
+from . import arm_h2, backtest, holdout, ta
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -122,6 +122,41 @@ def sr_scanner(F, scan_len=100, max_sr=6):
                 strength.append(1)
         (res if side == "res" else sup).extend({"price": _f(p), "touches": s} for p, s in zip(levels, strength))
     return {"res": res, "sup": sup}
+
+
+H2_RULES = [   # [key, long wording, short wording] -- display text for the rules in arm_h2.py
+    ["trend", "Trend: close above EMA200 and EMA20 above EMA100", "Trend: close below EMA200 and EMA20 below EMA100"],
+    ["sweep", "Liquidity sweep in the last 3 bars: wick below PDL/PWL/PML or the swing low, close back above it",
+              "Liquidity sweep in the last 3 bars: wick above PDH/PWH/PMH or the swing high, close back below it"],
+    ["value", "The sweep reached the value-area low (VAL) or lower", "The sweep reached the value-area high (VAH) or higher"],
+    ["confirmation", "Confirmation: close above the previous bar's high", "Confirmation: close below the previous bar's low"],
+    ["session", "Active session (London / New York)", "Active session (London / New York)"],
+]
+
+
+def h2_section(market, res, cfg, man, now, store_dir, idx) -> dict:
+    trades, ev = arm_h2.simulate(res, cfg)
+    key = arm_h2.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
+    if market.synthetic:
+        man2 = {"arm": "h2", "freeze_key": key, "freeze_utc": now.isoformat(), "status": "SYNTHETIC"}
+        post = holdout.split(trades, man2["freeze_utc"])[1]
+    else:
+        man2 = holdout.load_or_freeze_arm(store_dir, "h2", key, now)
+        post = holdout.update_ledger(store_dir, market.tf, "h2", trades, man2["freeze_utc"], key, market.price_source)
+    pre, _ = holdout.split(trades, man2["freeze_utc"])
+    n = len(idx)
+    sig = [i for i in range(n) if ev["exec_buy"][i] or ev["exec_sell"][i]]
+    def plan(i):
+        return {"t": int(pd.Timestamp(idx[i]).timestamp()), "iso": idx[i].isoformat(), "dir": "LONG" if ev["exec_buy"][i] else "SHORT",
+                "entry": _f(res.F["c"][i]), "sl": _f(ev["plan_sl"][i]), "tp1": _f(ev["plan_tp1"][i]), "tp2": _f(ev["plan_tp2"][i]),
+                "sweep_t": int(pd.Timestamp(idx[ev["sweep_bar"][i]]).timestamp())}
+    return {"rules": H2_RULES, "freeze": man2, "checklist": ev["checklist"],
+            "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None,
+            "last_signal": plan(sig[-1]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
+            "open": [t for t in trades if t.get("open")],
+            "next_move_in_sample": arm_h2.next_move_stats(pre),
+            "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
+            "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None}
 
 
 def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, store_dir: str | None = None,
@@ -268,10 +303,16 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
             "funnel": rr.last["funnel"],
         }
 
+    # arm H2 "Sweep and Value" (pre-registered, Amendment 5): its own freeze key and ledger
+    try:
+        h2 = h2_section(market, res, cfg, man, now, store_dir, idx)
+    except Exception as e:  # noqa: BLE001 - H2 must never break the page
+        h2 = {"error": f"{type(e).__name__}: {e}"[:200]}
+
     forming = None
     if market.forming is not None:
         fb = market.forming
-        forming = {"t": int(pd.Timestamp(fb.name).as_unit("s").value), "o": _f(fb["open"]), "h": _f(fb["high"]), "l": _f(fb["low"]), "c": _f(fb["close"])}
+        forming = {"t": int(pd.Timestamp(fb.name).timestamp()), "o": _f(fb["open"]), "h": _f(fb["high"]), "l": _f(fb["low"]), "c": _f(fb["close"])}
     last_open = idx[-1]
     last_close = last_open + np.timedelta64(market.tf_sec, "s")
     plan = L["plan"]
@@ -293,5 +334,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
                    "wr_ci": _f(diag_wr_ci, 1), "oos_ci": _f(diag_oos_ci, 1), "cal_q": L["cal_q"]},
         "macro": macro,
         "backtest": bt,
+        "h2": h2,
     }
     return _clean(payload)
