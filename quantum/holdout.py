@@ -120,3 +120,31 @@ def update_ledger(store_dir: str | None, tf: str, arm: str, trades: list[dict], 
         with open(path, "w") as f:
             json.dump(led, f, indent=0)
     return led
+
+
+def load_or_freeze_arm(store_dir: str | None, arm: str, key: str, now: datetime) -> dict:
+    """A separately pre-registered arm (e.g. H2, Amendment 5) with its OWN freeze key and start.
+
+    The manifest lives in holdout/manifest_<arm>.json, so the workflow carries it to the
+    forward-ledger branch with the ledgers. Every timeframe job of one pipeline run receives the
+    same `now`, so parallel jobs write identical content (and the write is atomic).
+    """
+    path = os.path.join(store_dir, "holdout", f"manifest_{arm}.json") if store_dir else None
+    man = None
+    if path and os.path.exists(path):
+        with open(path) as f:
+            man = json.load(f)
+    if man and man.get("freeze_key") == key:
+        man["status"] = "ACTIVE" if now >= datetime.fromisoformat(man["freeze_utc"]) else "PENDING"
+        return man
+    hist = (man or {}).get("history", [])
+    if man:
+        hist.append({k: man.get(k) for k in ("freeze_key", "freeze_utc")} | {"ended_utc": now.isoformat()})
+    man = {"arm": arm, "freeze_key": key, "freeze_utc": now.isoformat(), "status": "RESET" if hist else "STARTED", "history": hist}
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        tmp = f"{path}.{os.getpid()}.tmp"
+        with open(tmp, "w") as f:
+            json.dump(man, f, indent=2)
+        os.replace(tmp, path)
+    return man

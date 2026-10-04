@@ -252,3 +252,54 @@ Display-only files (`report.py`, `notify.py`, `site/`) and documents are outside
   shared, so it affects all three arms identically (Amendment 3).
 - **Open horizon mismatch.** F-035 is open.
 - **No-resolution score.** Calibration has no resolution on the history (F-A34).
+
+## Amendment 5 (2026-10-04, approved by the operator before any H2 result was computed): arm H2 "Sweep and Value"
+
+A **new, separate arm**. It does not change the Treatment, Control or Challenger arms, the engine,
+or their freeze key (`5e4630924d663fc5:3252a9f0d312db75`). The rules were proposed in chat, approved
+by the operator verbatim, and written here **before** H2 was run on any price history, in-sample
+or forward. Any change to a rule after this point restarts H2.
+
+**Inputs** (all already produced by the frozen engine and features on the treatment arm's bars):
+- EMA20, EMA100 and EMA200 on the chart timeframe, and ATR(14);
+- the session quality (`sq`);
+- the rolling 100-bar volume profile (POC, VAH, VAL; volume = COMEX GC futures, D-06);
+- the PDL/PWL/PML and PDH/PWH/PMH pool sweeps (the engine's `SWEEP` events);
+- the active pivot swing low and high (`active_sup` / `active_res`).
+
+**LONG at the close of bar i**, when all of these hold (SHORT is the exact mirror):
+1. **Trend:** close[i] > EMA200[i] and EMA20[i] > EMA100[i].
+2. **Sweep:** for some bar j with i−3 ≤ j ≤ i, bar j swept sell-side liquidity: either the engine's
+   bullish `SWEEP` event (low ≤ PDL/PWL/PML and close above it), or low[j] < active_sup[j−1]
+   and close[j] > active_sup[j−1].
+3. **Value:** low[j] ≤ VAL[j].
+4. **Confirmation:** close[i] > high[i−1].
+5. **Session:** sq[i] ≥ 30.
+
+**Completing the specification** (written before any test; not tuned):
+- One signal per sweep bar j: the first confirming bar uses it.
+- If LONG and SHORT both qualify on the same bar, there is no signal.
+- If the trend, session or value condition is missing a value (warm-up), there is no signal.
+
+**Plan:**
+- **Entry:** close[i].
+- **Stop:** min(low[j..i]) − 0.1 × ATR[i]. R = entry − stop; no signal if R ≤ 0.
+- **TP1:** POC[i] if POC[i] − entry ≥ R, else entry + R.
+- **TP2:** the nearer of VAH[i] and active_res[i] that lies above TP1; if neither does, TP1 + R.
+
+**Execution and costs:** identical to the other arms (`backtest.simulate`): entry at the close, stop
+first on a same-bar tie, 50% off at TP1, then breakeven, and the same cost model.
+
+**Freeze:**
+- H2's key = the engine freeze key + SHA-256 of `quantum/arm_h2.py`. If either changes, H2 restarts.
+  Its ledger is `holdout/<tf>_h2.json`, and earlier keys are archived, never deleted.
+- **H2's forward test starts at the first pipeline run after this amendment is merged.** Trades
+  entered before that are reported as **in-sample** only.
+
+**Decision (same standard as §7):**
+- The **1H** H2 forward record decides.
+- After **N ≥ 50** closed trades, H2 shows an edge only if the 95% t-interval of mean R is above 0
+  **and** PF ≥ 1.2. Decide by 2027-03-31; with fewer than 50 trades, the answer is **NOT SHOWN**.
+- Other timeframes are reported, not decisive.
+- **Multiplicity:** H2 is a fourth hypothesis on the same market and period. If both the Treatment
+  and H2 pass, each is still reported on its own terms; neither borrows the other's evidence.
