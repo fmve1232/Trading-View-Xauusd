@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v35
+# Build changelog — v1 → … → v36
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1258,4 +1258,50 @@ Operator request: review and validate.
   - Executed: all-win → EDGE SHOWN, edge → EDGE SHOWN, no edge → NOT SHOWN, N 20 →
     COLLECTING 20/50.
 - The Master, Diagnostics, EdgeCases and Visuals are unchanged. Compile NOT RUN.
+
+---
+
+# Build v35 → v36 — H2 sweep-to-value arm (operator's signal specification)
+
+Operator request: a signal from the volume profile, market trend, liquidity sweep, swing
+highs/lows and the next movement of the market.
+
+**Why a new arm, not a change to the Master.** That is a different trading idea. It is
+pre-registered as **H2** (amendment A3), before the 2026-10-05 start, and runs beside the
+frozen arms, so the forward test can tell whether it is better.
+
+- **H2 rule:**
+  - trend ≥ 2 of the 1H/4H/1D HTF trend scores (the engine's scoring);
+  - the last unconsumed 5-bar swing;
+  - a sweep = trade-through and close back;
+  - the engine's volume profile (100 × 40, POC, 70% value area) rebuilt every confirmed bar;
+  - long ≤ POC / short ≥ POC;
+  - SL at the wick ± 0.15 ATR (risk 0.5–5 ATR), TP1 = max(POC, 1R), TP2 = max(VAH, 2R);
+  - every value borrowed from the existing system, none fitted.
+- **Files:**
+  - `Strategy_H2.pine` (new, ~2,290 lexical tokens): the H2 block, plus the Treatment's
+    execution layer, cost model and scorecard, verbatim apart from the signal and levels.
+  - Visuals: the same H2 block, "H2" chart markers, an H2 card (trend, unswept swings,
+    VAL/POC/VAH, last sweep, next movement, last signal at MT5 prices), and an H2 alert. About
+    8,940 lexical tokens.
+- **Verification:**
+  - `h2_parity.py`: the block is identical in both files.
+  - `h2_trace.py`, executing the Pine text:
+    - volume profile vs an independent spec, 300 series: 0 mismatches;
+    - volume profile vs the engine's own VP code on the same bars: 0;
+    - signal + plan, 3,000 cases: 0;
+    - swing/sweep state machine, 200 × 300 bars, ~2,000 sweeps: 0.
+  - `pine_exec` gained series semantics, `while` and `break`.
+  - `deadcode` treats H2 display values read by Visuals as wired.
+- **Workbook:**
+  - an H2 column;
+  - a Bonferroni adoption interval (97.5%, Read Me B11), and H1/H2 decisions that use it;
+  - H2 in the arm lists;
+  - 11,058 formulas, 0 errors.
+  - Checked on synthetic data: H2 column = Python; a case with a 95% EDGE SHOWN and a negative
+    97.5% low → "KEEP TREATMENT".
+- **PREREGISTRATION A3:** the H2 rule, Bonferroni adoption, the same start/timeframe/N/date,
+  and the H2 hash in §2.
+- **Unchanged:** the Master, Treatment, Control, Challenger, Diagnostics and EdgeCases.
+- Compile NOT RUN (Strategy_H2 and Visuals).
 

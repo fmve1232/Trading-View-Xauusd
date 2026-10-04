@@ -1,0 +1,349 @@
+//@version=6
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║  BUILD STAMP — this file last CHANGED in v36   (NEW: H2 sweep-to-value arm)   ║
+// ║  Compare against the build record in chat. If they differ, the copy on your   ║
+// ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
+// ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
+// ║  whose table has had 100 rows since the first audited version.                ║
+// ║  The stamp only moves when THIS file changes, so an unchanged file keeps its  ║
+// ║  old number and still matches the record.                                     ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+// A/B COST MODEL (pinned in code, NOT left to the Properties tab). Commission and
+// slippage default to ZERO in TradingView, and zero costs systematically FLATTER the
+// Treatment arm specifically: it is designed to fire materially more trades, so it pays
+// more spread, and a costless test hides exactly the degradation the acceptance criteria
+// are meant to measure. Pinning them here also removes the risk of the two arms being
+// run under different Properties settings, which would invalidate the comparison
+// outright. slippage is in TICKS; commission is cash per contract per side. TUNE BOTH
+// to your own broker's XAUUSD fill quality before trusting absolute P&L — but keep them
+// IDENTICAL across the two arms, which is what actually matters for a gate-only A/B.
+//
+// CHANGE ID: P0-CAL-002 — SELF-CORRECTION of the values pinned in the previous pass, and
+// reconciliation of the TWO cost models that were silently disagreeing.
+//   (1) UNIT ERROR (mine): strategy()'s `slippage` is denominated in TICKS, while the
+//       Master's internal analog-cost model uses slippagePts in POINTS. `slippage=2` was
+//       therefore 0.02 points/side at a 0.01 mintick — 10x too small (100x at 0.001) —
+//       against the 0.2 points/side the expectancy engine assumes. Now 20 ticks = 0.20
+//       points/side at mintick 0.01, matching slippagePts exactly.
+//   (2) COMMISSION DIVERGENCE: commissionL defaulted to 0.0, so the Master's EV/veto
+//       priced commission at ZERO while the backtest charged it. Both now assume the
+//       same ~$7/lot round turn (commissionL=7.0; 3.50 per contract per SIDE here).
+// WHY THIS MATTERS beyond tidiness: the Master's cost model feeds _costATR, which feeds
+// analog expectancy, which drives the negative-expectancy VETO. Mispricing cost there
+// means the system SELECTS trades under one cost assumption and is SCORED under another
+// — an A/B measured on that basis is not measuring the gates. Selector and scorer must
+// agree.
+//
+// CHANGE ID: P0-CAL-004 — values above DERIVED, not guessed, and proven equal by the
+// cost-equivalence harness (cost_invariant.py). Two further faults this exposed:
+//
+//   (A) QTY UNIT ERROR (100x). strategy() qty is in UNITS OF THE BASE INSTRUMENT; for
+//       spot XAUUSD the base is XAU = ONE TROY OUNCE, so qty=1 is 1 oz, NOT one 100oz
+//       lot. commission_value=3.50 "per contract" therefore charged $3.50 per OUNCE per
+//       side = $700 round turn per lot — 100x the intended $7/lot. Since pointValue=100
+//       encodes 100 oz/lot, the correct figure is 7.00/100/2 = 0.035 per contract PER SIDE.
+//
+//   (B) THE ENGINE HAS NO SPREAD PARAMETER. The selector charges _sessSpread; the scorer
+//       charged nothing for it. Spread is therefore FOLDED INTO slippage here. With the
+//       spreadCost input at its 0.3 default, _sessSpread = max(floor, 0.3) collapses to
+//       0.30 for killzone/NY/London alike, so one constant matches every in-session bar
+//       exactly: (0.30 spread + 0.40 slip round trip) / 2 / 0.01 = 35 ticks.
+//
+// DERIVATION — recompute these if you change ANY of spreadCost, slippagePts, commissionL,
+// pointValue or mintick, or the two models silently desynchronise again:
+//   commission_value = commissionL / (pointValue) / 2
+//   slippage_ticks   = (spreadCost + 2*slippagePts) / 2 / syminfo.mintick
+//
+// KNOWN RESIDUAL (accepted, documented): off-session bars carry a 0.50 spread floor in
+// the selector vs the 0.30 folded in here — the scorer under-charges them by 0.20 points.
+// strategy() takes ONE constant, so no single value can match a session-varying spread.
+// The sessionQuality >= 30 hard gate excludes off-session bars in practice, so this
+// residual should affect no trade the A/B actually takes; if you lower that gate, revisit.
+//
+// CHANGE ID: P0-CAL-006 (v15) — THE COST MODEL NO LONGER DEPENDS ON TICK SIZE.
+//   strategy()'s `slippage` is a CONSTANT count of TICKS, so it could only be right for
+//   one mintick: OANDA:XAUUSD quotes to 0.001, and the 35-tick constant would have charged
+//   0.035 pts/side instead of 0.35 -- which is why the P0-CAL-005 gate blocked every entry.
+//   The same cost is now charged as CASH per contract (1 contract = 1 oz, 1 pt = $1/oz):
+//       commission_value = commissionL / pointValue / 2  +  (spreadCost + 2*slippagePts) / 2
+//                        = 7 / 100 / 2 + (0.30 + 0.40) / 2 = 0.035 + 0.35 = 0.385 per side
+//   and slippage = 0. P&L is identical for market fills at any tick size. KNOWN, ACCEPTED:
+//   TradingView applies `slippage` to market/stop fills but not to LIMIT fills, whereas cash
+//   commission applies to every fill -- so TP-limit exits are now charged up to 0.35 pts/oz
+//   more than before. Conservative, and stated.
+//   The gate now checks what this model actually depends on: 1 contract = $1 per point
+//   (syminfo.pointvalue == 1) quoted in USD. Tick size no longer matters.
+// These are BROKER-SPECIFIC, not universal truths. $7/lot round turn and 0.2 pts/side are
+// mid-range retail ECN gold figures. Replace with your own fills, rerun the derivation
+// above, and keep BOTH arms identical.
+strategy("XAUUSD Quantum 5.0 — H2 Sweep-to-Value", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, initial_capital=10000, default_qty_type=strategy.fixed, default_qty_value=1, calc_on_every_tick=false, process_orders_on_close=true, commission_type=strategy.commission.cash_per_contract, commission_value=0.385, slippage=0)
+// FILE ROLE: H2 ARM (v36, pre-registered in audit/PREREGISTRATION.md amendment A3) — FORWARD TEST
+// ONLY. A self-contained strategy: the H2 sweep-to-value signal (the fenced H2 block,
+// byte-identical to the one in Visuals) traded through the SAME execution layer, cost
+// model and scorecard as the Treatment / Control / Challenger arms, so the four are comparable.
+// It does not use the Quantum engine. Canonical live file = the Master.
+// H2-BEGIN
+// ═══ HYPOTHESIS H2 — SWEEP-TO-VALUE (pre-registered: PREREGISTRATION amendment A3) ═══
+// Operator's specification: a signal from the market trend, swing highs and lows, a liquidity
+// sweep, the volume profile, and the next expected movement. This block is byte-identical in
+// XAUUSD_Quantum_5_5_Visuals.pine (chart signals + H2 card) and XAUUSD_Quantum_5_0_Strategy_H2.pine
+// (the forward-test arm); audit/tools/h2_parity.py fails otherwise.
+// Every number is fixed in advance and borrowed from the existing system, not fitted:
+//   trend  = the engine's HTF trend score on COMPLETED 1H / 4H / 1D bars (>= 60 up, <= 40 down),
+//            at least 2 of the 3 agreeing
+//   swings = 5-bar pivots (the Visuals structure default); a swing is liquidity until price
+//            trades through it once, then it is consumed
+//   sweep  = the confirmed bar trades through the last unconsumed swing low (high) and CLOSES
+//            back above (below) it
+//   value  = the engine's volume profile, rebuilt on every confirmed bar: 100 bars, 40 bins,
+//            typical price, POC and a 70% value area (OANDA volume is tick volume; Diagnostics
+//            reports its correlation with COMEX volume)
+//   entry  = long only at or below the POC (discount), short only at or above it (premium)
+//   plan   = stop beyond the sweep wick by 0.15 ATR (the engine's buffer), risk 0.5-5 ATR (the
+//            engine's R bounds); TP1 = POC or 1R, TP2 = VAH (VAL) or 2R, whichever is farther
+// Evaluated on confirmed bars only; reads nothing from the future.
+h2HtfScore(float _c, float _e20, float _e100, float _e200) => na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 0.0) + (not na(_e20) and _c > _e20 ? 20.0 : 0.0)
+[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+float h2S1 = h2HtfScore(h2C1, h2A1, h2B1, h2D1)
+float h2S4 = h2HtfScore(h2C4, h2A4, h2B4, h2D4)
+float h2SD = h2HtfScore(h2CD, h2AD, h2BD, h2DD)
+int h2UpN = (h2S1 >= 60 ? 1 : 0) + (h2S4 >= 60 ? 1 : 0) + (h2SD >= 60 ? 1 : 0)
+int h2DnN = (h2S1 <= 40 ? 1 : 0) + (h2S4 <= 40 ? 1 : 0) + (h2SD <= 40 ? 1 : 0)
+bool h2TrendUp = h2UpN >= 2
+bool h2TrendDn = h2DnN >= 2
+// swings: the last unconsumed 5-bar pivot on each side
+float h2PH = ta.pivothigh(high, 5, 5)
+float h2PL = ta.pivotlow(low, 5, 5)
+var float h2SwH = na
+var float h2SwL = na
+bool h2SweepL = barstate.isconfirmed and not na(h2SwL) and low < h2SwL and close > h2SwL
+bool h2SweepH = barstate.isconfirmed and not na(h2SwH) and high > h2SwH and close < h2SwH
+float h2SweptLvl = h2SweepL ? h2SwL : h2SweepH ? h2SwH : na
+if barstate.isconfirmed and not na(h2SwL) and low < h2SwL
+    h2SwL := na
+if barstate.isconfirmed and not na(h2SwH) and high > h2SwH
+    h2SwH := na
+if not na(h2PL)
+    h2SwL := h2PL
+if not na(h2PH)
+    h2SwH := h2PH
+// volume profile, rebuilt on every confirmed bar (the engine's definition)
+float h2VHi = ta.highest(high, 100)
+float h2VLo = ta.lowest(low, 100)
+var float h2Poc = na
+var float h2Vah = na
+var float h2Val = na
+if barstate.isconfirmed and bar_index >= 100 and h2VHi > h2VLo
+    float _h2bs = (h2VHi - h2VLo) / 40.0
+    float[] _h2vv = array.new_float(40, 0.0)
+    for _h2i = 0 to 99
+        int _h2k = math.max(0, math.min(int(((high[_h2i] + low[_h2i] + close[_h2i]) / 3.0 - h2VLo) / _h2bs), 39))
+        array.set(_h2vv, _h2k, array.get(_h2vv, _h2k) + nz(volume[_h2i], 0.0))
+    float _h2mx = 0.0
+    int _h2pk = 0
+    for _h2j = 0 to 39
+        if array.get(_h2vv, _h2j) > _h2mx
+            _h2mx := array.get(_h2vv, _h2j)
+            _h2pk := _h2j
+    float _h2cum = _h2mx
+    float _h2tgt = array.sum(_h2vv) * 0.70
+    int _h2lo = _h2pk
+    int _h2hi = _h2pk
+    while _h2cum < _h2tgt and (_h2lo > 0 or _h2hi < 39)
+        float _h2vb = _h2lo > 0 ? array.get(_h2vv, _h2lo - 1) : -1.0
+        float _h2va = _h2hi < 39 ? array.get(_h2vv, _h2hi + 1) : -1.0
+        if _h2va >= _h2vb and _h2hi < 39
+            _h2hi += 1
+            _h2cum += _h2va
+        else if _h2lo > 0
+            _h2lo -= 1
+            _h2cum += _h2vb
+        else
+            break
+    h2Poc := h2VLo + _h2bs * (_h2pk + 0.5)
+    h2Vah := h2VLo + _h2bs * (_h2hi + 0.5)
+    h2Val := h2VLo + _h2bs * (_h2lo + 0.5)
+// the signal and its plan
+float h2Atr = ta.atr(14)
+float h2RL = h2SweepL ? close - (low - 0.15 * h2Atr) : na
+float h2RS = h2SweepH ? (high + 0.15 * h2Atr) - close : na
+bool h2Long = h2SweepL and h2TrendUp and not na(h2Poc) and close <= h2Poc and h2RL >= 0.5 * h2Atr and h2RL <= 5.0 * h2Atr
+bool h2Short = h2SweepH and h2TrendDn and not na(h2Poc) and close >= h2Poc and h2RS >= 0.5 * h2Atr and h2RS <= 5.0 * h2Atr
+float h2R = h2Long ? h2RL : h2Short ? h2RS : na
+float h2Sl = h2Long ? close - h2RL : h2Short ? close + h2RS : na
+float h2Tp1 = h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na
+float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h2Val, close - 2.0 * h2R) : na
+// next expected movement, from where price sits against value (shown on every bar)
+string h2Trend = h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED"
+string h2Next = na(h2Poc) ? "building profile" : close < h2Val ? "below value: pull toward POC " + str.tostring(h2Poc, "#.##") : close > h2Vah ? "above value: pull toward POC " + str.tostring(h2Poc, "#.##") : close < h2Poc ? "in value, under POC " + str.tostring(h2Poc, "#.##") : "in value, over POC " + str.tostring(h2Poc, "#.##")
+// H2-END
+
+bool _costModelValid = syminfo.pointvalue == 1.0 and syminfo.currency == "USD"
+var label _mtWarn = na
+if barstate.islast and not _costModelValid
+    label.delete(_mtWarn)
+    _mtWarn := label.new(bar_index, high, "A/B INVALID — COST MODEL MISMATCH\npointvalue=" + str.tostring(syminfo.pointvalue) + " currency=" + syminfo.currency + "\n(cash costs derived for 1 contract = $1/pt, USD)\nENTRIES BLOCKED until corrected", color=color.new(color.red, 0), textcolor=color.white, style=label.style_label_down, size=size.large)
+
+float abTestQty = 1.0
+// Q5.6: entries additionally blocked by the account-state risk lockout, so the twin
+// backtests EXACTLY what the indicator recommends (tqVeto already folds in riskLock).
+// P0-CAL-005: `and _costModelValid` is the HARD GATE. On a feed whose tick size the
+// declared cost constants were not derived for, the twin takes NO trades at all, so the
+// Strategy Tester reports a visibly empty run instead of a plausible but invalid one.
+bool execBuyS = h2Long and _costModelValid
+bool execSellS = h2Short and _costModelValid
+var float stEntry = na
+var float stSL = na
+var float stTP1 = na
+var float stTP2 = na
+var bool stBE = false
+if execBuyS and strategy.position_size <= 0
+    strategy.close_all(comment="flip")
+    stEntry := close
+    stSL := h2Sl
+    stTP1 := h2Tp1
+    stTP2 := h2Tp2
+    stBE := false
+    // P0-EXEC-001 (external audit): qty is now EXPLICIT. Previously omitted, so the
+    // order fell through to default_qty_type=percent_of_equity/5 — i.e. 5% of equity
+    // notional, which is neither the dashboard's risk-based lot nor a constant size.
+    // Worse for an A/B: percent_of_equity COMPOUNDS, so the two arms would trade
+    // different sizes as their equity curves diverged, contaminating the very
+    // comparison the twins exist to make. Fixed size makes trade outcomes additive in
+    // R and the gate change the only variable. Absolute P&L is therefore NOT a
+    // risk-model simulation — it is a like-for-like gate comparison, which is the
+    // twins' only purpose.
+    // CHANGE ID: F-013 — stamp the engine's own per-trade estimates into the entry
+    // COMMENT, which TradingView writes to the Signal column of the List of Trades
+    // export. This is METADATA ONLY: comment has zero effect on fills, sizing, or any
+    // result. It is applied to BOTH arms so the A/B delta is unchanged.
+    // WHY IT MUST PRECEDE THE BASELINE: validate.py's calibration test needs a `prob`
+    // and `tq` per trade, and those are internal engine values absent from the standard
+    // export. alert() CANNOT supply them — alerts fire only forward in real time and
+    // never on historical bars, so they can never backfill a backtest. The entry comment
+    // is the only mechanism that attaches them to every historical trade. Without this,
+    // the baseline export cannot support the calibration test and a second full run
+    // F-A12 FIX. That format was NEVER EMITTED: the comment shipped TQ|CG|B..V..|D and
+    // carried no probability at all, so the one field the calibration test actually needs
+    // was the one field missing -- and the defect hid behind a comment describing the
+    // intended format rather than the real one. P is now appended, and it is the
+    // DIRECTIONAL probability: _calibratedProb for longs, 1 - _calibratedProb for shorts,
+    // i.e. P(this trade wins) rather than P(bullish). A reliability curve needs the
+    // former. Emitted format is now "TQ<n>|CG<n>|B<n>V<n>|D<n>|P<pct>".
+    // This had to land BEFORE the baseline run for the reason stated just above: alerts
+    // cannot backfill history, so without it the export cannot support the calibration
+    // test and a second full backtest would be needed to get it.
+    strategy.entry("L", strategy.long, qty = abTestQty, comment = "H2 R" + str.tostring(h2R, "#.##"))
+if execSellS and strategy.position_size >= 0
+    strategy.close_all(comment="flip")
+    stEntry := close
+    stSL := h2Sl
+    stTP1 := h2Tp1
+    stTP2 := h2Tp2
+    stBE := false
+    strategy.entry("S", strategy.short, qty = abTestQty, comment = "H2 R" + str.tostring(h2R, "#.##"))
+// CHANGE ID: P0-EXEC-002-FIX | FILE: Strategy execution layer (both twins)
+// OLD LOGIC: on the bar where high>=stTP1, stSL was mutated to breakeven BEFORE
+// being passed to strategy.exit() the SAME bar, with no check for whether the
+// ORIGINAL stop was also touched this bar. TradingView cannot determine intrabar
+// touch order from OHLC alone (documented limitation, not fixable by
+// calc_on_every_tick) — so a bar whose low breached the original stop AND whose
+// high reached TP1 was silently resolved as "TP1 then breakeven," which is
+// optimistic if the stop was actually touched first.
+// NEW LOGIC: only move to breakeven if TP1 was touched AND the ORIGINAL stop was
+// NOT also touched this same bar. If both were touched, stSL is left unmutated
+// (original stop stays live) — this matches the stop-first convention already
+// used elsewhere in this codebase (Q5.6 risk tracker: "SL assumed first if both
+// hit in one bar"), applied here for consistency rather than invented fresh.
+// EXPECTED EFFECT: fewer/later breakeven transitions on bars with a same-bar
+// stop/TP1 conflict; no change on bars where only one level was touched.
+// REGRESSION TESTS: (A) TP1 only, no stop touch -> BE as before. (B) stop only ->
+// unaffected (existing branch). (C) both touched same bar -> stop wins, no BE.
+if strategy.position_size > 0
+    bool _slTouchedL = low <= stSL
+    if not stBE and high >= stTP1 and not _slTouchedL
+        stBE := true
+        stSL := stEntry
+    strategy.exit("Lx1", "L", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Lx2", "L", stop=stSL, limit=stTP2)
+if strategy.position_size < 0
+    bool _slTouchedS = high >= stSL
+    if not stBE and low <= stTP1 and not _slTouchedS
+        stBE := true
+        stSL := stEntry
+    strategy.exit("Sx1", "S", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Sx2", "S", stop=stSL, limit=stTP2)
+
+// ═══ v34 FORWARD-TEST SCORECARD (display only: reads strategy.closedtrades, feeds nothing) ═══
+// The record of THIS arm, inside TradingView. One row per POSITION: the 50% TP1 exit and the
+// remainder are summed per entry, so a position closed in two parts counts once (the Strategy
+// Tester's List of Trades shows each part as its own row). A position still partly open is left
+// out until it closes. Rule (PREREGISTRATION §4): N >= 50, the 95% t-interval of the mean $ per
+// position entirely above 0, and PF >= 1.2 -> EDGE SHOWN; below 50 -> COLLECTING. TradingView keeps
+// nothing between sessions: the card is recomputed from the LOADED bars, so it is only as deep as
+// the chart's history -- the Coverage row says when the history no longer reaches the start.
+fwdStart = input.time(timestamp("UTC", 2026, 10, 5, 0, 0), "Forward test start (PREREGISTRATION A1)", group="FORWARD TEST")
+fwdShow = input.bool(true, "Show forward-test scorecard", group="FORWARD TEST")
+fwdPos = input.string("Bottom Right", "Scorecard position", options=["Bottom Right", "Bottom Left", "Top Right", "Top Left"], group="FORWARD TEST", tooltip="With several arms visible on one chart, give each its own corner.")
+var int fwdBar0 = time
+var table fwdTbl = table.new(fwdPos == "Bottom Left" ? position.bottom_left : fwdPos == "Top Right" ? position.top_right : fwdPos == "Top Left" ? position.top_left : position.bottom_right, 2, 9, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+_fwRow(int _r, string _k, string _fwv, color _c) =>
+    table.cell(fwdTbl, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=size.small, text_halign=text.align_left)
+    table.cell(fwdTbl, 1, _r, _fwv, text_color=_c, text_size=size.small, text_halign=text.align_left)
+if fwdShow and barstate.islast
+    int _fwct = strategy.closedtrades
+    int _fwopenBar = strategy.opentrades > 0 ? strategy.opentrades.entry_bar_index(0) : -3
+    int _fwn = 0
+    int _fww = 0
+    float _fws = 0.0
+    float _fws2 = 0.0
+    float _fwgw = 0.0
+    float _fwgl = 0.0
+    float _fwpos = 0.0
+    int _fweb = -1
+    int _fwfirst = 0
+    for _fwi = 0 to _fwct
+        int _fwb = -2
+        bool _fwin = false
+        if _fwi < _fwct
+            _fwb := strategy.closedtrades.entry_bar_index(_fwi)
+            _fwin := strategy.closedtrades.entry_time(_fwi) >= fwdStart
+        if _fweb >= 0 and _fwb != _fweb and _fweb != _fwopenBar
+            _fwn += 1
+            _fww += _fwpos > 0 ? 1 : 0
+            _fws += _fwpos
+            _fws2 += _fwpos * _fwpos
+            _fwgw += math.max(_fwpos, 0.0)
+            _fwgl += math.max(-_fwpos, 0.0)
+        if _fwb != _fweb
+            _fwpos := 0.0
+            _fweb := -1
+        if _fwin
+            _fweb := _fwb
+            _fwpos += strategy.closedtrades.profit(_fwi)
+            _fwfirst := _fwfirst == 0 ? strategy.closedtrades.entry_time(_fwi) : _fwfirst
+    float _fwm = _fwn > 0 ? _fws / _fwn : na
+    float _fwsd = _fwn > 1 ? math.sqrt(math.max((_fws2 - _fwn * _fwm * _fwm) / (_fwn - 1), 0.0)) : na
+    // two-sided 95% t quantile by the Fisher expansion in z = 1.96 (error < 0.003 for df >= 10)
+    float _fwdf = math.max(_fwn - 1, 1)
+    float _fwt = 1.959964 + (7.529121 + 1.959964) / (4.0 * _fwdf) + (5.0 * 28.922809 + 16.0 * 7.529121 + 3.0 * 1.959964) / (96.0 * _fwdf * _fwdf)
+    float _fwlo = _fwn >= 10 ? _fwm - _fwt * _fwsd / math.sqrt(_fwn) : na
+    float _fwhi = _fwn >= 10 ? _fwm + _fwt * _fwsd / math.sqrt(_fwn) : na
+    float _fwpf = _fwgl > 0 ? _fwgw / _fwgl : na
+    // no losing position at all: PF is infinite, which passes the >= 1.2 rule (it is na above)
+    bool _fwpfOk = _fwgl > 0 ? _fwpf >= 1.2 : _fwgw > 0
+    string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpfOk ? "EDGE SHOWN" : "NOT SHOWN"
+    bool _fwtfOk = timeframe.in_seconds() == 900
+    color _fwcT = color.new(#E6EDF3, 0)
+    table.cell(fwdTbl, 0, 0, "FORWARD TEST  v35", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    table.cell(fwdTbl, 1, 0, "from " + str.format_time(fwdStart, "yyyy-MM-dd HH:mm", "UTC") + " UTC  ·  " + timeframe.period + (_fwtfOk ? " (registered)" : "  NOT 15M: does not count"), text_color=_fwtfOk ? color.white : color.orange, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    _fwRow(1, "Positions (N)", str.tostring(_fwn) + (_fwn > 0 ? "   wins " + str.tostring(_fww) + " = " + str.tostring(_fww * 100.0 / _fwn, "#") + "%" : ""), _fwcT)
+    _fwRow(2, "Mean $ / position", na(_fwm) ? "—" : str.tostring(_fwm, "#.##"), _fwcT)
+    _fwRow(3, "95% CI of mean", na(_fwlo) ? "needs 10+ positions" : str.tostring(_fwlo, "#.##") + "  to  " + str.tostring(_fwhi, "#.##"), _fwcT)
+    _fwRow(4, "Profit factor", na(_fwpf) ? (_fwgw > 0 ? "no losses yet (infinite)" : "—") : str.tostring(_fwpf, "#.##") + "  (rule >= 1.2)", _fwcT)
+    _fwRow(5, "Net $ (1 oz, pinned costs)", str.tostring(_fws, "#.##"), _fwcT)
+    _fwRow(6, "VERDICT (pre-registered)", _fwv, _fwv == "EDGE SHOWN" ? color.lime : _fwv == "NOT SHOWN" ? color.orange : _fwcT)
+    _fwRow(7, "Coverage", fwdBar0 > fwdStart ? "loaded history starts " + str.format_time(fwdBar0, "yyyy-MM-dd", "UTC") + " AFTER the test start: incomplete, use the weekly log" : _fwn == 0 ? "no closed position since the start yet" : "first counted entry " + str.format_time(_fwfirst, "yyyy-MM-dd HH:mm", "UTC"), fwdBar0 > fwdStart ? color.orange : _fwcT)
+    _fwRow(8, "Unit", "positions (partial exits summed); open positions excluded", color.new(#8FA3B8, 0))

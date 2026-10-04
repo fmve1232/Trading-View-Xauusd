@@ -1,7 +1,7 @@
 # XAUUSD Quantum — Independent Audit Prompt
 
 **Status:** binding instructions for the auditor.
-**Scope:** the seven Pine v6 artefacts listed in §1 and nothing else (six since v17, seven since v31).
+**Scope:** the eight Pine v6 artefacts listed in §1 and nothing else (six since v17, seven since v31, eight since v36).
 **Generated against:** the artefact set committed under `artefacts/`.
 
 This is not a generic code-review template. It is pinned to this project's
@@ -13,7 +13,7 @@ traps in §4 are findings that already cost this project weeks to locate. Read
 
 ## §1 — Artefact manifest and the stop rule
 
-You are auditing exactly these seven files. Nothing else in the repository is in
+You are auditing exactly these eight files. Nothing else in the repository is in
 scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
@@ -22,11 +22,12 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5365 | 337383 | `86193648198fd1d2c947658457af811d6396f6c156215e823befeddffa3b8d38` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5365 | 337448 | `256eaf50d61526bbd36897828f23d140fd5053b37e9c39d5e3d69637bb4869b7` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5376 | 338367 | `8db04fbbc1db9818e6390d8c659b4183e2f93e49450d348bbdc29889272025ae` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 349 | 24650 | `4cbefc223aebe21c9f9982304fd906eabd371a07789db5e211b53e7204d17bb7` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 994 | 62656 | `2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1125 | 72359 | `e7b245e3a9292668a26c910d94186739040680ad52229cabee027942314a6996` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5602 | 354093 | `a195c954aba012bff18c0273a650688253e2afeb3b07a5e59d8d31ef48e735c7` |
 
-> **BUILD v35 — this prompt pins the current build.** The originally audited build
+> **BUILD v36 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -73,6 +74,8 @@ scope, and no other build of these scripts is in scope.
 > **15M from 2026-10-05 00:00 UTC** (PREREGISTRATION amendment A1); EdgeCases F-group rewritten.
 > **v34: F-A40** (MTF scale per timeframe) fixed; on-chart forward-test scorecards (unit = position);
 > PREREGISTRATION A2 (15M registered, 5M timing only), before the 2026-10-05 start.
+> **v36:** arm H2 (sweep-to-value: trend + swings + liquidity sweep + volume profile + next movement),
+> pre-registered in amendment A3 with a Bonferroni adoption rule; its signal is shown in Visuals.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

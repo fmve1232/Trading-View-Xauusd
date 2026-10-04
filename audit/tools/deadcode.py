@@ -75,7 +75,10 @@ for p in sys.argv[1:]:
         if n <= 1:
             hits.append(('UNCALLED-FUNC', f, ln, False))
     if 'Strategy' in os.path.basename(p):
-        _dp = os.path.join(os.path.dirname(p), 'XAUUSD_Quantum_5_0_Diagnostics.pine')
+        # companion that runs the same code: Diagnostics for the engine arms; Visuals for the H2
+        # arm, whose H2 block is byte-identical there (h2_parity.py) -- only h2* names qualify
+        _h2 = 'Strategy_H2' in os.path.basename(p)
+        _dp = os.path.join(os.path.dirname(p), 'XAUUSD_Quantum_5_5_Visuals.pine' if _h2 else 'XAUUSD_Quantum_5_0_Diagnostics.pine')
         if os.path.exists(_dp):
             _dr = {r['name']: r['nreads'] for r in T.analyze(_dp)['rows']}
             _df = set(T.analyze(_dp)['funcs'])
@@ -84,10 +87,10 @@ for p in sys.argv[1:]:
                 if nm in _df:
                     return sum(len(re.findall(r'(?<![\w.])' + re.escape(nm) + r'\s*\(', l)) for l in _dl) > 1
                 return _dr.get(nm, 0) > 0
-            via = [h for h in hits if not h[3] and _wired(h[1])]
+            via = [h for h in hits if not h[3] and _wired(h[1]) and (not _h2 or h[1].startswith('h2'))]
             hits = [h for h in hits if h not in via]
             if via:
-                print(f"{os.path.basename(p)}: {len(via)} symbols wired through Diagnostics (same engine)")
+                print(f"{os.path.basename(p)}: {len(via)} symbols wired through {'Visuals (same H2 block)' if _h2 else 'Diagnostics (same engine)'}")
     kept = [h for h in hits if not h[3] and h[1] in RETAINED]
     real = [h for h in hits if not h[3] and h[1] not in RETAINED]
     print(f"{os.path.basename(p)}: {len(real)} dead, {len(kept)} retained (operator instruction), {len(hits) - len(real) - len(kept)} structural")

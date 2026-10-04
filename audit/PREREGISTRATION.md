@@ -1,4 +1,15 @@
-# Forward-test pre-registration — XAUUSD Quantum (build v34, amendments A1–A2)
+# Forward-test pre-registration — XAUUSD Quantum (build v36, amendments A1–A3)
+
+## Amendment A3 — 2026-10-04, before the holdout start (operator: signals from volume profile, trend, liquidity sweep, swings, next movement)
+
+| # | Change | Why |
+|---|---|---|
+| A3.1 | New arm **H2 — sweep-to-value**, `XAUUSD_Quantum_5_0_Strategy_H2.pine` | The operator's specification. It is a different trading idea, so it is a new hypothesis. The Master's decision is not altered mid-test; H2 runs beside it. |
+| A3.2 | H2 rule, fixed now with every value borrowed from the existing system (none fitted). **Trend:** ≥ 2 of the engine's HTF trend scores on completed 1H / 4H / 1D bars ≥ 60 (≤ 40 for down). **Swing:** the last unconsumed 5-bar pivot. **Sweep:** the confirmed bar trades through it and closes back inside. **Value:** the engine's volume profile (100 bars, 40 bins, POC, 70% value area) rebuilt every confirmed bar. **Entry:** long at or below POC, short at or above POC. **Plan:** SL = sweep wick ± 0.15 ATR with risk 0.5–5 ATR; TP1 = max(POC, 1R); TP2 = max(VAH, 2R) (mirrored for shorts). **Execution, costs, unit and scorecard:** identical to the other arms. | The signal block is byte-identical in Visuals (`h2_parity.py`); `h2_trace.py` executes it against this specification, and its volume profile equals the engine's VP code on the same bars. |
+| A3.3 | **Multiple comparisons.** Two challengers (H1, H2) are now compared with the Treatment, so adoption of either uses a **97.5%** t-interval (Bonferroni, 0.05 / 2), plus PF ≥ 1.2 and a higher mean $ per position than the Treatment over the same window. Each arm's own EDGE SHOWN / NOT SHOWN verdict stays at 95% and is descriptive. | Testing two ideas at 95% each would give roughly a 1-in-10 chance of a false "better". |
+| A3.4 | Same holdout start (2026-10-05 00:00 UTC), timeframe (15M), decision date and N = 50 for H2 | One protocol for every arm. |
+
+The H2 hash is added to §2 below.
 
 ## Amendment A2 — before the holdout start (operator request: records inside TradingView; 5M and 15M)
 
@@ -60,6 +71,7 @@ Only trades that happen **after** the rules are frozen can show an edge.
 | `XAUUSD_Quantum_5_0_Master.pine` | `043410047ff2eef03845c53c7e832bb7a873c7b7d0b8c8d55c778c3041061694` |
 | `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `86193648198fd1d2c947658457af811d6396f6c156215e823befeddffa3b8d38` |
 | `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `256eaf50d61526bbd36897828f23d140fd5053b37e9c39d5e3d69637bb4869b7` |
+| `XAUUSD_Quantum_5_0_Strategy_H2.pine` (H2) | `4cbefc223aebe21c9f9982304fd906eabd371a07789db5e211b53e7204d17bb7` |
 | `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `8db04fbbc1db9818e6390d8c659b4183e2f93e49450d348bbdc29889272025ae` |
 
 Settings stay at the script defaults, except `MT5 Price Offset`, which is display only.

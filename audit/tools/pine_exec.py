@@ -22,6 +22,10 @@ TOK = re.compile(r'\s*(?:(\d+\.\d*(?:e[-+]?\d+)?|\d+(?:e[-+]?\d+)?|\.\d+)|("(?:\
 NA = float('nan')
 
 
+class Series(list):
+    """A price/volume series, oldest first: a bare name reads the current bar, name[i] reads i bars back."""
+
+
 def isna(x):
     return x is None or (isinstance(x, float) and math.isnan(x))
 
@@ -76,6 +80,8 @@ BUILTINS = {
     'int': lambda x: NA if isna(x) else int(x), 'float': lambda x: float(x),
     'array.get': lambda a, i: a[int(i)],
     'array.from': lambda *a: list(a),
+    'array.new_float': lambda n, v=NA: [v] * int(n),
+    'array.sum': lambda a: sum(x for x in a if not isna(x)),
 }
 
 
@@ -170,7 +176,8 @@ class Parser:
             else:
                 idx = self.expr()
                 self.take(']')
-                a = f"_H({a}, {idx})"
+                mh = re.fullmatch(r"_V\('([\w.]+)'\)", a)
+                a = f"_HS({mh.group(1)!r}, {idx})" if mh else f"_H({a}, {idx})"
         return a
 
     def prim(self):
@@ -231,8 +238,10 @@ class Env(dict):
 def evaluate(src, env):
     code = compile_expr(src)
     g = {'_T': _T, '_C': _C, '_A': _A, 'NA': NA, 'na': 'na',
-         '_V': lambda n: env[n] if n in env else (_ for _ in ()).throw(NameError(n)),
-         '_H': lambda a, i: (a[-1 - int(i)] if isinstance(a, list) else (a if int(i) == 0 else NA)),
+         '_V': lambda n: (env[n][-1] if isinstance(env[n], Series) else env[n]) if n in env else (_ for _ in ()).throw(NameError(n)),
+         '_H': lambda a, i: a if isinstance(a, (int, float)) and int(i) == 0 else NA,
+         '_HS': lambda nm, i: (lambda v, k: (v[-1 - k] if k < len(v) else NA) if isinstance(v, Series)
+                               else (v if k == 0 else NA))(env[nm], int(i)),
          '_F': lambda f, *a: (env.funcs[f](*a) if f in env.funcs else BUILTINS[f](*a))}
     return eval(code, g)
 
@@ -240,6 +249,10 @@ def evaluate(src, env):
 DECL = re.compile(r'^(?:var\s+)?(?:float|int|bool|string|color|float\[\]|int\[\]|array<\w+>)\s+([A-Za-z_]\w*)\s*=\s*(.+)$')
 PLAIN = re.compile(r'^([A-Za-z_]\w*)\s*(:=|\+=|-=|\*=|/=|=)\s*(.+)$')
 SETA = re.compile(r'^array\.set\(\s*([A-Za-z_]\w*)\s*,(.+)$')
+
+
+class _Break(Exception):
+    pass
 
 
 def run(lines, env):
@@ -280,12 +293,26 @@ def _block(L, a, b, env):
                     break
             i = j
             continue
+        m = re.match(r'^while\s+(.+)$', s)
+        if m:
+            try:
+                while _T(evaluate(m.group(1), env)):
+                    _block(L, i + 1, j, env)
+            except _Break:
+                pass
+            i = j
+            continue
+        if s == 'break':
+            raise _Break()
         m = re.match(r'^for\s+([A-Za-z_]\w*)\s*=\s*(.+?)\s+to\s+(.+)$', s)
         if m:
             lo, hi = int(evaluate(m.group(2), env)), int(evaluate(m.group(3), env))
-            for v in range(lo, hi + 1) if hi >= lo else range(lo, hi - 1, -1):
-                env[m.group(1)] = v
-                _block(L, i + 1, j, env)
+            try:
+                for v in range(lo, hi + 1) if hi >= lo else range(lo, hi - 1, -1):
+                    env[m.group(1)] = v
+                    _block(L, i + 1, j, env)
+            except _Break:
+                pass
             i = j
             continue
         m = SETA.match(s)

@@ -9,11 +9,12 @@ The operator pastes these into TradingView by hand. Sending only the changed fil
 mismatched set on the chart, and there is no way to tell from the TradingView side which
 build a given script is on. A full set every time removes that class of mistake.
 
-There are **seven** artefacts (since v31). Six are chart scripts; `EdgeCases.pine` is a
+There are **eight** artefacts (since v36). Seven are chart scripts; `EdgeCases.pine` is a
 run-once diagnostic that is removed after reading its table. `Diagnostics.pine` (v17)
 carries the features that no longer fit under the Master's compiled-token limit, on the
 Treatment twin's engine verbatim. `Strategy_CHALLENGER.pine` (v31) is the pre-registered
-forward-test arm H1. Send all seven unless the
+forward-test arm H1; `Strategy_H2.pine` (v36) is arm H2 (sweep-to-value), whose signal block is
+byte-identical in Visuals. Send all eight unless the
 operator says to drop EdgeCases.
 
 **The chat record must include**, every time:
@@ -41,8 +42,8 @@ sha256sum -c audit/MANIFEST.sha256
 
 ## Non-negotiables carried from the audit
 
-- **HOLDOUT FREEZE (from 2026-10-05 00:00 UTC, 15M; amendment A1):** the Master, Treatment, Control
-  and Challenger are frozen at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
+- **HOLDOUT FREEZE (from 2026-10-05 00:00 UTC, 15M; amendments A1–A3):** the Master, Treatment, Control,
+  Challenger and H2 are frozen at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
   fixes and display-only changes are allowed; any other change restarts the forward test.
 - **Do not tune** thresholds, weights or gates against results measured on this price
   history. The IS/OOS boundary slides and the window already had parameters selected on it.
@@ -59,6 +60,8 @@ sha256sum -c audit/MANIFEST.sha256
 - **Forward record lives on the chart (v34):** each strategy arm ends with a FORWARD-TEST SCORECARD
   (identical code in all three arms; unit = position, partial exits summed). Keep it identical, or
   the A/B hunk counts break. The registered timeframe is 15M; 5M is for timing only (PREREG A2.4).
+- **H2 block:** `// H2-BEGIN` … `// H2-END` must stay byte-identical in Visuals and Strategy_H2
+  (`h2_parity.py`); `h2_trace.py` executes it against its specification.
 - **Token estimates are estimates.** Compiled ≈ lexical × 2.515 (measured on v23: 100,820 /
   40,081; v14 gave 2.466). Keep the Master ≥ 2% under 100,256 at that ratio.
 - The checkers narrow the search; **they do not replace the compiler.** Three static passes
@@ -68,7 +71,7 @@ sha256sum -c audit/MANIFEST.sha256
 
 | Path | What |
 |---|---|
-| `artefacts/` | The seven Pine v6 files. |
+| `artefacts/` | The eight Pine v6 files. |
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
@@ -76,4 +79,4 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |
-| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`; `race_model_check.py` / `formula_check.py` (test the maths on synthetic data, not the Pine); `deadcode.py` (unread / self-only / write-only / uncalled symbols; `retained.txt` lists code kept on operator instruction); `diag_parity.py`; `build_diag.py` (regenerates `Diagnostics.pine` from the Treatment twin — edit DIAG blocks there, not in the artefact); `sequence.py` (reads that run before a same-bar write, i.e. an earlier stage or last bar; triage by hand); `pine_exec.py` + `formula_trace.py` (execute the probability/statistics blocks AS WRITTEN in each .pine against first-principles references — run on every engine copy); `fix_v33.py` (F-A38/F-A39, applied v33); `fix_v34.py` (F-A40, applied v34); `pinelimits.py` (compile-error classes the others miss, incl. "no output call"). |
+| `audit/tools/` | `trace.py`, `precheck.py`, `undeclared.py`, `order.py`; `race_model_check.py` / `formula_check.py` (test the maths on synthetic data, not the Pine); `deadcode.py` (unread / self-only / write-only / uncalled symbols; `retained.txt` lists code kept on operator instruction); `diag_parity.py`; `build_diag.py` (regenerates `Diagnostics.pine` from the Treatment twin — edit DIAG blocks there, not in the artefact); `sequence.py` (reads that run before a same-bar write, i.e. an earlier stage or last bar; triage by hand); `pine_exec.py` + `formula_trace.py` (execute the probability/statistics blocks AS WRITTEN in each .pine against first-principles references — run on every engine copy); `fix_v33.py` (F-A38/F-A39, applied v33); `fix_v34.py` (F-A40, applied v34); `h2_parity.py` + `h2_trace.py` (H2 arm); `pinelimits.py` (compile-error classes the others miss, incl. "no output call"). |

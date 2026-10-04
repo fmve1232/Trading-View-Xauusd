@@ -178,7 +178,15 @@ The rules are frozen in `audit/PREREGISTRATION.md`. Only trades opened after the
    the 5M chart to time the entry inside that signal (e.g. a 5M structure break in the same
    direction). A scorecard on 5M says "NOT 15M: does not count". On a free plan, the 5M history
    covers only ~2–3 weeks, so its statistics are thin by construction.
-6. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
+6. **H2 sweep-to-value (v36).** Add `Strategy_H2.pine` to the same 15M chart (defaults, 10K), and
+   paste the new Visuals.
+   - Visuals marks H2 signals with "H2" triangles, and its **H2 card** shows: the 1H/4H/1D trend,
+     the unswept swing high/low, VAL/POC/VAH, the last sweep, the next movement, and the last
+     signal at MT5 prices.
+   - Set *MT5 price offset* in Visuals to the same value as in the Master.
+   - H2's own record is the scorecard of `Strategy_H2`.
+   - Adoption of H1 or H2 needs the 97.5% interval (Stats rows 35–37).
+7. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
    setting or rule before the decision date in PREREGISTRATION §5.
 
 ---
