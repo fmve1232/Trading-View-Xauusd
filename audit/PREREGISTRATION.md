@@ -10,6 +10,10 @@
 
 Start date, timeframe, N, decision date and every rule are unchanged. §2 has the new Master and H2 hashes.
 
+**Operator confirmation (2026-10-04, before the start):** "Keep H2 as it is, approved." The H2 rule in A3.2 is
+confirmed unchanged; a sweep of previous day/week/month levels was considered and NOT added (it would be a
+separate arm, H3, with its own pre-registration).
+
 ## Amendment A3 — 2026-10-04, before the holdout start (operator: signals from volume profile, trend, liquidity sweep, swings, next movement)
 
 | # | Change | Why |
