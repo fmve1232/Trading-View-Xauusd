@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v36   (H2 signals + card)            ║
+// ║  BUILD STAMP — this file last CHANGED in v37   (H2 card + session rows)      ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -536,6 +536,71 @@ bool inAsian  = hU >= 0 and hU < londonOpen
 bool inLondon = hU >= londonOpen and hU < londonClose
 bool inNY     = hU >= nyOpen and hU < nyClose
 bgcolor(showSess and inLondon and inNY ? color.new(#FFD54F, 95) : showSess and inLondon ? color.new(#4DA6FF, 95) : showSess and inNY ? color.new(#00D084, 95) : showSess and inAsian ? color.new(#B084FF, 96) : na, title = "Sessions")
+// v37: SESSION INTELLIGENCE moved here from the Master (token ceiling; display only, it fed no
+// gate there). f_sessionIntel is the Treatment engine's function VERBATIM (sess_parity.py checks
+// it) on this file's session clock, which matches the engine's hours (London 07 UTC, NY by US DST).
+// SESSIntel-BEGIN
+f_sessionIntel() =>
+    // ═══════════════ R6.0 SESSION INTELLIGENCE ═══════════════
+    // Per-session-class rolling statistics (Asian=0, London=1, NY=2), confirmed bars only.
+    // avg range = EWMA (a~0.1, ~ last 20 sessions); manipulation = swept the PREVIOUS
+    // session's extreme intra-session but closed back inside; continuation = session closed
+    // beyond 50% of its own range from its open (directional session).
+    int sessId = inAsian ? 0 : inLondon ? 1 : inNY ? 2 : 3
+    var int curSessId = -1
+    var float sesHi = na
+    var float sesLo = na
+    var float sesOpenPx = na
+    var float prevSesHi = na
+    var float prevSesLo = na
+    var bool sesManip = false
+    var float[] sessRngAvg = array.from(0.0, 0.0, 0.0)
+    var int[] sessCnt = array.from(0, 0, 0)
+    var int[] sessManipCnt = array.from(0, 0, 0)
+    var int[] sessContCnt = array.from(0, 0, 0)
+    if barstate.isconfirmed
+        if sessId != curSessId
+            if curSessId >= 0 and curSessId <= 2 and not na(sesHi)
+                float _rngS = sesHi - sesLo
+                int _cS = array.get(sessCnt, curSessId)
+                array.set(sessRngAvg, curSessId, _cS == 0 ? _rngS : array.get(sessRngAvg, curSessId) * 0.9 + _rngS * 0.1)
+                array.set(sessCnt, curSessId, _cS + 1)
+                if sesManip
+                    array.set(sessManipCnt, curSessId, array.get(sessManipCnt, curSessId) + 1)
+                if _rngS > 0 and math.abs(close[1] - sesOpenPx) / _rngS > 0.5
+                    array.set(sessContCnt, curSessId, array.get(sessContCnt, curSessId) + 1)
+            prevSesHi := sesHi
+            prevSesLo := sesLo
+            curSessId := sessId
+            sesHi := high
+            sesLo := low
+            sesOpenPx := open
+            sesManip := false
+        else
+            sesHi := math.max(nz(sesHi, high), high)
+            sesLo := math.min(nz(sesLo, low), low)
+            if not na(prevSesHi) and not na(prevSesLo) and ((high > prevSesHi and close < prevSesHi) or (low < prevSesLo and close > prevSesLo))
+                sesManip := true
+    float sessAvgRange = curSessId >= 0 and curSessId <= 2 ? array.get(sessRngAvg, curSessId) : na
+    float sessExpansionPct = not na(sessAvgRange) and sessAvgRange > 0 and not na(sesHi) ? (sesHi - sesLo) / sessAvgRange * 100.0 : na
+    int _sessN = curSessId >= 0 and curSessId <= 2 ? array.get(sessCnt, curSessId) : 0
+    float sessManipProb = _sessN >= 5 ? array.get(sessManipCnt, curSessId) * 100.0 / _sessN : na
+    float sessContProb = _sessN >= 5 ? array.get(sessContCnt, curSessId) * 100.0 / _sessN : na
+    [sessId, curSessId, sesHi, sesLo, sesOpenPx, prevSesHi, prevSesLo, sesManip, sessExpansionPct, sessManipProb, sessContProb]
+[sessId, curSessId, sesHi, sesLo, sesOpenPx, prevSesHi, prevSesLo, sesManip, sessExpansionPct, sessManipProb, sessContProb] = f_sessionIntel()
+// SESSIntel-END
+// Session volume vs its own per-session EWMA (alpha 0.01, ~100-bar half-life), from the Master.
+var float volAsianEWMA = 0.0
+var float volLondonEWMA = 0.0
+var float volNyEWMA = 0.0
+if barstate.isconfirmed and not na(volume)
+    if inAsian
+        volAsianEWMA := volAsianEWMA > 0 ? 0.99 * volAsianEWMA + 0.01 * volume : volume
+    else if inLondon
+        volLondonEWMA := volLondonEWMA > 0 ? 0.99 * volLondonEWMA + 0.01 * volume : volume
+    else if inNY
+        volNyEWMA := volNyEWMA > 0 ? 0.99 * volNyEWMA + 0.01 * volume : volume
+float sessVolBase = inAsian ? volAsianEWMA : inLondon ? volLondonEWMA : inNY ? volNyEWMA : 0.0
 
 // ═══════════════════ SUPPORT & RESISTANCE ═══════════════════
 // Confirmed swing pivots, clustered by ATR proximity so repeated tests of the same
@@ -993,6 +1058,16 @@ alertcondition(_t4hL, "4H Low Touch",  "XAUUSD touched the last closed 4H candle
 alertcondition(_t1dH, "PDH Touch",     "XAUUSD touched the previous day HIGH (PDH)")
 alertcondition(_t1dL, "PDL Touch",     "XAUUSD touched the previous day LOW (PDL)")
 
+// H2-TREND-BEGIN — per file. Visuals and Strategy_H2 request 1H / 4H / 1D themselves; the Master
+// reads its engine's byte-identical requests instead (see the Master's H2-TREND block).
+h2HtfScore(float _c, float _e20, float _e100, float _e200) => na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 0.0) + (not na(_e20) and _c > _e20 ? 20.0 : 0.0)
+[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+float h2S1 = h2HtfScore(h2C1, h2A1, h2B1, h2D1)
+float h2S4 = h2HtfScore(h2C4, h2A4, h2B4, h2D4)
+float h2SD = h2HtfScore(h2CD, h2AD, h2BD, h2DD)
+// H2-TREND-END
 // H2-BEGIN
 // ═══ HYPOTHESIS H2 — SWEEP-TO-VALUE (pre-registered: PREREGISTRATION amendment A3) ═══
 // Operator's specification: a signal from the market trend, swing highs and lows, a liquidity
@@ -1013,13 +1088,6 @@ alertcondition(_t1dL, "PDL Touch",     "XAUUSD touched the previous day LOW (PDL
 //   plan   = stop beyond the sweep wick by 0.15 ATR (the engine's buffer), risk 0.5-5 ATR (the
 //            engine's R bounds); TP1 = POC or 1R, TP2 = VAH (VAL) or 2R, whichever is farther
 // Evaluated on confirmed bars only; reads nothing from the future.
-h2HtfScore(float _c, float _e20, float _e100, float _e200) => na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 0.0) + (not na(_e20) and _c > _e20 ? 20.0 : 0.0)
-[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-float h2S1 = h2HtfScore(h2C1, h2A1, h2B1, h2D1)
-float h2S4 = h2HtfScore(h2C4, h2A4, h2B4, h2D4)
-float h2SD = h2HtfScore(h2CD, h2AD, h2BD, h2DD)
 int h2UpN = (h2S1 >= 60 ? 1 : 0) + (h2S4 >= 60 ? 1 : 0) + (h2SD >= 60 ? 1 : 0)
 int h2DnN = (h2S1 <= 40 ? 1 : 0) + (h2S4 <= 40 ? 1 : 0) + (h2SD <= 40 ? 1 : 0)
 bool h2TrendUp = h2UpN >= 2
@@ -1086,13 +1154,13 @@ float h2R = h2Long ? h2RL : h2Short ? h2RS : na
 float h2Sl = h2Long ? close - h2RL : h2Short ? close + h2RS : na
 float h2Tp1 = h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na
 float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h2Val, close - 2.0 * h2R) : na
-// next expected movement, from where price sits against value (shown on every bar)
-string h2Trend = h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED"
-string h2Next = na(h2Poc) ? "building profile" : close < h2Val ? "below value: pull toward POC " + str.tostring(h2Poc, "#.##") : close > h2Vah ? "above value: pull toward POC " + str.tostring(h2Poc, "#.##") : close < h2Poc ? "in value, under POC " + str.tostring(h2Poc, "#.##") : "in value, over POC " + str.tostring(h2Poc, "#.##")
 // H2-END
 
 // ═══ v36 H2 DISPLAY — chart markers, H2 card and alerts. Display only: the signal is the H2 block
 // above, byte-identical to the H2 strategy arm, whose on-chart scorecard is the H2 record. ═══
+// next expected movement, from where price sits against value (shown on every bar)
+string h2Trend = h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED"
+string h2Next = na(h2Poc) ? "building profile" : close < h2Val ? "below value: pull toward POC " + str.tostring(h2Poc, "#.##") : close > h2Vah ? "above value: pull toward POC " + str.tostring(h2Poc, "#.##") : close < h2Poc ? "in value, under POC " + str.tostring(h2Poc, "#.##") : "in value, over POC " + str.tostring(h2Poc, "#.##")
 grpH2 = "H2 sweep-to-value (pre-registered)"
 h2Show = input.bool(true, "Show H2 signals and card", group = grpH2)
 h2CardPos = input.string("Middle Left", "H2 card position", options = ["Middle Left", "Bottom Left", "Top Left", "Middle Right"], group = grpH2)
@@ -1109,13 +1177,13 @@ if h2Long or h2Short
     alert("XAUUSD " + timeframe.period + " H2 sweep-to-value " + h2LastSig + " (MT5 prices) | trend " + h2Trend, alert.freq_once_per_bar_close)
 alertcondition(h2Long, "H2 BUY", "XAUUSD H2 sweep-to-value BUY on {{interval}} at {{close}} (TradingView price)")
 alertcondition(h2Short, "H2 SELL", "XAUUSD H2 sweep-to-value SELL on {{interval}} at {{close}} (TradingView price)")
-var table h2Card = table.new(h2CardPos == "Bottom Left" ? position.bottom_left : h2CardPos == "Top Left" ? position.top_left : h2CardPos == "Middle Right" ? position.middle_right : position.middle_left, 2, 7, bgcolor = color.new(#0B0F14, 5), border_width = 1, border_color = color.new(#2A3340, 0))
+var table h2Card = table.new(h2CardPos == "Bottom Left" ? position.bottom_left : h2CardPos == "Top Left" ? position.top_left : h2CardPos == "Middle Right" ? position.middle_right : position.middle_left, 2, 10, bgcolor = color.new(#0B0F14, 5), border_width = 1, border_color = color.new(#2A3340, 0))
 _h2Row(int _r, string _k, string _x, color _c) =>
     table.cell(h2Card, 0, _r, _k, text_color = color.new(#8FA3B8, 0), text_size = size.small, text_halign = text.align_left)
     table.cell(h2Card, 1, _r, _x, text_color = _c, text_size = size.small, text_halign = text.align_left)
 if h2Show and barstate.islast
     color _h2t = color.new(#E6EDF3, 0)
-    table.cell(h2Card, 0, 0, "H2 SWEEP-TO-VALUE  v36", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
+    table.cell(h2Card, 0, 0, "H2 SWEEP-TO-VALUE  v37", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
     table.cell(h2Card, 1, 0, timeframe.period + (timeframe.in_seconds() == 900 ? " (registered)" : "  NOT 15M: the H2 record does not count here"), text_color = timeframe.in_seconds() == 900 ? color.white : color.orange, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
     _h2Row(1, "Trend 1H / 4H / 1D", h2Trend + "   " + str.tostring(h2S1, "#") + " / " + str.tostring(h2S4, "#") + " / " + str.tostring(h2SD, "#") + "  (>=60 up, <=40 down)", h2TrendUp ? color.new(#00D084, 0) : h2TrendDn ? color.new(#FF4D4D, 0) : _h2t)
     _h2Row(2, "Swing liquidity (unswept)", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "   low " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)), _h2t)
@@ -1123,3 +1191,7 @@ if h2Show and barstate.islast
     _h2Row(4, "Last sweep", h2LastSweep, _h2t)
     _h2Row(5, "Next movement (TV price)", h2Next, _h2t)
     _h2Row(6, "Last H2 signal (MT5)", h2LastSig, h2LastSig == "none yet" ? _h2t : str.startswith(h2LastSig, "BUY") ? color.new(#00D084, 0) : color.new(#FF4D4D, 0))
+    string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
+    _h2Row(7, "Session now (" + _sn + ")", curSessId != sessId or na(sesHi) ? "starts next confirmed bar" : "range " + _h2p(sesLo) + " - " + _h2p(sesHi) + "  open " + _h2p(sesOpenPx) + "  Exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "  SWEPT prev session extreme" : ""), sesManip ? color.orange : _h2t)
+    _h2Row(8, "Session history", "manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + "  continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + "  (n>=5)   prev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _h2t)
+    _h2Row(9, "Session volume", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of this session's average (tick volume)" : "—", _h2t)

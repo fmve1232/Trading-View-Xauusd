@@ -24,6 +24,8 @@ deletes and redraws it (x := f(x, ...)) is a live chart object, not a self-only 
 COMPANION: the strategy twins and Diagnostics.pine run the same engine verbatim
 (diag_parity.py). A twin symbol that the twin never reads but Diagnostics DOES read is wired
 through Diagnostics, and is reported as such.
+The Master is included since v37: its analog-evidence readout (oPdh1stPct, oCalDetail, ...)
+moved to the Diagnostics "Analog evidence" row (token ceiling); the same engine computes them.
 
 Usage: python3 audit/tools/deadcode.py artefacts/*.pine
 """
@@ -74,7 +76,7 @@ for p in sys.argv[1:]:
         n = sum(len(re.findall(r'(?<![\w.])' + re.escape(f) + r'\s*\(', l)) for l in lines)
         if n <= 1:
             hits.append(('UNCALLED-FUNC', f, ln, False))
-    if 'Strategy' in os.path.basename(p):
+    if 'Strategy' in os.path.basename(p) or 'Master' in os.path.basename(p):
         # companion that runs the same code: Diagnostics for the engine arms; Visuals for the H2
         # arm, whose H2 block is byte-identical there (h2_parity.py) -- only h2* names qualify
         _h2 = 'Strategy_H2' in os.path.basename(p)

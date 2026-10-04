@@ -186,6 +186,13 @@ The rules are frozen in `audit/PREREGISTRATION.md`. Only trades opened after the
    - Set *MT5 price offset* in Visuals to the same value as in the Master.
    - H2's own record is the scorecard of `Strategy_H2`.
    - Adoption of H1 or H2 needs the 97.5% interval (Stats rows 35–37).
+   - **v37:** the Master shows the same H2 signal as **H2 SETUP** (desktop: under the decision
+     footer; phone: card row "5 H2 SETUP") with its own MT5 plan and alert. It is a second
+     decision, separate from DECISION: an H2 SETUP you execute is **not** a Live Log trade (A4.2).
+   - The H2 card in Visuals now also shows the session (range, open, expansion vs average,
+     swept-previous-extreme flag), session history (manipulation / continuation %) and session
+     volume — moved from the Master's market cell. The analog-evidence numbers (A / WR / Cal /
+     IS-ROLL / weights) moved from the Master's cross-check line to Diagnostics' *Analog evidence* row.
 7. **Read *Stats*.** Verdicts stay COLLECTING until 50 trades per arm. Do not change any
    setting or rule before the decision date in PREREGISTRATION §5.
 

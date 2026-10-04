@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v34   (F-A40 MTF scale per timeframe)║
+// ║  BUILD STAMP — this file last CHANGED in v37   (H2 SETUP shown; session -> V) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -911,60 +911,14 @@ sessionQuality += (not inAsian or inLondonKZ) ? int((10.0)) : 0
 sessionQuality += (inLondon and not inLondonKZ) ? int((10.0 - regimeStrength * 5.0)) : 0
 sessionQuality := math.min(int(math.round(sessionQuality / (80.0) * 100.0)), 100)
 sessionLabel = inKillzone ? (inLondonFixKZ ? "LON-FIX" : inLondonKZ ? "LON-KZ" : inLondonCloseKZ ? "LON-CL" : inNYKZ ? "NY-KZ" : "KZ") : inLondon ? "LONDON" : inNY ? "NY" : inAsian ? "ASIAN" : "OFF"
-f_sessionIntel() =>
-    // ═══════════════ R6.0 SESSION INTELLIGENCE ═══════════════
-    // Per-session-class rolling statistics (Asian=0, London=1, NY=2), confirmed bars only.
-    // avg range = EWMA (a~0.1, ~ last 20 sessions); manipulation = swept the PREVIOUS
-    // session's extreme intra-session but closed back inside; continuation = session closed
-    // beyond 50% of its own range from its open (directional session).
-    int sessId = inAsian ? 0 : inLondon ? 1 : inNY ? 2 : 3
-    var int curSessId = -1
-    var float sesHi = na
-    var float sesLo = na
-    var float sesOpenPx = na
-    var float prevSesHi = na
-    var float prevSesLo = na
-    var bool sesManip = false
-    var float[] sessRngAvg = array.from(0.0, 0.0, 0.0)
-    var int[] sessCnt = array.from(0, 0, 0)
-    var int[] sessManipCnt = array.from(0, 0, 0)
-    var int[] sessContCnt = array.from(0, 0, 0)
-    if barstate.isconfirmed
-        if sessId != curSessId
-            if curSessId >= 0 and curSessId <= 2 and not na(sesHi)
-                float _rngS = sesHi - sesLo
-                int _cS = array.get(sessCnt, curSessId)
-                array.set(sessRngAvg, curSessId, _cS == 0 ? _rngS : array.get(sessRngAvg, curSessId) * 0.9 + _rngS * 0.1)
-                array.set(sessCnt, curSessId, _cS + 1)
-                if sesManip
-                    array.set(sessManipCnt, curSessId, array.get(sessManipCnt, curSessId) + 1)
-                if _rngS > 0 and math.abs(close[1] - sesOpenPx) / _rngS > 0.5
-                    array.set(sessContCnt, curSessId, array.get(sessContCnt, curSessId) + 1)
-            prevSesHi := sesHi
-            prevSesLo := sesLo
-            curSessId := sessId
-            sesHi := high
-            sesLo := low
-            sesOpenPx := open
-            sesManip := false
-        else
-            sesHi := math.max(nz(sesHi, high), high)
-            sesLo := math.min(nz(sesLo, low), low)
-            if not na(prevSesHi) and not na(prevSesLo) and ((high > prevSesHi and close < prevSesHi) or (low < prevSesLo and close > prevSesLo))
-                sesManip := true
-    float sessAvgRange = curSessId >= 0 and curSessId <= 2 ? array.get(sessRngAvg, curSessId) : na
-    float sessExpansionPct = not na(sessAvgRange) and sessAvgRange > 0 and not na(sesHi) ? (sesHi - sesLo) / sessAvgRange * 100.0 : na
-    int _sessN = curSessId >= 0 and curSessId <= 2 ? array.get(sessCnt, curSessId) : 0
-    float sessManipProb = _sessN >= 5 ? array.get(sessManipCnt, curSessId) * 100.0 / _sessN : na
-    float sessContProb = _sessN >= 5 ? array.get(sessContCnt, curSessId) * 100.0 / _sessN : na
-    [sessId, curSessId, sesHi, sesLo, sesOpenPx, prevSesHi, prevSesLo, sesManip, sessExpansionPct, sessManipProb, sessContProb]
-[sessId, curSessId, sesHi, sesLo, sesOpenPx, prevSesHi, prevSesLo, sesManip, sessExpansionPct, sessManipProb, sessContProb] = f_sessionIntel()
+// v37: R6.0 SESSION INTELLIGENCE (per-session range EWMA, expansion, manipulation and continuation
+// frequencies) MOVED to XAUUSD_Quantum_5_5_Visuals.pine (H2 card, "Session" row) to make room for
+// the H2 SETUP. It is OHLC + session-time only; Visuals carries the same function verbatim (the
+// engine copies in the strategy arms and Diagnostics still run it) and the same session clock.
+// It fed only the dashboard text here -- no gate, alert or plan value.
 // ═══════════════ END SESSION INTELLIGENCE ═══════════════
 
-// Session volume accumulators — per-session EWMA for anomaly detection (α=0.01, ~100 bar half-life)
-var float volAsianEWMA = 0.0
-var float volLondonEWMA = 0.0
-var float volNyEWMA = 0.0
+// v37: session volume EWMA moved to Visuals with the session intelligence (display only).
 
 // Session-aware confidence multipliers — XAUUSD-specific (heuristic)
 float sessionConfMult = 1.0
@@ -1973,14 +1927,6 @@ if barstate.islast and barstate.isconfirmed and not perfMode
             vaPos := close > vahPrice ? "▲" : close < valPrice ? "▼" : "●"
     vpRefresh += 1
 
-// Session volume modeling — per-session rolling averages for anomaly detection
-if barstate.isconfirmed and not na(volume)
-    if inAsian
-        volAsianEWMA := volAsianEWMA > 0 ? 0.99 * volAsianEWMA + 0.01 * volume : volume
-    else if inLondon
-        volLondonEWMA := volLondonEWMA > 0 ? 0.99 * volLondonEWMA + 0.01 * volume : volume
-    else if inNY
-        volNyEWMA := volNyEWMA > 0 ? 0.99 * volNyEWMA + 0.01 * volume : volume
 
 // ORDER FLOW — CVD (proxy-based)
 var float cvd = 0.0
@@ -4969,7 +4915,7 @@ string _xQ = riskLock ? "R✗" : _calVeto ? "P✗" : tqVeto ? "Q✗" : "R✓"
 // 68% from 9 analogs and 68% from 600 look identical on screen and mean entirely
 // different things. A<30 is flagged LOW because the engine's own machinery already treats
 // 30 as the floor for credible-interval and Wilson work (see oMatch >= 30 guards).
-string _evidence = showStatsEngine ? "  A" + str.tostring(oMatch) + (oMatch < 30 ? "!LOW" : "") + " WR" + str.tostring(int(oWr)) + "% ROLL" + str.tostring(oOosN) : ""
+// v37: F-007 analog evidence (A / WR / ROLL n) moved to Diagnostics → "Analog evidence" row (same engine; Master token ceiling).
 // F-008: oCalDetail wired — the calibration engine's own worked example ("P72>65%" = the
 // bin it PREDICTED 72% for actually resolved 65%). That single string is the most direct
 // read on whether the displayed probabilities can be trusted, and it was computed every
@@ -4978,7 +4924,7 @@ string _evidence = showStatsEngine ? "  A" + str.tostring(oMatch) + (oMatch < 30
 // down produced a forward reference).
 // oBosFail is the exact arithmetic complement of oBosCont (they sum to 100 by construction
 // at L4096), so it is intentionally NOT printed twice; BOScont carries both.
-string calStr = showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : ""
+// v37: F-008 calibration example moved to Diagnostics → "Analog evidence" row (same engine; Master token ceiling).
 // v15 (token ceiling): the rolling reliability readout (default OFF, observability only,
 // appended to the crossCheck line) was removed. It recalculated nothing; recoverable from git.
 // CHANGE ID: F-011 — the last 9 orphans, all wired. These were destructured from the
@@ -4996,9 +4942,9 @@ string calStr = showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : "
 //   Feature weights — the ADAPTIVE per-dimension similarity weights the engine actually
 //     converged on (Str/Htf/Liq/Mr/Cor), i.e. what it currently thinks matters. Folded
 //     into one compact string rather than five fields.
-string _calQ = showStatsEngine and __cg != "N/A" ? "  Cal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : ""
-string _isOos = showStatsEngine and __in >= 10 and oOosN >= 10 ? "  IS" + str.tostring(int(__iw)) + "%/ROLL" + str.tostring(int(oOosWr)) + "%" + (__iw - oOosWr > 15 ? "!FIT" : "") : ""
-string _featW = showStatsEngine and oMatch >= 30 ? "  W" + str.tostring(int(__fs)) + "/" + str.tostring(int(__fh)) + "/" + str.tostring(int(__fl)) + "/" + str.tostring(int(__fm)) + "/" + str.tostring(int(__fc)) : ""
+// v37: F-011 Cal grade + Brier moved to Diagnostics → "Analog evidence" row (same engine; Master token ceiling).
+// v37: F-011 IS vs ROLL win rate moved to Diagnostics → "Analog evidence" row (same engine; Master token ceiling).
+// v37: F-011 feature weights moved to Diagnostics → "Analog evidence" row (same engine; Master token ceiling).
 // F-008 (cont): vaPos / vaRatio wired. Both were computed every profile rebuild and read
 // by nothing — another finished feature with no consumer. vaPos states where price sits
 // relative to the volume-profile Value Area (ABOVE / BELOW / INSIDE), which is a direct
@@ -5020,7 +4966,7 @@ string _vaStr = vaPos != "—" ? "  VA" + vaPos + str.tostring(int(vaRatio)) + "
 //             tells you whether a stop is inside the historical noise band.
 //   BOScont — BOS continuation rate. DISPLAY ONLY: R5.3 removed it from fAdj to kill a
 //             double-count, and it must never be fed back into a score.
-string _analytics = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "/PDL" + str.tostring(oPdl1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "/fail" + str.tostring(int(oBosFail)) + "%" : ""
+// v37: F-008 PDH1st / MAE / BOS continuation moved to Diagnostics → "Analog evidence" row (same engine; Master token ceiling).
 // showSR consumer: annotates the readout when the user has toggled the Master switch for a
 // feature that now lives in the companion, so the control is wired to something truthful.
 string _srWhere = showSR ? "  SR@Visuals" : ""
@@ -5034,7 +4980,7 @@ string _gcCell = (gcValid ? "  " + gcState : "") + (oiValid ? "  " + oiState : "
 // looking at, and layout drives how much of the panel is visible. Appended to the readout
 // so the value has a consumer and the mode is never ambiguous.
 string __resolvedModeResp = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
-string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _evidence + _analytics + calStr + _calQ + _isOos + _featW + _vaStr + "  [~ = analog estimate, /100 = heuristic score]"
+string crossCheck = "[" + __resolvedModeResp + "]" + _srWhere + _gcCell + _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + " TQ" + str.tostring(tradeQuality) + "/100" + tqBasis + " C" + str.tostring(confidenceScore) + "/100" + _vaStr + "  [~ = analog estimate, /100 = heuristic score]"
 string xcheckStr = crossCheck + "\n{" + structStr + "} " + (riskLockStr != "" ? "[" + riskLockStr + "] " : "") + (not na(vixD) ? "VIX" + str.tostring(vixD, "#.#") : "") + (climaxUp ? " CLIMAX▲" : climaxDown ? " CLIMAX▼" : "")
 string tqGrade = tradeQuality >= 80 ? "A" : tradeQuality >= 65 ? "B" : tradeQuality >= 50 ? "C" : "D"
 // ═══════════════ END TRADE QUALITY ═══════════════
@@ -5123,6 +5069,109 @@ _dowBiasStr() =>
     _res
 
 float vdK = volDelta50 / 1000.0
+
+// H2-TREND-BEGIN — Master. The engine already requests 1H / 4H / 1D with byte-identical
+// expressions (close[1], EMA 20/100/200 of close[1], lookahead off) and scores them with the same
+// 40/40/20 rule (htfTrendScore). On charts below 1H -- the registered 15M and the 5M timing chart --
+// these ARE H2's scores. On a 1H+ chart the layer at the chart's own timeframe reads a neutral 50 here.
+float h2S1 = htf1hScore
+float h2S4 = htf4hScore
+float h2SD = htf1dScore
+// H2-TREND-END
+// H2-BEGIN
+// ═══ HYPOTHESIS H2 — SWEEP-TO-VALUE (pre-registered: PREREGISTRATION amendment A3) ═══
+// Operator's specification: a signal from the market trend, swing highs and lows, a liquidity
+// sweep, the volume profile, and the next expected movement. This block is byte-identical in
+// XAUUSD_Quantum_5_5_Visuals.pine (chart signals + H2 card) and XAUUSD_Quantum_5_0_Strategy_H2.pine
+// (the forward-test arm); audit/tools/h2_parity.py fails otherwise.
+// Every number is fixed in advance and borrowed from the existing system, not fitted:
+//   trend  = the engine's HTF trend score on COMPLETED 1H / 4H / 1D bars (>= 60 up, <= 40 down),
+//            at least 2 of the 3 agreeing
+//   swings = 5-bar pivots (the Visuals structure default); a swing is liquidity until price
+//            trades through it once, then it is consumed
+//   sweep  = the confirmed bar trades through the last unconsumed swing low (high) and CLOSES
+//            back above (below) it
+//   value  = the engine's volume profile, rebuilt on every confirmed bar: 100 bars, 40 bins,
+//            typical price, POC and a 70% value area (OANDA volume is tick volume; Diagnostics
+//            reports its correlation with COMEX volume)
+//   entry  = long only at or below the POC (discount), short only at or above it (premium)
+//   plan   = stop beyond the sweep wick by 0.15 ATR (the engine's buffer), risk 0.5-5 ATR (the
+//            engine's R bounds); TP1 = POC or 1R, TP2 = VAH (VAL) or 2R, whichever is farther
+// Evaluated on confirmed bars only; reads nothing from the future.
+int h2UpN = (h2S1 >= 60 ? 1 : 0) + (h2S4 >= 60 ? 1 : 0) + (h2SD >= 60 ? 1 : 0)
+int h2DnN = (h2S1 <= 40 ? 1 : 0) + (h2S4 <= 40 ? 1 : 0) + (h2SD <= 40 ? 1 : 0)
+bool h2TrendUp = h2UpN >= 2
+bool h2TrendDn = h2DnN >= 2
+// swings: the last unconsumed 5-bar pivot on each side
+float h2PH = ta.pivothigh(high, 5, 5)
+float h2PL = ta.pivotlow(low, 5, 5)
+var float h2SwH = na
+var float h2SwL = na
+bool h2SweepL = barstate.isconfirmed and not na(h2SwL) and low < h2SwL and close > h2SwL
+bool h2SweepH = barstate.isconfirmed and not na(h2SwH) and high > h2SwH and close < h2SwH
+float h2SweptLvl = h2SweepL ? h2SwL : h2SweepH ? h2SwH : na
+if barstate.isconfirmed and not na(h2SwL) and low < h2SwL
+    h2SwL := na
+if barstate.isconfirmed and not na(h2SwH) and high > h2SwH
+    h2SwH := na
+if not na(h2PL)
+    h2SwL := h2PL
+if not na(h2PH)
+    h2SwH := h2PH
+// volume profile, rebuilt on every confirmed bar (the engine's definition)
+float h2VHi = ta.highest(high, 100)
+float h2VLo = ta.lowest(low, 100)
+var float h2Poc = na
+var float h2Vah = na
+var float h2Val = na
+if barstate.isconfirmed and bar_index >= 100 and h2VHi > h2VLo
+    float _h2bs = (h2VHi - h2VLo) / 40.0
+    float[] _h2vv = array.new_float(40, 0.0)
+    for _h2i = 0 to 99
+        int _h2k = math.max(0, math.min(int(((high[_h2i] + low[_h2i] + close[_h2i]) / 3.0 - h2VLo) / _h2bs), 39))
+        array.set(_h2vv, _h2k, array.get(_h2vv, _h2k) + nz(volume[_h2i], 0.0))
+    float _h2mx = 0.0
+    int _h2pk = 0
+    for _h2j = 0 to 39
+        if array.get(_h2vv, _h2j) > _h2mx
+            _h2mx := array.get(_h2vv, _h2j)
+            _h2pk := _h2j
+    float _h2cum = _h2mx
+    float _h2tgt = array.sum(_h2vv) * 0.70
+    int _h2lo = _h2pk
+    int _h2hi = _h2pk
+    while _h2cum < _h2tgt and (_h2lo > 0 or _h2hi < 39)
+        float _h2vb = _h2lo > 0 ? array.get(_h2vv, _h2lo - 1) : -1.0
+        float _h2va = _h2hi < 39 ? array.get(_h2vv, _h2hi + 1) : -1.0
+        if _h2va >= _h2vb and _h2hi < 39
+            _h2hi += 1
+            _h2cum += _h2va
+        else if _h2lo > 0
+            _h2lo -= 1
+            _h2cum += _h2vb
+        else
+            break
+    h2Poc := h2VLo + _h2bs * (_h2pk + 0.5)
+    h2Vah := h2VLo + _h2bs * (_h2hi + 0.5)
+    h2Val := h2VLo + _h2bs * (_h2lo + 0.5)
+// the signal and its plan
+float h2Atr = ta.atr(14)
+float h2RL = h2SweepL ? close - (low - 0.15 * h2Atr) : na
+float h2RS = h2SweepH ? (high + 0.15 * h2Atr) - close : na
+bool h2Long = h2SweepL and h2TrendUp and not na(h2Poc) and close <= h2Poc and h2RL >= 0.5 * h2Atr and h2RL <= 5.0 * h2Atr
+bool h2Short = h2SweepH and h2TrendDn and not na(h2Poc) and close >= h2Poc and h2RS >= 0.5 * h2Atr and h2RS <= 5.0 * h2Atr
+float h2R = h2Long ? h2RL : h2Short ? h2RS : na
+float h2Sl = h2Long ? close - h2RL : h2Short ? close + h2RS : na
+float h2Tp1 = h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na
+float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h2Val, close - 2.0 * h2R) : na
+// H2-END
+// v37 H2 SETUP on the Master -- display and alert only. The DECISION above is unchanged; H2 is the
+// separate, pre-registered sweep-to-value idea (PREREGISTRATION A3), shown beside it, MT5 prices.
+string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + str.tostring(close + mt5Offset, "#.##") + " SL " + str.tostring(h2Sl + mt5Offset, "#.##") + " TP1 " + str.tostring(h2Tp1 + mt5Offset, "#.##") + " TP2 " + str.tostring(h2Tp2 + mt5Offset, "#.##") : ""
+var string h2Last = "none yet"
+if h2Long or h2Short
+    h2Last := h2Plan + " (swept " + str.tostring(h2SweptLvl + mt5Offset, "#.##") + ") @" + str.format_time(time, "MM-dd HH:mm", "UTC")
+string h2Line = "H2 trend " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : str.tostring(h2Poc + mt5Offset, "#.##")) + " · last " + h2Last
 
 // ══════════════════════════════════════════════════════════════════════
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
@@ -5457,8 +5506,6 @@ f_dashRender() =>
     string _sessTicks = (inNY ? "NY" : inLondon ? "LDN" : inAsian ? "ASN" : "CLS") + " " + (bullBOS ? "▲" : "·") + (bearBOS ? "▼" : "·")
     // R5.1: session volume anomaly (vs per-session EWMA), CVD direction, and 50-bar volume
     // delta wired into MARKET row 2 (all previously computed but never displayed)
-    float _sessVolBase = inAsian ? volAsianEWMA : inLondon ? volLondonEWMA : inNY ? volNyEWMA : 0.0
-    string _sessVolStr = _sessVolBase > 0 and not na(volume) ? " x" + str.tostring(volume / _sessVolBase, "#.#") : ""
     string _cvdStr = cvdBull ? " CVD▲" : cvdBear ? " CVD▼" : " CVD·"
     string _dltStr = " Δ" + (vdK >= 0 ? "+" : "") + str.tostring(vdK, "#.#") + "k"
     // F-028: confidenceScore is a weighted heuristic of structure/MTF/liquidity/macro/session
@@ -5533,10 +5580,7 @@ f_dashRender() =>
         tcb(8, 1, _decBox, C_TEXT, _dirBg, _prSize, _w8)
         // ROW 2 — SECONDARY / DIAGNOSTIC METRICS
         string _mtfArrows = "5M" + (htf5mBull ? "▲" : htf5mBear ? "▼" : "·") + " 15M" + (htf15mBull ? "▲" : htf15mBear ? "▼" : "·") + " 1H" + (htf1hBull ? "▲" : htf1hBear ? "▼" : "·") + " 4H" + (htf4hBull ? "▲" : htf4hBear ? "▼" : "·") + " 1D" + (htf1dBull ? "▲" : htf1dBear ? "▼" : "·")
-        // R6.0: session intelligence appended — Exp = current range vs avg session range,
-        // M = historical manipulation frequency, C = directional-continuation frequency.
-        string _sessStats = (not na(sessExpansionPct) ? " Exp" + str.tostring(int(sessExpansionPct)) + "%" : "") + (not na(sessManipProb) ? " M" + str.tostring(int(sessManipProb)) + "%" : "") + (not na(sessContProb) ? " C" + str.tostring(int(sessContProb)) + "%" : "")
-        string _mktLine = _mtfArrows + "\n" + _sessTicks + _sessVolStr + _cvdStr + _dltStr + " " + regLabel + _sessStats
+        string _mktLine = _mtfArrows + "\n" + _sessTicks + _cvdStr + _dltStr + " " + regLabel
         tc(0, 2, _mktLine + "\n" + xcheckStr, _sessCol, _seSize, _w0)
         string _biasLine = _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : "")
         tc(1, 2, _biasLine, cBloomNeut, _seSize, _w1)
@@ -5568,7 +5612,7 @@ f_dashRender() =>
         string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "#.00") + "L"
         string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + str.tostring(int(_riskUSD)) + " " + _lotStr : ""
         string _decFoot = _rrStr + _riskDisp + " " + decisionLog + " " + _agreePct
-        tc(8, 2, _decFoot, C_TEXT, _seSize, _w8)
+        tc(8, 2, _decFoot + "\n" + h2Line, C_TEXT, _seSize, _w8)
         // v25: hand the composite strings to the Mobile card (slots 25-34), so the phone shows
         // exactly what the desktop cells show, built once.
         array.set(gDashS, 25, _mktLine)
@@ -5626,7 +5670,7 @@ if showDashboard and barstate.islast
     f_dashRender()
     if _dashMobile
         if na(tblBrief)
-            tblBrief := table.new(position.top_right, 2, _planOn ? 16 : _mDet ? 8 : 4, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
+            tblBrief := table.new(position.top_right, 2, (_planOn ? 16 : _mDet ? 8 : 4) + 1, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
         _bts = textSize == "Large" ? size.large : textSize == "Medium" ? size.normal : size.small
         // Compact: headlines on rows 0-3. Otherwise headline k on row 2k, its detail on 2k+1.
         int _hs = _mDet ? 2 : 1
@@ -5655,6 +5699,8 @@ if showDashboard and barstate.islast
         // probability that the next 1R move goes up vs down (the gate's own probability)
         _bc(2 * _hs, "3 PREV → NEXT", (structStr == "" ? "no active structure" : structStr) + " · last " + array.get(gDashS, 2) + "  →  next 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : " · EV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
         // 4 DECISION: the CONFIRMED decision (same as alerts); the MT5 plan when it is a trade
+        // v37: 5 H2 SETUP -- the separate H2 idea, after the plan rows
+        _bc(_planOn ? 16 : _mDet ? 8 : 4, "5 H2 SETUP", h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, _bds)
         bool _bTrade = _confDirLabel == "BUY" or _confDirLabel == "SELL"
         _bc(3 * _hs, "4 DECISION", array.get(gDashS, 30) + (_bTrade ? " | MT5 " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
     // ═══ Q5.9: TRADE PLAN PANEL POPULATION (regression fix) ═══
@@ -5740,5 +5786,8 @@ alertcondition(showSignals and barstate.isconfirmed and bearBOS and not perfMode
 // veto engages, WAIT -> SELL), carrying the MT5 plan when the new state is a trade.
 if barstate.isconfirmed and not perfMode and _confDirLabel != _confDirLabel[1]
     alert("XAUUSD " + timeframe.period + " DECISION " + _confDirLabel[1] + " -> " + _confDirLabel + (_confDirLabel == "BUY" or _confDirLabel == "SELL" ? " | " + _mt5Plan : _confDirLabel == "RISK LOCK" ? " | " + riskLockStr : ""), alert.freq_once_per_bar_close)
+// v37: H2 SETUP alert (the separate sweep-to-value idea); the DECISION alerts above are unchanged.
+if (h2Long or h2Short) and not perfMode
+    alert("XAUUSD " + timeframe.period + " H2 SETUP " + h2Plan + " (MT5) | trend " + (h2Long ? "UP" : "DOWN") + " | separate from DECISION", alert.freq_once_per_bar_close)
 if barstate.isconfirmed and not perfMode and useRiskLimits and riskLock and not riskLock[1]
     alert("XAUUSD " + timeframe.period + " RISK LOCK engaged: " + riskLockStr + " -- new entries blocked", alert.freq_once_per_bar_close)

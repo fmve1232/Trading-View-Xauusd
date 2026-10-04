@@ -18,16 +18,16 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5744 | 371237 | `043410047ff2eef03845c53c7e832bb7a873c7b7d0b8c8d55c778c3041061694` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5793 | 373508 | `1fce11001d0a549d894de4ad792ed59003b0bb469c8686d3a9ea02e37aa540c5` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5365 | 337383 | `86193648198fd1d2c947658457af811d6396f6c156215e823befeddffa3b8d38` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5365 | 337448 | `256eaf50d61526bbd36897828f23d140fd5053b37e9c39d5e3d69637bb4869b7` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5376 | 338367 | `8db04fbbc1db9818e6390d8c659b4183e2f93e49450d348bbdc29889272025ae` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 349 | 24650 | `4cbefc223aebe21c9f9982304fd906eabd371a07789db5e211b53e7204d17bb7` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 349 | 24375 | `7f110a9f89387b3e19e148cd1682de263c08462e0f39b3a18cd80095e3ae77bb` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1125 | 72359 | `e7b245e3a9292668a26c910d94186739040680ad52229cabee027942314a6996` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5602 | 354093 | `a195c954aba012bff18c0273a650688253e2afeb3b07a5e59d8d31ef48e735c7` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1197 | 77369 | `bb64d9c354539a7ce0361157e4437e194780fdbb62bede8df15a2f5945132732` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5616 | 355863 | `2478fcb5121b275d06c0957d0eebdd44e994b066055278be08c4dd1738f0056c` |
 
-> **BUILD v36 — this prompt pins the current build.** The originally audited build
+> **BUILD v37 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -76,6 +76,8 @@ scope, and no other build of these scripts is in scope.
 > PREREGISTRATION A2 (15M registered, 5M timing only), before the 2026-10-05 start.
 > **v36:** arm H2 (sweep-to-value: trend + swings + liquidity sweep + volume profile + next movement),
 > pre-registered in amendment A3 with a Bonferroni adoption rule; its signal is shown in Visuals.
+> **v37:** the Master shows H2 as a second decision (H2 SETUP row + alert; DECISION unchanged, PREREG A4);
+> session intelligence moved to Visuals and the analog-evidence readout to Diagnostics (token ceiling).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v36   (NEW: H2 sweep-to-value arm)   ║
+// ║  BUILD STAMP — this file last CHANGED in v37   (H2 prelude split; signals same)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -82,6 +82,16 @@ strategy("XAUUSD Quantum 5.0 — H2 Sweep-to-Value", overlay=true, max_lines_cou
 // byte-identical to the one in Visuals) traded through the SAME execution layer, cost
 // model and scorecard as the Treatment / Control / Challenger arms, so the four are comparable.
 // It does not use the Quantum engine. Canonical live file = the Master.
+// H2-TREND-BEGIN — per file. Visuals and Strategy_H2 request 1H / 4H / 1D themselves; the Master
+// reads its engine's byte-identical requests instead (see the Master's H2-TREND block).
+h2HtfScore(float _c, float _e20, float _e100, float _e200) => na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 0.0) + (not na(_e20) and _c > _e20 ? 20.0 : 0.0)
+[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+float h2S1 = h2HtfScore(h2C1, h2A1, h2B1, h2D1)
+float h2S4 = h2HtfScore(h2C4, h2A4, h2B4, h2D4)
+float h2SD = h2HtfScore(h2CD, h2AD, h2BD, h2DD)
+// H2-TREND-END
 // H2-BEGIN
 // ═══ HYPOTHESIS H2 — SWEEP-TO-VALUE (pre-registered: PREREGISTRATION amendment A3) ═══
 // Operator's specification: a signal from the market trend, swing highs and lows, a liquidity
@@ -102,13 +112,6 @@ strategy("XAUUSD Quantum 5.0 — H2 Sweep-to-Value", overlay=true, max_lines_cou
 //   plan   = stop beyond the sweep wick by 0.15 ATR (the engine's buffer), risk 0.5-5 ATR (the
 //            engine's R bounds); TP1 = POC or 1R, TP2 = VAH (VAL) or 2R, whichever is farther
 // Evaluated on confirmed bars only; reads nothing from the future.
-h2HtfScore(float _c, float _e20, float _e100, float _e200) => na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 0.0) + (not na(_e20) and _c > _e20 ? 20.0 : 0.0)
-[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-float h2S1 = h2HtfScore(h2C1, h2A1, h2B1, h2D1)
-float h2S4 = h2HtfScore(h2C4, h2A4, h2B4, h2D4)
-float h2SD = h2HtfScore(h2CD, h2AD, h2BD, h2DD)
 int h2UpN = (h2S1 >= 60 ? 1 : 0) + (h2S4 >= 60 ? 1 : 0) + (h2SD >= 60 ? 1 : 0)
 int h2DnN = (h2S1 <= 40 ? 1 : 0) + (h2S4 <= 40 ? 1 : 0) + (h2SD <= 40 ? 1 : 0)
 bool h2TrendUp = h2UpN >= 2
@@ -175,9 +178,6 @@ float h2R = h2Long ? h2RL : h2Short ? h2RS : na
 float h2Sl = h2Long ? close - h2RL : h2Short ? close + h2RS : na
 float h2Tp1 = h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na
 float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h2Val, close - 2.0 * h2R) : na
-// next expected movement, from where price sits against value (shown on every bar)
-string h2Trend = h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED"
-string h2Next = na(h2Poc) ? "building profile" : close < h2Val ? "below value: pull toward POC " + str.tostring(h2Poc, "#.##") : close > h2Vah ? "above value: pull toward POC " + str.tostring(h2Poc, "#.##") : close < h2Poc ? "in value, under POC " + str.tostring(h2Poc, "#.##") : "in value, over POC " + str.tostring(h2Poc, "#.##")
 // H2-END
 
 bool _costModelValid = syminfo.pointvalue == 1.0 and syminfo.currency == "USD"

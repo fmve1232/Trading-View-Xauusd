@@ -14,7 +14,8 @@ run-once diagnostic that is removed after reading its table. `Diagnostics.pine` 
 carries the features that no longer fit under the Master's compiled-token limit, on the
 Treatment twin's engine verbatim. `Strategy_CHALLENGER.pine` (v31) is the pre-registered
 forward-test arm H1; `Strategy_H2.pine` (v36) is arm H2 (sweep-to-value), whose signal block is
-byte-identical in Visuals. Send all eight unless the
+byte-identical in Visuals and (v37) the Master, which shows it as a second decision, H2 SETUP.
+Send all eight unless the
 operator says to drop EdgeCases.
 
 **The chat record must include**, every time:
@@ -60,8 +61,10 @@ sha256sum -c audit/MANIFEST.sha256
 - **Forward record lives on the chart (v34):** each strategy arm ends with a FORWARD-TEST SCORECARD
   (identical code in all three arms; unit = position, partial exits summed). Keep it identical, or
   the A/B hunk counts break. The registered timeframe is 15M; 5M is for timing only (PREREG A2.4).
-- **H2 block:** `// H2-BEGIN` … `// H2-END` must stay byte-identical in Visuals and Strategy_H2
-  (`h2_parity.py`); `h2_trace.py` executes it against its specification.
+- **H2 block:** `// H2-BEGIN` … `// H2-END` must stay byte-identical in Visuals, Strategy_H2 and the
+  Master (`h2_parity.py`, which also checks Visuals' `SESSIntel` block equals the Treatment's
+  `f_sessionIntel`); `h2_trace.py` executes it against its specification. The Master's H2 SETUP is
+  display + alert only: it never changes the DECISION (PREREG A4).
 - **Token estimates are estimates.** Compiled ≈ lexical × 2.515 (measured on v23: 100,820 /
   40,081; v14 gave 2.466). Keep the Master ≥ 2% under 100,256 at that ratio.
 - The checkers narrow the search; **they do not replace the compiler.** Three static passes

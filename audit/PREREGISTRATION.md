@@ -1,4 +1,14 @@
-# Forward-test pre-registration — XAUUSD Quantum (build v36, amendments A1–A3)
+# Forward-test pre-registration — XAUUSD Quantum (build v37, amendments A1–A4)
+
+## Amendment A4 — 2026-10-04, before the holdout start (operator: "show both, H2 as a second decision")
+
+| # | Change | Why |
+|---|---|---|
+| A4.1 | The **Master shows H2** beside its DECISION: an H2 SETUP line (desktop decision footer, phone card row 5) with its own MT5 plan, and an H2 SETUP alert labelled "separate from DECISION". | The operator wants both signals on the decision screen. The H2 block is byte-identical to Strategy_H2 and Visuals (`h2_parity.py`, three files); on 5M/15M the Master's 1H/4H/1D trend scores are the H2 arm's (same requests, same 40/40/20 rule). |
+| A4.2 | **The Master's DECISION is unchanged.** Its engine, gates and DECISION/BUY/SELL alerts are untouched; the only other Master changes are display strings moved to companions (session intelligence → Visuals H2 card; analog-evidence readout → Diagnostics "Analog evidence" row), to stay under the compiled-token limit. | Display only, as §2 allows; the Live arm's rule (execute the Master's DECISION) is unchanged. **An H2 SETUP executed on MT5 is NOT a Live-arm trade**: log it separately, or not at all; H2's record is the Strategy_H2 scorecard. |
+| A4.3 | Strategy_H2 hash changes: the trend prelude moved out of the H2 block and two display strings moved to Visuals. **Signals identical** (same expressions; `h2_trace.py` PASS). | Lets the Master reuse the block without duplicate requests. |
+
+Start date, timeframe, N, decision date and every rule are unchanged. §2 has the new Master and H2 hashes.
 
 ## Amendment A3 — 2026-10-04, before the holdout start (operator: signals from volume profile, trend, liquidity sweep, swings, next movement)
 
@@ -26,7 +36,7 @@ are unchanged. The new hashes replace those in §2.
 A2.5 (v35, display only): the scorecard verdict treats a record with no losing position as PF = ∞
 (passes the PF rule) instead of na (failed it). No signal changes; the arms' hashes in §2 are updated.
 
-, operator decision; the holdout clock restarts
+## Amendment A1 — 2026-10-02, operator decision; the holdout clock restarts
 
 | # | Change | Why |
 |---|---|---|
@@ -68,10 +78,10 @@ Only trades that happen **after** the rules are frozen can show an edge.
 
 | File | SHA-256 |
 |---|---|
-| `XAUUSD_Quantum_5_0_Master.pine` | `043410047ff2eef03845c53c7e832bb7a873c7b7d0b8c8d55c778c3041061694` |
+| `XAUUSD_Quantum_5_0_Master.pine` | `1fce11001d0a549d894de4ad792ed59003b0bb469c8686d3a9ea02e37aa540c5` |
 | `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `86193648198fd1d2c947658457af811d6396f6c156215e823befeddffa3b8d38` |
 | `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `256eaf50d61526bbd36897828f23d140fd5053b37e9c39d5e3d69637bb4869b7` |
-| `XAUUSD_Quantum_5_0_Strategy_H2.pine` (H2) | `4cbefc223aebe21c9f9982304fd906eabd371a07789db5e211b53e7204d17bb7` |
+| `XAUUSD_Quantum_5_0_Strategy_H2.pine` (H2) | `7f110a9f89387b3e19e148cd1682de263c08462e0f39b3a18cd80095e3ae77bb` |
 | `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `8db04fbbc1db9818e6390d8c659b4183e2f93e49450d348bbdc29889272025ae` |
 
 Settings stay at the script defaults, except `MT5 Price Offset`, which is display only.

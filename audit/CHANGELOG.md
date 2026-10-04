@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v36
+# Build changelog — v1 → … → v37
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1305,3 +1305,45 @@ frozen arms, so the forward test can tell whether it is better.
 - **Unchanged:** the Master, Treatment, Control, Challenger, Diagnostics and EdgeCases.
 - Compile NOT RUN (Strategy_H2 and Visuals).
 
+# Build v36 → v37 — H2 shown on the Master as a second decision
+
+Operator: "unfreeze and update our files"; then, from the options offered, **"Show both, H2 as a
+second decision"**. Made before the 2026-10-05 holdout start, as PREREGISTRATION amendment A4.
+
+- **Master:**
+  - the H2 block, byte-identical to Strategy_H2 and Visuals. Its 1H/4H/1D trend reads the engine's
+    own `htf1hScore` / `htf4hScore` / `htf1dScore`: same requests, same 40/40/20 rule, so the
+    same values on 5M/15M. On 1H+ charts the engine sets its unavailable layer to 50.
+  - **H2 SETUP**: desktop, a line under the decision footer (trend, POC, last setup with entry /
+    SL / TP1 / TP2 / swept level at MT5 prices); phone, card row "5 H2 SETUP" (coloured on a
+    signal bar); an alert "H2 SETUP … separate from DECISION".
+  - **DECISION unchanged.** The diff touches no engine, gate, DECISION or BUY/SELL alert line.
+- **Moved, not deleted (token ceiling):**
+  - Session intelligence (`f_sessionIntel`, verbatim from the Treatment engine) and the
+    session-volume EWMA → the Visuals H2 card, rows *Session now* / *Session history* /
+    *Session volume*. Visuals' session clock has the engine's hours.
+  - The cross-check line's analog-evidence readout (A / WR / ROLL n, PDH1st / MAE / BOS cont,
+    Cal example, Cal grade + Brier, IS vs ROLL + !FIT, feature weights) → a Diagnostics
+    *Analog evidence* row, through `build_diag.py`.
+  - The Master's cross-check line keeps the mode, GC/OI/COT/curve, T/S/L/M/Q, TQ, C, VA,
+    structure, risk lock, VIX and CLIMAX.
+- **Strategy_H2:** the trend prelude moved out of the H2 block (`H2-TREND` fence, per file), and
+  two display strings moved to Visuals. Same expressions, so the signals are identical; hash
+  updated in PREREG §2.
+- **Tokens (lexical):** Master 38,970 ≈ 98,010 compiled = 2.24% under 100,256 (target ≥ 2%).
+  Without the moves it was 39,245 ≈ 98,701 (1.55%).
+- **Checkers:**
+  - `h2_parity.py` now compares three files and checks Visuals' `SESSIntel` block against the
+    Treatment's `f_sessionIntel`.
+  - `deadcode.py` applies its companion rule to the Master, for the six stats now displayed
+    by Diagnostics.
+  - `precheck`, `undeclared`, `order`, `deadcode`, `pinelimits`, `diag_parity`, `h2_parity`,
+    `h2_trace` and `formula_trace`: all PASS.
+- **PREREGISTRATION:**
+  - A4;
+  - Master and H2 hashes in §2;
+  - the A1 heading, lost in v36, restored.
+- **Workbook:** Read Me title v37; A13 says an H2 SETUP is not a Live-arm trade. Recalculated in
+  LibreOffice; 11,058 formulas.
+- **Unchanged:** Treatment, Control, Challenger, EdgeCases.
+- Compile NOT RUN (Master, Visuals, Diagnostics, Strategy_H2).

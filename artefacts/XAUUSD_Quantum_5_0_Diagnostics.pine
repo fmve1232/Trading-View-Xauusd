@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v34   (engine F-A40 MTF scale)       ║
+// ║  BUILD STAMP — this file last CHANGED in v37   (evidence row from Master)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5560,14 +5560,27 @@ if barstate.isconfirmed and _cfValid and math.abs(retSkew) < 1.5 and math.abs(re
     dgCfMaxZ := math.max(dgCfMaxZ, math.abs(retZScore))
 string probeLine = "D close[1]: =1d back " + str.tostring(dgHtfEq1) + " / =2d back " + str.tostring(dgHtfEq2) + " / other " + str.tostring(dgHtfOth) + "  |  CF non-monotone " + str.tostring(dgCfNonMono) + "/" + str.tostring(dgCfApplied) + " max|z| " + str.tostring(dgCfMaxZ, "#.#") + "  |  fit bull k " + str.tostring(array.get(gCalFit, 0), "#.####") + " a " + str.tostring(array.get(gCalFit, 1), "#.##") + "  bear k " + str.tostring(array.get(gCalFitBear, 0), "#.####") + " a " + str.tostring(array.get(gCalFitBear, 1), "#.##")
 
+// ---- 15. ANALOG EVIDENCE (moved from the Master's cross-check line in v37) -------------
+// The Master's F-007 / F-008 / F-011 readouts, verbatim apart from the dg prefix: analog count
+// and win rate (A / WR / ROLL n), PDH-first / MAE / BOS continuation, the calibration example,
+// grade and Brier, IS vs ROLL win rate (!FIT = IS more than 15 points above ROLL), and the
+// adaptive feature weights Str/Htf/Liq/Mr/Cor. Moved to make room for the Master's H2 SETUP row
+// (token ceiling); same engine, so the same numbers. Display only.
+string dgEvid = showStatsEngine ? "A" + str.tostring(oMatch) + (oMatch < 30 ? "!LOW" : "") + " WR" + str.tostring(int(oWr)) + "% ROLL" + str.tostring(oOosN) : "stats engine off"
+string dgAnl = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "/PDL" + str.tostring(oPdl1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "/fail" + str.tostring(int(oBosFail)) + "%" : ""
+string dgCal = (showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : "") + (showStatsEngine and __cg != "N/A" ? "  Cal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : "")
+string dgIsOos = showStatsEngine and __in >= 10 and oOosN >= 10 ? "  IS" + str.tostring(int(__iw)) + "%/ROLL" + str.tostring(int(oOosWr)) + "%" + (__iw - oOosWr > 15 ? "!FIT" : "") : ""
+string dgFeatW = showStatsEngine and oMatch >= 30 ? "  W" + str.tostring(int(__fs)) + "/" + str.tostring(int(__fh)) + "/" + str.tostring(int(__fl)) + "/" + str.tostring(int(__fm)) + "/" + str.tostring(int(__fc)) : ""
+string evidLine = dgEvid + dgAnl + dgCal + dgIsOos + dgFeatW
+
 // ---- PANEL -----------------------------------------------------------------------------
-var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 25, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 26, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=dgTs, text_halign=text.align_left)
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v34 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v37 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5595,6 +5608,7 @@ if barstate.islast
     _dRow(22, "Volume (free plan)", volLine, _cT)
     _dRow(23, "Missed moves", missLine, _cT)
     _dRow(24, "Math probes", probeLine, _cT)
+    _dRow(25, "Analog evidence", evidLine, _cT)
     _dRow(14, "Engine", "Treatment-twin engine, verbatim · " + mktRegime + " · N " + str.tostring(oMatch), _cT)
 // Pine rejects an indicator with no output function call ("Script must have at least one
 // output function call"); tables do not count. Same fix as the EdgeCases harness.
