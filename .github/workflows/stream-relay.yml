@@ -51,6 +51,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           FINNHUB_KEY: ${{ secrets.FINNHUB_KEY }}
+          MT5_PUSH_KEY: ${{ secrets.MT5_PUSH_KEY }}   # optional: lets the XauBridge EA (mt5/) post MT5 ticks
         run: |
           # wrangler's own messages go to annotations so a failure is readable without the log;
           # it never prints the token values
@@ -61,6 +62,13 @@ jobs:
           echo "::notice title=deployed::$url"
           out=$(printf '%s' "$FINNHUB_KEY" | npx --yes wrangler@4 secret put FINNHUB_KEY 2>&1) || fail "wrangler secret put" "$out"
           echo "::notice title=secret stored::FINNHUB_KEY stored as a Worker secret"
+          if [ -n "$MT5_PUSH_KEY" ]; then
+            if [ "${#MT5_PUSH_KEY}" -lt 16 ]; then fail "MT5_PUSH_KEY" "must be at least 16 characters"; fi
+            out=$(printf '%s' "$MT5_PUSH_KEY" | npx --yes wrangler@4 secret put MT5_PUSH_KEY 2>&1) || fail "wrangler secret put MT5_PUSH_KEY" "$out"
+            echo "::notice title=secret stored::MT5_PUSH_KEY stored as a Worker secret (the MT5 bridge can post)"
+          else
+            echo "::notice title=MT5 bridge::MT5_PUSH_KEY not set: the relay refuses MT5 pushes until it is added"
+          fi
 
       - name: Report the stream URL
         if: steps.cfg.outputs.ready == 'true'

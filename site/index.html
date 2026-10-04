@@ -22,6 +22,7 @@
     <span class="chip" id="chip-updated"><span class="dot"></span><span>updated <b id="updated">—</b></span></span>
     <span class="chip" id="chip-source"><span>price <b id="source">—</b></span></span>
     <span class="chip" id="chip-live" title="Live spot from gold-api.com, read by your browser. DISPLAY ONLY: the engine never uses it; signals come from closed bars."><span class="dot"></span><span>live <b id="live">—</b> <span class="dim" id="live-meta"></span></span></span>
+    <span class="chip" id="chip-mt5" style="display:none" title="Your MT5 broker price, sent by the XauBridge EA on your PC through the relay. DISPLAY ONLY: the engine never uses it."><span class="dot"></span><span>MT5 <b id="mt5-px">—</b> <span class="dim" id="mt5-meta"></span></span></span>
     <span class="chip" id="chip-holdout" title="Frozen forward holdout: evidence collected after the configuration was frozen"><span><span id="freeze-lbl">holdout</span> <b id="freeze">—</b></span></span>
     <label class="ctrl" title="MT5 minus this feed, in price points. Shifts DISPLAYED entry/SL/TP only; nothing is recalculated.">MT5 offset <input id="mt5" type="number" step="0.01" value="0"></label>
     <label class="ctrl">Time <select id="tz"><option value="local">Local</option><option value="UTC">UTC</option><option value="America/New_York">New York</option><option value="Europe/London">London</option></select></label>

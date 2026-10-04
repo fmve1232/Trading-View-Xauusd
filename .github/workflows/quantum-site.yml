@@ -145,12 +145,13 @@ jobs:
           OANDA_ACCOUNT_ID: ${{ vars.OANDA_ACCOUNT_ID }}
         run: python -m quantum.reference --out site/data/reference.json --chart site/data/1h.json
 
-      - name: MT5 broker feed via MetaApi (display and validation only; never fails the run)
+      - name: MT5 broker feed (bridge EA via the relay, else MetaApi; display and validation only; never fails the run)
         continue-on-error: true
         env:   # free MetaApi account, connected with the MT5 INVESTOR (read-only) password
           METAAPI_TOKEN: ${{ secrets.METAAPI_TOKEN }}
           METAAPI_ACCOUNT_ID: ${{ secrets.METAAPI_ACCOUNT_ID }}
           MT5_SYMBOL: ${{ vars.MT5_SYMBOL }}
+          STREAM_URL: ${{ vars.STREAM_URL }}   # the relay; its /mt5/snapshot carries the free MT5 bridge (mt5/XauBridge.mq5)
         run: python -m quantum.mt5 --out site/data/mt5.json --store store --data site/data
 
       - name: Data-versioning manifest (bookkeeping only; before the store's orphan commit)

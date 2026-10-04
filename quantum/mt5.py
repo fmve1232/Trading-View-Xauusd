@@ -194,6 +194,88 @@ def build(api: MetaApi | None, symbol: str, primary: dict | None = None, store_d
     return out
 
 
+# ---------------------------------------------------------------- MT5 bridge (free; the operator's MT5)
+RELAY_FRESH_S = 600       # a snapshot older than this means MT5 (or the PC) is off, or the market is closed
+
+
+def relay_snapshot_url(stream_url: str) -> str:
+    """wss://host/stream -> https://host/mt5/snapshot (the relay that the EA posts to)."""
+    u = (stream_url or "").strip()
+    if not u.startswith("wss://"):
+        return ""
+    return "https://" + u[len("wss://"):].split("/", 1)[0] + "/mt5/snapshot"
+
+
+def bars_frame(bars1m: list) -> pd.DataFrame:
+    """Relay 1-minute bars [open_s, o, h, l, c, ticks, spread_sum] -> OHLC + tick volume + mean spread."""
+    if not bars1m:
+        return pd.DataFrame(columns=["open", "high", "low", "close", "volume", "spread"])
+    a = np.array(bars1m, dtype=float)
+    df = pd.DataFrame({"open": a[:, 1], "high": a[:, 2], "low": a[:, 3], "close": a[:, 4], "volume": a[:, 5],
+                       "spread": a[:, 6] / np.maximum(a[:, 5], 1)}, index=pd.to_datetime(a[:, 0].astype("int64"), unit="s", utc=True))
+    df.index.name = "datetime"
+    return df
+
+
+def resample_bars(m1: pd.DataFrame, sec: int) -> pd.DataFrame:
+    if m1.empty:
+        return m1
+    r = m1.resample(f"{sec}s", label="left", closed="left")
+    out = pd.DataFrame({"open": r["open"].first(), "high": r["high"].max(), "low": r["low"].min(), "close": r["close"].last(),
+                        "volume": r["volume"].sum(min_count=1), "spread": r["spread"].mean()})
+    return out.dropna(subset=["close"])
+
+
+def complete_bars(df: pd.DataFrame, m1: pd.DataFrame, sec: int, last_t_s: float) -> pd.DataFrame:
+    """Only bars the bridge saw whole: drop a first bar that began before the bridge's first
+    minute and a last bar that has not closed by the last tick."""
+    if df.empty or m1.empty:
+        return df
+    keep = (df.index >= m1.index[0]) & ((df.index + pd.Timedelta(seconds=sec)).map(lambda x: x.timestamp()) <= last_t_s)
+    return df[keep]
+
+
+def build_from_relay(snap: dict, primary: dict | None = None, store_dir: str | None = None, now_ms: int | None = None) -> dict:
+    gen = time.time_ns()
+    now_ms = now_ms or gen // 1_000_000
+    sym = snap.get("sym") or "?"
+    out = {"generated_ts_ns": gen, "symbol": sym, "status": "UNAVAILABLE", "note": "", "source": "MT5 bridge (XauBridge EA via the relay)",
+           "broker": {"server": snap.get("server"), "platform": "mt5", "state": "BRIDGE"}, "tick": None, "candles": {}, "vs_primary": {},
+           "footprint": snap.get("footprint"), "volume_kind": "TICK_VOLUME (count of price changes; not traded volume)",
+           "rejected_ticks": snap.get("rejected"), "note_display": "Display and validation only. The engine never reads this feed."}
+    last = snap.get("last")
+    if not last:
+        out["note"] = "the MT5 bridge has not sent any tick yet"
+        return out
+    age_s = (now_ms - int(last["t"])) / 1000
+    b, a_ = float(last["b"]), float(last["a"])
+    out["tick"] = {"bid": b, "ask": a_, "spread": round(a_ - b, 5), "mid": (b + a_) / 2, "source_ts_ns": int(last["t"]) * 1_000_000,
+                   "received_ts_ns": int(snap.get("rx") or 0) * 1_000_000, "timestamp_precision": "MILLISECOND", "age_s": round(age_s, 1),
+                   "quality": "CROSSED" if a_ < b else "VALID"}
+    m1 = bars_frame(snap.get("bars1m") or [])
+    last_s = int(last["t"]) / 1000
+    frames = {"1m": complete_bars(m1, m1, 60, last_s),
+              **{tf: complete_bars(resample_bars(m1, sec), m1, sec, last_s) for tf, sec in TIMEFRAMES.items()}}
+    for tf, df in frames.items():
+        if not df.empty:
+            lb = df.iloc[-1]
+            out["candles"][tf] = {"n": len(df), "last_open": df.index[-1].isoformat(), "o": lb["open"], "h": lb["high"], "l": lb["low"],
+                                  "c": lb["close"], "tick_volume": float(lb["volume"]), "tick_volume_median": float(df["volume"].tail(100).median())}
+    if store_dir and not m1.empty and sym != "?":
+        from .data import store                       # write only; the engine never loads MT5_* series
+        name = f"MT5_{sym}_1m"
+        store.save(store_dir, name, store.merge(store.load(store_dir, name), frames["1m"]))   # closed minutes only
+    if primary:
+        for tf, sec in TIMEFRAMES.items():
+            if tf in primary:
+                out["vs_primary"][tf] = compare(primary[tf], frames[tf], sec)
+    out["status"] = "OK" if age_s <= RELAY_FRESH_S else "OFFLINE"
+    if out["status"] == "OFFLINE":
+        out["note"] = f"last MT5 tick {age_s / 60:.0f} min ago: MT5 or the PC is off, or the market is closed"
+    out["processed_ts_ns"] = time.time_ns()
+    return out
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", required=True)
@@ -209,7 +291,19 @@ def main() -> None:
             with open(p) as f:
                 ch = json.load(f).get("chart", {})
             primary[tf] = {"t": ch.get("t"), "c": ch.get("c")}
-    out = build(MetaApi(tok, acc) if tok and acc else None, symbol, primary, a.store or None)
+    out = None
+    snap_url = os.environ.get("MT5_RELAY_URL", "").strip() or relay_snapshot_url(os.environ.get("STREAM_URL", ""))
+    if snap_url:                                   # the free MT5 bridge first; MetaApi only if configured
+        try:
+            r = requests.get(snap_url, timeout=TIMEOUT)
+            r.raise_for_status()
+            snap = r.json()
+            if snap.get("last"):
+                out = build_from_relay(snap, primary, a.store or None)
+        except Exception as e:  # noqa: BLE001 - reported below if nothing else works
+            print(f"mt5 bridge snapshot unavailable: {str(e)[:160]}")
+    if out is None or (out["status"] != "OK" and tok and acc):
+        out = build(MetaApi(tok, acc) if tok and acc else None, symbol, primary, a.store or None)
     with open(a.out, "w") as f:
         json.dump(out, f, separators=(",", ":"), default=float)
     print(f"mt5 {symbol}: {out['status']} {out['note']} tick={out['tick'] and out['tick'].get('mid')} calls={out.get('api_calls')}")

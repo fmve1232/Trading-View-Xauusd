@@ -174,7 +174,7 @@ async function startStream() {
   try { cfg = await getJSON("data/stream.json"); } catch (e) { return; }
   const u = String((cfg && cfg.url) || "").trim();
   if (!/^wss:\/\/[^\s"'<>]+$/.test(u) || STREAM.url === u) return;
-  STREAM.url = u; connectStream();
+  STREAM.url = u; connectStream(); loadMt5();
 }
 function connectStream() {
   let ws;
@@ -183,8 +183,9 @@ function connectStream() {
   ws.onopen = () => { STREAM.retry = 2000; };
   ws.onmessage = (ev) => {
     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-    if (m.type === "hello" || m.type === "status") { STREAM.status = String(m.status || "").slice(0, 80); if (m.last) onTick(m.last, true); renderLive(); }
+    if (m.type === "hello" || m.type === "status") { STREAM.status = String(m.status || "").slice(0, 80); if (m.last) onTick(m.last, true); if (m.mt5) onMt5(m.mt5); renderLive(); }
     else if (m.type === "tick") onTick(m, false);
+    else if (m.type === "mt5") onMt5(m);
   };
   ws.onclose = () => {
     STREAM.ws = null; STREAM.status = "disconnected"; renderLive();
@@ -258,20 +259,63 @@ function renderReference() {
     <p class="note">Checked ${nsAgo(R.generated_ts_ns)}. Bands (fixed, not fitted): &lt;${R.thresholds_pct.CONSISTENT}% consistent, &lt;${R.thresholds_pct.MINOR_DIVERGENCE}% minor, &lt;${R.thresholds_pct.SIGNIFICANT_DIVERGENCE}% significant, otherwise critical. The engine never reads these prices.</p>`;
 }
 
-/* ---------- the operator's MT5 broker feed via MetaApi (DISPLAY AND VALIDATION ONLY; quantum/mt5.py) ---------- */
+/* ---------- the operator's MT5 broker feed (DISPLAY AND VALIDATION ONLY) ----------
+   Live: the XauBridge EA in the operator's MT5 posts ticks to the relay, which streams {type:"mt5"}
+   here and serves /mt5/snapshot (bars, footprint). Fallback: data/mt5.json from the pipeline. */
+const MT5LIVE = { b: null, a: null, t: 0, sym: "", server: "" };
+function onMt5(k) {
+  const b = Number(k.b), a = Number(k.a), t = Number(k.t);
+  if (!isNum(b) || !isNum(a) || a < b || b <= 0 || !isNum(t)) return;
+  Object.assign(MT5LIVE, { b, a, t, sym: String(k.sym || MT5LIVE.sym), server: String(k.server || MT5LIVE.server) });
+  renderMt5Chip();
+}
+function renderMt5Chip() {
+  const chip = $("#chip-mt5"); if (!chip) return;
+  if (!MT5LIVE.t) { chip.style.display = "none"; return; }
+  const ageS = (Date.now() - MT5LIVE.t) / 1000, closed = marketClosed(new Date());
+  chip.style.display = "";
+  chip.classList.remove("ok", "stale", "bad");
+  chip.classList.add(!closed && ageS < 30 ? "ok" : "stale");
+  $("#mt5-px").textContent = ((MT5LIVE.b + MT5LIVE.a) / 2).toFixed(2);
+  $("#mt5-meta").textContent = closed ? "market closed · last quote" : `${MT5LIVE.sym} · spread ${(MT5LIVE.a - MT5LIVE.b).toFixed(2)} · ${ageS < 60 ? Math.round(ageS) + " s" : Math.round(ageS / 60) + " min"}`;
+  chip.title = `MT5 ${MT5LIVE.sym} on ${MT5LIVE.server}: bid ${MT5LIVE.b} / ask ${MT5LIVE.a}, tick time ${new Date(MT5LIVE.t).toISOString()}. Sent by the XauBridge EA on your PC (offline when MT5 or the PC is off). DISPLAY ONLY.`;
+}
+setInterval(renderMt5Chip, 5000);
+// the relay's https address, derived from the stream address (wss://host/stream)
+const relayBase = () => (STREAM.url ? STREAM.url.replace(/^wss:\/\//, "https://").replace(/\/stream$/, "") : "");
+function fromSnapshot(sn) {        // relay snapshot -> the panel's shape (the same one quantum/mt5.py writes)
+  if (!sn || !sn.last) return null;
+  const age = (Date.now() - sn.last.t) / 1000, bars = sn.bars1m || [];
+  const hours = new Map();
+  for (const x of bars) { const h = Math.floor(x[0] / 3600) * 3600; hours.set(h, (hours.get(h) || 0) + x[5]); }
+  const hv = [...hours.entries()].sort((p, q) => p[0] - q[0]).map((x) => x[1]);
+  const done = hv.length > 2 ? hv.slice(1, -1) : [];                         // whole hours only
+  const med = done.length ? done.slice().sort((p, q) => p - q)[Math.floor(done.length / 2)] : null;
+  return { status: age <= 600 ? "OK" : "OFFLINE", symbol: sn.sym, broker: { server: sn.server },
+           tick: { bid: sn.last.b, ask: sn.last.a, spread: sn.last.a - sn.last.b, mid: (sn.last.b + sn.last.a) / 2, source_ts_ns: sn.last.t * 1e6,
+                   timestamp_precision: "MILLISECOND", quality: sn.last.a < sn.last.b ? "CROSSED" : "VALID", age_s: age },
+           candles: { "1h": { tick_volume: done.length ? done[done.length - 1] : null, tick_volume_median: med } },
+           vs_primary: (S.mt5file && S.mt5file.vs_primary) || {}, footprint: sn.footprint, live: true };
+}
 async function loadMt5() {
-  try { S.mt5feed = await getJSON("data/mt5.json"); } catch (e) { S.mt5feed = null; }
+  try { S.mt5file = await getJSON("data/mt5.json"); } catch (e) { S.mt5file = null; }
+  let snap = null;
+  const base = relayBase();
+  if (base && !document.hidden) { try { snap = fromSnapshot(await getJSON(base + "/mt5/snapshot")); } catch (e) { snap = null; } }
+  if (snap && snap.tick) onMt5({ b: snap.tick.bid, a: snap.tick.ask, t: snap.tick.source_ts_ns / 1e6, sym: snap.symbol, server: snap.broker.server });
+  S.mt5feed = snap || S.mt5file;
   renderMt5();
 }
+setInterval(() => { if (relayBase() && !document.hidden) loadMt5(); }, 15000);   // footprint and bars refresh every 15 s
 function renderMt5() {
   const X = S.mt5feed, el = $("#mt5feed"), st = $("#mt5-state"); if (!el) return;
   // Hidden until a MetaApi account is actually connected (MetaApi bills per account-hour,
   // so most viewers will never connect one); nothing empty or broken is shown.
-  const card = $("#mt5-card"); if (card) card.style.display = X && X.status === "OK" ? "" : "none";
+  const card = $("#mt5-card"); if (card) card.style.display = X && (X.status === "OK" || (X.status === "OFFLINE" && X.tick)) ? "" : "none";
   if (!X) { el.innerHTML = '<span class="muted">No MT5 file yet; it appears after the next pipeline run.</span>'; st.textContent = "—"; st.className = "pill"; return; }
   $("#mt5-sym").textContent = X.symbol ? "(" + X.symbol + (X.broker && X.broker.server ? " · " + X.broker.server : "") + ")" : "";
   st.textContent = X.status; st.className = "pill " + (X.status === "OK" ? "bull" : X.status === "UNAVAILABLE" ? "" : "warn");
-  if (X.status !== "OK") { el.innerHTML = `<p class="muted">${esc(X.note || "unavailable")}</p>`; return; }
+  if (X.status !== "OK" && !X.tick) { el.innerHTML = `<p class="muted">${esc(X.note || "unavailable")}</p>`; return; }
   const k = X.tick || {}, h = (X.candles || {})["1h"] || {};
   const vs = Object.entries(X.vs_primary || {}).filter(([, v]) => v && v.n).map(([tf, v]) =>
     [`Same ${tf} bar: engine − MT5`, `${fs(v.diff, 2)} (${fs(v.diff_pct, 3)}%) · ${esc(v.status)} · median ${fs(v.median_diff, 2)} over ${v.n}`]);
@@ -289,7 +333,8 @@ function renderMt5() {
     (near.length ? `<h4 class="evh" style="margin-top:10px">Footprint · last ${fp.n} ticks · step $${f(fp.step, 2)} · Δ ${fs(fp.delta, 0)}</h4>
       <table class="t"><tr><th>Price</th><th>Buy</th><th>Sell</th><th>Δ</th><th></th></tr>${fpRows}</table>
       <p class="note">${esc(label)}. Tick volume is the count of price changes, not traded volume.</p>` : "") +
-    `<p class="note">Read in the cloud through MetaApi on each update (about every 15 minutes); the live chip above streams OANDA. Display only: the engine never reads this feed.</p>`;
+    (X.status === "OFFLINE" ? `<p class="note warn">Last MT5 data ${X.tick && isNum(X.tick.age_s) ? Math.round(X.tick.age_s / 60) + " min" : ""} ago: MT5 or the PC is off, or the market is closed.</p>` : "") +
+    `<p class="note">${X.live ? "Live from your MT5 through the XauBridge EA (refreshed every 15 s; the MT5 chip above updates within a few seconds)" : "From the last pipeline update"}. Display only: the engine never reads this feed.</p>`;
 }
 
 /* ---------- upcoming events (DISPLAY ONLY) ---------- */

@@ -189,3 +189,13 @@ def test_reference_and_manifest_are_outside_the_freeze_key():
     for rel in holdout.ENGINE_SOURCES:
         src = _read("quantum/" + rel)
         assert "from .reference" not in src and "from .manifest" not in src and "from ..reference" not in src
+
+
+def test_mt5_bridge_ea_is_read_only():
+    """The XauBridge EA must never trade: no order, position or trade-object calls at all."""
+    src = _read("mt5/XauBridge.mq5")
+    code = "\n".join(line.split("//", 1)[0] for line in src.splitlines())          # ignore comments
+    for banned in ("OrderSend", "OrderSendAsync", "OrderModify", "OrderDelete", "PositionClose", "PositionModify",
+                   "CTrade", "Trade.mqh", "#import", ".dll"):
+        assert banned not in code, banned
+    assert "WebRequest(\"POST\"" in code and "CopyTicks(" in code

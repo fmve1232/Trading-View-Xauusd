@@ -98,3 +98,45 @@ def test_mt5_is_outside_the_freeze_key_and_never_loaded_by_the_engine():
     for rel in holdout.ENGINE_SOURCES:
         src = open("quantum/" + rel).read()
         assert "MT5_" not in src and "from .mt5" not in src and "from ..mt5" not in src
+
+
+# ------------------------------------------------------------------ the free MT5 bridge (EA -> relay)
+def _snap(age_ms=2000, n_min=180):
+    t_last = int(T0.timestamp() * 1000)
+    bars = []
+    for k in range(n_min):
+        o = int(T0.timestamp()) - (n_min - 1 - k) * 60
+        bars.append([o, 4300.0 + k * 0.01, 4300.5 + k * 0.01, 4299.5 + k * 0.01, 4300.2 + k * 0.01, 10 + k % 5, 2.0 * (10 + k % 5) * 0.2])
+    return {"sym": "XAUUSDm", "server": "Exness-MT5Real32", "digits": 3, "last": {"t": t_last, "b": 4301.9, "a": 4302.1},
+            "rx": t_last + 300, "rejected": 0, "bars1m": bars,
+            "footprint": {"n": 2, "levels": [], "method": "TICK_RULE_PROXY", "buy": 1, "sell": 0, "delta": 1}}, t_last + age_ms
+
+
+def test_relay_url_is_derived_from_the_stream_address():
+    assert mt5.relay_snapshot_url("wss://xau-stream.fm-ve1232.workers.dev/stream") == "https://xau-stream.fm-ve1232.workers.dev/mt5/snapshot"
+    assert mt5.relay_snapshot_url("") == "" and mt5.relay_snapshot_url("https://x/y") == ""
+
+
+def test_bridge_snapshot_becomes_the_panel_and_is_stored(tmp_path):
+    snap, now = _snap()
+    out = mt5.build_from_relay(snap, None, str(tmp_path), now_ms=now)
+    assert out["status"] == "OK" and out["symbol"] == "XAUUSDm" and out["broker"]["server"] == "Exness-MT5Real32"
+    k = out["tick"]
+    assert (k["bid"], k["ask"], k["spread"], k["age_s"], k["timestamp_precision"]) == (4301.9, 4302.1, 0.2, 2.0, "MILLISECOND")
+    # minutes 09:01..12:00 with the last tick at 12:00:00: the 12:00 minute and hour are still forming
+    assert out["candles"]["1m"]["n"] == 179 and out["candles"]["1h"]["n"] == 2                  # 10:00 and 11:00 only
+    assert out["candles"]["1h"]["tick_volume"] == sum(10 + k % 5 for k in range(119, 179))     # 11:00 = sum of its 60 minutes
+    stored = pd.read_csv(tmp_path / "MT5_XAUUSDm_1m" / "2026-10.csv", index_col=0)
+    assert len(stored) == 179                                                                   # closed minutes only
+
+
+def test_bridge_offline_when_stale_and_compare_uses_complete_bars_only():
+    snap, now = _snap(age_ms=3600_000)
+    out = mt5.build_from_relay(snap, None, None, now_ms=now)
+    assert out["status"] == "OFFLINE" and "60 min ago" in out["note"]
+    snap, now = _snap()
+    m1 = mt5.bars_frame(snap["bars1m"])
+    h = mt5.resample_bars(m1, 3600)
+    primary = {"1h": {"t": [int(x.timestamp()) for x in h.index], "c": list(h["close"] + 0.3)}}
+    v = mt5.build_from_relay(snap, primary, None, now_ms=now)["vs_primary"]["1h"]
+    assert v["n"] == 2 and v["diff"] == 0.3 and v["status"] == "CONSISTENT"     # the partial first hour and the forming hour are left out
