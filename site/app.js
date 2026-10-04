@@ -388,6 +388,41 @@ function renderHeader() {
 }
 
 /* ---------- side panels ---------- */
+/* ---------- decision transparency (DISPLAY ONLY; reads what the engine already published) ---------- */
+// The engine's decision log, e.g. "▼5/7 [✗Sess Trig] NO-TRIG ctx:RgM+R+", in plain words.
+const GATES = [["Trend", "Trend strong enough"], ["HTF", "Higher timeframe not against it"], ["Sess", "Active session (London / New York)"],
+  ["Recent", "Recent bar"], ["News", "No news block"], ["DD", "No drawdown lock"], ["Trig", "Trigger bar: structure break or displacement"]];
+function whyHtml(d, D) {
+  const log = String(d.decision_log || "");
+  if (/^RANGE/.test(log)) return `<div class="why"><b>Why ${esc(d.decision)}:</b> the market is ranging, so no side has an edge. The engine trades only in a trend.</div>`;
+  const m = log.match(/^([▲▼])\d\/7(?: \[✗([^\]]*)\])?/); if (!m) return "";
+  const side = m[1] === "▲" ? "long" : "short", fails = (m[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x));
+  const rows = GATES.map(([k, txt]) => `<li class="${fails.includes(k) ? "bad" : "ok"}">${fails.includes(k) ? "✗" : "✓"} ${txt}${k === "Sess" && d.blk_why && d.blk_why.startsWith("SESS") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}${k === "Trend" && d.blk_why && d.blk_why.startsWith("TREND") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}</li>`).join("");
+  const fn = d.funnel || {}, rate = fn.bars ? fn.sig / fn.bars : null, wk = 5 * 23 * 3600 / D.meta.tf_sec;
+  const passed = isNum(fn.pass_) && fn.bars ? fn.pass_ / fn.bars : null;
+  const waitFor = d.decision === "WAIT" ? (fails.length === 1 && fails[0] === "Trig" ? `Everything is in place for a ${side}. It is waiting for a trigger bar.` :
+    `A ${side} still needs: ${fails.map((f) => (GATES.find((g) => g[0] === f) || [f, f])[1]).join("; ")}.`) : "";
+  return `<div class="why"><b>${d.decision === "WAIT" ? "Why WAIT" : "Gates"} (${side} side):</b> ${esc(waitFor)}<ul class="gates">${rows}</ul>` +
+    (rate !== null ? `<div class="dim">Over the last ${fn.bars} ${esc(D.meta.tf)} bars, entry signals fired on ${fn.sig} (${(rate * 100).toFixed(1)}%)` +
+      (passed !== null ? ` and ${fn.pass_} also passed the quality, EV and probability vetoes (about ${(passed * wk).toFixed(1)} a week)` : "") +
+      `. Most bars are WAIT by design: an entry needs every gate on the same bar.</div>` : "") + `</div>`;
+}
+function lastSignalHtml(D) {
+  const B = D.backtest && D.backtest.treatment; if (!B) return "";
+  const open = (B.open || [])[0], tr = (B.trades || []).filter((t) => !t.open), last = tr[tr.length - 1];
+  const when = (iso) => tfmt(Date.parse(iso) / 1000);
+  if (open) return `<div class="why"><b>Open trade:</b> ${esc(open.dir)} since ${when(open.entry_time)} · entry ${px(open.entry)} · SL ${px(open.sl)} · TP1 ${px(open.tp1)} · TP2 ${px(open.tp2)} <span class="dim">(treatment arm; WAIT on later bars does not close it)</span></div>`;
+  if (last) return `<div class="why dim">Last signal: ${esc(last.dir)} ${when(last.entry_time)} at ${px(last.entry)} → ${esc(last.exit_reason)} ${fs(last.r, 2)} R (${when(last.exit_time)})</div>`;
+  return "";
+}
+// Is P better than always quoting the base rate? Brier of the trades' entry P vs the constant base rate.
+function calCheck(D) {
+  const c = D.backtest && D.backtest.treatment && D.backtest.treatment.calibration;
+  if (!c || !isNum(c.brier) || !c.n) return "—";
+  const b = c.base_rate / 100, ref = b * (1 - b), better = c.brier < ref;
+  return `Brier ${f(c.brier, 3)} vs ${f(ref, 3)} for always ${pct(c.base_rate)} · n${c.n} · <span class="${better ? "" : "warn"}">${better ? "better than the base rate" : "NOT better than the base rate: read P as a ranking, not a probability"}</span>`;
+}
+
 function renderSide() {
   const D = S.data; if (!D) return;
   const d = D.dashboard, p = d.plan, a = D.analog, M = D.meta;
@@ -406,7 +441,7 @@ function renderSide() {
     <div class="sub">${esc(sub)}</div>
     <div class="bar3" title="Bull / Range / Bear composite"><span style="width:${b}%;background:var(--bull)"></span><span style="width:${r}%;background:var(--neutral)"></span><span style="width:${s}%;background:var(--bear)"></span></div>
     <div class="sub mono">L ${f(b, 0)} · R ${f(r, 0)} · S ${f(s, 0)} · bias <b>${esc(d.bias_label)}</b> · ${esc(d.regime.label)} ${esc(d.regime.vol_tag)} · ${esc(d.session.label)}</div>
-    <div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>`;
+    <div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>` + whyHtml(d, D) + lastSignalHtml(D);
 
   const sig = dec === "BUY" || dec === "SELL";
   $("#plan-dir").textContent = (p.long ? "LONG" : "SHORT") + (sig ? "" : " · no signal");
@@ -443,6 +478,7 @@ function renderSide() {
     ["Win rate (ROLL)", `${pctN(a.oos_wr, a.oos_n)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
     ["IS vs ROLL", `${pctN(a.is_wr, a.is_n)} / ${pctN(a.oos_wr, a.oos_n)}${a.is_n > 0 && a.oos_n > 0 && a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
     ["Calibration grade", `${esc(a.cal_grade)} ${a.cal_grade_pct}/100 ${esc(a.cal_detail || "")}`],
+    ["Check on this timeframe's trades", calCheck(D)],
   ]) + `<p class="note">ROLL is a rolling trailing slice, <b>not</b> a holdout (F-037). The only out-of-sample evidence is the frozen forward holdout in the Backtest tab.</p>`;
 
   const tq = d.trade_quality;
