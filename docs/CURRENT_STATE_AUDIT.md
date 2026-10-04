@@ -98,3 +98,50 @@ Verdicts use the specification's vocabulary:
 | 3 | Research track: out-of-sample calibration (E2), AMBIGUOUS same-bar outcomes (E4), and quality scores (D6), run *beside* the frozen arm on the same bars. | No (new package; the frozen arm is untouched) |
 | 4 | A second spot feed with bid/ask for D3/D4: a free OANDA practice account read from the pipeline (target phase 8). It needs only the operator's free account token as a secret. | No, display/reference only until pre-registered |
 | 5 | Any change to signals, calibration or data handling of the frozen arm. | **Yes: restarts the forward test.** Only through a pre-registration amendment. |
+
+## 6. Why the decision is WAIT most of the time (diagnosis, 4 Oct 2026)
+
+**Method.** The frozen engine was run offline on the stored Twelve Data bars:
+- 15m: 3,864 bars, 5 Aug – 2 Oct;
+- 1h: 3,549 bars, 2 Mar – 2 Oct.
+
+The runs used a scratch copy of `engine.py` that only records each bar's blocking gate. The repository file was not changed, so the freeze key is the same. Nothing was tuned.
+
+**Share of bars by decision (treatment arm):**
+
+| TF | WAIT | WARMUP | BUY + SELL (signal bars) | NO TRADE (vetoed) |
+|---|---|---|---|---|
+| 15m | 88.5% | 8.3% | 1.5% | 1.6% |
+| 1h | 86.6% | 8.7% | 2.6% | 2.2% |
+
+**What blocks a WAIT bar first:**
+
+| Gate | 15m | 1h |
+|---|---|---|
+| Session quality < 30 (Asia / rollover) | 45% | 46% |
+| Every pre-filter passed, but no trigger bar | 22% | 28% |
+| Trend below 60 | 20% | 19% |
+| Higher timeframe against it | 13% | 7% |
+
+On 842 (15m) and 936 (1h) bars, the trigger was the *only* missing gate.
+
+**Conclusion.** WAIT is the designed selectivity, not a fault:
+- an entry needs trend, higher-timeframe agreement, an active session **and** a trigger on the same bar;
+- signals last one bar, and a position held afterwards shows as WAIT on later bars.
+
+Changing any gate would tune the engine on this history (`AUDIT_PROMPT.md` §9) and restart the forward test. So the gates are left as they are and **explained on the page** instead.
+
+**Calibration** (backtest trades, entry P against "TP1 before SL"):
+
+| TF | Arm | Brier | Brier of "always the base rate" | Trades |
+|---|---|---|---|---|
+| 15m | treatment | 0.241 | 0.249 (base 53%) | 15 |
+| 1h | treatment | 0.297 | 0.240 (base 40%) | 30 |
+| 1h | challenger | 0.288 | 0.239 | 33 |
+
+On 1h the probabilities are **worse than quoting the base rate**: the largest bin (P ≈ 56%) won about 21–24%. This repeats F-A34 with current data. The page now says so next to P ("read P as a ranking, not a probability"). The fix is the out-of-sample calibration study (target phase 6), judged only on post-freeze data.
+
+**Display changes (no engine change):**
+- the decision card shows the gate checklist in plain words, what a signal still needs, and how often signals pass;
+- it shows the last or open trade of the treatment arm;
+- the probability card shows the Brier comparison above.
