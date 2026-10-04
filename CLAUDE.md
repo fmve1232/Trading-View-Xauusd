@@ -43,7 +43,7 @@ sha256sum -c audit/MANIFEST.sha256
 
 ## Non-negotiables carried from the audit
 
-- **HOLDOUT FREEZE (from 2026-10-05 00:00 UTC, 15M; amendments A1–A3):** the Master, Treatment, Control,
+- **HOLDOUT FREEZE (from 2026-10-05 00:00 UTC, 15M; amendments A1–A4):** the Master, Treatment, Control,
   Challenger and H2 are frozen at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
   fixes and display-only changes are allowed; any other change restarts the forward test.
 - **Do not tune** thresholds, weights or gates against results measured on this price
