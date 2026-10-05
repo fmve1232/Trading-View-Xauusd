@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v37
+# Build changelog — v1 → … → v38
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1347,3 +1347,43 @@ second decision"**. Made before the 2026-10-05 holdout start, as PREREGISTRATION
   LibreOffice; 11,058 formulas.
 - **Unchanged:** Treatment, Control, Challenger, EdgeCases.
 - Compile NOT RUN (Master, Visuals, Diagnostics, Strategy_H2).
+
+# Build v37 → v38 — first chart run: two defects found, fixed; holdout restarts 2026-10-06
+
+From the operator's screenshots of v37 on the 15M chart (2026-10-05):
+
+- **F-A42 (P0, compile):** the strategy arms failed to compile.
+  - Treatment, Control, Challenger and H2 all stopped at `fwdStart = input.time(timestamp("UTC",
+    2026, 10, 5, 0, 0), ...)`: CE10123. `timestamp()` with a timezone gives a simple int, and
+    input.time needs a const.
+  - The bug dates from the v34 scorecards, and no checker covered that class.
+  - Fixed with a const literal (epoch ms). New `pinelimits.py` **G9** flags any input default that
+    is a function call; it catches the old file and nothing in v38.
+- **F-A41 (P1, signals):** live and history used different higher-timeframe data.
+  - Diagnostics' Math-probes row measured the daily `close[1]` request at **two days back on 6,027
+    of 6,091 bars** (one day back live).
+  - All 15 higher-timeframe requests of offset values per engine copy are affected: the 1H/4H/1D
+    (and 5M/15M where available) trend layers, macro feeds, VIX, COT, OI, daily closes and monthly
+    H/L.
+  - Also the H2 trend (Visuals, Strategy_H2; the Master via the engine) and Visuals' monthly and
+    4H levels.
+  - These now use `lookahead_on` with the offset: the last completed bar, identical live and in
+    history, with no lookahead.
+  - Unchanged:
+    - same-timeframe requests (silver, EURUSD, SPX, GC);
+    - Visuals' live 4H `[high, low]`, which has no offset, so `lookahead_on` would read the future.
+  - New `pinelimits.py` **G10** flags the pattern: 15 hits in the old Treatment, 0 in v38.
+  - The Diagnostics probe now makes the engine's call and should read "=1d back".
+- **Holdout:** start moved to **2026-10-06 00:00 UTC** (PREREGISTRATION A5, operator decision).
+  - The scorecard input default changed with it.
+  - Workbook Read Me B5 = 2026-10-06; 2,501 formulas gate on it.
+  - No arm had recorded anything (none compiled).
+- **Parity:** Treatment/Control 5 hunks, Treatment/Challenger 4; `diag_parity`, `h2_parity` and
+  `h2_trace` PASS.
+- **Seen on the chart, not changed:**
+  - The Master compiled, with TradingView's "Heavy script — close to the plan's 20 s runtime
+    limit".
+  - The pasted Diagnostics was v36 (its header said v34, its last panel row was Engine), so the v37
+    Analog-evidence row had not reached the chart yet.
+  - F-A43: the EdgeCases line citations are stale (comments only).
+- Compile NOT RUN for v38 (all seven chart files changed except EdgeCases).

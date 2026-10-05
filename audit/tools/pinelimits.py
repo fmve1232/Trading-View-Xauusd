@@ -13,6 +13,13 @@
   G8  an indicator()/strategy() with no output call (plot, bgcolor, fill, hline, alertcondition,
       strategy.entry ...): "Script must have at least one output function call". Tables and
       labels do not count.
+  G9  an input.*() whose default (first argument) is a function call, e.g.
+      input.time(timestamp("UTC", ...)): the call yields a simple value where a const is
+      required (CE10123). Measured on the operator's chart, v37 scorecards. color.* and
+      math.* calls on literals are const and are not flagged.
+  G10 a HIGHER-timeframe request.security of offset values ([1], [2]) with lookahead_off:
+      two HTF bars back in history but one bar back live (F-A41, measured on the chart).
+      Use lookahead_on with the offset. timeframe.period requests are not flagged.
 
 A mechanical screen like the others: it cannot prove a file compiles. Calibrated against a
 build that did compile on the operator's chart (v14 Strategy.pine): anything it flags there
@@ -142,6 +149,19 @@ def analyse(path):
     for n, l in enumerate(S, 1):
         if re.match(r'^\s*(?:var\s+)?bool\s+\w+\s*=\s*na\s*$', l):
             issues.append(('G6', n, 'bool initialised to na (not allowed in v6)'))
+
+    for n, l in enumerate(S, 1):
+        m = re.search(r'(?<![\w.])input\.(?:int|float|time|bool|string|price|source|timeframe|session|symbol|text_area)?\s*\(\s*([A-Za-z_][\w.]*)\s*\(', l)
+        if m and not re.match(r'(?:color|math)\.', m.group(1)):
+            issues.append(('G9', n, 'input default is a call (' + m.group(1) + '): simple, not const'))
+
+    for n, l in enumerate(raw, 1):
+        if 'request.security(' in l and 'lookahead_off' in l and not l.lstrip().startswith('//'):
+            tfs = re.findall(r'request\.security\([^,]+,\s*("[^"]*"|[\w.]+)\s*,', l)
+            body = l[l.index('request.security('):]
+            refs = re.findall(r'(?<![\w.])(?:close|high|low|open|volume|time|hl2|hlc3|ohlc4)(?!\w)(\s*\[)?', body)
+            if tfs and 'timeframe.period' not in tfs and refs and all(refs):
+                issues.append(('G10', n, 'HTF offset request with lookahead_off (2 bars back in history, 1 live)'))
 
     outs = sum(len(re.findall(r'(?<![\w.])(plot|plotshape|plotchar|plotarrow|plotcandle|plotbar|bgcolor|barcolor|fill|hline|alertcondition|strategy\.entry|strategy\.order)\s*\(', l)) for l in S)
     if outs == 0:

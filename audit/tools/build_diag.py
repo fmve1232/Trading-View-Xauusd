@@ -21,7 +21,7 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v37   (evidence row from Master)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v38   (F-A41 HTF data; probe)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '
@@ -373,9 +373,11 @@ if barstate.isconfirmed
 string missLine = "moves >=" + str.tostring(dgMoveUSD, "#") + " in " + str.tostring(dgMoveBars) + " bars: up " + str.tostring(dgNU) + " / down " + str.tostring(dgND) + "  ENTRY " + str.tostring(array.get(dgMiss, 8)) + "  |  stopped at: trend " + str.tostring(array.get(dgMiss, 0)) + "  HTF " + str.tostring(array.get(dgMiss, 1)) + "  sess/news/DD " + str.tostring(array.get(dgMiss, 2)) + "  trigger " + str.tostring(array.get(dgMiss, 3)) + "  TQ " + str.tostring(array.get(dgMiss, 4)) + "  EV " + str.tostring(array.get(dgMiss, 5)) + "  P " + str.tostring(array.get(dgMiss, 6)) + "  risk " + str.tostring(array.get(dgMiss, 7))
 
 // ---- 14. MATH PROBES (v32) -- questions only the chart can answer ------------------------
-// (a) HTF semantics. The engine requests daily data as request.security(.., "D", close[1],
-//     lookahead_off). In theory that returns the close TWO days back on historical bars but
-//     ONE day back in realtime (an extra historical lag, not lookahead). Counted here on
+// (a) HTF semantics. Up to v37 the engine requested daily data as request.security(.., "D",
+//     close[1], lookahead_off): TWO days back on historical bars, ONE day back live. The
+//     operator's chart measured it (2d back on 6,027 of 6,091 bars) -> F-A41. Since v38 the
+//     engine uses close[1] + lookahead_on (the last COMPLETED day, live and history alike), and
+//     this probe makes the same call: expect "=1d back" on almost every bar. Counted on
 //     confirmed bars against the chart's own previous-day closes.
 // (b) Cornish-Fisher domain (F-A39). q(w) is monotone only if a2 = K/8 - S^2/6 > 0 and
 //     (S/3)^2 - 4 a2 (1 - K/8 + 5 S^2/36) < 0; outside it the Newton inverse has no solution.
@@ -383,7 +385,7 @@ string missLine = "moves >=" + str.tostring(dgMoveUSD, "#") + " in " + str.tostr
 // (c) Calibration fit in use (F-A38): slope and intercept of the bull and bear fits, and
 //     read against the clamps (slope 0.02 / -0.02 / 0.25, intercept +-1).
 // Display only; nothing here feeds a gate.
-float dgHtfD = request.security(syminfo.tickerid, "D", close[1], barmerge.gaps_off, barmerge.lookahead_off)
+float dgHtfD = request.security(syminfo.tickerid, "D", close[1], barmerge.gaps_off, barmerge.lookahead_on)
 bool dgNewDay = ta.change(time("D")) != 0
 var float dgD1 = na
 var float dgD2 = na
@@ -433,7 +435,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v37 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v38 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)

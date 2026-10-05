@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v37   (H2 card + session rows)      ║
+// ║  BUILD STAMP — this file last CHANGED in v38   (F-A41 HTF data)              ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -352,7 +352,7 @@ float pdl = _tfAboveD ? na : prevNyDailyLow
 bool _tfAboveW = timeframe.in_seconds() > 604800
 float pwh = _tfAboveW ? na : prevNyWeeklyHigh
 float pwl = _tfAboveW ? na : prevNyWeeklyLow
-[pmh, pml] = request.security(syminfo.tickerid, "M", [high[1], low[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
+[pmh, pml] = request.security(syminfo.tickerid, "M", [high[1], low[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
 
 // CURRENT-DAY extremes (CDH/CDL) — same NY anchor. Present in the Master as live TP
 // candidates but never drawn here, so the chart omitted two levels the engine targets.
@@ -942,7 +942,7 @@ h4Col       = input.color(color.yellow, "Line colour", group = grpH4)
 // the lines would sit on top of the chart's own candles.
 bool h4Active = showH4 and timeframe.in_seconds() < 14400
 
-[h4H, h4L, h4O, h4C] = request.security(syminfo.tickerid, "240", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
+[h4H, h4L, h4O, h4C] = request.security(syminfo.tickerid, "240", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)
 [h4LiveH, h4LiveL]   = request.security(syminfo.tickerid, "240", [high, low], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)
 
 var line h4Hi = na
@@ -1061,9 +1061,15 @@ alertcondition(_t1dL, "PDL Touch",     "XAUUSD touched the previous day LOW (PDL
 // H2-TREND-BEGIN — per file. Visuals and Strategy_H2 request 1H / 4H / 1D themselves; the Master
 // reads its engine's byte-identical requests instead (see the Master's H2-TREND block).
 h2HtfScore(float _c, float _e20, float _e100, float _e200) => na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 0.0) + (not na(_e20) and _c > _e20 ? 20.0 : 0.0)
-[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+// F-A41 (v38): every HIGHER-timeframe request.security in this file that asks for an offset value
+// ([1] / [2]) now uses barmerge.lookahead_on. With lookahead_off, close[1] on a higher timeframe is
+// TWO bars back on historical bars but ONE bar back live (measured on the operator's chart: daily
+// close two days old on 6,027 of 6,091 bars), so backtest/record and live alerts saw different data.
+// [1] + lookahead_on = the last COMPLETED higher-timeframe bar, identical live and in history; no
+// lookahead, because every value is offset. Same-timeframe requests (timeframe.period) are unchanged.
+[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
 float h2S1 = h2HtfScore(h2C1, h2A1, h2B1, h2D1)
 float h2S4 = h2HtfScore(h2C4, h2A4, h2B4, h2D4)
 float h2SD = h2HtfScore(h2CD, h2AD, h2BD, h2DD)

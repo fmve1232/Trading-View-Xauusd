@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v37   (H2 prelude split; signals same)║
+// ║  BUILD STAMP — this file last CHANGED in v38   (F-A41 HTF trend; compile fix)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -85,9 +85,15 @@ strategy("XAUUSD Quantum 5.0 — H2 Sweep-to-Value", overlay=true, max_lines_cou
 // H2-TREND-BEGIN — per file. Visuals and Strategy_H2 request 1H / 4H / 1D themselves; the Master
 // reads its engine's byte-identical requests instead (see the Master's H2-TREND block).
 h2HtfScore(float _c, float _e20, float _e100, float _e200) => na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 0.0) + (not na(_e20) and _c > _e20 ? 20.0 : 0.0)
-[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+// F-A41 (v38): every HIGHER-timeframe request.security in this file that asks for an offset value
+// ([1] / [2]) now uses barmerge.lookahead_on. With lookahead_off, close[1] on a higher timeframe is
+// TWO bars back on historical bars but ONE bar back live (measured on the operator's chart: daily
+// close two days old on 6,027 of 6,091 bars), so backtest/record and live alerts saw different data.
+// [1] + lookahead_on = the last COMPLETED higher-timeframe bar, identical live and in history; no
+// lookahead, because every value is offset. Same-timeframe requests (timeframe.period) are unchanged.
+[h2C1, h2A1, h2B1, h2D1] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[h2C4, h2A4, h2B4, h2D4] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[h2CD, h2AD, h2BD, h2DD] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
 float h2S1 = h2HtfScore(h2C1, h2A1, h2B1, h2D1)
 float h2S4 = h2HtfScore(h2C4, h2A4, h2B4, h2D4)
 float h2SD = h2HtfScore(h2CD, h2AD, h2BD, h2DD)
@@ -284,7 +290,9 @@ if strategy.position_size < 0
 // position entirely above 0, and PF >= 1.2 -> EDGE SHOWN; below 50 -> COLLECTING. TradingView keeps
 // nothing between sessions: the card is recomputed from the LOADED bars, so it is only as deep as
 // the chart's history -- the Coverage row says when the history no longer reaches the start.
-fwdStart = input.time(timestamp("UTC", 2026, 10, 5, 0, 0), "Forward test start (PREREGISTRATION A1)", group="FORWARD TEST")
+// v38 COMPILE FIX (operator's chart, 2026-10-05): input.time() needs a const int default, and
+// timestamp("UTC", ...) returns a simple int (CE10123). 1791244800000 = 2026-10-06 00:00 UTC in ms (start moved by A5, F-A41).
+fwdStart = input.time(1791244800000, "Forward test start (PREREGISTRATION A5)", group="FORWARD TEST")
 fwdShow = input.bool(true, "Show forward-test scorecard", group="FORWARD TEST")
 fwdPos = input.string("Bottom Right", "Scorecard position", options=["Bottom Right", "Bottom Left", "Top Right", "Top Left"], group="FORWARD TEST", tooltip="With several arms visible on one chart, give each its own corner.")
 var int fwdBar0 = time

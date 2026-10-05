@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v37   (H2 SETUP shown; session -> V) ║
+// ║  BUILD STAMP — this file last CHANGED in v38   (F-A41 HTF data: live=history)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -530,7 +530,7 @@ vwapVal = ta.vwap(hlc3)
 // plans and error at add-time despite ignore_invalid_symbol). Exposed as an input;
 // leave blank to disable the feed entirely.
 string vixSymbol = input.symbol("TVC:VIX", "VIX Symbol (blank=off)", group=grpCore)
-float vixD = vixSymbol != "" ? request.security(vixSymbol, "D", close[1], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true) : na
+float vixD = vixSymbol != "" ? request.security(vixSymbol, "D", close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true) : na
 // Q5.1-B: institutional anchor set — weekly and monthly VWAPs join the daily anchor
 // as trend references and trade-plan candidate levels.
 float wVwapVal = ta.vwap(hlc3, timeframe.change("1W"))
@@ -560,11 +560,17 @@ goldRet = math.min(math.max(_rawGoldRet, -_retClampW), _retClampW)
 // R5.3-L4: mid EMA aligned 50 -> 100 so every trend engine in the system uses the same
 // 20/100/200 definition (the chart-level engine already did). NOTE: this shifts the HTF
 // bull/bear gates — expect somewhat slower HTF regime flips than R5.2.
-[htf5mClose, htf5mEma20, htf5mEma100M, htf5mEma200] = request.security(syminfo.tickerid, "5", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[htf15mClose, htf15mEma20, htf15mEma100M, htf15mEma200] = request.security(syminfo.tickerid, "15", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[htf1hClose, htf1hEma20, htf1hEma100M, htf1hEma200] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[htf4hClose, htf4hEma20, htf4hEma100M, htf4hEma200] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
-[htf1dClose, htf1dEma20, htf1dEma100M, htf1dEma200] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_off)
+// F-A41 (v38): every HIGHER-timeframe request.security in this file that asks for an offset value
+// ([1] / [2]) now uses barmerge.lookahead_on. With lookahead_off, close[1] on a higher timeframe is
+// TWO bars back on historical bars but ONE bar back live (measured on the operator's chart: daily
+// close two days old on 6,027 of 6,091 bars), so backtest/record and live alerts saw different data.
+// [1] + lookahead_on = the last COMPLETED higher-timeframe bar, identical live and in history; no
+// lookahead, because every value is offset. Same-timeframe requests (timeframe.period) are unchanged.
+[htf5mClose, htf5mEma20, htf5mEma100M, htf5mEma200] = request.security(syminfo.tickerid, "5", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[htf15mClose, htf15mEma20, htf15mEma100M, htf15mEma200] = request.security(syminfo.tickerid, "15", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[htf1hClose, htf1hEma20, htf1hEma100M, htf1hEma200] = request.security(syminfo.tickerid, "60", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[htf4hClose, htf4hEma20, htf4hEma100M, htf4hEma200] = request.security(syminfo.tickerid, "240", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
+[htf1dClose, htf1dEma20, htf1dEma100M, htf1dEma200] = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], barmerge.gaps_off, barmerge.lookahead_on)
 
 // ---- NY Session-based Daily / Weekly OHLC (17:00 ET close → next day open) ----
 // ASSUMPTION: chart symbol's exchange timezone is America/New_York (true for OANDA XAUUSD).
@@ -946,14 +952,14 @@ float _sessSpread = inKillzone ? math.max(0.18, spreadCost) : inNY ? math.max(0.
 
 
 // MACRO DATA FEEDS (zero repaint via [1], invalid symbols tolerated)
-[_rawDXY, _rawDXYFast, _rawDXYSlow, _rawDXYRoc, _rawDXYRSI] = request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen), ta.rsi(close[1], rsiLen)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
-[_rawYield, _rawYieldFast, _rawYieldSlow, _rawYieldRoc] = request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
+[_rawDXY, _rawDXYFast, _rawDXYSlow, _rawDXYRoc, _rawDXYRSI] = request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen), ta.rsi(close[1], rsiLen)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+[_rawYield, _rawYieldFast, _rawYieldSlow, _rawYieldRoc] = request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
 [_rawSilver, _rawSilverEMA, _silverRSI] = request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
 [_rawEURUSD, _rawEURFast, _rawEURSlow, _rawEURRoc] = request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
 [_rawSPX, _rawSPXFast, _rawSPXSlow] = request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
 // PRE-EXISTING GAP CLOSED: the tipsSymbol input advertises "(blank=off)" but the call had
 // no guard, so blanking it would have errored the script. Same fix as the new layers.
-[_rawTIPS, _rawTIPSFast, _rawTIPSSlow] = request.security(tipsSymbol != "" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
+[_rawTIPS, _rawTIPSFast, _rawTIPSSlow] = request.security(tipsSymbol != "" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
 
 var float cachedDXY = na
 var float cachedYield = na
@@ -1040,7 +1046,7 @@ silverBear = silverValid and silverClose < silverEMA
 
 
 // ----- US2Y and the 2y10y curve ------------------------------------------------
-float _y2 = y2Symbol != "" ? request.security(y2Symbol, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true) : na
+float _y2 = y2Symbol != "" ? request.security(y2Symbol, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true) : na
 bool y2Valid = y2Symbol != "" and not na(_y2) and not na(_rawYield)
 // Spread in yield points. Rising = steepening = historically gold-supportive.
 float curve2s10s = y2Valid ? _rawYield - _y2 : na
@@ -1062,7 +1068,7 @@ string curveState = not y2Valid ? "" : "  2s10s" + str.tostring(curve2s10s, "#.#
 // the error appears, isolated to a deliberate action rather than at load time.
 string _cotL = cotEnable ? "COT:088691_F_L_ALL_NC_L" : syminfo.tickerid
 string _cotS = cotEnable ? "COT:088691_F_L_ALL_NC_S" : syminfo.tickerid
-float _cotNetRaw = cotEnable ? request.security(_cotL, "W", close[1], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true) - request.security(_cotS, "W", close[1], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true) : na
+float _cotNetRaw = cotEnable ? request.security(_cotL, "W", close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true) - request.security(_cotS, "W", close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true) : na
 bool cotValid = cotEnable and not na(_cotNetRaw)
 // Percentile rank of current net positioning within its own lookback — the absolute
 // contract count is meaningless without that context.
@@ -1083,13 +1089,13 @@ int cotRegime = not cotValid ? 0 : cotCrowdedLong ? -1 : cotCrowdedShort ? 1 : 0
 string cotState = not cotValid ? "" : "  COT" + str.tostring(int(nz(cotPct, 50))) + (cotCrowdedLong ? "!LONG-CROWD" : cotCrowdedShort ? "!SHORT-CROWD" : "")
 
 // ----- Open Interest conviction (daily, delay-immune) --------------------------
-[_oiNow, _oiPrev] = request.security(oiSymbol != "" ? oiSymbol : syminfo.tickerid, "D", [close[1], close[2]], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
+[_oiNow, _oiPrev] = request.security(oiSymbol != "" ? oiSymbol : syminfo.tickerid, "D", [close[1], close[2]], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
 bool oiValid = oiSymbol != "" and not na(_oiNow) and not na(_oiPrev) and _oiPrev > 0
 float oiChgPct = oiValid ? (_oiNow - _oiPrev) / _oiPrev * 100.0 : na
 bool oiRising = oiValid and oiChgPct > 0.0
 // Daily price direction, taken on the SAME daily series so the two are aligned.
-float _dC1 = request.security(syminfo.tickerid, "D", close[1], barmerge.gaps_off, barmerge.lookahead_off)
-float _dC2 = request.security(syminfo.tickerid, "D", close[2], barmerge.gaps_off, barmerge.lookahead_off)
+float _dC1 = request.security(syminfo.tickerid, "D", close[1], barmerge.gaps_off, barmerge.lookahead_on)
+float _dC2 = request.security(syminfo.tickerid, "D", close[2], barmerge.gaps_off, barmerge.lookahead_on)
 bool _dUp = not na(_dC1) and not na(_dC2) and _dC1 > _dC2
 // +1 genuine participation, -1 closing-out move, 0 unknown.
 int oiConviction = not oiValid or na(_dC1) or na(_dC2) ? 0 : (_dUp and oiRising) ? 1 : (not _dUp and oiRising) ? -1 : 0
@@ -1940,7 +1946,7 @@ bool cvdBull = cvdEma20 > cvdEma100
 bool cvdBear = cvdEma20 < cvdEma100
 
 // LIQUIDITY POOL TRACKING — previous period extremes (last completed candle only)
-[monthlyH, monthlyL] = request.security(syminfo.tickerid, "M", [high[1], low[1]], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+[monthlyH, monthlyL] = request.security(syminfo.tickerid, "M", [high[1], low[1]], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_on)
 var float poolPdH = na
 var float poolPdL = na
 var float poolPwH = na

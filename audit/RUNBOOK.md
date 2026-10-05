@@ -157,7 +157,12 @@ remain available and are confirmed-bar gated too.
 
 ---
 
-## Step 2d — Forward test (v33, from 2026-10-05 00:00 UTC, **15M** — amendment A1)
+## Step 2d — Forward test (v38, from **2026-10-06 00:00 UTC**, **15M** — amendments A1, A5)
+
+**v38 (A5):** the start moved one day because the strategy arms did not compile on 2026-10-05
+(F-A42) and the higher-timeframe data fix (F-A41) changes signals. Check after pasting: each arm's
+*Properties* shows initial capital **10,000** and the scorecard's start input reads 2026-10-06 00:00.
+The Diagnostics *Math probes* row should now read "=1d back" on almost every bar.
 
 The rules are frozen in `audit/PREREGISTRATION.md`. Only trades opened after the freeze count.
 

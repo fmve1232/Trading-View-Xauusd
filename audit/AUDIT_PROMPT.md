@@ -18,16 +18,16 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5793 | 373508 | `1fce11001d0a549d894de4ad792ed59003b0bb469c8686d3a9ea02e37aa540c5` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5365 | 337383 | `86193648198fd1d2c947658457af811d6396f6c156215e823befeddffa3b8d38` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5365 | 337448 | `256eaf50d61526bbd36897828f23d140fd5053b37e9c39d5e3d69637bb4869b7` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5376 | 338367 | `8db04fbbc1db9818e6390d8c659b4183e2f93e49450d348bbdc29889272025ae` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 349 | 24375 | `7f110a9f89387b3e19e148cd1682de263c08462e0f39b3a18cd80095e3ae77bb` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5799 | 374094 | `d544744cb8a11b390e1c58ce5e37f3549af44be7c2bc476b2b1549dc71d26323` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5373 | 338170 | `1edf1e7a36e686d11fddc83e6a72ef868a5becd13d6b0ff4b86c3f8f3abaab16` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5373 | 338235 | `60ca631e9c621d85bff1d513d0dfa792fb6549e17fe2348c1b26785c6e25b8b5` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5384 | 339155 | `4b40a97f7cd214533c62a7cbc88c444dbeb03a025d05c4f04e3240fcda6d7d76` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 357 | 25174 | `e9114048b13e4f85e3a4df42c3b5075b6b85a8b31618a047d79ba6d13054d34d` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1197 | 77369 | `bb64d9c354539a7ce0361157e4437e194780fdbb62bede8df15a2f5945132732` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5616 | 355863 | `2478fcb5121b275d06c0957d0eebdd44e994b066055278be08c4dd1738f0056c` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1203 | 77967 | `262844d089805c7573bff5928f3378671a9a95adcb73e0b4314cf4c12f0ded72` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5624 | 356636 | `d42a57e5bda771dde836e7549fa5f04e4d97e2eae8bfa34a9b8ab57d4b7b85aa` |
 
-> **BUILD v37 — this prompt pins the current build.** The originally audited build
+> **BUILD v38 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -78,6 +78,9 @@ scope, and no other build of these scripts is in scope.
 > pre-registered in amendment A3 with a Bonferroni adoption rule; its signal is shown in Visuals.
 > **v37:** the Master shows H2 as a second decision (H2 SETUP row + alert; DECISION unchanged, PREREG A4);
 > session intelligence moved to Visuals and the analog-evidence readout to Diagnostics (token ceiling).
+> **v38: F-A41, F-A42** from the operator's first chart run: higher-timeframe `[1]` requests used
+> `lookahead_off` (2 bars back in history, 1 live) and the four arms did not compile (CE10123). Both fixed;
+> forward test restarted **2026-10-06 00:00 UTC** (PREREGISTRATION A5). F-A43 (EdgeCases citations) open.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
