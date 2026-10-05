@@ -1,4 +1,4 @@
-# Forward-test pre-registration — XAUUSD Quantum (build v38, amendments A1–A5)
+# Forward-test pre-registration — XAUUSD Quantum (build v39, amendments A1–A5)
 
 ## Amendment A5 — 2026-10-05, after the planned start; the holdout clock restarts (operator decision)
 
@@ -7,6 +7,8 @@
 | A5.1 | **Compile fix F-A42** in the four strategy arms (scorecard start input) | All four arms failed to compile on the operator's chart (CE10123), so none of them recorded anything from the 2026-10-05 start. Signal-neutral. |
 | A5.2 | **Engine fix F-A41** in the Master, all four arms, Diagnostics and Visuals: higher-timeframe `request.security` of offset values uses `lookahead_on` | The Diagnostics probe measured the daily value two days old on 6,027 of 6,091 historical bars but one day old live, so the recorded (recomputed) trades and the live alerts used different data. This changes signals; under §2 it restarts the clock. The operator chose to fix and restart. |
 | A5.3 | New holdout start **2026-10-06 00:00 UTC**, and the new hashes in §2 | No arm had recorded a position (they did not compile); the Master's live DECISION on 2026-10-05 is outside the record either way. |
+
+A5.4 (v39, 2026-10-05, before the new start; display only): the PDL-first count restored in the three twins (F-A44) and the Master's H2 line split in two for the desktop cell. No signal changes; §2 hashes updated.
 
 Everything else is unchanged: 15M, N = 50, the rules of §4, the decision date of §5, H1 and the H2 rule (A3.2, confirmed in A4). Trades opened before 2026-10-06 00:00 UTC do not count.
 
@@ -92,11 +94,11 @@ Only trades that happen **after** the rules are frozen can show an edge.
 
 | File | SHA-256 |
 |---|---|
-| `XAUUSD_Quantum_5_0_Master.pine` | `d544744cb8a11b390e1c58ce5e37f3549af44be7c2bc476b2b1549dc71d26323` |
-| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `1edf1e7a36e686d11fddc83e6a72ef868a5becd13d6b0ff4b86c3f8f3abaab16` |
-| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `60ca631e9c621d85bff1d513d0dfa792fb6549e17fe2348c1b26785c6e25b8b5` |
+| `XAUUSD_Quantum_5_0_Master.pine` | `ad7158339628ff6bb99d4536099cc816b8d5add91e661478d12eeab7a74d1277` |
+| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `ae08877675f4187dbfdae3d4239646c48780474d88c9aa84c3ef2231013f9ed2` |
+| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `84a7e3c778ca40a079b36fdf8dc2acaef1dabb35825989837b088405efa34ec6` |
 | `XAUUSD_Quantum_5_0_Strategy_H2.pine` (H2) | `e9114048b13e4f85e3a4df42c3b5075b6b85a8b31618a047d79ba6d13054d34d` |
-| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `4b40a97f7cd214533c62a7cbc88c444dbeb03a025d05c4f04e3240fcda6d7d76` |
+| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `1fe1ec2d09388231d37bdaa64cd1a53fb58b4854edd3f417b42039a21afc5670` |
 
 Settings stay at the script defaults, except `MT5 Price Offset`, which is display only.
 Strategy Properties stay at the code defaults: initial capital 10,000, 1 oz fixed, costs as

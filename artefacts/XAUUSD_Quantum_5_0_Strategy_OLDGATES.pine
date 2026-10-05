@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v38   (F-A41 HTF data; compile fix) ║
+// ║  BUILD STAMP — this file last CHANGED in v39   (F-A44 PDL-first count; F-A41)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -3679,6 +3679,12 @@ runStatsEngines() =>
                 p1 += 1
                 pT += 1
                 wp1 += sim
+                wpT += sim
+            // F-A44 (v39): the PDL-first branch, as in the Master. Without it pT counted only PDH-first
+            // cases, so PDH1st read 100% and PDL1st 0% on every bar (display only: read by nothing else).
+            else if fh_ == 2
+                p2 += 1
+                pT += 1
                 wpT += sim
             float fr = array.get(hRet, i)
             // Cost-adjusted return: subtract round-trip cost from raw return

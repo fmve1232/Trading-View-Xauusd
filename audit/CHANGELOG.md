@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v38
+# Build changelog — v1 → … → v39
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1387,3 +1387,37 @@ From the operator's screenshots of v37 on the 15M chart (2026-10-05):
     Analog-evidence row had not reached the chart yet.
   - F-A43: the EdgeCases line citations are stale (comments only).
 - Compile NOT RUN for v38 (all seven chart files changed except EdgeCases).
+
+# Build v38 → v39 — v38 chart run reviewed; two display fixes
+
+From the operator's v38 screenshots (2026-10-05, 15M):
+
+- **Verified on the chart:**
+  - All seven chart scripts compile; the four arms run.
+  - F-A41: Diagnostics' Math probes read `D close[1]: =1d back 6094 / =2d back 0 / other 0`. That
+    is the opposite of v36's 64 / 6027 / 0, so the fix holds.
+  - The Visuals H2 card and its session rows display (London range, open, expansion,
+    swept-previous-extreme, manipulation 80% / continuation 39%).
+  - Diagnostics shows the v37 *Analog evidence* row.
+- **F-A44 (P3, display):** that row read PDH1st 100 / PDL 0%.
+  - The three twins (and so Diagnostics, built from the Treatment) lack the Master's
+    `else if fh_ == 2` branch, so only PDH-first analogs were counted. The gap is in the twins
+    since the originally audited build.
+  - v37's move to Diagnostics assumed "same engine, same numbers", which was wrong for this value.
+  - Restored identically in Treatment, Control and Challenger; Diagnostics rebuilt. `p2`/`pT` feed
+    nothing but this readout, so there is no signal change.
+  - `diag_parity.py` now also compares `runStatsEngines` Master vs Treatment, allowing only the
+    two documented last-bar refresh lines. It fails on v38's twin and passes v39.
+- **Master H2 line:** the desktop decision-footer cell clipped the one-line H2 text at both ends.
+  It is now two lines:
+  - `H2 <trend> · POC <p> · last <time> swept <lvl>`
+  - `<side> entry … SL … TP1 … TP2 …`
+- **Seen, not changed:**
+  - Treatment's and H2's Strategy Tester show 25K initial capital (Control and Challenger 10K;
+    code default 10,000). That is a saved Properties setting on the chart, and the registered
+    default is 10,000.
+  - Several reports were captured while "Updating report", and the Challenger and H2 screenshots
+    show identical figures (104 trades, PF 1.734, +215.99). Not validated: re-capture each after
+    "updated successfully".
+  - These backtests cover Jul–Oct 2026, the development window. They are not evidence (A1.2).
+- Hunk counts 5 / 4. All checkers pass. Compile NOT RUN for v39.

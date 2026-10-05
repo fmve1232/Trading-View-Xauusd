@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v38   (F-A41 HTF data: live=history)║
+// ║  BUILD STAMP — this file last CHANGED in v39   (H2 line split; F-A41 HTF)    ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5176,8 +5176,9 @@ float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h
 string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + str.tostring(close + mt5Offset, "#.##") + " SL " + str.tostring(h2Sl + mt5Offset, "#.##") + " TP1 " + str.tostring(h2Tp1 + mt5Offset, "#.##") + " TP2 " + str.tostring(h2Tp2 + mt5Offset, "#.##") : ""
 var string h2Last = "none yet"
 if h2Long or h2Short
-    h2Last := h2Plan + " (swept " + str.tostring(h2SweptLvl + mt5Offset, "#.##") + ") @" + str.format_time(time, "MM-dd HH:mm", "UTC")
-string h2Line = "H2 trend " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : str.tostring(h2Poc + mt5Offset, "#.##")) + " · last " + h2Last
+    h2Last := str.format_time(time, "MM-dd HH:mm", "UTC") + " swept " + str.tostring(h2SweptLvl + mt5Offset, "#.##") + "\n" + h2Plan
+// v39: two short lines (the desktop footer cell clipped one long line at both ends on the chart).
+string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : str.tostring(h2Poc + mt5Offset, "#.##")) + " · last " + h2Last
 
 // ══════════════════════════════════════════════════════════════════════
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
