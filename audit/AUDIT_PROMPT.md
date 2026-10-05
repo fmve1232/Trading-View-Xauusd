@@ -18,16 +18,16 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5800 | 374185 | `ad7158339628ff6bb99d4536099cc816b8d5add91e661478d12eeab7a74d1277` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5379 | 338486 | `ae08877675f4187dbfdae3d4239646c48780474d88c9aa84c3ef2231013f9ed2` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5379 | 338551 | `84a7e3c778ca40a079b36fdf8dc2acaef1dabb35825989837b088405efa34ec6` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5390 | 339470 | `1fe1ec2d09388231d37bdaa64cd1a53fb58b4854edd3f417b42039a21afc5670` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5804 | 374659 | `552307e4a0da26f43b58501451fc85a3ee9d9a06f84e4d55b021b2323fd048e7` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5383 | 338960 | `5a9df034b8a168c0b32910cc5ad97a5b11a70c75b196a9e702fe0e7546e2e472` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5383 | 339025 | `abe49ef765a9b7a3515d9238458fc94fe850ab7b551a9a06304c031da2f06557` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5394 | 339944 | `76a366683bea1bff3bfb73f560b962d0a21b62b7bba63f7e02b15a9fef893ff5` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 357 | 25174 | `e9114048b13e4f85e3a4df42c3b5075b6b85a8b31618a047d79ba6d13054d34d` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1203 | 77967 | `262844d089805c7573bff5928f3378671a9a95adcb73e0b4314cf4c12f0ded72` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5630 | 356952 | `78fa1fbaccf0d591a3fbd6e89e80a9acd0b591ca4511183fd235b678f04ba4f1` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5635 | 357552 | `f2e3236a2a929e290bfcf2c698999eb798787db5b8c396c3a10dd170051ea3cf` |
 
-> **BUILD v39 — this prompt pins the current build.** The originally audited build
+> **BUILD v40 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -83,6 +83,7 @@ scope, and no other build of these scripts is in scope.
 > forward test restarted **2026-10-06 00:00 UTC** (PREREGISTRATION A5). F-A43 (EdgeCases citations) open.
 > **v39: F-A44** — PDL-first branch missing from the twins (display only), found on the v38 chart; stats-engine
 > parity Master vs Treatment added to `diag_parity.py`. Master H2 line split for the desktop cell.
+> **v40: F-A45** — per-feature directional edge over resolved analogs (display only).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

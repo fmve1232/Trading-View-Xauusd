@@ -21,7 +21,7 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v39   (F-A44 PDL-first; F-A41)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v40   (F-A45 feature edge; F-A44)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '
@@ -419,13 +419,14 @@ string probeLine = "D close[1]: =1d back " + str.tostring(dgHtfEq1) + " / =2d ba
 // The Master's F-007 / F-008 / F-011 readouts, verbatim apart from the dg prefix: analog count
 // and win rate (A / WR / ROLL n), PDH-first / MAE / BOS continuation, the calibration example,
 // grade and Brier, IS vs ROLL win rate (!FIT = IS more than 15 points above ROLL), and the
-// adaptive feature weights Str/Htf/Liq/Mr/Cor. Moved to make room for the Master's H2 SETUP row
+// per-feature directional edge Str/Htf/Liq/Mr/Cor: accuracy among RESOLVED analogs minus 50, in
+// points (v40, F-A45; 0 = coin flip). Not similarity weights. Moved to make room for the Master's H2 SETUP row
 // (token ceiling); same engine, so the same numbers. Display only.
 string dgEvid = showStatsEngine ? "A" + str.tostring(oMatch) + (oMatch < 30 ? "!LOW" : "") + " WR" + str.tostring(int(oWr)) + "% ROLL" + str.tostring(oOosN) : "stats engine off"
 string dgAnl = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "/PDL" + str.tostring(oPdl1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "/fail" + str.tostring(int(oBosFail)) + "%" : ""
 string dgCal = (showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : "") + (showStatsEngine and __cg != "N/A" ? "  Cal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : "")
 string dgIsOos = showStatsEngine and __in >= 10 and oOosN >= 10 ? "  IS" + str.tostring(int(__iw)) + "%/ROLL" + str.tostring(int(oOosWr)) + "%" + (__iw - oOosWr > 15 ? "!FIT" : "") : ""
-string dgFeatW = showStatsEngine and oMatch >= 30 ? "  W" + str.tostring(int(__fs)) + "/" + str.tostring(int(__fh)) + "/" + str.tostring(int(__fl)) + "/" + str.tostring(int(__fm)) + "/" + str.tostring(int(__fc)) : ""
+string dgFeatW = showStatsEngine and oMatch >= 30 ? "  edge S/H/L/M/C " + str.tostring(int(__fs)) + "/" + str.tostring(int(__fh)) + "/" + str.tostring(int(__fl)) + "/" + str.tostring(int(__fm)) + "/" + str.tostring(int(__fc)) : ""
 string evidLine = dgEvid + dgAnl + dgCal + dgIsOos + dgFeatW
 
 // ---- PANEL -----------------------------------------------------------------------------
@@ -435,7 +436,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v39 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v40 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)

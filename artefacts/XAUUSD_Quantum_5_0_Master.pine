@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v39   (H2 line split; F-A41 HTF)    ║
+// ║  BUILD STAMP — this file last CHANGED in v40   (F-A45 feature edge; H2 line) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -4250,17 +4250,21 @@ runStatsEngines() =>
             _cRegPer := math.round((rRCnt - rRT - rRD) * 100.0 / rRCnt)
         else if rCurr == 2 and rDCnt > 0
             _cRegPer := math.round((rDCnt - rDT - rDR) * 100.0 / rDCnt)
+        // F-A45 (v40, display only): directional accuracy among RESOLVED analogs, c / (c + w). It was
+        // c / t with t counting timeouts too, so with most analogs timing out every feature read about
+        // 25 points under the 50% coin-flip line (chart: W-22/-22/-26/-26/-17). Now 0 = coin flip,
+        // + = the feature picks the side that resolves; na below 10 resolved analogs.
         float _baseDirAcc = 0.50
-        if fSt > 0
-            _cFeatStr := (fSc * 1.0 / fSt - _baseDirAcc) * 100.0
-        if fHt > 0
-            _cFeatHtf := (fHc * 1.0 / fHt - _baseDirAcc) * 100.0
-        if fLt > 0
-            _cFeatLiq := (fLc * 1.0 / fLt - _baseDirAcc) * 100.0
-        if fMt > 0
-            _cFeatMr := (fMc * 1.0 / fMt - _baseDirAcc) * 100.0
-        if fCt > 0
-            _cFeatCor := (fCc * 1.0 / fCt - _baseDirAcc) * 100.0
+        if fSc + fSw >= 10
+            _cFeatStr := (fSc * 1.0 / (fSc + fSw) - _baseDirAcc) * 100.0
+        if fHc + fHw >= 10
+            _cFeatHtf := (fHc * 1.0 / (fHc + fHw) - _baseDirAcc) * 100.0
+        if fLc + fLw >= 10
+            _cFeatLiq := (fLc * 1.0 / (fLc + fLw) - _baseDirAcc) * 100.0
+        if fMc + fMw >= 10
+            _cFeatMr := (fMc * 1.0 / (fMc + fMw) - _baseDirAcc) * 100.0
+        if fCc + fCw >= 10
+            _cFeatCor := (fCc * 1.0 / (fCc + fCw) - _baseDirAcc) * 100.0
         if mt >= 5 and sl > 0 and lc > 0 and wc > 0
             float avgW = sw / wc
             float avgL = sl / lc

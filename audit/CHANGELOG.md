@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v39
+# Build changelog — v1 → … → v40
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1421,3 +1421,26 @@ From the operator's v38 screenshots (2026-10-05, 15M):
     "updated successfully".
   - These backtests cover Jul–Oct 2026, the development window. They are not evidence (A1.2).
 - Hunk counts 5 / 4. All checkers pass. Compile NOT RUN for v39.
+
+# Build v39 → v40 — feature "weights" baseline (F-A45, display only)
+
+Operator: "Fix the feature weights baseline too."
+
+- The Diagnostics readout `W-22/-22/-26/-26/-17` was not similarity weights.
+  - It was each feature's directional accuracy minus 50%, over all analogs, timeouts included
+    (`c / t`).
+  - With about three-quarters of analogs timing out, every feature sat about 25 points under the
+    coin-flip line whatever its real skill.
+- **Now:** accuracy among resolved analogs, `c / (c + w)`, minus 50, in points.
+  - 0 = coin flip; + = the feature picks the side that resolves.
+  - na below 10 resolved analogs.
+- **Files:** the Master and the three twins, identically (the stats-engine parity holds).
+  Diagnostics relabels the readout "edge S/H/L/M/C".
+- **Display only:** `_cFeat*` / `__fs.. __fc` are read by nothing but this readout.
+- **Executed check:** the formula text taken from the Pine, on c = 26, w = 4, t = 100, gives +36.7
+  (the old formula gave −24.0).
+- **Tokens (lexical):** Master 39,000 ≈ 98,085 compiled (2.17% under). Diagnostics 39,611 ≈
+  99,622: v38 compiled at 39,567, so this adds 44 and leaves ~0.6% under the limit on the estimate.
+  **Diagnostics has no room left;** nothing more should be added to it without moving something
+  out.
+- All checkers pass; hunk counts 5 / 4. Compile NOT RUN.
