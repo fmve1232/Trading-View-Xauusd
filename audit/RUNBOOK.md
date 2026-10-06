@@ -157,7 +157,11 @@ remain available and are confirmed-bar gated too.
 
 ---
 
-## Step 2d — Forward test (v38, from **2026-10-06 00:00 UTC**, **15M** — amendments A1, A5)
+## Step 2d — Forward test (v41, from **2026-10-07 00:00 UTC** — H2 from 2026-10-06 — **15M**; amendments A1, A5, A6)
+
+**v41 (A6):** the volume-profile fix (F-A46) changes the engine arms' signals, so they and the Live Log count
+from 2026-10-07 (workbook Read Me B5). H2 is unchanged and counts from 2026-10-06 (Read Me D5). After pasting,
+each engine arm's scorecard start input should read 2026-10-07 00:00; Strategy_H2's reads 2026-10-06 00:00.
 
 **v38 (A5):** the start moved one day because the strategy arms did not compile on 2026-10-05
 (F-A42) and the higher-timeframe data fix (F-A41) changes signals. Check after pasting: each arm's

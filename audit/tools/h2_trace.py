@@ -53,7 +53,7 @@ def ref_vp(h, l, c, v):
 
 def test_vp():
     vp, ln = P.extract(H2, r'^if barstate.isconfirmed and bar_index >= 100 and h2VHi > h2VLo', r'^    h2Val := ')
-    eng, ln2 = P.extract(T, r'^if barstate.islast and barstate.isconfirmed and not perfMode$', r'^    vpRefresh \+= 1')
+    eng, ln2 = P.extract(T, r'^if barstate.isconfirmed and not perfMode$', r'^    vpRefresh \+= 1')
     bad_ref = bad_eng = 0
     for _ in range(300):
         px = 4000.0

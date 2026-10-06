@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v40   (F-A45 feature edge; H2 line) ║
+// ║  BUILD STAMP — this file last CHANGED in v41   (F-A46 VP every bar)          ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1888,7 +1888,11 @@ var string vaPos = "—"
 float vpHigh = ta.highest(high, vpLookback)
 float vpLow = ta.lowest(low, vpLookback)
 var int vpRefresh = 0
-if barstate.islast and barstate.isconfirmed and not perfMode
+// F-A46 (v41, operator-approved; supersedes the F-A07 note): rebuilt on EVERY confirmed bar (same 5-bar
+// cadence) instead of the last bar only. POC/VAH/VAL are SL/TP candidates and feed the plan's EV,
+// which can veto entries, so with the last-bar guard history planned without them and live with
+// them: a trade fired live could change or vanish from the record after a reload.
+if barstate.isconfirmed and not perfMode
     float bucketSize = (vpHigh - vpLow) / vpBuckets
     if vpRefresh % 5 == 0
         for i = 0 to vpBuckets - 1

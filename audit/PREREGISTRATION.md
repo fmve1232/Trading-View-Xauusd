@@ -1,4 +1,14 @@
-# Forward-test pre-registration — XAUUSD Quantum (build v40, amendments A1–A5)
+# Forward-test pre-registration — XAUUSD Quantum (build v41, amendments A1–A6)
+
+## Amendment A6 — 2026-10-06, during the A5 holdout; the clock restarts for the engine arms (operator decision)
+
+| # | Change | Why |
+|---|---|---|
+| A6.1 | **Engine fix F-A46** in the Master, Treatment, Control, Challenger (and Diagnostics): the volume profile is rebuilt on every confirmed bar instead of the last bar only | Its POC/VAH/VAL are stop/target candidates and feed the plan EV veto, so recorded (recomputed) trades and live signals used different plans. Changes signals; under §2 that restarts the clock. |
+| A6.2 | New holdout start **2026-10-07 00:00 UTC** for the Live arm, Treatment, Control and Challenger; their §2 hashes replaced | About 10 hours of the A5 holdout are discarded for these arms. |
+| A6.3 | **H2 keeps its 2026-10-06 00:00 UTC start**: its file is unchanged (its own profile was always rebuilt every confirmed bar). The workbook counts H2 from Read Me D5, the others from B5. | H2 is not affected, so its record is not reset. |
+
+Nothing else changes: 15M, N = 50, §4, §5, H1, H2 (A3.2). For the H1/H2 vs Treatment comparisons, "the same window" (A3.3) is the window from 2026-10-07, where all arms are counting.
 
 ## Amendment A5 — 2026-10-05, after the planned start; the holdout clock restarts (operator decision)
 
@@ -90,17 +100,17 @@ Only trades that happen **after** the rules are frozen can show an edge.
 
 | Item | Value |
 |---|---|
-| Holdout start | **2026-10-06 00:00 UTC** (A5; was 2026-10-05 by A1, 2026-09-28 originally) |
+| Holdout start | **2026-10-07 00:00 UTC** (A6) for Live / Treatment / Control / Challenger; **H2 2026-10-06 00:00 UTC** (A5, unaffected by A6) |
 | Chart | OANDA:XAUUSD, **15M** (A1; was 1H), the same layout for every arm |
 | Frozen scripts (SHA-256) | see table below; any change restarts the clock |
 
 | File | SHA-256 |
 |---|---|
-| `XAUUSD_Quantum_5_0_Master.pine` | `552307e4a0da26f43b58501451fc85a3ee9d9a06f84e4d55b021b2323fd048e7` |
-| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `5a9df034b8a168c0b32910cc5ad97a5b11a70c75b196a9e702fe0e7546e2e472` |
-| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `abe49ef765a9b7a3515d9238458fc94fe850ab7b551a9a06304c031da2f06557` |
+| `XAUUSD_Quantum_5_0_Master.pine` | `d8cf5eaaf6cb24d48ab2517ec1416d23694bc872952347b7460c9c5749879a4e` |
+| `XAUUSD_Quantum_5_0_Strategy.pine` (Treatment) | `2f43566ff43fcec2fbdcc7b8709b5b1383f725c58f8f00c2a6328a9cb01d7d59` |
+| `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` (Control) | `a927a6e3ba3921db15df5e1641c0f1d09fbee64714082bb37d9a3cf44f9ca7b7` |
 | `XAUUSD_Quantum_5_0_Strategy_H2.pine` (H2) | `e9114048b13e4f85e3a4df42c3b5075b6b85a8b31618a047d79ba6d13054d34d` |
-| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `76a366683bea1bff3bfb73f560b962d0a21b62b7bba63f7e02b15a9fef893ff5` |
+| `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` (H1) | `2f14870f4ca9861c7bfb113b35ab22eeefb80329e3dc2fa822d412dd71326984` |
 
 Settings stay at the script defaults, except `MT5 Price Offset`, which is display only.
 Strategy Properties stay at the code defaults: initial capital 10,000, 1 oz fixed, costs as

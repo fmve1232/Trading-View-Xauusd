@@ -43,7 +43,7 @@ sha256sum -c audit/MANIFEST.sha256
 
 ## Non-negotiables carried from the audit
 
-- **HOLDOUT FREEZE (from 2026-10-06 00:00 UTC, 15M; amendments A1–A5):** the Master, Treatment, Control,
+- **HOLDOUT FREEZE (from 2026-10-07 00:00 UTC — H2 from 2026-10-06 — 15M; amendments A1–A6):** the Master, Treatment, Control,
   Challenger and H2 are frozen at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
   fixes and display-only changes are allowed; any other change restarts the forward test.
 - **Do not tune** thresholds, weights or gates against results measured on this price
@@ -78,7 +78,7 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A45. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A46. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |

@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v40
+# Build changelog — v1 → … → v41
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1443,4 +1443,39 @@ Operator: "Fix the feature weights baseline too."
   99,622: v38 compiled at 39,567, so this adds 44 and leaves ~0.6% under the limit on the estimate.
   **Diagnostics has no room left;** nothing more should be added to it without moving something
   out.
+- All checkers pass; hunk counts 5 / 4. Compile NOT RUN.
+
+# Build v40 → v41 — volume profile rebuilt every bar (F-A46); engine arms restart 2026-10-07
+
+From the operator's v40 screenshots (2026-10-06). TradingView warned "barstate.islast may not
+initially return true" at the arms' L1948.
+
+- **The defect (F-A46):** that line guarded the engine's volume-profile rebuild.
+  - The POC/VAH/VAL it produces are stop and target candidates (`_slC`, `_tpLvls`), and they feed
+    `planExpectancy`, whose EV < 0 test is part of `tqVeto`.
+  - On historical bars the levels were na; live they existed. So the record a reload recomputes
+    was planned differently from the signals that fired live.
+  - It was known as F-A07 and deferred until a runtime baseline existed. The operator chose to fix.
+- **Fix:** `if barstate.isconfirmed and not perfMode` (same 5-bar rebuild cadence), identically in
+  the Master and the three twins. Diagnostics was rebuilt.
+  - `h2_trace`: the engine VP code still equals H2's specification on the same bars.
+  - H2 is unaffected; its own profile was always rebuilt every confirmed bar.
+- **Holdout (A6):**
+  - The Live arm, Treatment, Control and Challenger now start **2026-10-07 00:00 UTC**; their
+    scorecard inputs were changed.
+  - H2 keeps 2026-10-06; its file is unchanged.
+  - Workbook: Read Me B5 = 2026-10-07 and new D5 = H2 start. Arm Trades "Counts?" picks D5 for H2.
+    Tested on a scratch copy: H2 10-06 12:00 counts; Treatment 10-06 12:00 does not; Treatment 10-07
+    counts; H2 10-05 does not.
+- **Runtime:** the rebuild adds about 50 loop steps per bar (H2's own profile is ~180). The
+  scripts already show TradingView's "Heavy script" notice; watch for a runtime error after
+  pasting.
+- **Also seen in the v40 run, not changed:**
+  - The other two "islast" warnings (cost-model note, scorecard draw) are display-only: the card
+    draws at the first close after load.
+  - PDH1st now reads 0 / PDL 100. The counting code is identical in all engines and symmetric. The
+    value may be real for the matched analogs, but it is unverified without the counts.
+  - The feature edge reads 1/0/1/−4/5 (≈ coin flip, consistent with F-A34).
+  - The bear calibration slope fits at 0 (flat).
+  - The Strategy Tester panels again showed figures belonging to other arms while updating.
 - All checkers pass; hunk counts 5 / 4. Compile NOT RUN.
