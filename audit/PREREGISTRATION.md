@@ -303,3 +303,49 @@ first on a same-bar tie, 50% off at TP1, then breakeven, and the same cost model
 - Other timeframes are reported, not decisive.
 - **Multiplicity:** H2 is a fourth hypothesis on the same market and period. If both the Treatment
   and H2 pass, each is still reported on its own terms; neither borrows the other's evidence.
+
+## Amendment 6 (2026-10-06, operator decision "option 1"): one system of record — the website
+
+**Why.** A second Claude session developed the Pine line separately from build v31 onwards, on branch
+`claude/xauusd-developed-files-tmnk9g` (builds v32–v41, head `98d9ab5`). That line has its own
+pre-registration:
+- amendments A1–A6, with a **15M** decision and holdout restarts on 2, 5 and 6 Oct;
+- its own **H2 "sweep-to-value"** rule, frozen on 4 Oct within minutes of this file's Amendment 5 H2,
+  from the same operator request.
+
+Two pre-registrations of the same idea with different rules, run in parallel, would let the better-looking
+one be chosen after the fact. They would also multiply the number of tests (about nine arms in total), and
+one of them would likely clear a 95% bar by chance. The operator chose a single system of record.
+
+**Decision.**
+1. **The only counted forward tests are the website's**, as defined in this file:
+   - §7: Treatment, Control and Challenger on 1H, freeze key `5e4630924d663fc5:3252a9f0d312db75`,
+     started 2026-10-03 10:37 UTC;
+   - Amendment 5: H2 "Sweep and Value", key `…:adeaccb163806651`, started 2026-10-04 07:55 UTC.
+   Their decision rules and dates are unchanged.
+2. **The TradingView line (builds v33–v41) is DISPLAY ONLY.** Its scorecards, verdicts and amendments
+   A1–A6 are **not counted** and must not be cited as evidence for or against any arm. Its files may be
+   used as chart visuals. File hashes at this decision, for the record:
+
+   | File (branch head `98d9ab5`) | SHA-256 (first 16) |
+   |---|---|
+   | Master | `d8cf5eaaf6cb24d4` |
+   | Strategy (Treatment) | `2f43566ff43fcec2` |
+   | Strategy_OLDGATES (Control) | `a927a6e3ba3921db` |
+   | Strategy_CHALLENGER | `2f14870f4ca9861c` |
+   | Strategy_H2 (sweep-to-value) | `e9114048b13e4f85` |
+   | Diagnostics | `98c2833b2296e895` |
+   | Visuals | `262844d089805c75` |
+
+3. **The Pine reference stays at v32** (the hashes in §2) for validating the website, as in Amendment 2.
+   The Pine line's findings F-A39 (Cornish-Fisher outside its domain), F-A40 (MTF denominator) and F-A41
+   (HTF two bars old in history) were checked against the website engine on this date:
+   - F-A41 does not apply: it aligns to the last completed HTF bar;
+   - F-A40 does not apply: it has real 5m/15m data, so every layer votes;
+   - F-A39 is already guarded: an unsolved inverse keeps the observed z.
+
+   Nothing is ported, and the freeze keys are unchanged.
+4. **Open item, recorded rather than acted on.** In every Pine strategy file (v32 and v41) the exit orders
+   are placed only once a position exists. With `process_orders_on_close`, that probably leaves the first
+   bar after entry without its stop and targets. The website's backtest protects that bar, so the website
+   arms are unaffected. It is listed for the Pine reference only.

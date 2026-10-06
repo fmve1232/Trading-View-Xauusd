@@ -49,6 +49,11 @@ sha256sum -c audit/MANIFEST.sha256
 
 ## Non-negotiables carried from the audit
 
+- **ONE SYSTEM OF RECORD (operator decision 2026-10-06, `PREREGISTRATION.md` Amendment 6):** only the
+  website's forward tests count (§7 arms on 1H and the Amendment 5 H2). The Pine line developed separately
+  on branch `claude/xauusd-developed-files-tmnk9g` (builds v33–v41, with its own amendments A1–A6 and its own
+  15M H2) is **display only**: never cite its scorecards or verdicts as evidence, and do not merge it into
+  this line without a new amendment.
 - **HOLDOUT FREEZE (from 2026-09-28 00:00 UTC):** the website engine is frozen by its freeze key
   (`PREREGISTRATION.md` §7; any change to `holdout.ENGINE_SOURCES` or `config.py` restarts it). The Pine
   reference files (Master, Treatment, Control, Challenger) stay at the hashes in `audit/PREREGISTRATION.md` §2. Only signal-neutral compile/runtime
