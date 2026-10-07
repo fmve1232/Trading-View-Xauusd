@@ -32,6 +32,28 @@ export async function dispatch(env, fetchImpl = fetch) {
   return r.status;      // 204 = started
 }
 
+// Diagnostics without side effects (GET /check). It answers:
+// (1) can the token READ the workflow?
+// (2) may it DISPATCH? A dispatch to a branch that does not exist returns 422 "No ref found" when
+//     the token has Actions write, and 403/404 when it does not. No run is ever started.
+// The token itself is never returned; GitHub's message and its permission/expiry headers are.
+export async function check(env, fetchImpl = fetch) {
+  if (!env.GH_DISPATCH_TOKEN) return { token_set: false };
+  const hd = { Authorization: `Bearer ${env.GH_DISPATCH_TOKEN}`, Accept: "application/vnd.github+json",
+               "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "xau-scheduler" };
+  const base = `https://api.github.com/repos/${env.REPO}/actions/workflows/${env.WORKFLOW}`;
+  const msg = async (r) => { try { const j = await r.json(); return String(j.message || j.state || j.name || "").slice(0, 160); } catch (e) { return ""; } };
+  const rd = await fetchImpl(base, { headers: hd });
+  const wr = await fetchImpl(`${base}/dispatches`, { method: "POST", headers: hd, body: JSON.stringify({ ref: "xau-scheduler-permission-check-no-such-branch" }) });
+  const verdict = wr.status === 422 ? "OK: the token may dispatch this workflow"
+    : wr.status === 401 ? "BAD TOKEN: expired, revoked or mistyped"
+    : wr.status === 403 || wr.status === 404 ? "NO PERMISSION: needs this repository selected and Actions: Read and write"
+    : `UNEXPECTED HTTP ${wr.status}`;
+  return { token_set: true, verdict, read_status: rd.status, read_message: await msg(rd), dispatch_probe_status: wr.status,
+           dispatch_probe_message: await msg(wr), accepted_permissions: wr.headers.get("x-accepted-github-permissions") || rd.headers.get("x-accepted-github-permissions") || "",
+           token_expiry: rd.headers.get("github-authentication-token-expiration") || "", repo: env.REPO, workflow: env.WORKFLOW, ref: env.REF };
+}
+
 export default {
   async scheduled(event, env, ctx) {
     const when = new Date(event.scheduledTime);
@@ -40,8 +62,9 @@ export default {
     const st = await dispatch(env);
     console.log(`${when.toISOString()} dispatch -> HTTP ${st}`);   // never logs the token
   },
-  async fetch() {
-    return new Response(JSON.stringify({ service: "xau-scheduler", now: new Date().toISOString(), gold_shut: goldShut(new Date()) }),
-      { headers: { "content-type": "application/json" } });
+  async fetch(req, env) {
+    const path = req ? new URL(req.url).pathname : "/";
+    const body = path === "/check" ? await check(env) : { service: "xau-scheduler", now: new Date().toISOString(), gold_shut: goldShut(new Date()) };
+    return new Response(JSON.stringify(body), { headers: { "content-type": "application/json", "cache-control": "no-store" } });
   },
 };

@@ -397,7 +397,12 @@ function renderH2() {
   const now = H.signal_now, ck = H.checklist || {};
   st.textContent = now ? `${now.dir} signal` : "no setup"; st.className = "pill " + (now ? (now.dir === "LONG" ? "bull" : "bear") : "");
   const score = (c) => (c ? Object.values(c).filter(Boolean).length : 0);
-  const side = score(ck.long) >= score(ck.short) ? "long" : "short", c = ck[side] || {};
+  // The side shown: the live signal's side; else the side the trend rule favours; else the side with
+  // more rules met. (Showing the higher count alone put "Long side" on screen in a clear downtrend.)
+  const tl = !!(ck.long && ck.long.trend), ts = !!(ck.short && ck.short.trend);
+  const side = now ? (now.dir === "LONG" ? "long" : "short") : tl !== ts ? (tl ? "long" : "short")
+    : score(ck.long) >= score(ck.short) ? "long" : "short", c = ck[side] || {};
+  const other = side === "long" ? "short" : "long";
   const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}">${c[k] ? "✓" : "✗"} ${esc(side === "short" ? stx : lt)}</li>`).join("");
   const p = now || H.last_signal;
   const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(sweep bar ${tfmt(p.sweep_t)})</span></div>` : "";
@@ -406,7 +411,7 @@ function renderH2() {
   const nm = H.next_move_in_sample || {}, fw = H.forward || {}, fr = H.freeze || {};
   const next = nm.n ? `After ${nm.n} past H2 signals on ${esc(D.meta.tf)} (in-sample): TP1 reached first ${f(nm.tp1_first_pct, 0)}%, stop first ${f(nm.stop_first_pct, 0)}%, mean ${fs(nm.mean_r, 2)} R, median ${fs(nm.median_r, 2)} R, about ${f(nm.avg_bars, 0)} bars to the exit.` : "No past H2 signals on this timeframe yet.";
   const fwd = fw.n ? `${fw.n} closed · win ${f(fw.win_rate, 0)}% · mean ${fs(fw.avg_r, 2)} R · PF ${f(fw.profit_factor, 2)}` : "no closed trades yet";
-  el.innerHTML = `<div class="why"><b>${esc(side === "long" ? "Long" : "Short")} side, ${score(c)}/5 rules met</b><ul class="gates">${rows}</ul></div>` + planHtml + openHtml +
+  el.innerHTML = `<div class="why"><b>${esc(side === "long" ? "Long" : "Short")} side, ${score(c)}/5 rules met</b> <span class="dim">(${other} side ${score(ck[other])}/5)</span><ul class="gates">${rows}</ul></div>` + planHtml + openHtml +
     `<div class="why"><b>Next movement:</b> ${next} <span class="dim">Small samples: a pattern, not a forecast.</span></div>` +
     `<div class="why"><b>Forward record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${fwd}. Decision on 1H after 50 trades (Amendment 5).</div>`;
 }

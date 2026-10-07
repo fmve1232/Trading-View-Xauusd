@@ -67,3 +67,19 @@ jobs:
           echo "### Scheduler deployed" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Status: \`$URL/\`. quantum-site now starts at :01/:16/:31/:46 UTC while gold trades." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify (token permission and cron registration; never prints a secret)
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          URL: ${{ steps.deploy.outputs.deployment-url }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          sleep 5
+          chk=$(curl -fsS -m 30 "$URL/check" || echo '{"error":"check endpoint unreachable"}')
+          echo "::notice title=token check::$chk"
+          crons=$(curl -fsS -m 30 -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/xau-scheduler/schedules" \
+            | python3 -c "import json,sys; j=json.load(sys.stdin); print(json.dumps([s.get('cron') for s in (j.get('result') or {}).get('schedules', [])]) if j.get('success') else 'error: ' + json.dumps(j.get('errors')))" || echo "unavailable")
+          echo "::notice title=cron schedules::$crons"
+          { echo "### Scheduler check"; echo ""; echo "- token: \`$chk\`"; echo "- crons: \`$crons\`"; } >> "$GITHUB_STEP_SUMMARY"
