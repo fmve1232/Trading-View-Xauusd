@@ -43,3 +43,19 @@ test("no dispatch while gold is shut or without a token; the token is never logg
     assert.ok(logs.every((l) => !l.includes("secret-tok")));
   } finally { globalThis.fetch = orig; console.log = log; }
 });
+
+test("/check classifies the token without starting a run and never echoes it", async () => {
+  const { check } = await import("../scheduler/worker.js");
+  const env = { REPO: "o/r", WORKFLOW: "w.yml", REF: "main", GH_DISPATCH_TOKEN: "secret-tok" };
+  const mk = (rd, wr) => async (url, init) => {
+    const st = url.endsWith("/dispatches") ? wr : rd;
+    if (url.endsWith("/dispatches")) assert.match(JSON.parse(init.body).ref, /no-such-branch/);
+    return { status: st, headers: new Headers({ "x-accepted-github-permissions": "actions=write" }), json: async () => ({ message: "m" }) };
+  };
+  assert.match((await check(env, mk(200, 422))).verdict, /^OK/);
+  assert.match((await check(env, mk(200, 403))).verdict, /^NO PERMISSION/);
+  assert.match((await check(env, mk(404, 404))).verdict, /^NO PERMISSION/);
+  assert.match((await check(env, mk(401, 401))).verdict, /^BAD TOKEN/);
+  assert.deepEqual(await check({ ...env, GH_DISPATCH_TOKEN: "" }, mk(200, 422)), { token_set: false });
+  assert.ok(!JSON.stringify(await check(env, mk(200, 403))).includes("secret-tok"));
+});
