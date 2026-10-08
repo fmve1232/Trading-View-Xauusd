@@ -1,4 +1,21 @@
-# Forward-test pre-registration — XAUUSD Quantum (build v41, amendments A1–A6)
+# Forward-test pre-registration — XAUUSD Quantum (build v42, amendments A1–A7) — SUPERSEDED: the record is the website
+
+## Amendment A7 — 2026-10-08: this pre-registration is SUPERSEDED; the website is the only system of record
+
+**Operator decision, confirmed in this session on 2026-10-08:** "Website only". It confirms the decision recorded on
+the default branch (`claude/audit-prompt-real-artefacts-nekqv6`, `audit/PREREGISTRATION.md`, Amendment 6 of 2026-10-06, "option 1").
+
+1. **Nothing on this branch is counted.** The TradingView 15M arms (Treatment, Control, Challenger, H2 sweep-to-value),
+   their on-chart scorecards and this file's amendments A1–A6 are **display only**. They must not be cited as evidence
+   for or against any arm, and the decision rules of §4 are not applied to them.
+2. **The counted tests are the website's**, as written in the default branch's pre-registration: §7 Treatment /
+   Control / Challenger on 1H (started 2026-10-03 10:37 UTC) and its Amendment 5 H2 "Sweep and Value" (started
+   2026-10-04 07:55 UTC). This branch does not change them.
+3. **No more holdout restarts here.** Changes to these files no longer restart anything. The §2 hashes below are kept
+   as history of builds v33–v41 and are not a freeze.
+4. **Fix made under this amendment (F-A47):** exits are placed on the entry bar (they were placed one bar late, so
+   the first bar after every entry had no stop or targets). This changes the TradingView backtests only.
+5. The Pine reference used to validate the website stays at v32 on the default branch, as its Amendments 2 and 6 say.
 
 ## Amendment A6 — 2026-10-06, during the A5 holdout; the clock restarts for the engine arms (operator decision)
 

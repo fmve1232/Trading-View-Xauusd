@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v38   (F-A41 HTF data)              ║
+// ║  BUILD STAMP — this file last CHANGED in v42   (H2 card label)               ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1189,7 +1189,7 @@ _h2Row(int _r, string _k, string _x, color _c) =>
     table.cell(h2Card, 1, _r, _x, text_color = _c, text_size = size.small, text_halign = text.align_left)
 if h2Show and barstate.islast
     color _h2t = color.new(#E6EDF3, 0)
-    table.cell(h2Card, 0, 0, "H2 SWEEP-TO-VALUE  v37", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
+    table.cell(h2Card, 0, 0, "H2 SWEEP-TO-VALUE  v42 (display only)", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
     table.cell(h2Card, 1, 0, timeframe.period + (timeframe.in_seconds() == 900 ? " (registered)" : "  NOT 15M: the H2 record does not count here"), text_color = timeframe.in_seconds() == 900 ? color.white : color.orange, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
     _h2Row(1, "Trend 1H / 4H / 1D", h2Trend + "   " + str.tostring(h2S1, "#") + " / " + str.tostring(h2S4, "#") + " / " + str.tostring(h2SD, "#") + "  (>=60 up, <=40 down)", h2TrendUp ? color.new(#00D084, 0) : h2TrendDn ? color.new(#FF4D4D, 0) : _h2t)
     _h2Row(2, "Swing liquidity (unswept)", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "   low " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)), _h2t)

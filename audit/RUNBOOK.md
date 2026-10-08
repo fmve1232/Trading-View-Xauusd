@@ -157,7 +157,12 @@ remain available and are confirmed-bar gated too.
 
 ---
 
-## Step 2d — Forward test (v41, from **2026-10-07 00:00 UTC** — H2 from 2026-10-06 — **15M**; amendments A1, A5, A6)
+## Step 2d — SUPERSEDED (A7, 2026-10-08): the record is the website, not TradingView
+
+The TradingView arms and scorecards below are **display only**. Log live trades and read verdicts on the website
+(default branch). The text below is kept for history.
+
+### Former step 2d — Forward test (v41, from **2026-10-07 00:00 UTC** — H2 from 2026-10-06 — **15M**; amendments A1, A5, A6)
 
 **v41 (A6):** the volume-profile fix (F-A46) changes the engine arms' signals, so they and the Live Log count
 from 2026-10-07 (workbook Read Me B5). H2 is unchanged and counts from 2026-10-06 (Read Me D5). After pasting,

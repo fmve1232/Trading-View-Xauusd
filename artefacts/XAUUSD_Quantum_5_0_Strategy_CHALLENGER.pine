@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v41   (challenger H1; F-A46 VP)     ║
+// ║  BUILD STAMP — this file last CHANGED in v42   (challenger H1; F-A47 exits)  ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5283,6 +5283,11 @@ if execBuyS and strategy.position_size <= 0
     // cannot backfill history, so without it the export cannot support the calibration
     // test and a second full backtest would be needed to get it.
     strategy.entry("L", strategy.long, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round(_calPLong * 100.0)))
+    // v42 (F-A47): exits placed on the ENTRY bar too. They used to be placed only once
+    // strategy.position_size showed the position, i.e. one bar later, so with
+    // process_orders_on_close the first bar after every entry had no stop and no targets.
+    strategy.exit("Lx1", "L", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Lx2", "L", stop=stSL, limit=stTP2)
 if execSellS and strategy.position_size >= 0
     strategy.close_all(comment="flip")
     stEntry := close
@@ -5291,6 +5296,11 @@ if execSellS and strategy.position_size >= 0
     stTP2 := tp2
     stBE := false
     strategy.entry("S", strategy.short, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round(_calPShort * 100.0)))
+    // v42 (F-A47): exits placed on the ENTRY bar too. They used to be placed only once
+    // strategy.position_size showed the position, i.e. one bar later, so with
+    // process_orders_on_close the first bar after every entry had no stop and no targets.
+    strategy.exit("Sx1", "S", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Sx2", "S", stop=stSL, limit=stTP2)
 // CHANGE ID: P0-EXEC-002-FIX | FILE: Strategy execution layer (both twins)
 // OLD LOGIC: on the bar where high>=stTP1, stSL was mutated to breakeven BEFORE
 // being passed to strategy.exit() the SAME bar, with no check for whether the
@@ -5333,7 +5343,7 @@ if strategy.position_size < 0
 // the chart's history -- the Coverage row says when the history no longer reaches the start.
 // v38 COMPILE FIX (operator's chart, 2026-10-05): input.time() needs a const int default, and
 // timestamp("UTC", ...) returns a simple int (CE10123). 1791331200000 = 2026-10-07 00:00 UTC in ms (start moved by A6, F-A46).
-fwdStart = input.time(1791331200000, "Forward test start (PREREGISTRATION A6)", group="FORWARD TEST")
+fwdStart = input.time(1791331200000, "Card start (display only: the record is the website, A7)", group="FORWARD TEST")
 fwdShow = input.bool(true, "Show forward-test scorecard", group="FORWARD TEST")
 fwdPos = input.string("Bottom Right", "Scorecard position", options=["Bottom Right", "Bottom Left", "Top Right", "Top Left"], group="FORWARD TEST", tooltip="With several arms visible on one chart, give each its own corner.")
 var int fwdBar0 = time
@@ -5386,7 +5396,7 @@ if fwdShow and barstate.islast
     string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpfOk ? "EDGE SHOWN" : "NOT SHOWN"
     bool _fwtfOk = timeframe.in_seconds() == 900
     color _fwcT = color.new(#E6EDF3, 0)
-    table.cell(fwdTbl, 0, 0, "FORWARD TEST  v35", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    table.cell(fwdTbl, 0, 0, "BACKTEST CARD (NOT COUNTED: record = website)  v42", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
     table.cell(fwdTbl, 1, 0, "from " + str.format_time(fwdStart, "yyyy-MM-dd HH:mm", "UTC") + " UTC  ·  " + timeframe.period + (_fwtfOk ? " (registered)" : "  NOT 15M: does not count"), text_color=_fwtfOk ? color.white : color.orange, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
     _fwRow(1, "Positions (N)", str.tostring(_fwn) + (_fwn > 0 ? "   wins " + str.tostring(_fww) + " = " + str.tostring(_fww * 100.0 / _fwn, "#") + "%" : ""), _fwcT)
     _fwRow(2, "Mean $ / position", na(_fwm) ? "—" : str.tostring(_fwm, "#.##"), _fwcT)

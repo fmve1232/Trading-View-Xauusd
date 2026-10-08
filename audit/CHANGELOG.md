@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v41
+# Build changelog — v1 → … → v42
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1479,3 +1479,29 @@ initially return true" at the arms' L1948.
   - The bear calibration slope fits at 0 (flat).
   - The Strategy Tester panels again showed figures belonging to other arms while updating.
 - All checkers pass; hunk counts 5 / 4. Compile NOT RUN.
+
+# Build v41 → v42 — one system of record (A7); exits on the entry bar (F-A47)
+
+From the operator's 2026-10-08 screenshots (TradingView v41 and the website).
+
+- **Two records were found.**
+  - A second session runs the website (Python port, GitHub Pages) on the default branch `claude/audit-prompt-real-artefacts-nekqv6`. Its
+    pre-registration Amendment 6 (2026-10-06, written after v41) made the website the only system of record and
+    this TradingView line display only. That contradicted this branch's A5/A6 restarts.
+  - Asked here, the operator chose **"Website only"**. PREREGISTRATION A7 marks this branch superseded and display
+    only; CLAUDE.md, the RUNBOOK and the workbook say so.
+- **F-A47 (P2):** exits were placed only once `strategy.position_size` showed the position, one bar after the entry
+  under `process_orders_on_close`, so the first bar after every entry had no stop or targets. Raised by the website
+  session; confirmed in these files.
+  - Fix: both exits are also placed in the entry block, after the levels are set, in Treatment, Control, Challenger
+    and H2 identically (hunk counts 5 / 4).
+  - It changes the TradingView backtests. Since A7 those are not counted.
+- **Display:**
+  - The scorecards are headed "BACKTEST CARD (NOT COUNTED: record = website)".
+  - Visuals' H2 card reads v42 (it read v37).
+- **Checked on the website's own data** (`market-data` branch, read only):
+  - its PDL 4061.73 is a real 10-07 12:45 UTC drop;
+  - weekend quotes and missing spot volume are already handled by its engine (weekend bars dropped; COMEX volume, D-07);
+  - the TradingView-H2 SELL of 10-06 18:15 (SL 4173.92) was stopped on that feed at 18:45 (high 4176.59) before the drop.
+- **Not changed:** the website, its freeze keys and the default branch.
+- All checkers pass. Compile NOT RUN.
