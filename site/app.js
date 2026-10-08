@@ -76,8 +76,10 @@ function showTab(t) {
 const TOGGLES = [["ema", "EMA 20/100/200"], ["vwap", "VWAP D/W/M"], ["bb", "Bollinger"], ["levels", "Levels"], ["zones", "OB / FVG"],
   ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"], ["h2", "H2 signals"]];
 if (S.toggles.h2 === undefined) S.toggles.h2 = true;   // added after viewers saved their toggles
-$("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${l}</span>`).join("");
+$("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${l}</span>`).join("") +
+  `<button class="toggle fit" type="button" data-act="fit" title="Fit the latest bars to the screen and re-enable auto price scale">⤢ Fit</button>`;
 $("#toolbar").onclick = (e) => {
+  if (e.target.dataset.act === "fit") { fitView(); return; }
   const k = e.target.dataset.k; if (!k) return;
   S.toggles[k] = !S.toggles[k]; store.set("toggles", S.toggles);
   e.target.classList.toggle("on", S.toggles[k]); renderChart();
@@ -645,10 +647,14 @@ function rebuildCharts() {
 }
 function buildCharts() {
   const LC = window.LightweightCharts;
-  const main = LC.createChart($("#chart"), chartOpts());
-  const sub = LC.createChart($("#subchart"), { ...chartOpts(), timeScale: { ...chartOpts().timeScale, visible: false } });
-  const line = (color, w = 1, style = 0) => main.addLineSeries({ color, lineWidth: w, lineStyle: style, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false });
-  const candles = main.addCandlestickSeries({ upColor: css("--bull"), downColor: css("--bear"), wickUpColor: css("--bull"), wickDownColor: css("--bear"), borderVisible: false });
+  // autoSize: both panes follow their box (CSS sizes it to the viewport), width and height.
+  const main = LC.createChart($("#chart"), { ...chartOpts(), autoSize: true, rightPriceScale: { ...chartOpts().rightPriceScale, scaleMargins: { top: 0.12, bottom: 0.08 } } });
+  const sub = LC.createChart($("#subchart"), { ...chartOpts(), autoSize: true, timeScale: { ...chartOpts().timeScale, visible: false } });
+  // Overlays never drive the price scale: a weekly level or a cone far from price used to squeeze
+  // the candles into ~40% of the pane. The scale follows the candles (and the plan, below).
+  const line = (color, w = 1, style = 0) => main.addLineSeries({ color, lineWidth: w, lineStyle: style, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null });
+  const candles = main.addCandlestickSeries({ upColor: css("--bull"), downColor: css("--bear"), wickUpColor: css("--bull"), wickDownColor: css("--bear"), borderVisible: false,
+    autoscaleInfoProvider: (orig) => planScale(orig()) });
   const zones = new ZonesPrimitive();
   candles.attachPrimitive(zones);
   const L = {
@@ -670,7 +676,6 @@ function buildCharts() {
   main.timeScale().subscribeVisibleLogicalRangeChange((r) => { if (!r || syncing) return; syncing = true; sub.timeScale().setVisibleLogicalRange(r); syncing = false; });
   sub.timeScale().subscribeVisibleLogicalRangeChange((r) => { if (!r || syncing) return; syncing = true; main.timeScale().setVisibleLogicalRange(r); syncing = false; });
   main.subscribeCrosshairMove((prm) => legend(prm));
-  new ResizeObserver(() => { main.applyOptions({ width: $("#chart").clientWidth }); sub.applyOptions({ width: $("#subchart").clientWidth }); }).observe($("#chart"));
   C = { main, sub, candles, zones, L, subS, priceLines: [], fitted: false };
 }
 function series(t, arr, breaks) {
@@ -761,12 +766,31 @@ function renderChart() {
   // sub pane
   C.subS.bull.setData(series(t, ch.bull)); C.subS.bear.setData(series(t, ch.bear)); C.subS.range.setData(series(t, ch.range));
   C.subS.tq.setData(series(t, ch.tq));
-  if (!C.fitted || C.fittedTf !== S.tf) {
-    const n = bars.length;
-    C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - 220), to: n + 12 });
-    C.fitted = true; C.fittedTf = S.tf;
-  }
+  C.nBars = bars.length;
+  if (!C.fitted || C.fittedTf !== S.tf) { fitView(); C.fitted = true; C.fittedTf = S.tf; }
   legend(null);
+}
+// Keep the plan's SL and TP1 on screen when they are near price; a level further than a quarter of
+// the candles' own range away is left off so it cannot squeeze the candles again (its axis label
+// and the decision card still give the price).
+function planScale(info) {
+  const D = S.data;
+  if (!info || !D || !S.toggles.plan) return info;
+  const r = info.priceRange, span = r.maxValue - r.minValue, p = D.dashboard && D.dashboard.plan;
+  if (!p || !(span > 0)) return info;
+  let lo = r.minValue, hi = r.maxValue;
+  for (const v of [p.sl, p.tp1]) if (isNum(v) && v > r.minValue - span / 4 && v < r.maxValue + span / 4) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  return { ...info, priceRange: { minValue: lo, maxValue: hi } };
+}
+// Fit to screen: about 6 px per bar (TradingView's default spacing), so a phone shows ~50 bars and
+// a wide screen up to 200, with room on the right for the volatility cone; price auto-scale back on.
+function fitView() {
+  if (!C || !C.nBars) return;
+  const D = S.data, n = C.nBars, w = C.main.timeScale().width() || $("#chart").clientWidth;
+  const show = Math.max(40, Math.min(200, Math.round(w / 6)));
+  const pad = S.toggles.cone && D && D.cone && D.cone.upper ? D.cone.upper.length + 2 : 4;
+  C.main.priceScale("right").applyOptions({ autoScale: true });
+  C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show), to: n - 1 + pad });
 }
 function legend(prm) {
   const D = S.data; if (!D) return;

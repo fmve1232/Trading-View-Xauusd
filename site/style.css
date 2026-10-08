@@ -117,9 +117,14 @@ main { padding: 12px 16px 40px; max-width: 1680px; margin: 0 auto; }
 .chart-card .toolbar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px; border-bottom: 1px solid var(--line); }
 .toggle { font: 600 11px var(--sans); color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); border-radius: 7px; padding: 4px 8px; cursor: pointer; user-select: none; }
 .toggle.on { color: var(--text); border-color: var(--line-2); background: var(--card-2); box-shadow: inset 0 -2px 0 var(--accent); }
-#chart { height: 560px; position: relative; }
+/* The price pane fills the screen below the toolbar, leaving room for the sub pane (vh fallback, then dvh). */
+#chart { height: clamp(380px, calc(100vh - 240px), 820px); height: clamp(380px, calc(100dvh - 240px), 820px); position: relative; }
 #subchart { height: 130px; border-top: 1px solid var(--line); }
-@media (max-width: 700px) { #chart { height: 60vh; min-height: 340px; } #subchart { height: 110px; } }
+.chart-card .toolbar .fit { margin-left: auto; }
+@media (max-width: 700px) {
+  #chart { height: clamp(320px, calc(100vh - 300px), 600px); height: clamp(320px, calc(100svh - 300px), 600px); }
+  #subchart { height: 110px; }
+}
 .legend { position: absolute; top: 6px; left: 10px; z-index: 5; font: 11px var(--mono); color: var(--muted); pointer-events: none; display: flex; flex-wrap: wrap; gap: 4px 12px; max-width: 90%; }
 .legend b { color: var(--text); font-weight: 600; }
 
