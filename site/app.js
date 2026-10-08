@@ -58,14 +58,14 @@ applyTheme(store.get("theme", null));
 $("#theme").onclick = () => {
   const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   const nx = cur === "light" ? "dark" : "light";
-  store.set("theme", nx); applyTheme(nx); rebuildCharts();
+  store.set("theme", nx); applyTheme(nx); rebuildCharts(); syncTV();
 };
 $("#mt5").value = S.mt5;
 $("#mt5").oninput = (e) => { S.mt5 = Number(e.target.value) || 0; store.set("mt5", S.mt5); renderSide(); };
 $("#tz").value = S.tz;
 $("#tz").onchange = (e) => { S.tz = e.target.value; store.set("tz", S.tz); rebuildCharts(); renderAll(); };
 $("#tf-tabs").innerHTML = TFS.map((t) => `<button data-tf="${t}">${t}</button>`).join("");
-$("#tf-tabs").onclick = (e) => { const t = e.target.dataset.tf; if (t) { S.tf = t; store.set("tf", t); load(); } };
+$("#tf-tabs").onclick = (e) => { const t = e.target.dataset.tf; if (t) { S.tf = t; store.set("tf", t); load(); if (typeof syncTV === "function") syncTV(); } };
 $("#tabs").onclick = (e) => { const t = e.target.dataset.tab; if (t) showTab(t); };
 function showTab(t) {
   S.tab = t; store.set("tab", t);
@@ -223,6 +223,53 @@ function applyLiveBar(lastTime) {
   if (isNum(lastTime) && b.time < lastTime) return;           // an engine update has moved past it
   try { C.candles.update({ ...b, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") }); } catch (e) { /* older than the series end */ }
 }
+
+/* ---------- TradingView's free Advanced Chart widget (DISPLAY ONLY; loaded on demand) ----------
+   A visual cross-check: TradingView's own OANDA:XAUUSD chart. Nothing reads from it, it never
+   feeds the engine, and its third-party script is fetched only after the viewer presses Show. */
+const TV_SRC = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
+const TV_INTERVAL = { "5m": "5", "15m": "15", "1h": "60", "4h": "240" };
+const tvTheme = () => document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+function tvConfig() {
+  let tz = "Etc/UTC";
+  try { tz = S.tz === "local" ? Intl.DateTimeFormat().resolvedOptions().timeZone || "Etc/UTC" : S.tz; } catch (e) { /* keep UTC */ }
+  return { autosize: true, symbol: "OANDA:XAUUSD", interval: TV_INTERVAL[S.tf] || "15", timezone: tz, theme: tvTheme(), style: "1",
+           locale: "en", allow_symbol_change: false, calendar: false, hide_side_toolbar: true, support_host: "https://www.tradingview.com" };
+}
+function loadTV() {
+  const w = $("#tv-wrap"); if (!w) return;
+  const cfg = tvConfig();
+  w.innerHTML = "";
+  const box = document.createElement("div");
+  box.className = "tradingview-widget-container tv-box";
+  const inner = document.createElement("div");
+  inner.className = "tradingview-widget-container__widget";
+  inner.style.height = "calc(100% - 24px)";
+  const cp = document.createElement("div");
+  cp.className = "tradingview-widget-copyright dim";            // attribution required by TradingView's widget terms
+  cp.innerHTML = '<a href="https://www.tradingview.com/symbols/XAUUSD/?exchange=OANDA" rel="noopener nofollow" target="_blank">XAUUSD chart by TradingView</a>';
+  const sc = document.createElement("script");
+  sc.type = "text/javascript"; sc.async = true; sc.src = TV_SRC;
+  sc.text = JSON.stringify(cfg);                                  // the widget reads its config from this script's text
+  sc.onerror = () => { w.innerHTML = '<p class="warn">The TradingView widget could not load (blocked by the browser or network, or TradingView is unreachable). Nothing else on this page depends on it.</p>'; };
+  box.append(inner, cp, sc);
+  w.append(box);
+  S.tvShown = { tf: S.tf, tz: S.tz, theme: cfg.theme };
+}
+function setTV(on) {
+  S.tvOn = on; store.set("tvOn", on);
+  const b = $("#tv-toggle"); if (b) b.textContent = on ? "Hide" : "Show";
+  if (on) loadTV();
+  else { S.tvShown = null; $("#tv-wrap").innerHTML = '<p class="muted">Hidden. Press <b>Show</b> to load TradingView\'s live OANDA:XAUUSD chart (third-party script).</p>'; }
+}
+// reload only when the timeframe, time zone or theme it was built for has changed
+function syncTV() {
+  if (!S.tvOn) return;
+  const t = S.tvShown;
+  if (!t || t.tf !== S.tf || t.tz !== S.tz || t.theme !== tvTheme()) loadTV();
+}
+$("#tv-toggle").onclick = () => setTV(!S.tvOn);
+if (store.get("tvOn", false)) setTV(true);
 
 /* ---------- reference prices (DISPLAY AND VALIDATION ONLY; quantum/reference.py) ---------- */
 // Each provider is shown as it reported itself: raw values, its own timestamp precision and
@@ -938,7 +985,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderStrip); safe(renderH2); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderH2); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(syncTV); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
