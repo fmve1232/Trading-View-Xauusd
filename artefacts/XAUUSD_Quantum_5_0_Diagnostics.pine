@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v41   (F-A46 VP every bar)           ║
+// ║  BUILD STAMP — this file last CHANGED in v43   (F-A48 plan on final scores)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -2662,7 +2662,7 @@ f_tradePlan() =>
     // (regSLMult) is the fallback, so ATR is secondary as specified.
     // TPs: nearest liquidity destinations on the profit side (min 0.8R / 0.5 ATR away,
     // deduped within 0.3 ATR); R-multiple fallbacks (1R/2R/3R) only when the map is empty.
-    bool tpIsLong = shouldBuy ? true : shouldSell ? false : bullBiasScore >= bearBiasScore
+    bool tpIsLong = shouldBuy ? true : shouldSell ? false : bullScore >= bearScore
     float tpEntry = close
     float _slAtrBase = adaptiveATR * regSLMult
     float _slLoB = adaptiveATR * 0.6
@@ -2866,7 +2866,7 @@ f_tradePlan() =>
     // the horizon mismatch itself (F-035) remains OPEN as a design decision.
     string planReason = "SL:" + tpSLBasis + " TP:" + tp1Basis + "/" + tp2Basis + "/" + tp3Basis + " [" + mktRegime + "]" + (not na(pTP1) ? " ~touch(<=" + str.tostring(OUTCOME_N) + "b):" + str.tostring(int(pTP1)) + "/" + str.tostring(int(pTP2)) + "/" + str.tostring(int(pTP3)) + "% ~SLtouch" + str.tostring(int(pSLhit)) + "% EVrace" + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##") + "R n" + str.tostring(int(nz(array.get(gRaceN, 0))))) : "")
     [tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason]
-[tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason] = f_tradePlan()
+// v43: the f_tradePlan() call moved below the final scores (after rangeScore := nr2_), see there.
 
 // STATISTICAL ENGINES — Evidence-based historical outcome analysis
 
@@ -4524,6 +4524,12 @@ rangeScore := fRngScore
 bullScore := nb2_
 bearScore := nbe2_
 rangeScore := nr2_
+// v43 ALIGNMENT (F-A48): the trade plan is built HERE, on the FINAL scores. It was built ~1,700 lines
+// earlier and, on WAIT bars, took its side from the structure composite (bullBiasScore vs bearBiasScore)
+// while BIAS, the WAIT reason and TQ's label read the final scores, so the panel could show a LONG plan
+// under BEAR-ISH with S 55% > L 31% (operator's 5M chart, 2026-10-09). Nothing read the plan before this
+// point, so the move reorders no reader; the plan now also uses this bar's refreshed statistics.
+[tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason] = f_tradePlan()
 // R5.3-M3: calibration now tracks the FINAL displayed bullScore. The record written
 // earlier this bar stored the pre-blend evidence score, so the Cal grade / Brier /
 // mP= sigmoid were validating a variable the user never sees. The slot is overwritten
@@ -5603,7 +5609,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v41 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v43 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, _cT)
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)

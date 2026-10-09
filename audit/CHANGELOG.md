@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v42
+# Build changelog — v1 → … → v43
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1505,3 +1505,25 @@ From the operator's 2026-10-08 screenshots (TradingView v41 and the website).
   - the TradingView-H2 SELL of 10-06 18:15 (SL 4173.92) was stopped on that feed at 18:45 (high 4176.59) before the drop.
 - **Not changed:** the website, its freeze keys and the default branch.
 - All checkers pass. Compile NOT RUN.
+
+# Build v42 → v43 — plan, TQ and bias aligned (F-A48)
+
+Operator's 5M Master screenshot (2026-10-09), "all values should be well calibrated and aligned to each other".
+
+- **Contradiction on screen:** DECISION read `WAIT TQ47D · BIAS BEAR-ISH · TREND 20/60` and SIGNAL read L 31 / S 55 / R 13,
+  yet the plan line read **LONG** (entry 4183.66, SL 4180.29, TP1 4195.41, EV −0.01R).
+- **Cause:**
+  - `f_tradePlan()` ran ~1,700 lines before the final scores.
+  - On a WAIT bar it chose its side from `bullBiasScore >= bearBiasScore`, a structure / liquidity / macro / HTF / momentum
+    / session composite; BIAS uses the final `bullScore` / `bearScore`.
+  - Trade quality grades the plan's side, so TQ47D was the quality of a long.
+- **Fix:**
+  - The call is moved to just after the final normalisation (`rangeScore := nr2_`), in the Master and the three twins
+    identically. Nothing read the plan before that point, so no reader moves.
+  - The WAIT-bar side is `bullScore >= bearScore`, the same rule as BIAS and the WAIT reason. On BUY/SELL bars nothing
+    changes: the plan already followed the signal.
+  - Side effect: the plan uses this bar's refreshed race probabilities rather than the previous bar's. `sequence.py`
+    previously listed `gHitProb` / `gRaceN` / `gRaceProb` as read before their same-bar write; those three entries are gone,
+    and no new ones appear.
+- **Tokens:** unchanged (Master 38,998, Diagnostics 39,609 lexical); lines moved, none added except comments.
+- All checkers pass; hunk counts 5 / 4. Display only under A7. Compile NOT RUN.

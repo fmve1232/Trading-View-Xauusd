@@ -79,7 +79,7 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A47. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A48. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |
