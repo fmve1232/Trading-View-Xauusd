@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v43   (F-A48 plan on final scores)  ║
+// ║  BUILD STAMP — this file last CHANGED in v44   (F-A49 WR side)               ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -4953,7 +4953,8 @@ if showStatsEngine and oMatch >= 30
     // F-A28 (v20): a bearish bias showed 1 - P(bull), i.e. "bear OR timeout" -- 80% on a chart
     // whose bear rate is ~20%. The bear direction now shows its own rate, oBear (the engine's
     // weighted bear-resolution share), so both directions are win rates on the same basis.
-    float _wrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _wrR
+    // v44 (F-A49): the side follows the FINAL scores, as the plan does since v43 (was the bias composite)
+    float _wrDir = bearScore > bullScore ? oBear / 100.0 : _wrR
     float _effN = math.max(oMatch / math.max(OUTCOME_N, 1), 1.0)
     float _wrCI95 = oMatch >= 30 ? 1.96 * math.sqrt(_wrDir * (1.0 - _wrDir) / _effN) * 100.0 : 0.0
     wrCIStr := _wrCI95 > 1.0 ? "+/-" + str.tostring(int(_wrCI95 + 0.5)) + "%" : ""

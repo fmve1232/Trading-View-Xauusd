@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v43   (F-A48 plan on final scores)  ║
+// ║  BUILD STAMP — this file last CHANGED in v44   (F-A49 WR side, PF label)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5028,7 +5028,8 @@ if showStatsEngine and oMatch >= 30
     // F-A28 (v20): a bearish bias showed 1 - P(bull), i.e. "bear OR timeout" -- 80% on a chart
     // whose bear rate is ~20%. The bear direction now shows its own rate, oBear (the engine's
     // weighted bear-resolution share), so both directions are win rates on the same basis.
-    float _wrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _wrR
+    // v44 (F-A49): the side follows the FINAL scores, as the plan does since v43 (was the bias composite)
+    float _wrDir = bearScore > bullScore ? oBear / 100.0 : _wrR
     wrStr := str.tostring(int(_wrDir * 100.0)) + "%"
 // Reliability label — sample-size bins for historical analog confidence
 // Feature contribution breakdown: directional accuracy lift per factor
@@ -5537,7 +5538,8 @@ f_dashRender() =>
     // PRESENTATION ONLY -- the score, its weights and every gate are untouched.
     string _confLabel = (_statsWarm ? "CONF " : "~CONF ") + str.tostring(na(confidenceScore) ? 0 : int(confidenceScore)) + "/100 " + (confLabel == "MEDIUM" ? "MED" : confLabel == "HIGH" ? "HI" : confLabel == "LOW" ? "LO" : confLabel)
     string _evDisp = "EV " + evStr
-    string _pfDisp = "PF " + pfStr
+    // v44 (F-A49): resolved analogs only (wins / losses; timeouts are in EV, not in this ratio)
+    string _pfDisp = "PFres " + pfStr
     float _crVal = na(avgCorrHealth) ? 50 : avgCorrHealth
     // Footer data
     int _agreeCount = shouldBuy ? (htf5mBull ? 1 : 0) + (htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0) + (htf1dBull ? 1 : 0) : shouldSell ? (htf5mBear ? 1 : 0) + (htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0) + (htf1dBear ? 1 : 0) : 0

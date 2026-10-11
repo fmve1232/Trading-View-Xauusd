@@ -18,16 +18,16 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5814 | 375632 | `9369b3a9b841ed0922751b69c2641e6d60d40fde89bc3bc5162b7e2d7e61141a` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5403 | 340747 | `190a677ae2f99f5e332338d724500319074eb4b7413cb72741661d863a9ce2c8` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5403 | 340812 | `efc558126df5e1babf857e3cce29e54b2d29da3ce2523852e69731c794911a53` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5414 | 341731 | `26f0c7b507bcf1ccc74a67b5a507d18649c21e9804818235307e85218e716b87` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5816 | 375831 | `b52c6bf0a424a02bf9b02239ddf59399341ec7af6f605aede0898d6750b14f96` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5404 | 340846 | `11eb0e3883747735416c7460ae70efcca21aaf513ecf6b26cbbeef9755d85278` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5404 | 340911 | `2914ef5121293bc22666122f2469b1d4b3113f615d547152f284f16c0bbf82a2` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5415 | 341830 | `09391d871b2cfa15b32fe90c78a442ef28a428b2ad30ddd29fc553af7a28d6ae` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 367 | 25988 | `e8cfed1c030703c664128162bf5d5aee02155b89e48613cb2cec6179da665082` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1203 | 77982 | `7a7db4a18aee5911852cc2fa62598474b43be8c1ad0d17ab16953b4ebfe2e524` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5645 | 358525 | `5773695bb94d55d09d65705590dda434f8e68af0db70e0d726e0fd4ff11080a5` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5646 | 358634 | `2bfd1666d711bba848609ff63d4ad61a0ea8817889a3ec874c2d78f01d29aed9` |
 
-> **BUILD v43 — this prompt pins the current build.** The originally audited build
+> **BUILD v44 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -89,6 +89,7 @@ scope, and no other build of these scripts is in scope.
 > **v42: A7** — the website is the only system of record (operator); this branch's TradingView files are display only.
 > F-A47 (exits one bar late) fixed in all four arms.
 > **v43: F-A48** — the trade plan is built on the final scores, so its side, EV and TQ agree with BIAS on WAIT bars.
+> **v44: F-A49** — WR side by the final scores; PF labelled resolved-only. `expectancy_check.py` executes the EV line and scorecard.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

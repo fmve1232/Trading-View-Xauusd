@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v43
+# Build changelog — v1 → … → v44
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1527,3 +1527,27 @@ Operator's 5M Master screenshot (2026-10-09), "all values should be well calibra
     and no new ones appear.
 - **Tokens:** unchanged (Master 38,998, Diagnostics 39,609 lexical); lines moved, none added except comments.
 - All checkers pass; hunk counts 5 / 4. Display only under A7. Compile NOT RUN.
+
+# Build v43 → v44 — expectancy review against "Trading is Math" (F-A49)
+
+Operator shared chapter 1 of S. & H. Burns, *Trading is Math* (expectancy = W x AvgWin - L x AvgLoss; an edge only
+where expectancy > 0; recompute every 25-50 trades).
+
+- **New tool `audit/tools/expectancy_check.py`** (executes the Pine text):
+  - the book's worked examples: 171.40, -17.60, 166, 210 and +26.5%;
+  - the engine's EV line: equal to the book formula with no timeouts, and to W*AvgW - L*AvgL + T*AvgT with timeouts
+    (2000 cases each, |diff| 0);
+  - the scorecard block on 300 random histories (split exits, open position, start filter): positions, mean $ per
+    position (= the book's expectancy), SD, PF, 95% t-interval and verdict, 0 mismatches;
+  - the t quantile against an exact Student t: -0.004 at df 9, 0.0000 at df 49 (the N = 50 decision);
+  - the 95% interval of each book example at n = 50 / 100.
+- **What the book's rule needs, quantitatively.** "Expectancy > 0" is a point estimate. At n = 50:
+  - the 42% / 850 / 320 strategy is +171 [+7, +336];
+  - the 56% / 650 / 450 strategy is +166 [+11, +321];
+  - the 68% / 280 / 650 strategy is -17.6 [-141, +106], indistinguishable from zero.
+  That is why the scorecard requires the 95% interval's low end > 0 (and PF >= 1.2) at N >= 50, not just a positive mean.
+- **F-A49 (display):**
+  - the panel WR's direction now follows the final scores, like the plan since v43 (Master, twins, Diagnostics CI row);
+  - the panel PF is relabelled `PFres`: wins / losses over resolved analogs only. The EV already includes timeouts.
+- **Unchanged:** the regime call and the decision log keep the 130-point bias composite; they are labelled as such.
+- Tokens unchanged. All checkers pass; hunk counts 5 / 4. Display only under A7. Compile NOT RUN.
