@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v49
+# Build changelog — v1 → … → v50
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1672,3 +1672,20 @@ Operator: "add alert when CHoCH, MSS or BOS and liquidity sweep occurs".
 - **Unchanged:** the named "Bull BOS" / "Bear BOS" alert conditions (filtered BOS that can trigger entries); the
   DECISION rule.
 - All checks pass (value map 22 values). Compile NOT RUN.
+
+# Build v49 → v50 — macro label (F-A53)
+
+Operator: "the macro was bull, now it shows bearish -- why?"
+
+- **What the verdict is.** `macroStrengthScore` (-100..+100) on completed 1H bars:
+  - DXY and US yields / TIPS falling are bullish for gold; EURUSD, silver and SPX rising are bullish;
+  - each vote is weighted by its |correlation| with gold, normalised to 100;
+  - plus DXY momentum (+/-10) and rate pressure (+/-10).
+- **Labels:** >= 40 BULL, 15..39 bull-ish, -14..14 MIX, -39..-15 bear-ish, <= -40 BEAR.
+  - 10-05 "BULL+" was the weak bullish band; 10-08 "BEAR" was a strongly bearish reading.
+  - It is a live reading and changes as those markets move. The website's stored data showed the dollar up on 10-05
+    and down on 10-06 (rough proxy).
+  - That data ends on 10-06, so the 10-08 reading could not be re-derived here.
+- **F-A53:** `BULL+` / `BEAR+` printed for the WEAKER readings; they now read `bull-ish` / `bear-ish`, followed by the
+  score, e.g. `Macro BEAR -52`. Master 39,060 lexical (2.01% under).
+- VALUE_TRACEABILITY gains the macro row (23 values). All checks pass. Compile NOT RUN.

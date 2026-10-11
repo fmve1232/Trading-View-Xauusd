@@ -18,7 +18,7 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5826 | 376636 | `e82e20b9edaca5679f16059e4d3eb508134ce937be54022b32219a694055b706` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5828 | 376909 | `f514937c83ecfa5116a767b1ac2805a5040052348a54108ea1beca6cd6730c78` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5411 | 341690 | `6e8bfe6a8c64c657c3d17295c939e30e570f7b06f6d07bd18f0ce68e0c745dd3` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5411 | 341755 | `b6792d32a9a3b270ada870f81cd832a4bbba673d768b80273e777c5ce01733e0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5422 | 342674 | `d0cb76563ca221428f49908f90a619bc99db0554f8fb2e07a2b7b8add23e182a` |
@@ -27,7 +27,7 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1203 | 77865 | `422b55084e6c6f537d432d04946938a93ba676f985124619ee3e16b0bd821138` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5646 | 358634 | `2bfd1666d711bba848609ff63d4ad61a0ea8817889a3ec874c2d78f01d29aed9` |
 
-> **BUILD v49 — this prompt pins the current build.** The originally audited build
+> **BUILD v50 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -94,6 +94,7 @@ scope, and no other build of these scripts is in scope.
 > **v46: F-A52** — Master risk $ and lots now include the regime size haircut shown in Risk %; '<min' decoded.
 > **v47:** `regime_check.py`, `decision_check.py`, `value_map.py` / `VALUE_TRACEABILITY.md` (tools only). **v48:** stale "(registered) / NOT 15M" labels replaced by "display only" (A7).
 > **v49:** Master alert on the first bar of BOS / CHoCH / MSS / liquidity sweep (engine flags), H2 SETUP folded into it.
+> **v50: F-A53** — MACRO cell reads bull-ish / bear-ish (was BULL+ / BEAR+ for the weaker readings) with its score.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

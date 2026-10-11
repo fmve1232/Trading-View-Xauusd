@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v49   (BOS/CHoCH/MSS/sweep alerts)  ║
+// ║  BUILD STAMP — this file last CHANGED in v50   (macro label + score)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5626,7 +5626,9 @@ f_dashRender() =>
         string _liqReachDisp = (liqDestLabel != "—" ? "TGT " + liqDestLabel + " R" + str.tostring(liqDestScore) + _pdhReachSuffix + "\nRCH " + str.tostring(int(na(liqReachScore) ? 50 : liqReachScore)) + "% " + liqDestConfidence : _liqTargetLbl) + _fvgZone
         tc(4, 2, _liqReachDisp, _liqTargetCol, _seSize, _w4)
         tc(5, 2, "E200 " + (not na(ema200) ? str.tostring(ema200, "#.##") : "—") + " " + _updTime, cBloomNeut, _seSize, _w5)
-        string _macroVerdict = "Macro " + (macroIntelLabel == "BULL" ? "BULL" : macroIntelLabel == "BEAR" ? "BEAR" : macroIntelLabel == "BULL-ISH" ? "BULL+" : macroIntelLabel == "BEAR-ISH" ? "BEAR+" : macroIntelLabel == "N/A" ? "—" : "MIX")
+        // v50 (F-A53): '+' meant the WEAKER reading (score 15..39) but read as stronger; now bull-ish / bear-ish, with the
+        // score (-100..+100: >= 40 BULL, 15..39 bull-ish, -14..14 MIX, -39..-15 bear-ish, <= -40 BEAR).
+        string _macroVerdict = "Macro " + (macroIntelLabel == "BULL" ? "BULL" : macroIntelLabel == "BEAR" ? "BEAR" : macroIntelLabel == "BULL-ISH" ? "bull-ish" : macroIntelLabel == "BEAR-ISH" ? "bear-ish" : macroIntelLabel == "N/A" ? "—" : "MIX") + " " + str.tostring(macroIntelScore)
         string _dowStr = showDowTracker ? _dowBiasStr() : ""
         string _macroRow2 = _macroVerdict + (_dowStr != "" ? "\n" + _dowStr : "")
         tcb(6, 2, _macroLine2 + " CR" + str.tostring(int(_crVal)) + "%\n" + _macroRow2, _crCol, color.new(_macro2Col, 88), _seSize, _w6)
