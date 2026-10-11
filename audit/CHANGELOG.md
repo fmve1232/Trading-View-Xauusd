@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v47
+# Build changelog — v1 → … → v48
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1635,3 +1635,21 @@ traceability.
   -> gates -> plan -> veto -> decision -> MT5 order values. Each row gives the variable, its current Master line (found
   by anchor, not typed), the formula and the executed check that verifies it. `--check` fails if code moved.
 - No artefact changed: the v46 files and hashes stand.
+
+# Build v47 → v48 — review and validate (labels only)
+
+- **Full suite on v47: all pass.**
+  - precheck, undeclared, order, deadcode, pinelimits;
+  - diag_parity, h2_parity, h2_trace;
+  - formula_trace, expectancy_check, regime_check, decision_check, race_model_check, formula_check;
+  - value_map --check.
+  - The sequence audit is unchanged (61 entries, as at v43). Hashes and AUDIT_PROMPT pins are consistent.
+- **Stale labels removed.** They implied the 15M chart counts, which has not been true since A7:
+  - the scorecards and the Visuals H2 card said "(registered)" on 15M and an orange "NOT 15M: does not count" elsewhere;
+  - they now read "display only" in white, and the `_fwtfOk` flag (display helper) is gone;
+  - the Visuals H2 card header reads v48.
+- **Still open (unchanged):**
+  - F-A43 (EdgeCases line citations, comments only);
+  - Diagnostics prints "NaN" for a feature edge with fewer than 10 resolved analogs (no token room in Diagnostics);
+  - the Master runtime "Heavy script" notice.
+- Compile NOT RUN.
