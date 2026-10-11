@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v44   (F-A49 WR side)               ║
+// ║  BUILD STAMP — this file last CHANGED in v45   (F-A50 win rate vs break-even)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5343,7 +5343,7 @@ fwdStart = input.time(1791331200000, "Card start (display only: the record is th
 fwdShow = input.bool(true, "Show forward-test scorecard", group="FORWARD TEST")
 fwdPos = input.string("Bottom Right", "Scorecard position", options=["Bottom Right", "Bottom Left", "Top Right", "Top Left"], group="FORWARD TEST", tooltip="With several arms visible on one chart, give each its own corner.")
 var int fwdBar0 = time
-var table fwdTbl = table.new(fwdPos == "Bottom Left" ? position.bottom_left : fwdPos == "Top Right" ? position.top_right : fwdPos == "Top Left" ? position.top_left : position.bottom_right, 2, 9, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+var table fwdTbl = table.new(fwdPos == "Bottom Left" ? position.bottom_left : fwdPos == "Top Right" ? position.top_right : fwdPos == "Top Left" ? position.top_left : position.bottom_right, 2, 10, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 _fwRow(int _r, string _k, string _fwv, color _c) =>
     table.cell(fwdTbl, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=size.small, text_halign=text.align_left)
     table.cell(fwdTbl, 1, _r, _fwv, text_color=_c, text_size=size.small, text_halign=text.align_left)
@@ -5389,6 +5389,13 @@ if fwdShow and barstate.islast
     float _fwpf = _fwgl > 0 ? _fwgw / _fwgl : na
     // no losing position at all: PF is infinite, which passes the >= 1.2 rule (it is na above)
     bool _fwpfOk = _fwgl > 0 ? _fwpf >= 1.2 : _fwgw > 0
+    // v45 (F-A50): per POSITION win rate against the break-even win rate the payoff requires,
+    // BE = avg loss / (avg win + avg loss) ('Trading is Math' ch. 1: E > 0 <=> WR > BE). TradingView's
+    // 'Profitable trades' counts each partial exit as a trade, and the break-even remainder after TP1
+    // exits at entry minus commission, i.e. as a small 'loss' inside a winning position.
+    float _fwaw = _fww > 0 ? _fwgw / _fww : na
+    float _fwal = _fwn - _fww > 0 ? _fwgl / (_fwn - _fww) : na
+    float _fwbe = not na(_fwaw) and not na(_fwal) and _fwaw + _fwal > 0 ? _fwal / (_fwaw + _fwal) * 100.0 : na
     string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpfOk ? "EDGE SHOWN" : "NOT SHOWN"
     bool _fwtfOk = timeframe.in_seconds() == 900
     color _fwcT = color.new(#E6EDF3, 0)
@@ -5401,4 +5408,5 @@ if fwdShow and barstate.islast
     _fwRow(5, "Net $ (1 oz, pinned costs)", str.tostring(_fws, "#.##"), _fwcT)
     _fwRow(6, "VERDICT (pre-registered)", _fwv, _fwv == "EDGE SHOWN" ? color.lime : _fwv == "NOT SHOWN" ? color.orange : _fwcT)
     _fwRow(7, "Coverage", fwdBar0 > fwdStart ? "loaded history starts " + str.format_time(fwdBar0, "yyyy-MM-dd", "UTC") + " AFTER the test start: incomplete, use the weekly log" : _fwn == 0 ? "no closed position since the start yet" : "first counted entry " + str.format_time(_fwfirst, "yyyy-MM-dd HH:mm", "UTC"), fwdBar0 > fwdStart ? color.orange : _fwcT)
+    _fwRow(9, "Win rate vs break-even", na(_fwbe) ? "needs a win and a loss" : str.tostring(_fww * 100.0 / _fwn, "#") + "% vs " + str.tostring(_fwbe, "#") + "% needed  (avg win " + str.tostring(_fwaw, "#.##") + " / avg loss " + str.tostring(_fwal, "#.##") + ")", na(_fwbe) ? _fwcT : _fww * 100.0 / _fwn > _fwbe ? color.lime : color.orange)
     _fwRow(8, "Unit", "positions (partial exits summed); open positions excluded", color.new(#8FA3B8, 0))

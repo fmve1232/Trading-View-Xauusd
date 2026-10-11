@@ -120,6 +120,11 @@ for case in range(300):
     def eq(u, v):
         return (P.isna(u) and v != v) or (not P.isna(u) and v == v and abs(u - v) <= 1e-6 * max(1.0, abs(v)))
     ok = int(env["_fwn"]) == n and eq(env["_fwm"], m) and eq(env["_fwsd"], sd) and eq(env["_fwpf"], pf)
+    nw = sum(1 for v in x if v > 0)
+    aw = gw / nw if nw else float("nan")
+    al = gl / (n - nw) if n - nw else float("nan")
+    be = al / (aw + al) * 100 if aw == aw and al == al and aw + al > 0 else float("nan")
+    ok = ok and eq(env["_fwaw"], aw) and eq(env["_fwal"], al) and eq(env["_fwbe"], be)
     if n >= 10:
         tq = TQ.setdefault(n - 1, t_q975(n - 1))
         lo = m - tq * sd / math.sqrt(n)
@@ -128,7 +133,7 @@ for case in range(300):
         want = "COLLECTING " + str(n) + "/50" if n < 50 else ("EDGE SHOWN" if lo > 0 and pfok else "NOT SHOWN")
         ok = ok and (env["_fwv"] == want or abs(lo) < 0.005 * sd)
     bad += 0 if ok else 1
-check(bad == 0, f"scorecard block (positions, mean = expectancy, SD, PF, 95% t-interval, verdict): 300 random histories, mismatches {bad}")
+check(bad == 0, f"scorecard block (positions, mean = expectancy, SD, PF, avg win/loss, break-even WR, 95% t-interval, verdict): 300 random histories, mismatches {bad}")
 
 # 4. Fisher t quantile vs exact
 fl = next(l.strip() for l in src if l.strip().startswith("float _fwt = "))

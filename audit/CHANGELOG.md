@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v44
+# Build changelog — v1 → … → v45
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1551,3 +1551,39 @@ where expectancy > 0; recompute every 25-50 trades).
   - the panel PF is relabelled `PFres`: wins / losses over resolved analogs only. The EV already includes timeouts.
 - **Unchanged:** the regime call and the decision log keep the 130-point bias composite; they are labelled as such.
 - Tokens unchanged. All checkers pass; hunk counts 5 / 4. Display only under A7. Compile NOT RUN.
+
+# Build v44 → v45 — "why is our win ratio too low" (F-A50, F-A51)
+
+Operator's 4H Strategy Tester runs, Jan 2023 - Oct 2026, captured after "updated":
+
+| Arm | TV trades | Wins | PF | Net $ | Avg win | Avg loss | Break-even WR |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Treatment | 80 | 41.2% | 1.285 | 179.06 | 24.46 | 13.37 | 35.3% |
+| Challenger | 86 | 41.9% | 1.395 | 283.07 | 27.77 | 14.33 | 34.0% |
+| H2 | 48 | 33.3% | 1.243 | 67.08 | 21.45 | 8.63 | 28.7% |
+| Control | 0 | — | — | — | — | — | — |
+
+(Avg win / loss derived from PF, net and the win count: GL = net/(PF-1), GP = PF*GL.)
+
+- **Why the win rate is low, and why that is not itself the problem:**
+  - The plans aim 1.5-5R away against a 1R structural stop. With no edge at all, a 2R target is hit first 33% of the
+    time and a 3R target 25%.
+  - Each arm's win rate is ABOVE the break-even rate its payoff requires (41% vs 35%, 42% vs 34%, 33% vs 29%).
+  - TradingView's figure also counts each partial exit as a trade, and the post-TP1 break-even remainder as a small
+    loss.
+  - These are in-sample backtests, not evidence: the record is the website (A7), and Diagnostics flags IS 38% vs
+    ROLL 17% "!FIT" on 4H.
+- **The real limit:** the reliability buckets on 4H predict 24-59% and observe 17-24%. The score does not separate
+  winners, so "being more selective" cannot raise the win rate here (F-A34).
+- **F-A50 (display):** the scorecard gains a row "Win rate vs break-even" in all four arms, computed per POSITION:
+  - win rate;
+  - avg win / avg loss;
+  - BE = avgL / (avgW + avgL);
+  - green when above.
+  Set the card's start input back to 2023 to see it over the whole loaded history. Verified by `expectancy_check.py`.
+- **F-A51 (recorded):** at 4H and above only the 1D layer can vote, so Control's ">= 2 aligned HTF layers" gate can
+  never pass (0 trades) and Treatment's HTF filter removes nothing (funnel trend 4172 > +HTF 4172). Not changed:
+  display-only arms; the registered timeframe was 15M.
+- **Not done, on purpose:** moving targets closer, or adding filters, to raise the win rate. That would be tuning on
+  this history (AUDIT_PROMPT §9). A change of plan would be a new hypothesis, pre-registered on the website.
+- All checkers pass; hunk counts 5 / 4. Diagnostics unchanged. Compile NOT RUN.
