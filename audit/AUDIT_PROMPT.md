@@ -18,7 +18,7 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5816 | 375831 | `b52c6bf0a424a02bf9b02239ddf59399341ec7af6f605aede0898d6750b14f96` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5818 | 376064 | `019e3cb1aa61d47ee5dc2ad5e8950f7f3c51f05752b776229e1407f3e4158c5a` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5412 | 341800 | `44b3041397f9449c79481ee4e1259bc8ec2c70ad7e75e5d1b3bbb2b0b658ec5b` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5412 | 341865 | `9ae727a0eb342bbfbaaac32b04cf925eb040e4c48ee2bffcd481055f19fe3eda` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5423 | 342784 | `503f238d8bc3ba33a61bd7868931f341f16c80781c37ac39b1076f6f598d853b` |
@@ -27,7 +27,7 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1203 | 77982 | `7a7db4a18aee5911852cc2fa62598474b43be8c1ad0d17ab16953b4ebfe2e524` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5646 | 358634 | `2bfd1666d711bba848609ff63d4ad61a0ea8817889a3ec874c2d78f01d29aed9` |
 
-> **BUILD v45 — this prompt pins the current build.** The originally audited build
+> **BUILD v46 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -91,6 +91,7 @@ scope, and no other build of these scripts is in scope.
 > **v43: F-A48** — the trade plan is built on the final scores, so its side, EV and TQ agree with BIAS on WAIT bars.
 > **v44: F-A49** — WR side by the final scores; PF labelled resolved-only. `expectancy_check.py` executes the EV line and scorecard.
 > **v45: F-A50** — scorecard shows per-position win rate vs the break-even win rate; **F-A51** (HTF gates inert / impossible at 4H+) recorded.
+> **v46: F-A52** — Master risk $ and lots now include the regime size haircut shown in Risk %; '<min' decoded.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v45
+# Build changelog — v1 → … → v46
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1587,3 +1587,23 @@ Operator's 4H Strategy Tester runs, Jan 2023 - Oct 2026, captured after "updated
 - **Not done, on purpose:** moving targets closer, or adding filters, to raise the win rate. That would be tuning on
   this history (AUDIT_PROMPT §9). A change of plan would be a new hypothesis, pre-registered on the website.
 - All checkers pass; hunk counts 5 / 4. Diagnostics unchanged. Compile NOT RUN.
+
+# Build v45 → v46 — MT5 execution review (F-A52)
+
+Operator: every value is executed by hand on MT5; review all of them.
+
+- **MT5 prices: consistent.**
+  - The offset (`MT5 Price Offset`) is applied to entry / SL / TP1-3 in the plan, to the H2 SETUP line and alert, to
+    the risk-tracker alert and to the TARGET row.
+  - The BUY / SELL / DECISION alerts reuse the exact plan strings, so an alert and the screen cannot differ.
+  - Structure, liquidity and VWAP figures in the dashboard and in Visuals are TradingView prices: reference levels,
+    not order prices.
+- **Sizing: units checked.** 1 lot = 100 oz (`Value per Point per Lot` 100).
+  - lots = floor(risk $ / (SL distance x 100) to 0.01), clamped 0-100, with the below-minimum case flagged.
+  - Risk % = half-Kelly on the Wilson 95% lower win probability, capped at the `Risk %` input; 0% means no proven edge.
+- **F-A52 (fixed, Master only):**
+  - the regime haircut reached the Risk % text but not the $ and lots;
+  - "-1.00L" showed instead of "<min";
+  - the % was truncated and zero lots printed ".00L".
+  - Sizing lines executed on 3000 random cases: 0 mismatches; realised risk never above the intended risk.
+- Master 39,009 lexical (~98,108 compiled, 2.1% under). All checkers pass. Compile NOT RUN.

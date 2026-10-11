@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v44   (F-A49 WR side, PF label)     ║
+// ║  BUILD STAMP — this file last CHANGED in v46   (F-A52 risk $/lots match %)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5348,7 +5348,9 @@ f_dashData1() =>
     true
 f_dashData2() =>
     float _kellyPct = array.get(gDashF, 4)
-    float _riskUSD = accountSize * math.max(_kellyPct, 0.0) / 100.0
+    // v46 (F-A52): the regime size haircut (regSizeMult) is applied HERE, so the $ risk and the lots
+    // match the Risk % the dashboard shows (it applied the haircut to the % only).
+    float _riskUSD = accountSize * math.max(_kellyPct, 0.0) * regSizeMult / 100.0
     float _rawLots = tpDist > 0 and pointValue > 0 ? _riskUSD / (tpDist * pointValue) : 0.0
     // CHANGE ID: F-002 (frozen forensic audit). DISPLAY/ADVISORY PATH ONLY — the scorer
     // twins trade a fixed 1-unit qty and never read _lots, so no backtest number moves.
@@ -5577,7 +5579,7 @@ f_dashRender() =>
         tcb(6, 1, "Corr " + _dxyStr + " " + _yldStr + " " + tipsC, _dxyYldCol, color.new(_macroBg, 85), _prSize, _w6)
         float _costToTargetPct = tpDist > 0 and not na(_liveCostATR) ? _liveCostATR * adaptiveATR / tpDist * 100.0 : 0.0
         _kellyPct := _kellyPct * regSizeMult // R6.0: size guidance haircut in high-vol/abnormal regimes
-        string _riskPrimary = "RRg " + (not na(tpRR2) ? "1:" + str.tostring(tpRR2, "#.#") : "—") + " SL " + (not na(tpSL) and not na(tpEntry) ? str.tostring(math.abs(tpSL - tpEntry) / adaptiveATR, "#.#") + " ATR" : "—") + "\nRisk " + str.tostring(int(_kellyPct)) + "% $" + str.tostring(int(_riskUSD)) + " " + str.tostring(_lots, "#.00") + "L Cst " + str.tostring(_costToTargetPct, "#.#") + "%"
+        string _riskPrimary = "RRg " + (not na(tpRR2) ? "1:" + str.tostring(tpRR2, "#.#") : "—") + " SL " + (not na(tpSL) and not na(tpEntry) ? str.tostring(math.abs(tpSL - tpEntry) / adaptiveATR, "#.#") + " ATR" : "—") + "\nRisk " + str.tostring(_kellyPct, "0.0#") + "% $" + str.tostring(int(_riskUSD)) + " " + (_lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L") + " Cst " + str.tostring(_costToTargetPct, "#.#") + "%"
         tc(7, 1, _riskPrimary, _volCol, _prSize, _w7) // R5.1: tinted by volatility percentile (wires _volCol)
         // RED-2C-FIX: _dirLabel here is still the LIVE per-tick decision (unchanged,
         // via gDashS[6]). Template selection now branches on _confDirLabel (global,
@@ -5632,7 +5634,7 @@ f_dashRender() =>
         // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement
         // that the trade cannot be placed at this account size; "0.00L" read as a valid
         // instruction to trade nothing, which is a different and misleading claim.
-        string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "#.00") + "L"
+        string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L"
         string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + str.tostring(int(_riskUSD)) + " " + _lotStr : ""
         string _decFoot = _rrStr + _riskDisp + " " + decisionLog + " " + _agreePct
         tc(8, 2, _decFoot + "\n" + h2Line, C_TEXT, _seSize, _w8)
@@ -5748,7 +5750,7 @@ if showDashboard and barstate.islast
         // computed from broker economics that are still ASSUMPTIONS, and a confidently
         // wrong number is worse than an honestly qualified one. Switch to true net once
         // the user's own fills replace the [BROKER CONFIG] defaults.
-        string _pLotStr = _pLots < 0.0 ? "<min" : str.tostring(_pLots, "#.00") + "L"
+        string _pLotStr = _pLots < 0.0 ? "<min" : str.tostring(_pLots, "0.00") + "L"
         tcp(6, 0, "RRg " + tpRRStr + "  " + _pLotStr, cBloomBg, _pSz, 0)
         tcp(7, 0, planReason, cBloomBg, _pSz, 0)
 
