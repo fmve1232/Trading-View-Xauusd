@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v46   (F-A52 risk $/lots match %)   ║
+// ║  BUILD STAMP — this file last CHANGED in v49   (BOS/CHoCH/MSS/sweep alerts)  ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -398,6 +398,7 @@ obMaxBars = input.int(20, "OB Max Bars", minval=10, maxval=50, group=grpCore)
 // offset cancels in a difference. The panel labels itself when the offset is non-zero so
 // it can never be applied silently.
 mt5Offset = input.float(0.0, "MT5 Price Offset (MT5 - TradingView)", minval=-50.0, maxval=50.0, step=0.01, group=grpCore, tooltip="Feed difference between your MT5 broker and TradingView. Shifts DISPLAYED Entry/SL/TP so they can be typed straight into MT5. Affects display only — never any calculation.")
+_m(float _x) => str.tostring(_x + mt5Offset, "#.##") // MT5 price text (v49: one helper, same output)
 liqProxMult = input.float(1.5, "Liq Proximity (ATR)", minval=0.5, maxval=4.0, step=0.1, group=grpCore)
 // P2-CAL-003: the round-number magnet grid was HARDCODED at 50.0 in two places (the
 // stop-cluster nudge and the RN take-profit candidate). 50 is a sound WEEKLY/DAILY gold
@@ -2735,11 +2736,11 @@ f_tradePlan() =>
     // F-014: MT5-adjusted DISPLAY strings. The underlying tpEntry/tpSL/tp1..tp3 floats are
     // deliberately NOT modified — everything downstream (RR, R-distances, pSLhit/pTP*,
     // position size) keeps using the raw TradingView values.
-    string tpEntryStr = str.tostring(tpEntry + mt5Offset, "#.##")
-    string tpSLStr = str.tostring(tpSL + mt5Offset, "#.##")
-    string tp1Str = str.tostring(tp1 + mt5Offset, "#.##")
-    string tp2Str = str.tostring(tp2 + mt5Offset, "#.##")
-    string tp3Str = str.tostring(tp3 + mt5Offset, "#.##")
+    string tpEntryStr = _m(tpEntry)
+    string tpSLStr = _m(tpSL)
+    string tp1Str = _m(tp1)
+    string tp2Str = _m(tp2)
+    string tp3Str = _m(tp3)
     string tpRRStr = "1:" + str.tostring(tpRR1, "#.#") + "/1:" + str.tostring(tpRR2, "#.#") + "/1:" + str.tostring(tpRR3, "#.#")
     // R6.0 explainability: how the plan was built, shown on the plan panel.
     // Q5.2-F4: P(reach TP_k) and P(SL) from analog MFE/MAE distributions; 1R expectancy.
@@ -5188,12 +5189,12 @@ float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h
 // H2-END
 // v37 H2 SETUP on the Master -- display and alert only. The DECISION above is unchanged; H2 is the
 // separate, pre-registered sweep-to-value idea (PREREGISTRATION A3), shown beside it, MT5 prices.
-string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + str.tostring(close + mt5Offset, "#.##") + " SL " + str.tostring(h2Sl + mt5Offset, "#.##") + " TP1 " + str.tostring(h2Tp1 + mt5Offset, "#.##") + " TP2 " + str.tostring(h2Tp2 + mt5Offset, "#.##") : ""
+string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + _m(close) + " SL " + _m(h2Sl) + " TP1 " + _m(h2Tp1) + " TP2 " + _m(h2Tp2) : ""
 var string h2Last = "none yet"
 if h2Long or h2Short
-    h2Last := str.format_time(time, "MM-dd HH:mm", "UTC") + " swept " + str.tostring(h2SweptLvl + mt5Offset, "#.##") + "\n" + h2Plan
+    h2Last := str.format_time(time, "MM-dd HH:mm", "UTC") + " swept " + _m(h2SweptLvl) + "\n" + h2Plan
 // v39: two short lines (the desktop footer cell clipped one long line at both ends on the chart).
-string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : str.tostring(h2Poc + mt5Offset, "#.##")) + " · last " + h2Last
+string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : _m(h2Poc)) + " · last " + h2Last
 
 // ══════════════════════════════════════════════════════════════════════
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
@@ -5719,7 +5720,7 @@ if showDashboard and barstate.islast
         _bc(0, "1 TREND", biasLabel + " · " + mktRegime + " · HTF " + array.get(gDashS, 8) + " · B" + str.tostring(bullScore, "#") + "/S" + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
         // 2 TARGET: the engine's liquidity destination, at the MT5 price, with its reach score
         float _bTgt = liqDestLabel == "PDH" ? poolPdH : liqDestLabel == "PDL" ? poolPdL : liqDestLabel == "PWH" ? poolPwH : liqDestLabel == "PWL" ? poolPwL : liqDestLabel == "PMH" ? poolPmH : liqDestLabel == "PML" ? poolPmL : liqDestLabel == "EQH" ? poolEqH : liqDestLabel == "EQL" ? poolEqL : na
-        _bc(_hs, "2 TARGET", na(_bTgt) ? "no dominant liquidity target" : liqDestLabel + " " + str.tostring(_bTgt + mt5Offset, "#.##") + " MT5 · reach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
+        _bc(_hs, "2 TARGET", na(_bTgt) ? "no dominant liquidity target" : liqDestLabel + " " + _m(_bTgt) + " MT5 · reach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
         // 3 PREVIOUS -> NEXT: last structure event and last bar's change; calibrated
         // probability that the next 1R move goes up vs down (the gate's own probability)
         _bc(2 * _hs, "3 PREV → NEXT", (structStr == "" ? "no active structure" : structStr) + " · last " + array.get(gDashS, 2) + "  →  next 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : " · EV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
@@ -5812,7 +5813,14 @@ alertcondition(showSignals and barstate.isconfirmed and bearBOS and not perfMode
 if barstate.isconfirmed and not perfMode and _confDirLabel != _confDirLabel[1]
     alert("XAUUSD " + timeframe.period + " DECISION " + _confDirLabel[1] + " -> " + _confDirLabel + (_confDirLabel == "BUY" or _confDirLabel == "SELL" ? " | " + _mt5Plan : _confDirLabel == "RISK LOCK" ? " | " + riskLockStr : ""), alert.freq_once_per_bar_close)
 // v37: H2 SETUP alert (the separate sweep-to-value idea); the DECISION alerts above are unchanged.
-if (h2Long or h2Short) and not perfMode
-    alert("XAUUSD " + timeframe.period + " H2 SETUP " + h2Plan + " (MT5) | trend " + (h2Long ? "UP" : "DOWN") + " | separate from DECISION", alert.freq_once_per_bar_close)
+// v49 STRUCTURE / SWEEP ALERTS (operator request): one alert at bar close when the engine's BOS, CHoCH, MSS or a
+// liquidity sweep (PDH/PDL, PWH/PWL, PMH/PML wick through and close back) FIRST appears -- the same flags as the
+// STRUCTURE cell. CHoCH / MSS are states that persist until the next swing, so only the first bar alerts.
+// Information only: these are not entries; the DECISION rule is unchanged. The H2 SETUP message rides in the same
+// alert (one alert() call; same trigger and text as before).
+_ev(bool _x, string _s) => _x and not _x[1] ? _s : ""
+string _evS = _ev(bosLabelBull, " BOS▲") + _ev(bosLabelBear, " BOS▼") + _ev(chochLabelBull, " CHoCH▲") + _ev(chochLabelBear, " CHoCH▼") + _ev(mssLabelBull, " MSS▲") + _ev(mssLabelBear, " MSS▼") + _ev(liqSweepBull, " SWEEP-LOW") + _ev(liqSweepBear, " SWEEP-HIGH") + (h2Long or h2Short ? " | H2 SETUP " + h2Plan + " (MT5)" : "")
+if _evS != "" and not perfMode
+    alert("XAUUSD " + timeframe.period + _evS + " | info, not a DECISION", alert.freq_once_per_bar_close)
 if barstate.isconfirmed and not perfMode and useRiskLimits and riskLock and not riskLock[1]
     alert("XAUUSD " + timeframe.period + " RISK LOCK engaged: " + riskLockStr + " -- new entries blocked", alert.freq_once_per_bar_close)

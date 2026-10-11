@@ -92,5 +92,23 @@ for _ in range(5000):
     shown_vetoed += env["_confDirLabel"] in ("BUY", "SELL") and env["tqVeto"]
 check(bad == 0, f"DECISION precedence RISK LOCK > NO TRADE > BUY > SELL > WARMUP > WAIT: 5000 cases, mismatches {bad}")
 check(shown_vetoed == 0, f"BUY/SELL never shown on a vetoed bar: {shown_vetoed}")
+
+# v49: structure / sweep alert -- fires on the FIRST bar of each flag only (CHoCH / MSS persist until the next swing)
+ev = next((l.strip() for l in L if l.strip().startswith("_ev(bool _x, string _s) =>")), None)
+evs = next((l.strip() for l in L if l.strip().startswith("string _evS = _ev(")), None)
+if ev and evs:
+    body = ev.split("=>", 1)[1].strip()
+    bad = 0
+    for _ in range(300):
+        seq = [rng.random() < 0.35 for _ in range(60)]
+        for t in range(1, len(seq)):
+            env = P.Env(_x=P.Series(seq[:t + 1]), _s=" X", _r="")
+            P.run(["_r = " + body], env)
+            want = " X" if seq[t] and not seq[t - 1] else ""
+            bad += env["_r"] != want
+    check(bad == 0, f"structure/sweep alert fires only on the first bar of an event (300 random flag sequences): mismatches {bad}")
+    flags = ["bosLabelBull", "bosLabelBear", "chochLabelBull", "chochLabelBear", "mssLabelBull", "mssLabelBear", "liqSweepBull", "liqSweepBear"]
+    miss = [f for f in flags if "_ev(" + f + "," not in evs]
+    check(not miss, "alert covers BOS / CHoCH / MSS (both sides) and liquidity sweeps (both sides): " + ("all 8 flags" if not miss else "missing " + ", ".join(miss)))
 print("RESULT: " + ("PASS" if fails == 0 else f"FAIL ({fails})") + " -- Pine text executed in Python; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

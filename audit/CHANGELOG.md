@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v48
+# Build changelog — v1 → … → v49
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1653,3 +1653,22 @@ traceability.
   - Diagnostics prints "NaN" for a feature edge with fewer than 10 resolved analogs (no token room in Diagnostics);
   - the Master runtime "Heavy script" notice.
 - Compile NOT RUN.
+
+# Build v48 → v49 — structure and liquidity-sweep alerts (Master)
+
+Operator: "add alert when CHoCH, MSS or BOS and liquidity sweep occurs".
+
+- **One `alert()` at bar close (Master)** when any of these FIRST appears:
+  - the engine's BOS, CHoCH or MSS, either side;
+  - a liquidity sweep (wick through PDH/PDL, PWH/PWL or PMH/PML and close back).
+- **Same flags as the dashboard's STRUCTURE cell.** Visuals' "~BOS / ~CHoCH" are an approximation and are not used.
+- **CHoCH / MSS are states** that persist until the next swing, so a rising-edge helper `_ev()` alerts only on the
+  first bar. `decision_check.py` executes it on 300 random flag sequences (0 mismatches) and checks that all 8 flags
+  are covered.
+- **Message:** `XAUUSD 15 CHoCH▲ SWEEP-LOW | info, not a DECISION`. The H2 SETUP text (same trigger, same MT5 plan)
+  now rides in the same alert instead of a second `alert()` call.
+- **Tokens:** a helper `_m(x)` replaces 12 copies of `str.tostring(x + mt5Offset, "#.##")` with identical output.
+  Master 39,053 lexical ~ 98,218 compiled = 2.03% under the limit.
+- **Unchanged:** the named "Bull BOS" / "Bear BOS" alert conditions (filtered BOS that can trigger entries); the
+  DECISION rule.
+- All checks pass (value map 22 values). Compile NOT RUN.
