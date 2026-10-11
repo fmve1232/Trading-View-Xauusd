@@ -55,6 +55,9 @@ function applyTheme(t) {
   if (t) document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme");
 }
 applyTheme(store.get("theme", null));
+// header height -> CSS, so the sticky decision column starts just under it
+const setHdr = () => { const h = document.querySelector("header.top"); if (h) document.documentElement.style.setProperty("--hdr-h", h.offsetHeight + "px"); };
+new ResizeObserver(setHdr).observe(document.querySelector("header.top")); setHdr();
 $("#theme").onclick = () => {
   const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   const nx = cur === "light" ? "dark" : "light";
@@ -161,6 +164,7 @@ function renderLive() {
   const age = src === "stream" ? (ageMin < 1 ? Math.max(0, Math.round(ageMin * 60)) + " s" : Math.round(ageMin) + " min") : (ageMin < 1 ? "<1 min" : Math.round(ageMin) + " min");
   $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
+  try { renderQuote(); } catch (e) { console.error(e); }
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
     (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
@@ -416,6 +420,41 @@ function renderGuard() {
 setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
 
 /* ---------- header / banners ---------- */
+/* ---------- quote header (display only) ---------- */
+// Previous trading day's close: the last bar before the latest New York 17:00 rollover (the engine's
+// trading-day rule: a bar belongs to the date of its New York open time + 7 hours).
+function prevDayClose(D) {
+  const ch = D && D.chart; if (!ch || !ch.t || !ch.t.length) return null;
+  const day = (t) => new Date(t * 1000 + 7 * 3600e3).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const last = day(ch.t[ch.t.length - 1]);
+  for (let i = ch.t.length - 2; i >= 0; i--) if (day(ch.t[i]) !== last) return ch.c[i];
+  return null;
+}
+let QPREV = null;
+function renderQuote() {
+  const D = S.data, pxEl = $("#q-px"), chEl = $("#q-chg"), mk = $("#q-mkt"); if (!D || !pxEl) return;
+  const closed = marketClosed(new Date());
+  const fb = D.meta && D.meta.forming;
+  const eng = fb && isNum(fb.c) ? fb.c : D.dashboard.close;
+  const live = !closed && LIVE.px !== null && !LIVE.err ? LIVE.px : null;
+  const p = isNum(live) ? live : eng;
+  const pc = prevDayClose(D);
+  pxEl.textContent = isNum(p) ? p.toFixed(2) : "—";   // the feed price (the MT5 offset applies to plan levels only)
+  pxEl.classList.remove("up", "dn");
+  if (isNum(QPREV) && isNum(p) && p !== QPREV) pxEl.classList.add(p > QPREV ? "up" : "dn");
+  QPREV = p;
+  if (isNum(p) && isNum(pc)) {
+    const d = p - pc;
+    chEl.textContent = `${d >= 0 ? "+" : ""}${d.toFixed(2)}  ${d >= 0 ? "+" : ""}${(d / pc * 100).toFixed(2)}%`;
+    chEl.className = d >= 0 ? "bull" : "bear";
+  } else { chEl.textContent = "—"; chEl.className = "muted"; }
+  const sess = (D.dashboard.session && D.dashboard.session.label) || "";
+  const SESS = { ASIAN: "Asia", LONDON: "London", NY: "New York", "LON-KZ": "London killzone", "LON-FIX": "London fix",
+    "LON-CL": "London close", "NY-KZ": "New York killzone", KZ: "killzone", OFF: "off-session" };
+  mk.textContent = closed ? "Market closed" : `Open · ${SESS[sess] || sess.toLowerCase() || "—"}`;
+  mk.className = "mkt " + (closed ? "closed" : "open");
+  mk.title = closed ? "Spot gold is shut Friday 17:00 to Sunday 18:00 New York and daily 17:00-18:00." : `Session of the last closed ${D.meta.tf} bar (engine label ${sess}).`;
+}
 function renderHeader() {
   const D = S.data; if (!D) return;
   const M = D.meta;
@@ -436,6 +475,7 @@ function renderHeader() {
   if (!M.synthetic && M.price_source.includes("GC=F")) b.push(`<div class="banner info">Price source is <b>COMEX gold futures</b> (spot XAU/USD was unavailable). Futures trade at a premium to spot; set the <b>MT5 offset</b> to your broker's difference. Add a free Twelve Data key to use spot.</div>`);
   if (M.volume_source && M.volume_source.startsWith("NONE")) b.push(`<div class="banner error">No volume source: volume-gated signals (BOS, displacement, climax) cannot fire.</div>`);
   $("#banners").innerHTML = b.join("");
+  renderQuote();
 }
 
 /* ---------- side panels ---------- */
@@ -668,10 +708,11 @@ function chartOpts() {
   const tf = (t) => { try { return isNum(t) ? tfmt(t, true) : ""; } catch (e) { return ""; } };
   return {
     layout: { background: { type: "solid", color: css("--card") }, textColor: css("--muted"), fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
-    grid: { vertLines: { color: css("--line") + "80" }, horzLines: { color: css("--line") + "80" } },
+    grid: { vertLines: { color: css("--grid") }, horzLines: { color: css("--grid") } },
     rightPriceScale: { borderColor: css("--line") },
+    watermark: { visible: true, text: `XAUUSD · ${S.tf}`, color: css("--text") + "0d", fontSize: 44, fontFamily: "Inter, system-ui, sans-serif", fontStyle: "800" },
     timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false, rightOffset: 14, tickMarkFormatter: tickFmt },
-    crosshair: { mode: 0 },
+    crosshair: { mode: 0, vertLine: { color: css("--dim"), style: 3, labelBackgroundColor: css("--card-2") }, horzLine: { color: css("--dim"), style: 3, labelBackgroundColor: css("--card-2") } },
     localization: { timeFormatter: tf, locale: LOCALE },
     handleScroll: true, handleScale: true,
   };
@@ -688,17 +729,19 @@ function buildCharts() {
   // Overlays never drive the price scale: a weekly level or a cone far from price used to squeeze
   // the candles into ~40% of the pane. The scale follows the candles (and the plan, below).
   const line = (color, w = 1, style = 0) => main.addLineSeries({ color, lineWidth: w, lineStyle: style, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null });
-  const candles = main.addCandlestickSeries({ upColor: css("--bull"), downColor: css("--bear"), wickUpColor: css("--bull"), wickDownColor: css("--bear"), borderVisible: false,
+  const candles = main.addCandlestickSeries({ upColor: css("--candle-up"), downColor: css("--candle-dn"), wickUpColor: css("--candle-up"), wickDownColor: css("--candle-dn"), borderVisible: false,
     autoscaleInfoProvider: (orig) => planScale(orig()) });
   const zones = new ZonesPrimitive();
   candles.attachPrimitive(zones);
   const L = {
-    ema20: line("#e6edf6", 1), ema100: line("#4da3ff", 1), ema200: line("#f2c96b", 2),
-    vwap: line("#00bcd4", 2), wvwap: line("#00bcd499", 1, 2), mvwap: line("#00bcd466", 1, 2),
-    bb_up: line("#b084ff99", 1), bb_lo: line("#b084ff99", 1), bb_mid: line("#b084ff55", 1, 2),
-    pdh: line("#ffd54f", 1, 1), pdl: line("#ffd54f", 1, 1), pwh: line("#ff8a65", 1, 1), pwl: line("#ff8a65", 1, 1),
-    vpoc: line("#ffd54fcc", 1, 3), vah: line("#ffd54f77", 1, 3), val: line("#ffd54f77", 1, 3),
-    cone_u: line("#9aa5b1", 1, 2), cone_l: line("#9aa5b1", 1, 2),
+    // overlay hues (blue / gold / magenta) pass colour-blind separation in both themes; EMA20 and the bands are neutral
+    ema20: line(css("--ov-ema20"), 1), ema100: line(css("--ov-ema100"), 1), ema200: line(css("--ov-ema200"), 2),
+    vwap: line(css("--ov-vwap"), 2), wvwap: line(css("--ov-vwap") + "99", 1, 2), mvwap: line(css("--ov-vwap") + "66", 1, 2),
+    bb_up: line(css("--ov-band") + "aa", 1), bb_lo: line(css("--ov-band") + "aa", 1), bb_mid: line(css("--ov-band") + "66", 1, 2),
+    // levels are neutral (their price-line labels name them); line style separates day / week / value area
+    pdh: line(css("--muted") + "aa", 1, 1), pdl: line(css("--muted") + "aa", 1, 1), pwh: line(css("--dim") + "aa", 1, 2), pwl: line(css("--dim") + "aa", 1, 2),
+    vpoc: line(css("--text") + "88", 1, 3), vah: line(css("--muted") + "77", 1, 3), val: line(css("--muted") + "77", 1, 3),
+    cone_u: line(css("--dim"), 1, 2), cone_l: line(css("--dim"), 1, 2),
   };
   const subS = {
     bull: sub.addLineSeries({ color: css("--bull"), lineWidth: 1, priceLineVisible: false, lastValueVisible: true }),
@@ -731,6 +774,7 @@ function renderChart() {
     const fb = D.meta.forming; bars.push({ time: fb.t, open: fb.o, high: fb.h, low: fb.l, close: fb.c, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") });
   }
   C.candles.setData(bars);
+  C.main.applyOptions({ watermark: { text: `XAUUSD · ${S.tf}` } });
   if (bars.length) applyLiveBar(bars[bars.length - 1].time);
   const set = (k, on) => C.L[k].setData(on ? series(t, ch[k], ch.anchor && ch.anchor[k]) : []);
   ["ema20", "ema100", "ema200"].forEach((k) => set(k, T.ema));

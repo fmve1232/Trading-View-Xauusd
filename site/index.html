@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e13">
   <title>XAUUSD Quantum</title>
   <meta name="description" content="XAUUSD Quantum 5.0 engine, running on free market data: decision, trade plan, analog statistics, three-arm backtest and a frozen forward holdout.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d4a846'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='800' font-size='15' text-anchor='middle' fill='%231a1305'%3EAu%3C/text%3E%3C/svg%3E">
@@ -15,7 +16,12 @@
 <header class="top">
   <div class="brand">
     <div class="logo">Au</div>
-    <div>XAUUSD Quantum<small id="engine-ver">engine —</small></div>
+    <div><b>XAUUSD</b> <span class="q">QUANTUM</span><small id="engine-ver">engine —</small></div>
+  </div>
+  <div class="quote" id="quote" title="Last price: the live quote while the market is open, otherwise the engine's last close. Change is against the previous trading day's close (New York 17:00 rollover). Display only.">
+    <div class="sym"><b>XAU/USD</b><span>Gold spot · US dollar</span></div>
+    <div class="qpx"><span id="q-px">—</span><span id="q-chg" class="muted">—</span></div>
+    <span class="mkt" id="q-mkt">—</span>
   </div>
   <div class="tf-tabs" id="tf-tabs"></div>
   <div class="chips">
@@ -74,7 +80,7 @@
 </main>
 <footer>
   Research tool, not investment advice. Free data is delayed and can be wrong; every source and its freshness is shown in Diagnostics.
-  Engine: a Python port of the Pine Master (build v32) and its three arms, web build Q7.2-web.3 — <a href="https://github.com/fmve1232/Trading-View-Xauusd">source on GitHub</a>.<br>
+  Engine: a Python port of the Pine Master (build v32, with the v33–v50 fixes of Amendment 7), its three arms and arms H2 / H3, web build Q7.2-web.5 — <a href="https://github.com/fmve1232/Trading-View-Xauusd">source on GitHub</a>.<br>
   Charts: TradingView Lightweight Charts™, Copyright (c) 2025 TradingView, Inc. <a href="https://www.tradingview.com/">https://www.tradingview.com/</a> (Apache-2.0, <a href="vendor/LIGHTWEIGHT-CHARTS-LICENSE.txt">licence</a>).
 </footer>
 <script src="app.js"></script>
