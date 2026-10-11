@@ -32,7 +32,7 @@ Hashes are in `SHA256SUMS` (`sha256sum -c SHA256SUMS` from this folder).
 | F-A48 (v43) | plan built on the final scores | **ported in web.5** |
 | F-A38 (v33, Pine numbering) | constrained calibration fit | **ported in web.5** |
 | F-A45 (v40) | feature accuracy among resolved analogs | **ported in web.5** |
-| F-A49 (v44) | analog win-rate side by the final scores; PF labelled "resolved" | not applicable: the website shows both sides' rates |
+| F-A49 (v44) | analog win-rate side by the final scores; PF labelled "resolved" | not applicable: the website shows the analog win rate without choosing a side |
 | F-A52 (v46) | regime size haircut applied to $ risk and lots | **ported** (`report.py`, display; the website lacked the haircut entirely) |
 | F-A53 (v50) | macro label: bull-ish / bear-ish with its score | **already equal**: the website writes BULL-ISH / BEAR-ISH with the score beside it |
 | v49 | alerts on first BOS / CHoCH / MSS / sweep | **ported** (`notify.py`) |

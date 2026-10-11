@@ -101,15 +101,22 @@ def test_bin_needs_30():
     assert st.out["cal_grade"] != "N/A"          # E2: N=30 accepted
 
 
-def test_platt_needs_three_bins_and_positive_slope():
+def test_platt_needs_three_bins_and_constrained_slope():
+    # EdgeCases group F as of the Pine line's v33 (F-A38, Amendment 7): constrained WLS.
     two = [(40, 40 * 30.0, 10, 20), (40, 40 * 60.0, 25, 10)] + [(0, 0, 0, 0)] * 3
-    assert math.isnan(_publish_with_bins(two).cal_fit[0])            # E4
+    assert math.isnan(_publish_with_bins(two).cal_fit[0])            # F9: too few bins -> no fit
     three = [(40, 40 * 30.0, 10, 20), (40, 40 * 50.0, 18, 12), (40, 40 * 70.0, 28, 6)] + [(0, 0, 0, 0)] * 2
     st = _publish_with_bins(three)
-    assert 0.02 <= st.cal_fit[0] <= 0.25 and -1 <= st.cal_fit[1] <= 1  # F clamps
+    assert 0.0 < st.cal_fit[0] <= 0.25 and -5 <= st.cal_fit[1] <= 5  # F10: three bins fit; F2/F4 bounds
     assert st.cal_fit_bear[0] < 0                                        # bear fit has negative slope
     inverted = [(40, 40 * 30.0, 28, 6), (40, 40 * 50.0, 18, 12), (40, 40 * 70.0, 10, 20)] + [(0, 0, 0, 0)] * 2
-    assert math.isnan(_publish_with_bins(inverted).cal_fit[0])       # F6: negative slope rejected
+    inv = _publish_with_bins(inverted)
+    assert inv.cal_fit[0] == 0.0                                         # F6: negative slope -> 0, not rejected
+    # F7 / F11: with the slope used, the line passes through the weighted centroid (= weighted base rate at 0)
+    ws = [(t, min(max((bw + 1) / (t + 2), 0.05), 0.95)) for (t, _s, bw, _b) in inverted[:3]]
+    w = [t * p * (1 - p) for t, p in ws]
+    my = sum(wi * math.log(p / (1 - p)) for wi, (_t, p) in zip(w, ws)) / sum(w)
+    assert abs(inv.cal_fit[1] - my) < 1e-12
 
 
 def test_timeout_is_bin_total_not_win(res):
@@ -145,7 +152,7 @@ def test_normalize_scores_sum_and_floor():
 # ---------------- trade plan ----------------
 def _plan(**kw):
     AS = analog.AnalogState()
-    base = dict(i=0, cfg=DEFAULT, should_buy=True, should_sell=False, bull_bias=60, bear_bias=40, close=2049.0, a=10.0,  # RN 2050 too close to be a target
+    base = dict(i=0, cfg=DEFAULT, should_buy=True, should_sell=False, bull_final=60, bear_final=40, close=2049.0, a=10.0,  # RN 2050 too close to be a target
                 reg_sl=1.5, active_sup=np.nan, active_res=np.nan, ob_b_act=False, ob_bl=np.nan, ob_bh=np.nan, ob_s_act=False,
                 ob_sl=np.nan, ob_sh=np.nan, cdl=np.nan, cdh=np.nan, pdl=np.nan, pdh=np.nan, pwh=np.nan, pwl=np.nan,
                 pmh=np.nan, pml=np.nan, eql=np.nan, eqh=np.nan, val=np.nan, vah=np.nan, vpoc=np.nan, wvwap=np.nan,
@@ -310,9 +317,48 @@ def test_challenger_gate_is_the_fast_trend_term_only(mkt, res):
     # the gate is really different (H1 admits bars the slow trend score rejects) ...
     tb = res.rows["should_buy"].astype(bool) | res.rows["should_sell"].astype(bool)
     assert ((sb | ss) & ~tb).any()
-    # ... and nothing upstream of it differs: scores, TQ and the plan are the treatment arm's
-    for k in ("bull", "bear", "range", "tq", "plan_sl", "plan_tp1", "cal_p_long", "cal_p_short"):
+    # ... and nothing upstream of it differs: the scores and probabilities are the treatment arm's
+    for k in ("bull", "bear", "range", "cal_p_long", "cal_p_short"):
         np.testing.assert_array_equal(np.asarray(res.rows[k], float), np.asarray(ch.rows[k], float))
+    # The plan (and TQ, which reads its side) takes a signal's side, so it follows each arm's own gate
+    # (Pine: tpIsLong = shouldBuy ? true : shouldSell ? false : final scores). Where the gates agree, so do they.
+    same = (res.rows["should_buy"].astype(bool) == sb) & (res.rows["should_sell"].astype(bool) == ss)
+    for k in ("tq", "plan_sl", "plan_tp1"):
+        np.testing.assert_array_equal(np.asarray(res.rows[k], float)[same], np.asarray(ch.rows[k], float)[same])
+
+
+# ---------------- Amendment 7: defects ported from the Pine line (v33-v43) ----------------
+def test_mtf_scores_normalised_by_votes_available(res):
+    # F-A40: a layer at or below the chart's timeframe never votes, so it is not in the denominator.
+    for tf_sec, mtf, full in ((60, 4, 5), (300, 3, 4), (900, 2, 3), (3600, 1, 2), (14400, 0, 1)):
+        assert int(tf_sec < 300) + int(tf_sec < 900) + int(tf_sec < 3600) + int(tf_sec < 14400) == mtf
+        assert max(mtf + int(tf_sec < 86400), 1) == full
+    assert res.F["mtf_avail"] == 2 and res.F["htf_full_avail"] == 3          # the 15m fixture
+    conf = np.asarray(res.rows["conf"], float)
+    assert np.nanmax(conf) <= 100
+
+
+def test_plan_side_follows_final_scores_without_a_signal(res):
+    # F-A48: no signal -> the plan's side is the final bull vs bear score (as the bias label), never the composite.
+    R = res.rows
+    sb, ss = R["should_buy"].astype(bool), R["should_sell"].astype(bool)
+    bull, bear = np.asarray(R["bull"], float), np.asarray(R["bear"], float)
+    ok = ~sb & ~ss & ~np.isnan(bull)
+    assert ok.sum() > 100
+    np.testing.assert_array_equal(np.asarray(R["plan_long"], bool)[ok], (bull >= bear)[ok])
+    assert np.asarray(R["plan_long"], bool)[sb].all() and not np.asarray(R["plan_long"], bool)[ss].any()
+
+
+def test_feature_accuracy_counts_resolved_analogs_only():
+    # F-A45: (correct / (correct + wrong) - 0.5) x 100, shown from 10 resolved analogs; timeouts are not counted.
+    st = _publish_with_bins([(0, 0, 0, 0)] * 5)
+    assert st.out["feat_str"] is None
+    A_ok = analog.AnalogState()
+    A = dict(mt=0, wt=0.0, mb=0, mbr=0, mr_=0, wb=0, wbr=0, wr_=0, pT=0, wp1=0, wpT=0, p1=0, sw=0, sl=0, st=0, wc=0, lc=0,
+             cal=[(0, 0, 0, 0)] * 5, boT=0, bov=0, fS=(10, 7), fH=(9, 9), fL=(0, 0), fM=(0, 0), fC=(0, 0), mae_cnt=0, mae_sum=0,
+             ghit=[0] * 9, grace=[0] * 19, eq_peak=100.0, max_dd=0.0, oos_mt=0, is_mt=0)
+    analog._publish(0, A_ok, {"N": 4}, {"r_curr": 1, "reg_trans": {k: 0 for k in ("T", "R", "D", "TR", "TD", "RT", "RD", "DT", "DR")}}, A)
+    assert abs(A_ok.out["feat_str"] - 20.0) < 1e-9 and A_ok.out["feat_htf"] is None
 
 
 def test_config_hash_is_stable():

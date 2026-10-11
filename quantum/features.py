@@ -118,6 +118,10 @@ def compute(m: Market, cfg: Config) -> dict:
     hb = {k: s >= 60 for k, s in htf_scores.items()}
     hs = {k: s <= 40 for k, s in htf_scores.items()}
     F["htf_bull"], F["htf_bear"] = hb, hs
+    # Pine v34 F-A40 (Amendment 7): layers at or below the chart's timeframe never vote, so the MTF scores are
+    # normalised by the layers that can (Pine: htf5mAvailable ... htf1dAvailable, by timeframe only).
+    F["mtf_avail"] = int(tf_sec < 300) + int(tf_sec < 900) + int(tf_sec < 3600) + int(tf_sec < 14400)
+    F["htf_full_avail"] = max(F["mtf_avail"] + int(tf_sec < 86400), 1)
     F["htf_align_long"] = hb["15"].astype(int) + hb["60"] + hb["240"] + hb["D"]
     F["htf_align_short"] = hs["15"].astype(int) + hs["60"] + hs["240"] + hs["D"]
     F["htf_bull_gate"] = F["htf_align_long"] >= 2
