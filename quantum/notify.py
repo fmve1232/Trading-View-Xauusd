@@ -6,6 +6,10 @@
 Only events on bars that closed since the previous run are sent (state kept in the data
 store), so a re-run never repeats an alert. Prices are shown with the MT5 offset from the
 MT5_PRICE_OFFSET variable (display only, like the Pine input).
+
+Structure / sweep alerts (Pine line v49): one line per closed bar on which the engine's BOS, CHoCH, MSS
+or a PDH/PDL/PWH/PWL/PMH/PML sweep first appears, plus the separately registered H2 / H3 setups. They are
+information, not entries; the DECISION is unchanged. ALERT_STRUCTURE=0 turns them off.
 """
 from __future__ import annotations
 
@@ -36,6 +40,8 @@ def messages(payload: dict, since_t: int | None) -> list[str]:
             out.append(f"XAUUSD {tf} tracked plan {'STOPPED' if (m.get('r') or 0) < 0 else 'reached TP1'} at {_fmt(m['px'], off)} = {m.get('r')}R")
         elif m["type"] == "RISK_LOCK":
             out.append(f"XAUUSD {tf} RISK LOCK engaged -- new entries blocked")
+    if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0":
+        out += structure_lines(payload, since_t, off)
     for d in payload["decisions"]:
         if since_t is not None and d["t"] <= since_t:
             continue
@@ -43,6 +49,26 @@ def messages(payload: dict, since_t: int | None) -> list[str]:
             continue  # already covered by the SIGNAL message
         out.append(f"XAUUSD {tf} DECISION {d['from']} -> {d['to']}")
     return out
+
+
+_TAG = {("BOS", 1): "BOS▲", ("BOS", -1): "BOS▼", ("CHoCH", 1): "CHoCH▲", ("CHoCH", -1): "CHoCH▼",
+        ("MSS", 1): "MSS▲", ("MSS", -1): "MSS▼", ("SWEEP", 1): "SWEEP-LOW", ("SWEEP", -1): "SWEEP-HIGH"}
+
+
+def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> list[str]:
+    """One line per newly closed bar: its structure / sweep events and any H2 / H3 setup on it."""
+    tf = payload["meta"]["tf"]
+    by_t: dict = {}
+    for m in payload["markers"]:
+        tag = _TAG.get((m["type"], m.get("dir")))
+        if tag and (since_t is None or m["t"] > since_t) and tag not in by_t.setdefault(m["t"], []):
+            by_t[m["t"]].append(tag)
+    for arm in ("h2", "h3"):
+        for g in (payload.get(arm) or {}).get("signals") or []:
+            if since_t is None or g["t"] > since_t:
+                by_t.setdefault(g["t"], []).append(f"{arm.upper()} {'BUY' if g['dir'] == 'LONG' else 'SELL'} entry {_fmt(g['entry'], off)} "
+                                                   f"SL {_fmt(g['sl'], off)} TP1 {_fmt(g['tp1'], off)} TP2 {_fmt(g['tp2'], off)}")
+    return [f"XAUUSD {tf} {' '.join(v)} | info, not a DECISION" for _, v in sorted(by_t.items())]
 
 
 def send(lines: list[str]) -> list[str]:

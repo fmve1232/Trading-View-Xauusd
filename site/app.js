@@ -74,8 +74,9 @@ function showTab(t) {
   if (t === "backtest") setTimeout(renderEquity, 0);
 }
 const TOGGLES = [["ema", "EMA 20/100/200"], ["vwap", "VWAP D/W/M"], ["bb", "Bollinger"], ["levels", "Levels"], ["zones", "OB / FVG"],
-  ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"], ["h2", "H2 signals"]];
+  ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"], ["h2", "H2 signals"], ["h3", "H3 signals"]];
 if (S.toggles.h2 === undefined) S.toggles.h2 = true;   // added after viewers saved their toggles
+if (S.toggles.h3 === undefined) S.toggles.h3 = true;
 $("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${l}</span>`).join("") +
   `<button class="toggle fit" type="button" data-act="fit" title="Fit the latest bars to the screen and re-enable auto price scale">⤢ Fit</button>`;
 $("#toolbar").onclick = (e) => {
@@ -469,6 +470,36 @@ function renderH2() {
     `<div class="why"><b>Forward record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${fwd}. Decision on 1H after 50 trades (Amendment 5).</div>`;
 }
 
+/* ---------- arm H3 "Sweep-to-Value" (the Pine line's H2 rule; Amendment 7; computed by quantum/arm_h3.py) ---------- */
+function renderH3() {
+  const D = S.data, el = $("#h3"), st = $("#h3-state"); if (!el || !D) return;
+  const H = D.h3;
+  if (!H || H.error) { el.innerHTML = `<p class="muted">${esc((H && H.error) || "not published yet")}</p>`; st.textContent = "—"; st.className = "pill"; return; }
+  const now = H.signal_now, ck = H.checklist || {}, open = (H.open || [])[0];
+  // one position at a time (backtest.simulate): a same-side signal while H3 already holds a trade is not taken
+  const held = !!(now && open && open.dir === now.dir && Date.parse(open.entry_time) / 1000 < now.t);
+  st.textContent = now ? `${now.dir} ${held ? "held" : "signal"}` : "no setup"; st.className = "pill " + (now ? (now.dir === "LONG" ? "bull" : "bear") : "");
+  const keys = (H.rules || []).map((r) => r[0]);
+  const score = (c) => (c ? keys.filter((k) => c[k]).length : 0);
+  const tl = !!(ck.long && ck.long.trend), ts = !!(ck.short && ck.short.trend);
+  const side = now ? (now.dir === "LONG" ? "long" : "short") : tl !== ts ? (tl ? "long" : "short")
+    : score(ck.long) >= score(ck.short) ? "long" : "short", c = ck[side] || {};
+  const other = side === "long" ? "short" : "long";
+  const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}">${c[k] ? "✓" : "✗"} ${esc(side === "short" ? stx : lt)}</li>`).join("");
+  const sc = ck.scores || {};
+  const trendLine = `<span class="dim">trend scores 1H ${f(sc["60"], 0)} · 4H ${f(sc["240"], 0)} · 1D ${f(sc.D, 0)} · swing ${side === "long" ? "low " + px(ck.swing_low) : "high " + px(ck.swing_high)}</span>`;
+  const p = now || H.last_signal;
+  const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}${held ? " (not taken)" : ""}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(swept ${px(p.swept)})</span>` +
+    (held ? ` <span class="warn">H3 already holds this ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)}; it takes one position at a time, so the open trade below is the one that counts.</span>` : "") + `</div>` : "";
+  const openHtml = open ? `<div class="why"><b>Open H3 trade:</b> ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)} · entry ${px(open.entry)} · SL ${px(open.sl)} · TP1 ${px(open.tp1)}</div>` : "";
+  const nm = H.next_move_in_sample || {}, fw = H.forward || {}, fr = H.freeze || {};
+  const next = nm.n ? `After ${nm.n} past H3 signals on ${esc(D.meta.tf)} (in-sample): TP1 reached first ${f(nm.tp1_first_pct, 0)}%, stop first ${f(nm.stop_first_pct, 0)}%, mean ${fs(nm.mean_r, 2)} R, median ${fs(nm.median_r, 2)} R, about ${f(nm.avg_bars, 0)} bars to the exit.` : "No past H3 signals on this timeframe yet.";
+  const fwd = fw.n ? `${fw.n} closed · win ${f(fw.win_rate, 0)}% · mean ${fs(fw.avg_r, 2)} R · PF ${f(fw.profit_factor, 2)}` : "no closed trades yet";
+  el.innerHTML = `<div class="why"><b>${side === "long" ? "Long" : "Short"} side, ${score(c)}/${keys.length} rules met</b> <span class="dim">(${other} side ${score(ck[other])}/${keys.length})</span><ul class="gates">${rows}</ul>${trendLine}</div>` + planHtml + openHtml +
+    `<div class="why"><b>Next movement:</b> ${next} <span class="dim">Small samples: a pattern, not a forecast.</span></div>` +
+    `<div class="why"><b>Forward record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${fwd}. Decision on 1H after 50 trades (Amendment 7).</div>`;
+}
+
 /* ---------- decision transparency (DISPLAY ONLY; reads what the engine already published) ---------- */
 // The engine's decision log, e.g. "▼5/7 [✗Sess Trig] NO-TRIG ctx:RgM+R+", in plain words.
 const GATES = [["Trend", "Trend strong enough"], ["HTF", "Higher timeframe not against it"], ["Sess", "Active session (London / New York)"],
@@ -527,7 +558,7 @@ function renderSide() {
   const sig = dec === "BUY" || dec === "SELL";
   $("#plan-dir").textContent = (p.long ? "LONG" : "SHORT") + (sig ? "" : " · no signal");
   $("#plan-dir").className = "pill " + (sig ? (p.long ? "bull" : "bear") : "");
-  $("#plan-dir").title = sig ? "Side of the current signal." : `No signal: a hypothetical plan on the regime-call side (L${f(d.bull_bias, 0)} ${p.long ? "≥" : "<"} S${f(d.bear_bias, 0)}). The bias label uses the final scores (L${f(d.bull_score, 0)} / S${f(d.bear_score, 0)}), so the two can differ. WAIT means no trade.`;
+  $("#plan-dir").title = sig ? "Side of the current signal." : `No signal: a hypothetical plan on the side of the final scores (L${f(d.bull_score, 0)} ${p.long ? "≥" : "<"} S${f(d.bear_score, 0)}), the same scores as the bias label (web.5, Pine v43). WAIT means no trade.`;
   $("#plan-mt5").textContent = Number(S.mt5) ? `(MT5 ${fs(Number(S.mt5))})` : "";
   const planTxt = `XAUUSD ${M.tf} ${p.long ? "BUY" : "SELL"} | entry ${px(p.entry)} SL ${px(p.sl)} TP1 ${px(p.tp1)} TP2 ${px(p.tp2)} TP3 ${px(p.tp3)}`;
   const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}%` : "—";
@@ -543,7 +574,7 @@ function renderSide() {
     ${kv([["R multiples", `1:${f(p.rr1, 1)} / 1:${f(p.rr2, 1)} / 1:${f(p.rr3, 1)}`],
       ["Race EV (TP1 vs SL)", isNum(p.ev) ? `<span class="${p.ev >= 0 ? "bull" : "bear"}">${fs(p.ev, 2)} R</span> <span class="dim">n${f(p.race_n, 0)}</span>` : "—"],
       [`Touch within ${p.horizon_bars} bars`, touch]])}
-    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the expectancy. ${sig ? "Plan direction follows the signal." : `<b>No signal:</b> this is a hypothetical plan on the regime-call side (L${f(d.bull_bias, 0)} vs S${f(d.bear_bias, 0)}), not a trade. The bias label above uses the final scores, so it can point the other way.`}</p>
+    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the expectancy. ${sig ? "Plan direction follows the signal." : `<b>No signal:</b> this is a hypothetical plan on the side of the final scores (L${f(d.bull_score, 0)} vs S${f(d.bear_score, 0)}), the same scores as the bias label, not a trade.`}</p>
     <button class="icon-btn copy" id="copy-plan" style="margin-top:8px;width:100%">Copy plan for MT5</button>`;
   $("#copy-plan").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(planTxt); $("#copy-plan").textContent = "Copied"; setTimeout(() => ($("#copy-plan").textContent = "Copy plan for MT5"), 1500); };
 
@@ -738,6 +769,12 @@ function renderChart() {
     const t0 = D.chart.t[0];
     D.h2.signals.filter((g) => g.t >= t0).forEach((g) => mk.push({ time: g.t, position: g.dir === "LONG" ? "belowBar" : "aboveBar", color: "#b084ff",
       shape: g.dir === "LONG" ? "arrowUp" : "arrowDown", text: `H2 ${g.dir === "LONG" ? "BUY" : "SELL"}` }));
+    mk.sort((a, b) => a.time - b.time);
+  }
+  if (T.h3 && D.h3 && Array.isArray(D.h3.signals)) {                     // arm H3 (Amendment 7)
+    const t0 = D.chart.t[0];
+    D.h3.signals.filter((g) => g.t >= t0).forEach((g) => mk.push({ time: g.t, position: g.dir === "LONG" ? "belowBar" : "aboveBar", color: "#26c6da",
+      shape: g.dir === "LONG" ? "arrowUp" : "arrowDown", text: `H3 ${g.dir === "LONG" ? "BUY" : "SELL"}` }));
     mk.sort((a, b) => a.time - b.time);
   }
   C.candles.setMarkers(mk);
@@ -1017,7 +1054,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderStrip); safe(renderH2); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(syncTV); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(syncTV); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
