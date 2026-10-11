@@ -11,7 +11,7 @@ Hashes are in `SHA256SUMS` (`sha256sum -c SHA256SUMS` from this folder).
 | File | Build stamp | Role on TradingView |
 |---|---|---|
 | `XAUUSD_Quantum_5_0_Master.pine` | v50 | the live indicator |
-| `XAUUSD_Quantum_5_0_Strategy.pine` | **v41** (see note 1) | Treatment arm |
+| `XAUUSD_Quantum_5_0_Strategy.pine` | **v51** (synced, see note 1) | Treatment arm |
 | `XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | v48 | Control arm |
 | `XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | v48 | Challenger (fast trend, H1) |
 | `XAUUSD_Quantum_5_0_Strategy_H2.pine` | v48 | the Pine line's H2 = **H3 on the website** |
@@ -41,9 +41,12 @@ Hashes are in `SHA256SUMS` (`sha256sum -c SHA256SUMS` from this folder).
 
 ## Notes found while comparing
 
-1. **The Treatment file is behind the other arms.** `Strategy.pine` is at v41, while
-   `Strategy_OLDGATES.pine` and `Strategy_CHALLENGER.pine` are at v48. Treatment lacks F-A47 (exits on the
-   entry bar), F-A48 (plan side) and F-A49. On TradingView, the arms therefore differ by more than their
-   gates. This does not affect the website, whose three arms share one engine.
+1. **The Treatment file was behind the other arms — synced in v51 (2026-10-11).** As supplied, `Strategy.pine`
+   was at v41 (SHA-256 `2f43566ff43fcec2…`) while Control and Challenger were at v48, so Treatment lacked F-A47
+   (exits on the entry bar), F-A48 (plan side), F-A49 and the v45 / A7 scorecard rows, and the TradingView arms
+   differed by more than their gates. v51 is the v48 Challenger with Treatment's four own parts put back (stamp,
+   title, role, trend gate): Treatment vs Challenger = those 4 hunks; Treatment vs Control = the 5 gate / title /
+   role hunks plus the build stamp. precheck / undeclared / order / pinelimits: 0 issues on all 8 files. Not compiled
+   here — the TradingView compiler is the final check. The website is unaffected (its arms share one engine).
 2. **This line branched from v31, not v32.** It has `SCHEMA_BUILD = 5` and its own F-A38 / F-A39 numbering;
    the website and `artefacts/` carry v32's Cornish-Fisher guard (F-A38 in this repository's numbering).
