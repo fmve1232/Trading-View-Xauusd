@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v41   (F-A46 VP every bar)          ║
+// ║  BUILD STAMP — this file last CHANGED in v51   (Treatment synced to v48 arms)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -2662,7 +2662,7 @@ f_tradePlan() =>
     // (regSLMult) is the fallback, so ATR is secondary as specified.
     // TPs: nearest liquidity destinations on the profit side (min 0.8R / 0.5 ATR away,
     // deduped within 0.3 ATR); R-multiple fallbacks (1R/2R/3R) only when the map is empty.
-    bool tpIsLong = shouldBuy ? true : shouldSell ? false : bullBiasScore >= bearBiasScore
+    bool tpIsLong = shouldBuy ? true : shouldSell ? false : bullScore >= bearScore
     float tpEntry = close
     float _slAtrBase = adaptiveATR * regSLMult
     float _slLoB = adaptiveATR * 0.6
@@ -2866,7 +2866,7 @@ f_tradePlan() =>
     // the horizon mismatch itself (F-035) remains OPEN as a design decision.
     string planReason = "SL:" + tpSLBasis + " TP:" + tp1Basis + "/" + tp2Basis + "/" + tp3Basis + " [" + mktRegime + "]" + (not na(pTP1) ? " ~touch(<=" + str.tostring(OUTCOME_N) + "b):" + str.tostring(int(pTP1)) + "/" + str.tostring(int(pTP2)) + "/" + str.tostring(int(pTP3)) + "% ~SLtouch" + str.tostring(int(pSLhit)) + "% EVrace" + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##") + "R n" + str.tostring(int(nz(array.get(gRaceN, 0))))) : "")
     [tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason]
-[tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason] = f_tradePlan()
+// v43: the f_tradePlan() call moved below the final scores (after rangeScore := nr2_), see there.
 
 // STATISTICAL ENGINES — Evidence-based historical outcome analysis
 
@@ -4493,6 +4493,12 @@ rangeScore := fRngScore
 bullScore := nb2_
 bearScore := nbe2_
 rangeScore := nr2_
+// v43 ALIGNMENT (F-A48): the trade plan is built HERE, on the FINAL scores. It was built ~1,700 lines
+// earlier and, on WAIT bars, took its side from the structure composite (bullBiasScore vs bearBiasScore)
+// while BIAS, the WAIT reason and TQ's label read the final scores, so the panel could show a LONG plan
+// under BEAR-ISH with S 55% > L 31% (operator's 5M chart, 2026-10-09). Nothing read the plan before this
+// point, so the move reorders no reader; the plan now also uses this bar's refreshed statistics.
+[tpIsLong, tpEntry, tpSL, tpDist, tp1, tp2, tp3, tpRR1, tpRR2, tpRR3, tpDirStr, tpCol, tpEntryStr, tpSLStr, tp1Str, tp2Str, tp3Str, tpRRStr, pTP1, pTP2, pTP3, pSLhit, planExpectancy, planReason] = f_tradePlan()
 // R5.3-M3: calibration now tracks the FINAL displayed bullScore. The record written
 // earlier this bar stored the pre-blend evidence score, so the Cal grade / Brier /
 // mP= sigmoid were validating a variable the user never sees. The slot is overwritten
@@ -4947,7 +4953,8 @@ if showStatsEngine and oMatch >= 30
     // F-A28 (v20): a bearish bias showed 1 - P(bull), i.e. "bear OR timeout" -- 80% on a chart
     // whose bear rate is ~20%. The bear direction now shows its own rate, oBear (the engine's
     // weighted bear-resolution share), so both directions are win rates on the same basis.
-    float _wrDir = bearBiasScore > bullBiasScore ? oBear / 100.0 : _wrR
+    // v44 (F-A49): the side follows the FINAL scores, as the plan does since v43 (was the bias composite)
+    float _wrDir = bearScore > bullScore ? oBear / 100.0 : _wrR
     float _effN = math.max(oMatch / math.max(OUTCOME_N, 1), 1.0)
     float _wrCI95 = oMatch >= 30 ? 1.96 * math.sqrt(_wrDir * (1.0 - _wrDir) / _effN) * 100.0 : 0.0
     wrCIStr := _wrCI95 > 1.0 ? "+/-" + str.tostring(int(_wrCI95 + 0.5)) + "%" : ""
@@ -5272,6 +5279,11 @@ if execBuyS and strategy.position_size <= 0
     // cannot backfill history, so without it the export cannot support the calibration
     // test and a second full backtest would be needed to get it.
     strategy.entry("L", strategy.long, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round(_calPLong * 100.0)))
+    // v42 (F-A47): exits placed on the ENTRY bar too. They used to be placed only once
+    // strategy.position_size showed the position, i.e. one bar later, so with
+    // process_orders_on_close the first bar after every entry had no stop and no targets.
+    strategy.exit("Lx1", "L", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Lx2", "L", stop=stSL, limit=stTP2)
 if execSellS and strategy.position_size >= 0
     strategy.close_all(comment="flip")
     stEntry := close
@@ -5280,6 +5292,11 @@ if execSellS and strategy.position_size >= 0
     stTP2 := tp2
     stBE := false
     strategy.entry("S", strategy.short, qty = abTestQty, comment = "TQ" + str.tostring(tradeQuality) + "|CG" + str.tostring(oCalGrade) + "|B" + str.tostring(SCHEMA_BUILD) + "V" + str.tostring(REGIME_FEATURE_VERSION) + "|D" + str.tostring(barDataStatus) + "|P" + str.tostring(math.round(_calPShort * 100.0)))
+    // v42 (F-A47): exits placed on the ENTRY bar too. They used to be placed only once
+    // strategy.position_size showed the position, i.e. one bar later, so with
+    // process_orders_on_close the first bar after every entry had no stop and no targets.
+    strategy.exit("Sx1", "S", stop=stSL, limit=stTP1, qty_percent=50)
+    strategy.exit("Sx2", "S", stop=stSL, limit=stTP2)
 // CHANGE ID: P0-EXEC-002-FIX | FILE: Strategy execution layer (both twins)
 // OLD LOGIC: on the bar where high>=stTP1, stSL was mutated to breakeven BEFORE
 // being passed to strategy.exit() the SAME bar, with no check for whether the
@@ -5322,11 +5339,11 @@ if strategy.position_size < 0
 // the chart's history -- the Coverage row says when the history no longer reaches the start.
 // v38 COMPILE FIX (operator's chart, 2026-10-05): input.time() needs a const int default, and
 // timestamp("UTC", ...) returns a simple int (CE10123). 1791331200000 = 2026-10-07 00:00 UTC in ms (start moved by A6, F-A46).
-fwdStart = input.time(1791331200000, "Forward test start (PREREGISTRATION A6)", group="FORWARD TEST")
+fwdStart = input.time(1791331200000, "Card start (display only: the record is the website, A7)", group="FORWARD TEST")
 fwdShow = input.bool(true, "Show forward-test scorecard", group="FORWARD TEST")
 fwdPos = input.string("Bottom Right", "Scorecard position", options=["Bottom Right", "Bottom Left", "Top Right", "Top Left"], group="FORWARD TEST", tooltip="With several arms visible on one chart, give each its own corner.")
 var int fwdBar0 = time
-var table fwdTbl = table.new(fwdPos == "Bottom Left" ? position.bottom_left : fwdPos == "Top Right" ? position.top_right : fwdPos == "Top Left" ? position.top_left : position.bottom_right, 2, 9, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+var table fwdTbl = table.new(fwdPos == "Bottom Left" ? position.bottom_left : fwdPos == "Top Right" ? position.top_right : fwdPos == "Top Left" ? position.top_left : position.bottom_right, 2, 10, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 _fwRow(int _r, string _k, string _fwv, color _c) =>
     table.cell(fwdTbl, 0, _r, _k, text_color=color.new(#8FA3B8, 0), text_size=size.small, text_halign=text.align_left)
     table.cell(fwdTbl, 1, _r, _fwv, text_color=_c, text_size=size.small, text_halign=text.align_left)
@@ -5372,11 +5389,17 @@ if fwdShow and barstate.islast
     float _fwpf = _fwgl > 0 ? _fwgw / _fwgl : na
     // no losing position at all: PF is infinite, which passes the >= 1.2 rule (it is na above)
     bool _fwpfOk = _fwgl > 0 ? _fwpf >= 1.2 : _fwgw > 0
+    // v45 (F-A50): per POSITION win rate against the break-even win rate the payoff requires,
+    // BE = avg loss / (avg win + avg loss) ('Trading is Math' ch. 1: E > 0 <=> WR > BE). TradingView's
+    // 'Profitable trades' counts each partial exit as a trade, and the break-even remainder after TP1
+    // exits at entry minus commission, i.e. as a small 'loss' inside a winning position.
+    float _fwaw = _fww > 0 ? _fwgw / _fww : na
+    float _fwal = _fwn - _fww > 0 ? _fwgl / (_fwn - _fww) : na
+    float _fwbe = not na(_fwaw) and not na(_fwal) and _fwaw + _fwal > 0 ? _fwal / (_fwaw + _fwal) * 100.0 : na
     string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpfOk ? "EDGE SHOWN" : "NOT SHOWN"
-    bool _fwtfOk = timeframe.in_seconds() == 900
     color _fwcT = color.new(#E6EDF3, 0)
-    table.cell(fwdTbl, 0, 0, "FORWARD TEST  v35", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
-    table.cell(fwdTbl, 1, 0, "from " + str.format_time(fwdStart, "yyyy-MM-dd HH:mm", "UTC") + " UTC  ·  " + timeframe.period + (_fwtfOk ? " (registered)" : "  NOT 15M: does not count"), text_color=_fwtfOk ? color.white : color.orange, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    table.cell(fwdTbl, 0, 0, "BACKTEST CARD (NOT COUNTED: record = website)  v42", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    table.cell(fwdTbl, 1, 0, "from " + str.format_time(fwdStart, "yyyy-MM-dd HH:mm", "UTC") + " UTC  ·  " + timeframe.period + "  display only (A7)", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
     _fwRow(1, "Positions (N)", str.tostring(_fwn) + (_fwn > 0 ? "   wins " + str.tostring(_fww) + " = " + str.tostring(_fww * 100.0 / _fwn, "#") + "%" : ""), _fwcT)
     _fwRow(2, "Mean $ / position", na(_fwm) ? "—" : str.tostring(_fwm, "#.##"), _fwcT)
     _fwRow(3, "95% CI of mean", na(_fwlo) ? "needs 10+ positions" : str.tostring(_fwlo, "#.##") + "  to  " + str.tostring(_fwhi, "#.##"), _fwcT)
@@ -5384,4 +5407,5 @@ if fwdShow and barstate.islast
     _fwRow(5, "Net $ (1 oz, pinned costs)", str.tostring(_fws, "#.##"), _fwcT)
     _fwRow(6, "VERDICT (pre-registered)", _fwv, _fwv == "EDGE SHOWN" ? color.lime : _fwv == "NOT SHOWN" ? color.orange : _fwcT)
     _fwRow(7, "Coverage", fwdBar0 > fwdStart ? "loaded history starts " + str.format_time(fwdBar0, "yyyy-MM-dd", "UTC") + " AFTER the test start: incomplete, use the weekly log" : _fwn == 0 ? "no closed position since the start yet" : "first counted entry " + str.format_time(_fwfirst, "yyyy-MM-dd HH:mm", "UTC"), fwdBar0 > fwdStart ? color.orange : _fwcT)
+    _fwRow(9, "Win rate vs break-even", na(_fwbe) ? "needs a win and a loss" : str.tostring(_fww * 100.0 / _fwn, "#") + "% vs " + str.tostring(_fwbe, "#") + "% needed  (avg win " + str.tostring(_fwaw, "#.##") + " / avg loss " + str.tostring(_fwal, "#.##") + ")", na(_fwbe) ? _fwcT : _fww * 100.0 / _fwn > _fwbe ? color.lime : color.orange)
     _fwRow(8, "Unit", "positions (partial exits summed); open positions excluded", color.new(#8FA3B8, 0))

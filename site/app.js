@@ -55,6 +55,9 @@ function applyTheme(t) {
   if (t) document.documentElement.setAttribute("data-theme", t); else document.documentElement.removeAttribute("data-theme");
 }
 applyTheme(store.get("theme", null));
+// header height -> CSS, so the sticky decision column starts just under it
+const setHdr = () => { const h = document.querySelector("header.top"); if (h) document.documentElement.style.setProperty("--hdr-h", h.offsetHeight + "px"); };
+new ResizeObserver(setHdr).observe(document.querySelector("header.top")); setHdr();
 $("#theme").onclick = () => {
   const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   const nx = cur === "light" ? "dark" : "light";
@@ -161,6 +164,7 @@ function renderLive() {
   const age = src === "stream" ? (ageMin < 1 ? Math.max(0, Math.round(ageMin * 60)) + " s" : Math.round(ageMin) + " min") : (ageMin < 1 ? "<1 min" : Math.round(ageMin) + " min");
   $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
+  try { renderQuote(); } catch (e) { console.error(e); }
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
     (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
@@ -416,6 +420,41 @@ function renderGuard() {
 setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
 
 /* ---------- header / banners ---------- */
+/* ---------- quote header (display only) ---------- */
+// Previous trading day's close: the last bar before the latest New York 17:00 rollover (the engine's
+// trading-day rule: a bar belongs to the date of its New York open time + 7 hours).
+function prevDayClose(D) {
+  const ch = D && D.chart; if (!ch || !ch.t || !ch.t.length) return null;
+  const day = (t) => new Date(t * 1000 + 7 * 3600e3).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  const last = day(ch.t[ch.t.length - 1]);
+  for (let i = ch.t.length - 2; i >= 0; i--) if (day(ch.t[i]) !== last) return ch.c[i];
+  return null;
+}
+let QPREV = null;
+function renderQuote() {
+  const D = S.data, pxEl = $("#q-px"), chEl = $("#q-chg"), mk = $("#q-mkt"); if (!D || !pxEl) return;
+  const closed = marketClosed(new Date());
+  const fb = D.meta && D.meta.forming;
+  const eng = fb && isNum(fb.c) ? fb.c : D.dashboard.close;
+  const live = !closed && LIVE.px !== null && !LIVE.err ? LIVE.px : null;
+  const p = isNum(live) ? live : eng;
+  const pc = prevDayClose(D);
+  pxEl.textContent = isNum(p) ? p.toFixed(2) : "—";   // the feed price (the MT5 offset applies to plan levels only)
+  pxEl.classList.remove("up", "dn");
+  if (isNum(QPREV) && isNum(p) && p !== QPREV) pxEl.classList.add(p > QPREV ? "up" : "dn");
+  QPREV = p;
+  if (isNum(p) && isNum(pc)) {
+    const d = p - pc;
+    chEl.textContent = `${d >= 0 ? "+" : ""}${d.toFixed(2)}  ${d >= 0 ? "+" : ""}${(d / pc * 100).toFixed(2)}%`;
+    chEl.className = d >= 0 ? "bull" : "bear";
+  } else { chEl.textContent = "—"; chEl.className = "muted"; }
+  const sess = (D.dashboard.session && D.dashboard.session.label) || "";
+  const SESS = { ASIAN: "Asia", LONDON: "London", NY: "New York", "LON-KZ": "London killzone", "LON-FIX": "London fix",
+    "LON-CL": "London close", "NY-KZ": "New York killzone", KZ: "killzone", OFF: "off-session" };
+  mk.textContent = closed ? "Market closed" : `Open · ${SESS[sess] || sess.toLowerCase() || "—"}`;
+  mk.className = "mkt " + (closed ? "closed" : "open");
+  mk.title = closed ? "Spot gold is shut Friday 17:00 to Sunday 18:00 New York and daily 17:00-18:00." : `Session of the last closed ${D.meta.tf} bar (engine label ${sess}).`;
+}
 function renderHeader() {
   const D = S.data; if (!D) return;
   const M = D.meta;
@@ -436,6 +475,7 @@ function renderHeader() {
   if (!M.synthetic && M.price_source.includes("GC=F")) b.push(`<div class="banner info">Price source is <b>COMEX gold futures</b> (spot XAU/USD was unavailable). Futures trade at a premium to spot; set the <b>MT5 offset</b> to your broker's difference. Add a free Twelve Data key to use spot.</div>`);
   if (M.volume_source && M.volume_source.startsWith("NONE")) b.push(`<div class="banner error">No volume source: volume-gated signals (BOS, displacement, climax) cannot fire.</div>`);
   $("#banners").innerHTML = b.join("");
+  renderQuote();
 }
 
 /* ---------- side panels ---------- */
@@ -457,7 +497,7 @@ function renderH2() {
   const side = now ? (now.dir === "LONG" ? "long" : "short") : tl !== ts ? (tl ? "long" : "short")
     : score(ck.long) >= score(ck.short) ? "long" : "short", c = ck[side] || {};
   const other = side === "long" ? "short" : "long";
-  const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}">${c[k] ? "✓" : "✗"} ${esc(side === "short" ? stx : lt)}</li>`).join("");
+  const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}"><span class="sr">${c[k] ? "met:" : "missing:"}</span>${esc(side === "short" ? stx : lt)}</li>`).join("");
   const p = now || H.last_signal;
   const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}${held ? " (not taken)" : ""}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(sweep bar ${tfmt(p.sweep_t)})</span>` +
     (held ? ` <span class="warn">H2 already holds this ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)}; it takes one position at a time, so the open trade below is the one that counts.</span>` : "") + `</div>` : "";
@@ -465,7 +505,7 @@ function renderH2() {
   const nm = H.next_move_in_sample || {}, fw = H.forward || {}, fr = H.freeze || {};
   const next = nm.n ? `After ${nm.n} past H2 signals on ${esc(D.meta.tf)} (in-sample): TP1 reached first ${f(nm.tp1_first_pct, 0)}%, stop first ${f(nm.stop_first_pct, 0)}%, mean ${fs(nm.mean_r, 2)} R, median ${fs(nm.median_r, 2)} R, about ${f(nm.avg_bars, 0)} bars to the exit.` : "No past H2 signals on this timeframe yet.";
   const fwd = fw.n ? `${fw.n} closed · win ${f(fw.win_rate, 0)}% · mean ${fs(fw.avg_r, 2)} R · PF ${f(fw.profit_factor, 2)}` : "no closed trades yet";
-  el.innerHTML = `<div class="why"><b>${esc(side === "long" ? "Long" : "Short")} side, ${score(c)}/5 rules met</b> <span class="dim">(${other} side ${score(ck[other])}/5)</span><ul class="gates">${rows}</ul></div>` + planHtml + openHtml +
+  el.innerHTML = `<div class="why"><div class="rhead"><b>${esc(side === "long" ? "Long" : "Short")} side · ${score(c)}/5 rules met</b>${ruleMeter(score(c), 5)}<span class="dim">${other} side ${score(ck[other])}/5</span></div><ul class="gates">${rows}</ul></div>` + planHtml + openHtml +
     `<div class="why"><b>Next movement:</b> ${next} <span class="dim">Small samples: a pattern, not a forecast.</span></div>` +
     `<div class="why"><b>Forward record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${fwd}. Decision on 1H after 50 trades (Amendment 5).</div>`;
 }
@@ -485,7 +525,7 @@ function renderH3() {
   const side = now ? (now.dir === "LONG" ? "long" : "short") : tl !== ts ? (tl ? "long" : "short")
     : score(ck.long) >= score(ck.short) ? "long" : "short", c = ck[side] || {};
   const other = side === "long" ? "short" : "long";
-  const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}">${c[k] ? "✓" : "✗"} ${esc(side === "short" ? stx : lt)}</li>`).join("");
+  const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}"><span class="sr">${c[k] ? "met:" : "missing:"}</span>${esc(side === "short" ? stx : lt)}</li>`).join("");
   const sc = ck.scores || {};
   const trendLine = `<span class="dim">trend scores 1H ${f(sc["60"], 0)} · 4H ${f(sc["240"], 0)} · 1D ${f(sc.D, 0)} · swing ${side === "long" ? "low " + px(ck.swing_low) : "high " + px(ck.swing_high)}</span>`;
   const p = now || H.last_signal;
@@ -495,9 +535,15 @@ function renderH3() {
   const nm = H.next_move_in_sample || {}, fw = H.forward || {}, fr = H.freeze || {};
   const next = nm.n ? `After ${nm.n} past H3 signals on ${esc(D.meta.tf)} (in-sample): TP1 reached first ${f(nm.tp1_first_pct, 0)}%, stop first ${f(nm.stop_first_pct, 0)}%, mean ${fs(nm.mean_r, 2)} R, median ${fs(nm.median_r, 2)} R, about ${f(nm.avg_bars, 0)} bars to the exit.` : "No past H3 signals on this timeframe yet.";
   const fwd = fw.n ? `${fw.n} closed · win ${f(fw.win_rate, 0)}% · mean ${fs(fw.avg_r, 2)} R · PF ${f(fw.profit_factor, 2)}` : "no closed trades yet";
-  el.innerHTML = `<div class="why"><b>${side === "long" ? "Long" : "Short"} side, ${score(c)}/${keys.length} rules met</b> <span class="dim">(${other} side ${score(ck[other])}/${keys.length})</span><ul class="gates">${rows}</ul>${trendLine}</div>` + planHtml + openHtml +
+  el.innerHTML = `<div class="why"><div class="rhead"><b>${side === "long" ? "Long" : "Short"} side · ${score(c)}/${keys.length} rules met</b>${ruleMeter(score(c), keys.length)}<span class="dim">${other} side ${score(ck[other])}/${keys.length}</span></div><ul class="gates">${rows}</ul>${trendLine}</div>` + planHtml + openHtml +
     `<div class="why"><b>Next movement:</b> ${next} <span class="dim">Small samples: a pattern, not a forecast.</span></div>` +
     `<div class="why"><b>Forward record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${fwd}. Decision on 1H after 50 trades (Amendment 7).</div>`;
+}
+
+// segmented progress for "n of total rules met" (display only)
+function ruleMeter(n, total) {
+  const cls = n === total ? "full" : n >= total - 1 ? "near" : "";
+  return `<span class="rmeter ${cls}" role="img" aria-label="${n} of ${total} rules met">${Array.from({ length: total }, (_, i) => `<i class="${i < n ? "on" : ""}"></i>`).join("")}</span>`;
 }
 
 /* ---------- decision transparency (DISPLAY ONLY; reads what the engine already published) ---------- */
@@ -509,12 +555,12 @@ function whyHtml(d, D) {
   if (/^RANGE/.test(log)) return `<div class="why"><b>Why ${esc(d.decision)}:</b> the market is ranging, so no side has an edge. The engine trades only in a trend.</div>`;
   const m = log.match(/^([▲▼])\d\/7(?: \[✗([^\]]*)\])?/); if (!m) return "";
   const side = m[1] === "▲" ? "long" : "short", fails = (m[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x));
-  const rows = GATES.map(([k, txt]) => `<li class="${fails.includes(k) ? "bad" : "ok"}">${fails.includes(k) ? "✗" : "✓"} ${txt}${k === "Sess" && d.blk_why && d.blk_why.startsWith("SESS") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}${k === "Trend" && d.blk_why && d.blk_why.startsWith("TREND") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}</li>`).join("");
+  const rows = GATES.map(([k, txt]) => `<li class="${fails.includes(k) ? "bad" : "ok"}"><span class="sr">${fails.includes(k) ? "missing:" : "met:"}</span>${txt}${k === "Sess" && d.blk_why && d.blk_why.startsWith("SESS") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}${k === "Trend" && d.blk_why && d.blk_why.startsWith("TREND") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}</li>`).join("");
   const fn = d.funnel || {}, rate = fn.bars ? fn.sig / fn.bars : null, wk = 5 * 23 * 3600 / D.meta.tf_sec;
   const passed = isNum(fn.pass_) && fn.bars ? fn.pass_ / fn.bars : null;
   const waitFor = d.decision === "WAIT" ? (fails.length === 1 && fails[0] === "Trig" ? `Everything is in place for a ${side}. It is waiting for a trigger bar.` :
     `A ${side} still needs: ${fails.map((f) => (GATES.find((g) => g[0] === f) || [f, f])[1]).join("; ")}.`) : "";
-  return `<div class="why"><b>${d.decision === "WAIT" ? "Why WAIT" : "Gates"} (${side} side):</b> ${esc(waitFor)}<ul class="gates">${rows}</ul>` +
+  return `<div class="why"><div class="rhead"><b>${d.decision === "WAIT" ? "Why WAIT" : "Gates"} · ${side} side · ${7 - fails.length}/7 gates</b>${ruleMeter(7 - fails.length, 7)}</div>${waitFor ? `<p class="lead">${esc(waitFor)}</p>` : ""}<ul class="gates">${rows}</ul>` +
     (rate !== null ? `<div class="dim">Over the last ${fn.bars} ${esc(D.meta.tf)} bars, entry signals fired on ${fn.sig} (${(rate * 100).toFixed(1)}%)` +
       (passed !== null ? ` and ${fn.pass_} also passed the quality, EV and probability vetoes (about ${(passed * wk).toFixed(1)} a week)` : "") +
       `. Most bars are WAIT by design: an entry needs every gate on the same bar.</div>` : "") + `</div>`;
@@ -668,10 +714,11 @@ function chartOpts() {
   const tf = (t) => { try { return isNum(t) ? tfmt(t, true) : ""; } catch (e) { return ""; } };
   return {
     layout: { background: { type: "solid", color: css("--card") }, textColor: css("--muted"), fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
-    grid: { vertLines: { color: css("--line") + "80" }, horzLines: { color: css("--line") + "80" } },
+    grid: { vertLines: { color: css("--grid") }, horzLines: { color: css("--grid") } },
     rightPriceScale: { borderColor: css("--line") },
+    watermark: { visible: true, text: `XAUUSD · ${S.tf}`, color: css("--text") + "0d", fontSize: 44, fontFamily: "Inter, system-ui, sans-serif", fontStyle: "800" },
     timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false, rightOffset: 14, tickMarkFormatter: tickFmt },
-    crosshair: { mode: 0 },
+    crosshair: { mode: 0, vertLine: { color: css("--dim"), style: 3, labelBackgroundColor: css("--card-2") }, horzLine: { color: css("--dim"), style: 3, labelBackgroundColor: css("--card-2") } },
     localization: { timeFormatter: tf, locale: LOCALE },
     handleScroll: true, handleScale: true,
   };
@@ -684,26 +731,29 @@ function buildCharts() {
   const LC = window.LightweightCharts;
   // autoSize: both panes follow their box (CSS sizes it to the viewport), width and height.
   const main = LC.createChart($("#chart"), { ...chartOpts(), autoSize: true, rightPriceScale: { ...chartOpts().rightPriceScale, scaleMargins: { top: 0.12, bottom: 0.08 } } });
-  const sub = LC.createChart($("#subchart"), { ...chartOpts(), autoSize: true, timeScale: { ...chartOpts().timeScale, visible: false } });
+  const sub = LC.createChart($("#subchart"), { ...chartOpts(), autoSize: true, watermark: { visible: false }, timeScale: { ...chartOpts().timeScale, visible: false } });
   // Overlays never drive the price scale: a weekly level or a cone far from price used to squeeze
   // the candles into ~40% of the pane. The scale follows the candles (and the plan, below).
-  const line = (color, w = 1, style = 0) => main.addLineSeries({ color, lineWidth: w, lineStyle: style, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null });
-  const candles = main.addCandlestickSeries({ upColor: css("--bull"), downColor: css("--bear"), wickUpColor: css("--bull"), wickDownColor: css("--bear"), borderVisible: false,
+  // every line is named: its title shows on the price-axis label (levels already carry named price lines)
+  const line = (color, w = 1, style = 0, title = "") => main.addLineSeries({ color, lineWidth: w, lineStyle: style, title, lastValueVisible: !!title, priceLineVisible: false, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null });
+  const candles = main.addCandlestickSeries({ upColor: css("--candle-up"), downColor: css("--candle-dn"), wickUpColor: css("--candle-up"), wickDownColor: css("--candle-dn"), borderVisible: false,
     autoscaleInfoProvider: (orig) => planScale(orig()) });
   const zones = new ZonesPrimitive();
   candles.attachPrimitive(zones);
   const L = {
-    ema20: line("#e6edf6", 1), ema100: line("#4da3ff", 1), ema200: line("#f2c96b", 2),
-    vwap: line("#00bcd4", 2), wvwap: line("#00bcd499", 1, 2), mvwap: line("#00bcd466", 1, 2),
-    bb_up: line("#b084ff99", 1), bb_lo: line("#b084ff99", 1), bb_mid: line("#b084ff55", 1, 2),
-    pdh: line("#ffd54f", 1, 1), pdl: line("#ffd54f", 1, 1), pwh: line("#ff8a65", 1, 1), pwl: line("#ff8a65", 1, 1),
-    vpoc: line("#ffd54fcc", 1, 3), vah: line("#ffd54f77", 1, 3), val: line("#ffd54f77", 1, 3),
-    cone_u: line("#9aa5b1", 1, 2), cone_l: line("#9aa5b1", 1, 2),
+    // overlay hues (blue / gold / magenta) pass colour-blind separation in both themes; EMA20 and the bands are neutral
+    ema20: line(css("--ov-ema20"), 1, 0, "EMA 20"), ema100: line(css("--ov-ema100"), 1, 0, "EMA 100"), ema200: line(css("--ov-ema200"), 2, 0, "EMA 200"),
+    vwap: line(css("--ov-vwap"), 2, 0, "VWAP D"), wvwap: line(css("--ov-vwap") + "99", 1, 2, "VWAP W"), mvwap: line(css("--ov-vwap") + "66", 1, 2, "VWAP M"),
+    bb_up: line(css("--ov-band") + "aa", 1, 0, "BB upper"), bb_lo: line(css("--ov-band") + "aa", 1, 0, "BB lower"), bb_mid: line(css("--ov-band") + "66", 1, 2, "BB basis"),
+    // levels are neutral (their price-line labels name them); line style separates day / week / value area
+    pdh: line(css("--muted") + "aa", 1, 1), pdl: line(css("--muted") + "aa", 1, 1), pwh: line(css("--dim") + "aa", 1, 2), pwl: line(css("--dim") + "aa", 1, 2),
+    vpoc: line(css("--text") + "88", 1, 3, "POC"), vah: line(css("--muted") + "77", 1, 3, "VAH"), val: line(css("--muted") + "77", 1, 3, "VAL"),
+    cone_u: line(css("--dim"), 1, 2, "Cone upper"), cone_l: line(css("--dim"), 1, 2, "Cone lower"),
   };
   const subS = {
-    bull: sub.addLineSeries({ color: css("--bull"), lineWidth: 1, priceLineVisible: false, lastValueVisible: true }),
-    bear: sub.addLineSeries({ color: css("--bear"), lineWidth: 1, priceLineVisible: false, lastValueVisible: true }),
-    range: sub.addLineSeries({ color: css("--neutral"), lineWidth: 1, priceLineVisible: false, lastValueVisible: false }),
+    bull: sub.addLineSeries({ color: css("--bull"), lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: "Long score" }),
+    bear: sub.addLineSeries({ color: css("--bear"), lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: "Short score" }),
+    range: sub.addLineSeries({ color: css("--neutral"), lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: "Range" }),
     tq: sub.addHistogramSeries({ color: css("--accent") + "55", priceScaleId: "tq", priceLineVisible: false, lastValueVisible: false }),
   };
   sub.priceScale("tq").applyOptions({ scaleMargins: { top: 0.6, bottom: 0 }, visible: false });
@@ -731,6 +781,7 @@ function renderChart() {
     const fb = D.meta.forming; bars.push({ time: fb.t, open: fb.o, high: fb.h, low: fb.l, close: fb.c, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") });
   }
   C.candles.setData(bars);
+  C.main.applyOptions({ watermark: { text: `XAUUSD · ${S.tf}` } });
   if (bars.length) applyLiveBar(bars[bars.length - 1].time);
   const set = (k, on) => C.L[k].setData(on ? series(t, ch[k], ch.anchor && ch.anchor[k]) : []);
   ["ema20", "ema100", "ema200"].forEach((k) => set(k, T.ema));
@@ -836,16 +887,28 @@ function fitView() {
   C.main.priceScale("right").applyOptions({ autoScale: true });
   C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show), to: n - 1 + pad });
 }
+// The chart key: every visible line by name, with its colour, style and value at the hovered bar.
+const KEY = [["ema", [["ema20", "EMA 20", "--ov-ema20", "solid"], ["ema100", "EMA 100", "--ov-ema100", "solid"], ["ema200", "EMA 200", "--ov-ema200", "thick"]]],
+  ["vwap", [["vwap", "VWAP D", "--ov-vwap", "thick"], ["wvwap", "VWAP W", "--ov-vwap", "dash"], ["mvwap", "VWAP M", "--ov-vwap", "dash"]]],
+  ["bb", [["bb_up", "BB upper", "--ov-band", "solid"], ["bb_mid", "BB basis", "--ov-band", "dash"], ["bb_lo", "BB lower", "--ov-band", "solid"]]],
+  ["levels", [["pdh", "PDH", "--muted", "dot"], ["pdl", "PDL", "--muted", "dot"], ["pwh", "PWH", "--dim", "dash"], ["pwl", "PWL", "--dim", "dash"]]],
+  ["vp", [["vpoc", "POC", "--text", "dot"], ["vah", "VAH", "--muted", "dot"], ["val", "VAL", "--muted", "dot"]]]];
 function legend(prm) {
   const D = S.data; if (!D) return;
   const ch = D.chart;
   let i = ch.t.length - 1;
   if (prm && prm.time) { const k = ch.t.indexOf(prm.time); if (k >= 0) i = k; }
   const col = ch.c[i] >= ch.o[i] ? "bull" : "bear";
-  $("#legend").innerHTML = `<span>${tfmt(ch.t[i])}</span><span class="${col}">O <b>${f(ch.o[i])}</b> H <b>${f(ch.h[i])}</b> L <b>${f(ch.l[i])}</b> C <b>${f(ch.c[i])}</b></span>` +
-    `<span>EMA20 <b>${f(ch.ema20[i])}</b> 200 <b>${f(ch.ema200[i])}</b></span><span>VWAP <b>${f(ch.vwap[i])}</b></span>` +
-    `<span>L/R/S <b class="bull">${f(ch.bull[i], 0)}</b>/<b>${f(ch.range[i], 0)}</b>/<b class="bear">${f(ch.bear[i], 0)}</b> TQ <b>${f(ch.tq[i], 0)}</b></span><span>${esc(ch.session[i] || "")}</span>` +
-    (C && C.tags && C.tags.get(ch.t[i]) ? `<span class="warn">${esc(C.tags.get(ch.t[i]).join(" · "))}</span>` : "");
+  const chg = i > 0 && isNum(ch.c[i]) && isNum(ch.c[i - 1]) ? ch.c[i] - ch.c[i - 1] : null;
+  const keys = KEY.filter(([t]) => S.toggles[t]).flatMap(([, ls]) => ls).filter(([k]) => ch[k] && isNum(ch[k][i]))
+    .map(([k, name, v, st]) => `<span class="lk"><i class="sw ${st}" style="--c:${css(v)}"></i>${name} <b>${f(ch[k][i])}</b></span>`).join("");
+  const tags = C && C.tags && C.tags.get(ch.t[i]);
+  $("#legend").innerHTML =
+    `<div class="lrow"><span class="lt">XAUUSD · ${esc(D.meta.tf)} · ${tfmt(ch.t[i])}</span><span class="${col}">O <b>${f(ch.o[i])}</b> H <b>${f(ch.h[i])}</b> L <b>${f(ch.l[i])}</b> C <b>${f(ch.c[i])}</b>` +
+    (isNum(chg) ? ` <b class="${chg >= 0 ? "bull" : "bear"}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}</b>` : "") + `</span>` +
+    `<span>Long <b class="bull">${f(ch.bull[i], 0)}</b> · Range <b>${f(ch.range[i], 0)}</b> · Short <b class="bear">${f(ch.bear[i], 0)}</b> · TQ <b>${f(ch.tq[i], 0)}</b></span>` +
+    (ch.session[i] ? `<span class="tag">${esc(ch.session[i])}</span>` : "") + (tags ? `<span class="tag warn">${esc(tags.join(" · "))}</span>` : "") + `</div>` +
+    (keys ? `<div class="lrow keys">${keys}</div>` : "");
 }
 
 /* ---------- tabs ---------- */

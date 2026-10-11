@@ -421,3 +421,15 @@ here before H3 is run on any price history. Any change restarts H3.
 - **Decision:** the same standard as H2: the 1H record decides; N ≥ 50, the 95% t-interval of mean R above 0
   and PF ≥ 1.2; by 2027-03-31, otherwise NOT SHOWN. **Multiplicity:** H3 is a fifth hypothesis on the same
   market and period; each arm is reported on its own terms and none borrows another's evidence.
+
+**Amendment 7 — start record** (filled in after the merge; facts only, nothing decided here). PR #27 merged
+2026-10-11 (merge commit `295a2e56`); the first pipeline run of the new code (workflow run `38163424458`) froze:
+
+| Test | Freeze key | Start (UTC) | Status |
+|---|---|---|---|
+| §7 Treatment / Control / Challenger | `5e4630924d663fc5:92b67584f33cc1f0` | 2026-10-11 18:22:45 | RESET (previous key `…:3252a9f0d312db75` in the manifest history) |
+| H2 (Amendment 5) | `5e4630924d663fc5:92b67584f33cc1f0:adeaccb163806651` | 2026-10-11 18:22:45 | RESET |
+| H3 (Amendment 7 §3) | `5e4630924d663fc5:92b67584f33cc1f0:0eb650f81d99803e` | 2026-10-11 18:22:45 | STARTED |
+
+Checked on `forward-ledger` @ `da366f16`: the archived 1H Treatment ledger holds both earlier trades (28 Sep, −1.021R;
+7 Oct, −1.035R) and every new ledger starts empty. The decision rules and the decision date are unchanged.

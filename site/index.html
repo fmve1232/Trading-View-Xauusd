@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e13">
   <title>XAUUSD Quantum</title>
   <meta name="description" content="XAUUSD Quantum 5.0 engine, running on free market data: decision, trade plan, analog statistics, three-arm backtest and a frozen forward holdout.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d4a846'/%3E%3Ctext x='16' y='22' font-family='Arial' font-weight='800' font-size='15' text-anchor='middle' fill='%231a1305'%3EAu%3C/text%3E%3C/svg%3E">
@@ -15,7 +16,12 @@
 <header class="top">
   <div class="brand">
     <div class="logo">Au</div>
-    <div>XAUUSD Quantum<small id="engine-ver">engine —</small></div>
+    <div><b>XAUUSD</b> <span class="q">QUANTUM</span><small id="engine-ver">engine —</small></div>
+  </div>
+  <div class="quote" id="quote" title="Last price: the live quote while the market is open, otherwise the engine's last close. Change is against the previous trading day's close (New York 17:00 rollover). Display only.">
+    <div class="sym"><b>XAU/USD</b><span>Gold spot · US dollar</span></div>
+    <div class="qpx"><span id="q-px">—</span><span id="q-chg" class="muted">—</span></div>
+    <span class="mkt" id="q-mkt">—</span>
   </div>
   <div class="tf-tabs" id="tf-tabs"></div>
   <div class="chips">
@@ -36,7 +42,7 @@
     <section class="card chart-card">
       <div class="toolbar" id="toolbar"></div>
       <div id="chart"><div class="legend" id="legend"></div></div>
-      <div id="subchart"></div>
+      <div id="subchart"><div class="legend sublegend"><div class="lrow keys"><span class="lt">Scores</span><span class="lk"><i class="sw solid" style="--c:var(--bull)"></i>Long score</span><span class="lk"><i class="sw solid" style="--c:var(--neutral)"></i>Range</span><span class="lk"><i class="sw solid" style="--c:var(--bear)"></i>Short score</span><span class="lk"><i class="sw bar" style="--c:var(--accent)"></i>Trade quality (bars)</span></div></div></div>
     </section>
       <div class="card" id="tv-card"><div class="hd"><h3>TradingView chart <span class="dim">(OANDA:XAUUSD · display only)</span></h3><button class="pill" id="tv-toggle" type="button">Show</button></div><div class="bd" id="tv-wrap"><p class="muted">TradingView's own live OANDA chart, for a visual cross-check with the chart above. It follows this page's timeframe, time zone and theme. It is a third-party script, so it loads only when you press <b>Show</b>. Nothing on this page reads from it.</p></div></div>
       <div class="card" id="cal-card"><div class="hd"><h3>Calendar &amp; news <span class="dim">(USD)</span></h3><span class="pill" id="ev-state">—</span></div><div class="bd" id="events"><span class="muted">loading…</span></div></div>
@@ -74,7 +80,7 @@
 </main>
 <footer>
   Research tool, not investment advice. Free data is delayed and can be wrong; every source and its freshness is shown in Diagnostics.
-  Engine: a Python port of the Pine Master (build v32) and its three arms, web build Q7.2-web.3 — <a href="https://github.com/fmve1232/Trading-View-Xauusd">source on GitHub</a>.<br>
+  Engine: a Python port of the Pine Master (build v32, with the v33–v50 fixes of Amendment 7), its three arms and arms H2 / H3, web build Q7.2-web.5 — <a href="https://github.com/fmve1232/Trading-View-Xauusd">source on GitHub</a>.<br>
   Charts: TradingView Lightweight Charts™, Copyright (c) 2025 TradingView, Inc. <a href="https://www.tradingview.com/">https://www.tradingview.com/</a> (Apache-2.0, <a href="vendor/LIGHTWEIGHT-CHARTS-LICENSE.txt">licence</a>).
 </footer>
 <script src="app.js"></script>
