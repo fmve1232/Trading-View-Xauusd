@@ -120,7 +120,7 @@ setInterval(async () => {
     if (!S.index || ix.generated_utc !== S.index.generated_utc) load();
     else renderHeader();
   } catch (e) { /* offline: keep what we have */ }
-}, 60000);
+}, 20000);   // a new engine run is picked up within 20 s of being published, without a page reload
 
 /* ---------- live spot ticker (DISPLAY ONLY: the engine never reads it) ---------- */
 const LIVE_URL = "https://api.gold-api.com/price/XAU";
@@ -133,8 +133,10 @@ function marketClosed(d) {
   const dow = ny.getDay(), h = ny.getHours();
   return dow === 6 || (dow === 5 && h >= 17) || (dow === 0 && h < 18) || (dow >= 1 && dow <= 4 && h === 17);
 }
+let LIVE_FAILS = 0;
 async function pollLive() {
   if (document.hidden || streaming()) return;
+  if (LIVE_FAILS && Date.now() < (LIVE.next || 0)) return;            // backing off after errors
   try {
     const r = await fetch(LIVE_URL, { cache: "no-store" });
     if (!r.ok) throw new Error("HTTP " + r.status);
@@ -145,8 +147,9 @@ async function pollLive() {
     if (!isNum(p) || p <= 0) throw new Error("no price in the response");
     // a feed glitch must not look like a market move: reject anything >5% from the engine's last close
     if (isNum(ref) && Math.abs(p / ref - 1) > 0.05) throw new Error(`rejected ${p.toFixed(2)} (more than 5% from the engine close ${ref.toFixed(2)})`);
-    Object.assign(LIVE, { px: p, t: isFinite(ts) ? ts : Date.now(), err: "", src: "gold-api" });
-  } catch (e) { LIVE.err = (e && e.message) || "unavailable"; }
+    Object.assign(LIVE, { px: p, t: isFinite(ts) ? ts : Date.now(), err: "", src: "gold-api", rx: Date.now() });
+    LIVE_FAILS = 0;
+  } catch (e) { LIVE.err = (e && e.message) || "unavailable"; LIVE_FAILS++; LIVE.next = Date.now() + Math.min(5000 * 2 ** LIVE_FAILS, 120000); }
   renderLive();
 }
 function renderLive() {
@@ -164,13 +167,15 @@ function renderLive() {
   const age = src === "stream" ? (ageMin < 1 ? Math.max(0, Math.round(ageMin * 60)) + " s" : Math.round(ageMin) + " min") : (ageMin < 1 ? "<1 min" : Math.round(ageMin) + " min");
   $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
-  try { renderQuote(); } catch (e) { console.error(e); }
+  try { renderQuote(); renderBrief(); } catch (e) { console.error(e); }
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
     (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
   renderGuard();
 }
-setInterval(pollLive, 60000);
+// Every 5 s while the tab is visible, the market is open and the tick stream is not delivering
+// (the stream, when it works, sends up to 4 ticks a second). Errors back off to 2 minutes.
+setInterval(() => { if (!marketClosed(new Date()) || LIVE.px === null) pollLive(); }, 5000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) pollLive(); });
 
 /* ---------- streaming ticks via the relay (DISPLAY ONLY; never read by the engine) ---------- */
@@ -206,7 +211,7 @@ function onTick(k, replay) {
   const ref = S.data && S.data.dashboard ? S.data.dashboard.close : null;
   if (isNum(ref) && Math.abs(p / ref - 1) > 0.05) { STREAM.status = `rejected ${p.toFixed(2)} (>5% from the engine close)`; renderLive(); return; }
   if (!replay) STREAM.rx = Date.now();
-  Object.assign(LIVE, { px: p, t, err: "", src: "stream" });
+  Object.assign(LIVE, { px: p, t, err: "", src: "stream", rx: Date.now() });
   if (!replay) updateLiveBar({ p, t, h: Number(k.h), l: Number(k.l) });
   renderLive();
 }
@@ -575,10 +580,32 @@ function nextLevels(D, price) {
   const below = uniq(L.filter(([, v]) => v < price).sort((a, b) => b[1] - a[1]));
   return { above, below };
 }
+// The live price for display: fresh (< 2 min) and the market open; otherwise null.
+function livePrice() {
+  if (marketClosed(new Date()) || LIVE.px === null || LIVE.err) return null;
+  return Date.now() - (LIVE.rx || LIVE.t) < 120000 ? LIVE.px : null;
+}
+// 1-second clock: live badge, countdown to the bar close and to the next engine refresh.
+function tickClock() {
+  const D = S.data, lv = $("#brief-live"), ck = $("#brief-clock"); if (!D || !lv || !ck) return;
+  const closed = marketClosed(new Date()), now = Date.now();
+  if (closed) { lv.className = "lpill off"; lv.textContent = "Market closed"; }
+  else if (livePrice() !== null) {
+    const age = Math.max(0, (now - (LIVE.rx || LIVE.t)) / 1000), src = LIVE.src === "stream" && streaming() ? "ticks" : "gold-api · 5 s";
+    lv.className = "lpill on"; lv.textContent = `Live · ${src} · ${age < 10 ? age.toFixed(1) : Math.round(age)} s ago`;
+  } else { lv.className = "lpill stale"; lv.textContent = "Live price unavailable"; }
+  const tf = D.meta.tf_sec, t = now / 1000, nextClose = (Math.floor(t / tf) + 1) * tf;
+  const mmss = (x) => `${Math.floor(x / 60)}:${String(Math.floor(x % 60)).padStart(2, "0")}`;
+  // the scheduler dispatches at :01 / :16 / :31 / :46; a run takes about 2-3 minutes to publish
+  const d0 = new Date(now), m = d0.getUTCMinutes(), slot = [1, 16, 31, 46].find((x) => x > m);
+  const disp = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate(), d0.getUTCHours() + (slot === undefined ? 1 : 0), slot === undefined ? 1 : slot) + 180000);
+  ck.textContent = closed ? "engine resumes when the market reopens" : `${D.meta.tf} bar closes in ${mmss(nextClose - t)} · next engine update ≈ ${tfmt(disp.getTime() / 1000, false)}`;
+}
+setInterval(tickClock, 1000);
 function renderBrief() {
   const el = $("#brief"), D = S.data; if (!el || !D) return;
   const d = D.dashboard, ch = D.chart, p = d.plan || {}, M = D.meta;
-  const fb = M.forming, price = fb && isNum(fb.c) ? fb.c : d.close;
+  const fb = M.forming, eng = fb && isNum(fb.c) ? fb.c : d.close, lp = livePrice(), price = isNum(lp) ? lp : eng;
   const last = ch.t.length - 1, e200 = ch.ema200[last], up = d.bull_score >= d.bear_score;
   const tile = (cls, icon, k, v, sub) => `<div class="bt ${cls}"><div class="bk">${IC[icon] || ""}${k}</div><div class="bv">${v}</div><div class="bs">${sub}</div></div>`;
   // 1 trend
@@ -619,9 +646,11 @@ function renderBrief() {
   const t6 = `<div class="bt plan ${sig ? (p.long ? "bull" : "bear") : ""}"><div class="bk">${IC.plan}Trade plan ${sig ? "" : '<span class="hyp">hypothetical · no signal</span>'}</div>
     <div class="bv">${planV}</div>
     <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
-    <div class="bs">${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
-  el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="dim">XAUUSD · ${esc(M.tf)} · bar closed ${tfmt(Date.parse(M.last_bar_close) / 1000)} · price ${px(price)}</span></div>
+    <div class="bs">${isNum(p.sl) && isNum(p.tp1) ? `Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>` : ""}${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
+  el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="lpill" id="brief-live"></span><span class="bpx">${px(price)}</span>` +
+    `<span class="dim">XAUUSD · ${esc(M.tf)} · analysis as of the bar closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</span><span class="dim clk" id="brief-clock"></span></div>
     <div class="bgrid">${t1}${t2}${t3}${t4}${t5}${t6}</div>`;
+  tickClock();
 }
 
 // segmented progress for "n of total rules met" (display only)
