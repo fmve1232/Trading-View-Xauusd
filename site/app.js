@@ -540,6 +540,90 @@ function renderH3() {
     `<div class="why"><b>Forward record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${fwd}. Decision on 1H after 50 trades (Amendment 7).</div>`;
 }
 
+/* ---------- Market Brief: the six answers a trader needs in the first seconds (display only) ----------
+   Everything here is read from what the engine already published for the last closed bar; nothing is
+   forecast here. "Where it is heading" is the engine's own lean and liquidity reach, not a prediction. */
+const IC = {
+  up: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 11 8 5l5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  dn: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 5l5 6 5-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  side: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12M10 4l4 4-4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  drop: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2s4.5 5 4.5 8a4.5 4.5 0 0 1-9 0C3.5 7 8 2 8 2Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  target: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2.4" fill="currentColor"/></svg>',
+  hand: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="3" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>',
+  plan: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3h10M3 8h10M3 13h6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+};
+const htfDir = (sc) => (!isNum(sc) || sc === 50 ? "n/a" : sc >= 60 ? "up" : sc <= 40 ? "down" : "mixed");
+function lastSweep(D) {
+  const ch = D.chart, sw = (D.markers || []).filter((m) => m.type === "SWEEP");
+  if (!sw.length) return null;
+  const m = sw[sw.length - 1], i = ch.t.indexOf(m.t);
+  // which pool it took: the PDH/PWH (PDL/PWL) level the wick went through, closest to the wick
+  const cands = m.dir < 0 ? [["PDH", ch.pdh], ["PWH", ch.pwh]] : [["PDL", ch.pdl], ["PWL", ch.pwl]];
+  let pool = m.dir < 0 ? "PMH" : "PML", lvl = null;
+  if (i >= 0) for (const [nm, arr] of cands) {
+    const v = arr && arr[i];
+    if (isNum(v) && (m.dir < 0 ? m.px >= v : m.px <= v) && (lvl === null || Math.abs(m.px - v) < Math.abs(m.px - lvl))) { pool = nm; lvl = v; }
+  }
+  return { ...m, pool, lvl, barsAgo: i >= 0 ? ch.t.length - 1 - i : null };
+}
+function nextLevels(D, price) {
+  const d = D.dashboard, lq = d.liquidity || {}, P = lq.pools || {}, st = d.struct || {};
+  const L = [["PDH", P.PDH], ["PDL", P.PDL], ["PWH", P.PWH], ["PWL", P.PWL], ["PMH", P.PMH], ["PML", P.PML], ["EQH", P.EQH], ["EQL", P.EQL],
+    ["Day high", lq.cdh], ["Day low", lq.cdl], ["Swing high", st.swing_res], ["Swing low", st.swing_sup]].filter(([, v]) => isNum(v));
+  const uniq = (arr) => arr.filter((x, k) => !arr.slice(0, k).some((y) => Math.abs(y[1] - x[1]) < 0.01));
+  const above = uniq(L.filter(([, v]) => v > price).sort((a, b) => a[1] - b[1]));
+  const below = uniq(L.filter(([, v]) => v < price).sort((a, b) => b[1] - a[1]));
+  return { above, below };
+}
+function renderBrief() {
+  const el = $("#brief"), D = S.data; if (!el || !D) return;
+  const d = D.dashboard, ch = D.chart, p = d.plan || {}, M = D.meta;
+  const fb = M.forming, price = fb && isNum(fb.c) ? fb.c : d.close;
+  const last = ch.t.length - 1, e200 = ch.ema200[last], up = d.bull_score >= d.bear_score;
+  const tile = (cls, icon, k, v, sub) => `<div class="bt ${cls}"><div class="bk">${IC[icon] || ""}${k}</div><div class="bv">${v}</div><div class="bs">${sub}</div></div>`;
+  // 1 trend
+  const bl = d.bias_label || "—", tUp = /BULL/.test(bl), tDn = /BEAR/.test(bl);
+  const st = d.struct || {}, sType = st.bull_act ? `bullish ${st.bull_type}` : st.bear_act ? `bearish ${st.bear_type}` : "no active break";
+  const sAge = st.bull_act ? st.bull_age : st.bear_act ? st.bear_age : null;
+  const mtf = (d.mtf && d.mtf.scores) || {};
+  const t1 = tile(tUp ? "bull" : tDn ? "bear" : "", tUp ? "up" : tDn ? "dn" : "side", `Current trend · ${esc(M.tf)}`, esc(bl.replace("-ISH", "ISH").replace("BULLISH", "Bullish").replace("BEARISH", "Bearish").replace("BULL", "Bull").replace("BEAR", "Bear").replace("RANGE", "Range").replace("NEUTRAL", "Neutral")),
+    ((tUp && htfDir(mtf["240"]) === "down" && htfDir(mtf.D) === "down") || (tDn && htfDir(mtf["240"]) === "up" && htfDir(mtf.D) === "up") ? '<b class="warn">Against the 4H and 1D trend.</b><br>' : "") + `Price ${isNum(e200) ? (price > e200 ? "above" : "below") + " EMA 200" : ""} · structure ${esc(sType)}${isNum(sAge) && sAge >= 0 ? ` (${sAge} bars ago)` : ""}<br>Higher timeframes: 4H ${htfDir(mtf["240"])} · 1D ${htfDir(mtf.D)} · ${esc(d.regime ? d.regime.label.toLowerCase() : "")}`);
+  // 2 where it is heading (the engine's lean, not a forecast)
+  const rs = (d.liquidity && d.liquidity.reach_scores) || {};
+  const lean = Math.abs(d.bull_score - d.bear_score) < 5 ? "No clear lean" : up ? "Leaning up" : "Leaning down";
+  const t2 = tile(lean === "No clear lean" ? "" : up ? "bull" : "bear", lean === "No clear lean" ? "side" : up ? "up" : "dn", `Where it is heading · ${esc(M.tf)}`, lean,
+    `Long ${f(d.bull_score, 0)}% · Short ${f(d.bear_score, 0)}% · Range ${f(d.range_score, 0)}%<br>${isNum(rs.PDH) ? `Reach: PDH ${f(rs.PDH, 0)}% vs PDL ${f(rs.PDL, 0)}%` : ""} <span class="dim">engine scores, not a forecast</span>`);
+  // 3 last liquidity sweep
+  const sw = lastSweep(D);
+  const t3 = sw ? tile(sw.dir < 0 ? "bear" : "bull", "drop", "Last liquidity taken", `${sw.dir < 0 ? "Buy-side" : "Sell-side"} @ ${px(sw.px)}`,
+    `Wick through ${sw.pool}${isNum(sw.lvl) ? " " + px(sw.lvl) : ""}, closed back ${sw.dir < 0 ? "below" : "above"}<br>${tfmt(sw.t)}${isNum(sw.barsAgo) ? ` · ${sw.barsAgo} bars ago` : ""}`)
+    : tile("", "drop", "Last liquidity taken", "None in view", "No PDH/PDL/PWH/PWL sweep on the chart window");
+  // 4 next target: the nearest liquidity on the side of the lean; the other side is the risk
+  const nl = nextLevels(D, price), tgt = (up ? nl.above : nl.below)[0], nxt = (up ? nl.above : nl.below)[1], opp = (up ? nl.below : nl.above)[0];
+  const t4 = tgt ? tile(up ? "bull" : "bear", "target", "Next target", `${esc(tgt[0])} ${px(tgt[1])}`,
+    `${fs(tgt[1] - price, 2)} from price${nxt ? ` · then ${esc(nxt[0])} ${px(nxt[1])}` : ""}<br>${opp ? `Opposite liquidity: ${esc(opp[0])} ${px(opp[1])} (${fs(opp[1] - price, 2)})` : ""}`)
+    : tile("", "target", "Next target", "—", "No liquidity level on that side");
+  // 5 what to do now
+  const dec = d.decision, sig = dec === "BUY" || dec === "SELL";
+  const fr = freshness(), ev = nearEvent();
+  const log = String(d.decision_log || ""), mm = log.match(/^([▲▼])\d\/7(?: \[✗([^\]]*)\])?/);
+  const fails = mm ? (mm[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x)) : [];
+  const need = fails.map((k) => (GATES.find((g) => g[0] === k) || [k, k])[1].replace(" (London / New York)", "")).join(" · ");
+  const doNow = sig ? `${dec} now` : dec === "WAIT" ? "Stay flat · wait" : dec === "RISK LOCK" ? "Stop · risk lock" : "No trade";
+  const warn = (fr && fr.behind >= 2 ? `Data ${fr.behind} bars old: do not act. ` : "") + (ev ? `High-impact USD event near (${esc(ev.title || ev.event || "release")}). ` : "") + (marketClosed(new Date()) ? "Market closed. " : "");
+  const t5 = tile(sig ? (dec === "BUY" ? "bull act" : "bear act") : "warn act", sig ? (dec === "BUY" ? "up" : "dn") : "hand", "What to do now", esc(doNow),
+    (warn ? `<b class="warn">${warn}</b><br>` : "") + (sig ? `Entry ${px(p.entry)} · stop ${px(p.sl)} · TQ ${d.trade_quality}` : /^RANGE/.test(log) ? "Market is ranging: no side has an edge." : need ? `Waiting for: ${esc(need)}` : esc(d.blk_why || "")));
+  // 6 trade plan
+  const side = p.long ? "LONG" : "SHORT";
+  const planV = isNum(p.entry) ? `<span class="${p.long ? "bull" : "bear"}">${side}</span> ${px(p.entry)}` : "—";
+  const t6 = `<div class="bt plan ${sig ? (p.long ? "bull" : "bear") : ""}"><div class="bk">${IC.plan}Trade plan ${sig ? "" : '<span class="hyp">hypothetical · no signal</span>'}</div>
+    <div class="bv">${planV}</div>
+    <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
+    <div class="bs">${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
+  el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="dim">XAUUSD · ${esc(M.tf)} · bar closed ${tfmt(Date.parse(M.last_bar_close) / 1000)} · price ${px(price)}</span></div>
+    <div class="bgrid">${t1}${t2}${t3}${t4}${t5}${t6}</div>`;
+}
+
 // segmented progress for "n of total rules met" (display only)
 function ruleMeter(n, total) {
   const cls = n === total ? "full" : n >= total - 1 ? "near" : "";
@@ -1117,7 +1201,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(syncTV); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderBrief); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(syncTV); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

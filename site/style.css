@@ -359,3 +359,32 @@ footer a { color: var(--muted); }
 .rmeter i.on { background: var(--warn); } .rmeter.near i.on { background: var(--accent); } .rmeter.full i.on { background: var(--bull); }
 .why > .dim, .why .dim { color: var(--muted); }
 @media (max-width: 560px) { .why .gates { columns: 1; } .legend { max-width: calc(100% - 70px); } .legend .keys { display: none; } }
+/* ═══ Market brief: the first thing on the page ════════════════════════════════════════════════ */
+.brief { margin-bottom: 12px; padding: 0; overflow: hidden; }
+.brief .bhd { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--bg-2) 55%, transparent); }
+.brief .btitle { font: 800 11px var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.brief .bhd .dim { font: 11.5px var(--mono); }
+.bgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.5fr); gap: 1px; background: var(--line); }
+.bt { position: relative; background: var(--card); padding: 12px 14px 12px 16px; display: grid; align-content: start; gap: 4px; min-width: 0; }
+.bt::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--line-2); }
+.bt.bull::before { background: var(--bull); } .bt.bear::before { background: var(--bear); } .bt.warn::before { background: var(--warn); }
+.bt .bk { display: flex; align-items: center; gap: 6px; font: 700 10px var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.bt .bk svg { width: 14px; height: 14px; flex: none; }
+.bt.bull .bk svg { color: var(--bull); } .bt.bear .bk svg { color: var(--bear); } .bt.warn .bk svg { color: var(--warn); }
+.bt .bv { font: 800 20px var(--sans); letter-spacing: 0.01em; line-height: 1.15; overflow-wrap: anywhere; }
+.bt.bull .bv { color: var(--bull); } .bt.bear .bv { color: var(--bear); }
+.bt.act { background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 9%, var(--card)), var(--card)); }
+.bt.act.bull { background: linear-gradient(180deg, color-mix(in srgb, var(--bull) 12%, var(--card)), var(--card)); }
+.bt.act.bear { background: linear-gradient(180deg, color-mix(in srgb, var(--bear) 12%, var(--card)), var(--card)); }
+.bt.act.warn .bv { color: var(--warn); }
+.bt .bs { font-size: 11.5px; line-height: 1.45; color: var(--muted); }
+.bt .bs b.warn { color: var(--warn); font-weight: 700; }
+.bt.plan .bv { font-family: var(--mono); font-size: 18px; color: var(--text); }
+.bt .hyp { margin-left: 6px; padding: 1px 6px; border-radius: 3px; border: 1px solid var(--line-2); font-size: 9.5px; letter-spacing: 0.06em; color: var(--dim); }
+.bt .pl { display: flex; flex-wrap: wrap; gap: 4px; }
+.bt .pl span { display: grid; padding: 4px 7px; border-radius: 4px; background: var(--bg-2); border: 1px solid var(--line); min-width: 62px; }
+.bt .pl i { font: normal 700 9px var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--dim); }
+.bt .pl b { font: 700 12.5px var(--mono); font-variant-numeric: tabular-nums; }
+@media (max-width: 1400px) { .bgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .bgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .bt.plan, .bt.act { grid-column: 1 / -1; } .bt .bv { font-size: 18px; } }
+@media (max-width: 1100px) { .brief { order: -4; } }
