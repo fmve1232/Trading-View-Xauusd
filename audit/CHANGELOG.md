@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v46
+# Build changelog — v1 → … → v47
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1607,3 +1607,31 @@ Operator: every value is executed by hand on MT5; review all of them.
   - the % was truncated and zero lots printed ".00L".
   - Sizing lines executed on 3000 random cases: 0 mismatches; realised risk never above the intended risk.
 - Master 39,009 lexical (~98,108 compiled, 2.1% under). All checkers pass. Compile NOT RUN.
+
+# Build v46 → v47 — volatility robustness and end-to-end traceability (tools only; no artefact changed)
+
+Operator: the code must work in high, medium and low volatility, with calibrated, validated values and end-to-end
+traceability.
+
+- **`regime_check.py`** executes the regime engine on 20,000 states across every ATR percentile:
+  - exactly one regime per bar, in the documented priority;
+  - LV/NV/HV tags at the 20th / 80th percentiles;
+  - SL multiple within [1.0, 2.2] and non-decreasing in volatility for each regime;
+  - size 1.0 / 0.75 (HV) / 0.5 (ABNORMAL); confidence cap 60 in ABNORMAL; forecast >= 4 bars;
+  - adaptiveATR never 0 or na after the first bar (floor 0.01% of price). The first bar has no previous close, so it is
+    warm-up.
+  - It passes on the Master, Treatment and Diagnostics.
+- **Divisions by a volatility measure** (ATR, order-block range, VP bucket size) are all guarded; scan of the Master
+  and Treatment.
+- **Low volatility and costs.** Round-trip cost is $0.65-0.97/oz by session, i.e. 32-49% of R at a $2 stop and 4-7% at
+  $15. The engine subtracts it in EV (race formula, verified), so it declines trades where cost eats the reward.
+- **`decision_check.py`** executes the decision chain:
+  - trend scores sum <= 100, so with the threshold >= 51 (the input's minimum) BUY and SELL can never both fire;
+  - the entry rule, every condition necessary;
+  - the veto truth table; a missing EV does not veto;
+  - DECISION precedence RISK LOCK > NO TRADE > BUY > SELL > WARMUP > WAIT, and BUY/SELL never shown while vetoed.
+  - It passes on the Master, Treatment and Diagnostics. Control and Challenger gates differ by design.
+- **`value_map.py` -> `audit/VALUE_TRACEABILITY.md`:** 21 operator-facing values, data -> regime -> evidence -> scores
+  -> gates -> plan -> veto -> decision -> MT5 order values. Each row gives the variable, its current Master line (found
+  by anchor, not typed), the formula and the executed check that verifies it. `--check` fails if code moved.
+- No artefact changed: the v46 files and hashes stand.
