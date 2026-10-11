@@ -349,3 +349,75 @@ one of them would likely clear a 95% bar by chance. The operator chose a single 
    are placed only once a position exists. With `process_orders_on_close`, that probably leaves the first
    bar after entry without its stop and targets. The website's backtest protects that bar, so the website
    arms are unaffected. It is listed for the Pine reference only.
+
+## Amendment 7 (2026-10-11, operator decision; written before any code below was changed or run)
+
+**Why.** The operator supplied the TradingView line at its current builds (Master v50, Strategy arms v41–v48;
+file hashes in `reference/pine-v50/SHA256SUMS`) and asked that the website use the same standard. The operator
+chose (11 Oct, in chat): port the engine defects that also exist on the website and restart the forward test;
+keep H2; add the Pine line's H2 rule as a separate arm. The Pine files are stored as a **display-only
+reference** in `reference/pine-v50/`; Amendment 6 still holds: only the website's records count, and the Pine
+line's own scorecards and amendments are not evidence. `artefacts/` (v32) stays the frozen Pine reference of §2.
+
+**Correction to Amendment 6, item 3.** It said F-A40 "does not apply" to the website. That was wrong. The
+website's MTF layers at or below the chart timeframe are neutral, exactly as in Pine (`features.py`: a layer
+votes only when the chart is faster than it), so on 1H only the 4H layer can vote and the fixed denominators
+cap the scores by timeframe. F-A41 (HTF data age) and F-A39 (Cornish-Fisher domain) remain as stated there.
+
+**1. Engine changes (the §7 forward test restarts).** Each is a defect fix taken from the Pine line, not a
+change of any threshold, weight or gate value; nothing was measured on price history to choose them.
+
+| Pine finding | Defect | Website change |
+|---|---|---|
+| F-A40 (v34) | MTF confluence score divides by a fixed 10 votes and MTF confidence by a fixed 5 layers, although layers at or below the chart timeframe can never vote: the cap is 70 and 40 on 1H | divide by the votes available on the chart's timeframe (MTF layers above the chart + 6 macro votes; HTF layers above the chart, minimum 1). Identical wherever every layer votes |
+| F-A48 (v43) | on bars without a signal the plan takes its side from the bias composite, while the bias label and WAIT reason use the final scores, so a LONG plan can sit under BEAR-ISH | the plan is built after the final scores and, without a signal, takes the side of the final bull vs bear score. It therefore also reads this bar's refreshed analog statistics (as Pine v43) |
+| F-A38 (v33, Pine line's numbering) | calibration fit: a slope ≤ 0 is rejected and the previous fit kept; a slope floor of 0.02 invents resolution the bins do not show; the intercept is clamped to ±1 for the raw slope | slope projected onto [0, 0.25] (bear fit [−0.25, 0]); a degenerate variance gives slope 0, i.e. the weighted base rate; the intercept is re-solved for the slope used and guarded at ±5 |
+| F-A45 (v40, display) | feature direction accuracy divides by all analogs, timeouts included, so every feature reads about 25 points under a coin flip | accuracy among resolved analogs only, shown when at least 10 are resolved |
+
+Already equal on the website, so not ported: F-A41, F-A46 (D-06), F-A44, F-A47 (the backtest protects the
+first bar after entry), F-A39 (guarded since web.1, D-08).
+
+**Effect on the records.** The engine code hash changes, so the §7 key changes, and so does H2's key, which
+contains it (Amendment 5). Both restart at the first pipeline run of the new code. At this decision (ledger
+`forward-ledger` @ `034d7960`, 2026-10-11 16:21 UTC; no open positions) the records that move to the archive are:
+
+| Arm | 1H (decides) | 4H | 15m | 5m |
+|---|---|---|---|---|
+| Treatment | 1 trade, **−1.035R** (SHORT 7 Oct 14:00 → SL 8 Oct 01:00 UTC) | 1, −1.014R | 0 | 2, 1 win, −0.537R |
+| Control | 0 | 0 | 0 | 2, 0 wins, −2.221R |
+| Challenger | 1 trade, **−1.035R** (the same SHORT) | 1, −1.014R | 0 | 2, 1 win, −0.537R |
+| H2 | 0 | 0 | 1, −1.067R | 3, 1 win, −0.840R |
+
+The Amendment 4 rule applies: the final report lists every archived trade of every earlier freeze next to
+the counted result. Decision rules and the decision date (2027-03-31) are unchanged.
+
+**2. Display-only changes (outside the freeze key):** the regime size haircut in the dashboard's risk sizing
+(Pine v32 already applied it to the risk %; F-A52 to the $ and lots too); first-appearance alerts for BOS,
+CHoCH, MSS and liquidity sweeps (v49). F-A53 (macro label) needs no change: the website already writes
+BULL-ISH / BEAR-ISH with the score beside it.
+
+**3. Arm H3 "Sweep-to-Value" — the Pine line's H2 rule, as a new arm.** Rules transcribed from
+`reference/pine-v50/XAUUSD_Quantum_5_0_Strategy_H2.pine` (block `H2-BEGIN … H2-END` and `H2-TREND`), fixed
+here before H3 is run on any price history. Any change restarts H3.
+
+- **Trend:** for each of 1H, 4H and 1D, score = 40 × [close₁ > EMA200] + 40 × [EMA20 > EMA100] + 20 ×
+  [close₁ > EMA20], where close₁ is the last completed bar of that timeframe and the EMAs are of close₁
+  (the engine's HTF alignment, D-01); a missing close₁ scores 50. Up = at least 2 of the 3 scores ≥ 60; down
+  = at least 2 of the 3 ≤ 40. All three layers are used on every chart timeframe.
+- **Swings:** 5-bar pivots (`pivothigh/pivotlow(5, 5)`, the engine's pivot function). The last pivot low
+  (high) is liquidity until a bar trades through it, which consumes it; a newly confirmed pivot replaces it.
+- **Sweep (bar i):** low[i] < swing low and close[i] > swing low (short: high[i] > swing high and close[i] <
+  swing high), using the swing as it stood before bar i.
+- **Value:** the engine's per-bar volume profile (100 bars, 40 bins, typical price, POC and 70% value area;
+  the same construction as the Pine block; volume per D-07). Long only if close[i] ≤ POC[i]; short only if
+  close[i] ≥ POC[i].
+- **Risk:** R = close − (low − 0.15 × ATR14) for a long (short: high + 0.15 × ATR14 − close); signal only if
+  0.5 × ATR ≤ R ≤ 5 × ATR.
+- **Plan:** entry close[i]; stop = entry ∓ R; TP1 = the farther of POC and 1R; TP2 = the farther of VAH
+  (short: VAL) and 2R.
+- **Execution and costs:** `backtest.simulate`, as every other arm (one position; an opposite signal flips).
+- **Freeze:** key = §7 engine key + SHA-256 of `quantum/arm_h3.py`; ledger `holdout/<tf>_h3.json`; starts at
+  the first pipeline run after this amendment is merged; earlier trades are in-sample only.
+- **Decision:** the same standard as H2: the 1H record decides; N ≥ 50, the 95% t-interval of mean R above 0
+  and PF ≥ 1.2; by 2027-03-31, otherwise NOT SHOWN. **Multiplicity:** H3 is a fifth hypothesis on the same
+  market and period; each arm is reported on its own terms and none borrows another's evidence.

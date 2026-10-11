@@ -258,9 +258,9 @@ def scan(i: int, st: AnalogState, H: dict, S: dict, cur: dict, P: dict) -> None:
 
     def feat(code):
         up, dn = code == 2, code == 0
-        tot = int((up | dn).sum())
         corr = int((up & win).sum() + (dn & loss).sum())
-        return tot, corr
+        wrong = int((up & loss).sum() + (dn & win).sum())
+        return corr + wrong, corr                    # resolved analogs only (Pine v40 F-A45)
     A["fS"] = feat(H["str"][R])
     A["fH"] = feat(H["htf"][R])
     A["fL"] = feat(H["liq"][R])
@@ -338,10 +338,11 @@ def _publish(i: int, st: AnalogState, P: dict, cur: dict, A: dict, empty: bool =
         if nb >= 3 and sw > 0:
             mx, my = sx / sw, sy / sw
             vr = sxx / sw - mx * mx
-            if vr > 1e-6:
-                k_ = (sxy / sw - mx * my) / vr
-                if k_ > 0:
-                    st.cal_fit = [min(max(k_, 0.02), 0.25), min(max(my - k_ * mx, -1.0), 1.0)]
+            # Pine v33 F-A38 (Pine line numbering; Amendment 7): constrained WLS. The slope is projected onto
+            # [0, 0.25] (0 = no resolution, i.e. the weighted base rate) instead of rejecting a slope <= 0 and
+            # keeping a stale fit, or flooring it at 0.02; the intercept is re-solved for the slope used.
+            k_ = min(max((sxy / sw - mx * my) / vr, 0.0), 0.25) if vr > 1e-6 else 0.0
+            st.cal_fit = [k_, min(max(my - k_ * mx, -5.0), 5.0)]
         # bear fit (F-A16)
         sw = sx = sy = sxx = sxy = 0.0
         nb = 0
@@ -356,10 +357,8 @@ def _publish(i: int, st: AnalogState, P: dict, cur: dict, A: dict, empty: bool =
         if nb >= 3 and sw > 0:
             mx, my = sx / sw, sy / sw
             vr = sxx / sw - mx * mx
-            if vr > 1e-6:
-                k_ = (sxy / sw - mx * my) / vr
-                if k_ < 0:
-                    st.cal_fit_bear = [min(max(k_, -0.25), -0.02), min(max(my - k_ * mx, -1.0), 1.0)]
+            k_ = min(max((sxy / sw - mx * my) / vr, -0.25), 0.0) if vr > 1e-6 else 0.0   # same fit, [-0.25, 0]
+            st.cal_fit_bear = [k_, min(max(my - k_ * mx, -5.0), 5.0)]
         tot = sum(t for (t, _, _, _) in cal)
         tb = sum(bw for (_, _, bw, _) in cal)
         base = tb / tot if tot > 0 else 0.5
@@ -395,7 +394,7 @@ def _publish(i: int, st: AnalogState, P: dict, cur: dict, A: dict, empty: bool =
         o["reg_per"] = pine_round((tc["D"] - tc["DT"] - tc["DR"]) * 100.0 / tc["D"])
     for key, name in (("fS", "feat_str"), ("fH", "feat_htf"), ("fL", "feat_liq"), ("fM", "feat_mr"), ("fC", "feat_cor")):
         tot, corr = A[key]
-        if tot > 0:
+        if tot >= 10:                                # F-A45: accuracy among >= 10 RESOLVED analogs; 0 = coin flip
             o[name] = (corr / tot - 0.5) * 100.0
     if mt >= 5 and A["sl"] > 0 and A["lc"] > 0 and A["wc"] > 0:
         o["profit_factor"] = (A["wc"] * (A["sw"] / A["wc"])) / (A["lc"] * (A["sl"] / A["lc"]))

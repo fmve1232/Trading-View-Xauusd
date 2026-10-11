@@ -123,6 +123,7 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
     htf_bull_gate, htf_bear_gate = F["htf_bull_gate"].tolist(), F["htf_bear_gate"].tolist()
     htf_al_l, htf_al_s = F["htf_align_long"].tolist(), F["htf_align_short"].tolist()
     htf_full_l, htf_full_s = F["htf_full_long"].tolist(), F["htf_full_short"].tolist()
+    mtf_avail, htf_full_avail = F["mtf_avail"], F["htf_full_avail"]
     hb, hs = {k: a.tolist() for k, a in F["htf_bull"].items()}, {k: a.tolist() for k, a in F["htf_bear"].items()}
     sess_q = F["session_quality"].tolist()
     regime_strength = F["regime_strength"].tolist()
@@ -802,7 +803,8 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
         # ================= MTF confluence / macro label =================
         mtf_b = int(hb["5"][i]) + int(hb["15"][i]) + int(hb["60"][i]) + int(hb["240"][i])
         mtf_s = int(hs["5"][i]) + int(hs["15"][i]) + int(hs["60"][i]) + int(hs["240"][i])
-        mtf_conf_score = int(pround(((mtf_b + mbv[i]) - (mtf_s + mbr[i])) / 10.0 * 100.0))
+        # Pine v34 F-A40: divided by the votes AVAILABLE on this timeframe (was a fixed 10, which capped 1H at 70)
+        mtf_conf_score = int(pround(((mtf_b + mbv[i]) - (mtf_s + mbr[i])) / (mtf_avail + 6.0) * 100.0))
         mtf_mag = abs(mtf_conf_score)
         mtf_hi, mtf_med, mtf_low = mtf_mag >= 60, 30 <= mtf_mag < 60, mtf_mag < 30
         macro_valid = macro_valid_any[i]
@@ -829,7 +831,7 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
 
         # ================= confidence =================
         conf_struct = 100 if structure_regime >= 80 else 60 if structure_regime >= 50 else 30 if structure_regime >= 20 else 10
-        conf_mtf = int(pround(max(htf_full_l[i], htf_full_s[i]) * 100.0 / 5.0))
+        conf_mtf = int(pround(max(htf_full_l[i], htf_full_s[i]) * 100.0 / htf_full_avail))   # F-A40 (was / 5)
         conf_liq = (25 if (bull_bos or bear_bos) else 0) + (25 if (fvg_active or ob_b_act or ob_s_act) else 0) \
             + (25 if (ran_pdh or ran_pdl or ran_pwh or ran_pwl or ran_eqh or ran_eql) else 0) + (25 if liq_dest_score >= 50 else 0)
         mic = macro_conf[i]
@@ -991,11 +993,6 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
         else:
             decision_log = sell_log + trig_log + conflict_log + ctx_log
 
-        # ================= trade plan (uses the analog grids published up to the previous bar) =================
-        plan = trade_plan(i, cfg, should_buy, should_sell, bull_bias, bear_bias, ci, a, reg_sl_mult[i],
-                          active_sup, active_res, ob_b_act, ob_bl, ob_bh, ob_s_act, ob_sl, ob_sh, cdl, cdh,
-                          pool_pdl, pool_pdh, pool_pwh, pool_pwl, pool_pmh, pool_pml, pool_eql, pool_eqh,
-                          val, vah, vpoc, wvwap[i], mvwap[i], AS, sess_spread[i], N, F["mkt_regime"][i])
 
         # ================= regime transition counters =================
         r_curr = 0 if strong_trend else 1 if moderate_trend else 2
@@ -1161,6 +1158,15 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
         if recorded:
             H["pred"][i] = bull_score
             H["calbin"][i] = 4.0 if bull_score >= cal_q[3] else 3.0 if bull_score >= cal_q[2] else 2.0 if bull_score >= cal_q[1] else 1.0 if bull_score >= cal_q[0] else 0.0
+
+        # ================= trade plan =================
+        # Pine v43 F-A48 (Amendment 7): built HERE, on the FINAL scores and this bar's refreshed analog
+        # statistics. It was built before the history blend and, on bars without a signal, took its side from
+        # the bias composite, so a LONG plan could sit under a BEAR-ISH label. Nothing reads the plan earlier.
+        plan = trade_plan(i, cfg, should_buy, should_sell, bull_score, bear_score, ci, a, reg_sl_mult[i],
+                          active_sup, active_res, ob_b_act, ob_bl, ob_bh, ob_s_act, ob_sl, ob_sh, cdl, cdh,
+                          pool_pdl, pool_pdh, pool_pwh, pool_pwl, pool_pmh, pool_pml, pool_eql, pool_eqh,
+                          val, vah, vpoc, wvwap[i], mvwap[i], AS, sess_spread[i], N, F["mkt_regime"][i])
 
         # ================= calibrated probability =================
         cal_p_raw = bull_score / 100.0
@@ -1595,11 +1601,11 @@ def normalize_scores(b, be, r, floor):
     return float(nb), float(nbe), float(nr)
 
 
-def trade_plan(i, cfg, should_buy, should_sell, bull_bias, bear_bias, close, a, reg_sl, active_sup, active_res,
+def trade_plan(i, cfg, should_buy, should_sell, bull_final, bear_final, close, a, reg_sl, active_sup, active_res,
                ob_b_act, ob_bl, ob_bh, ob_s_act, ob_sl, ob_sh, cdl, cdh, pdl, pdh, pwh, pwl, pmh, pml, eql, eqh,
                val, vah, vpoc, wvwap, mvwap, AS, sess_spread, N, regime_label):
     """R6.0 dynamic trade plan (Pine f_tradePlan)."""
-    long_ = True if should_buy else False if should_sell else bull_bias >= bear_bias
+    long_ = True if should_buy else False if should_sell else bull_final >= bear_final   # F-A48: final scores
     entry = close
     sl_base = a * reg_sl
     sl_lo, sl_hi = a * 0.6, sl_base * 1.6

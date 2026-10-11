@@ -9,7 +9,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, backtest, holdout, ta
+from . import arm_h2, arm_h3, backtest, holdout, ta
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -45,9 +45,11 @@ def _clean(o):
     return o
 
 
-def kelly(last: dict, cfg, N: int) -> dict:
+def kelly(last: dict, cfg, N: int, reg_mult: float = 1.0) -> dict:
     """Dashboard Kelly sizing (v16 form: binary Kelly on P conditional on resolution, Wilson
-    95% lower bound at effective N, half-Kelly, tail and drawdown haircuts)."""
+    95% lower bound at effective N, half-Kelly, tail and drawdown haircuts), then the regime size
+    haircut `regSizeMult` (0.5 abnormal, 0.75 at ATR percentile >= 80; Pine v32 L5500 on the risk %,
+    and since the Pine line's v46 F-A52 on the $ and lots too). The website had left it out."""
     a = last["analog"]
     k = cfg.risk_percent
     detail = "risk % (no ROLL history yet)"
@@ -80,11 +82,14 @@ def kelly(last: dict, cfg, N: int) -> dict:
             k *= 0.5
         elif md >= 10:
             k *= 0.75
+    if not _isnan(reg_mult) and reg_mult != 1.0:
+        k *= reg_mult
+        detail += f" × regime {reg_mult:g}"
     risk_usd = cfg.account_size * max(k, 0.0) / 100.0
     dist = last["plan"]["dist"]
     raw_lots = risk_usd / (dist * cfg.point_value) if dist > 0 and cfg.point_value > 0 else 0.0
     floored = math.floor(raw_lots / 0.01) * 0.01
-    return {"kelly_pct": k, "detail": detail, "risk_usd": risk_usd, "lots": min(max(floored, 0.0), 100.0),
+    return {"kelly_pct": k, "detail": detail, "reg_size_mult": reg_mult, "risk_usd": risk_usd, "lots": min(max(floored, 0.0), 100.0),
             "below_min": raw_lots > 0 and floored < 0.01, "raw_lots": raw_lots}
 
 
@@ -134,6 +139,48 @@ H2_RULES = [   # [key, long wording, short wording] -- display text for the rule
 ]
 
 
+H3_RULES = [   # [key, long wording, short wording] -- display text for the rules in arm_h3.py (Amendment 7)
+    ["trend", "Trend: at least 2 of 1H / 4H / 1D up (score >= 60 on the last completed bar)",
+              "Trend: at least 2 of 1H / 4H / 1D down (score <= 40 on the last completed bar)"],
+    ["swing", "An untouched 5-bar swing low is waiting below", "An untouched 5-bar swing high is waiting above"],
+    ["sweep", "This bar wicked below that swing low and closed back above it", "This bar wicked above that swing high and closed back below it"],
+    ["value", "Close at or below the volume POC (discount)", "Close at or above the volume POC (premium)"],
+    ["risk", "Stop 0.15 ATR beyond the wick is 0.5 to 5 ATR away", "Stop 0.15 ATR beyond the wick is 0.5 to 5 ATR away"],
+]
+
+
+def _arm_record(arm, key, market, trades, cfg, now, store_dir):
+    """Freeze manifest + append-only ledger for a separately registered arm; returns (manifest, pre, post)."""
+    if market.synthetic:
+        man2 = {"arm": arm, "freeze_key": key, "freeze_utc": now.isoformat(), "status": "SYNTHETIC"}
+        post = holdout.split(trades, man2["freeze_utc"])[1]
+    else:
+        man2 = holdout.load_or_freeze_arm(store_dir, arm, key, now)
+        post = holdout.update_ledger(store_dir, market.tf, arm, trades, man2["freeze_utc"], key, market.price_source)
+    pre, _ = holdout.split(trades, man2["freeze_utc"])
+    return man2, pre, post
+
+
+def h3_section(market, res, cfg, man, now, store_dir, idx) -> dict:
+    trades, ev = arm_h3.simulate(res, market, cfg)
+    key = arm_h3.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
+    man3, pre, post = _arm_record("h3", key, market, trades, cfg, now, store_dir)
+    n = len(idx)
+    sig = [i for i in range(n) if ev["exec_buy"][i] or ev["exec_sell"][i]]
+
+    def plan(i):
+        return {"t": int(pd.Timestamp(idx[i]).timestamp()), "iso": idx[i].isoformat(), "dir": "LONG" if ev["exec_buy"][i] else "SHORT",
+                "entry": _f(res.F["c"][i]), "sl": _f(ev["plan_sl"][i]), "tp1": _f(ev["plan_tp1"][i]), "tp2": _f(ev["plan_tp2"][i]),
+                "swept": _f(ev["swept"][i])}
+    return {"rules": H3_RULES, "freeze": man3, "checklist": ev["checklist"],
+            "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None,
+            "last_signal": plan(sig[-1]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
+            "open": [t for t in trades if t.get("open")],
+            "next_move_in_sample": arm_h2.next_move_stats(pre),
+            "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
+            "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None}
+
+
 def h2_section(market, res, cfg, man, now, store_dir, idx) -> dict:
     trades, ev = arm_h2.simulate(res, cfg)
     key = arm_h2.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
@@ -171,7 +218,7 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
     N = res.outcome_n
     L["ret_skew"] = float(F["ret_skew"][-1])
     L["ret_kurt"] = float(F["ret_kurt"][-1])
-    ks = kelly(L, cfg, N)
+    ks = kelly(L, cfg, N, float(F["reg_size_mult"][-1]))
     i = n - 1
 
     chart = {
@@ -308,6 +355,11 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         h2 = h2_section(market, res, cfg, man, now, store_dir, idx)
     except Exception as e:  # noqa: BLE001 - H2 must never break the page
         h2 = {"error": f"{type(e).__name__}: {e}"[:200]}
+    # arm H3 "Sweep-to-Value" (the Pine line's H2 rule, Amendment 7): its own freeze key and ledger
+    try:
+        h3 = h3_section(market, res, cfg, man, now, store_dir, idx)
+    except Exception as e:  # noqa: BLE001 - H3 must never break the page
+        h3 = {"error": f"{type(e).__name__}: {e}"[:200]}
 
     forming = None
     if market.forming is not None:
@@ -335,5 +387,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "macro": macro,
         "backtest": bt,
         "h2": h2,
+        "h3": h3,
     }
     return _clean(payload)
