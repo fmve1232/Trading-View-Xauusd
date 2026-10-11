@@ -1,4 +1,4 @@
-# Build changelog — v1 → … → v50
+# Build changelog — v1 → … → v51
 
 **All F-A findings through F-A20 applied (v14).** F-035 mitigated, not closed. See each build section below.
 Builds v1→v3 changed no trading behaviour. **v4 does** — see that section before running it live.
@@ -1689,3 +1689,18 @@ Operator: "the macro was bull, now it shows bearish -- why?"
 - **F-A53:** `BULL+` / `BEAR+` printed for the WEAKER readings; they now read `bull-ish` / `bear-ish`, followed by the
   score, e.g. `Macro BEAR -52`. Master 39,060 lexical (2.01% under).
 - VALUE_TRACEABILITY gains the macro row (23 values). All checks pass. Compile NOT RUN.
+
+# Build v50 → v51 — chart run of v48-v50 reviewed; card header
+
+The operator's 15M screenshots (2026-10-11) show every recent fix live:
+- all scripts compile, EdgeCases ALL PASS 99;
+- `Macro BULL 75` (v50), `Risk 0.0% $0 0.00L` (v46), `PFres` (v44), "display only (A7)" (v48);
+- the plan follows the bias: BULL-ISH -> LONG (v43);
+- the H2 card row `25% vs 83% needed (avg win 1.8 / avg loss 8.97)` (v45).
+
+- **Fixed:** the scorecard header still printed a hard-coded "v42"; it now carries no build number (the BUILD STAMP
+  at the top of each file is the build).
+- **Observed, not changed:** H2's 4 positions since 2026-10-06 are 1 win / 3 losses. The average win ($1.80) is the
+  TP1 half closed at about 1R with the remainder stopped at break-even, against full-R losses. With N = 4 this is not
+  evidence of anything; the H2 record of record is the website's (A7).
+- Checks pass. Compile NOT RUN.

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v48   (A7 label: display only)      ║
+// ║  BUILD STAMP — this file last CHANGED in v51   (card header version)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5398,7 +5398,7 @@ if fwdShow and barstate.islast
     float _fwbe = not na(_fwaw) and not na(_fwal) and _fwaw + _fwal > 0 ? _fwal / (_fwaw + _fwal) * 100.0 : na
     string _fwv = _fwn < 50 ? "COLLECTING " + str.tostring(_fwn) + "/50" : _fwlo > 0 and _fwpfOk ? "EDGE SHOWN" : "NOT SHOWN"
     color _fwcT = color.new(#E6EDF3, 0)
-    table.cell(fwdTbl, 0, 0, "BACKTEST CARD (NOT COUNTED: record = website)  v42", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
+    table.cell(fwdTbl, 0, 0, "BACKTEST CARD (NOT COUNTED: record = website)", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
     table.cell(fwdTbl, 1, 0, "from " + str.format_time(fwdStart, "yyyy-MM-dd HH:mm", "UTC") + " UTC  ·  " + timeframe.period + "  display only (A7)", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.small)
     _fwRow(1, "Positions (N)", str.tostring(_fwn) + (_fwn > 0 ? "   wins " + str.tostring(_fww) + " = " + str.tostring(_fww * 100.0 / _fwn, "#") + "%" : ""), _fwcT)
     _fwRow(2, "Mean $ / position", na(_fwm) ? "—" : str.tostring(_fwm, "#.##"), _fwcT)
