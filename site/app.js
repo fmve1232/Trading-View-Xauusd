@@ -61,14 +61,14 @@ new ResizeObserver(setHdr).observe(document.querySelector("header.top")); setHdr
 $("#theme").onclick = () => {
   const cur = document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
   const nx = cur === "light" ? "dark" : "light";
-  store.set("theme", nx); applyTheme(nx); rebuildCharts(); syncTV();
+  store.set("theme", nx); applyTheme(nx); rebuildCharts();
 };
 $("#mt5").value = S.mt5;
 $("#mt5").oninput = (e) => { S.mt5 = Number(e.target.value) || 0; store.set("mt5", S.mt5); renderSide(); };
 $("#tz").value = S.tz;
 $("#tz").onchange = (e) => { S.tz = e.target.value; store.set("tz", S.tz); rebuildCharts(); renderAll(); };
 $("#tf-tabs").innerHTML = TFS.map((t) => `<button data-tf="${t}">${t}</button>`).join("");
-$("#tf-tabs").onclick = (e) => { const t = e.target.dataset.tf; if (t) { S.tf = t; store.set("tf", t); load(); if (typeof syncTV === "function") syncTV(); } };
+$("#tf-tabs").onclick = (e) => { const t = e.target.dataset.tf; if (t) { S.tf = t; store.set("tf", t); load(); } };
 $("#tabs").onclick = (e) => { const t = e.target.dataset.tab; if (t) showTab(t); };
 function showTab(t) {
   S.tab = t; store.set("tab", t);
@@ -219,6 +219,31 @@ function onTick(k, replay) {
   if (!replay) updateLiveBar({ p, t, h: Number(k.h), l: Number(k.l) });
   renderLive();
 }
+// Per tick, on the FORMING candle only (closed bars are never touched), the values that are exact
+// arithmetic on the live price: EMA_t = EMA_{t-1} + 2/(N+1) (price - EMA_{t-1}) from the last closed EMA,
+// and the current day's high / low when the live candle breaks them (same trading day only).
+// Signals, scores and the decision stay on closed bars: recomputing them per tick would show signals
+// that can disappear before the bar closes (repainting).
+function liveIndicators(b) {
+  const D = S.data; if (!C || !D) return;
+  const ch = D.chart, n = ch.t.length, last = ch.t[n - 1];
+  if (!(b.time > last)) return;
+  const ends = (C.labels && C.labels.ends) || [];
+  for (const [k, N] of [["ema20", 20], ["ema100", 100], ["ema200", 200]]) {
+    const e = ch[k][n - 1]; if (!S.toggles.ema || !isNum(e)) continue;
+    const v = e + (2 / (N + 1)) * (b.close - e);
+    try { C.L[k].update({ time: b.time, value: v }); } catch (err) { /* older than the series end */ }
+    const tag = ends.find((x) => x.key === k); if (tag) tag.price = v;
+  }
+  const day = (x) => new Date((x + 7 * 3600) * 1000).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  if (C.labels && day(b.time) === day(last)) {
+    for (const g of C.labels.segs) {
+      if (g.name === "CDH" && b.high > g.price) g.price = b.high;
+      if (g.name === "CDL" && b.low < g.price) g.price = b.low;
+    }
+  }
+  C.labels.req && C.labels.req();
+}
 // The forming candle only: bars the engine has closed are never touched.
 function updateLiveBar(k) {
   if (!C || !S.data) return;
@@ -239,54 +264,8 @@ function applyLiveBar(lastTime) {
   if (isNum(lastTime) && b.time < lastTime) return;           // an engine update has moved past it
   try { C.candles.update({ ...b, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") }); } catch (e) { /* older than the series end */ }
   if (C.labels && (C.labels.lastT === null || b.time > C.labels.lastT)) C.labels.set({ lastT: b.time });   // levels reach the live candle
+  liveIndicators(b);
 }
-
-/* ---------- TradingView's free Advanced Chart widget (DISPLAY ONLY; loaded on demand) ----------
-   A visual cross-check: TradingView's own OANDA:XAUUSD chart. Nothing reads from it, it never
-   feeds the engine, and its third-party script is fetched only after the viewer presses Show. */
-const TV_SRC = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-const TV_INTERVAL = { "5m": "5", "15m": "15", "1h": "60", "4h": "240" };
-const tvTheme = () => document.documentElement.getAttribute("data-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-function tvConfig() {
-  let tz = "Etc/UTC";
-  try { tz = S.tz === "local" ? Intl.DateTimeFormat().resolvedOptions().timeZone || "Etc/UTC" : S.tz; } catch (e) { /* keep UTC */ }
-  return { autosize: true, symbol: "OANDA:XAUUSD", interval: TV_INTERVAL[S.tf] || "15", timezone: tz, theme: tvTheme(), style: "1",
-           locale: "en", allow_symbol_change: false, calendar: false, hide_side_toolbar: true, support_host: "https://www.tradingview.com" };
-}
-function loadTV() {
-  const w = $("#tv-wrap"); if (!w) return;
-  const cfg = tvConfig();
-  w.innerHTML = "";
-  const box = document.createElement("div");
-  box.className = "tradingview-widget-container tv-box";
-  const inner = document.createElement("div");
-  inner.className = "tradingview-widget-container__widget";
-  inner.style.height = "calc(100% - 24px)";
-  const cp = document.createElement("div");
-  cp.className = "tradingview-widget-copyright dim";            // attribution required by TradingView's widget terms
-  cp.innerHTML = '<a href="https://www.tradingview.com/symbols/XAUUSD/?exchange=OANDA" rel="noopener nofollow" target="_blank">XAUUSD chart by TradingView</a>';
-  const sc = document.createElement("script");
-  sc.type = "text/javascript"; sc.async = true; sc.src = TV_SRC;
-  sc.text = JSON.stringify(cfg);                                  // the widget reads its config from this script's text
-  sc.onerror = () => { w.innerHTML = '<p class="warn">The TradingView widget could not load (blocked by the browser or network, or TradingView is unreachable). Nothing else on this page depends on it.</p>'; };
-  box.append(inner, cp, sc);
-  w.append(box);
-  S.tvShown = { tf: S.tf, tz: S.tz, theme: cfg.theme };
-}
-function setTV(on) {
-  S.tvOn = on; store.set("tvOn", on);
-  const b = $("#tv-toggle"); if (b) b.textContent = on ? "Hide" : "Show";
-  if (on) loadTV();
-  else { S.tvShown = null; $("#tv-wrap").innerHTML = '<p class="muted">Hidden. Press <b>Show</b> to load TradingView\'s live OANDA:XAUUSD chart (third-party script).</p>'; }
-}
-// reload only when the timeframe, time zone or theme it was built for has changed
-function syncTV() {
-  if (!S.tvOn) return;
-  const t = S.tvShown;
-  if (!t || t.tf !== S.tf || t.tz !== S.tz || t.theme !== tvTheme()) loadTV();
-}
-$("#tv-toggle").onclick = () => setTV(!S.tvOn);
-if (store.get("tvOn", false)) setTV(true);
 
 /* ---------- reference prices (DISPLAY AND VALIDATION ONLY; quantum/reference.py) ---------- */
 // Each provider is shown as it reported itself: raw values, its own timestamp precision and
@@ -731,10 +710,12 @@ function renderBrief() {
   // 6 trade plan
   const side = p.long ? "LONG" : "SHORT";
   const planV = isNum(p.entry) ? `<span class="${p.long ? "bull" : "bear"}">${side}</span> ${px(p.entry)}` : "—";
-  const t6 = `<div class="bt plan ${sig ? (p.long ? "bull" : "bear") : ""}"><div class="bk">${IC.plan}Trade plan ${sig ? "" : '<span class="hyp">hypothetical · no signal</span>'}</div>
-    <div class="bv">${planV}</div>
+  const t6 = !sig ? `<div class="bt plan"><div class="bk">${IC.plan}Trade plan</div><div class="bv">No trade plan</div>
+    <div class="bs">Entry, stop and targets are published only for a BUY or SELL signal that passed every gate on a closed bar.</div></div>`
+    : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
+    <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
     <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
-    <div class="bs">${isNum(p.sl) && isNum(p.tp1) ? `Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>` : ""}${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
+    <div class="bs">Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
   el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="lpill" id="brief-live"></span><span class="bpx">${px(price)}</span>` +
     `<span class="dim">XAUUSD · ${esc(M.tf)} · analysis as of the bar closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</span><span class="dim clk" id="brief-clock"></span></div>
     <div class="bgrid">${t1}${t2}${t3}${t4}${t5}${t6}</div>`;
@@ -803,12 +784,16 @@ function renderSide() {
     <div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>` + whyHtml(d, D) + lastSignalHtml(D);
 
   const sig = dec === "BUY" || dec === "SELL";
-  $("#plan-dir").textContent = (p.long ? "LONG" : "SHORT") + (sig ? "" : " · no signal");
+  $("#plan-dir").textContent = sig ? (p.long ? "LONG" : "SHORT") : "no signal";
   $("#plan-dir").className = "pill " + (sig ? (p.long ? "bull" : "bear") : "");
-  $("#plan-dir").title = sig ? "Side of the current signal." : `No signal: a hypothetical plan on the side of the final scores (L${f(d.bull_score, 0)} ${p.long ? "≥" : "<"} S${f(d.bear_score, 0)}), the same scores as the bias label (web.5, Pine v43). WAIT means no trade.`;
+  $("#plan-dir").title = sig ? "Side of the current signal." : "No signal on the last closed bar, so no entry, stop or target is published.";
   $("#plan-mt5").textContent = Number(S.mt5) ? `(MT5 ${fs(Number(S.mt5))})` : "";
   const planTxt = `XAUUSD ${M.tf} ${p.long ? "BUY" : "SELL"} | entry ${px(p.entry)} SL ${px(p.sl)} TP1 ${px(p.tp1)} TP2 ${px(p.tp2)} TP3 ${px(p.tp3)}`;
   const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}%` : "—";
+  if (!sig) {
+    $("#plan").innerHTML = `<div class="noplan"><b>No trade plan.</b> The engine publishes an entry, stop and targets only when a
+      BUY or SELL signal has passed every gate on a closed bar. The last closed bar's decision is <b>${esc(dec)}</b>.</div>`;
+  } else {
   $("#plan").innerHTML = `
     <div class="plan-grid">
       <div class="cell"><div class="k">Entry</div><div class="v">${px(p.entry)}</div></div>
@@ -821,9 +806,10 @@ function renderSide() {
     ${kv([["R multiples", `1:${f(p.rr1, 1)} / 1:${f(p.rr2, 1)} / 1:${f(p.rr3, 1)}`],
       ["Race EV (TP1 vs SL)", isNum(p.ev) ? `<span class="${p.ev >= 0 ? "bull" : "bear"}">${fs(p.ev, 2)} R</span> <span class="dim">n${f(p.race_n, 0)}</span>` : "—"],
       [`Touch within ${p.horizon_bars} bars`, touch]])}
-    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the expectancy. ${sig ? "Plan direction follows the signal." : `<b>No signal:</b> this is a hypothetical plan on the side of the final scores (L${f(d.bull_score, 0)} vs S${f(d.bear_score, 0)}), the same scores as the bias label, not a trade.`}</p>
+    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the expectancy. Plan direction follows the signal.</p>
     <button class="icon-btn copy" id="copy-plan" style="margin-top:8px;width:100%">Copy plan for MT5</button>`;
   $("#copy-plan").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(planTxt); $("#copy-plan").textContent = "Copied"; setTimeout(() => ($("#copy-plan").textContent = "Copy plan for MT5"), 1500); };
+  }
 
   const fitted = d.cal_fit && isNum(d.cal_fit[0]);
   $("#p-state").textContent = fitted ? (d.cal_drift ? "DRIFT → raw" : "fitted in-sample") : "unfitted";
@@ -850,13 +836,13 @@ function renderSide() {
 
   const k = d.kelly;
   const acct = S.account || M.config.account_size;
-  const lots = p.dist > 0 ? Math.floor((acct * Math.max(k.kelly_pct, 0) / 100 / (p.dist * M.config.point_value)) / 0.01) * 0.01 : 0;
+  const lots = sig && p.dist > 0 ? Math.floor((acct * Math.max(k.kelly_pct, 0) / 100 / (p.dist * M.config.point_value)) / 0.01) * 0.01 : 0;
   $("#risk-state").textContent = d.risk.lock ? "LOCKED" : "open";
   $("#risk-state").className = "pill " + (d.risk.lock ? "bear" : "bull");
   $("#risk").innerHTML = kv([
     ["Tracker today", esc(d.risk.lock_str || "—")],
     ["Open tracked plan", isNum(d.risk.open_entry) ? `${d.risk.open_long ? "BUY" : "SELL"} ${px(d.risk.open_entry)} → SL ${px(d.risk.open_sl)} / TP1 ${px(d.risk.open_tp)}` : "none"],
-    ["Kelly (half, Wilson LB)", `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span>`],
+    ["Kelly (half, Wilson LB)", sig ? `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span>` : '<span class="dim">no signal: nothing to size</span>'],
     ["Account", `<input id="acct" type="number" value="${acct}" style="width:90px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"> USD`],
     ["Lots (100 oz)", lots >= 0.01 ? f(lots, 2) : (k.kelly_pct > 0 ? "below 0.01 minimum" : "0 (no edge sized)")],
   ]) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot). The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
@@ -908,7 +894,7 @@ class LabelsPrimitive {
     ctx.setLineDash([]);
     // 2 end tags beside the current candle, spread so they never overlap (a leader joins a moved tag)
     const tags = [];
-    for (const g of [...this.segs.filter((s) => s.label), ...this.ends]) {
+    for (const g of [...this.segs.map((s) => ({ ...s, label: `${s.name} ${px(s.price)}` })), ...this.ends]) {
       const y = se.priceToCoordinate(g.price); if (y !== null) tags.push({ ...g, y, ty: y });
     }
     tags.sort((a, b) => a.y - b.y);
@@ -1114,9 +1100,9 @@ function renderChart() {
   const segs = [], seen = [];
   const seg = (price, t0, label, color, dash = 0, w = 1, solid = false) => {
     if (!isNum(price) || seen.some((x) => Math.abs(x - price) < 0.005)) return;
-    seen.push(price); segs.push({ price, t0, label: `${label} ${px(price)}`, color, dash, w, solid });
+    seen.push(price); segs.push({ price, t0, name: label, color, dash, w, solid });
   };
-  if (T.plan) {
+  if (T.plan && (d.decision === "BUY" || d.decision === "SELL")) {   // a real signal only: no hypothetical lines
     const p = d.plan, p0 = t[Math.max(0, n - 10)];
     seg(p.sl, p0, `SL · ${p.sl_basis}`, css("--bear"), 0, 1.5, true);
     seg(p.tp1, p0, `TP1 · ${p.tp_basis[0]}`, css("--bull"), 0, 1.5, true); seg(p.tp2, p0, `TP2 · ${p.tp_basis[1]}`, css("--bull"), 2); seg(p.tp3, p0, `TP3 · ${p.tp_basis[2]}`, css("--bull"), 2);
@@ -1147,7 +1133,7 @@ function renderChart() {
   const NAME = { ema20: ["EMA 20", "--ov-ema20"], ema100: ["EMA 100", "--ov-ema100"], ema200: ["EMA 200", "--ov-ema200"], vwap: ["VWAP D", "--ov-vwap"],
     wvwap: ["VWAP W", "--ov-vwap"], mvwap: ["VWAP M", "--ov-vwap"], bb_up: ["BB upper", "--ov-band"], bb_lo: ["BB lower", "--ov-band"] };
   for (const [tg, keys] of [["ema", ["ema20", "ema100", "ema200"]], ["vwap", ["vwap", "wvwap", "mvwap"]], ["bb", ["bb_up", "bb_lo"]]]) {
-    if (T[tg]) for (const k of keys) if (isNum(ch[k][n - 1])) ends.push({ price: ch[k][n - 1], label: NAME[k][0], color: css(NAME[k][1]) });
+    if (T[tg]) for (const k of keys) if (isNum(ch[k][n - 1])) ends.push({ key: k, price: ch[k][n - 1], label: NAME[k][0], color: css(NAME[k][1]) });
   }
   const hl = new Map(); for (let k = 0; k < n; k++) hl.set(t[k], [ch.h[k], ch.l[k]]);
   ev.sort((a, b) => a.t - b.t);
@@ -1282,8 +1268,7 @@ function renderLiquidity() {
       ["Bear OB", z.ob_bear ? `${f(z.ob_bear[0])} – ${f(z.ob_bear[1])} (mit ${f(z.ob_bear_mit, 0)}%)` : "—"],
       ["FVG", z.fvg ? `${f(z.fvg[0])} – ${f(z.fvg[1])} ${z.fvg[2] ? "▲" : "▼"}` : "—"], ["EQH / EQL", `${f(z.eqh)} / ${f(z.eql)}`]]) +
       `<p class="note">These zones FEED the decision (F-A30: detection is on by default), and they are the same definitions the chart draws.</p>`) +
-    card("Support / resistance scanner", `<table class="t"><tr><th>Side</th><th>Price</th><th>Touches</th></tr>${[...D.sr.res.map((r) => ["R", r]), ...D.sr.sup.map((r) => ["S", r])].map(([s, r]) => `<tr><td class="${s === "R" ? "bear" : "bull"}">${s}</td><td>${f(r.price)}</td><td>${r.touches}</td></tr>`).join("")}</table>`) +
-    card("What-if scenarios", kv(Object.entries(d.what_if).map(([k, v]) => [k.replace("_", " "), isNum(v) ? f(v, 0) + "/100" : "n/a"])) + `<p class="note">Heuristic scores clamped 10–90, not probabilities.</p>`);
+    card("Support / resistance scanner", `<table class="t"><tr><th>Side</th><th>Price</th><th>Touches</th></tr>${[...D.sr.res.map((r) => ["R", r]), ...D.sr.sup.map((r) => ["S", r])].map(([s, r]) => `<tr><td class="${s === "R" ? "bear" : "bull"}">${s}</td><td>${f(r.price)}</td><td>${r.touches}</td></tr>`).join("")}</table>`);
 }
 function renderAnalog() {
   const A = S.data.analog, d = S.data.dashboard;
@@ -1422,7 +1407,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderBrief); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(syncTV); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderBrief); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
