@@ -1190,7 +1190,7 @@ function fitView() {
   C.main.priceScale("right").applyOptions({ autoScale: true });
   C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show), to: n - 1 + pad });
 }
-// The chart key: every visible line by name, with its colour, style and value at the hovered bar.
+// The chart key: every visible line by name, with its colour and line style (no values: it only identifies the lines).
 const KEY = [["ema", [["ema20", "EMA 20", "--ov-ema20", "solid"], ["ema100", "EMA 100", "--ov-ema100", "solid"], ["ema200", "EMA 200", "--ov-ema200", "thick"]]],
   ["vwap", [["vwap", "VWAP D", "--ov-vwap", "thick"], ["wvwap", "VWAP W", "--ov-vwap", "dash"], ["mvwap", "VWAP M", "--ov-vwap", "dash"]]],
   ["bb", [["bb_up", "BB upper", "--ov-band", "solid"], ["bb_mid", "BB basis", "--ov-band", "dash"], ["bb_lo", "BB lower", "--ov-band", "solid"]]],
@@ -1204,7 +1204,7 @@ function legend(prm) {
   const col = ch.c[i] >= ch.o[i] ? "bull" : "bear";
   const chg = i > 0 && isNum(ch.c[i]) && isNum(ch.c[i - 1]) ? ch.c[i] - ch.c[i - 1] : null;
   const keys = KEY.filter(([t]) => S.toggles[t]).flatMap(([, ls]) => ls).filter(([k]) => ch[k] && isNum(ch[k][i]))
-    .map(([k, name, v, st]) => `<span class="lk"><i class="sw ${st}" style="--c:${css(v)}"></i>${name} <b>${f(ch[k][i])}</b></span>`).join("");
+    .map(([k, name, v, st]) => `<span class="lk"><i class="sw ${st}" style="--c:${css(v)}"></i>${name}</span>`).join("");   // names only: a key to the lines
   const tags = C && C.tags && C.tags.get(ch.t[i]);
   const ohlc = [["O", ch.o[i]], ["H", ch.h[i]], ["L", ch.l[i]], ["C", ch.c[i]]].map(([k, v]) => `<span class="q"><i>${k}</i><b class="${col}">${f(v)}</b></span>`).join("");
   const score = (k, v, cls) => `<span class="sc"><i>${k}</i><b class="${cls}">${f(v, 0)}</b></span>`;
