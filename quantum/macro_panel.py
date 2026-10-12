@@ -1,10 +1,10 @@
-"""Macro panel for the site: DXY, USD/JPY, the US 10-year yield and WTI oil beside gold.
+"""Macro panel for the site: DXY, JPY/USD, the US 10-year yield and WTI oil beside gold.
 DISPLAY ONLY: outside `holdout.ENGINE_SOURCES`; the engine never reads `site/data/macro_panel.json`.
 
 For each instrument: the last price, the 24-hour change, a 15-minute sparkline (last 2 days), the
 correlation of its 15-minute returns with gold's over the same bars, and what its move implies for gold:
   * the sign of the measured correlation when it is clear (|r| >= 0.2), otherwise
-  * the textbook relation (DXY, USD/JPY and yields up = gold down; oil up = gold up), labelled as such.
+  * the textbook relation (DXY and yields up = gold down; JPY/USD (a stronger yen) and oil up = gold up), labelled as such.
 Gold is the engine's own 15-minute series (`site/data/15m.json`), so both sides share a clock.
 A failed source is reported per instrument and never fails the run.
 """
@@ -22,7 +22,7 @@ from .data import sources
 
 INSTRUMENTS = [   # key, label, Yahoo symbol, textbook sign of its move for gold, unit, decimals
     ("DXY", "US Dollar Index", "DX-Y.NYB", -1, "", 2),
-    ("USDJPY", "USD / JPY", "JPY=X", -1, "", 2),
+    ("JPYUSD", "JPY / USD", "JPYUSD=X", +1, "", 6),   # the yen in dollars (1 / USDJPY): a stronger yen
     ("US10Y", "US 10Y yield", "^TNX", -1, "%", 3),
     ("WTI", "WTI crude oil", "CL=F", +1, "$", 2),
 ]
