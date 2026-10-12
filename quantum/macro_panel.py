@@ -6,6 +6,9 @@ correlation of its 15-minute returns with gold's over the same bars, and what it
   * the sign of the measured correlation when it is clear (|r| >= 0.2), otherwise
   * the textbook relation (DXY and yields up = gold down; EUR/USD, JPY/USD (a stronger yen) and oil up = gold up),
     labelled as such. Bitcoin has no established relation (textbook 0): only a clear measured r colours it.
+Live US 10Y yield: no free feed streams the yield, only the 10-year T-note price (the relay's OANDA:USB10Y_USD).
+`bridge` measures the yield's change per point of T-note price (Yahoo ZN=F futures vs ^TNX, 15-minute changes,
+last 5 days); the site shows yield = ^TNX at the last completed bar + beta x the T-note's move since then.
 Gold is the engine's own 15-minute series (`site/data/15m.json`), so both sides share a clock.
 A failed source is reported per instrument and never fails the run.
 """
@@ -32,6 +35,11 @@ INSTRUMENTS = [   # key, label, Yahoo symbol, textbook sign of its move for gold
 SPARK_BARS = 192          # 2 days of 15-minute bars
 CORR_BARS = 96            # 1 day of 15-minute returns
 CORR_CLEAR = 0.2
+LIVE_PROXY = {"US10Y": "ZN=F"}   # 10-year T-note futures: the price the live yield estimate moves with
+BRIDGE_BARS = 480                # 5 days of 15-minute changes
+BRIDGE_ROLL = 1.0                # a T-note move above 1 point in 15 minutes is a contract roll, not a trade
+BRIDGE_BETA = (-0.30, -0.03)     # plausible yield-% per T-note point (duration about 6-8); outside it, no estimate
+BRIDGE_R2 = 0.5
 
 
 def _gold(chart_path: str) -> pd.Series | None:
@@ -50,6 +58,23 @@ def correlation(a: pd.Series, b: pd.Series, n: int = CORR_BARS) -> tuple[float |
     if len(r) < 20 or r.iloc[:, 0].std() == 0 or r.iloc[:, 1].std() == 0:
         return None, len(r)
     return float(np.corrcoef(r.iloc[:, 0], r.iloc[:, 1])[0, 1]), len(r)
+
+
+def bridge(yld: pd.Series, price: pd.Series) -> dict:
+    """OLS slope of the yield's 15-minute changes on the T-note price's, on shared bars; rolls dropped."""
+    j = pd.concat([yld, price], axis=1, join="inner").dropna()
+    d = j.diff().dropna()
+    d = d[d.iloc[:, 1].abs() <= BRIDGE_ROLL].tail(BRIDGE_BARS)
+    if len(d) < 40 or d.iloc[:, 1].var() == 0 or d.iloc[:, 0].var() == 0:
+        return {"ok": False, "n": int(len(d)), "why": "too few shared bars"}
+    dy, dp = d.iloc[:, 0].to_numpy(), d.iloc[:, 1].to_numpy()
+    beta = float(np.cov(dy, dp)[0, 1] / np.var(dp, ddof=1))
+    r2 = float(np.corrcoef(dy, dp)[0, 1] ** 2)
+    out = {"ok": BRIDGE_BETA[0] <= beta <= BRIDGE_BETA[1] and r2 >= BRIDGE_R2, "beta": round(beta, 5), "r2": round(r2, 3),
+           "n": int(len(d)), "proxy_last": round(float(price.dropna().iloc[-1]), 4)}
+    if not out["ok"]:
+        out["why"] = "fit outside its plausible range"
+    return out
 
 
 def implication(change: float | None, corr: float | None, textbook: int) -> dict:
@@ -84,13 +109,30 @@ def item(key, label, sym, textbook, unit, dec, df: pd.DataFrame | None, gold: pd
     return out
 
 
+def live_bridge(df: pd.DataFrame, proxy: str, fetch) -> dict:
+    """The live estimate's inputs: the measured slope and the anchor (the last COMPLETED 15-minute bar)."""
+    try:
+        c = df["close"].astype(float).dropna()
+        out = bridge(c, fetch(proxy, "15m", "5d")["close"].astype(float))
+        if len(c) >= 2:   # Yahoo's last bar may still be forming; its predecessor closed at its start + 15 minutes
+            out.update(anchor_t=int(c.index[-2].timestamp()) + 900, anchor_v=round(float(c.iloc[-2]), 5))
+        else:
+            out["ok"] = False
+        return out
+    except Exception as e:  # noqa: BLE001 - the box falls back to the direction only
+        return {"ok": False, "why": sources.redact(f"{type(e).__name__}: {e}")[:120]}
+
+
 def build(chart_path: str, fetch=sources.yahoo) -> dict:
     gold = _gold(chart_path)
     items = []
     for key, label, sym, tb, unit, dec in INSTRUMENTS:
         try:
             df = fetch(sym, "15m", "5d")
-            items.append(item(key, label, sym, tb, unit, dec, df, gold))
+            it = item(key, label, sym, tb, unit, dec, df, gold)
+            if key in LIVE_PROXY and it["ok"]:
+                it["live"] = live_bridge(df, LIVE_PROXY[key], fetch)
+            items.append(it)
         except Exception as e:  # noqa: BLE001 - reported per instrument
             items.append(item(key, label, sym, tb, unit, dec, None, gold, sources.redact(f"{type(e).__name__}: {e}")[:160]))
     return {"generated_ts": int(time.time()), "gold_bars": 0 if gold is None else int(len(gold)), "items": items,

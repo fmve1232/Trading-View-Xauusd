@@ -8,6 +8,8 @@ SYMBOL = "OANDA:XAU_USD"
 # the macro panel: the six DXY pairs (ICE formula, computed in the browser; EUR/USD is also shown on its own), USD/JPY,
 # WTI, the US 10Y T-note and Bitcoin (Binance BTC/USDT, Finnhub's crypto feed)
 MACRO_SYMBOLS = "OANDA:EUR_USD,OANDA:USD_JPY,OANDA:GBP_USD,OANDA:USD_CAD,OANDA:USD_SEK,OANDA:USD_CHF,OANDA:WTICO_USD,OANDA:USB10Y_USD,BINANCE:BTCUSDT"
+# per-minute history the hub keeps (3 h) so a browser can anchor the live 10Y yield estimate on connect
+HIST_SYMBOLS = "OANDA:USB10Y_USD"
 ALLOWED_ORIGINS = "https://fmve1232.github.io"
 
 [[durable_objects.bindings]]

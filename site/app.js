@@ -205,7 +205,7 @@ function connectStream() {
   ws.onopen = () => { STREAM.retry = 2000; };
   ws.onmessage = (ev) => {
     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-    if (m.type === "hello" || m.type === "status") { STREAM.status = String(m.status || "").slice(0, 80); if (m.last) onTick(m.last, true); if (m.macro) onMacro(m.macro); renderLive(); }
+    if (m.type === "hello" || m.type === "status") { STREAM.status = String(m.status || "").slice(0, 80); if (m.last) onTick(m.last, true); if (m.mhist) addHist(m.mhist); if (m.macro) onMacro(m.macro); renderLive(); }
     else if (m.type === "macro") onMacro(m.q);
     else if (m.type === "tick") onTick(m, false);
   };
@@ -418,14 +418,30 @@ setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
 /* ---------- macro panel: DXY, EUR/USD, JPY/USD, US 10Y, WTI, Bitcoin beside gold (DISPLAY ONLY) ----------
    15-minute data from quantum/macro_panel.py (every engine run) plus, when the relay streams them,
    live quotes once a second: EUR/USD, WTI and Bitcoin (Binance BTC/USDT) directly, JPY/USD as 1 / USD_JPY, DXY from its six pairs with the ICE formula,
-   and the 10Y yield's direction from the T-note price (price up = yield down). Green = the move
+   and the 10Y yield estimated from the T-note price: ^TNX at the last completed 15-minute bar + the measured
+   beta x the T-note's move since then (the relay's per-minute history supplies the T-note price at that bar);
+   without those inputs, only the yield's direction (T-note price up = yield down). Green = the move
    supports gold going up, red = supports gold going down (measured correlation, else textbook). */
 const MQ = {};                                     // relay symbol -> {p, t, first:{p,t}} (first seen within 5 min)
+const MH = {};                                     // relay symbol -> Map(minute ms -> last price in that minute)
+function addHist(h) {
+  for (const [s, a] of Object.entries(h || {})) {
+    const m = (MH[s] = MH[s] || new Map());
+    if (Array.isArray(a)) for (const x of a) if (Array.isArray(x) && isNum(x[0]) && isNum(x[1])) m.set(x[0], x[1]);
+  }
+}
+// the last price traded before tMs (a bar close on a minute boundary), at most 3 minutes earlier
+function priceAt(s, tMs) {
+  const m = MH[s]; if (!m) return null;
+  for (let k = tMs - 60000; k >= tMs - 180000; k -= 60000) if (m.has(k)) return m.get(k);
+  return null;
+}
 function onMacro(q) {
   if (!q) return;
   const now = Date.now();
   for (const [k, v] of Object.entries(q)) {
     if (!v || !isNum(v.p)) continue;
+    if (isNum(v.t)) addHist({ [k]: [[Math.floor(v.t / 60000) * 60000, v.p]] });
     const prev = MQ[k];
     const first = prev && prev.first && now - prev.first.rx < 300000 ? prev.first : { p: v.p, rx: now };
     MQ[k] = { p: v.p, t: v.t, rx: now, first };
@@ -433,7 +449,7 @@ function onMacro(q) {
   renderMacroPanel();
 }
 const freshQ = (k) => MQ[k] && Date.now() - MQ[k].rx < 600000 ? MQ[k] : null;
-function liveMacro(key) {
+function liveMacro(key, it) {
   if (key === "JPYUSD") { const q = freshQ("OANDA:USD_JPY"); return q && q.p > 0 ? { v: 1 / q.p, t: q.t } : null; }   // the yen in dollars
   const DIRECT = { EURUSD: "OANDA:EUR_USD", WTI: "OANDA:WTICO_USD", BTC: "BINANCE:BTCUSDT" };
   if (DIRECT[key]) { const q = freshQ(DIRECT[key]); return q ? { v: q.p, t: q.t } : null; }
@@ -443,12 +459,19 @@ function liveMacro(key) {
     const [eu, uj, gu, uc, us, uf] = P.map((x) => x.p);
     return { v: 50.14348112 * eu ** -0.576 * uj ** 0.136 * gu ** -0.119 * uc ** 0.091 * us ** 0.042 * uf ** 0.036, t: Math.max(...P.map((x) => x.t)) };
   }
-  if (key === "US10Y") {                           // direction only: T-note price over the last few minutes, inverted
-    const q = freshQ("OANDA:USB10Y_USD"); if (!q || q.p === q.first.p) return q ? { dir: 0, t: q.t } : null;
+  if (key === "US10Y") {
+    const q = freshQ("OANDA:USB10Y_USD"); if (!q) return null;
+    const L = it && it.live;                       // yield = ^TNX at the anchor + beta x the T-note's move since
+    if (L && L.ok && isNum(L.beta) && isNum(L.anchor_v) && isNum(L.anchor_t) && Math.abs(q.p - L.proxy_last) < 3) {
+      const p0 = priceAt("OANDA:USB10Y_USD", L.anchor_t * 1000);
+      if (isNum(p0)) return { v: L.anchor_v + L.beta * (q.p - p0), t: q.t, est: true };
+    }
+    if (q.p === q.first.p) return { dir: 0, t: q.t };   // direction only: T-note price over the last few minutes, inverted
     return { dir: q.p > q.first.p ? -1 : 1, t: q.t };
   }
   return null;
 }
+const estNote = (it) => `live est.: ^TNX ${it.live.anchor_v.toFixed(3)}% at ${new Date(it.live.anchor_t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} ${it.live.beta < 0 ? "−" : "+"} ${Math.abs(it.live.beta).toFixed(3)} × T-note move (fit r² ${it.live.r2.toFixed(2)}, ${it.live.n} bars)`;
 async function loadMacroPanel() { try { S.macroPanel = await getJSON("data/macro_panel.json"); } catch (e) { S.macroPanel = null; } renderMacroPanel(); }
 function spark(it, gold) {
   const v = it.spark && it.spark.v; if (!v || v.length < 2) return "";
@@ -475,10 +498,10 @@ function renderMacroPanel() {
         (lv0 && isNum(lv0.v) ? `<div class="mv"><span class="num">${it.unit === "$" ? "$" : ""}${lv0.v.toFixed(it.dec)}</span><span class="dim">no 24 h history yet</span></div>` : "") +
         `<div class="muted mnote">15-minute data unavailable${it.note ? " · " + esc(it.note) : ""}</div></div>`;
     }
-    const lv = liveMacro(it.key);
+    const lv = liveMacro(it.key, it);
     let last = it.last, chg = it.change, live = false, dirOnly = null;
     if (lv && isNum(lv.v)) { last = lv.v; chg = lv.v - it.ref; live = true; }
-    if (lv && it.key === "US10Y") dirOnly = lv.dir;
+    if (lv && isNum(lv.dir)) dirOnly = lv.dir;
     // what the move means for gold: sign(move) x sign(r) when r is clear, else the textbook relation
     const sgnR = isNum(it.corr) && Math.abs(it.corr) >= 0.2 ? Math.sign(it.corr) : it.textbook;
     const gimp = dirOnly ? dirOnly * sgnR : chg ? Math.sign(chg) * sgnR : 0;
@@ -488,12 +511,13 @@ function renderMacroPanel() {
     const arrow = chg > 0 ? "▲" : chg < 0 ? "▼" : "■";
     const view = { ...it, gold: gimp };
     return `<div class="mbox ${cls}">
-      <div class="mh"><b>${esc(it.label)}</b><span class="lt ${live || dirOnly !== null ? "on" : ""}">${live ? "live" : dirOnly !== null ? "live dir" : "15 min"}</span></div>
+      <div class="mh"><b>${esc(it.label)}</b><span class="lt ${live || dirOnly !== null ? "on" : ""}"${lv && lv.est ? ` title="${esc(estNote(it))}"` : ""}>${live ? (lv.est ? "live est." : "live") : dirOnly !== null ? "live dir" : "15 min"}</span></div>
       <div class="mv"><span class="num">${it.unit === "$" ? "$" : ""}${fmt(last)}${it.unit === "%" ? "%" : ""}</span>
         <span class="mchg ${cls}">${arrow} ${chg >= 0 ? "+" : ""}${fmt(chg)} (${isNum(pct) ? (pct >= 0 ? "+" : "") + pct.toFixed(2) : "—"}%)</span></div>
       ${spark(view)}
       <div class="mf"><span class="gi ${cls}">${gimp > 0 ? "▲ supports gold up" : gimp < 0 ? "▼ supports gold down" : "■ neutral for gold"}</span>
         <span class="dim" title="${esc(it.basis || "")}">r ${isNum(it.corr) ? (it.corr >= 0 ? "+" : "") + it.corr.toFixed(2) : "—"} vs gold</span></div>
+      ${lv && lv.est ? `<div class="dim mnote">${esc(estNote(it))}</div>` : ""}
       ${dirOnly !== null ? `<div class="dim mnote">live: T-note ${dirOnly > 0 ? "falling → yield rising" : dirOnly < 0 ? "rising → yield falling" : "flat"}</div>` : ""}
     </div>`;
   }).join("") + `<div class="mp-key dim">24 h change · 2-day 15-minute line in colour, gold dashed grey · <span class="bull">green = supports gold up</span> · <span class="bear">red = supports gold down</span> · r = correlation of 15-minute returns with gold over the last day</div>`;
