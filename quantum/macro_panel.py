@@ -1,10 +1,11 @@
-"""Macro panel for the site: DXY, JPY/USD, the US 10-year yield and WTI oil beside gold.
+"""Macro panel for the site: DXY, EUR/USD, JPY/USD, the US 10-year yield, WTI oil and Bitcoin beside gold.
 DISPLAY ONLY: outside `holdout.ENGINE_SOURCES`; the engine never reads `site/data/macro_panel.json`.
 
 For each instrument: the last price, the 24-hour change, a 15-minute sparkline (last 2 days), the
 correlation of its 15-minute returns with gold's over the same bars, and what its move implies for gold:
   * the sign of the measured correlation when it is clear (|r| >= 0.2), otherwise
-  * the textbook relation (DXY and yields up = gold down; JPY/USD (a stronger yen) and oil up = gold up), labelled as such.
+  * the textbook relation (DXY and yields up = gold down; EUR/USD, JPY/USD (a stronger yen) and oil up = gold up),
+    labelled as such. Bitcoin has no established relation (textbook 0): only a clear measured r colours it.
 Gold is the engine's own 15-minute series (`site/data/15m.json`), so both sides share a clock.
 A failed source is reported per instrument and never fails the run.
 """
@@ -22,9 +23,11 @@ from .data import sources
 
 INSTRUMENTS = [   # key, label, Yahoo symbol, textbook sign of its move for gold, unit, decimals
     ("DXY", "US Dollar Index", "DX-Y.NYB", -1, "", 2),
+    ("EURUSD", "EUR / USD", "EURUSD=X", +1, "", 5),   # a stronger euro = a weaker dollar (57.6% of the DXY)
     ("JPYUSD", "JPY / USD", "JPYUSD=X", +1, "", 6),   # the yen in dollars (1 / USDJPY): a stronger yen
     ("US10Y", "US 10Y yield", "^TNX", -1, "%", 3),
     ("WTI", "WTI crude oil", "CL=F", +1, "$", 2),
+    ("BTC", "Bitcoin", "BTC-USD", 0, "$", 0),         # no established relation with gold: measured r only
 ]
 SPARK_BARS = 192          # 2 days of 15-minute bars
 CORR_BARS = 96            # 1 day of 15-minute returns
@@ -55,6 +58,8 @@ def implication(change: float | None, corr: float | None, textbook: int) -> dict
         return {"gold": 0, "basis": "flat"}
     if corr is not None and abs(corr) >= CORR_CLEAR:
         return {"gold": int(np.sign(change) * np.sign(corr)), "basis": f"measured r {corr:+.2f}"}
+    if not textbook:
+        return {"gold": 0, "basis": "no established relation (measured r weak)"}
     return {"gold": int(np.sign(change) * textbook), "basis": "textbook relation (measured r weak)"}
 
 
@@ -69,10 +74,11 @@ def item(key, label, sym, textbook, unit, dec, df: pd.DataFrame | None, gold: pd
     chg = float(c.iloc[-1]) - ref
     corr, nret = correlation(c, gold) if gold is not None else (None, 0)
     sp = c.tail(SPARK_BARS)
+    dg = max(4, dec + 2)          # keep the instrument's precision (JPY/USD is about 0.0065)
     gs = gold.reindex(sp.index, method="ffill") if gold is not None else None
-    out.update(ok=True, last=round(float(c.iloc[-1]), 4), t=int(last_t.timestamp()), ref=round(ref, 4), change=round(chg, 4),
+    out.update(ok=True, last=round(float(c.iloc[-1]), dg), t=int(last_t.timestamp()), ref=round(ref, dg), change=round(chg, dg),
                change_pct=round(chg / ref * 100, 3) if ref else None, corr=None if corr is None else round(corr, 3), corr_n=nret,
-               spark={"t": [int(x.timestamp()) for x in sp.index], "v": [round(float(v), 4) for v in sp.values],
+               spark={"t": [int(x.timestamp()) for x in sp.index], "v": [round(float(v), dg) for v in sp.values],
                       "gold": None if gs is None else [None if not math.isfinite(v) else round(float(v), 2) for v in gs.values]},
                **implication(chg, corr, textbook))
     return out

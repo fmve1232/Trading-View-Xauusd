@@ -415,9 +415,9 @@ function renderGuard() {
 setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
 
 /* ---------- header / banners ---------- */
-/* ---------- macro panel: DXY, JPY/USD, US 10Y, WTI beside gold (DISPLAY ONLY) ----------
+/* ---------- macro panel: DXY, EUR/USD, JPY/USD, US 10Y, WTI, Bitcoin beside gold (DISPLAY ONLY) ----------
    15-minute data from quantum/macro_panel.py (every engine run) plus, when the relay streams them,
-   live quotes once a second: JPY/USD (1 / USD_JPY) and WTI directly, DXY from its six pairs with the ICE formula,
+   live quotes once a second: EUR/USD, WTI and Bitcoin (Binance BTC/USDT) directly, JPY/USD as 1 / USD_JPY, DXY from its six pairs with the ICE formula,
    and the 10Y yield's direction from the T-note price (price up = yield down). Green = the move
    supports gold going up, red = supports gold going down (measured correlation, else textbook). */
 const MQ = {};                                     // relay symbol -> {p, t, first:{p,t}} (first seen within 5 min)
@@ -435,7 +435,8 @@ function onMacro(q) {
 const freshQ = (k) => MQ[k] && Date.now() - MQ[k].rx < 600000 ? MQ[k] : null;
 function liveMacro(key) {
   if (key === "JPYUSD") { const q = freshQ("OANDA:USD_JPY"); return q && q.p > 0 ? { v: 1 / q.p, t: q.t } : null; }   // the yen in dollars
-  if (key === "WTI") { const q = freshQ("OANDA:WTICO_USD"); return q ? { v: q.p, t: q.t } : null; }
+  const DIRECT = { EURUSD: "OANDA:EUR_USD", WTI: "OANDA:WTICO_USD", BTC: "BINANCE:BTCUSDT" };
+  if (DIRECT[key]) { const q = freshQ(DIRECT[key]); return q ? { v: q.p, t: q.t } : null; }
   if (key === "DXY") {                             // ICE U.S. Dollar Index from its six currency pairs
     const P = ["EUR_USD", "USD_JPY", "GBP_USD", "USD_CAD", "USD_SEK", "USD_CHF"].map((x) => freshQ("OANDA:" + x));
     if (P.some((x) => !x)) return null;
