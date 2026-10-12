@@ -435,3 +435,37 @@ footer a { color: var(--muted); }
 .mp-empty { grid-column: 1 / -1; background: var(--card); padding: 12px; }
 @media (max-width: 1100px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 420px) { .mgrid { grid-template-columns: minmax(0, 1fr); } }
+/* playbook (conditional directions) */
+.pb { padding: 6px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg-2); display: grid; gap: 5px; margin-top: 4px; }
+.pb.prim { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.pb .pbh { font-size: 12px; line-height: 1.35; }
+.pb.bear .pbh > b:first-child { color: var(--bear); } .pb.bull .pbh > b:first-child { color: var(--bull); }
+.pb .tagp { margin-left: 6px; padding: 0 5px; border-radius: 3px; font: 700 9px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; background: var(--accent); color: var(--accent-ink); }
+.pb .pl span { min-width: 54px; padding: 3px 6px; }
+.bt.pbk { gap: 3px; }
+/* ═══ space optimisation (operator, Oct 2026): no empty areas ════════════════════════════════════ */
+/* brief: the playbook spans the rows on the right; "what to do now" fills the row under the four facts */
+.bgrid { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 1.55fr);
+  grid-template-areas: "trend heading liq target plan" "act act act act plan"; }
+.bgrid > :nth-child(1) { grid-area: trend; } .bgrid > :nth-child(2) { grid-area: heading; } .bgrid > :nth-child(3) { grid-area: liq; }
+.bgrid > :nth-child(4) { grid-area: target; } .bgrid > :nth-child(5) { grid-area: act; } .bgrid > :nth-child(6) { grid-area: plan; }
+.bt.act .bs { max-width: 900px; }
+@media (max-width: 1400px) {
+  .bgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) minmax(0, 1.3fr); grid-template-areas: "trend heading plan" "liq target plan" "act act plan"; }
+}
+@media (max-width: 760px) {
+  .bgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: "trend heading" "liq target" "act act" "plan plan"; }
+  .bgrid > .bt.act { grid-area: act; } .bgrid > .bt.plan { grid-area: plan; }
+}
+.bt { padding: 10px 12px 10px 15px; }
+/* chart toolbar: one row; scrolls sideways if a screen is too narrow */
+.chart-card .toolbar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 6px 8px; gap: 3px; }
+.chart-card .toolbar::-webkit-scrollbar { display: none; }
+.toggle { padding: 3px 7px; font-size: 10px; white-space: nowrap; flex: none; }
+/* header: one row on laptops; secondary chips are shown on wide screens only (their information is
+   also in the Market Brief's live badge, the Backtest tab and the tooltips) */
+@media (max-width: 1800px) { #chip-holdout { display: none; } }
+@media (max-width: 1600px) { #chip-live, #chip-source { display: none; } }
+@media (max-width: 1500px) { .brand small { display: none; } }
+@media (min-width: 1101px) { header.top { flex-wrap: nowrap; } .chips { flex-wrap: nowrap; } }
+.chart-card .toolbar .fit { position: sticky; right: 0; margin-left: auto; background: var(--card); box-shadow: -10px 0 10px var(--card); }

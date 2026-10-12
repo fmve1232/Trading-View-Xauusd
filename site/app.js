@@ -8,7 +8,7 @@ const store = {
   set(k, v) { try { localStorage.setItem("q5." + k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
 };
 const S = {
-  tf: store.get("tf", "15m"),
+  tf: (() => { if (!store.get("tf15_v1", false)) { store.set("tf", "15m"); store.set("tf15_v1", true); } return store.get("tf", "15m"); })(),   // 15m by default (operator, Oct 2026)
   data: null,
   index: null,
   mt5: store.get("mt5", 0),
@@ -669,6 +669,45 @@ function tickClock() {
   ck.textContent = closed ? "engine resumes when the market reopens" : `${D.meta.tf} bar closes in ${mmss(nextClose - t)} · next engine update ≈ ${tfmt(disp.getTime() / 1000, false)}`;
 }
 setInterval(tickClock, 1000);
+/* ---------- Playbook: conditional directions when the engine has no signal (display only) ----------
+   Built only from published levels and the engine's own constants, so every number is real:
+   * trigger = the nearest liquidity level beyond price on each side (at least 0.1 ATR away);
+   * entry   = a close of the chart timeframe beyond the trigger (never an intrabar touch);
+   * stop    = trigger -/+ the engine's regime stop distance (regime SL multiple x ATR);
+   * TP1/TP2 = the next levels beyond the trigger at least 1 R away (the same minimum as arm H2), so the
+               reward is never smaller than the risk; with none, 2R, labelled.
+   It is NOT a validated signal: the engine's decision stays as published, and this rule has no forward
+   record. Primary side = the side of the engine's final scores. */
+function playbook(D, price) {
+  const d = D.dashboard, lq = d.liquidity || {}, P = lq.pools || {}, st = d.struct || {}, fl = d.flow || {};
+  const a = d.atr, slm = d.regime && d.regime.sl_mult;
+  if (!isNum(price) || !isNum(a) || a <= 0 || !isNum(slm)) return null;
+  const stopD = slm * a;
+  const L = [["PDH", P.PDH], ["PDL", P.PDL], ["PWH", P.PWH], ["PWL", P.PWL], ["PMH", P.PMH], ["PML", P.PML], ["EQH", P.EQH], ["EQL", P.EQL],
+    ["Day high", lq.cdh], ["Day low", lq.cdl], ["Swing high", st.swing_res], ["Swing low", st.swing_sup], ["Internal high", st.active_res],
+    ["Internal low", st.active_sup], ["VAH", fl.vah], ["VAL", fl.val], ["POC", fl.vpoc]].filter(([, v]) => isNum(v));
+  const uniq = (arr) => arr.filter((x, k) => !arr.slice(0, k).some((y) => Math.abs(y[1] - x[1]) < 0.05 * a));
+  const below = uniq(L.filter(([, v]) => v < price - 0.1 * a).sort((x, y) => y[1] - x[1]));
+  const above = uniq(L.filter(([, v]) => v > price + 0.1 * a).sort((x, y) => x[1] - y[1]));
+  const side = (dir, list) => {
+    if (!list.length) return null;
+    const [tn, tv] = list[0], stop = tv - dir * stopD, R = stopD;
+    const tps = list.slice(1).filter(([, v]) => dir * (tv - v) * -1 >= 1.0 * R);
+    const tp1 = tps[0] || ["2R", tv + dir * 2 * R], tp2 = tps[1] || (tps[0] ? null : null);
+    return { dir, trigger: tv, tname: tn, stop, tp1: tp1[1], tp1n: tp1[0], tp2: tp2 ? tp2[1] : null, tp2n: tp2 ? tp2[0] : null,
+             rr: Math.abs(tp1[1] - tv) / R, dist: tv - price };
+  };
+  const sell = side(-1, below), buy = side(1, above);
+  const primary = Math.abs(d.bull_score - d.bear_score) < 5 ? 0 : d.bull_score > d.bear_score ? 1 : -1;
+  return { sell, buy, primary, a, stopD, lowSession: d.session && d.session.quality < 30 };
+}
+function pbLine(x, tf, primary) {
+  if (!x) return "";
+  const s = x.dir < 0;
+  return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(x.tname)}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
+    `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span><i>TP1 ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
+    (isNum(x.tp2) ? `<span><i>TP2 ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>R:R</i><b>1:${f(x.rr, 1)}</b></span><span><i>Away</i><b>${fs(x.dist, 2)}</b></span></div></div>`;
+}
 function renderBrief() {
   const el = $("#brief"), D = S.data; if (!el || !D) return;
   const d = D.dashboard, ch = D.chart, p = d.plan || {}, M = D.meta;
@@ -703,15 +742,22 @@ function renderBrief() {
   const log = String(d.decision_log || ""), mm = log.match(/^([▲▼])\d\/7(?: \[✗([^\]]*)\])?/);
   const fails = mm ? (mm[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x)) : [];
   const need = fails.map((k) => (GATES.find((g) => g[0] === k) || [k, k])[1].replace(" (London / New York)", "")).join(" · ");
-  const doNow = sig ? `${dec} now` : dec === "WAIT" ? "Stay flat · wait" : dec === "RISK LOCK" ? "Stop · risk lock" : "No trade";
+  const pb0 = !sig ? playbook(D, price) : null;
+  const doNow = sig ? `${dec} now` : dec === "RISK LOCK" ? "Stop · risk lock" : pb0 && (pb0.sell || pb0.buy) ? "Wait for a trigger" : dec === "WAIT" ? "Stay flat · wait" : "No trade";
   const warn = (fr && fr.behind >= 2 ? `Data ${fr.behind} bars old: do not act. ` : "") + (ev ? `High-impact USD event near (${esc(ev.title || ev.event || "release")}). ` : "") + (marketClosed(new Date()) ? "Market closed. " : "");
   const t5 = tile(sig ? (dec === "BUY" ? "bull act" : "bear act") : "warn act", sig ? (dec === "BUY" ? "up" : "dn") : "hand", "What to do now", esc(doNow),
-    (warn ? `<b class="warn">${warn}</b><br>` : "") + (sig ? `Entry ${px(p.entry)} · stop ${px(p.sl)} · TQ ${d.trade_quality}` : /^RANGE/.test(log) ? "Market is ranging: no side has an edge." : need ? `Waiting for: ${esc(need)}` : esc(d.blk_why || "")));
+    (warn ? `<b class="warn">${warn}</b><br>` : "") + (sig ? `Entry ${px(p.entry)} · stop ${px(p.sl)} · TQ ${d.trade_quality}` :
+      (pb0 ? `${pb0.sell ? `Sell below <b>${px(pb0.sell.trigger)}</b>` : ""}${pb0.sell && pb0.buy ? " · " : ""}${pb0.buy ? `buy above <b>${px(pb0.buy.trigger)}</b>` : ""} on a ${esc(M.tf)} close.<br>` : "") +
+      (/^RANGE/.test(log) ? "Engine: ranging, no side has an edge." : need ? `Engine waits for: ${esc(need)}` : esc(d.blk_why || "")) +
+      (d.session && d.session.quality < 30 ? ` · ${esc(d.session.label.toLowerCase())} session (the engine trades London / New York)` : "")));
   // 6 trade plan
   const side = p.long ? "LONG" : "SHORT";
   const planV = isNum(p.entry) ? `<span class="${p.long ? "bull" : "bear"}">${side}</span> ${px(p.entry)}` : "—";
-  const t6 = !sig ? `<div class="bt plan"><div class="bk">${IC.plan}Trade plan</div><div class="bv">No trade plan</div>
-    <div class="bs">Entry, stop and targets are published only for a BUY or SELL signal that passed every gate on a closed bar.</div></div>`
+  const pb = !sig ? playbook(D, price) : null;
+  const order = pb ? (pb.primary < 0 ? [pb.sell, pb.buy] : [pb.buy, pb.sell]) : [];
+  const t6 = !sig ? `<div class="bt plan pbk"><div class="bk">${IC.plan}Playbook <span class="hyp">conditional · not yet triggered</span></div>
+    ${pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : '<div class="bv">—</div>'}
+    <div class="bs">Engine decision: <b>${esc(dec)}</b>. Levels and stop size are the engine's own; this rule is not a validated signal${pb && pb.lowSession ? ' · <b class="warn">low-liquidity session</b>' : ""}.</div></div>`
     : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
     <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
     <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
@@ -784,15 +830,18 @@ function renderSide() {
     <div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>` + whyHtml(d, D) + lastSignalHtml(D);
 
   const sig = dec === "BUY" || dec === "SELL";
-  $("#plan-dir").textContent = sig ? (p.long ? "LONG" : "SHORT") : "no signal";
+  $("#plan-dir").textContent = sig ? (p.long ? "LONG" : "SHORT") : "playbook";
   $("#plan-dir").className = "pill " + (sig ? (p.long ? "bull" : "bear") : "");
   $("#plan-dir").title = sig ? "Side of the current signal." : "No signal on the last closed bar, so no entry, stop or target is published.";
   $("#plan-mt5").textContent = Number(S.mt5) ? `(MT5 ${fs(Number(S.mt5))})` : "";
   const planTxt = `XAUUSD ${M.tf} ${p.long ? "BUY" : "SELL"} | entry ${px(p.entry)} SL ${px(p.sl)} TP1 ${px(p.tp1)} TP2 ${px(p.tp2)} TP3 ${px(p.tp3)}`;
   const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}%` : "—";
   if (!sig) {
-    $("#plan").innerHTML = `<div class="noplan"><b>No trade plan.</b> The engine publishes an entry, stop and targets only when a
-      BUY or SELL signal has passed every gate on a closed bar. The last closed bar's decision is <b>${esc(dec)}</b>.</div>`;
+    const lp = livePrice(), pb = playbook(D, isNum(lp) ? lp : d.close);
+    const order = pb ? (pb.primary < 0 ? [pb.sell, pb.buy] : [pb.buy, pb.sell]) : [];
+    $("#plan").innerHTML = `<div class="noplan"><b>No engine signal</b> (decision ${esc(dec)}). Conditional playbook from the published levels:</div>` +
+      (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : "") +
+      `<p class="note">Entry only on a ${esc(M.tf)} close beyond the trigger. Stop = the engine's regime stop (${f(d.regime.sl_mult, 2)} × ATR ${f(d.atr, 2)}); targets = the next liquidity at least 1 R away. Not a validated signal: it has no forward record.</p>`;
   } else {
   $("#plan").innerHTML = `
     <div class="plan-grid">
@@ -1107,6 +1156,11 @@ function renderChart() {
     seg(p.sl, p0, `SL · ${p.sl_basis}`, css("--bear"), 0, 1.5, true);
     seg(p.tp1, p0, `TP1 · ${p.tp_basis[0]}`, css("--bull"), 0, 1.5, true); seg(p.tp2, p0, `TP2 · ${p.tp_basis[1]}`, css("--bull"), 2); seg(p.tp3, p0, `TP3 · ${p.tp_basis[2]}`, css("--bull"), 2);
   }
+  if (T.plan && !(d.decision === "BUY" || d.decision === "SELL")) {   // playbook triggers (conditional)
+    const fb = D.meta.forming, pb = playbook(D, fb && isNum(fb.c) ? fb.c : d.close), p0 = t[Math.max(0, n - 6)];
+    if (pb && pb.sell) seg(pb.sell.trigger, p0, `SELL below · ${pb.sell.tname}`, css("--bear"), 2, 1.5);
+    if (pb && pb.buy) seg(pb.buy.trigger, p0, `BUY above · ${pb.buy.tname}`, css("--bull"), 2, 1.5);
+  }
   const lq = d.liquidity || {}, P = lq.pools || {};
   if (T.levels) {
     const cdIdx = (v, hi) => { for (let k = n - 1; k >= 0 && t[k] >= dayStart; k--) if (isNum(v) && Math.abs((hi ? ch.h[k] : ch.l[k]) - v) < 0.02) return t[k]; return dayStart; };
@@ -1166,15 +1220,17 @@ function planScale(info) {
   for (const v of [p.sl, p.tp1]) if (isNum(v) && v > r.minValue - span / 4 && v < r.maxValue + span / 4) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   return { ...info, priceRange: { minValue: lo, maxValue: hi } };
 }
-// Fit to screen: about 6 px per bar (TradingView's default spacing), so a phone shows ~50 bars and
-// a wide screen up to 200, with room on the right for the volatility cone; price auto-scale back on.
+// Fit to screen (operator setting): the last 4 hours of market (16 candles on 15m, 48 on 5m; at least 16
+// candles on 1h / 4h), with a fixed ~150 px on the right for the line tags; price auto-scale back on.
+// Scroll or pinch to see more history; "Fit" returns here.
 function fitView() {
   if (!C || !C.nBars) return;
   const D = S.data, n = C.nBars, w = C.main.timeScale().width() || $("#chart").clientWidth;
-  const show = Math.max(40, Math.min(200, Math.round(w / 6)));
-  const pad = Math.max(S.toggles.cone && D && D.cone && D.cone.upper ? D.cone.upper.length + 2 : 0, 26);   // room for the end tags
+  const show = Math.max(Math.ceil(4 * 3600 / ((D && D.meta.tf_sec) || 900)), 16);
+  const tagPx = Math.min(150, w * 0.35), spacing = Math.max((w - tagPx) / show, 2);
+  const pad = tagPx / spacing;
   C.main.priceScale("right").applyOptions({ autoScale: true });
-  C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show), to: n - 1 + pad });
+  C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show) - 0.5, to: n - 1 + pad });
 }
 // The chart key: every visible line by name, with its colour and line style (no values: it only identifies the lines).
 const KEY = [["ema", [["ema20", "EMA 20", "--ov-ema20", "solid"], ["ema100", "EMA 100", "--ov-ema100", "solid"], ["ema200", "EMA 200", "--ov-ema200", "thick"]]],
