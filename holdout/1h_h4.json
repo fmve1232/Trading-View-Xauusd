@@ -1,1 +1,30 @@
-[]
+[
+{
+"dir": "LONG",
+"entry_time": "2026-10-12T13:00:00+00:00",
+"exit_time": "2026-10-12T14:00:00+00:00",
+"entry_i": 3679,
+"exit_i": 3680,
+"entry": 4173.266,
+"sl": 4155.729,
+"tp1": 4206.984,
+"tp2": 4216.207,
+"exit": 4164.269,
+"exit_reason": "FLIP",
+"tp1_hit": false,
+"pts": -9.767,
+"gross_pts": -8.997,
+"cost_pts": 0.77,
+"r": -0.557,
+"bars": 1,
+"tq": 0,
+"p": null,
+"ev": null,
+"session": "LONDON",
+"regime": "ABNORMAL",
+"open": false,
+"recorded_utc": "2026-10-12T15:04:57.116206+00:00",
+"freeze_key": "5e4630924d663fc5:92b67584f33cc1f0:090418672c210848",
+"price_source": "twelvedata:XAU/USD"
+}
+]
