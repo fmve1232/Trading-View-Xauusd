@@ -4,8 +4,8 @@
 // (opened while at least one viewer is connected, closed when the last one leaves), and fans the
 // ticks out, throttled to at most 4 messages a second per hub: {type:"tick", p, t, h, l, n}
 // = last price, its time (ms), high / low / count since the previous message.
-// The macro panel's instruments (MACRO_SYMBOLS: the six DXY currency pairs, USD/JPY, WTI and the
-// US 10Y T-note) ride on the same upstream connection and go out once a second as
+// The macro panel's instruments (MACRO_SYMBOLS: the six DXY currency pairs, USD/JPY, WTI, the
+// US 10Y T-note and Bitcoin) ride on the same upstream connection and go out once a second as
 // {type:"macro", q:{symbol:{p,t}}} -- only the symbols that changed.
 //
 // The Finnhub key lives only in the Worker secret FINNHUB_KEY; it never reaches a browser.

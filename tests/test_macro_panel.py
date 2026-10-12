@@ -34,6 +34,9 @@ def test_gold_implication_measured_then_textbook():
     assert macro_panel.implication(+0.5, +0.05, -1) == {"gold": -1, "basis": "textbook relation (measured r weak)"}
     assert macro_panel.implication(+1.0, None, +1)["gold"] == 1                                    # oil up -> green
     assert macro_panel.implication(0.0, -0.9, -1)["gold"] == 0
+    # Bitcoin: no textbook relation, so only a clear measured r colours it
+    assert macro_panel.implication(+500.0, 0.1, 0) == {"gold": 0, "basis": "no established relation (measured r weak)"}
+    assert macro_panel.implication(+500.0, 0.4, 0)["gold"] == 1
 
 
 def test_build_reports_each_instrument_and_never_raises(tmp_path):
@@ -49,8 +52,15 @@ def test_build_reports_each_instrument_and_never_raises(tmp_path):
         return _frame(100 + np.cumsum(np.random.default_rng(len(sym)).normal(0, 0.1, 300)))
     out = macro_panel.build(str(chart), fetch=fetch)
     keys = {it["key"]: it for it in out["items"]}
-    assert set(keys) == {"DXY", "JPYUSD", "US10Y", "WTI"}
+    assert set(keys) == {"DXY", "EURUSD", "JPYUSD", "US10Y", "WTI", "BTC"}
     assert not keys["WTI"]["ok"] and "blocked" in keys["WTI"]["note"]
     d = keys["DXY"]
     assert d["ok"] and len(d["spark"]["v"]) == 192 and len(d["spark"]["gold"]) == 192 and d["gold"] in (-1, 0, 1)
     assert abs(d["change"] - (d["last"] - d["ref"])) < 1e-3
+
+
+def test_small_prices_keep_their_precision():
+    v = 0.0065 + np.arange(200) * 1e-7                      # JPY/USD-sized values
+    it = macro_panel.item("JPYUSD", "JPY / USD", "JPYUSD=X", 1, "", 6, _frame(v), None)
+    assert it["last"] == round(v[-1], 8) and it["change"] != 0 and abs(it["change"] - (it["last"] - it["ref"])) < 1e-9
+    assert len(set(it["spark"]["v"])) > 100
