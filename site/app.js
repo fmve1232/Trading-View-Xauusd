@@ -8,7 +8,7 @@ const store = {
   set(k, v) { try { localStorage.setItem("q5." + k, JSON.stringify(v)); } catch (e) { /* private mode */ } },
 };
 const S = {
-  tf: store.get("tf", "15m"),
+  tf: (() => { if (!store.get("tf15_v1", false)) { store.set("tf", "15m"); store.set("tf15_v1", true); } return store.get("tf", "15m"); })(),   // 15m by default (operator, Oct 2026)
   data: null,
   index: null,
   mt5: store.get("mt5", 0),
@@ -1220,15 +1220,17 @@ function planScale(info) {
   for (const v of [p.sl, p.tp1]) if (isNum(v) && v > r.minValue - span / 4 && v < r.maxValue + span / 4) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   return { ...info, priceRange: { minValue: lo, maxValue: hi } };
 }
-// Fit to screen: about 6 px per bar (TradingView's default spacing), so a phone shows ~50 bars and
-// a wide screen up to 200, with room on the right for the volatility cone; price auto-scale back on.
+// Fit to screen (operator setting): the last 4 hours of market (16 candles on 15m, 48 on 5m; at least 16
+// candles on 1h / 4h), with a fixed ~150 px on the right for the line tags; price auto-scale back on.
+// Scroll or pinch to see more history; "Fit" returns here.
 function fitView() {
   if (!C || !C.nBars) return;
   const D = S.data, n = C.nBars, w = C.main.timeScale().width() || $("#chart").clientWidth;
-  const show = Math.max(40, Math.min(200, Math.round(w / 6)));
-  const pad = Math.max(S.toggles.cone && D && D.cone && D.cone.upper ? D.cone.upper.length + 2 : 0, 26);   // room for the end tags
+  const show = Math.max(Math.ceil(4 * 3600 / ((D && D.meta.tf_sec) || 900)), 16);
+  const tagPx = Math.min(150, w * 0.35), spacing = Math.max((w - tagPx) / show, 2);
+  const pad = tagPx / spacing;
   C.main.priceScale("right").applyOptions({ autoScale: true });
-  C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show), to: n - 1 + pad });
+  C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show) - 0.5, to: n - 1 + pad });
 }
 // The chart key: every visible line by name, with its colour and line style (no values: it only identifies the lines).
 const KEY = [["ema", [["ema20", "EMA 20", "--ov-ema20", "solid"], ["ema100", "EMA 100", "--ov-ema100", "solid"], ["ema200", "EMA 200", "--ov-ema200", "thick"]]],
