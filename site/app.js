@@ -80,6 +80,8 @@ const TOGGLES = [["ema", "EMA 20/100/200"], ["vwap", "VWAP D/W/M"], ["bb", "Boll
   ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"], ["h2", "H2 signals"], ["h3", "H3 signals"]];
 if (S.toggles.h2 === undefined) S.toggles.h2 = true;   // added after viewers saved their toggles
 if (S.toggles.h3 === undefined) S.toggles.h3 = true;
+// v-labels (Oct 2026): sweeps and structure labels on by default once, now that they are readable labels
+if (!store.get("labels_v1", false)) { S.toggles.sweeps = true; S.toggles.structure = true; store.set("toggles", S.toggles); store.set("labels_v1", true); }
 $("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${l}</span>`).join("") +
   `<button class="toggle fit" type="button" data-act="fit" title="Fit the latest bars to the screen and re-enable auto price scale">⤢ Fit</button>`;
 $("#toolbar").onclick = (e) => {
@@ -234,6 +236,7 @@ function applyLiveBar(lastTime) {
   const b = STREAM.bar; if (!C || !b) return;
   if (isNum(lastTime) && b.time < lastTime) return;           // an engine update has moved past it
   try { C.candles.update({ ...b, color: css("--neutral") + "88", wickColor: css("--neutral"), borderColor: css("--neutral") }); } catch (e) { /* older than the series end */ }
+  if (C.labels && (C.labels.lastT === null || b.time > C.labels.lastT)) C.labels.set({ lastT: b.time });   // levels reach the live candle
 }
 
 /* ---------- TradingView's free Advanced Chart widget (DISPLAY ONLY; loaded on demand) ----------
@@ -782,6 +785,76 @@ function structStr(st) {
 
 /* ---------- chart ---------- */
 let C = null;
+/* ---------- chart labels layer: level segments with end tags, and event labels (display only) ----------
+   Levels run from the bar where they formed to the current candle and carry their name at that end;
+   overlay lines (EMAs, VWAPs, bands) are named at their last point; BOS / CHoCH / MSS / sweep / signal
+   events get a filled label above (bearish) or below (bullish) the bar, stacked so they never overlap. */
+class LabelsPrimitive {
+  constructor() { this.segs = []; this.ends = []; this.events = []; this.hl = new Map(); this.lastT = null; }
+  attached({ chart, series, requestUpdate }) { this.chart = chart; this.series = series; this.req = requestUpdate; }
+  detached() {}
+  set(o) { Object.assign(this, o); this.req && this.req(); }
+  updateAllViews() {}
+  paneViews() {
+    const self = this;
+    return [{ zOrder: () => "top", renderer: () => ({ draw: (target) => target.useBitmapCoordinateSpace((sc) => self.draw(sc)) }) }];
+  }
+  draw(sc) {
+    const ctx = sc.context, hr = sc.horizontalPixelRatio, vr = sc.verticalPixelRatio, ts = this.chart.timeScale(), se = this.series;
+    const W = sc.bitmapSize.width / hr, xEnd = this.lastT !== null ? ts.timeToCoordinate(this.lastT) : null;
+    if (xEnd === null) return;
+    const font = (px, w = 600) => `${w} ${px * vr}px Inter, system-ui, sans-serif`;
+    const pill = (x, y, text, bg, fg, border) => {     // x, y in CSS px; returns width
+      ctx.font = font(10.5, 700);
+      const tw = ctx.measureText(text).width / hr, w = tw + 10, h = 16;
+      ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(x * hr, (y - h / 2) * vr, w * hr, h * vr, 3 * hr); ctx.fill();
+      if (border) { ctx.strokeStyle = border; ctx.lineWidth = 1 * hr; ctx.stroke(); }
+      ctx.fillStyle = fg; ctx.textBaseline = "middle"; ctx.fillText(text, (x + 5) * hr, y * vr + 0.5 * vr);
+      return w;
+    };
+    // 1 level segments: origin bar -> current candle
+    for (const g of this.segs) {
+      const y = se.priceToCoordinate(g.price); if (y === null) continue;
+      let x0 = ts.timeToCoordinate(g.t0); if (x0 === null) x0 = 0;
+      ctx.strokeStyle = g.color; ctx.lineWidth = (g.w || 1) * hr;
+      ctx.setLineDash(g.dash === 1 ? [2 * hr, 3 * hr] : g.dash === 2 ? [6 * hr, 4 * hr] : []);
+      ctx.beginPath(); ctx.moveTo(Math.max(0, x0) * hr, Math.round(y * vr) + 0.5); ctx.lineTo(xEnd * hr, Math.round(y * vr) + 0.5); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // 2 end tags beside the current candle, spread so they never overlap (a leader joins a moved tag)
+    const tags = [];
+    for (const g of [...this.segs.filter((s) => s.label), ...this.ends]) {
+      const y = se.priceToCoordinate(g.price); if (y !== null) tags.push({ ...g, y, ty: y });
+    }
+    tags.sort((a, b) => a.y - b.y);
+    for (let k = 1; k < tags.length; k++) if (tags[k].ty - tags[k - 1].ty < 17) tags[k].ty = tags[k - 1].ty + 17;
+    const x = xEnd + 10;
+    for (const g of tags) {
+      if (Math.abs(g.ty - g.y) > 1) { ctx.strokeStyle = g.color; ctx.lineWidth = 1 * hr; ctx.beginPath(); ctx.moveTo(xEnd * hr, g.y * vr); ctx.lineTo((x - 2) * hr, g.ty * vr); ctx.stroke(); }
+      pill(x, g.ty, g.label, g.solid ? g.color : this.bg, g.solid ? "#ffffff" : g.color, g.color);
+    }
+    // 3 event labels above / below their bar, in lanes so they do not collide
+    const placed = { up: [], dn: [] };
+    for (const e of this.events) {
+      const xb = ts.timeToCoordinate(e.t); if (xb === null || xb < -40 || xb > W + 40) continue;
+      const hl = this.hl.get(e.t); if (!hl) continue;
+      const above = e.dir < 0, base = se.priceToCoordinate(above ? hl[0] : hl[1]); if (base === null) continue;
+      ctx.font = font(10.5, 700);
+      const w = ctx.measureText(e.text).width / hr + 10, x0 = xb - w / 2;
+      // place the label clear of every label already drawn (true box collision), moving away from the bar
+      const boxes = placed[above ? "up" : "dn"].concat(placed[above ? "dn" : "up"]);
+      let y = above ? base - 22 : base + 22, tries = 0;
+      const hit = (yy) => boxes.some((r) => x0 < r.x1 + 3 && x0 + w > r.x0 - 3 && Math.abs(yy - r.y) < 18);
+      while (tries < 3 && hit(y)) { y += above ? -18 : 18; tries++; }
+      if (hit(y)) continue;                                             // too crowded: the shape and the legend still show it
+      placed[above ? "up" : "dn"].push({ x0, x1: x0 + w, y });
+      // a hairline from the label to its bar
+      ctx.strokeStyle = e.color; ctx.globalAlpha = 0.5; ctx.lineWidth = 1 * hr; ctx.beginPath();
+      ctx.moveTo(xb * hr, (above ? y + 8 : y - 8) * vr); ctx.lineTo(xb * hr, (above ? base - 4 : base + 4) * vr); ctx.stroke(); ctx.globalAlpha = 1;
+      pill(x0, y, e.text, e.solid ? e.color : this.bg, e.solid ? "#ffffff" : e.color, e.color);
+    }
+  }
+}
 class ZonesPrimitive {
   constructor() { this.zones = []; this.cone = null; }
   attached({ chart, series, requestUpdate }) { this.chart = chart; this.series = series; this.req = requestUpdate; }
@@ -848,11 +921,14 @@ function buildCharts() {
   // Overlays never drive the price scale: a weekly level or a cone far from price used to squeeze
   // the candles into ~40% of the pane. The scale follows the candles (and the plan, below).
   // every line is named: its title shows on the price-axis label (levels already carry named price lines)
-  const line = (color, w = 1, style = 0, title = "") => main.addLineSeries({ color, lineWidth: w, lineStyle: style, title, lastValueVisible: !!title, priceLineVisible: false, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null });
+  // the price axis is kept for the current price and CDH / CDL / PDH / PDL / POC; lines are named at their end in the chart
+  const line = (color, w = 1, style = 0, title = "") => main.addLineSeries({ color, lineWidth: w, lineStyle: style, lastValueVisible: false, priceLineVisible: false, crosshairMarkerVisible: false, autoscaleInfoProvider: () => null });
   const candles = main.addCandlestickSeries({ upColor: css("--candle-up"), downColor: css("--candle-dn"), wickUpColor: css("--candle-up"), wickDownColor: css("--candle-dn"), borderVisible: false,
     autoscaleInfoProvider: (orig) => planScale(orig()) });
   const zones = new ZonesPrimitive();
   candles.attachPrimitive(zones);
+  const labels = new LabelsPrimitive();
+  candles.attachPrimitive(labels);
   const L = {
     // overlay hues (blue / gold / magenta) pass colour-blind separation in both themes; EMA20 and the bands are neutral
     ema20: line(css("--ov-ema20"), 1, 0, "EMA 20"), ema100: line(css("--ov-ema100"), 1, 0, "EMA 100"), ema200: line(css("--ov-ema200"), 2, 0, "EMA 200"),
@@ -874,7 +950,7 @@ function buildCharts() {
   main.timeScale().subscribeVisibleLogicalRangeChange((r) => { if (!r || syncing) return; syncing = true; sub.timeScale().setVisibleLogicalRange(r); syncing = false; });
   sub.timeScale().subscribeVisibleLogicalRangeChange((r) => { if (!r || syncing) return; syncing = true; main.timeScale().setVisibleLogicalRange(r); syncing = false; });
   main.subscribeCrosshairMove((prm) => legend(prm));
-  C = { main, sub, candles, zones, L, subS, priceLines: [], fitted: false };
+  C = { main, sub, candles, zones, labels, L, subS, priceLines: [], fitted: false };
 }
 function series(t, arr, breaks) {
   // `breaks`: bar indices where an anchored series restarts (VWAP resets) -> draw a gap, not a cliff
@@ -900,8 +976,7 @@ function renderChart() {
   ["ema20", "ema100", "ema200"].forEach((k) => set(k, T.ema));
   ["vwap", "wvwap", "mvwap"].forEach((k) => set(k, T.vwap));
   ["bb_up", "bb_lo", "bb_mid"].forEach((k) => set(k, T.bb));
-  ["pdh", "pdl", "pwh", "pwl"].forEach((k) => set(k, T.levels));
-  ["vpoc", "vah", "val"].forEach((k) => set(k, T.vp));
+  ["pdh", "pdl", "pwh", "pwl", "vpoc", "vah", "val"].forEach((k) => set(k, false));   // drawn as current segments (labels layer)
   // volatility cone into the future
   const cone = D.cone, lastT = t[t.length - 1], lastC = ch.c[ch.c.length - 1];
   if (T.cone && cone && cone.upper && cone.upper.length) {
@@ -919,58 +994,88 @@ function renderChart() {
   C.zones.set(z);
   // markers. Vetoes and sweeps are frequent (dozens a day on 15m), so they are drawn as dots without
   // text, which piled up into unreadable "veto EV" stacks; the hovered bar's labels go in the legend.
-  const mk = [], tags = new Map();
+  const mk = [], tags = new Map(), ev = [];
   const tag = (t, s) => tags.set(t, (tags.get(t) || []).concat(s));
   for (const m of D.markers) {
-    if (m.type === "SIGNAL" && T.signals) mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: m.dir > 0 ? css("--bull") : css("--bear"), shape: m.dir > 0 ? "arrowUp" : "arrowDown", text: `${m.dir > 0 ? "BUY" : "SELL"} TQ${m.tq}` });
+    if (m.type === "SIGNAL" && T.signals) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: m.dir > 0 ? css("--bull") : css("--bear"), shape: m.dir > 0 ? "arrowUp" : "arrowDown" });
+      ev.push({ t: m.t, dir: m.dir, text: `${m.dir > 0 ? "BUY" : "SELL"} · TQ ${m.tq}`, color: m.dir > 0 ? css("--candle-up") : css("--candle-dn"), solid: true }); }
     else if (m.type === "VETO" && T.signals) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: css("--warn"), shape: "circle", size: 0.5 }); tag(m.t, `veto ${m.dir > 0 ? "▲" : "▼"} ${m.why}`); }
     else if (m.type === "TRACK_EXIT" && T.signals) mk.push({ time: m.t, position: "inBar", color: (m.r || 0) >= 0 ? css("--bull") : css("--bear"), shape: "square", text: `${fs(m.r, 1)}R` });
-    else if ((m.type === "BOS" || m.type === "CHoCH" || m.type === "MSS") && T.structure) mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: m.dir > 0 ? css("--bull") + "cc" : css("--bear") + "cc", shape: "circle", size: 0.5, text: m.type });
-    else if (m.type === "SWEEP" && T.sweeps) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: "#e040fb", shape: "circle", size: 0.4 }); tag(m.t, `sweep ${m.dir > 0 ? "▲" : "▼"}`); }
+    else if ((m.type === "BOS" || m.type === "CHoCH" || m.type === "MSS") && T.structure) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: m.dir > 0 ? css("--bull") + "cc" : css("--bear") + "cc", shape: "circle", size: 0.5 });
+      ev.push({ t: m.t, dir: m.dir, text: `${m.type} ${m.dir > 0 ? "▲" : "▼"}`, color: m.dir > 0 ? css("--bull") : css("--bear") }); }
+    else if (m.type === "SWEEP" && T.sweeps) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: "#e040fb", shape: "circle", size: 0.4 }); tag(m.t, `sweep ${m.dir > 0 ? "▲" : "▼"}`);
+      ev.push({ t: m.t, dir: m.dir, text: m.dir > 0 ? "Sweep SSL" : "Sweep BSL", color: "#d55181" }); }
   }
   mk.sort((a, b) => a.time - b.time);
   if (T.h2 && D.h2 && Array.isArray(D.h2.signals)) {                     // arm H2 (toggle on by default)
     const t0 = D.chart.t[0];
-    D.h2.signals.filter((g) => g.t >= t0).forEach((g) => mk.push({ time: g.t, position: g.dir === "LONG" ? "belowBar" : "aboveBar", color: "#b084ff",
-      shape: g.dir === "LONG" ? "arrowUp" : "arrowDown", text: `H2 ${g.dir === "LONG" ? "BUY" : "SELL"}` }));
+    D.h2.signals.filter((g) => g.t >= t0).forEach((g) => { mk.push({ time: g.t, position: g.dir === "LONG" ? "belowBar" : "aboveBar", color: "#b084ff",
+      shape: g.dir === "LONG" ? "arrowUp" : "arrowDown" }); ev.push({ t: g.t, dir: g.dir === "LONG" ? 1 : -1, text: `H2 ${g.dir === "LONG" ? "BUY" : "SELL"}`, color: "#9b6dff", solid: true }); });
     mk.sort((a, b) => a.time - b.time);
   }
   if (T.h3 && D.h3 && Array.isArray(D.h3.signals)) {                     // arm H3 (Amendment 7)
     const t0 = D.chart.t[0];
-    D.h3.signals.filter((g) => g.t >= t0).forEach((g) => mk.push({ time: g.t, position: g.dir === "LONG" ? "belowBar" : "aboveBar", color: "#26c6da",
-      shape: g.dir === "LONG" ? "arrowUp" : "arrowDown", text: `H3 ${g.dir === "LONG" ? "BUY" : "SELL"}` }));
+    D.h3.signals.filter((g) => g.t >= t0).forEach((g) => { mk.push({ time: g.t, position: g.dir === "LONG" ? "belowBar" : "aboveBar", color: "#26c6da",
+      shape: g.dir === "LONG" ? "arrowUp" : "arrowDown" }); ev.push({ t: g.t, dir: g.dir === "LONG" ? 1 : -1, text: `H3 ${g.dir === "LONG" ? "BUY" : "SELL"}`, color: "#0f9fb3", solid: true }); });
     mk.sort((a, b) => a.time - b.time);
   }
   C.candles.setMarkers(mk);
   C.tags = tags;
-  // price lines
+  // ---- levels: drawn from where they formed to the current candle, named at that end ----
   C.priceLines.forEach((p) => C.candles.removePriceLine(p)); C.priceLines = [];
-  // One line per price: a level the plan already names ("TP1 CDL") is not drawn again ("CDL"),
-  // which stacked two labels on the same price.
-  const drawn = [];
-  const pl = (price, color, title, style = 2, w = 1) => {
-    if (!isNum(price) || drawn.some((x) => Math.abs(x - price) < 0.005)) return;
-    drawn.push(price);
-    C.priceLines.push(C.candles.createPriceLine({ price, color, lineWidth: w, lineStyle: style, axisLabelVisible: true, title }));
+  const d = D.dashboard, n = t.length, curT = bars.length ? bars[bars.length - 1].time : t[n - 1];   // the current candle
+  const since = (arr, v) => { if (!arr || !isNum(v)) return t[Math.max(0, n - 24)]; let k = n - 1; while (k > 0 && isNum(arr[k - 1]) && Math.abs(arr[k - 1] - v) < 0.005) k--; return t[k]; };
+  const dayStart = since(ch.pdh, ch.pdh[n - 1]);
+  const segs = [], seen = [];
+  const seg = (price, t0, label, color, dash = 0, w = 1, solid = false) => {
+    if (!isNum(price) || seen.some((x) => Math.abs(x - price) < 0.005)) return;
+    seen.push(price); segs.push({ price, t0, label: `${label} ${px(price)}`, color, dash, w, solid });
   };
-  const d = D.dashboard;
   if (T.plan) {
-    const p = d.plan;
-    pl(p.sl, css("--bear"), `SL ${p.sl_basis}`, 0, 1);
-    pl(p.tp1, css("--bull"), `TP1 ${p.tp_basis[0]}`, 0, 1); pl(p.tp2, css("--bull"), `TP2 ${p.tp_basis[1]}`, 2); pl(p.tp3, css("--bull"), `TP3 ${p.tp_basis[2]}`, 2);
+    const p = d.plan, p0 = t[Math.max(0, n - 10)];
+    seg(p.sl, p0, `SL · ${p.sl_basis}`, css("--bear"), 0, 1.5, true);
+    seg(p.tp1, p0, `TP1 · ${p.tp_basis[0]}`, css("--bull"), 0, 1.5, true); seg(p.tp2, p0, `TP2 · ${p.tp_basis[1]}`, css("--bull"), 2); seg(p.tp3, p0, `TP3 · ${p.tp_basis[2]}`, css("--bull"), 2);
   }
+  const lq = d.liquidity || {}, P = lq.pools || {};
   if (T.levels) {
-    const lq = d.liquidity.pools;
-    pl(lq.PDH, "#f0b04a", "PDH", 2); pl(lq.PDL, "#f0b04a", "PDL", 2);
-    pl(lq.PWH, "#c79bff", "PWH", 2); pl(lq.PWL, "#c79bff", "PWL", 2);
-    pl(lq.PMH, "#9aa5b1", "PMH", 1); pl(lq.PML, "#9aa5b1", "PML", 1);
-    pl(d.liquidity.cdh, "#4dd0e1", "CDH", 3); pl(d.liquidity.cdl, "#4dd0e1", "CDL", 3);
-    pl(lq.EQH, "#ef5350", "EQH", 3); pl(lq.EQL, "#26a69a", "EQL", 3);
+    const cdIdx = (v, hi) => { for (let k = n - 1; k >= 0 && t[k] >= dayStart; k--) if (isNum(v) && Math.abs((hi ? ch.h[k] : ch.l[k]) - v) < 0.02) return t[k]; return dayStart; };
+    seg(lq.cdh, cdIdx(lq.cdh, true), "CDH", "#4dd0e1", 2); seg(lq.cdl, cdIdx(lq.cdl, false), "CDL", "#4dd0e1", 2);
+    seg(P.PDH, since(ch.pdh, P.PDH), "PDH", "#f0b04a", 2); seg(P.PDL, since(ch.pdl, P.PDL), "PDL", "#f0b04a", 2);
+    seg(P.PWH, since(ch.pwh, P.PWH), "PWH", "#b98cff", 2); seg(P.PWL, since(ch.pwl, P.PWL), "PWL", "#b98cff", 2);
+    const mon = (x) => new Date((x + 7 * 3600) * 1000).toLocaleDateString("en-CA", { timeZone: "America/New_York" }).slice(0, 7);
+    let mk0 = n - 1; while (mk0 > 0 && mon(t[mk0 - 1]) === mon(t[n - 1])) mk0--;
+    seg(P.PMH, t[mk0], "PMH", "#9aa5b1", 1); seg(P.PML, t[mk0], "PML", "#9aa5b1", 1);
+    seg(P.EQH, dayStart, "EQH", css("--bear"), 1); seg(P.EQL, dayStart, "EQL", css("--bull"), 1);
+  }
+  const fl = d.flow || {};
+  if (T.vp) {
+    const v0 = t[Math.max(0, n - 100)];                               // the 100-bar profile window
+    seg(fl.vpoc, v0, "POC", css("--text"), 1, 1.5); seg(fl.vah, v0, "VAH", css("--muted"), 1); seg(fl.val, v0, "VAL", css("--muted"), 1);
   }
   if (T.sr && D.sr) {
-    D.sr.res.forEach((r, k) => pl(r.price, css("--bear") + (r.touches >= 3 ? "cc" : "77"), `R${k + 1} ×${r.touches}`, 1));
-    D.sr.sup.forEach((r, k) => pl(r.price, css("--bull") + (r.touches >= 3 ? "cc" : "77"), `S${k + 1} ×${r.touches}`, 1));
+    const s0 = t[Math.max(0, n - 40)];
+    D.sr.res.forEach((r, k) => seg(r.price, s0, `R${k + 1} ×${r.touches}`, css("--bear") + (r.touches >= 3 ? "" : "99"), 1));
+    D.sr.sup.forEach((r, k) => seg(r.price, s0, `S${k + 1} ×${r.touches}`, css("--bull") + (r.touches >= 3 ? "" : "99"), 1));
   }
+  // overlay lines named at their last point
+  const ends = [];
+  const NAME = { ema20: ["EMA 20", "--ov-ema20"], ema100: ["EMA 100", "--ov-ema100"], ema200: ["EMA 200", "--ov-ema200"], vwap: ["VWAP D", "--ov-vwap"],
+    wvwap: ["VWAP W", "--ov-vwap"], mvwap: ["VWAP M", "--ov-vwap"], bb_up: ["BB upper", "--ov-band"], bb_lo: ["BB lower", "--ov-band"] };
+  for (const [tg, keys] of [["ema", ["ema20", "ema100", "ema200"]], ["vwap", ["vwap", "wvwap", "mvwap"]], ["bb", ["bb_up", "bb_lo"]]]) {
+    if (T[tg]) for (const k of keys) if (isNum(ch[k][n - 1])) ends.push({ price: ch[k][n - 1], label: NAME[k][0], color: css(NAME[k][1]) });
+  }
+  const hl = new Map(); for (let k = 0; k < n; k++) hl.set(t[k], [ch.h[k], ch.l[k]]);
+  ev.sort((a, b) => a.t - b.t);
+  const tfS = D.meta.tf_sec, lastSw = {};
+  const evs = ev.filter((e) => {
+    if (!/^Sweep/.test(e.text)) return true;
+    const k = e.dir, keep = !(lastSw[k] && e.t - lastSw[k] <= 6 * tfS);
+    lastSw[k] = e.t; return keep;                                       // the rest of a sweep cluster keeps its dot
+  });
+  C.labels.set({ segs, ends, events: evs, hl, lastT: curT, bg: css("--card") });
+  // the price axis: current price (the candle series) and only CDH / CDL / PDH / PDL / POC
+  const ax = (price, color, title) => { if (isNum(price)) C.priceLines.push(C.candles.createPriceLine({ price, color, lineVisible: false, axisLabelVisible: true, title })); };
+  ax(lq.cdh, "#4dd0e1", "CDH"); ax(lq.cdl, "#4dd0e1", "CDL"); ax(P.PDH, "#f0b04a", "PDH"); ax(P.PDL, "#f0b04a", "PDL"); ax(fl.vpoc, css("--muted"), "POC");
   // sub pane
   C.subS.bull.setData(series(t, ch.bull)); C.subS.bear.setData(series(t, ch.bear)); C.subS.range.setData(series(t, ch.range));
   C.subS.tq.setData(series(t, ch.tq));
@@ -996,7 +1101,7 @@ function fitView() {
   if (!C || !C.nBars) return;
   const D = S.data, n = C.nBars, w = C.main.timeScale().width() || $("#chart").clientWidth;
   const show = Math.max(40, Math.min(200, Math.round(w / 6)));
-  const pad = S.toggles.cone && D && D.cone && D.cone.upper ? D.cone.upper.length + 2 : 4;
+  const pad = Math.max(S.toggles.cone && D && D.cone && D.cone.upper ? D.cone.upper.length + 2 : 0, 26);   // room for the end tags
   C.main.priceScale("right").applyOptions({ autoScale: true });
   C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show), to: n - 1 + pad });
 }
@@ -1016,10 +1121,12 @@ function legend(prm) {
   const keys = KEY.filter(([t]) => S.toggles[t]).flatMap(([, ls]) => ls).filter(([k]) => ch[k] && isNum(ch[k][i]))
     .map(([k, name, v, st]) => `<span class="lk"><i class="sw ${st}" style="--c:${css(v)}"></i>${name} <b>${f(ch[k][i])}</b></span>`).join("");
   const tags = C && C.tags && C.tags.get(ch.t[i]);
+  const ohlc = [["O", ch.o[i]], ["H", ch.h[i]], ["L", ch.l[i]], ["C", ch.c[i]]].map(([k, v]) => `<span class="q"><i>${k}</i><b class="${col}">${f(v)}</b></span>`).join("");
+  const score = (k, v, cls) => `<span class="sc"><i>${k}</i><b class="${cls}">${f(v, 0)}</b></span>`;
   $("#legend").innerHTML =
-    `<div class="lrow"><span class="lt">XAUUSD · ${esc(D.meta.tf)} · ${tfmt(ch.t[i])}</span><span class="${col}">O <b>${f(ch.o[i])}</b> H <b>${f(ch.h[i])}</b> L <b>${f(ch.l[i])}</b> C <b>${f(ch.c[i])}</b>` +
-    (isNum(chg) ? ` <b class="${chg >= 0 ? "bull" : "bear"}">${chg >= 0 ? "+" : ""}${chg.toFixed(2)}</b>` : "") + `</span>` +
-    `<span>Long <b class="bull">${f(ch.bull[i], 0)}</b> · Range <b>${f(ch.range[i], 0)}</b> · Short <b class="bear">${f(ch.bear[i], 0)}</b> · TQ <b>${f(ch.tq[i], 0)}</b></span>` +
+    `<div class="lrow head"><span class="sym">XAUUSD</span><span class="tfb">${esc(D.meta.tf)}</span><span class="tm">${tfmt(ch.t[i])}</span>${ohlc}` +
+    (isNum(chg) ? `<span class="chg ${chg >= 0 ? "up" : "dn"}">${chg >= 0 ? "▲ +" : "▼ "}${chg.toFixed(2)} (${(chg / ch.c[i - 1] * 100).toFixed(2)}%)</span>` : "") + `</div>` +
+    `<div class="lrow">${score("Long", ch.bull[i], "bull")}${score("Range", ch.range[i], "")}${score("Short", ch.bear[i], "bear")}${score("TQ", ch.tq[i], "")}` +
     (ch.session[i] ? `<span class="tag">${esc(ch.session[i])}</span>` : "") + (tags ? `<span class="tag warn">${esc(tags.join(" · "))}</span>` : "") + `</div>` +
     (keys ? `<div class="lrow keys">${keys}</div>` : "");
 }

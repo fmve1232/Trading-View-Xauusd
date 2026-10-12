@@ -399,3 +399,19 @@ footer a { color: var(--muted); }
 .lpill.off::before, .lpill.stale::before { background: var(--warn); }
 @media (prefers-reduced-motion: reduce) { .lpill.on::before { animation: none; } }
 @media (max-width: 760px) { .brief .clk { margin-left: 0; width: 100%; } }
+/* chart header panel (top-left): symbol, OHLC, scores and the line key */
+#chart > .legend { top: 8px; left: 8px; padding: 7px 10px 8px; border-radius: 6px; gap: 5px; text-shadow: none;
+  background: color-mix(in srgb, var(--card) 86%, transparent); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); backdrop-filter: blur(6px); max-width: min(760px, calc(100% - 150px)); }
+.legend .head { gap: 4px 12px; }
+.legend .sym { font: 800 12px var(--sans); letter-spacing: 0.06em; color: var(--text); }
+.legend .tfb { font: 700 10px var(--mono); padding: 1px 6px; border-radius: 3px; background: var(--accent); color: var(--accent-ink); }
+.legend .tm { font: 11px var(--mono); color: var(--muted); }
+.legend .q, .legend .sc { display: inline-flex; align-items: baseline; gap: 4px; }
+.legend .q i, .legend .sc i { font: normal 700 9.5px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.legend .q b, .legend .sc b { font: 600 11.5px var(--mono); font-variant-numeric: tabular-nums; }
+.legend .chg { font: 700 11px var(--mono); padding: 1px 6px; border-radius: 3px; }
+.legend .chg.up { color: var(--bull); background: color-mix(in srgb, var(--bull) 12%, transparent); }
+.legend .chg.dn { color: var(--bear); background: color-mix(in srgb, var(--bear) 12%, transparent); }
+.legend .keys .lk { background: transparent; padding: 0; }
+.sublegend { background: transparent !important; border: 0 !important; box-shadow: none !important; padding: 2px 6px !important; }
+@media (max-width: 560px) { #chart > .legend { max-width: calc(100% - 80px); padding: 5px 7px; } .legend .sc, .legend .tag { display: none; } }
