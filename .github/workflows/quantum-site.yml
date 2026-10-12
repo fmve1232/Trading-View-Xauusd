@@ -145,6 +145,10 @@ jobs:
           OANDA_ACCOUNT_ID: ${{ vars.OANDA_ACCOUNT_ID }}
         run: python -m quantum.reference --out site/data/reference.json --chart site/data/1h.json
 
+      - name: Macro panel - DXY, USD-JPY, US 10Y, WTI vs gold (display only; never fails the run)
+        continue-on-error: true
+        run: python -m quantum.macro_panel --out site/data/macro_panel.json --chart site/data/15m.json
+
       - name: MT5 broker feed via MetaApi (display and validation only; never fails the run)
         continue-on-error: true
         env:   # free MetaApi account, connected with the MT5 INVESTOR (read-only) password

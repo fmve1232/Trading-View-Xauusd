@@ -111,6 +111,7 @@ async function load() {
   }
   renderAll();
   loadEvents();
+  loadMacroPanel();
   loadReference();
   loadMt5();
   pollLive();
@@ -198,7 +199,8 @@ function connectStream() {
   ws.onopen = () => { STREAM.retry = 2000; };
   ws.onmessage = (ev) => {
     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
-    if (m.type === "hello" || m.type === "status") { STREAM.status = String(m.status || "").slice(0, 80); if (m.last) onTick(m.last, true); renderLive(); }
+    if (m.type === "hello" || m.type === "status") { STREAM.status = String(m.status || "").slice(0, 80); if (m.last) onTick(m.last, true); if (m.macro) onMacro(m.macro); renderLive(); }
+    else if (m.type === "macro") onMacro(m.q);
     else if (m.type === "tick") onTick(m, false);
   };
   ws.onclose = () => {
@@ -428,6 +430,89 @@ function renderGuard() {
 setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
 
 /* ---------- header / banners ---------- */
+/* ---------- macro panel: DXY, USD/JPY, US 10Y, WTI beside gold (DISPLAY ONLY) ----------
+   15-minute data from quantum/macro_panel.py (every engine run) plus, when the relay streams them,
+   live quotes once a second: USD/JPY and WTI directly, DXY from its six pairs with the ICE formula,
+   and the 10Y yield's direction from the T-note price (price up = yield down). Green = the move
+   supports gold going up, red = supports gold going down (measured correlation, else textbook). */
+const MQ = {};                                     // relay symbol -> {p, t, first:{p,t}} (first seen within 5 min)
+function onMacro(q) {
+  if (!q) return;
+  const now = Date.now();
+  for (const [k, v] of Object.entries(q)) {
+    if (!v || !isNum(v.p)) continue;
+    const prev = MQ[k];
+    const first = prev && prev.first && now - prev.first.rx < 300000 ? prev.first : { p: v.p, rx: now };
+    MQ[k] = { p: v.p, t: v.t, rx: now, first };
+  }
+  renderMacroPanel();
+}
+const freshQ = (k) => MQ[k] && Date.now() - MQ[k].rx < 600000 ? MQ[k] : null;
+function liveMacro(key) {
+  if (key === "USDJPY") { const q = freshQ("OANDA:USD_JPY"); return q ? { v: q.p, t: q.t } : null; }
+  if (key === "WTI") { const q = freshQ("OANDA:WTICO_USD"); return q ? { v: q.p, t: q.t } : null; }
+  if (key === "DXY") {                             // ICE U.S. Dollar Index from its six currency pairs
+    const P = ["EUR_USD", "USD_JPY", "GBP_USD", "USD_CAD", "USD_SEK", "USD_CHF"].map((x) => freshQ("OANDA:" + x));
+    if (P.some((x) => !x)) return null;
+    const [eu, uj, gu, uc, us, uf] = P.map((x) => x.p);
+    return { v: 50.14348112 * eu ** -0.576 * uj ** 0.136 * gu ** -0.119 * uc ** 0.091 * us ** 0.042 * uf ** 0.036, t: Math.max(...P.map((x) => x.t)) };
+  }
+  if (key === "US10Y") {                           // direction only: T-note price over the last few minutes, inverted
+    const q = freshQ("OANDA:USB10Y_USD"); if (!q || q.p === q.first.p) return q ? { dir: 0, t: q.t } : null;
+    return { dir: q.p > q.first.p ? -1 : 1, t: q.t };
+  }
+  return null;
+}
+async function loadMacroPanel() { try { S.macroPanel = await getJSON("data/macro_panel.json"); } catch (e) { S.macroPanel = null; } renderMacroPanel(); }
+function spark(it, gold) {
+  const v = it.spark && it.spark.v; if (!v || v.length < 2) return "";
+  const W = 220, H = 54, pad = 3, n = v.length;
+  const mm = (a) => { const b = a.filter(isNum); return [Math.min(...b), Math.max(...b)]; };
+  const [lo, hi] = mm(v), xs = (i) => pad + (i / (n - 1)) * (W - 2 * pad), ys = (x, l, h) => H - pad - ((x - l) / ((h - l) || 1)) * (H - 2 * pad);
+  const path = (a, l, h) => a.map((x, i) => (isNum(x) ? `${i && isNum(a[i - 1]) ? "L" : "M"}${xs(i).toFixed(1)},${ys(x, l, h).toFixed(1)}` : "")).join("");
+  const g = it.spark.gold; let gp = "";
+  if (g && g.filter(isNum).length > 2) { const [gl, gh] = mm(g); gp = `<path d="${path(g, gl, gh)}" class="sg"/>`; }
+  const col = it.gold > 0 ? "var(--bull)" : it.gold < 0 ? "var(--bear)" : "var(--muted)";
+  const lastY = ys(v[n - 1], lo, hi).toFixed(1);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" class="spk" role="img" aria-label="${esc(it.label)} last 2 days with gold">${gp}` +
+    `<path d="${path(v, lo, hi)}" fill="none" stroke="${col}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>` +
+    `<circle cx="${xs(n - 1).toFixed(1)}" cy="${lastY}" r="2.6" fill="${col}"/></svg>`;
+}
+function renderMacroPanel() {
+  const el = $("#macro-panel"); if (!el) return;
+  const M = S.macroPanel;
+  if (!M || !Array.isArray(M.items)) { el.innerHTML = `<div class="mp-empty muted">Macro panel appears after the next pipeline run.</div>`; return; }
+  el.innerHTML = M.items.map((it) => {
+    if (!it.ok) {
+      const lv0 = liveMacro(it.key);                 // no 15-minute data, but the relay may still have a live quote
+      return `<div class="mbox"><div class="mh"><b>${esc(it.label)}</b><span class="lt ${lv0 ? "on" : ""}">${lv0 ? "live" : esc(it.symbol)}</span></div>` +
+        (lv0 && isNum(lv0.v) ? `<div class="mv"><span class="num">${it.unit === "$" ? "$" : ""}${lv0.v.toFixed(it.dec)}</span><span class="dim">no 24 h history yet</span></div>` : "") +
+        `<div class="muted mnote">15-minute data unavailable${it.note ? " · " + esc(it.note) : ""}</div></div>`;
+    }
+    const lv = liveMacro(it.key);
+    let last = it.last, chg = it.change, live = false, dirOnly = null;
+    if (lv && isNum(lv.v)) { last = lv.v; chg = lv.v - it.ref; live = true; }
+    if (lv && it.key === "US10Y") dirOnly = lv.dir;
+    // what the move means for gold: sign(move) x sign(r) when r is clear, else the textbook relation
+    const sgnR = isNum(it.corr) && Math.abs(it.corr) >= 0.2 ? Math.sign(it.corr) : it.textbook;
+    const gimp = dirOnly ? dirOnly * sgnR : chg ? Math.sign(chg) * sgnR : 0;
+    const cls = gimp > 0 ? "bull" : gimp < 0 ? "bear" : "";
+    const pct = it.ref ? chg / it.ref * 100 : null;
+    const fmt = (x) => (isNum(x) ? x.toFixed(it.dec) : "—");
+    const arrow = chg > 0 ? "▲" : chg < 0 ? "▼" : "■";
+    const view = { ...it, gold: gimp };
+    return `<div class="mbox ${cls}">
+      <div class="mh"><b>${esc(it.label)}</b><span class="lt ${live || dirOnly !== null ? "on" : ""}">${live ? "live" : dirOnly !== null ? "live dir" : "15 min"}</span></div>
+      <div class="mv"><span class="num">${it.unit === "$" ? "$" : ""}${fmt(last)}${it.unit === "%" ? "%" : ""}</span>
+        <span class="mchg ${cls}">${arrow} ${chg >= 0 ? "+" : ""}${fmt(chg)} (${isNum(pct) ? (pct >= 0 ? "+" : "") + pct.toFixed(2) : "—"}%)</span></div>
+      ${spark(view)}
+      <div class="mf"><span class="gi ${cls}">${gimp > 0 ? "▲ supports gold up" : gimp < 0 ? "▼ supports gold down" : "■ neutral for gold"}</span>
+        <span class="dim" title="${esc(it.basis || "")}">r ${isNum(it.corr) ? (it.corr >= 0 ? "+" : "") + it.corr.toFixed(2) : "—"} vs gold</span></div>
+      ${dirOnly !== null ? `<div class="dim mnote">live: T-note ${dirOnly > 0 ? "falling → yield rising" : dirOnly < 0 ? "rising → yield falling" : "flat"}</div>` : ""}
+    </div>`;
+  }).join("") + `<div class="mp-key dim">24 h change · 2-day 15-minute line in colour, gold dashed grey · <span class="bull">green = supports gold up</span> · <span class="bear">red = supports gold down</span> · r = correlation of 15-minute returns with gold over the last day</div>`;
+}
+
 /* ---------- quote header (display only) ---------- */
 // Previous trading day's close: the last bar before the latest New York 17:00 rollover (the engine's
 // trading-day rule: a bar belongs to the date of its New York open time + 7 hours).

@@ -5,6 +5,8 @@ compatibility_date = "2025-06-01"
 
 [vars]
 SYMBOL = "OANDA:XAU_USD"
+# the macro panel: the six DXY pairs (ICE formula, computed in the browser), USD/JPY, WTI and the US 10Y T-note
+MACRO_SYMBOLS = "OANDA:EUR_USD,OANDA:USD_JPY,OANDA:GBP_USD,OANDA:USD_CAD,OANDA:USD_SEK,OANDA:USD_CHF,OANDA:WTICO_USD,OANDA:USB10Y_USD"
 ALLOWED_ORIGINS = "https://fmve1232.github.io"
 
 [[durable_objects.bindings]]

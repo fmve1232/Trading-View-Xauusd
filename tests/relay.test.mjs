@@ -1,7 +1,7 @@
 // node --test tests/relay.test.mjs  (run by tests/test_relay.py)
 import test from "node:test";
 import assert from "node:assert/strict";
-import { originAllowed, pickTicks, Hub } from "../relay/worker.js";
+import { originAllowed, pickTicks, pickMacro, macroSymbols, Hub } from "../relay/worker.js";
 
 const SYM = "OANDA:XAU_USD";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -68,4 +68,26 @@ test("missing key and upstream errors are reported, not thrown", async () => {
   h2.clients.clear();                                               // stop the retry loop
   assert.match(d.sent.at(-1).status, /^error: /);
   assert.ok(!JSON.stringify(d.sent).includes("SECRET123"), "the key is redacted from error text");
+});
+
+test("macro symbols: subscribed on the same upstream, sent once a second, only what changed", async () => {
+  const MS = "OANDA:USD_JPY,OANDA:WTICO_USD";
+  assert.deepEqual(macroSymbols({ MACRO_SYMBOLS: MS + ", " }), ["OANDA:USD_JPY", "OANDA:WTICO_USD"]);
+  assert.deepEqual(pickMacro({ type: "trade", data: [{ s: "OANDA:USD_JPY", p: 150.1, t: 2 }, { s: "OANDA:USD_JPY", p: 150.2, t: 3 },
+    { s: SYM, p: 4300, t: 4 }, { s: "OANDA:WTICO_USD", p: -1, t: 5 }] }, ["OANDA:USD_JPY", "OANDA:WTICO_USD"]), { "OANDA:USD_JPY": { p: 150.2, t: 3 } });
+  const up = fakeUpstream();
+  globalThis.fetch = async () => ({ status: 101, webSocket: up });
+  const hub = new Hub({}, { SYMBOL: SYM, FINNHUB_KEY: "K", MACRO_SYMBOLS: MS }); const c = client(); hub.clients.add(c);
+  await hub.openUpstream();
+  assert.deepEqual(up.sent.map((m) => m.symbol), [SYM, "OANDA:USD_JPY", "OANDA:WTICO_USD"]);
+  hub.onUpstream(JSON.stringify({ type: "trade", data: [{ s: "OANDA:USD_JPY", p: 150.3, t: 6 }, { s: SYM, p: 4301, t: 6 }] }));
+  hub.onUpstream(JSON.stringify({ type: "trade", data: [{ s: "OANDA:USD_JPY", p: 150.4, t: 7 }] }));
+  await sleep(300);
+  assert.equal(c.sent.filter((m) => m.type === "macro").length, 0, "macro waits for its 1 s batch");
+  assert.equal(c.sent.filter((m) => m.type === "tick").length, 1, "gold ticks are not slowed by it");
+  await sleep(900);
+  const mac = c.sent.filter((m) => m.type === "macro");
+  assert.equal(mac.length, 1);
+  assert.deepEqual(mac[0].q, { "OANDA:USD_JPY": { p: 150.4, t: 7 } });
+  hub.clients.clear(); hub.closeUpstream();
 });

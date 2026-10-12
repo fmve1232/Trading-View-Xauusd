@@ -13,6 +13,12 @@ Finnhub WebSocket ──(one connection, key in a Worker secret)──► Cloudf
 - The **key never reaches a browser**. Messages from browsers are ignored.
 - Cost: Cloudflare Workers free plan (Durable Objects included); Finnhub free plan.
 
+**Macro panel quotes.** The same connection also subscribes to `MACRO_SYMBOLS` (`wrangler.toml`): the six
+DXY currency pairs, USD/JPY, WTI and the US 10Y T-note. They go to browsers once a second as
+`{type:"macro", q:{symbol:{p,t}}}`, only the symbols that changed. The site computes DXY from the six pairs
+with the ICE formula and reads the 10Y yield's direction from the T-note price. If Finnhub does not send a
+symbol on your plan, that box simply stays on its 15-minute data. `/health` lists the macro symbols.
+
 ## Setup (about 10 minutes, one time)
 
 1. **Finnhub:** sign up at https://finnhub.io and copy your API key.
