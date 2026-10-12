@@ -469,3 +469,21 @@ footer a { color: var(--muted); }
 @media (max-width: 1500px) { .brand small { display: none; } }
 @media (min-width: 1101px) { header.top { flex-wrap: nowrap; } .chips { flex-wrap: nowrap; } }
 .chart-card .toolbar .fit { position: sticky; right: 0; margin-left: auto; background: var(--card); box-shadow: -10px 0 10px var(--card); }
+/* ═══ chart info bar: one slim line between the toolbar and the chart; never over the candles ═══ */
+#legend { position: static; display: block; max-width: none; margin: 0; padding: 5px 10px; border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg-2) 45%, var(--card)); backdrop-filter: none; box-shadow: none; border-radius: 0;
+  overflow-x: auto; white-space: nowrap; scrollbar-width: none; pointer-events: auto; }
+#legend::-webkit-scrollbar { display: none; }
+#legend .lrow { flex-wrap: nowrap; gap: 0 12px; }
+#legend .sym { font-size: 11px; }
+#legend .sep { width: 1px; height: 14px; background: var(--line-2); flex: none; }
+#legend .tag { padding: 0 6px; }
+/* the chart height gives back the info bar's height, so the page does not grow */
+#chart { height: clamp(352px, calc(100vh - 268px), 792px); height: clamp(352px, calc(100dvh - 268px), 792px); }
+@media (max-width: 700px) { #chart { height: clamp(300px, calc(100svh - 328px), 572px); } #legend .sc, #legend .tag { display: inline-flex; } }
+/* swatches inside the toolbar toggles = the chart key */
+.toggle { display: inline-flex; align-items: center; gap: 4px; }
+.toggle .sw { width: 10px; }
+.toggle .sw.box { width: 9px; height: 8px; border: 1px solid var(--c); background: color-mix(in srgb, var(--c) 25%, transparent); border-radius: 1px; }
+.toggle .sw.dotc { width: 7px; height: 7px; border: 0; border-radius: 50%; background: var(--c); }
+.toggle:not(.on) .sw { opacity: 0.4; }

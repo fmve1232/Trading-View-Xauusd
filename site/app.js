@@ -82,13 +82,19 @@ if (S.toggles.h2 === undefined) S.toggles.h2 = true;   // added after viewers sa
 if (S.toggles.h3 === undefined) S.toggles.h3 = true;
 // v-labels (Oct 2026): sweeps and structure labels on by default once, now that they are readable labels
 if (!store.get("labels_v1", false)) { S.toggles.sweeps = true; S.toggles.structure = true; store.set("toggles", S.toggles); store.set("labels_v1", true); }
-$("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${l}</span>`).join("") +
+// each toggle carries the colour / line style of what it draws, so the buttons are also the chart key
+const SWATCH = { ema: [["--ov-ema20", "solid"], ["--ov-ema100", "solid"], ["--ov-ema200", "thick"]], vwap: [["--ov-vwap", "thick"], ["--ov-vwap", "dash"]],
+  bb: [["--ov-band", "solid"]], levels: [["--muted", "dot"], ["--dim", "dash"]], vp: [["--text", "dot"]], cone: [["--dim", "dash"]],
+  zones: [["--ob", "box"], ["--fvg", "box"]], sweeps: [["#d55181", "dotc"]], h2: [["#9b6dff", "dotc"]], h3: [["#0f9fb3", "dotc"]] };
+const sw = (k) => (SWATCH[k] || []).map(([c, st]) => `<i class="sw ${st}" style="--c:${c.startsWith("--") ? `var(${c})` : c}"></i>`).join("");
+$("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${sw(k)}${l}</span>`).join("") +
   `<button class="toggle fit" type="button" data-act="fit" title="Fit the latest bars to the screen and re-enable auto price scale">⤢ Fit</button>`;
 $("#toolbar").onclick = (e) => {
-  if (e.target.dataset.act === "fit") { fitView(); return; }
-  const k = e.target.dataset.k; if (!k) return;
+  const btn = e.target.closest("[data-k], [data-act]"); if (!btn) return;
+  if (btn.dataset.act === "fit") { fitView(); return; }
+  const k = btn.dataset.k; if (!k) return;
   S.toggles[k] = !S.toggles[k]; store.set("toggles", S.toggles);
-  e.target.classList.toggle("on", S.toggles[k]); renderChart();
+  btn.classList.toggle("on", S.toggles[k]); renderChart();
 };
 
 /* ---------- data ---------- */
@@ -1245,17 +1251,14 @@ function legend(prm) {
   if (prm && prm.time) { const k = ch.t.indexOf(prm.time); if (k >= 0) i = k; }
   const col = ch.c[i] >= ch.o[i] ? "bull" : "bear";
   const chg = i > 0 && isNum(ch.c[i]) && isNum(ch.c[i - 1]) ? ch.c[i] - ch.c[i - 1] : null;
-  const keys = KEY.filter(([t]) => S.toggles[t]).flatMap(([, ls]) => ls).filter(([k]) => ch[k] && isNum(ch[k][i]))
-    .map(([k, name, v, st]) => `<span class="lk"><i class="sw ${st}" style="--c:${css(v)}"></i>${name}</span>`).join("");   // names only: a key to the lines
   const tags = C && C.tags && C.tags.get(ch.t[i]);
   const ohlc = [["O", ch.o[i]], ["H", ch.h[i]], ["L", ch.l[i]], ["C", ch.c[i]]].map(([k, v]) => `<span class="q"><i>${k}</i><b class="${col}">${f(v)}</b></span>`).join("");
   const score = (k, v, cls) => `<span class="sc"><i>${k}</i><b class="${cls}">${f(v, 0)}</b></span>`;
   $("#legend").innerHTML =
     `<div class="lrow head"><span class="sym">XAUUSD</span><span class="tfb">${esc(D.meta.tf)}</span><span class="tm">${tfmt(ch.t[i])}</span>${ohlc}` +
-    (isNum(chg) ? `<span class="chg ${chg >= 0 ? "up" : "dn"}">${chg >= 0 ? "▲ +" : "▼ "}${chg.toFixed(2)} (${(chg / ch.c[i - 1] * 100).toFixed(2)}%)</span>` : "") + `</div>` +
-    `<div class="lrow">${score("Long", ch.bull[i], "bull")}${score("Range", ch.range[i], "")}${score("Short", ch.bear[i], "bear")}${score("TQ", ch.tq[i], "")}` +
-    (ch.session[i] ? `<span class="tag">${esc(ch.session[i])}</span>` : "") + (tags ? `<span class="tag warn">${esc(tags.join(" · "))}</span>` : "") + `</div>` +
-    (keys ? `<div class="lrow keys">${keys}</div>` : "");
+    (isNum(chg) ? `<span class="chg ${chg >= 0 ? "up" : "dn"}">${chg >= 0 ? "▲ +" : "▼ "}${chg.toFixed(2)} (${(chg / ch.c[i - 1] * 100).toFixed(2)}%)</span>` : "") +
+    `<span class="sep"></span>${score("Long", ch.bull[i], "bull")}${score("Range", ch.range[i], "")}${score("Short", ch.bear[i], "bear")}${score("TQ", ch.tq[i], "")}` +
+    (ch.session[i] ? `<span class="tag">${esc(ch.session[i])}</span>` : "") + (tags ? `<span class="tag warn">${esc(tags.join(" · "))}</span>` : "") + `</div>`;
 }
 
 /* ---------- tabs ---------- */
