@@ -4,6 +4,9 @@
 // (opened while at least one viewer is connected, closed when the last one leaves), and fans the
 // ticks out, throttled to at most 4 messages a second per hub: {type:"tick", p, t, h, l, n}
 // = last price, its time (ms), high / low / count since the previous message.
+// The macro panel's instruments (MACRO_SYMBOLS: the six DXY currency pairs, USD/JPY, WTI and the
+// US 10Y T-note) ride on the same upstream connection and go out once a second as
+// {type:"macro", q:{symbol:{p,t}}} -- only the symbols that changed.
 //
 // The Finnhub key lives only in the Worker secret FINNHUB_KEY; it never reaches a browser.
 // ALLOWED_ORIGINS (comma-separated) limits which sites may connect, so nobody else can spend
@@ -11,12 +14,25 @@
 
 const MAX_CLIENTS = 200;
 const SEND_EVERY_MS = 250;
+const MACRO_EVERY_MS = 1000;
+export const macroSymbols = (env) => String((env && env.MACRO_SYMBOLS) || "").split(",").map((s) => s.trim()).filter(Boolean);
+
+// Finnhub trade message -> the newest valid price per macro symbol in the batch.
+export function pickMacro(msg, symbols) {
+  if (!msg || msg.type !== "trade" || !Array.isArray(msg.data)) return null;
+  const out = {};
+  for (const x of msg.data) {
+    if (!x || !symbols.includes(x.s) || !Number.isFinite(x.p) || x.p <= 0 || !Number.isFinite(x.t)) continue;
+    if (!out[x.s] || x.t >= out[x.s].t) out[x.s] = { p: x.p, t: x.t };
+  }
+  return Object.keys(out).length ? out : null;
+}
 
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (url.pathname === "/health") {
-      return new Response(JSON.stringify({ ok: true, symbol: env.SYMBOL || "OANDA:XAU_USD", key: Boolean(env.FINNHUB_KEY) }),
+      return new Response(JSON.stringify({ ok: true, symbol: env.SYMBOL || "OANDA:XAU_USD", macro: macroSymbols(env), key: Boolean(env.FINNHUB_KEY) }),
         { headers: { "content-type": "application/json" } });
     }
     if (url.pathname !== "/stream") return new Response("not found", { status: 404 });
@@ -46,6 +62,7 @@ export class Hub {
     this.state = state; this.env = env;
     this.clients = new Set(); this.up = null; this.status = "idle"; this.backoff = 1000;
     this.last = null; this.batch = null; this.timer = null; this.lastSent = 0;
+    this.mlast = {}; this.mpend = {}; this.mtimer = null;
   }
   sym() { return this.env.SYMBOL || "OANDA:XAU_USD"; }
 
@@ -58,7 +75,7 @@ export class Hub {
     const bye = () => { this.clients.delete(server); if (this.clients.size === 0) this.closeUpstream(); };
     server.addEventListener("close", bye);
     server.addEventListener("error", bye);
-    server.send(JSON.stringify({ type: "hello", symbol: this.sym(), status: this.status, last: this.last }));
+    server.send(JSON.stringify({ type: "hello", symbol: this.sym(), status: this.status, last: this.last, macro: this.mlast }));
     if (!this.up) this.openUpstream();
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -80,6 +97,7 @@ export class Hub {
       ws.accept();
       this.up = ws;
       ws.send(JSON.stringify({ type: "subscribe", symbol: this.sym() }));
+      for (const m of macroSymbols(this.env)) ws.send(JSON.stringify({ type: "subscribe", symbol: m }));
       this.backoff = 1000;
       this.setStatus("live");
       ws.addEventListener("message", (ev) => this.onUpstream(ev.data));
@@ -105,11 +123,22 @@ export class Hub {
   onUpstream(data) {
     let m; try { m = JSON.parse(data); } catch (e) { return; }
     if (m.type === "error") { this.setStatus("upstream: " + String(m.msg || "error").slice(0, 120)); return; }
+    const mq = pickMacro(m, macroSymbols(this.env));
+    if (mq) { Object.assign(this.mpend, mq); this.macroSoon(); }
     const k = pickTicks(m, this.sym());
     if (!k) return;
     this.batch = this.batch ? { p: k.t >= this.batch.t ? k.p : this.batch.p, t: Math.max(k.t, this.batch.t),
       h: Math.max(this.batch.h, k.h), l: Math.min(this.batch.l, k.l), n: this.batch.n + k.n } : k;
     this.flushSoon();
+  }
+  macroSoon() {
+    if (this.mtimer) return;
+    this.mtimer = setTimeout(() => {
+      this.mtimer = null;
+      if (!Object.keys(this.mpend).length) return;
+      Object.assign(this.mlast, this.mpend);
+      this.broadcast({ type: "macro", q: this.mpend }); this.mpend = {};
+    }, MACRO_EVERY_MS);
   }
   flushSoon(now = Date.now()) {
     if (this.timer) return;
