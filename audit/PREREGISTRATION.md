@@ -433,3 +433,38 @@ here before H3 is run on any price history. Any change restarts H3.
 
 Checked on `forward-ledger` @ `da366f16`: the archived 1H Treatment ledger holds both earlier trades (28 Sep, −1.021R;
 7 Oct, −1.035R) and every new ledger starts empty. The decision rules and the decision date are unchanged.
+
+## Amendment 8 (2026-10-12, operator request; written before H4 was run on any price history): arm H4 "Playbook"
+
+**Why.** On bars without a signal the site shows a conditional playbook ("sell below X / buy above Y on a
+close"). The operator asked that it be measured, so its directions are judged by a forward record and not by
+how they look. H4 is a **new, separate arm**. It changes nothing in the engine, the §7 arms, H2 or H3, or their
+freeze keys. The rule below is fixed here before H4 is run on any data; any change restarts H4.
+
+**Levels at bar i** (all already published per bar by the frozen engine): PDH, PDL, PWH, PWL, PMH, PML, EQH,
+EQL, the current day's high and low, the internal pivot high and low (`active_res` / `active_sup`), and the
+100-bar volume profile's VAH, VAL and POC. ATR = the engine's adaptive ATR; stop distance D = the engine's regime
+stop multiple × ATR. Levels closer than 0.05 ATR to one already listed are merged.
+
+**The playbook at the close of bar i−1** (P = close[i−1], A = ATR[i−1], D = D[i−1]):
+- sell trigger S = the highest level below P − 0.1·A; buy trigger B = the lowest level above P + 0.1·A;
+- for each side, TP1 = the first further level at least 1·D beyond the trigger, TP2 = the next one; with no
+  such level TP1 = trigger ∓ 2·D, and TP2 = TP1 when there is no second level.
+
+**Signal at the close of bar i:**
+- **SHORT** if close[i] < S; **LONG** if close[i] > B (both cannot happen on one bar).
+- Entry close[i]; stop = S + D (LONG: B − D); TP1 / TP2 as above.
+- No signal if close[i] is already beyond TP1, or if a value is missing (warm-up).
+- No session or trend filter: it is the playbook as displayed (the site warns outside London / New York).
+
+**Execution and costs:** `backtest.simulate`, as every other arm: one position at a time; an opposite signal
+flips; stop first on a same-bar tie; 50% off at TP1, then breakeven.
+
+**Freeze:** key = the §7 engine key + SHA-256 of `quantum/arm_h4.py`; ledger `holdout/<tf>_h4.json`; starts at the
+first pipeline run after this amendment is merged. Earlier trades are in-sample only. The playbook the site
+displays is the one `arm_h4.py` publishes for the last closed bar, so what is shown is what is measured.
+
+**Decision:** the **15m** record decides, because the playbook is used on the site's default 15m chart; other
+timeframes are reported only. After N ≥ 50 closed trades, H4 shows an edge only if the 95% t-interval of mean R
+is above 0 and PF ≥ 1.2; decide by 2027-03-31, otherwise NOT SHOWN. **Multiplicity:** H4 is a sixth hypothesis
+on the same market and period; each arm is reported on its own terms and none borrows another's evidence.

@@ -9,7 +9,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, backtest, holdout, ta
+from . import arm_h2, arm_h3, arm_h4, backtest, holdout, ta
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -177,6 +177,25 @@ def h3_section(market, res, cfg, man, now, store_dir, idx) -> dict:
             "last_signal": plan(sig[-1]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
             "open": [t for t in trades if t.get("open")],
             "next_move_in_sample": arm_h2.next_move_stats(pre),
+            "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
+            "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None}
+
+
+def h4_section(market, res, cfg, man, now, store_dir, idx) -> dict:
+    """Arm H4 "Playbook" (Amendment 8): the site's playbook for the next bar, and its measured record."""
+    trades, ev = arm_h4.simulate(res, cfg)
+    key = arm_h4.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
+    man4, pre, post = _arm_record("h4", key, market, trades, cfg, now, store_dir)
+    n = len(idx)
+    sig = [i for i in range(n) if ev["exec_buy"][i] or ev["exec_sell"][i]]
+
+    def plan(i):
+        return {"t": int(pd.Timestamp(idx[i]).timestamp()), "dir": "LONG" if ev["exec_buy"][i] else "SHORT", "entry": _f(res.F["c"][i]),
+                "sl": _f(ev["plan_sl"][i]), "tp1": _f(ev["plan_tp1"][i]), "tp2": _f(ev["plan_tp2"][i]),
+                "trigger": _f(ev["trigger"][i]), "tname": ev["tname"][i]}
+    return {"playbook": arm_h4.playbook(res, n - 1), "freeze": man4,
+            "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None, "last_signal": plan(sig[-1]) if sig else None,
+            "signals": [plan(i) for i in sig[-200:]], "open": [t for t in trades if t.get("open")],
             "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
             "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None}
 
@@ -355,6 +374,11 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         h2 = h2_section(market, res, cfg, man, now, store_dir, idx)
     except Exception as e:  # noqa: BLE001 - H2 must never break the page
         h2 = {"error": f"{type(e).__name__}: {e}"[:200]}
+    # arm H4 "Playbook" (Amendment 8): the displayed playbook and its own freeze key and ledger
+    try:
+        h4 = h4_section(market, res, cfg, man, now, store_dir, idx)
+    except Exception as e:  # noqa: BLE001 - H4 must never break the page
+        h4 = {"error": f"{type(e).__name__}: {e}"[:200]}
     # arm H3 "Sweep-to-Value" (the Pine line's H2 rule, Amendment 7): its own freeze key and ledger
     try:
         h3 = h3_section(market, res, cfg, man, now, store_dir, idx)
@@ -388,5 +412,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "backtest": bt,
         "h2": h2,
         "h3": h3,
+        "h4": h4,
     }
     return _clean(payload)
