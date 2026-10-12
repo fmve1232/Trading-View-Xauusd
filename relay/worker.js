@@ -15,6 +15,8 @@
 const MAX_CLIENTS = 200;
 const SEND_EVERY_MS = 250;
 const MACRO_EVERY_MS = 1000;
+const HIST_MS = 3 * 3600e3;          // per-minute history kept for HIST_SYMBOLS (the live 10Y yield estimate's anchor)
+export const histSymbols = (env) => String((env && env.HIST_SYMBOLS) || "").split(",").map((s) => s.trim()).filter(Boolean);
 export const macroSymbols = (env) => String((env && env.MACRO_SYMBOLS) || "").split(",").map((s) => s.trim()).filter(Boolean);
 
 // Finnhub trade message -> the newest valid price per macro symbol in the batch.
@@ -63,6 +65,25 @@ export class Hub {
     this.clients = new Set(); this.up = null; this.status = "idle"; this.backoff = 1000;
     this.last = null; this.batch = null; this.timer = null; this.lastSent = 0;
     this.mlast = {}; this.mpend = {}; this.mtimer = null;
+    this.mhist = {}; this.histSaved = 0;
+    if (state && state.storage && state.blockConcurrencyWhile) {
+      state.blockConcurrencyWhile(async () => { this.mhist = (await state.storage.get("mhist")) || {}; });
+    }
+  }
+  // last price per minute (by trade time) for HIST_SYMBOLS, 3 hours; saved at most once a minute
+  record(q, now = Date.now()) {
+    let changed = false;
+    for (const s of histSymbols(this.env)) {
+      const x = q[s]; if (!x) continue;
+      const m = Math.floor(x.t / 60000) * 60000, a = (this.mhist[s] = this.mhist[s] || []);
+      if (a.length && a[a.length - 1][0] === m) a[a.length - 1][1] = x.p;
+      else if (!a.length || m > a[a.length - 1][0]) a.push([m, x.p]);
+      while (a.length && a[0][0] < m - HIST_MS) a.shift();
+      changed = true;
+    }
+    if (changed && this.state && this.state.storage && now - this.histSaved > 60000) {
+      this.histSaved = now; this.state.storage.put("mhist", this.mhist).catch(() => {});
+    }
   }
   sym() { return this.env.SYMBOL || "OANDA:XAU_USD"; }
 
@@ -75,7 +96,7 @@ export class Hub {
     const bye = () => { this.clients.delete(server); if (this.clients.size === 0) this.closeUpstream(); };
     server.addEventListener("close", bye);
     server.addEventListener("error", bye);
-    server.send(JSON.stringify({ type: "hello", symbol: this.sym(), status: this.status, last: this.last, macro: this.mlast }));
+    server.send(JSON.stringify({ type: "hello", symbol: this.sym(), status: this.status, last: this.last, macro: this.mlast, mhist: this.mhist }));
     if (!this.up) this.openUpstream();
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -136,7 +157,7 @@ export class Hub {
     this.mtimer = setTimeout(() => {
       this.mtimer = null;
       if (!Object.keys(this.mpend).length) return;
-      Object.assign(this.mlast, this.mpend);
+      Object.assign(this.mlast, this.mpend); this.record(this.mpend);
       this.broadcast({ type: "macro", q: this.mpend }); this.mpend = {};
     }, MACRO_EVERY_MS);
   }

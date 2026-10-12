@@ -1,7 +1,7 @@
 // node --test tests/relay.test.mjs  (run by tests/test_relay.py)
 import test from "node:test";
 import assert from "node:assert/strict";
-import { originAllowed, pickTicks, pickMacro, macroSymbols, Hub } from "../relay/worker.js";
+import { originAllowed, pickTicks, pickMacro, macroSymbols, histSymbols, Hub } from "../relay/worker.js";
 
 const SYM = "OANDA:XAU_USD";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -90,4 +90,17 @@ test("macro symbols: subscribed on the same upstream, sent once a second, only w
   assert.equal(mac.length, 1);
   assert.deepEqual(mac[0].q, { "OANDA:USD_JPY": { p: 150.4, t: 7 } });
   hub.clients.clear(); hub.closeUpstream();
+});
+
+test("per-minute history for HIST_SYMBOLS: last price per minute, 3 hours", async () => {
+  const T = "OANDA:USB10Y_USD";
+  assert.deepEqual(histSymbols({ HIST_SYMBOLS: T + ", " }), [T]);
+  const hub = new Hub({}, { SYMBOL: SYM, HIST_SYMBOLS: T });
+  const m0 = 1_800_000_000_000 - (1_800_000_000_000 % 60000);
+  hub.record({ [T]: { p: 112.1, t: m0 + 1000 }, "OANDA:USD_JPY": { p: 150, t: m0 } });
+  hub.record({ [T]: { p: 112.2, t: m0 + 59000 } });           // same minute: replaced
+  hub.record({ [T]: { p: 112.3, t: m0 + 61000 } });
+  assert.deepEqual(hub.mhist, { [T]: [[m0, 112.2], [m0 + 60000, 112.3]] });
+  hub.record({ [T]: { p: 112.4, t: m0 + 4 * 3600e3 } });      // older than 3 h: trimmed
+  assert.deepEqual(hub.mhist[T], [[m0 + 4 * 3600e3, 112.4]]);
 });

@@ -64,3 +64,24 @@ def test_small_prices_keep_their_precision():
     it = macro_panel.item("JPYUSD", "JPY / USD", "JPYUSD=X", 1, "", 6, _frame(v), None)
     assert it["last"] == round(v[-1], 8) and it["change"] != 0 and abs(it["change"] - (it["last"] - it["ref"])) < 1e-9
     assert len(set(it["spark"]["v"])) > 100
+
+
+def test_live_yield_bridge_recovers_the_slope_and_rejects_bad_fits():
+    rng = np.random.default_rng(3)
+    dp = rng.normal(0, 0.05, 400)
+    dp[200] = 2.5                                           # a contract roll: dropped, not fitted
+    p = 112 + np.cumsum(dp)
+    y = 4.1 + np.cumsum(-0.14 * np.where(np.abs(dp) > 1, 0, dp) + rng.normal(0, 0.001, 400))
+    b = macro_panel.bridge(_frame(y)["close"], _frame(p)["close"])
+    assert b["ok"] and abs(b["beta"] + 0.14) < 0.01 and b["r2"] > 0.9 and b["n"] == 398
+    assert not macro_panel.bridge(_frame(y)["close"], _frame(112 - (p - 112))["close"])["ok"]   # wrong sign
+    assert not macro_panel.bridge(_frame(y[:30])["close"], _frame(p[:30])["close"])["ok"]       # too few bars
+
+
+def test_live_bridge_anchors_on_the_last_completed_bar():
+    dp = np.random.default_rng(5).normal(0, 0.05, 100)
+    p, y = _frame(112 + np.cumsum(dp)), _frame(4.1 - 0.14 * np.cumsum(dp))
+    L = macro_panel.live_bridge(y, "ZN=F", lambda s, i, r: p)
+    assert L["ok"] and L["anchor_v"] == round(float(y["close"].iloc[-2]), 5)
+    assert L["anchor_t"] == int(y.index[-2].timestamp()) + 900
+    assert macro_panel.live_bridge(y, "ZN=F", lambda s, i, r: (_ for _ in ()).throw(OSError("blocked")))["ok"] is False
