@@ -8,7 +8,7 @@ store), so a re-run never repeats an alert. Prices are shown with the MT5 offset
 MT5_PRICE_OFFSET variable (display only, like the Pine input).
 
 Structure / sweep alerts (Pine line v49): one line per closed bar on which the engine's BOS, CHoCH, MSS
-or a PDH/PDL/PWH/PWL/PMH/PML sweep first appears, plus the separately registered H2 / H3 setups. They are
+or a PDH/PDL/PWH/PWL/PMH/PML sweep first appears, plus the separately registered H2 / H3 / H4 setups. They are
 information, not entries; the DECISION is unchanged. ALERT_STRUCTURE=0 turns them off.
 """
 from __future__ import annotations
@@ -63,7 +63,7 @@ def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> lis
         tag = _TAG.get((m["type"], m.get("dir")))
         if tag and (since_t is None or m["t"] > since_t) and tag not in by_t.setdefault(m["t"], []):
             by_t[m["t"]].append(tag)
-    for arm in ("h2", "h3"):
+    for arm in ("h2", "h3", "h4"):
         for g in (payload.get(arm) or {}).get("signals") or []:
             if since_t is None or g["t"] > since_t:
                 by_t.setdefault(g["t"], []).append(f"{arm.upper()} {'BUY' if g['dir'] == 'LONG' else 'SELL'} entry {_fmt(g['entry'], off)} "

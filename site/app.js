@@ -675,44 +675,33 @@ function tickClock() {
   ck.textContent = closed ? "engine resumes when the market reopens" : `${D.meta.tf} bar closes in ${mmss(nextClose - t)} · next engine update ≈ ${tfmt(disp.getTime() / 1000, false)}`;
 }
 setInterval(tickClock, 1000);
-/* ---------- Playbook: conditional directions when the engine has no signal (display only) ----------
-   Built only from published levels and the engine's own constants, so every number is real:
-   * trigger = the nearest liquidity level beyond price on each side (at least 0.1 ATR away);
-   * entry   = a close of the chart timeframe beyond the trigger (never an intrabar touch);
-   * stop    = trigger -/+ the engine's regime stop distance (regime SL multiple x ATR);
-   * TP1/TP2 = the next levels beyond the trigger at least 1 R away (the same minimum as arm H2), so the
-               reward is never smaller than the risk; with none, 2R, labelled.
-   It is NOT a validated signal: the engine's decision stays as published, and this rule has no forward
-   record. Primary side = the side of the engine's final scores. */
+/* ---------- Playbook: conditional directions when the engine has no signal ----------
+   The playbook is arm H4 (pre-registered, Amendment 8; quantum/arm_h4.py): the pipeline publishes the
+   triggers for the next bar from the last closed bar, and the same rule is measured as a forward test, so
+   what is shown is what is measured. Here only the live "away" distance and the side order are added. */
 function playbook(D, price) {
-  const d = D.dashboard, lq = d.liquidity || {}, P = lq.pools || {}, st = d.struct || {}, fl = d.flow || {};
-  const a = d.atr, slm = d.regime && d.regime.sl_mult;
-  if (!isNum(price) || !isNum(a) || a <= 0 || !isNum(slm)) return null;
-  const stopD = slm * a;
-  const L = [["PDH", P.PDH], ["PDL", P.PDL], ["PWH", P.PWH], ["PWL", P.PWL], ["PMH", P.PMH], ["PML", P.PML], ["EQH", P.EQH], ["EQL", P.EQL],
-    ["Day high", lq.cdh], ["Day low", lq.cdl], ["Swing high", st.swing_res], ["Swing low", st.swing_sup], ["Internal high", st.active_res],
-    ["Internal low", st.active_sup], ["VAH", fl.vah], ["VAL", fl.val], ["POC", fl.vpoc]].filter(([, v]) => isNum(v));
-  const uniq = (arr) => arr.filter((x, k) => !arr.slice(0, k).some((y) => Math.abs(y[1] - x[1]) < 0.05 * a));
-  const below = uniq(L.filter(([, v]) => v < price - 0.1 * a).sort((x, y) => y[1] - x[1]));
-  const above = uniq(L.filter(([, v]) => v > price + 0.1 * a).sort((x, y) => x[1] - y[1]));
-  const side = (dir, list) => {
-    if (!list.length) return null;
-    const [tn, tv] = list[0], stop = tv - dir * stopD, R = stopD;
-    const tps = list.slice(1).filter(([, v]) => dir * (tv - v) * -1 >= 1.0 * R);
-    const tp1 = tps[0] || ["2R", tv + dir * 2 * R], tp2 = tps[1] || (tps[0] ? null : null);
-    return { dir, trigger: tv, tname: tn, stop, tp1: tp1[1], tp1n: tp1[0], tp2: tp2 ? tp2[1] : null, tp2n: tp2 ? tp2[0] : null,
-             rr: Math.abs(tp1[1] - tv) / R, dist: tv - price };
-  };
-  const sell = side(-1, below), buy = side(1, above);
+  const H = D.h4, pb = H && !H.error ? H.playbook : null, d = D.dashboard;
+  if (!pb) return null;
+  const live = (x) => (x ? { ...x, dist: isNum(price) ? x.trigger - price : null } : null);
   const primary = Math.abs(d.bull_score - d.bear_score) < 5 ? 0 : d.bull_score > d.bear_score ? 1 : -1;
-  return { sell, buy, primary, a, stopD, lowSession: d.session && d.session.quality < 30 };
+  return { sell: live(pb.sell), buy: live(pb.buy), primary, a: pb.atr, stopD: pb.stop_dist, lowSession: d.session && d.session.quality < 30 };
+}
+// H4's record in one line: the forward record decides (15m, Amendment 8); in-sample is history only
+function h4rec(D) {
+  const H = D.h4; if (!H || H.error) return "Measured as arm H4 (Amendment 8)";
+  const fw = H.forward || {}, is = H.in_sample || {};
+  const fr = fw.n ? `${fw.n} closed · win ${f(fw.win_rate, 0)}% · mean ${fs(fw.avg_r, 2)} R · PF ${f(fw.profit_factor, 2)}` : "no closed trades yet";
+  const neg = (fw.n >= 50 ? fw.avg_r : is.avg_r) < 0;
+  return `Measured as arm H4: forward record ${fr} (decides on 15m after 50 trades)` +
+    (is.n ? ` · in-sample ${is.n} trades, win ${f(is.win_rate, 0)}%, mean ${fs(is.avg_r, 2)} R, PF ${f(is.profit_factor, 2)}` : "") +
+    (neg ? ' · <b class="warn">measured mean R is negative: levels to watch, not a proven edge</b>' : "");
 }
 function pbLine(x, tf, primary) {
   if (!x) return "";
   const s = x.dir < 0;
   return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(x.tname)}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
     `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span><i>TP1 ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
-    (isNum(x.tp2) ? `<span><i>TP2 ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>R:R</i><b>1:${f(x.rr, 1)}</b></span><span><i>Away</i><b>${fs(x.dist, 2)}</b></span></div></div>`;
+    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span><i>TP2 ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>R:R</i><b>1:${f(x.rr, 1)}</b></span><span><i>Away</i><b>${fs(x.dist, 2)}</b></span></div></div>`;
 }
 function renderBrief() {
   const el = $("#brief"), D = S.data; if (!el || !D) return;
@@ -763,7 +752,7 @@ function renderBrief() {
   const order = pb ? (pb.primary < 0 ? [pb.sell, pb.buy] : [pb.buy, pb.sell]) : [];
   const t6 = !sig ? `<div class="bt plan pbk"><div class="bk">${IC.plan}Playbook <span class="hyp">conditional · not yet triggered</span></div>
     ${pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : '<div class="bv">—</div>'}
-    <div class="bs">Engine decision: <b>${esc(dec)}</b>. Levels and stop size are the engine's own; this rule is not a validated signal${pb && pb.lowSession ? ' · <b class="warn">low-liquidity session</b>' : ""}.</div></div>`
+    <div class="bs">Engine decision: <b>${esc(dec)}</b>. ${h4rec(D)}${pb && pb.lowSession ? ' · <b class="warn">low-liquidity session</b>' : ""}.</div></div>`
     : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
     <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
     <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
@@ -847,7 +836,7 @@ function renderSide() {
     const order = pb ? (pb.primary < 0 ? [pb.sell, pb.buy] : [pb.buy, pb.sell]) : [];
     $("#plan").innerHTML = `<div class="noplan"><b>No engine signal</b> (decision ${esc(dec)}). Conditional playbook from the published levels:</div>` +
       (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : "") +
-      `<p class="note">Entry only on a ${esc(M.tf)} close beyond the trigger. Stop = the engine's regime stop (${f(d.regime.sl_mult, 2)} × ATR ${f(d.atr, 2)}); targets = the next liquidity at least 1 R away. Not a validated signal: it has no forward record.</p>`;
+      `<p class="note">Entry only on a ${esc(M.tf)} close beyond the trigger. Stop = the engine's regime stop (${pb ? f(pb.stopD, 2) : "—"} = multiple × adaptive ATR); targets = the next liquidity at least one stop distance away. ${h4rec(D)}.</p>`;
   } else {
   $("#plan").innerHTML = `
     <div class="plan-grid">
