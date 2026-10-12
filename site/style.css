@@ -435,3 +435,11 @@ footer a { color: var(--muted); }
 .mp-empty { grid-column: 1 / -1; background: var(--card); padding: 12px; }
 @media (max-width: 1100px) { .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 420px) { .mgrid { grid-template-columns: minmax(0, 1fr); } }
+/* playbook (conditional directions) */
+.pb { padding: 6px 8px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg-2); display: grid; gap: 5px; margin-top: 4px; }
+.pb.prim { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.pb .pbh { font-size: 12px; line-height: 1.35; }
+.pb.bear .pbh > b:first-child { color: var(--bear); } .pb.bull .pbh > b:first-child { color: var(--bull); }
+.pb .tagp { margin-left: 6px; padding: 0 5px; border-radius: 3px; font: 700 9px var(--sans); letter-spacing: 0.08em; text-transform: uppercase; background: var(--accent); color: var(--accent-ink); }
+.pb .pl span { min-width: 54px; padding: 3px 6px; }
+.bt.pbk { gap: 3px; }
