@@ -14,6 +14,7 @@ Not modelled: series history across bars, tolerance-based float equality (F-A37)
 
 Usage: imported by formula_trace.py.
 """
+import functools
 import math
 import re
 
@@ -80,8 +81,15 @@ BUILTINS = {
     'int': lambda x: NA if isna(x) else int(x), 'float': lambda x: float(x),
     'array.get': lambda a, i: a[int(i)],
     'array.from': lambda *a: list(a),
-    'array.new_float': lambda n, v=NA: [v] * int(n),
+    'array.new_float': lambda n=0, v=NA: [v] * int(n),
     'array.sum': lambda a: sum(x for x in a if not isna(x)),
+    # v52 (brief_trace.py): the array calls the Market Brief panel uses, mutating in place as Pine does
+    'array.new_string': lambda n=0, v='': [v] * int(n),
+    'array.push': lambda a, x: a.append(x),
+    'array.insert': lambda a, i, x: a.insert(int(i), x),
+    'array.unshift': lambda a, x: a.insert(0, x),
+    'array.clear': lambda a: a.clear(),
+    'array.size': lambda a: float(len(a)),
 }
 
 
@@ -199,7 +207,8 @@ class Parser:
         return f"_V({tk!r})"
 
 
-def compile_expr(src):
+@functools.lru_cache(maxsize=None)
+def compile_expr(src):  # cached: the same line is re-run thousands of times
     p = Parser(src)
     code = p.expr()
     if p.peek() is not None:
@@ -235,8 +244,13 @@ class Env(dict):
         self.funcs = funcs or {}
 
 
+@functools.lru_cache(maxsize=None)
+def _bytecode(src):
+    return compile(compile_expr(src), '<pine>', 'eval')
+
+
 def evaluate(src, env):
-    code = compile_expr(src)
+    code = _bytecode(src)
     g = {'_T': _T, '_C': _C, '_A': _A, 'NA': NA, 'na': 'na',
          '_V': lambda n: (env[n][-1] if isinstance(env[n], Series) else env[n]) if n in env else (_ for _ in ()).throw(NameError(n)),
          '_H': lambda a, i: a if isinstance(a, (int, float)) and int(i) == 0 else NA,
@@ -246,7 +260,9 @@ def evaluate(src, env):
     return eval(code, g)
 
 
-DECL = re.compile(r'^(?:var\s+)?(?:float|int|bool|string|color|float\[\]|int\[\]|array<\w+>)\s+([A-Za-z_]\w*)\s*=\s*(.+)$')
+DECL = re.compile(r'^(?:var\s+)?(?:float|int|bool|string|color|float\[\]|int\[\]|string\[\]|bool\[\]|array<\w+>)\s+([A-Za-z_]\w*)\s*=\s*(.+)$')
+TUPLE = re.compile(r'^\[([^\]]+)\]\s*=(?!=)\s*(.+)$')
+CALL = re.compile(r'^[A-Za-z_][\w.]*\(.*\)$')
 PLAIN = re.compile(r'^([A-Za-z_]\w*)\s*(:=|\+=|-=|\*=|/=|=)\s*(.+)$')
 SETA = re.compile(r'^array\.set\(\s*([A-Za-z_]\w*)\s*,(.+)$')
 
@@ -315,6 +331,32 @@ def _block(L, a, b, env):
                 pass
             i = j
             continue
+        # v52: for-in loops, tuple destructuring and call statements (Market Brief panel)
+        m = re.match(r'^for\s+(?:\[\s*([A-Za-z_]\w*)\s*,\s*([A-Za-z_]\w*)\s*\]|([A-Za-z_]\w*))\s+in\s+(.+)$', s)
+        if m:
+            seq = list(evaluate(m.group(4), env))
+            try:
+                for k, v in enumerate(seq):
+                    if m.group(3):
+                        env[m.group(3)] = v
+                    else:
+                        env[m.group(1)], env[m.group(2)] = k, v
+                    _block(L, i + 1, j, env)
+            except _Break:
+                pass
+            i = j
+            continue
+        m = TUPLE.match(s)
+        if m:
+            names = [x.strip() for x in m.group(1).split(',')]
+            vals = evaluate(m.group(2), env)
+            for n_, v_ in zip(names, vals, strict=True):
+                env[n_] = v_
+            i = j
+            continue
+        if s in ('true', 'false'):
+            i = j
+            continue
         m = SETA.match(s)
         if m:
             arr = env[m.group(1)]
@@ -334,7 +376,35 @@ def _block(L, a, b, env):
             env[n] = v if op in ('=', ':=') else _A(env[n], op[0], v)
             i = j
             continue
+        if CALL.match(s):
+            evaluate(s, env)
+            i = j
+            continue
         raise SyntaxError(f"unsupported statement: {s!r}")
+
+
+def define(lines, env):
+    """Register the Pine function defined by `lines` (header `name(params) =>` plus its indented
+    body) in env.funcs. The body runs in its own scope over a copy of env; the last line is the
+    return value: an expression, or a tuple `[a, b, ...]`. v52, for brief_trace.py."""
+    lines = [l.split('//')[0].rstrip() if '"' not in l else l.rstrip() for l in lines]
+    lines = [l for l in lines if l.strip()]
+    m = re.match(r'^([A-Za-z_]\w*)\((.*)\)\s*=>\s*(.*)$', lines[0].strip())
+    name, params, inline = m.group(1), [p.split()[-1] for p in m.group(2).split(',') if p.strip()], m.group(3)
+    body = [inline] if inline else lines[1:]
+    base = min(_ind(l) for l in body)
+    body = [l[base:] for l in body]
+
+    def fn(*args):
+        loc = Env(funcs=env.funcs, **env)
+        loc.update(zip(params, args, strict=True))
+        _block(body, 0, len(body) - 1, loc)
+        last = body[-1].strip()
+        if last.startswith('[') and last.endswith(']'):
+            return tuple(evaluate(x, loc) for x in _split_args(last[1:-1]))
+        return evaluate(last, loc)
+    env.funcs[name] = fn
+    return fn
 
 
 def _split_args(s):

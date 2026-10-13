@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Diagnostics engine parity: the Diagnostics companion must run the Treatment twin's engine.
+"""Diagnostics engine parity: the Diagnostics and (v52) Brief companions must run the Treatment twin's engine.
 
 Compares CODE (comments and blank lines ignored, string literals kept) of
   artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine  with every `// DIAG-BEGIN ... // DIAG-END`
@@ -61,15 +61,17 @@ def lines(path, stop=None, fenced=False, decl=("strategy(", "indicator(")):
     return res
 
 
-d = lines(DIAG, fenced=True)
 t = lines(TWIN, stop="bool _costModelValid")
-bad = [(a, b) for a, b in zip(d, t) if a[1] != b[1]]
-if len(d) != len(t) or bad:
-    print(f"FAIL  engine drift: diagnostics {len(d)} code lines, twin {len(t)}")
-    for a, b in bad[:5]:
-        print(f"  DIAG L{a[0]}: {a[1][:90]}\n  TWIN L{b[0]}: {b[1][:90]}")
-    sys.exit(1)
-print(f"PASS  Diagnostics engine == Treatment twin engine ({len(d)} code lines, DIAG blocks excluded)")
+# v52: the Brief companion (Market Brief) is built the same way and held to the same rule.
+for name, path in (("Diagnostics", DIAG), ("Brief", "artefacts/XAUUSD_Quantum_5_0_Brief.pine")):
+    d = lines(path, fenced=True)
+    bad = [(a, b) for a, b in zip(d, t) if a[1] != b[1]]
+    if len(d) != len(t) or bad:
+        print(f"FAIL  engine drift: {name} {len(d)} code lines, twin {len(t)}")
+        for a, b in bad[:5]:
+            print(f"  {name.upper()} L{a[0]}: {a[1][:90]}\n  TWIN L{b[0]}: {b[1][:90]}")
+        sys.exit(1)
+    print(f"PASS  {name} engine == Treatment twin engine ({len(d)} code lines, DIAG blocks excluded)")
 
 # v39 (F-A44): the stats engine must match between the Master and the Treatment twin, because
 # Diagnostics displays the twin's values for readouts the Master moved there (v37). Allowed

@@ -1,0 +1,208 @@
+
+// DIAG-BEGIN market brief
+// ═══════════════════ MARKET BRIEF (v52) ═══════════════════
+// The website's Market Brief (site/app.js renderBrief, default branch) on this chart, from the
+// Treatment engine above, verbatim. Display only: no gate, no order. The Master's DECISION rules;
+// it also applies RISK LOCK and the TQ floor, which this companion does not compute. The playbook
+// is the website's arm H4 rule (quantum/arm_h4.py), constant for constant; brief_trace.py executes
+// it. Its record is the website's (A7); nothing here is counted.
+grpBrief = "MARKET BRIEF"
+brPos = input.string("Top Right", "Panel position", options=["Top Right", "Middle Right", "Bottom Right", "Bottom Left", "Top Left"], group=grpBrief)
+brTxt = input.string("Small", "Text size", options=["Tiny", "Small", "Normal"], group=grpBrief)
+brOffset = input.float(0.0, "MT5 Price Offset (MT5 - TradingView)", minval=-50.0, maxval=50.0, step=0.01, group=grpBrief, tooltip="Use the same value as in the Master. Shifts DISPLAYED prices only; distances do not change.")
+brAlert = input.bool(true, "Alert when a playbook trigger fires (info, not a DECISION)", group=grpBrief)
+
+f_brP(float x) => na(x) ? "—" : str.tostring(x + brOffset, "#.##")
+f_brD(float x) => na(x) ? "—" : (x >= 0 ? "+" : "") + str.tostring(x, "#.##")
+f_brHtf(float s) => na(s) or s == 50 ? "n/a" : s >= 60 ? "up" : s <= 40 ? "down" : "mixed"
+f_brAdd(float[] v, string[] n, string nm, float x) =>
+    if not na(x)
+        array.push(v, x)
+        array.push(n, nm)
+    true
+// arm_h4: sort by price (stable), then keep a level only if it is at least MERGE_ATR (0.05) x ATR
+// from every level already kept; then the side's candidates beyond GAP_ATR (0.1) x ATR, nearest first.
+f_brSplit(float[] v, string[] n, float p, float a, int dir, float[] ov, string[] on) =>
+    float[] sv = array.new_float()
+    string[] sn = array.new_string()
+    for [k, x] in v
+        int pos = 0
+        for e in sv
+            pos += e <= x ? 1 : 0
+        array.insert(sv, pos, x)
+        array.insert(sn, pos, array.get(n, k))
+    float[] kv = array.new_float()
+    string[] kn = array.new_string()
+    for [k, x] in sv
+        bool near = false
+        for w in kv
+            near := near or math.abs(x - w) < 0.05 * a
+        if not near
+            array.push(kv, x)
+            array.push(kn, array.get(sn, k))
+    for [k, x] in kv
+        if dir > 0 and x > p + 0.1 * a
+            array.push(ov, x)
+            array.push(on, array.get(kn, k))
+        if dir < 0 and x < p - 0.1 * a
+            array.unshift(ov, x)
+            array.unshift(on, array.get(kn, k))
+    true
+// arm_h4.side: trigger = nearest; TP1 / TP2 = the next levels at least MIN_TP_R (1) stop beyond
+// the trigger, else FALLBACK_R (2) stops; stop = trigger -/+ regSLMult x ATR; R:R = |TP1 - trigger| / stop.
+f_brSide(float[] v, string[] n, float p, float a, float d, int dir) =>
+    float[] lv = array.new_float()
+    string[] ln = array.new_string()
+    f_brSplit(v, n, p, a, dir, lv, ln)
+    float tv = na
+    string tn = ""
+    float f1 = na
+    string n1 = "2R"
+    float f2 = na
+    string n2 = ""
+    for [k, x] in lv
+        if k == 0
+            tv := x
+            tn := array.get(ln, 0)
+        else if dir * (x - tv) >= d
+            if na(f1)
+                f1 := x
+                n1 := array.get(ln, k)
+            else if na(f2)
+                f2 := x
+                n2 := array.get(ln, k)
+    float tp1 = na(f1) ? tv + dir * 2.0 * d : f1
+    [tv, tn, tv - dir * d, tp1, n1, na(f2) ? tp1 : f2, na(f2) ? n1 : n2, math.abs(tp1 - tv) / d]
+// site nextLevels: nearest level strictly beyond p on side dir; with `after`, at least 0.01 beyond it.
+f_brNear(float[] v, string[] n, float p, int dir, float after) =>
+    float bx = na
+    string bn = ""
+    for [k, x] in v
+        if dir * (x - p) > 0 and (na(after) or dir * (x - after) >= 0.01) and (na(bx) or dir * (x - bx) < 0)
+            bx := x
+            bn := array.get(n, k)
+    [bx, bn]
+
+// ---- last liquidity taken: the engine's own sweep (liqSweepBull / liqSweepBear), confirmed bars.
+// Pool named as on the site: the PDH/PWH (PDL/PWL) the wick went through, closest to the wick; else the month.
+var float brSwPx = na
+var int brSwDir = 0
+var int brSwBar = na
+var int brSwT = na
+var string brSwPool = ""
+var float brSwLvl = na
+if barstate.isconfirmed and (liqSweepBull or liqSweepBear)
+    bool _dn = liqSweepBear
+    brSwDir := _dn ? -1 : 1
+    brSwPx := _dn ? high : low
+    brSwBar := bar_index
+    brSwT := time
+    brSwPool := _dn ? "PMH" : "PML"
+    brSwLvl := _dn ? poolPmH : poolPmL
+    bool _first = true
+    for [k, x] in array.from(_dn ? poolPdH : poolPdL, _dn ? poolPwH : poolPwL)
+        if not na(x) and (_dn ? brSwPx >= x : brSwPx <= x) and (_first or math.abs(brSwPx - x) < math.abs(brSwPx - brSwLvl))
+            brSwPool := (k == 0 ? "PD" : "PW") + (_dn ? "H" : "L")
+            brSwLvl := x
+            _first := false
+
+// ---- the playbook is built at the close of a bar and applies to the next (arm_h4 docstring) ----
+var float[] brV = array.new_float()
+var string[] brN = array.new_string()
+var float[] brNv = array.new_float()
+var string[] brNn = array.new_string()
+var float brSp = na
+var float brSa = na
+var float brSd = na
+var int brSnap = na
+var string brFired = ""
+if barstate.isconfirmed and bar_index >= last_bar_index - 2
+    // arm_h4.evaluate: this bar trades the playbook of the previous bar (sell first, then buy)
+    if brSnap == bar_index - 1 and brSa > 0
+        [sT, sN, sS, s1, s1n, s2, s2n, sR] = f_brSide(brV, brN, brSp, brSa, brSd, -1)
+        [bT, bN, bS, b1, b1n, b2, b2n, bR] = f_brSide(brV, brN, brSp, brSa, brSd, 1)
+        bool fS = not na(sT) and close < sT and close > s1
+        bool fB = not fS and not na(bT) and close > bT and close < b1
+        if fS or fB
+            brFired := (fS ? "▼ SELL " : "▲ BUY ") + "fired " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC at " + f_brP(close) + ": stop " + f_brP(fS ? sS : bS) + " · TP1 " + f_brP(fS ? s1 : b1) + " · TP2 " + f_brP(fS ? s2 : b2)
+            if brAlert
+                alert("XAUUSD " + timeframe.period + " playbook " + brFired + " (MT5) | info, not a DECISION", alert.freq_once_per_bar_close)
+    array.clear(brV)
+    array.clear(brN)
+    array.clear(brNv)
+    array.clear(brNn)
+    f_brAdd(brV, brN, "PDH", poolPdH)
+    f_brAdd(brV, brN, "PDL", poolPdL)
+    f_brAdd(brV, brN, "PWH", poolPwH)
+    f_brAdd(brV, brN, "PWL", poolPwL)
+    f_brAdd(brV, brN, "PMH", poolPmH)
+    f_brAdd(brV, brN, "PML", poolPmL)
+    f_brAdd(brV, brN, "EQH", poolEqH)
+    f_brAdd(brV, brN, "EQL", poolEqL)
+    f_brAdd(brV, brN, "Day high", cdh)
+    f_brAdd(brV, brN, "Day low", cdl)
+    for [k, x] in brV
+        array.push(brNv, x)
+        array.push(brNn, array.get(brN, k))
+    f_brAdd(brNv, brNn, "Swing high", swingActiveResistance)
+    f_brAdd(brNv, brNn, "Swing low", swingActiveSupport)
+    f_brAdd(brV, brN, "Internal high", activeResistance)
+    f_brAdd(brV, brN, "Internal low", activeSupport)
+    f_brAdd(brV, brN, "VAH", vahPrice)
+    f_brAdd(brV, brN, "VAL", valPrice)
+    f_brAdd(brV, brN, "POC", vpocPrice)
+    brSp := close
+    brSa := adaptiveATR
+    brSd := regSLMult * adaptiveATR
+    brSnap := bar_index
+
+var table brT = table.new(brPos == "Middle Right" ? position.middle_right : brPos == "Bottom Right" ? position.bottom_right : brPos == "Bottom Left" ? position.bottom_left : brPos == "Top Left" ? position.top_left : position.top_right, 2, 10, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+f_brC(table t, int r, string k, string v, color col, string sz) =>
+    table.cell(t, 0, r, k, text_color=color.new(#D1D4DC, 0), text_size=sz, text_halign=text.align_left)
+    table.cell(t, 1, r, v, text_color=col, text_size=sz, text_halign=text.align_left)
+if barstate.islast
+    color cU = color.new(#26A69A, 0)
+    color cD = color.new(#EF5350, 0)
+    color cW = color.new(#FFA726, 0)
+    color cT = color.new(#D1D4DC, 0)
+    string sz = brTxt == "Tiny" ? size.tiny : brTxt == "Normal" ? size.normal : size.small
+    float px = close
+    bool up = bullScore >= bearScore
+    bool lean = math.abs(bullScore - bearScore) >= 5
+    int prim = lean ? (up ? 1 : -1) : 0
+    string bias = bullScore >= 62 ? "BULL" : bearScore >= 62 ? "BEAR" : rangeScore >= 62 ? "RANGE" : bullScore > bearScore and bullScore > rangeScore ? "BULL-ISH" : bearScore > bullScore and bearScore > rangeScore ? "BEAR-ISH" : "NEUTRAL"
+    bool bU = str.contains(bias, "BULL")
+    bool bD = str.contains(bias, "BEAR")
+    string h4 = f_brHtf(htf4hScore)
+    string h1d = f_brHtf(htf1dScore)
+    string sess = inLondon and inNY ? "London/NY" : inNY ? "New York" : inLondon ? "London" : inAsian ? "Asia" : "off-hours"
+    f_brC(brT, 0, "MARKET BRIEF " + timeframe.period, "display only · the Master's DECISION rules · prices MT5", cT)
+    f_brC(brT, 1, "TREND", bias + ((bU and h4 == "down" and h1d == "down") or (bD and h4 == "up" and h1d == "up") ? "  · against the 4H and 1D trend" : "") + "\nprice " + (close > ema200 ? "above" : "below") + " EMA200 · structure " + (bullStructActive ? "bullish " + bullStructType + " (" + str.tostring(bullStructAge) + " bars ago)" : bearStructActive ? "bearish " + bearStructType + " (" + str.tostring(bearStructAge) + " bars ago)" : "no active break") + "\n4H " + h4 + " · 1D " + h1d + " · " + str.lower(mktRegime), bU ? cU : bD ? cD : cT)
+    f_brC(brT, 2, "HEADING", (lean ? (up ? "Leaning up" : "Leaning down") : "No clear lean") + "\nLong " + str.tostring(bullScore, "#") + "% · Short " + str.tostring(bearScore, "#") + "% · Range " + str.tostring(rangeScore, "#") + "% · reach PDH " + str.tostring(pdhReachScore, "#") + "% vs PDL " + str.tostring(pdlReachScore, "#") + "%\nengine scores, not a forecast", prim > 0 ? cU : prim < 0 ? cD : cT)
+    f_brC(brT, 3, "LIQ TAKEN", na(brSwBar) ? "none in view" : (brSwDir < 0 ? "Buy-side @ " : "Sell-side @ ") + f_brP(brSwPx) + "\nwick through " + brSwPool + " " + f_brP(brSwLvl) + ", closed back " + (brSwDir < 0 ? "below" : "above") + "\n" + str.format_time(brSwT, "dd MMM HH:mm", "UTC") + " UTC · " + str.tostring(bar_index - brSwBar) + " bars ago", brSwDir < 0 ? cD : brSwDir > 0 ? cU : cT)
+    int dir = up ? 1 : -1
+    [tX, tN] = f_brNear(brNv, brNn, px, dir, float(na))
+    [nX, nN] = f_brNear(brNv, brNn, px, dir, tX)
+    [oX, oN] = f_brNear(brNv, brNn, px, -dir, float(na))
+    f_brC(brT, 4, "TARGET", na(tX) ? "no liquidity level on that side" : tN + " " + f_brP(tX) + " (" + f_brD(tX - px) + ")" + (na(nX) ? "" : " · then " + nN + " " + f_brP(nX)) + (na(oX) ? "" : "\nopposite liquidity: " + oN + " " + f_brP(oX) + " (" + f_brD(oX - px) + ")"), up ? cU : cD)
+    [sT, sN, sS, s1, s1n, s2, s2n, sR] = f_brSide(brV, brN, brSp, brSa, brSd, -1)
+    [bT, bN, bS, b1, b1n, b2, b2n, bR] = f_brSide(brV, brN, brSp, brSa, brSd, 1)
+    bool sig = shouldBuy or shouldSell
+    bool pbOK = not na(sT) or not na(bT)
+    bool bs = bullBiasScore >= bearBiasScore
+    bool[] g = array.from(bs ? bullTrend : bearTrend, not (bs ? htfBearScoreGate : htfBullScoreGate), recentBars, sessionQuality >= 30, not inNewsWindow, not _ddBreach, bs ? bullStructActive or displacementUp : bearStructActive or displacementDown)
+    string[] gn = array.from("Trend", "HTF not against", "Fresh bar", "Session", "No news", "No DD", "Trigger bar")
+    string gl = ""
+    string need = ""
+    int gp = 0
+    for [k, ok] in g
+        gp += ok ? 1 : 0
+        gl += (ok ? " ✓" : " ✗") + array.get(gn, k)
+        need += ok ? "" : (need == "" ? "" : " + ") + array.get(gn, k)
+    f_brC(brT, 5, "DO NOW", (sig ? (shouldBuy ? "BUY signal: use the Master's MT5 plan" : "SELL signal: use the Master's MT5 plan") : pbOK ? "Wait for a trigger" : "Stay flat · wait") + (sig or not pbOK ? "" : "\n" + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : " · ") + (na(bT) ? "" : "buy above " + f_brP(bT)) + " on a " + timeframe.period + " close") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session (the engine trades London / New York)" : ""), sig ? (shouldBuy ? cU : cD) : cW)
+    f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "if a " + timeframe.period + " bar closes below " + f_brP(sT) + " " + sN + " · away " + f_brD(sT - px) + "\nstop " + f_brP(sS) + " · TP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? " · TP2 " + s2n + " " + f_brP(s2) : "") + " · R:R 1:" + str.tostring(sR, "0.0"), cD)
+    f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "if a " + timeframe.period + " bar closes above " + f_brP(bT) + " " + bN + " · away " + f_brD(bT - px) + "\nstop " + f_brP(bS) + " · TP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? " · TP2 " + b2n + " " + f_brP(b2) : "") + " · R:R 1:" + str.tostring(bR, "0.0"), cU)
+    f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
+    f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry: arm H4's record is on the website, and its measured mean R decides", cW)
+plot(na, "brief", display = display.none)
+// DIAG-END

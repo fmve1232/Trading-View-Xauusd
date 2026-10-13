@@ -78,6 +78,27 @@ establish that the Master is wired to those expressions — that is a separate, 
 
 ---
 
+## Step 2a — Market Brief companion (v52)
+
+`XAUUSD_Quantum_5_0_Brief.pine` shows the website's Market Brief on the chart. It runs the Treatment
+engine verbatim, so it loads as slowly as a strategy arm. It is display only: no orders.
+
+1. Add it to the XAUUSD **15M** chart, the playbook's registered timeframe on the website.
+   - Set **MT5 Price Offset** to the same value as in the Master.
+   - Pick a **Panel position** that does not cover the Master's dashboard. `Middle Right` works with the Master
+     at top right.
+2. The rows, top to bottom:
+   - TREND, HEADING, LIQ TAKEN and TARGET: where the market stands.
+   - DO NOW: what the engine is waiting for.
+   - ▼ SELL and ▲ BUY: the conditional playbook. These are the levels to watch, not an entry.
+   - GATES n/7: the engine's seven entry conditions on the bias side.
+   - PLAYBOOK: the last trigger that fired.
+3. Compare it with the website's brief for the same closed bar. Small differences are expected:
+   - TradingView and the website use different price feeds;
+   - the website refreshes about every 15 minutes.
+4. Optional: add an alert on this script ("Any alert() function call"). It fires when a playbook trigger trades on
+   a close. It is information, not a DECISION.
+
 ## Step 2b — Diagnostics companion (v17)
 
 `XAUUSD_Quantum_5_0_Diagnostics.pine` runs the Treatment engine and shows the six diagnostic

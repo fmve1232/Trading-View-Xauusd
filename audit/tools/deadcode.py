@@ -76,8 +76,9 @@ for p in sys.argv[1:]:
         n = sum(len(re.findall(r'(?<![\w.])' + re.escape(f) + r'\s*\(', l)) for l in lines)
         if n <= 1:
             hits.append(('UNCALLED-FUNC', f, ln, False))
-    if 'Strategy' in os.path.basename(p) or 'Master' in os.path.basename(p):
-        # companion that runs the same code: Diagnostics for the engine arms; Visuals for the H2
+    if any(k in os.path.basename(p) for k in ('Strategy', 'Master', 'Brief')):
+        # companion that runs the same code: Diagnostics for the engine arms and Brief (v52, the
+        # same engine verbatim, diag_parity.py); Visuals for the H2
         # arm, whose H2 block is byte-identical there (h2_parity.py) -- only h2* names qualify
         _h2 = 'Strategy_H2' in os.path.basename(p)
         _dp = os.path.join(os.path.dirname(p), 'XAUUSD_Quantum_5_5_Visuals.pine' if _h2 else 'XAUUSD_Quantum_5_0_Diagnostics.pine')

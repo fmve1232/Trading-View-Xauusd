@@ -30,7 +30,7 @@ plotcandle plotarrow plotbar hline fill bgcolor barcolor alertcondition alert fi
 dayofmonth month year hour minute second weekofyear timenow timestamp dayofyear matrix map runtime chart
 ticker adjustment session currency scale shape location size position extend xloc yloc text
 display format order barmerge float int bool string var varip switch export import method type
-enum series simple const and or not if else for while to by break continue return""".split())
+enum series simple const and or not if else for in while to by break continue return""".split())
 
 def analyze(path):
     S=strip_code(open(path,encoding='utf-8').read())
@@ -56,6 +56,8 @@ def analyze(path):
             continue
         # for-loop variables
         for m2 in re.finditer(r'\bfor\s+([A-Za-z_]\w*)\s*(?:=|\bin\b)',L): bound.add(m2.group(1))
+        for m2 in re.finditer(r'\bfor\s+\[([^\]]+)\]\s*in\b',L):   # for [i, x] in array
+            bound.update(t.strip() for t in m2.group(1).split(','))
         # typed or plain declaration, any indent
         m=re.match(r'^\s*(?:var\s+|varip\s+)?(?:'+TYPES+r'\s+)?([A-Za-z_]\w*)\s*=(?!=)',L)
         if m: bound.add(m.group(1))

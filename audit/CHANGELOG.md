@@ -1704,3 +1704,47 @@ The operator's 15M screenshots (2026-10-11) show every recent fix live:
   TP1 half closed at about 1R with the remainder stopped at break-even, against full-R losses. With N = 4 this is not
   evidence of anything; the H2 record of record is the website's (A7).
 - Checks pass. Compile NOT RUN.
+
+# Build v51 → v52 — Market Brief on the chart (new companion: Brief.pine)
+
+Operator: "Our dashboard should also tell us these information as well" (the website's Market Brief).
+
+- **Where:** the Master has 5 lexical tokens of headroom and Diagnostics is full. The brief therefore goes in a new
+  companion, `XAUUSD_Quantum_5_0_Brief.pine`, built like Diagnostics:
+  - the Treatment engine, verbatim (`diag_parity.py` now checks both companions);
+  - plus a fenced panel (`audit/tools/brief_panel.pine`, assembled by `build_brief.py`).
+  - Size: 37,323 lexical ~ 93,867 compiled, 6.4% under the limit.
+- **What it shows** (definitions taken from `site/app.js` renderBrief and `quantum/arm_h4.py` on the default
+  branch, read only):
+  - TREND: BIAS, price vs EMA200, the active BOS / CHoCH / MSS and its age, 4H / 1D direction, regime, and
+    "against the 4H and 1D trend" when it applies.
+  - HEADING: the lean (|L − S| < 5 is "no clear lean"), L / S / R %, and PDH vs PDL reach.
+  - LIQ TAKEN: the engine's last confirmed sweep, with its price, pool, time (UTC) and bars ago.
+  - TARGET: the nearest pool / day / swing level on the lean side, the one after it, and the opposite liquidity.
+  - DO NOW: an engine signal, "Wait for a trigger" (sell below X / buy above Y on a close), or "Stay flat", plus what
+    the engine is waiting for.
+  - PLAYBOOK SELL / BUY: the arm-H4 rule with trigger, stop, TP1, TP2, R:R and distance away.
+  - GATES: n/7 on the bias side.
+  - When the next close trades a playbook, a "fired" line and an optional alert ("info, not a DECISION").
+- **Not a decision.** The Master's DECISION rules; it also applies RISK LOCK and the TQ floor, which this companion
+  does not compute. The playbook is conditional; its record is the website's arm H4 (A7). Nothing here is counted.
+- **Gates:** the brief scores the seven conditions of `shouldBuy` / `shouldSell` themselves. It does not use the
+  twin's `decisionLog`, which still scores the control set (F-A03 fixed that in the Master only; the twins keep it
+  to hold their A/B hunk count).
+- **Executed** (`brief_trace.py`, new) against the website's own code, run unchanged (Python for `arm_h4.py`, Node for
+  `app.js`):
+  - level list == `arm_h4.LEVELS`;
+  - playbook sides vs `arm_h4.playbook`;
+  - fired vs `arm_h4.evaluate`;
+  - target / then / opposite vs `nextLevels`;
+  - last-sweep pool vs `lastSweep`;
+  - gate row 7/7 ⇔ the engine signal.
+  - Known difference (by reading, not executed): three levels within 1.2 cents of each other can choose a different "then" level from the
+    site's chained de-duplication.
+- **Tools:**
+  - `pine_exec.py` now runs arrays, `for … in`, tuple returns and user functions, and caches compiled expressions;
+  - `undeclared.py` reads `for [i, x] in`;
+  - `deadcode.py` treats the Brief like the twins (engine symbols wired through Diagnostics);
+  - `value_map.py` adds five Brief rows (28 values).
+- **Unchanged:** every other artefact (same hashes as v51).
+- Compile NOT RUN.
