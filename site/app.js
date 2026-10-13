@@ -707,7 +707,9 @@ setInterval(tickClock, 1000);
 function playbook(D, price) {
   const H = D.h4, pb = H && !H.error ? H.playbook : null, d = D.dashboard;
   if (!pb) return null;
-  const live = (x) => (x ? { ...x, dist: isNum(price) ? x.trigger - price : null } : null);
+  const NM = { "Day high": "CDH", "Day low": "CDL" };          // the chart's and the price axis's names for the same levels
+  const nm = (s) => NM[s] || s;
+  const live = (x) => (x ? { ...x, tname: nm(x.tname), tp1n: nm(x.tp1n), tp2n: nm(x.tp2n), dist: isNum(price) ? x.trigger - price : null } : null);
   const primary = Math.abs(d.bull_score - d.bear_score) < 5 ? 0 : d.bull_score > d.bear_score ? 1 : -1;
   return { sell: live(pb.sell), buy: live(pb.buy), primary, a: pb.atr, stopD: pb.stop_dist, lowSession: d.session && d.session.quality < 30 };
 }
@@ -760,21 +762,22 @@ function renderBrief() {
   const dec = d.decision, sig = dec === "BUY" || dec === "SELL";
   const fr = freshness(), ev = nearEvent();
   const log = String(d.decision_log || ""), mm = log.match(/^([▲▼])\d\/7(?: \[✗([^\]]*)\])?/);
-  const fails = mm ? (mm[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x)) : [];
+  const gs = d.gate_sides, gsd = d.bull_score >= d.bear_score ? "long" : "short";   // the side the brief shows (as whyHtml)
+  const fails = gs ? gs[gsd] : mm ? (mm[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x)) : [];
   const need = fails.map((k) => (GATES.find((g) => g[0] === k) || [k, k])[1].replace(" (London / New York)", "")).join(" · ");
   const pb0 = !sig ? playbook(D, price) : null;
   const doNow = sig ? `${dec} now` : dec === "RISK LOCK" ? "Stop · risk lock" : pb0 && (pb0.sell || pb0.buy) ? "Wait for a trigger" : dec === "WAIT" ? "Stay flat · wait" : "No trade";
   const warn = (fr && fr.behind >= 2 ? `Data ${fr.behind} bars old: do not act. ` : "") + (ev ? `High-impact USD event near (${esc(ev.title || ev.event || "release")}). ` : "") + (marketClosed(new Date()) ? "Market closed. " : "");
   const t5 = tile(sig ? (dec === "BUY" ? "bull act" : "bear act") : "warn act", sig ? (dec === "BUY" ? "up" : "dn") : "hand", "What to do now", esc(doNow),
     (warn ? `<b class="warn">${warn}</b><br>` : "") + (sig ? `Entry ${px(p.entry)} · stop ${px(p.sl)} · TQ ${d.trade_quality}` :
-      (pb0 ? `${pb0.sell ? `Sell below <b>${px(pb0.sell.trigger)}</b>` : ""}${pb0.sell && pb0.buy ? " · " : ""}${pb0.buy ? `buy above <b>${px(pb0.buy.trigger)}</b>` : ""} on a ${esc(M.tf)} close.<br>` : "") +
-      (/^RANGE/.test(log) ? "Engine: ranging, no side has an edge." : need ? `Engine waits for: ${esc(need)}` : esc(d.blk_why || "")) +
+      (pb0 && (pb0.buy || pb0.sell) ? `Act only on a ${esc(M.tf)} close beyond a playbook trigger.<br>` : "") +
+      (/^RANGE/.test(log) ? "Engine: ranging, no side has an edge." : need ? `Engine (${gs ? gsd : mm && mm[1] === "▲" ? "long" : "short"} side) waits for: ${esc(need)}` : esc(d.blk_why || "")) +
       (d.session && d.session.quality < 30 ? ` · ${esc(d.session.label.toLowerCase())} session (the engine trades London / New York)` : "")));
   // 6 trade plan
   const side = p.long ? "LONG" : "SHORT";
   const planV = isNum(p.entry) ? `<span class="${p.long ? "bull" : "bear"}">${side}</span> ${px(p.entry)}` : "—";
   const pb = !sig ? playbook(D, price) : null;
-  const order = pb ? (pb.primary < 0 ? [pb.sell, pb.buy] : [pb.buy, pb.sell]) : [];
+  const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
   const t6 = !sig ? `<div class="bt plan pbk"><div class="bk">${IC.plan}Playbook <span class="hyp">conditional · not yet triggered</span></div>
     ${pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : '<div class="bv">—</div>'}
     <div class="bs">Engine decision: <b>${esc(dec)}</b>. ${h4rec(D)}${pb && pb.lowSession ? ' · <b class="warn">low-liquidity session</b>' : ""}.</div></div>`
@@ -802,13 +805,19 @@ function whyHtml(d, D) {
   const log = String(d.decision_log || "");
   if (/^RANGE/.test(log)) return `<div class="why"><b>Why ${esc(d.decision)}:</b> the market is ranging, so no side has an edge. The engine trades only in a trend.</div>`;
   const m = log.match(/^([▲▼])\d\/7(?: \[✗([^\]]*)\])?/); if (!m) return "";
-  const side = m[1] === "▲" ? "long" : "short", fails = (m[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x));
+  // gate_sides (report.py, checked against this log): show the side of the final scores, the same side as the
+  // WAIT reason and the brief; the engine's log can describe the other side (its side comes from the bias step).
+  const G = d.gate_sides, gside = G ? (d.bull_score >= d.bear_score ? "long" : "short") : null;
+  const side = gside || (m[1] === "▲" ? "long" : "short");
+  const fails = G ? G[gside] : (m[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x));
+  const other = G ? (side === "long" ? "short" : "long") : null, ofails = G ? G[other] : null;
   const rows = GATES.map(([k, txt]) => `<li class="${fails.includes(k) ? "bad" : "ok"}"><span class="sr">${fails.includes(k) ? "missing:" : "met:"}</span>${txt}${k === "Sess" && d.blk_why && d.blk_why.startsWith("SESS") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}${k === "Trend" && d.blk_why && d.blk_why.startsWith("TREND") ? ` <span class="dim">(${esc(d.blk_why)})</span>` : ""}</li>`).join("");
   const fn = d.funnel || {}, rate = fn.bars ? fn.sig / fn.bars : null, wk = 5 * 23 * 3600 / D.meta.tf_sec;
   const passed = isNum(fn.pass_) && fn.bars ? fn.pass_ / fn.bars : null;
   const waitFor = d.decision === "WAIT" ? (fails.length === 1 && fails[0] === "Trig" ? `Everything is in place for a ${side}. It is waiting for a trigger bar.` :
     `A ${side} still needs: ${fails.map((f) => (GATES.find((g) => g[0] === f) || [f, f])[1]).join("; ")}.`) : "";
   return `<div class="why"><div class="rhead"><b>${d.decision === "WAIT" ? "Why WAIT" : "Gates"} · ${side} side · ${7 - fails.length}/7 gates</b>${ruleMeter(7 - fails.length, 7)}</div>${waitFor ? `<p class="lead">${esc(waitFor)}</p>` : ""}<ul class="gates">${rows}</ul>` +
+    (G ? `<div class="dim">${other === "long" ? "Long" : "Short"} side: ${7 - ofails.length}/7${ofails.length ? " · missing " + ofails.map((x) => (GATES.find((g) => g[0] === x) || [x, x])[1].toLowerCase()).join(", ") : " · all gates met"}</div>` : "") +
     (rate !== null ? `<div class="dim">Over the last ${fn.bars} ${esc(D.meta.tf)} bars, entry signals fired on ${fn.sig} (${(rate * 100).toFixed(1)}%)` +
       (passed !== null ? ` and ${fn.pass_} also passed the quality, EV and probability vetoes (about ${(passed * wk).toFixed(1)} a week)` : "") +
       `. Most bars are WAIT by design: an entry needs every gate on the same bar.</div>` : "") + `</div>`;
@@ -847,7 +856,7 @@ function renderSide() {
     <div class="sub">${esc(sub)}</div>
     <div class="bar3" title="Bull / Range / Bear composite"><span style="width:${b}%;background:var(--bull)"></span><span style="width:${r}%;background:var(--neutral)"></span><span style="width:${s}%;background:var(--bear)"></span></div>
     <div class="sub mono">L ${f(b, 0)} · R ${f(r, 0)} · S ${f(s, 0)} · bias <b>${esc(d.bias_label)}</b> · ${esc(d.regime.label)} ${esc(d.regime.vol_tag)} · ${esc(d.session.label)}</div>
-    <div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>` + whyHtml(d, D) + lastSignalHtml(D);
+    ${d.gate_sides ? "" : `<div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>`}` + whyHtml(d, D) + lastSignalHtml(D);
 
   const sig = dec === "BUY" || dec === "SELL";
   $("#plan-dir").textContent = sig ? (p.long ? "LONG" : "SHORT") : "playbook";
@@ -858,7 +867,7 @@ function renderSide() {
   const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}%` : "—";
   if (!sig) {
     const lp = livePrice(), pb = playbook(D, isNum(lp) ? lp : d.close);
-    const order = pb ? (pb.primary < 0 ? [pb.sell, pb.buy] : [pb.buy, pb.sell]) : [];
+    const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
     $("#plan").innerHTML = `<div class="noplan"><b>No engine signal</b> (decision ${esc(dec)}). Conditional playbook from the published levels:</div>` +
       (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : "") +
       `<p class="note">Entry only on a ${esc(M.tf)} close beyond the trigger. Stop = the engine's regime stop (${pb ? f(pb.stopD, 2) : "—"} = multiple × adaptive ATR); targets = the next liquidity at least one stop distance away. ${h4rec(D)}.</p>`;
@@ -963,7 +972,7 @@ class LabelsPrimitive {
     ctx.setLineDash([]);
     // 2 end tags beside the current candle, spread so they never overlap (a leader joins a moved tag)
     const tags = [];
-    for (const g of [...this.segs.map((s) => ({ ...s, label: `${s.name} ${px(s.price)}` })), ...this.ends]) {
+    for (const g of [...this.segs.map((s) => ({ ...s, label: s.onAxis ? s.name : s.alt || `${s.name} ${px(s.price)}` })), ...this.ends]) {
       const y = se.priceToCoordinate(g.price); if (y !== null) tags.push({ ...g, y, ty: y });
     }
     tags.sort((a, b) => a.y - b.y);
@@ -1136,8 +1145,13 @@ function renderChart() {
   // text, which piled up into unreadable "veto EV" stacks; the hovered bar's labels go in the legend.
   const mk = [], tags = new Map(), ev = [];
   const tag = (t, s) => tags.set(t, (tags.get(t) || []).concat(s));
+  // a signal on a bar where the treatment arm already holds a trade adds no position: a dot, not a second BUY / SELL
+  const BT = D.backtest && D.backtest.treatment, spans = BT ? [...(BT.trades || []), ...(BT.open || [])].map((x) => [Date.parse(x.entry_time) / 1000, Date.parse(x.exit_time) / 1000]) : [];
+  const inTrade = (tt) => spans.some(([a, b]) => tt > a && tt <= b);
   for (const m of D.markers) {
-    if (m.type === "SIGNAL" && T.signals) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: m.dir > 0 ? css("--bull") : css("--bear"), shape: m.dir > 0 ? "arrowUp" : "arrowDown" });
+    if (m.type === "SIGNAL" && T.signals && inTrade(m.t)) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: m.dir > 0 ? css("--bull") : css("--bear"), shape: "circle", size: 0.5 });
+      tag(m.t, `signal ${m.dir > 0 ? "▲" : "▼"} while a trade is open (no new position)`); }
+    else if (m.type === "SIGNAL" && T.signals) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: m.dir > 0 ? css("--bull") : css("--bear"), shape: m.dir > 0 ? "arrowUp" : "arrowDown" });
       ev.push({ t: m.t, dir: m.dir, text: `${m.dir > 0 ? "BUY" : "SELL"} · TQ ${m.tq}`, color: m.dir > 0 ? css("--candle-up") : css("--candle-dn"), solid: true }); }
     else if (m.type === "VETO" && T.signals) { mk.push({ time: m.t, position: m.dir > 0 ? "belowBar" : "aboveBar", color: css("--warn"), shape: "circle", size: 0.5 }); tag(m.t, `veto ${m.dir > 0 ? "▲" : "▼"} ${m.why}`); }
     else if (m.type === "TRACK_EXIT" && T.signals) mk.push({ time: m.t, position: "inBar", color: (m.r || 0) >= 0 ? css("--bull") : css("--bear"), shape: "square", text: `${fs(m.r, 1)}R` });
@@ -1167,9 +1181,9 @@ function renderChart() {
   const since = (arr, v) => { if (!arr || !isNum(v)) return t[Math.max(0, n - 24)]; let k = n - 1; while (k > 0 && isNum(arr[k - 1]) && Math.abs(arr[k - 1] - v) < 0.005) k--; return t[k]; };
   const dayStart = since(ch.pdh, ch.pdh[n - 1]);
   const segs = [], seen = [];
-  const seg = (price, t0, label, color, dash = 0, w = 1, solid = false) => {
+  const seg = (price, t0, label, color, dash = 0, w = 1, solid = false, alt = null) => {
     if (!isNum(price) || seen.some((x) => Math.abs(x - price) < 0.005)) return;
-    seen.push(price); segs.push({ price, t0, name: label, color, dash, w, solid });
+    seen.push(price); segs.push({ price, t0, name: label, color, dash, w, solid, alt });
   };
   if (T.plan && (d.decision === "BUY" || d.decision === "SELL")) {   // a real signal only: no hypothetical lines
     const p = d.plan, p0 = t[Math.max(0, n - 10)];
@@ -1178,8 +1192,8 @@ function renderChart() {
   }
   if (T.plan && !(d.decision === "BUY" || d.decision === "SELL")) {   // playbook triggers (conditional)
     const fb = D.meta.forming, pb = playbook(D, fb && isNum(fb.c) ? fb.c : d.close), p0 = t[Math.max(0, n - 6)];
-    if (pb && pb.sell) seg(pb.sell.trigger, p0, `SELL below · ${pb.sell.tname}`, css("--bear"), 2, 1.5);
-    if (pb && pb.buy) seg(pb.buy.trigger, p0, `BUY above · ${pb.buy.tname}`, css("--bull"), 2, 1.5);
+    if (pb && pb.sell) seg(pb.sell.trigger, p0, `▼ SELL · ${pb.sell.tname}`, css("--bear"), 2, 1.5, false, `▼ SELL ${px(pb.sell.trigger)}`);
+    if (pb && pb.buy) seg(pb.buy.trigger, p0, `▲ BUY · ${pb.buy.tname}`, css("--bull"), 2, 1.5, false, `▲ BUY ${px(pb.buy.trigger)}`);
   }
   const lq = d.liquidity || {}, P = lq.pools || {};
   if (T.levels) {
@@ -1217,10 +1231,15 @@ function renderChart() {
     const k = e.dir, keep = !(lastSw[k] && e.t - lastSw[k] <= 6 * tfS);
     lastSw[k] = e.t; return keep;                                       // the rest of a sweep cluster keeps its dot
   });
-  C.labels.set({ segs, ends, events: evs, hl, lastT: curT, bg: css("--card") });
   // the price axis: current price (the candle series) and only CDH / CDL / PDH / PDL / POC
-  const ax = (price, color, title) => { if (isNum(price)) C.priceLines.push(C.candles.createPriceLine({ price, color, lineVisible: false, axisLabelVisible: true, title })); };
+  // a level whose line is drawn shows its name on the line and its value here; an undrawn one keeps its name here
+  const ax = (price, color, title) => {
+    if (!isNum(price)) return;
+    const sg = segs.find((s) => Math.abs(s.price - price) < 0.005); if (sg) sg.onAxis = true;
+    C.priceLines.push(C.candles.createPriceLine({ price, color, lineVisible: false, axisLabelVisible: true, title: sg ? "" : title }));
+  };
   ax(lq.cdh, "#4dd0e1", "CDH"); ax(lq.cdl, "#4dd0e1", "CDL"); ax(P.PDH, "#f0b04a", "PDH"); ax(P.PDL, "#f0b04a", "PDL"); ax(fl.vpoc, css("--muted"), "POC");
+  C.labels.set({ segs, ends, events: evs, hl, lastT: curT, bg: css("--card") });
   // sub pane
   C.subS.bull.setData(series(t, ch.bull)); C.subS.bear.setData(series(t, ch.bear)); C.subS.range.setData(series(t, ch.range));
   C.subS.tq.setData(series(t, ch.tq));
@@ -1246,8 +1265,12 @@ function planScale(info) {
 function fitView() {
   if (!C || !C.nBars) return;
   const D = S.data, n = C.nBars, w = C.main.timeScale().width() || $("#chart").clientWidth;
-  const show = Math.max(Math.ceil(4 * 3600 / ((D && D.meta.tf_sec) || 900)), 16);
-  const tagPx = Math.min(150, w * 0.35), spacing = Math.max((w - tagPx) / show, 2);
+  // from the first bar of the current trading day (the engine's day: New York 17:00 rollover, as CDH / CDL), 16 bars at least
+  const t = D && D.chart && D.chart.t, day = (x) => new Date((x + 7 * 3600) * 1000).toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+  let today = 1;                                   // bars of the current trading day (+ a forming bar the chart may add)
+  if (t && t.length) { const m = t.length, d0 = day(t[m - 1]); let k = m - 1; while (k > 0 && day(t[k - 1]) === d0) k--; today = m - k + Math.max(0, n - m); }
+  const show = Math.max(today, 16);
+  const tagPx = Math.min(160, Math.max(w * 0.35, 146)), spacing = Math.max((w - tagPx) / show, 2);
   const pad = tagPx / spacing;
   C.main.priceScale("right").applyOptions({ autoScale: true });
   C.main.timeScale().setVisibleLogicalRange({ from: Math.max(0, n - show) - 0.5, to: n - 1 + pad });
