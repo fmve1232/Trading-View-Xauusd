@@ -1748,3 +1748,19 @@ Operator: "Our dashboard should also tell us these information as well" (the web
   - `value_map.py` adds five Brief rows (28 values).
 - **Unchanged:** every other artefact (same hashes as v51).
 - Compile NOT RUN.
+
+# v52 (docs only) — smaller paste set
+
+Operator, 2026-10-13: "Can we decrease the number of files?"
+
+- **Measured:**
+  - The shared engine alone is about 87% of TradingView's compiled-token limit. The six engine-bearing files therefore
+    cannot be merged.
+  - Comments are about 35% of the lines and 45% of the bytes, but they do not count toward the limit.
+- **Operator chose:**
+  - Paste routinely only the chart set: Master, Visuals and Brief (plus Diagnostics when wanted).
+  - Keep the strategy arms and EdgeCases in the repo, unchanged, and send them only when they change.
+  - Keep the comments.
+- **Merging the four strategy arms was not chosen.** It would have meant one strategy with an Arm input, 9 → 6 files
+  and about 3% headroom.
+- No artefact changed. CLAUDE.md's delivery rule is updated; the build record still lists all nine hashes.

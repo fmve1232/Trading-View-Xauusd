@@ -1,9 +1,17 @@
 # Working conventions for this repo
 
-## Delivery (operator instruction, 2026-09-09)
+## Delivery (operator instruction, 2026-09-09; paste set narrowed 2026-10-13)
 
-**After every code change, send ALL artefact files together — not only the changed ones —
-and post the build record in chat.**
+**After every code change, send the CHART SET together — every file in it, changed or not —
+plus any other artefact that changed, and post the build record in chat.**
+
+- **Chart set** (pasted routinely): `Master.pine`, `Visuals.pine` and `Brief.pine`, and `Diagnostics.pine`
+  (the operator adds it when wanted).
+- **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
+  `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
+- The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.
+- Comments stay in the pasted files (operator, 2026-10-13). TradingView does not count them toward its token limit,
+  and they carry the audit trail.
 
 The operator pastes these into TradingView by hand. Sending only the changed files risks a
 mismatched set on the chart, and there is no way to tell from the TradingView side which
@@ -19,8 +27,7 @@ byte-identical in Visuals and (v37) the Master, which shows it as a second decis
 what to do, the arm-H4 playbook, gates), on the Treatment engine verbatim like Diagnostics: build it
 with `audit/tools/build_brief.py` (panel source `audit/tools/brief_panel.pine`), check it with
 `brief_trace.py`, which executes it against the website's own `arm_h4.py` and `app.js`.
-Send all nine unless the
-operator says to drop EdgeCases.
+Which of the nine are sent each time: see the chart set / repo set rule above.
 
 **The chat record must include**, every time:
 
