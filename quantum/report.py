@@ -3,6 +3,7 @@ made here that the engine did not already make."""
 from __future__ import annotations
 
 import math
+import re
 from datetime import datetime, timezone
 
 import numpy as np
@@ -91,6 +92,29 @@ def kelly(last: dict, cfg, N: int, reg_mult: float = 1.0) -> dict:
     floored = math.floor(raw_lots / 0.01) * 0.01
     return {"kelly_pct": k, "detail": detail, "reg_size_mult": reg_mult, "risk_usd": risk_usd, "lots": min(max(floored, 0.0), 100.0),
             "below_min": raw_lots > 0 and floored < 0.01, "raw_lots": raw_lots}
+
+
+GATE_ORDER = ("Trend", "HTF", "Recent", "Sess", "News", "DD", "Trig")
+
+
+def gate_sides(L: dict, F: dict, i: int) -> dict | None:
+    """Both sides' entry gates on the last bar (display only), rebuilt from what the engine published.
+    The engine logs one side, chosen by its bias step, while its WAIT reason follows the final scores, so the
+    two can describe different sides. Returned only when the rebuild equals the engine's own log for the
+    side it wrote; otherwise None and the site shows the log alone."""
+    m = re.match(r"^([\u25b2\u25bc])\d/7(?: \[\u2717([^\]]*)\])?", str(L.get("decision_log") or ""))
+    if not m:
+        return None
+    logged = sorted({"HTF" if x.startswith("HTF") else x for x in (m.group(2) or "").split()}, key=GATE_ORDER.index)
+    common = [k for k in ("Recent", "News", "DD") if k in logged]            # the same for both sides
+    s, sq = L.get("struct") or {}, float(F["session_quality"][i])
+    sides = {}
+    for side, trend, opp_htf, trig in (("long", F["bull_trend"][i], F["htf_bear_gate"][i], s.get("bull_act") or s.get("disp_up")),
+                                       ("short", F["bear_trend"][i], F["htf_bull_gate"][i], s.get("bear_act") or s.get("disp_dn"))):
+        fails = [k for k, ok in (("Trend", bool(trend)), ("HTF", not bool(opp_htf)), ("Sess", sq >= 30), ("Trig", bool(trig))) if not ok]
+        sides[side] = sorted(fails + common, key=GATE_ORDER.index)
+    side = "long" if m.group(1) == "\u25b2" else "short"
+    return {**sides, "logged": side} if sides[side] == logged else None
 
 
 def _isnan(x):
@@ -404,7 +428,8 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "data_status": [st.to_dict() for st in market.status.values()],
         "holdout": {k: man.get(k) for k in ("freeze_key", "config_hash", "engine_code_hash", "engine_version", "freeze_utc", "status", "history")},
         "chart": chart, "markers": markers, "zones": zones, "sr": sr_scanner(F), "decisions": decisions, "cone": cone,
-        "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks},
+        "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks,
+                      "gate_sides": gate_sides(L, F, n - 1)},
         "analog": {**A, "scan": L["analog_scan"], "hit_prob": L["hit_prob"], "hit_n": L["hit_n"],
                    "race_prob": L["race_prob"], "race_n": L["race_n"], "reliability": rel, "base_rate": _f(cr[15], 1),
                    "wr_ci": _f(diag_wr_ci, 1), "oos_ci": _f(diag_oos_ci, 1), "cal_q": L["cal_q"]},
