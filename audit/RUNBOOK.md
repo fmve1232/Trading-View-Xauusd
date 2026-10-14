@@ -89,10 +89,14 @@ engine verbatim, so it loads as slowly as a strategy arm. It is display only: no
      at top right.
 2. The rows, top to bottom:
    - TREND, HEADING, LIQ TAKEN and TARGET: where the market stands.
-   - DO NOW: what the engine is waiting for.
+   - DO NOW: the engine's DECISION (as the Master's) and what it is waiting for.
    - ▼ SELL and ▲ BUY: the conditional playbook. These are the levels to watch, not an entry.
    - GATES n/7: the engine's seven entry conditions on the bias side.
    - PLAYBOOK: the last trigger that fired.
+   - GOLD ARROWS grid (bottom right, v53): one cell per indicator. Green supports gold up, red supports gold
+     down, grey is neutral. Macro cells show the effect on gold, e.g. a falling dollar is a green ▲.
+   - If L/S/R or the DECISION differ from the Master's for a few bars, the Master rules: the Brief's engine
+     refreshes its statistics less often (F-A56).
 3. Compare it with the website's brief for the same closed bar. Small differences are expected:
    - TradingView and the website use different price feeds;
    - the website refreshes about every 15 minutes.

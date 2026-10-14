@@ -105,3 +105,32 @@ if real:
         print("  " + l[:110])
     sys.exit(1)
 print(f"PASS  stats engine Master == Treatment ({len(t2)} code lines; {nd} documented last-bar refresh lines normalised)")
+
+# v54 (F-A55): the Brief prints the twin's DECISION, gates and BIAS as the Master's. Hold the lines that
+# make them to identity, so a later edit to either side fails here instead of drifting on the chart.
+KEYS = ("bool buyPreFilters = ", "bool sellPreFilters = ", "shouldBuy = ", "shouldSell = ", "bool tqVeto = ",
+        "tqVeto := tqVeto or ", "    bool _rkBlockedConf = ", "    bool _tqBlockedConf = ", "    _confDirLabel := _rkBlockedConf",
+        "bool _statsWarm = ", "float pdhReachScore = ", "bool rkStreakHit = ", "int effTqMin = ", "int _cotDamp = ",
+        "int effTqMinCot = ", "bool _calBoth = ", "float _calPLong  = ", "float _calPShort = ", "bool _calGateReady = ",
+        "bool _calVeto = ", "bool rkLossHit = ", "bool rkCapHit = ")
+
+
+def keyline(p, k):
+    hits = [l.rstrip() for l in open(p, encoding="utf-8").read().split("\n") if l.startswith(k)]
+    return hits
+
+
+bad = []
+for k in KEYS:
+    a, b = keyline(MASTER, k), keyline(TWIN, k)
+    if len(a) != 1 or a != b:
+        bad.append((k, a, b))
+mb = keyline(MASTER, "biasLabel = bullScore >= 62")
+bb = [l.split("string bias = ", 1)[1] for l in open("artefacts/XAUUSD_Quantum_5_0_Brief.pine", encoding="utf-8").read().split("\n") if "string bias = " in l]
+if len(mb) != 1 or bb != [mb[0].split("biasLabel = ", 1)[1]]:
+    bad.append(("BIAS", mb, bb))
+if bad:
+    for k, a, b in bad:
+        print(f"FAIL  DECISION line differs: {k!r}\n  MASTER {a}\n  TWIN   {b}")
+    sys.exit(1)
+print(f"PASS  DECISION / gate / veto / reach lines Master == Treatment ({len(KEYS)} lines) and Brief BIAS == Master biasLabel")

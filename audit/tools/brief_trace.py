@@ -297,6 +297,23 @@ for _ in range(N_GATE):
 report("gold arrows: Brief grid glyph == Master _arrowStr (DXY lines, both executed)", bad, f"Brief L{fal}, Master L{a + 1}, {N_GATE} states incl. flat, weak |r|, na r, no data")
 report("gold arrows: colour == direction for gold (green ▲ / red ▼ / grey ≈ / dim —); flat never ▼", spec, f"{N_GATE} states")
 
+# ---- 7. v54 DO NOW == the site's doNow line (Node), driven by the engine DECISION, every state (F-A55)
+dl = js[js.index('const doNow = '):]
+dl = dl[:dl.index(';') + 1]
+DECS = ['RISK LOCK', 'NO TRADE', 'BUY', 'SELL', 'WARMUP', 'WAIT']
+cases = [(d, s_, b_) for d in DECS for s_ in (True, False) for b_ in (True, False)]
+nodejs2 = ("const out = []; for (const [dec, s, b] of " + json.dumps(cases) + ") { const sig = dec === 'BUY' || dec === 'SELL';"
+           " const pb0 = !sig ? {sell: s ? {} : null, buy: b ? {} : null} : null; " + dl + " out.push(doNow); } console.log(JSON.stringify(out));")
+site = json.loads(subprocess.run(['node', '-e', nodejs2], capture_output=True, text=True, check=True).stdout)
+DN, dnl = block(r'^    bool sig = _confDirLabel', r'^    string doNow = ')
+DN = [l for l in DN if l.startswith(('bool sig', 'string doNow'))]
+bad = 0
+for (d, s_, b_), want in zip(cases, site):
+    e = P.Env(_confDirLabel=d, pbOK=s_ or b_)
+    P.run(DN, e)
+    bad += e['doNow'] != want
+report("DO NOW == site doNow (engine DECISION x playbook sides)", bad, f"L{dnl}, {len(cases)} states (Node)")
+
 print(f"RESULT: {'PASS' if fails == 0 else 'FAIL'} -- Pine text executed in Python against the website's code "
       "(arm_h4.py in Python, app.js in Node); TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

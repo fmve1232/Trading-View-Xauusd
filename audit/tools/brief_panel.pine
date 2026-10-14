@@ -1,9 +1,11 @@
 
 // DIAG-BEGIN market brief
-// ═══════════════════ MARKET BRIEF (v52) ═══════════════════
+// ═══════════════════ MARKET BRIEF (v52, DECISION-driven since v54) ═══════════════════
 // The website's Market Brief (site/app.js renderBrief, default branch) on this chart, from the
-// Treatment engine above, verbatim. Display only: no gate, no order. The Master's DECISION rules;
-// it also applies RISK LOCK and the TQ floor, which this companion does not compute. The playbook
+// Treatment engine above, verbatim. Display only: no gate, no order. DO NOW reads the engine's own
+// DECISION `_confDirLabel` (RISK LOCK > NO TRADE > BUY / SELL > WARMUP > WAIT), the same line as the
+// Master's (F-A55). The twin refreshes its statistics every 2-12 bars, the Master also on the last
+// bar, so L/S/R and the DECISION can differ from the Master's for a few bars; the Master rules. The playbook
 // is the website's arm H4 rule (quantum/arm_h4.py), constant for constant; brief_trace.py executes
 // it. Its record is the website's (A7); nothing here is counted.
 grpBrief = "MARKET BRIEF"
@@ -189,7 +191,7 @@ if barstate.islast
     f_brC(brT, 4, "TARGET", na(tX) ? "no liquidity level on that side" : tN + " " + f_brP(tX) + " (" + f_brD(tX - px) + ")" + (na(nX) ? "" : " · then " + nN + " " + f_brP(nX)) + (na(oX) ? "" : "\nopposite liquidity: " + oN + " " + f_brP(oX) + " (" + f_brD(oX - px) + ")"), up ? cU : cD)
     [sT, sN, sS, s1, s1n, s2, s2n, sR] = f_brSide(brV, brN, brSp, brSa, brSd, -1)
     [bT, bN, bS, b1, b1n, b2, b2n, bR] = f_brSide(brV, brN, brSp, brSa, brSd, 1)
-    bool sig = shouldBuy or shouldSell
+    bool sig = _confDirLabel == "BUY" or _confDirLabel == "SELL"
     bool pbOK = not na(sT) or not na(bT)
     bool bs = bullBiasScore >= bearBiasScore
     bool[] g = array.from(bs ? bullTrend : bearTrend, not (bs ? htfBearScoreGate : htfBullScoreGate), recentBars, sessionQuality >= 30, not inNewsWindow, not _ddBreach, bs ? bullStructActive or displacementUp : bearStructActive or displacementDown)
@@ -201,11 +203,13 @@ if barstate.islast
         gp += ok ? 1 : 0
         gl += (ok ? " ✓" : " ✗") + array.get(gn, k)
         need += ok ? "" : (need == "" ? "" : " + ") + array.get(gn, k)
-    f_brC(brT, 5, "DO NOW", (sig ? (shouldBuy ? "BUY signal: use the Master's MT5 plan" : "SELL signal: use the Master's MT5 plan") : pbOK ? "Wait for a trigger" : "Stay flat · wait") + (sig or not pbOK ? "" : "\n" + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : " · ") + (na(bT) ? "" : "buy above " + f_brP(bT)) + " on a " + timeframe.period + " close") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session (the engine trades London / New York)" : ""), sig ? (shouldBuy ? cU : cD) : cW)
+    // site/app.js doNow, same order: signal > risk lock > playbook > WAIT > no trade (brief_trace.py runs both)
+    string doNow = sig ? _confDirLabel + " now" : _confDirLabel == "RISK LOCK" ? "Stop · risk lock" : pbOK ? "Wait for a trigger" : _confDirLabel == "WAIT" ? "Stay flat · wait" : "No trade"
+    f_brC(brT, 5, "DO NOW", doNow + (sig ? " · enter with the Master's MT5 plan" : " · DECISION " + _confDirLabel) + (sig or not pbOK ? "" : "\n" + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : " · ") + (na(bT) ? "" : "buy above " + f_brP(bT)) + " on a " + timeframe.period + " close") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : need == "" ? "\nall 7 gates pass; blocked by " + (_confDirLabel == "RISK LOCK" ? "the risk lock" : _confDirLabel == "WARMUP" ? "the statistics warm-up" : "the TQ floor / negative EV / calibration veto") : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session (the engine trades London / New York)" : ""), sig ? (_confDirLabel == "BUY" ? cU : cD) : cW)
     f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "if a " + timeframe.period + " bar closes below " + f_brP(sT) + " " + sN + " · away " + f_brD(sT - px) + "\nstop " + f_brP(sS) + " · TP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? " · TP2 " + s2n + " " + f_brP(s2) : "") + " · R:R 1:" + str.tostring(sR, "0.0"), cD)
     f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "if a " + timeframe.period + " bar closes above " + f_brP(bT) + " " + bN + " · away " + f_brD(bT - px) + "\nstop " + f_brP(bS) + " · TP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? " · TP2 " + b2n + " " + f_brP(b2) : "") + " · R:R 1:" + str.tostring(bR, "0.0"), cU)
     f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
-    f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry: arm H4's record is on the website, and its measured mean R decides", cW)
+    f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry: arm H4's record is on the website, and its measured mean R decides\nL/S/R and DECISION here can differ from the Master for a few bars (statistics refresh; the Master's risk lock counts only its last 120 signal bars); the Master rules", cW)
 
 // ---- v53 GOLD ARROWS: every arrowed indicator in its own cell, coloured by what it means FOR GOLD ----
 // d > 0 supports gold UP (green ▲, ▲▲ strong), d < 0 supports gold DOWN (red ▼), 0 neutral (grey ≈), na no data (—).

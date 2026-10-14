@@ -21,7 +21,7 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v44   (F-A49 WR side by final scores)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v54   (arrow rows coloured)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '
@@ -438,7 +438,7 @@ if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
     table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v44 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
-    _dRow(1, "Forecast cone", dgConeStatus, _cT)
+    _dRow(1, "Forecast cone", dgConeStatus, array.get(dgBreach, 0) ? cBloomBull : array.get(dgBreach, 1) ? cBloomBear : _cT) // v54: breach ↑ green / ↓ red
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
     _dRow(3, "Reliability", dgRelOn and showStatsEngine ? relHead : "off", _cT)
     for _b = 0 to 4
@@ -458,7 +458,7 @@ if barstate.islast
     // its only display and is no longer Spacious-only. Standard shows the auction read alone;
     // Spacious shows the engine's full auctionStr (cross-check prefix + auction read).
     if not dgCompact
-        _dRow(20, "Auction", dgWide ? auctionStr : xAuction, _cT)
+        _dRow(20, "Auction", dgWide ? auctionStr : xAuction, valueMigStr == "VAL⇈" or valueMigStr == "VAL↑" ? cBloomBull : valueMigStr == "VAL⇊" or valueMigStr == "VAL↓" ? cBloomBear : _cT) // v54: value migration up green / down red
     if debugMode
         _dRow(21, "Gate booleans", xDebug, _cT)
     _dRow(22, "Volume (free plan)", volLine, _cT)

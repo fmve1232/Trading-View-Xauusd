@@ -32,6 +32,9 @@ ROWS = [
     ("3 Evidence", "MACRO verdict (Macro BULL / bull-ish / MIX / bear-ish / BEAR + score)", "macroStrengthScore", r"macroStrengthScore = int\(math\.max\(",
      "sum of DXY, yields, SPX, EURUSD, silver, TIPS votes weighted by |correlation| (normalised to 100) + DXY momentum +/-10 + rate pressure +/-10, clamped -100..+100; >= 40 BULL, 15..39 bull-ish, <= -40 BEAR (F-A53 label)",
      "read from code (v50); inputs are completed 1H bars (F-A41)"),
+    ("3 Evidence", "macro arrows DXY / 10Y / EUR / XAG / SPX / TIP (▲ ▼ ≈ —)", "_arrowStr", r"_arrowStr\(bool valid, bool up, bool dn",
+     "IMPACT on gold: ▲ / ▲▲ supports up, ▼ / ▼▼ down by |corr| > 0.25 / > 0.5; flat or weak = ≈; no data = — (F-A54: flat was ▼)",
+     "brief_trace.py §6 (executed, 4000 states)"),
     ("4 Scores", "L / S / R % (SIGNAL)", "bullScore, bearScore, rangeScore", r"\[nb2_, nbe2_, nr2_\] = normalizeScores",
      "evidence -> analog blend -> forecast engine -> normalisation to 100", "sequence.py; diag_parity.py (stats engine)"),
     ("4 Scores", "BIAS", "biasLabel", r"biasLabel = bullScore >= 62",
@@ -79,6 +82,12 @@ BROWS = [
      "the engine's liqSweepBull / liqSweepBear on a confirmed bar; pool = PDx/PWx the wick crossed, closest, else the month", "brief_trace.py (vs the site's lastSweep, Node)"),
     ("11 Brief", "GATES n/7", "g", r"bool\[\] g = array\.from",
      "the seven conditions of shouldBuy / shouldSell on the bias side", "brief_trace.py (7/7 <=> engine signal)"),
+    ("11 Brief", "DO NOW", "doNow", r"string doNow = sig",
+     "the engine DECISION (_confDirLabel, the Master's line, diag_parity.py): BUY/SELL now > risk lock > wait for a playbook trigger > stay flat > no trade",
+     "brief_trace.py (vs the site's doNow, Node); diag_parity.py (22 DECISION/gate/veto lines Master == twin)"),
+    ("11 Brief", "GOLD ARROWS grid (24 cells)", "f_brA / f_brM", r"f_brA\(int i, string nm",
+     "green = supports gold up, red = down, grey = neutral, dim = no data; macro = impact on gold (DXY/yields/TIPS falling = up), weak |r| <= 0.25 = neutral",
+     "brief_trace.py (grid == Master _arrowStr; colour == direction)"),
 ]
 
 

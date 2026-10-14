@@ -1796,3 +1796,32 @@ Operator: "indicators with an arrow: green if they support gold up, red if they 
   - the grid's glyph equals the Master's `_arrowStr`, with both files' lines executed;
   - colour equals the gold direction, and flat is never ▼.
 - Compile NOT RUN.
+
+# Build v53 → v54 — re-audit (F-A55, F-A56; F-A43 closed)
+
+Operator: "recheck every value and re-audit ... zero error or bug, end-to-end traceability, zero unwired or dead features".
+
+- **F-A55 (bug, Brief):** DO NOW read the raw entry signal; it now reads the engine's DECISION `_confDirLabel`.
+  - Before, on a bar the Master vetoes (NO TRADE, RISK LOCK), the Brief said "BUY signal" and hid the playbook.
+  - The twin's DECISION, gate and veto lines are identical to the Master's. `diag_parity.py` now pins 22 of them, plus
+    the Brief's BIAS formula against the Master's `biasLabel`.
+  - DO NOW follows the website's doNow rule and is executed against that line in Node (24 states).
+  - When all 7 gates pass but the DECISION is vetoed, the panel now names the block instead of an empty "waits for:".
+- **F-A56 (disclosed):** the twin engine refreshes its statistics every 2–12 bars (the Master also on the last bar), and
+  its risk kernel counts all bars (the Master's only the last 120 signal bars). L/S/R, the DECISION and RISK LOCK can
+  therefore differ from the Master's for a few bars. The Brief panel says so: the Master rules.
+- **Checked equal, Master vs twin:**
+  - trade quality (`f_tqEngine`, 45 lines);
+  - the trade plan (`f_tradePlan`, differing only in the MT5-offset strings);
+  - the volume-profile block and its confirmed-bar gate;
+  - reach scores.
+- **Diagnostics:** the cone row (breach ↑ / ↓) and the auction row (value migration ⇈ ↑ / ⇊ ↓) are now coloured
+  green / red by direction. Diagnostics is 39,647 lexical tokens, about 0.5% under the limit.
+- **F-A43 closed:** EdgeCases cites Master code instead of line numbers.
+  - 27 anchors, each matching exactly one Master line, enforced by the new `edgecase_cites.py`.
+  - Comments only; no assertion changed.
+- **Dead or unwired code:**
+  - 0 in all nine files, and the retained list is empty.
+  - The "structural" hits are tuple slots, `ta.dmi`'s unused outputs and the A/B arms' cross-gate variables.
+- **Value map:** 31 values (adds the macro arrows, DO NOW and the GOLD ARROWS grid).
+- Compile NOT RUN.
