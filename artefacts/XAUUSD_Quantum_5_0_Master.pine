@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v53   (F-A54 arrows + colours)       ║
+// ║  BUILD STAMP — this file last CHANGED in v55   (mobile card for phones)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5190,12 +5190,13 @@ float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h
 // H2-END
 // v37 H2 SETUP on the Master -- display and alert only. The DECISION above is unchanged; H2 is the
 // separate, pre-registered sweep-to-value idea (PREREGISTRATION A3), shown beside it, MT5 prices.
-string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + _m(close) + " SL " + _m(h2Sl) + " TP1 " + _m(h2Tp1) + " TP2 " + _m(h2Tp2) : ""
+string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + _m(close) + " SL " + _m(h2Sl) + "\nTP1 " + _m(h2Tp1) + " TP2 " + _m(h2Tp2) : ""
 var string h2Last = "none yet"
 if h2Long or h2Short
     h2Last := str.format_time(time, "MM-dd HH:mm", "UTC") + " swept " + _m(h2SweptLvl) + "\n" + h2Plan
-// v39: two short lines (the desktop footer cell clipped one long line at both ends on the chart).
-string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : _m(h2Poc)) + " · last " + h2Last
+// v39: short lines (the desktop footer cell clipped one long line at both ends on the chart);
+// v55: every line <= ~32 characters, so the mobile card fits a phone-width chart.
+string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : _m(h2Poc)) + "\nlast " + h2Last
 
 // ══════════════════════════════════════════════════════════════════════
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
@@ -5704,8 +5705,8 @@ if showDashboard and barstate.islast
             tblBrief := table.new(position.top_right, 2, (_planOn ? 16 : _mDet ? 8 : 4) + 1, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
         _bts = textSize == "Large" ? size.large : textSize == "Medium" ? size.normal : size.small
         // Compact: headlines on rows 0-3. Otherwise headline k on row 2k, its detail on 2k+1.
-        int _hs = _mDet ? 2 : 1
-        _bds = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.tiny
+        int _hs = density == "Spacious" ? 2 : 1
+        _bds = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.small // v55: never tiny on a phone
         // Details (Standard / Spacious). Each is the desktop cell's own string:
         //   TREND   bias strength, C/S/I breakdown, agreement, HTF | MTF arrows, session, volume,
         //           CVD, delta, regime, session stats | macro verdict + day-of-week tracker
@@ -5716,24 +5717,25 @@ if showDashboard and barstate.islast
         //   DECISION   (headline = the desktop DECISION box: label, grade, TQ, bias + block reason,
         //           LIVE tag) | RR, SL in ATR, risk %, $, lots, cost | RR, risk, decision log,
         //           MTF agreement
-        if _mDet
+        // v55 (mobile): the long desktop detail strings only at Spacious; Standard = headlines + plan
+        if density == "Spacious"
             _bc(1, "", array.get(gDashS, 26) + "\n" + array.get(gDashS, 25) + "\n" + array.get(gDashS, 34), C_TEXT, _bds)
             _bc(3, "", "TV price: above " + array.get(gDashS, 17) + " / below " + array.get(gDashS, 19) + "\n" + array.get(gDashS, 33), C_TEXT, _bds)
             _bc(5, "", array.get(gDashS, 20) + " " + array.get(gDashS, 2) + "\n" + array.get(gDashS, 27) + "\n" + array.get(gDashS, 28) + "\n" + array.get(gDashS, 29) + (density == "Spacious" ? "\n" + xcheckStr : ""), C_TEXT, _bds)
             _bc(7, "", array.get(gDashS, 31) + "\n" + array.get(gDashS, 32), C_TEXT, _bds)
         // 1 TREND: composite bias, regime, higher-timeframe bias, bull/bear score split
-        _bc(0, "1 TREND", biasLabel + " · " + mktRegime + " · HTF " + array.get(gDashS, 8) + " · B" + str.tostring(bullScore, "#") + "/S" + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
+        _bc(0, "TREND", biasLabel + " · " + mktRegime + "\nHTF " + array.get(gDashS, 8) + "\nscore L " + str.tostring(bullScore, "#") + " / S " + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
         // 2 TARGET: the engine's liquidity destination, at the MT5 price, with its reach score
         float _bTgt = liqDestLabel == "PDH" ? poolPdH : liqDestLabel == "PDL" ? poolPdL : liqDestLabel == "PWH" ? poolPwH : liqDestLabel == "PWL" ? poolPwL : liqDestLabel == "PMH" ? poolPmH : liqDestLabel == "PML" ? poolPmL : liqDestLabel == "EQH" ? poolEqH : liqDestLabel == "EQL" ? poolEqL : na
-        _bc(_hs, "2 TARGET", na(_bTgt) ? "no dominant liquidity target" : liqDestLabel + " " + _m(_bTgt) + " MT5 · reach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
+        _bc(_hs, "TARGET", na(_bTgt) ? "no dominant target" : liqDestLabel + " " + _m(_bTgt) + " MT5\nreach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
         // 3 PREVIOUS -> NEXT: last structure event and last bar's change; calibrated
         // probability that the next 1R move goes up vs down (the gate's own probability)
-        _bc(2 * _hs, "3 PREV → NEXT", (structStr == "" ? "no active structure" : structStr) + " · last " + array.get(gDashS, 2) + "  →  next 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : " · EV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
+        _bc(2 * _hs, "NEXT", (structStr == "" ? "no active structure" : structStr) + "\nlast bar " + array.get(gDashS, 2) + "\nnext 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : "\nEV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
         // 4 DECISION: the CONFIRMED decision (same as alerts); the MT5 plan when it is a trade
         // v37: 5 H2 SETUP -- the separate H2 idea, after the plan rows
-        _bc(_planOn ? 16 : _mDet ? 8 : 4, "5 H2 SETUP", h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, _bds)
+        _bc(_planOn ? 16 : _mDet ? 8 : 4, "H2", h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, _bds)
         bool _bTrade = _confDirLabel == "BUY" or _confDirLabel == "SELL"
-        _bc(3 * _hs, "4 DECISION", array.get(gDashS, 30) + (_bTrade ? " | MT5 " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
+        _bc(3 * _hs, "DECISION", array.get(gDashS, 30) + (_bTrade ? "\nMT5 entry " + tpEntryStr + "\nSL " + tpSLStr + "\nTP1 " + tp1Str + "\nTP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
     // ═══ Q5.9: TRADE PLAN PANEL POPULATION (regression fix) ═══
     // The cell-writing block for tblPlan was swept together with the ROW 3 removal
     // during the token-limit cuts: the table was still being CREATED each bar, so the

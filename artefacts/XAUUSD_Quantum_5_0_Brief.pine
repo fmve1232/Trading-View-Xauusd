@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v54   (DO NOW = DECISION)            ║
+// ║  BUILD STAMP — this file last CHANGED in v55   (CE10165 fix)                  ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5276,8 +5276,8 @@ f_brSide(float[] v, string[] n, float p, float a, float d, int dir) =>
             else if na(f2)
                 f2 := x
                 n2 := array.get(ln, k)
-    float tp1 = na(f1) ? tv + dir * 2.0 * d : f1
-    [tv, tn, tv - dir * d, tp1, n1, na(f2) ? tp1 : f2, na(f2) ? n1 : n2, math.abs(tp1 - tv) / d]
+    float t1 = na(f1) ? tv + dir * 2.0 * d : f1
+    [tv, tn, tv - dir * d, t1, n1, na(f2) ? t1 : f2, na(f2) ? n1 : n2, math.abs(t1 - tv) / d]
 // site nextLevels: nearest level strictly beyond p on side dir; with `after`, at least 0.01 beyond it.
 f_brNear(float[] v, string[] n, float p, int dir, float after) =>
     float bx = na
@@ -5362,15 +5362,15 @@ if barstate.isconfirmed and bar_index >= last_bar_index - 2
     brSnap := bar_index
 
 var table brT = table.new(brPos == "Middle Right" ? position.middle_right : brPos == "Bottom Right" ? position.bottom_right : brPos == "Bottom Left" ? position.bottom_left : brPos == "Top Left" ? position.top_left : position.top_right, 2, 10, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
-f_brC(table t, int r, string k, string v, color col, string sz) =>
-    table.cell(t, 0, r, k, text_color=color.new(#D1D4DC, 0), text_size=sz, text_halign=text.align_left)
-    table.cell(t, 1, r, v, text_color=col, text_size=sz, text_halign=text.align_left)
+// v55: the text size is the global brSz (v52 declared an `sz` parameter that no call passed: CE10165)
+f_brC(table t, int r, string k, string v, color col) =>
+    table.cell(t, 0, r, k, text_color=color.new(#D1D4DC, 0), text_size=brSz, text_halign=text.align_left)
+    table.cell(t, 1, r, v, text_color=col, text_size=brSz, text_halign=text.align_left)
 if barstate.islast
     color cU = color.new(#26A69A, 0)
     color cD = color.new(#EF5350, 0)
     color cW = color.new(#FFA726, 0)
     color cT = color.new(#D1D4DC, 0)
-    string sz = brSz
     float px = close
     bool up = bullScore >= bearScore
     bool lean = math.abs(bullScore - bearScore) >= 5

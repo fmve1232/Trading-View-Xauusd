@@ -1825,3 +1825,37 @@ Operator: "recheck every value and re-audit ... zero error or bug, end-to-end tr
   - The "structural" hits are tuple slots, `ta.dmi`'s unused outputs and the A/B arms' cross-gate variables.
 - **Value map:** 31 values (adds the macro arrows, DO NOW and the GOLD ARROWS grid).
 - Compile NOT RUN.
+
+# Build v54 → v55 — Brief compile fix (F-A57); H2 card and mobile dashboard redesigned for phones
+
+Operator's chart (2026-10-14):
+- v54 Brief failed with CE10165 ×10 ("No value assigned to the sz parameter in f_brC()") and 1 shadowing warning.
+- EdgeCases shows ALL PASS 99; Diagnostics and the Master compile.
+- Request: "redesign the H2 card and the mobile dashboard for the size of a mobile screen".
+
+- **F-A57 fixed:**
+  - `f_brC` takes the text size from the global `brSz`; the f_brSide local `tp1` is renamed `t1`.
+  - New `pinelimits.py` checks: G11 (user-function call arity) and G12 (local shadows an earlier global).
+  - Run on the v54 file, they report exactly the compiler's 10 errors and 1 warning; all nine v55 files read 0.
+- **Design rules for a phone-width chart** (about 360 px wide):
+  - two columns, keys of at most 8 characters;
+  - every value line at most about 30 characters, wrapped with line breaks instead of " · " runs;
+  - no `size.tiny` text;
+  - MT5 prices throughout;
+  - colour = what the row means for gold.
+- **Master mobile card** (Dash Mode = Mobile), token-neutral (39,062 lexical, still at least 2% under the limit):
+  - Keys TREND / TARGET / NEXT / DECISION / H2.
+  - Each value wraps into short lines.
+  - The DECISION row lists the MT5 entry, SL, TP1 and TP2 one per line.
+  - The long desktop detail strings now appear only at Density = Spacious; Standard shows the headlines plus the plan.
+  - Detail text is never tiny (Small → small).
+  - The H2 line breaks before "last" and before TP1, also in its alert text.
+- **Visuals H2 card:**
+  - New inputs "H2 card layout": Compact (phone), the default with 7 short rows, or Full, which adds the session /
+    history / volume rows (nothing removed). Plus "H2 card text size": Small or Normal.
+  - Rows: SIGNAL (time, then entry + SL, then TP1 + TP2), TREND, VALUE, SWINGS, SWEEP, NEXT, NOTE.
+  - "NEXT" is now in MT5 prices; it was in TradingView prices while every other row was MT5.
+  - The header no longer carries a stale build number ("v48").
+  - Colours: a low-sweep / below-value / BUY row is green; a high-sweep / above-value / SELL row is red.
+- **H2 block:** unchanged, byte-identical in all three files (`h2_parity.py`).
+- Compile NOT RUN on v55.

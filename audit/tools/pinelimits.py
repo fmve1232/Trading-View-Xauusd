@@ -17,6 +17,10 @@
       input.time(timestamp("UTC", ...)): the call yields a simple value where a const is
       required (CE10123). Measured on the operator's chart, v37 scorecards. color.* and
       math.* calls on literals are const and are not flagged.
+  G11 a call to a user function with too few / too many arguments (CE10165 "No value assigned to the
+      parameter", measured on the operator's chart: v54 Brief, f_brC called with 5 of 6).
+  G12 (warning) a local declared with `=` under the name of an EARLIER global: TradingView warns
+      "Shadowing variable ... which exists in parent scope" (v54 Brief, `tp1` in f_brSide).
   G10 a HIGHER-timeframe request.security of offset values ([1], [2]) with lookahead_off:
       two HTF bars back in history but one bar back live (F-A41, measured on the chart).
       Use lookahead_on with the offset. timeframe.period requests are not flagged.
@@ -162,6 +166,72 @@ def analyse(path):
             refs = re.findall(r'(?<![\w.])(?:close|high|low|open|volume|time|hl2|hlc3|ohlc4)(?!\w)(\s*\[)?', body)
             if tfs and 'timeframe.period' not in tfs and refs and all(refs):
                 issues.append(('G10', n, 'HTF offset request with lookahead_off (2 bars back in history, 1 live)'))
+
+    # ---- G11: user-function call arity ---------------------------------------------------
+    def _args(txt):
+        out, depth, cur, q = [], 0, '', None
+        for ch in txt:
+            if q:
+                cur += ch
+                q = None if ch == q else q
+                continue
+            if ch in '"\'':
+                q = ch
+                cur += ch
+                continue
+            if ch in '([':
+                depth += 1
+            elif ch in ')]':
+                depth -= 1
+            if ch == ',' and depth == 0:
+                out.append(cur)
+                cur = ''
+            else:
+                cur += ch
+        out.append(cur)
+        return [a for a in out if a.strip()]
+    sig = {}
+    for n, l in enumerate(S, 1):
+        m = FUNC.match(l)
+        if m:
+            ps = _args(m.group(2))
+            sig[m.group(1)] = (sum(1 for x in ps if '=' not in x), len(ps), n)
+    for n, l in enumerate(S, 1):
+        for f, (req, tot, dn) in sig.items():
+            for m in re.finditer(r'(?<![\w.])' + re.escape(f) + r'\s*\(', l):
+                if n == dn and m.start() == 0:
+                    continue
+                r = raw[n - 1]                      # S has strings blanked: count on the raw line
+                i, depth, q = m.end(), 1, None
+                while i < len(r) and depth:
+                    c = r[i]
+                    if q:
+                        q = None if c == q else q
+                    elif c in '"\'':
+                        q = c
+                    else:
+                        depth += {'(': 1, ')': -1}.get(c, 0)
+                    i += 1
+                if depth:
+                    continue
+                k = len(_args(r[m.end():i - 1]))
+                if not req <= k <= tot:
+                    issues.append(('G11', n, f"{f}() called with {k} argument(s); it takes {req}" + (f"-{tot}" if tot != req else "")))
+
+    # ---- G12: local shadows an earlier global (compiler warning) ---------------------------
+    gdecl = {}
+    for n, l in enumerate(S, 1):
+        m = DECL.match(l)
+        if m and not m.group(1) and not FUNC.match(l):
+            gdecl.setdefault(m.group(2), n)
+        mt = re.match(r'^\[([^\]]+)\]\s*=(?!=)', l)          # global tuple destructuring
+        if mt:
+            for nm in mt.group(1).split(','):
+                gdecl.setdefault(nm.strip(), n)
+    for n, l in enumerate(S, 1):
+        m = DECL.match(l)
+        if m and m.group(1) and m.group(2) in gdecl and gdecl[m.group(2)] < n and ':=' not in l[:l.index('=') + 2]:
+            issues.append(('G12', n, f"local '{m.group(2)}' shadows the global declared at L{gdecl[m.group(2)]} (warning)"))
 
     outs = sum(len(re.findall(r'(?<![\w.])(plot|plotshape|plotchar|plotarrow|plotcandle|plotbar|bgcolor|barcolor|fill|hline|alertcondition|strategy\.entry|strategy\.order)\s*\(', l)) for l in S)
     if outs == 0:

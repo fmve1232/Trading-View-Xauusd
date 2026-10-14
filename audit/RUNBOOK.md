@@ -78,6 +78,12 @@ establish that the Master is wired to those expressions — that is a separate, 
 
 ---
 
+## Phone layout (v55)
+
+- Master: Settings → Dash Mode = **Mobile**, Density = **Standard**. That gives the headlines plus the MT5 plan. Choose
+  Spacious only on a tablet, because it adds the long desktop detail rows.
+- Visuals: H2 card layout = **Compact (phone)**; H2 card text size = Normal if it reads too small.
+
 ## Step 2a — Market Brief companion (v52)
 
 `XAUUSD_Quantum_5_0_Brief.pine` shows the website's Market Brief on the chart. It runs the Treatment

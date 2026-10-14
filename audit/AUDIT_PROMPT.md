@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5831 | 377321 | `12acd76b15777f6733ecc3c33451603a6ce5c6bee3c058ee6b0f37c229760e9c` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5833 | 377537 | `7edbe4d0411199cd775ae2210f7ef12bc12705f3a6b18ccf61b23f59271f9493` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5411 | 341685 | `7ec465ad992aef9305f780fbb58c8a087296011f3cb327320691e2964cccd0e4` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5411 | 341750 | `cb5c30d0bda665038cab3f15d7586b0ba85330bc37649343e28946605ecdd020` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5422 | 342669 | `4163c610c71ed1c8f6a42a3d1e97791d1d6ef9a4b7a36ab532af542b0fb583dc` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1203 | 77865 | `422b55084e6c6f537d432d04946938a93ba676f985124619ee3e16b0bd821138` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1217 | 78999 | `10143aefdb7c4f47b95112599850971dd437c590d60641a57f8695f0b3a8bba6` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5646 | 358921 | `8cfcf4be39bf2605d1e97a36904286dfc3190044a22775c33b68ba6f199a32ec` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5454 | 344865 | `a120b364d1aa5c2b1a7e6bad1e4a0e2242d6e15d0e16d9a8ef805d8a0c33d1c2` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5454 | 344936 | `08ca6a28d67954961d61bc360b35a698e163fbf720908e7904ee3f6c284651fc` |
 
-> **BUILD v54 — this prompt pins the current build.** The originally audited build
+> **BUILD v55 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -100,6 +100,7 @@ scope, and no other build of these scripts is in scope.
 > **v52:** new companion `Brief.pine`: the website's Market Brief on the chart, on the Treatment engine verbatim (`diag_parity.py`), executed against the website's own code (`brief_trace.py`). No other artefact changed.
 > **v53: F-A54** — macro arrows: flat = ≈ (was ▼); Master arrow cells coloured by gold direction; Brief GOLD ARROWS grid.
 > **v54: F-A55** — Brief DO NOW reads the DECISION; **F-A56** disclosed (twin stats cadence); **F-A43 closed** (EdgeCases cites code, `edgecase_cites.py`); Diagnostics arrow rows coloured.
+> **v55: F-A57** — Brief compile fix (CE10165), `pinelimits.py` G11 / G12; H2 card and Master mobile card redesigned for phone width.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

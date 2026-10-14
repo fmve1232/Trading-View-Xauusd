@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v48   (A7 label: display only)      ║
+// ║  BUILD STAMP — this file last CHANGED in v55   (H2 card for phones)           ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1166,38 +1166,52 @@ float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h
 // above, byte-identical to the H2 strategy arm, whose on-chart scorecard is the H2 record. ═══
 // next expected movement, from where price sits against value (shown on every bar)
 string h2Trend = h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED"
-string h2Next = na(h2Poc) ? "building profile" : close < h2Val ? "below value: pull toward POC " + str.tostring(h2Poc, "#.##") : close > h2Vah ? "above value: pull toward POC " + str.tostring(h2Poc, "#.##") : close < h2Poc ? "in value, under POC " + str.tostring(h2Poc, "#.##") : "in value, over POC " + str.tostring(h2Poc, "#.##")
 grpH2 = "H2 sweep-to-value (pre-registered)"
 h2Show = input.bool(true, "Show H2 signals and card", group = grpH2)
 h2CardPos = input.string("Middle Left", "H2 card position", options = ["Middle Left", "Bottom Left", "Top Left", "Middle Right"], group = grpH2)
+h2Layout = input.string("Compact (phone)", "H2 card layout", options = ["Compact (phone)", "Full"], group = grpH2, tooltip = "Compact: 7 short rows that fit a phone-width chart. Full: adds the three session rows.")
+h2TxtSize = input.string("Small", "H2 card text size", options = ["Small", "Normal"], group = grpH2)
 h2Mt5 = input.float(0.0, "MT5 price offset (same value as the Master)", minval = -50.0, maxval = 50.0, step = 0.01, group = grpH2, tooltip = "MT5 price minus TradingView price. Shifts the card's and the alert's prices only.")
 plotshape(h2Show and h2Long, "H2 BUY", shape.triangleup, location.belowbar, color.new(#00D084, 0), size = size.small, text = "H2")
 plotshape(h2Show and h2Short, "H2 SELL", shape.triangledown, location.abovebar, color.new(#FF4D4D, 0), size = size.small, text = "H2")
 _h2p(float _x) => na(_x) ? "—" : str.tostring(_x + h2Mt5, "#.##")
+// v55: MT5 prices like every other row (was TradingView prices), short enough for a phone
+string h2Next = na(h2Poc) ? "building profile" : close < h2Val ? "below value → POC " + _h2p(h2Poc) : close > h2Vah ? "above value → POC " + _h2p(h2Poc) : close < h2Poc ? "in value, under POC " + _h2p(h2Poc) : "in value, over POC " + _h2p(h2Poc)
 var string h2LastSig = "none yet"
 var string h2LastSweep = "none yet"
+var string h2SigCard = "none yet"
 if h2SweepL or h2SweepH
-    h2LastSweep := (h2SweepL ? "swing LOW " : "swing HIGH ") + _h2p(h2SweptLvl) + " at " + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC"
+    h2LastSweep := (h2SweepL ? "LOW " : "HIGH ") + _h2p(h2SweptLvl) + "\n" + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC"
 if h2Long or h2Short
     h2LastSig := (h2Long ? "BUY " : "SELL ") + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC  entry " + _h2p(close) + "  SL " + _h2p(h2Sl) + "  TP1 " + _h2p(h2Tp1) + "  TP2 " + _h2p(h2Tp2)
+    h2SigCard := (h2Long ? "BUY " : "SELL ") + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC\nentry " + _h2p(close) + "  SL " + _h2p(h2Sl) + "\nTP1 " + _h2p(h2Tp1) + "  TP2 " + _h2p(h2Tp2)
     alert("XAUUSD " + timeframe.period + " H2 sweep-to-value " + h2LastSig + " (MT5 prices) | trend " + h2Trend, alert.freq_once_per_bar_close)
 alertcondition(h2Long, "H2 BUY", "XAUUSD H2 sweep-to-value BUY on {{interval}} at {{close}} (TradingView price)")
 alertcondition(h2Short, "H2 SELL", "XAUUSD H2 sweep-to-value SELL on {{interval}} at {{close}} (TradingView price)")
-var table h2Card = table.new(h2CardPos == "Bottom Left" ? position.bottom_left : h2CardPos == "Top Left" ? position.top_left : h2CardPos == "Middle Right" ? position.middle_right : position.middle_left, 2, 10, bgcolor = color.new(#0B0F14, 5), border_width = 1, border_color = color.new(#2A3340, 0))
+// v55 H2 CARD, redesigned for a phone-width chart: two columns, short keys, each line <= ~30
+// characters, MT5 prices throughout, colour = what the row means for gold (green up / red down).
+// Compact (default) = 7 rows; Full adds the three session rows. Display only: the record is the website.
+var table h2Card = table.new(h2CardPos == "Bottom Left" ? position.bottom_left : h2CardPos == "Top Left" ? position.top_left : h2CardPos == "Middle Right" ? position.middle_right : position.middle_left, 2, 11, bgcolor = color.new(#0B0F14, 5), border_width = 1, border_color = color.new(#2A3340, 0))
+h2Sz = h2TxtSize == "Normal" ? size.normal : size.small
 _h2Row(int _r, string _k, string _x, color _c) =>
-    table.cell(h2Card, 0, _r, _k, text_color = color.new(#8FA3B8, 0), text_size = size.small, text_halign = text.align_left)
-    table.cell(h2Card, 1, _r, _x, text_color = _c, text_size = size.small, text_halign = text.align_left)
+    table.cell(h2Card, 0, _r, _k, text_color = color.new(#8FA3B8, 0), text_size = h2Sz, text_halign = text.align_left)
+    table.cell(h2Card, 1, _r, _x, text_color = _c, text_size = h2Sz, text_halign = text.align_left)
 if h2Show and barstate.islast
     color _h2t = color.new(#E6EDF3, 0)
-    table.cell(h2Card, 0, 0, "H2 SWEEP-TO-VALUE  v48", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
-    table.cell(h2Card, 1, 0, timeframe.period + "  display only: the record is the website", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = size.small)
-    _h2Row(1, "Trend 1H / 4H / 1D", h2Trend + "   " + str.tostring(h2S1, "#") + " / " + str.tostring(h2S4, "#") + " / " + str.tostring(h2SD, "#") + "  (>=60 up, <=40 down)", h2TrendUp ? color.new(#00D084, 0) : h2TrendDn ? color.new(#FF4D4D, 0) : _h2t)
-    _h2Row(2, "Swing liquidity (unswept)", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "   low " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)), _h2t)
-    _h2Row(3, "Volume profile (100 bars)", "VAL " + _h2p(h2Val) + "   POC " + _h2p(h2Poc) + "   VAH " + _h2p(h2Vah), _h2t)
-    _h2Row(4, "Last sweep", h2LastSweep, _h2t)
-    _h2Row(5, "Next movement (TV price)", h2Next, _h2t)
-    _h2Row(6, "Last H2 signal (MT5)", h2LastSig, h2LastSig == "none yet" ? _h2t : str.startswith(h2LastSig, "BUY") ? color.new(#00D084, 0) : color.new(#FF4D4D, 0))
-    string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
-    _h2Row(7, "Session now (" + _sn + ")", curSessId != sessId or na(sesHi) ? "starts next confirmed bar" : "range " + _h2p(sesLo) + " - " + _h2p(sesHi) + "  open " + _h2p(sesOpenPx) + "  Exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "  SWEPT prev session extreme" : ""), sesManip ? color.orange : _h2t)
-    _h2Row(8, "Session history", "manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + "  continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + "  (n>=5)   prev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _h2t)
-    _h2Row(9, "Session volume", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of this session's average (tick volume)" : "—", _h2t)
+    color _h2u = color.new(#00D084, 0)
+    color _h2d = color.new(#FF4D4D, 0)
+    bool _full = h2Layout == "Full"
+    table.cell(h2Card, 0, 0, "H2 SWEEP→VALUE", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
+    table.cell(h2Card, 1, 0, timeframe.period + " · display only", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
+    _h2Row(1, "SIGNAL", h2SigCard, h2SigCard == "none yet" ? _h2t : str.startswith(h2SigCard, "BUY") ? _h2u : _h2d)
+    _h2Row(2, "TREND", h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _h2u : h2TrendDn ? _h2d : _h2t)
+    _h2Row(3, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _h2t)
+    _h2Row(4, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _h2t)
+    _h2Row(5, "SWEEP", h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _h2u : str.startswith(h2LastSweep, "HIGH") ? _h2d : _h2t)
+    _h2Row(6, "NEXT", h2Next, na(h2Poc) ? _h2t : close < h2Val ? _h2u : close > h2Vah ? _h2d : _h2t)
+    if _full
+        string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
+        _h2Row(7, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _h2t)
+        _h2Row(8, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _h2t)
+        _h2Row(9, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _h2t)
+    _h2Row(_full ? 10 : 7, "NOTE", "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
