@@ -1764,3 +1764,35 @@ Operator, 2026-10-13: "Can we decrease the number of files?"
 - **Merging the four strategy arms was not chosen.** It would have meant one strategy with an Arm input, 9 → 6 files
   and about 3% headroom.
 - No artefact changed. CLAUDE.md's delivery rule is updated; the build record still lists all nine hashes.
+
+# Build v52 → v53 — every arrow coloured by what it means for gold (F-A54)
+
+Operator: "indicators with an arrow: green if they support gold up, red if they support gold down".
+
+- **Bug (F-A54 a):** the Master's macro arrows printed ▼ / ▼▼ whenever the gold-bullish side was false. A FLAT DXY,
+  10Y, EUR, XAG or TIPS therefore read as gold-bearish; executed on v52, a flat DXY with a strong correlation printed
+  ▼▼. Now `_arrowStr(valid, up, dn, mag)`:
+  - ▲ / ▲▲ supports gold up; ▼ / ▼▼ supports gold down;
+  - ≈ when flat or when the correlation is weak (|r| <= 0.25); — when there is no data.
+  - SPX uses the same helper.
+- **Colours (F-A54 b), Master:**
+  - MTF / session line: the text now follows MTF confluence (green / red / grey); session quality stays as the tint.
+  - Macro line 2 (EUR / XAG / SPX / TIP): the text now follows the net gold direction of those arrows; correlation
+    health stays as the tint, and CR% is still printed.
+  - C / S / I bias breakdown: now takes the BIAS colour (it was always grey).
+  - Unchanged, already correct: structure, Corr (DXY / 10Y / TIP), and the Visuals labels (BOS / CHoCH / OB /
+    absorption).
+- **A table cell has one colour.** A Master cell with several arrows shows their net direction. The Brief's new
+  **GOLD ARROWS** grid gives every indicator its own cell, coloured green / red / grey:
+  - trend, structure, bias, liquidity, EMA200, VWAP, value area, MTF, 5M / 15M / 1H / 4H / 1D, CVD, displacement,
+    RSI divergence;
+  - DXY, 10Y, TIPS, EURUSD, silver, SPX, macro score.
+  - Macro cells show the effect on gold, then what the market itself did ("DXY ▲ / dollar falling").
+  - CLIMAX is amber: the engine scores a climax as exhaustion, not as a side.
+  - New input "Gold-arrow grid position" (default Bottom Right; "Hidden" turns it off).
+- **Tokens:** Master 39,058 lexical, 2 fewer than v52, by removing duplicated validity checks. Brief 38,297 lexical
+  (3.9% under the limit).
+- **Executed:** `brief_trace.py` §6 (4,000 states each):
+  - the grid's glyph equals the Master's `_arrowStr`, with both files' lines executed;
+  - colour equals the gold direction, and flat is never ▼.
+- Compile NOT RUN.

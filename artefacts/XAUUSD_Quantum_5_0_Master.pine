@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v50   (macro label + score)         ║
+// ║  BUILD STAMP — this file last CHANGED in v53   (F-A54 arrows + colours)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5047,17 +5047,18 @@ color pfCol = not na(oProfitFactor) ? (oProfitFactor >= 1.5 ? #00D084 : oProfitF
 // Effective-N corrected MaxDD significance flag
 // Compact macro colors
 // Correlation: impact arrows on XAUUSD — ▲▲/▲ (gold-bullish), ▼▼/▼ (gold-bearish), ≈ (neutral)
-_arrowStr(bool valid, bool up, string mag) =>
-    valid ? (mag == "Strong" ? (up ? "▲▲" : "▼▼") : mag == "Moderate" ? (up ? "▲" : "▼") : "≈") : "—"
+// v53 (F-A54): `dn` added. Before, "not up" printed ▼ -- a FLAT DXY / yield / EUR / TIPS read gold-bearish.
+_arrowStr(bool valid, bool up, bool dn, string mag) =>
+    valid ? (up or dn ? (mag == "Strong" ? (up ? "▲▲" : "▼▼") : mag == "Moderate" ? (up ? "▲" : "▼") : "≈") : "≈") : "—"
 // R5-F13: arrows show IMPACT ON GOLD per the legend contract:
 // DXY falling / yields falling / TIPS falling → ▲ (gold-bullish)
-string _dxyArrow = _arrowStr(dxyValid, dxyBear, dxyMag)
-string _yldArrow = _arrowStr(yieldValid, yieldFalling, yldMag)
-string _eurArrow = _arrowStr(eurusdValid, eurusdBull, eurMag)
-string _xagArrow = _arrowStr(silverValid, silverClose > silverEMA, xagMag)
-string _spxArrow = spxValid ? (spxBull ? "▲" : spxBear ? "▼" : "≈") : "—"
-string _tipsArrow = _arrowStr(tipsValid, tipsFalling, tipsMag)
-string tipsC = tipsValid ? "TIP" + _tipsArrow : "—"
+string _dxyArrow = _arrowStr(dxyValid, dxyBear, dxyBull, dxyMag)
+string _yldArrow = _arrowStr(yieldValid, yieldFalling, yieldRising, yldMag)
+string _eurArrow = _arrowStr(eurusdValid, eurusdBull, eurusdBear, eurMag)
+string _xagArrow = _arrowStr(silverValid, silverClose > silverEMA, silverClose < silverEMA, xagMag)
+string _spxArrow = _arrowStr(spxValid, spxBull, spxBear, "Moderate")
+string _tipsArrow = _arrowStr(tipsValid, tipsFalling, tipsRising, tipsMag)
+string tipsC = "TIP" + _tipsArrow
 
 // Day-of-week tracker: cumulative bullish/bearish bar count per weekday
 // R5-F2: undefined regimeBull/regimeBear references removed.
@@ -5413,8 +5414,8 @@ f_dashData2() =>
     string _vwapStr = not na(vwapVal) ? str.tostring(vwapVal, "#.##") : "—"
     // Macro engine — DXY, 10Y, corr health
     string _dxyStr = dxyValid ? "DXY" + _dxyArrow + (not na(dxyRSI) ? " R" + str.tostring(int(dxyRSI)) : "") : "DXY—"
-    string _yldStr = yieldValid ? "10Y" + _yldArrow : "10Y—"
-    string _macroLine2 = "Corr " + (eurusdValid ? "EUR" + _eurArrow : "EUR—") + " " + (silverValid ? "XAG" + _xagArrow : "XAG—") + " " + (spxValid ? "SPX" + _spxArrow : "SPX—") + " " + (tipsValid ? "TIP" + _tipsArrow : "TIP—")
+    string _yldStr = "10Y" + _yldArrow
+    string _macroLine2 = "Corr EUR" + _eurArrow + " XAG" + _xagArrow + " SPX" + _spxArrow + " " + tipsC
     color _crCol = not na(avgCorrHealth) ? (avgCorrHealth >= 60 ? cBloomBull : avgCorrHealth >= 40 ? cBloomWarn : cBloomBear) : cBloomNeut
     // Macro gold-direction colors
     int _macroVote = (dxyBear ? 1 : dxyBull ? -1 : 0) + (yieldFalling ? 1 : yieldRising ? -1 : 0)
@@ -5607,9 +5608,10 @@ f_dashRender() =>
         // ROW 2 — SECONDARY / DIAGNOSTIC METRICS
         string _mtfArrows = "5M" + (htf5mBull ? "▲" : htf5mBear ? "▼" : "·") + " 15M" + (htf15mBull ? "▲" : htf15mBear ? "▼" : "·") + " 1H" + (htf1hBull ? "▲" : htf1hBear ? "▼" : "·") + " 4H" + (htf4hBull ? "▲" : htf4hBear ? "▼" : "·") + " 1D" + (htf1dBull ? "▲" : htf1dBear ? "▼" : "·")
         string _mktLine = _mtfArrows + "\n" + _sessTicks + _cvdStr + _dltStr + " " + regLabel
-        tc(0, 2, _mktLine + "\n" + xcheckStr, _sessCol, _seSize, _w0)
+        // v53: text = MTF direction (green up / red down for gold, as its arrows); session quality stays as the tint
+        tcb(0, 2, _mktLine + "\n" + xcheckStr, mtfConfluenceScore > 20 ? cBloomBull : mtfConfluenceScore < -20 ? cBloomBear : cBloomNeut, color.new(_sessCol, 88), _seSize, _w0)
         string _biasLine = _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : "")
-        tc(1, 2, _biasLine, cBloomNeut, _seSize, _w1)
+        tc(1, 2, _biasLine, _biasCol, _seSize, _w1) // v53: C/S/I arrows take the BIAS colour (was grey)
         string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel
         tc(2, 2, _evConf, _evCol, _seSize, _w2)
         tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)
@@ -5631,7 +5633,8 @@ f_dashRender() =>
         string _macroVerdict = "Macro " + (macroIntelLabel == "BULL" ? "BULL" : macroIntelLabel == "BEAR" ? "BEAR" : macroIntelLabel == "BULL-ISH" ? "bull-ish" : macroIntelLabel == "BEAR-ISH" ? "bear-ish" : macroIntelLabel == "N/A" ? "—" : "MIX") + " " + str.tostring(macroIntelScore)
         string _dowStr = showDowTracker ? _dowBiasStr() : ""
         string _macroRow2 = _macroVerdict + (_dowStr != "" ? "\n" + _dowStr : "")
-        tcb(6, 2, _macroLine2 + " CR" + str.tostring(int(_crVal)) + "%\n" + _macroRow2, _crCol, color.new(_macro2Col, 88), _seSize, _w6)
+        // v53: text = gold direction of the arrows (was correlation health); health stays as the tint and CR%
+        tcb(6, 2, _macroLine2 + " CR" + str.tostring(int(_crVal)) + "%\n" + _macroRow2, _macro2Col, color.new(_crCol, 88), _seSize, _w6)
         string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp
         tc(7, 2, _riskSec, pfCol, _seSize, _w7)
         // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement

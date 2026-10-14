@@ -18,7 +18,7 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5828 | 376909 | `f514937c83ecfa5116a767b1ac2805a5040052348a54108ea1beca6cd6730c78` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5831 | 377321 | `12acd76b15777f6733ecc3c33451603a6ce5c6bee3c058ee6b0f37c229760e9c` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5411 | 341685 | `7ec465ad992aef9305f780fbb58c8a087296011f3cb327320691e2964cccd0e4` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5411 | 341750 | `cb5c30d0bda665038cab3f15d7586b0ba85330bc37649343e28946605ecdd020` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5422 | 342669 | `4163c610c71ed1c8f6a42a3d1e97791d1d6ef9a4b7a36ab532af542b0fb583dc` |
@@ -26,9 +26,9 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 28645 | `3dd532aeda228340756a5d8b78dac150073cd6f195dd449c7fd421e262a7f6e4` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1203 | 77865 | `422b55084e6c6f537d432d04946938a93ba676f985124619ee3e16b0bd821138` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5646 | 358634 | `2bfd1666d711bba848609ff63d4ad61a0ea8817889a3ec874c2d78f01d29aed9` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5409 | 339274 | `3fc7a779106918ac86d0312e9c2f1e0b8179f82e7898ce0dc1b003c9ca9cb4b0` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5450 | 343976 | `12fb39e7a495bb7f92a12f3ff1c70c48b7250e998749cc8f884b9f7db11c5ea2` |
 
-> **BUILD v52 — this prompt pins the current build.** The originally audited build
+> **BUILD v53 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -98,6 +98,7 @@ scope, and no other build of these scripts is in scope.
 > **v50: F-A53** — MACRO cell reads bull-ish / bear-ish (was BULL+ / BEAR+ for the weaker readings) with its score.
 > **v51:** scorecard header no longer carries a hard-coded build number (it read v42).
 > **v52:** new companion `Brief.pine`: the website's Market Brief on the chart, on the Treatment engine verbatim (`diag_parity.py`), executed against the website's own code (`brief_trace.py`). No other artefact changed.
+> **v53: F-A54** — macro arrows: flat = ≈ (was ▼); Master arrow cells coloured by gold direction; Brief GOLD ARROWS grid.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

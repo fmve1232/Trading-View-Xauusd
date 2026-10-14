@@ -267,6 +267,36 @@ for _ in range(N_GATE):
     bad += (e['gp'] == 7) != bool(e['shouldBuy'] if e['bs'] else e['shouldSell'])
 report("gate row 7/7 <=> engine shouldBuy / shouldSell on the bias side", bad, f"L{gl}, {N_GATE} gate states")
 
+# ---- 6. v53 gold arrows: Brief grid == Master macro arrows, and a FLAT market is never shown as gold-bearish (F-A54)
+MS = open('artefacts/XAUUSD_Quantum_5_0_Master.pine', encoding='utf-8').read().split('\n')
+a = next(i for i, l in enumerate(MS) if l.startswith('_arrowStr('))
+P.define(MS[a:a + 2], env)
+magl = next(l for l in MS if l.startswith('string dxyMag = '))
+for f in ('f_brS', 'f_brM'):
+    P.define(func(f)[0], env)
+fa, fal = func('f_brA')
+glyph = re.search(r'\(na\(d\) \? "—" : .*?"≈"\)', fa[1]).group(0)
+colr = re.search(r'text_color=(na\(d\) \? .*?color\.new\(#B2B5BE, 0\))', fa[1]).group(1)
+GREEN, RED = 'color.new(#26A69A, 0)', 'color.new(#EF5350, 0)'
+BUILTIN_COL = {GREEN: 'G', RED: 'R', 'color.new(#B2B5BE, 0)': 'N', 'color.new(#787B86, 0)': 'X'}
+P.BUILTINS['color.new'] = lambda c, t: c
+bad = spec = 0
+for _ in range(N_GATE):
+    v, up = rng.random() < 0.85, rng.random() < 0.4
+    dn = (not up) and rng.random() < 0.6
+    r = rng.choice([NA, rng.uniform(-1, 1), 0.25, -0.5, 0.5])
+    e = P.Env(funcs=env.funcs, dxyValid=v, avgCorrDXY=r)
+    P.run([magl], e)
+    master = P.evaluate(f"_arrowStr({str(v).lower()}, {str(up).lower()}, {str(dn).lower()}, dxyMag)", e)
+    e['d'] = P.evaluate(f"f_brM({str(v).lower()}, {str(up).lower()}, {str(dn).lower()}, avgCorrDXY)", e)
+    brief = P.evaluate(glyph, e)
+    col = P.evaluate(colr.replace(GREEN, '"G"').replace(RED, '"R"').replace('color.new(#B2B5BE, 0)', '"N"').replace('color.new(#787B86, 0)', '"X"'), e)
+    bad += brief != master
+    want_col = 'X' if not v else 'N' if brief == '≈' else 'G' if '▲' in brief else 'R'
+    spec += col != want_col or (v and not up and not dn and brief != '≈') or (not v and brief != '—')
+report("gold arrows: Brief grid glyph == Master _arrowStr (DXY lines, both executed)", bad, f"Brief L{fal}, Master L{a + 1}, {N_GATE} states incl. flat, weak |r|, na r, no data")
+report("gold arrows: colour == direction for gold (green ▲ / red ▼ / grey ≈ / dim —); flat never ▼", spec, f"{N_GATE} states")
+
 print(f"RESULT: {'PASS' if fails == 0 else 'FAIL'} -- Pine text executed in Python against the website's code "
       "(arm_h4.py in Python, app.js in Node); TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

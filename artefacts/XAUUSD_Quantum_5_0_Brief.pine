@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v52   (new: Market Brief)            ║
+// ║  BUILD STAMP — this file last CHANGED in v53   (gold-arrow grid)              ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5212,6 +5212,8 @@ brPos = input.string("Top Right", "Panel position", options=["Top Right", "Middl
 brTxt = input.string("Small", "Text size", options=["Tiny", "Small", "Normal"], group=grpBrief)
 brOffset = input.float(0.0, "MT5 Price Offset (MT5 - TradingView)", minval=-50.0, maxval=50.0, step=0.01, group=grpBrief, tooltip="Use the same value as in the Master. Shifts DISPLAYED prices only; distances do not change.")
 brAlert = input.bool(true, "Alert when a playbook trigger fires (info, not a DECISION)", group=grpBrief)
+brGPos = input.string("Bottom Right", "Gold-arrow grid position", options=["Bottom Right", "Bottom Left", "Middle Right", "Top Left", "Hidden"], group=grpBrief)
+brSz = brTxt == "Tiny" ? size.tiny : brTxt == "Normal" ? size.normal : size.small
 
 f_brP(float x) => na(x) ? "—" : str.tostring(x + brOffset, "#.##")
 f_brD(float x) => na(x) ? "—" : (x >= 0 ? "+" : "") + str.tostring(x, "#.##")
@@ -5366,7 +5368,7 @@ if barstate.islast
     color cD = color.new(#EF5350, 0)
     color cW = color.new(#FFA726, 0)
     color cT = color.new(#D1D4DC, 0)
-    string sz = brTxt == "Tiny" ? size.tiny : brTxt == "Normal" ? size.normal : size.small
+    string sz = brSz
     float px = close
     bool up = bullScore >= bearScore
     bool lean = math.abs(bullScore - bearScore) >= 5
@@ -5405,5 +5407,44 @@ if barstate.islast
     f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "if a " + timeframe.period + " bar closes above " + f_brP(bT) + " " + bN + " · away " + f_brD(bT - px) + "\nstop " + f_brP(bS) + " · TP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? " · TP2 " + b2n + " " + f_brP(b2) : "") + " · R:R 1:" + str.tostring(bR, "0.0"), cU)
     f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
     f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry: arm H4's record is on the website, and its measured mean R decides", cW)
+
+// ---- v53 GOLD ARROWS: every arrowed indicator in its own cell, coloured by what it means FOR GOLD ----
+// d > 0 supports gold UP (green ▲, ▲▲ strong), d < 0 supports gold DOWN (red ▼), 0 neutral (grey ≈), na no data (—).
+// Macro arrows are the IMPACT on gold, as in the Master (F-A54): DXY / yields / TIPS falling = ▲; the
+// second line says what the market itself did. Weak correlation (|r| <= 0.25) = ≈, as the Master prints it.
+var table brG = table.new(brGPos == "Bottom Left" ? position.bottom_left : brGPos == "Middle Right" ? position.middle_right : brGPos == "Top Left" ? position.top_left : position.bottom_right, 4, 7, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+f_brS(bool up, bool dn) => up ? 1.0 : dn ? -1.0 : 0.0
+f_brM(bool v, bool up, bool dn, float r) => v ? f_brS(up, dn) * (math.abs(r) > 0.5 ? 2.0 : math.abs(r) > 0.25 ? 1.0 : 0.0) : na
+f_brMv(bool v, bool rise, bool fall) => not v ? "no data" : rise ? "rising" : fall ? "falling" : "flat"
+f_brA(int i, string nm, float d, string how) =>
+    table.cell(brG, i % 4, 1 + int(i / 4), nm + " " + (na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈") + "\n" + how, text_color=na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0), text_size=brSz, text_halign=text.align_left)
+if barstate.islast and brGPos != "Hidden"
+    table.cell(brG, 0, 0, "GOLD ARROWS · green = supports gold UP · red = supports gold DOWN · grey = neutral", text_color=color.new(#D1D4DC, 0), text_size=brSz)
+    table.merge_cells(brG, 0, 0, 3, 0)
+    f_brA(0, "TREND", f_brS(bullTrend, bearTrend), "engine trend gate")
+    f_brA(1, "STRUCT", f_brS(bullStructActive, bearStructActive), bullStructActive ? bullStructType : bearStructActive ? bearStructType : "none active")
+    f_brA(2, "BIAS", math.abs(bullScore - bearScore) < 5 ? 0.0 : f_brS(bullScore > bearScore, bearScore > bullScore), "L " + str.tostring(bullScore, "#") + " / S " + str.tostring(bearScore, "#"))
+    f_brA(3, "LIQ", f_brS(evLiqBull > evLiqBear + 3, evLiqBear > evLiqBull + 3), "liquidity draw")
+    f_brA(4, "EMA200", f_brS(close > ema200, close < ema200), close > ema200 ? "price above" : "price below")
+    f_brA(5, "VWAP", f_brS(close > vwapVal, close < vwapVal), close > vwapVal ? "price above" : "price below")
+    f_brA(6, "VALUE", f_brS(close > vahPrice, close < valPrice), close > vahPrice ? "above VAH" : close < valPrice ? "below VAL" : "inside value")
+    f_brA(7, "MTF", f_brS(mtfConfluenceScore > 20, mtfConfluenceScore < -20), "confluence " + str.tostring(mtfConfluenceScore, "#"))
+    f_brA(8, "5M", f_brS(htf5mBull, htf5mBear), "")
+    f_brA(9, "15M", f_brS(htf15mBull, htf15mBear), "")
+    f_brA(10, "1H", f_brS(htf1hBull, htf1hBear), "")
+    f_brA(11, "4H", f_brS(htf4hBull, htf4hBear), "")
+    f_brA(12, "1D", f_brS(htf1dScore >= 60, htf1dScore <= 40), "")
+    f_brA(13, "CVD", f_brS(cvdBull, cvdEma20 < cvdEma100), "volume delta")
+    f_brA(14, "DISPL", f_brS(displacementUp, displacementDown), "displacement")
+    f_brA(15, "RSI DIV", f_brS(bullRsiDiv, bearRsiDiv), "divergence")
+    f_brA(16, "DXY", f_brM(dxyValid, dxyBear, dxyBull, avgCorrDXY), "dollar " + f_brMv(dxyValid, dxyBull, dxyBear))
+    f_brA(17, "10Y", f_brM(yieldValid, yieldFalling, yieldRising, avgCorrYld), "yields " + f_brMv(yieldValid, yieldRising, yieldFalling))
+    f_brA(18, "TIPS", f_brM(tipsValid, tipsFalling, tipsRising, avgCorrTIPS), "real yield " + f_brMv(tipsValid, tipsRising, tipsFalling))
+    f_brA(19, "EUR", f_brM(eurusdValid, eurusdBull, eurusdBear, avgCorrEUR), "EURUSD " + f_brMv(eurusdValid, eurusdBull, eurusdBear))
+    f_brA(20, "XAG", f_brM(silverValid, silverClose > silverEMA, silverClose < silverEMA, avgCorrSlv), "silver " + f_brMv(silverValid, silverClose > silverEMA, silverClose < silverEMA))
+    f_brA(21, "SPX", spxValid ? f_brS(spxBull, spxBear) : na, "stocks " + f_brMv(spxValid, spxBull, spxBear))
+    f_brA(22, "MACRO", f_brS(macroStrengthScore >= 15, macroStrengthScore <= -15), "score " + str.tostring(macroStrengthScore))
+    // a volume climax is exhaustion either way (the engine scores it as exhaustion, not as a side): amber, not green/red
+    table.cell(brG, 3, 6, "CLIMAX " + (climaxUp ? "▲" : climaxDown ? "▼" : "·") + "\n" + (climaxUp or climaxDown ? "exhaustion risk" : "none"), text_color=climaxUp or climaxDown ? color.new(#FFA726, 0) : color.new(#B2B5BE, 0), text_size=brSz, text_halign=text.align_left)
 plot(na, "brief", display = display.none)
 // DIAG-END

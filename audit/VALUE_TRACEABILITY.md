@@ -26,16 +26,16 @@ none exercises the TradingView runtime (that is the operator's compile and chart
 | 7 Veto | NO TRADE | `tqVeto` | `Master.pine:4776` | TQ below floor OR EV < 0 OR calibrated P below minimum; + risk lock | decision_check.py (truth table) |
 | 8 Decision | DECISION | `_confDirLabel` | `Master.pine:4911` | RISK LOCK > NO TRADE > BUY / SELL > WARMUP > WAIT | decision_check.py (precedence; never BUY/SELL while vetoed) |
 | 9 MT5 | Entry / SL / TP prices | `tpEntryStr ... tp3Str` | `Master.pine:2739` | _m(x) = TradingView price + MT5 Price Offset, 2 decimals (one helper for every order price) | v46 review (offset applied everywhere an order price is shown) |
-| 9 MT5 | Risk % | `_kellyPct` | `Master.pine:5317` | half-Kelly on the Wilson 95% LOWER win probability at effective N, capped at Risk %, x skew/kurtosis/drawdown haircuts | formula_trace.py test_kelly |
-| 9 MT5 | $ risk / lots | `_riskUSD, _lots` | `Master.pine:5354` | account x Risk % x regime haircut; lots = floor(risk $ / (SL distance x 100 oz), 0.01); '<min' below the broker minimum (F-A52) | sizing lines executed, 3000 cases (v46) |
-| 9 MT5 | structure / sweep / H2 alert | `_evS` | `Master.pine:5824` | first bar of BOS / CHoCH / MSS / liquidity sweep (engine flags = STRUCTURE cell) + H2 SETUP text; info only | decision_check.py (alert edge test) |
-| 9 MT5 | BUY / SELL alert text | `_mt5Plan` | `Master.pine:5806` | the same strings as the PLAN box | v46 review |
-| 10 H2 | H2 SETUP | `h2Long / h2Short, h2Plan` | `Master.pine:5192` | sweep of the last unswept 5-bar swing + 2-of-3 HTF trend + value side of POC; SL wick +/- 0.15 ATR; TP1 max(POC,1R), TP2 max(VAH,2R) | h2_parity.py; h2_trace.py |
-| 11 Brief | PLAYBOOK SELL / BUY: trigger, stop, TP1, TP2, R:R | `f_brSide` | `Brief.pine:5254` | the website's arm H4 rule: nearest level beyond 0.1 ATR (levels merged within 0.05 ATR); stop = trigger -/+ regSLMult x ATR; TP = next levels >= 1 stop beyond, else 2 stops; built at a bar close, applies to the next | brief_trace.py (vs the site's arm_h4.py, executed) |
-| 11 Brief | playbook fired (and its alert) | `fS / fB` | `Brief.pine:5325` | the next bar's close beyond the trigger and short of TP1 (sell checked first) | brief_trace.py (vs arm_h4.evaluate) |
-| 11 Brief | TARGET / then / opposite liquidity | `f_brNear` | `Brief.pine:5278` | nearest pool / day / swing level beyond price on the side of the lean (bull >= bear), from the last closed bar | brief_trace.py (vs the site's nextLevels, Node) |
-| 11 Brief | LIQ TAKEN | `brSwPx, brSwPool` | `Brief.pine:5306` | the engine's liqSweepBull / liqSweepBear on a confirmed bar; pool = PDx/PWx the wick crossed, closest, else the month | brief_trace.py (vs the site's lastSweep, Node) |
-| 11 Brief | GATES n/7 | `g` | `Brief.pine:5394` | the seven conditions of shouldBuy / shouldSell on the bias side | brief_trace.py (7/7 <=> engine signal) |
+| 9 MT5 | Risk % | `_kellyPct` | `Master.pine:5318` | half-Kelly on the Wilson 95% LOWER win probability at effective N, capped at Risk %, x skew/kurtosis/drawdown haircuts | formula_trace.py test_kelly |
+| 9 MT5 | $ risk / lots | `_riskUSD, _lots` | `Master.pine:5355` | account x Risk % x regime haircut; lots = floor(risk $ / (SL distance x 100 oz), 0.01); '<min' below the broker minimum (F-A52) | sizing lines executed, 3000 cases (v46) |
+| 9 MT5 | structure / sweep / H2 alert | `_evS` | `Master.pine:5827` | first bar of BOS / CHoCH / MSS / liquidity sweep (engine flags = STRUCTURE cell) + H2 SETUP text; info only | decision_check.py (alert edge test) |
+| 9 MT5 | BUY / SELL alert text | `_mt5Plan` | `Master.pine:5809` | the same strings as the PLAN box | v46 review |
+| 10 H2 | H2 SETUP | `h2Long / h2Short, h2Plan` | `Master.pine:5193` | sweep of the last unswept 5-bar swing + 2-of-3 HTF trend + value side of POC; SL wick +/- 0.15 ATR; TP1 max(POC,1R), TP2 max(VAH,2R) | h2_parity.py; h2_trace.py |
+| 11 Brief | PLAYBOOK SELL / BUY: trigger, stop, TP1, TP2, R:R | `f_brSide` | `Brief.pine:5256` | the website's arm H4 rule: nearest level beyond 0.1 ATR (levels merged within 0.05 ATR); stop = trigger -/+ regSLMult x ATR; TP = next levels >= 1 stop beyond, else 2 stops; built at a bar close, applies to the next | brief_trace.py (vs the site's arm_h4.py, executed) |
+| 11 Brief | playbook fired (and its alert) | `fS / fB` | `Brief.pine:5327` | the next bar's close beyond the trigger and short of TP1 (sell checked first) | brief_trace.py (vs arm_h4.evaluate) |
+| 11 Brief | TARGET / then / opposite liquidity | `f_brNear` | `Brief.pine:5280` | nearest pool / day / swing level beyond price on the side of the lean (bull >= bear), from the last closed bar | brief_trace.py (vs the site's nextLevels, Node) |
+| 11 Brief | LIQ TAKEN | `brSwPx, brSwPool` | `Brief.pine:5308` | the engine's liqSweepBull / liqSweepBear on a confirmed bar; pool = PDx/PWx the wick crossed, closest, else the month | brief_trace.py (vs the site's lastSweep, Node) |
+| 11 Brief | GATES n/7 | `g` | `Brief.pine:5396` | the seven conditions of shouldBuy / shouldSell on the bias side | brief_trace.py (7/7 <=> engine signal) |
 
 Not listed: chart drawings and reference levels (PDH/PDL, VWAP, FVG, OB). They are TradingView prices for orientation,
 not order prices; order prices come only from the PLAN box and the alerts. The Brief's playbook prices are
