@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v57   (pro phone card, LIQ DRAW)     ║
+// ║  BUILD STAMP — this file last CHANGED in v58   (no value computed unseen)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -312,7 +312,6 @@ showSignals = input.bool(true, "BOS alerts", group=grpModules, tooltip="Enables 
 showFVG = input.bool(true, "Fair Value Gaps (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). FVG detection feeds trade quality, the analog zone feature and the plan. It was gated by this switch at OFF since the drawing moved to Visuals, so the decision ignored the FVGs Visuals draws. Same definition as Visuals (gap > 0.3 x ATR). Drawing is done by Visuals.")
 showOB = input.bool(true, "Order Blocks (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Order-block detection feeds SL/TP candidates, trade quality and the analog zone feature. It was gated OFF, so the decision ignored the OBs Visuals draws. Same definition as Visuals (F-A08 parity). Drawing is done by Visuals.")
 showSMT = input.bool(true, "SMT Divergence (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Gold/silver SMT divergence feeds the confluence signal count. It was gated OFF. Needs the silver feed.")
-showClimax = input.bool(true, "Volume Climax (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Volume climax: shown as CLIMAX▲/▼ on the dashboard cross-check line; it also feeds the auction exhaustion read, which runs in Diagnostics since v24. It was gated OFF.")
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
 showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
 forecastBars = input.int(10, "Forecast Projection", minval=5, maxval=30, group="V17 PREDICTIVE ENHANCEMENTS")
@@ -380,9 +379,7 @@ structWindow = input.int(8, "Structure signal validity (bars)", minval=1, maxval
 // could reach 50 simultaneously, making shouldBuy and shouldSell both true; _confDirLabel
 // tests shouldBuy first, so SELL was SILENTLY MASKED. 51 makes 2T = 102 > 100.
 trendThreshold = input.int(60, "Trend Score Threshold", minval=51, maxval=90, step=5, group=grpCore)
-volClimaxPerc = input.int(95, "Volume Climax Percentile", minval=90, maxval=99, step=1, group=grpCore)
 eqAtrMult = input.float(0.25, "EQ Tolerance (ATR mult)", minval=0.05, maxval=1.0, step=0.05, group=grpCore)
-volLookback = input.int(50, "Volume Climax Lookback", minval=20, maxval=100, group=grpCore)
 fvgMaxBars = input.int(30, "FVG Max Bars", minval=10, maxval=100, group=grpCore)
 obMaxBars = input.int(20, "OB Max Bars", minval=10, maxval=50, group=grpCore)
 // CHANGE ID: F-014 — MT5 EXECUTION OFFSET. Workflow-specific: TradingView is the
@@ -452,7 +449,6 @@ silverSymbol = input.symbol("OANDA:XAGUSD", "Silver Symbol", group=grpV17)
 // This contributes a macro VOTE and a confirmation flag. It is never a trigger on its own.
 gcSymbol = input.symbol("COMEX:GC1!", "COMEX Gold Futures (blank=off)", group=grpV17, tooltip="Centralised gold futures used for CONFIRMATION only. Direction and volume are read with a one-bar lag so free 10-minute-delayed CME data is safe. Price levels are never imported (futures carry a drifting basis vs spot).")
 gcMinTfSec = input.int(900, "  Min chart TF for GC (seconds)", minval=300, maxval=14400, step=300, group=grpV17, tooltip="Below this the 10-minute CME delay exceeds a bar or two and the layer disables itself. 900 = 15M.")
-gcVolMult = input.float(1.2, "  Volume-expansion threshold", minval=1.0, maxval=3.0, step=0.1, group=grpV17)
 
 // ===== OPEN INTEREST — DAILY CONVICTION =======================================
 // OI is the number of contracts still open. Unlike volume (which counts activity) it says
@@ -495,7 +491,6 @@ cotExtreme = input.int(85, "  Crowding percentile", minval=60, maxval=99, group=
 // gold is most sensitive to. Cheap: one series, one derived spread.
 // Used as REGIME CONTEXT ONLY. It does not add a macro vote, so the 6/7-source pool and its
 // threshold are untouched and this cannot shift the gate.
-y2Symbol = input.symbol("TVC:US02Y", "US 2Y Yield (blank=off)", group=grpV17, tooltip="With US10Y this gives the 2y10y curve spread — steepening favours gold, flattening pressures it. Context only, adds no macro vote.")
 eurusdSymbol = input.symbol("OANDA:EURUSD", "EURUSD Symbol", group=grpV17)
 spxSymbol = input.symbol("SP:SPX", "S&P 500 Symbol", group=grpV17)
 tipsSymbol = input.symbol("TVC:US10Y", "TIPS/Real-Yield Symbol (blank=off)", group=grpV17, tooltip="Q5.5: default changed from the unprefixed US10YTIPS (which errored on many feeds) to TVC:US10Y. For a true real-yield proxy use FRED:DFII10 if your plan has it, or blank this field to disable the feed. ignore_invalid_symbol protects the math regardless.")
@@ -1046,10 +1041,7 @@ silverBear = silverValid and silverClose < silverEMA
 
 
 // ----- US2Y and the 2y10y curve ------------------------------------------------
-float _y2 = y2Symbol != "" ? request.security(y2Symbol, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true) : na
-bool y2Valid = y2Symbol != "" and not na(_y2) and not na(_rawYield)
 // Spread in yield points. Rising = steepening = historically gold-supportive.
-float curve2s10s = y2Valid ? _rawYield - _y2 : na
 
 // ----- COT positioning (weekly, crowding percentile) ---------------------------
 // Managed Money net = non-commercial long minus short, CFTC legacy report, gold 088691.
@@ -1151,7 +1143,6 @@ bool gcValid = gcEnabled and gcResolved and gcFinite and gcFresh and gcPlausible
 bool gcBull = gcValid and _gcC > _gcEma
 bool gcBear = gcValid and _gcC < _gcEma
 // Real traded-contract expansion, the thing CFD tick-volume cannot tell you.
-bool gcVolExp = gcValid and not na(_gcVolAvg) and _gcVolAvg > 0 and _gcVol > _gcVolAvg * gcVolMult
 // DIVERGENCE = the two markets disagree on direction. Spot side uses the same 20-EMA test
 // on the same timeframe, so the comparison is like-for-like.
 bool _spotBull = close[1] > ta.ema(close[1], 20)
@@ -1585,26 +1576,7 @@ if not na(pivotLow)
 equalHighs = not na(swingHigh1) and not na(swingHigh2) and math.abs(swingHigh1 - swingHigh2) <= eqTolerance
 equalLows = not na(swingLow1) and not na(swingLow2) and math.abs(swingLow1 - swingLow2) <= eqTolerance
 
-// VOLUME CLIMAX — Relative Volume vs same-hour average
-// R5-F7: same-hour average is warm-up cumulative mean for the first 20 observations,
-// then EWMA (alpha=0.05, ~20-obs memory ~ 20 trading days per hour slot) so the
-// baseline tracks the CURRENT volume regime instead of an unbounded all-history mean.
-var float[] volByHour = array.new_float(24, 0.0)
-var int[] volHourCount = array.new_int(24, 0)
-int currHour = hour(time, "UTC")
-if barstate.isconfirmed
-    float prevAvg = array.get(volByHour, currHour)
-    int prevCount = array.get(volHourCount, currHour)
-    float _alphaVol = prevCount < 20 ? 1.0 / (prevCount + 1) : 0.05
-    float newAvg = prevAvg + _alphaVol * (nz(volume, 0.0) - prevAvg)
-    array.set(volByHour, currHour, newAvg)
-    array.set(volHourCount, currHour, math.min(prevCount + 1, 100000))
-float relVol = volume / math.max(array.get(volByHour, currHour), 1.0)
-float prRelVol = ta.percentrank(relVol, volLookback)
-float prRawVol = ta.percentrank(volume, volLookback)
-float volPercentile = array.get(volHourCount, currHour) >= 20 ? prRelVol : prRawVol
-climaxUp = showClimax and recentBars and volPercentile >= volClimaxPerc and close > open
-climaxDown = showClimax and recentBars and volPercentile >= volClimaxPerc and close < open
+// v57: the volume-climax block moved with the cross-check line to the Brief's ENGINE row (same engine there)
 
 // FAIR VALUE GAPS
 fvgDetected = showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0] - high[2] > adaptiveATR * 0.3) or (low[2] > high[0] and low[2] - high[0] > adaptiveATR * 0.3))
@@ -1868,8 +1840,6 @@ var float[] vpPrices = array.new_float(40, 0.0)
 var float vpocPrice = na
 var float vahPrice = na
 var float valPrice = na
-var float vaRatio = 0.0
-var string vaPos = "—"
 float vpHigh = ta.highest(high, vpLookback)
 float vpLow = ta.lowest(low, vpLookback)
 var int vpRefresh = 0
@@ -1917,9 +1887,7 @@ if barstate.isconfirmed and not perfMode
                     break
             vahPrice := array.get(vpPrices, vaHigh)
             valPrice := array.get(vpPrices, vaLow)
-            float vpRange = vpHigh - vpLow
-            vaRatio := totalV > 0.0 and vpRange > 0.0 ? (vahPrice - valPrice) / vpRange * 100.0 : 0.0
-            vaPos := close > vahPrice ? "▲" : close < valPrice ? "▼" : "●"
+            // v57: value-area width / position (vaRatio, vaPos) are displayed by the Brief's ENGINE row
     vpRefresh += 1
 
 
@@ -2897,8 +2865,6 @@ var float[] hCalBin = array.new_float(HIST_MAX, -1.0)
 // changes which trades fire; exports from B4 and B5 must never be pooled.
 int SCHEMA_BUILD = 5
 int REGIME_FEATURE_VERSION = ((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
-var int[] hSchemaVer = array.new_int(HIST_MAX, 1)
-var int migV2Count = 0
 var int[] hRegime = array.new_int(HIST_MAX, 0)
 var float[] hSess = array.new_float(HIST_MAX, 0.5)
 var int hW = 0
@@ -2979,12 +2945,7 @@ if not perfMode and barstate.isconfirmed and bar_index > OUTCOME_N * 3 + 50 and 
     // hSchemaVer a CONSUMED array rather than write-only metadata — the version is used
     // for MEASUREMENT now, and remains available for FILTERING later without re-collecting
     // history, which is the sequencing the reviewer asked for.
-    int _prevVer = array.get(hSchemaVer, hW)
-    if _prevVer == 2 and REGIME_FEATURE_VERSION != 2
-        migV2Count := math.max(migV2Count - 1, 0)
-    if _prevVer != 2 and REGIME_FEATURE_VERSION == 2
-        migV2Count := migV2Count + 1
-    array.set(hSchemaVer, hW, REGIME_FEATURE_VERSION)
+    // v57: the V2 census counter (migV2Count) moved with the schema text to the Brief's DATA row
     float _sessVal = inNY ? 1.0 : inLondon ? 0.67 : inAsian ? 0.33 : 0.0
     array.set(hSess, hW, _sessVal)
     int oP = (hW - OUTCOME_N + HIST_MAX) % HIST_MAX

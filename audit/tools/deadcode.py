@@ -92,6 +92,15 @@ for p in sys.argv[1:]:
                 return _dr.get(nm, 0) > 0
             via = [h for h in hits if not h[3] and _wired(h[1]) and (not _h2 or h[1].startswith('h2'))]
             hits = [h for h in hits if h not in via]
+            # v57: in the MASTER, a value only a companion reads is a value the Master computes and never shows.
+            # Only these are allowed: the six stats-engine outputs (the stats engine is held identical to the
+            # twin's, diag_parity.py) and one request.security tuple slot Pine requires to be named.
+            if 'Master' in os.path.basename(p):
+                MASTER_VIA_OK = {'oBosCont', 'oBosFail', 'oCalDetail', 'oMaxAdverseATR', 'oPdh1stPct', 'oPdl1stPct', '_gcVolAvg'}
+                extra = sorted(h[1] for h in via if h[1] not in MASTER_VIA_OK)
+                if extra:
+                    print(f"FAIL  Master computes values it never shows (read only by a companion): {extra}")
+                    hits += [h for h in via if h[1] in extra]
             if via:
                 print(f"{os.path.basename(p)}: {len(via)} symbols wired through {'Visuals (same H2 block)' if _h2 else 'Diagnostics (same engine)'}")
     kept = [h for h in hits if not h[3] and h[1] in RETAINED]

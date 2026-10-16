@@ -1910,3 +1910,31 @@ Operator: "Approve all, rename to LIQ DRAW and move features".
 - **Tokens:** Master 38,461 lexical (≈ 3.5% under the limit; it was 39,064); Brief 38,595.
 - **Value map:** 32 values (adds the ENGINE / DATA rows).
 - Compile NOT RUN on v57.
+
+# Build v57 → v58 — no value computed unseen; moved features verified (F-A58)
+
+Operator: "no compromise on quality, every feature maintained, wired up properly, end-to-end traceability".
+
+- **Moved features verified** (`moved_check.py`, new). Each of the 23 values the v57 move took to the Brief is checked
+  against its definition frozen from the v56 Master (commit 2f7f56d7):
+  - the T/S/L/M/Q arrows, structure, risk lock;
+  - the GC / OI / COT / 2s10s states and the VIX feed;
+  - the feed status codes, value area, climax and confidence.
+  - All 23 are identical, and each must still be displayed by the Brief panel.
+  - Documented equivalences: COT_STATUS (same value for every input) and `f_tqEngine` (body compared).
+  - The schema text now uses the Master's exact wording ("BUILD v5  SCHEMA_V2 CLEAN" / "V1 100%" / "MIXED_SCHEMA V1 x%
+    V2 y%"); v57 had shown the twin's shorter wording.
+  - Mutation-tested: dropping VIX from the panel, editing a definition, and re-adding a string to the Master each fail.
+- **F-A58 (my v57 regression, fixed):** the move left the Master computing seven values it no longer showed. They are
+  removed from the Master; the Brief's engine computes and displays each one.
+  - Removed: the volume-climax block (relative volume, same-hour EWMA, climax flags, `showClimax` /
+    `volClimaxPerc` / `volLookback` inputs); `vaRatio` / `vaPos`; the V2 census counter and the `hSchemaVer` ring
+    buffer; the 2s10s spread, `y2Valid` and the US 2Y feed (`y2Symbol`, one request.security); the GC
+    volume-expansion flag and `gcVolMult`.
+  - `deadcode.py` now FAILS if the Master computes a value only a companion reads. Seven are allowed and documented:
+    six stats-engine outputs held identical to the twin, and one request tuple slot. Mutation-tested.
+  - **Settings that moved:** VIX symbol, US 2Y symbol, Volume Climax switch / percentile / lookback, and the GC
+    volume-expansion threshold now live only in the Brief's settings (they only fed the moved displays).
+- **Master:** 37,984 lexical tokens (≈ 5% under the limit); 18 request.security call sites (was 20).
+- **RUNBOOK:** the phone-card table is rewritten for the v57 rows.
+- Compile NOT RUN on v58.

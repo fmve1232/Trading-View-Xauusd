@@ -85,6 +85,8 @@ establish that the Master is wired to those expressions — that is a separate, 
 - The Mobile card sits top-left (v56). The desktop layout is not readable on a phone, so switch Dash Mode to Mobile there.
 - v57: the card reads title → DECISION → TREND → LIQ DRAW → NEXT → plan → H2. Hide NEXT or H2 with the "Mobile card" switches.
 - Brief on a phone: Panel layout = **Compact (phone)**, Gold-arrow grid position = **Hidden**.
+- v58: the VIX symbol, US 2Y symbol, Volume Climax settings and GC volume-expansion threshold are set in the **Brief's**
+  settings now; they only fed the displays that moved there.
 - The engine cross-check line (T/S/L/M/Q, TQ, C, VIX, GC / OI / COT, feed status) moved to the Brief's ENGINE and DATA
   rows (v57).
 - Visuals: H2 card layout = **Compact (phone)**; H2 card text size = Normal if it reads too small.
@@ -156,21 +158,22 @@ buckets, rolling 95% intervals, what-if scenario scores and the data-source cens
 
 On the Master's settings choose **Dash Mode → Mobile** (or tick *☰ Mobile Layout*). v25 merged
 the old MobileLand, MobilePort and MobileBrief into this one mode. If a saved chart still
-holds an old option name, pick **Mobile** again. The card has four sections, and everything
-in it is built from the same engine values and strings as the desktop view:
+holds an old option name, pick **Mobile** again. Since v57 the card reads top to bottom (every value comes from the same
+engine values and strings as the desktop view):
 
-| Section | Headline | Detail (Standard / Spacious) |
+| Row | Shows | Detail (Spacious only) |
 |---|---|---|
-| 1 TREND | composite bias · regime · HTF bias · bull/bear score | bias strength and C/S/I breakdown, agreement · 5M–1D arrows, session, volume, CVD, delta, regime, session stats · macro verdict, day-of-week tracker |
-| 2 TARGET | liquidity destination at its **MT5** price, reach % | nearest liquidity above/below and target score/reach/open FVG, both at TradingView prices |
-| 3 PREV → NEXT | last structure event, last bar's change → calibrated 1R UP vs DOWN, race EV | price + change · forecast L/S/R · EV, calibrated P, confidence · WR/ROLL/PF · (Spacious) engine cross-check line |
-| 4 DECISION | the desktop DECISION box (confirmed label, grade, TQ, bias + block reason, LIVE tag); on BUY/SELL the MT5 entry, SL, TP1, TP2 | RR, SL in ATR, risk %, $, lots, cost · decision log, MTF agreement |
+| title | XAUUSD · timeframe · the DECISION · "MT5 prices" | — |
+| DECISION | the desktop DECISION box (confirmed label, grade, TQ, bias + block reason, LIVE tag); on BUY / SELL the MT5 entry, SL, TP1, TP2 one per line | RR, SL in ATR, risk %, $, lots, cost · decision log, MTF agreement |
+| TREND | bias · regime · 15m-4h bias · L / S scores | bias strength, C/S/I breakdown, agreement · 5M–1D arrows, session, volume, CVD, delta, regime · macro verdict, day-of-week tracker |
+| LIQ DRAW | the engine's liquidity destination at its MT5 price, its distance from price, reach % | nearest liquidity above / below, draw score, open FVG (TradingView prices) |
+| NEXT | structure event, last bar's change, calibrated 1R UP vs DOWN, race EV (switch: "Mobile card: NEXT row") | price + change · forecast L/S/R · EV, calibrated P, confidence · WR/ROLL/PF |
+| plan | LONG PLAN / SHORT PLAN, entry, SL / TP1–3 with hit probabilities, RR and lots (left-aligned); the plan reason at Spacious | — |
+| H2 | the separate H2 sweep-to-value idea, MT5 prices (switch: "Mobile card: H2 row") | — |
 
-Below it, the **full trade plan** (direction, entry, SL/TP1–3 with hit probabilities, RR and
-lots, plan reason) is listed inside the same card, so nothing can overlap on a narrow
-screen. **Density → Compact** shows the four headlines only, which is the old MobileBrief.
-TradingView keeps settings per chart layout, so use a separate layout for the phone.
-*Text Size* enlarges the card.
+**Density:** Standard = the rows above. Compact = title + the four headlines + H2. Spacious adds the details (tablet).
+The engine cross-check line (T/S/L/M/Q, TQ, C, VA, VIX, climax, GC / OI / COT) moved to the Brief's ENGINE / DATA rows
+in v57. TradingView keeps settings per chart layout, so use a separate layout for the phone. *Text Size* enlarges the card.
 
 ---
 
