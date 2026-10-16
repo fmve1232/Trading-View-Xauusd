@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v55   (mobile card for phones)       ║
+// ║  BUILD STAMP — this file last CHANGED in v56   (phone card fits the screen)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -2731,7 +2731,7 @@ f_tradePlan() =>
     float tpRR1 = tpDist > 0 ? math.abs(tp1 - tpEntry) / tpDist : 0.0
     float tpRR2 = tpDist > 0 ? math.abs(tp2 - tpEntry) / tpDist : 0.0
     float tpRR3 = tpDist > 0 ? math.abs(tp3 - tpEntry) / tpDist : 0.0
-    string tpDirStr = tpIsLong ? "LONG" : "SHORT"
+    string tpDirStr = tpIsLong ? "LONG PLAN" : "SHORT PLAN" // v56: a plan, not an instruction (DECISION decides)
     color tpCol = tpIsLong ? #00D084 : #FF4D4D
     // F-014: MT5-adjusted DISPLAY strings. The underlying tpEntry/tpSL/tp1..tp3 floats are
     // deliberately NOT modified — everything downstream (RR, R-distances, pSLhit/pTP*,
@@ -5190,10 +5190,10 @@ float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h
 // H2-END
 // v37 H2 SETUP on the Master -- display and alert only. The DECISION above is unchanged; H2 is the
 // separate, pre-registered sweep-to-value idea (PREREGISTRATION A3), shown beside it, MT5 prices.
-string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + _m(close) + " SL " + _m(h2Sl) + "\nTP1 " + _m(h2Tp1) + " TP2 " + _m(h2Tp2) : ""
+string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + _m(close) + "\nSL " + _m(h2Sl) + "\nTP1 " + _m(h2Tp1) + " TP2 " + _m(h2Tp2) : ""
 var string h2Last = "none yet"
 if h2Long or h2Short
-    h2Last := str.format_time(time, "MM-dd HH:mm", "UTC") + " swept " + _m(h2SweptLvl) + "\n" + h2Plan
+    h2Last := str.format_time(time, "MM-dd HH:mm", "UTC") + "\nswept " + _m(h2SweptLvl) + "\n" + h2Plan
 // v39: short lines (the desktop footer cell clipped one long line at both ends on the chart);
 // v55: every line <= ~32 characters, so the mobile card fits a phone-width chart.
 string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : _m(h2Poc)) + "\nlast " + h2Last
@@ -5702,11 +5702,12 @@ if showDashboard and barstate.islast
     f_dashRender()
     if _dashMobile
         if na(tblBrief)
-            tblBrief := table.new(position.top_right, 2, (_planOn ? 16 : _mDet ? 8 : 4) + 1, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
+            // v56: top LEFT on a phone, so the card covers older bars, not the live candle and the price scale
+            tblBrief := table.new(position.top_left, 2, (_planOn ? 16 : _mDet ? 8 : 4) + 1, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
         _bts = textSize == "Large" ? size.large : textSize == "Medium" ? size.normal : size.small
         // Compact: headlines on rows 0-3. Otherwise headline k on row 2k, its detail on 2k+1.
         int _hs = density == "Spacious" ? 2 : 1
-        _bds = textSize == "Large" ? size.normal : textSize == "Medium" ? size.small : size.small // v55: never tiny on a phone
+        _bds = textSize == "Large" ? size.normal : size.small // v55: never tiny on a phone
         // Details (Standard / Spacious). Each is the desktop cell's own string:
         //   TREND   bias strength, C/S/I breakdown, agreement, HTF | MTF arrows, session, volume,
         //           CVD, delta, regime, session stats | macro verdict + day-of-week tracker
@@ -5724,7 +5725,7 @@ if showDashboard and barstate.islast
             _bc(5, "", array.get(gDashS, 20) + " " + array.get(gDashS, 2) + "\n" + array.get(gDashS, 27) + "\n" + array.get(gDashS, 28) + "\n" + array.get(gDashS, 29) + (density == "Spacious" ? "\n" + xcheckStr : ""), C_TEXT, _bds)
             _bc(7, "", array.get(gDashS, 31) + "\n" + array.get(gDashS, 32), C_TEXT, _bds)
         // 1 TREND: composite bias, regime, higher-timeframe bias, bull/bear score split
-        _bc(0, "TREND", biasLabel + " · " + mktRegime + "\nHTF " + array.get(gDashS, 8) + "\nscore L " + str.tostring(bullScore, "#") + " / S " + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
+        _bc(0, "TREND", biasLabel + " · " + mktRegime + "\n15m-4h " + array.get(gDashS, 8) + "\nscore L " + str.tostring(bullScore, "#") + " / S " + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
         // 2 TARGET: the engine's liquidity destination, at the MT5 price, with its reach score
         float _bTgt = liqDestLabel == "PDH" ? poolPdH : liqDestLabel == "PDL" ? poolPdL : liqDestLabel == "PWH" ? poolPwH : liqDestLabel == "PWL" ? poolPwL : liqDestLabel == "PMH" ? poolPmH : liqDestLabel == "PML" ? poolPmL : liqDestLabel == "EQH" ? poolEqH : liqDestLabel == "EQL" ? poolEqL : na
         _bc(_hs, "TARGET", na(_bTgt) ? "no dominant target" : liqDestLabel + " " + _m(_bTgt) + " MT5\nreach " + str.tostring(int(liqReachScore)) + "% " + liqDestConfidence, C_TEXT, _bts)
@@ -5760,7 +5761,9 @@ if showDashboard and barstate.islast
         // the user's own fills replace the [BROKER CONFIG] defaults.
         string _pLotStr = _pLots < 0.0 ? "<min" : str.tostring(_pLots, "0.00") + "L"
         tcp(6, 0, "RRg " + tpRRStr + "  " + _pLotStr, cBloomBg, _pSz, 0)
-        tcp(7, 0, planReason, cBloomBg, _pSz, 0)
+        // v56: the ~75-character plan rationale is what made the phone card wider than the screen;
+        // on the mobile card it shows at Spacious only (desktop unchanged)
+        tcp(7, 0, density != "Spacious" and _dashMobile ? "" : planReason, cBloomBg, _pSz, 0)
 
 
 

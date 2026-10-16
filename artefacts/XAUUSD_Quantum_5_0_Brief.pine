@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v55   (CE10165 fix)                  ║
+// ║  BUILD STAMP — this file last CHANGED in v56   (short lines)                  ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5381,10 +5381,10 @@ if barstate.islast
     string h4 = f_brHtf(htf4hScore)
     string h1d = f_brHtf(htf1dScore)
     string sess = inLondon and inNY ? "London/NY" : inNY ? "New York" : inLondon ? "London" : inAsian ? "Asia" : "off-hours"
-    f_brC(brT, 0, "MARKET BRIEF " + timeframe.period, "display only · the Master's DECISION rules · prices MT5", cT)
-    f_brC(brT, 1, "TREND", bias + ((bU and h4 == "down" and h1d == "down") or (bD and h4 == "up" and h1d == "up") ? "  · against the 4H and 1D trend" : "") + "\nprice " + (close > ema200 ? "above" : "below") + " EMA200 · structure " + (bullStructActive ? "bullish " + bullStructType + " (" + str.tostring(bullStructAge) + " bars ago)" : bearStructActive ? "bearish " + bearStructType + " (" + str.tostring(bearStructAge) + " bars ago)" : "no active break") + "\n4H " + h4 + " · 1D " + h1d + " · " + str.lower(mktRegime), bU ? cU : bD ? cD : cT)
-    f_brC(brT, 2, "HEADING", (lean ? (up ? "Leaning up" : "Leaning down") : "No clear lean") + "\nLong " + str.tostring(bullScore, "#") + "% · Short " + str.tostring(bearScore, "#") + "% · Range " + str.tostring(rangeScore, "#") + "% · reach PDH " + str.tostring(pdhReachScore, "#") + "% vs PDL " + str.tostring(pdlReachScore, "#") + "%\nengine scores, not a forecast", prim > 0 ? cU : prim < 0 ? cD : cT)
-    f_brC(brT, 3, "LIQ TAKEN", na(brSwBar) ? "none in view" : (brSwDir < 0 ? "Buy-side @ " : "Sell-side @ ") + f_brP(brSwPx) + "\nwick through " + brSwPool + " " + f_brP(brSwLvl) + ", closed back " + (brSwDir < 0 ? "below" : "above") + "\n" + str.format_time(brSwT, "dd MMM HH:mm", "UTC") + " UTC · " + str.tostring(bar_index - brSwBar) + " bars ago", brSwDir < 0 ? cD : brSwDir > 0 ? cU : cT)
+    f_brC(brT, 0, "MARKET BRIEF " + timeframe.period, "display only · prices MT5\nthe Master's DECISION rules", cT)
+    f_brC(brT, 1, "TREND", bias + ((bU and h4 == "down" and h1d == "down") or (bD and h4 == "up" and h1d == "up") ? "  · against the 4H and 1D trend" : "") + "\nprice " + (close > ema200 ? "above" : "below") + " EMA200\nstructure " + (bullStructActive ? "bullish " + bullStructType + " (" + str.tostring(bullStructAge) + " bars ago)" : bearStructActive ? "bearish " + bearStructType + " (" + str.tostring(bearStructAge) + " bars ago)" : "no active break") + "\n4H " + h4 + " · 1D " + h1d + " · " + str.lower(mktRegime), bU ? cU : bD ? cD : cT)
+    f_brC(brT, 2, "HEADING", (lean ? (up ? "Leaning up" : "Leaning down") : "No clear lean") + "\nL " + str.tostring(bullScore, "#") + "% · S " + str.tostring(bearScore, "#") + "% · R " + str.tostring(rangeScore, "#") + "%\nreach PDH " + str.tostring(pdhReachScore, "#") + "% vs PDL " + str.tostring(pdlReachScore, "#") + "%\nengine scores, not a forecast", prim > 0 ? cU : prim < 0 ? cD : cT)
+    f_brC(brT, 3, "LIQ TAKEN", na(brSwBar) ? "none in view" : (brSwDir < 0 ? "Buy-side @ " : "Sell-side @ ") + f_brP(brSwPx) + "\nwick through " + brSwPool + " " + f_brP(brSwLvl) + "\nclosed back " + (brSwDir < 0 ? "below" : "above") + "\n" + str.format_time(brSwT, "dd MMM HH:mm", "UTC") + " UTC · " + str.tostring(bar_index - brSwBar) + " bars ago", brSwDir < 0 ? cD : brSwDir > 0 ? cU : cT)
     int dir = up ? 1 : -1
     [tX, tN] = f_brNear(brNv, brNn, px, dir, float(na))
     [nX, nN] = f_brNear(brNv, brNn, px, dir, tX)
@@ -5402,15 +5402,15 @@ if barstate.islast
     int gp = 0
     for [k, ok] in g
         gp += ok ? 1 : 0
-        gl += (ok ? " ✓" : " ✗") + array.get(gn, k)
+        gl += (k == 4 ? "\n" : k > 0 ? " " : "\n") + (ok ? "✓" : "✗") + array.get(gn, k)
         need += ok ? "" : (need == "" ? "" : " + ") + array.get(gn, k)
     // site/app.js doNow, same order: signal > risk lock > playbook > WAIT > no trade (brief_trace.py runs both)
     string doNow = sig ? _confDirLabel + " now" : _confDirLabel == "RISK LOCK" ? "Stop · risk lock" : pbOK ? "Wait for a trigger" : _confDirLabel == "WAIT" ? "Stay flat · wait" : "No trade"
-    f_brC(brT, 5, "DO NOW", doNow + (sig ? " · enter with the Master's MT5 plan" : " · DECISION " + _confDirLabel) + (sig or not pbOK ? "" : "\n" + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : " · ") + (na(bT) ? "" : "buy above " + f_brP(bT)) + " on a " + timeframe.period + " close") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : need == "" ? "\nall 7 gates pass; blocked by " + (_confDirLabel == "RISK LOCK" ? "the risk lock" : _confDirLabel == "WARMUP" ? "the statistics warm-up" : "the TQ floor / negative EV / calibration veto") : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session (the engine trades London / New York)" : ""), sig ? (_confDirLabel == "BUY" ? cU : cD) : cW)
-    f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "if a " + timeframe.period + " bar closes below " + f_brP(sT) + " " + sN + " · away " + f_brD(sT - px) + "\nstop " + f_brP(sS) + " · TP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? " · TP2 " + s2n + " " + f_brP(s2) : "") + " · R:R 1:" + str.tostring(sR, "0.0"), cD)
-    f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "if a " + timeframe.period + " bar closes above " + f_brP(bT) + " " + bN + " · away " + f_brD(bT - px) + "\nstop " + f_brP(bS) + " · TP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? " · TP2 " + b2n + " " + f_brP(b2) : "") + " · R:R 1:" + str.tostring(bR, "0.0"), cU)
+    f_brC(brT, 5, "DO NOW", doNow + (sig ? "\nenter with the Master's MT5 plan" : " · DECISION " + _confDirLabel) + (sig or not pbOK ? "" : "\n" + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : "\n") + (na(bT) ? "" : "buy above " + f_brP(bT)) + "\n(on a " + timeframe.period + " close)") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : need == "" ? "\nall 7 gates pass, blocked by\n" + (_confDirLabel == "RISK LOCK" ? "the risk lock" : _confDirLabel == "WARMUP" ? "the statistics warm-up" : "the TQ floor / negative EV / calibration veto") : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session\n(the engine trades London / NY)" : ""), sig ? (_confDirLabel == "BUY" ? cU : cD) : cW)
+    f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "close < " + f_brP(sT) + " " + sN + " · away " + f_brD(sT - px) + "\nstop " + f_brP(sS) + " · R:R 1:" + str.tostring(sR, "0.0") + "\nTP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? "\nTP2 " + s2n + " " + f_brP(s2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cD)
+    f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "close > " + f_brP(bT) + " " + bN + " · away " + f_brD(bT - px) + "\nstop " + f_brP(bS) + " · R:R 1:" + str.tostring(bR, "0.0") + "\nTP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? "\nTP2 " + b2n + " " + f_brP(b2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cU)
     f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
-    f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry: arm H4's record is on the website, and its measured mean R decides\nL/S/R and DECISION here can differ from the Master for a few bars (statistics refresh; the Master's risk lock counts only its last 120 signal bars); the Master rules", cW)
+    f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\narm H4's record is on the website\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
 
 // ---- v53 GOLD ARROWS: every arrowed indicator in its own cell, coloured by what it means FOR GOLD ----
 // d > 0 supports gold UP (green ▲, ▲▲ strong), d < 0 supports gold DOWN (red ▼), 0 neutral (grey ≈), na no data (—).

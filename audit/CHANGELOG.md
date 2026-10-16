@@ -1859,3 +1859,25 @@ Operator's chart (2026-10-14):
   - Colours: a low-sweep / below-value / BUY row is green; a high-sweep / above-value / SELL row is red.
 - **H2 block:** unchanged, byte-identical in all three files (`h2_parity.py`).
 - Compile NOT RUN on v55.
+
+# Build v55 → v56 — phone card fits the screen; Brief lines re-flowed
+
+The operator's screenshots (2026-10-16) show v55 compiling: the Brief, the GOLD ARROWS grid, the H2 card and the Master
+Mobile card. On a phone (1H) the Master's Mobile card was wider than the screen and clipped on the left.
+
+- **Master mobile card** (39,064 lexical, still at least 2% under the limit):
+  - The plan rationale line (about 75 characters, the cause of the clipping) shows on the mobile card at Spacious only.
+  - The card sits at the top LEFT, so it no longer covers the live candle and the price scale.
+  - The plan bar reads "LONG PLAN" / "SHORT PLAN" (a plan, not an instruction; the DECISION decides).
+  - The HTF line is labelled "15m-4h" (it counts 15m / 1H / 4H; the Brief's 4H / 1D lines are a different measure).
+  - The H2 lines break before SL and before "swept"; the H2 alert text breaks there too.
+  - Paid for by collapsing a two-branch ternary that v55 left with identical branches (−5 tokens).
+- **Brief panel:**
+  - Every value line is now about 34 characters at most: header, TREND, HEADING, LIQ TAKEN, DO NOW, SELL / BUY (close <
+    trigger · away, then stop · R:R, TP1, TP2, "not yet triggered"), and GATES (two lines).
+  - The PLAYBOOK note shrinks to 4 short lines.
+  - Same values; only the layout changes.
+- **Reviewed and not a bug:**
+  - The Master's mobile "HTF BULL" and the Brief's "4H down · 1D down" measure different timeframes.
+  - The desktop "TGT —" and the mobile "TARGET PDH" screenshots are 2 minutes apart, across a 5m bar close.
+- Compile NOT RUN on v56.
