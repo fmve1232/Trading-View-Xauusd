@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v55   (H2 card for phones)           ║
+// ║  BUILD STAMP — this file last CHANGED in v63   (London DST; ADX bound)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -93,7 +93,7 @@ obDispATR    = input.float(2.5,  "OB displacement (xATR)", minval = 1.5, maxval 
 // F-A08 PARITY INPUTS. Mirrors of the Master's ADX and Adaptive-ATR controls, needed
 // because the displacement threshold below is measured in adaptiveATR units, not raw ATR.
 // Keep all three equal to the Master's or the drawn order blocks stop matching the engine.
-adxLenV          = input.int(14,  "  ADX length (match Master)", group = grpZ)
+adxLenV          = input.int(14,  "  ADX length (match Master)", minval = 1, group = grpZ)
 adxThresholdV    = input.int(25,  "  ADX threshold (match Master)", minval = 10, maxval = 50, group = grpZ)
 showAdaptiveATRV = input.bool(false, "  Adaptive ATR Regime (match Master)", group = grpZ, tooltip = "Master default is OFF, in which case adaptiveATR collapses to ta.atr(14) and equals this file's atr14. Turn ON only if it is ON in the Master.")
 obKeep       = input.int(4,      "Order Blocks kept", minval = 1, maxval = 10, group = grpZ)
@@ -521,10 +521,12 @@ if _yr != _lastEuDstYr
     euDstStartDom := 25
     euDstEndDom := 25
     _lastEuDstYr := _yr
-if _mon == 3 and _dow == 1
-    euDstStartDom := math.max(euDstStartDom, _dom)
-if _mon == 10 and _dow == 1
-    euDstEndDom := math.max(euDstEndDom, _dom)
+// v63 (F-A62): the last Sunday of the month from today's date, as in the Master (the old tracker assumed the 25th
+// until it saw that Sunday, so London DST was wrong for up to 5 trading days a year).
+if _mon == 3
+    euDstStartDom := 31 - ((_dow - 1 + 31 - _dom) % 7)
+if _mon == 10
+    euDstEndDom := 31 - ((_dow - 1 + 31 - _dom) % 7)
 bool euIsDST = (_mon > 3 and _mon < 10) or (_mon == 3 and _dom >= euDstStartDom) or (_mon == 10 and _dom < euDstEndDom)
 
 int hU = hour(time, "UTC")

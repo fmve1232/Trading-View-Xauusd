@@ -186,6 +186,68 @@ for _ in range(4000):
 report("engine htf1hScore / htf4hScore / htf1dScore (v61 inline == v62 gated h2S*)",
        bad if len(raw) == 3 and len(gated) == 3 else n, n)
 
+# ---- v63: the MTF bias counts and the agreement count reuse sums that already exist (the v62 lines frozen here)
+V62_CNT = {"_htfBullCnt": "_b1(htf15mBull) + _b1(htf1hBull) + _b1(htf4hBull)",
+           "_htfBearCnt": "_b1(htf15mBear) + _b1(htf1hBear) + _b1(htf4hBear)",
+           "_agreeCount": "shouldBuy ? _b1(htf5mBull) + _b1(htf15mBull) + _b1(htf1hBull) + _b1(htf4hBull) + _b1(htf1dBull) : "
+                          "shouldSell ? _b1(htf5mBear) + _b1(htf15mBear) + _b1(htf1hBear) + _b1(htf4hBear) + _b1(htf1dBear) : 0"}
+P.define(fn("_b1(bool b) =>"), env)
+pre = [l for l in L if re.match(r"^htfFull(Long|Short) = ", l)] + \
+      [l.strip() for l in L if re.match(r"^    int _inst(Bull|Bear)Cnt = ", l)]
+new = {k: next(l.strip().split(" = ", 1)[1] for l in L if l.startswith(f"    int {k} = ")) for k in V62_CNT}
+bad = n = 0
+import itertools  # noqa: E402
+for bits in itertools.product([False, True], repeat=12):
+    e = P.Env(funcs=env.funcs)
+    for i, k in enumerate(("5m", "15m", "1h", "4h", "1d")):
+        e[f"htf{k}Bull"], e[f"htf{k}Bear"] = bits[2 * i], bits[2 * i + 1] and not bits[2 * i]
+    e["shouldBuy"], e["shouldSell"] = bits[10], bits[11] and not bits[10]
+    P.run(pre, e)
+    for k in V62_CNT:
+        n += 1
+        bad += P.evaluate(V62_CNT[k], e) != P.evaluate(new[k], e)
+report("MTF bias counts / agreement count (v62 sums == v63 reuse of _inst*Cnt / htfFull*)", bad if len(pre) == 4 else n, n)
+
+# ---- v63 (F-A63): MTF scores and agreement count only the layers live on the chart timeframe. Where every layer
+# is live the text must equal v62's; otherwise a dead layer prints — and INST / Agree use the live layers only.
+V62_SC = {"_currScore": "int(math.round(htf5mScore))", "_swingScore": "int(math.round(htf15mScore))",
+          "_instScore": "int(math.round((htf1hScore + htf4hScore) / 2.0))"}
+V62_BD = '"C" + str.tostring(_currScore) + " S" + str.tostring(_swingScore) + " I" + str.tostring(_instScore)'
+V62_AG = '"Agree " + _si(_agreeCount / 5.0 * 100) + "%"'
+sc = {k: next(l.strip().split(" = ", 1)[1] for l in L if l.startswith(f"    float {k} = ")) for k in V62_SC}
+bd = '"C" + _si(_currScore) + " S" + _si(_swingScore) + " I" + _si(_instScore)'
+assert '"C" + _cS + _si(_currScore) + " S" + _sS + _si(_swingScore) + " I" + _iS + _si(_instScore)' in "\n".join(L)
+ag = next(l.strip().split(" = ", 1)[1] for l in L if l.startswith("    string _agreePct = "))
+fa = next(l for l in L if l.startswith("int htfFullAvail = "))
+mt = next(l for l in L if l.startswith("int mtfAvail = "))
+bad = n = 0
+for sec in (60, 300, 900, 3600, 7200, 14400, 86400, 604800):
+    for _ in range(300):
+        e = P.Env(funcs=env.funcs)
+        for k, lim in (("5m", 300), ("15m", 900), ("1h", 3600), ("4h", 14400), ("1d", 86400)):
+            e[f"htf{k}Available"] = sec < lim
+            e[f"htf{k}Score"] = float(rng.choice([0, 20, 40, 60, 80, 100])) if sec < lim else 50.0
+        e["_agreeCount"] = float(rng.randint(0, sum(sec < x for x in (300, 900, 3600, 14400, 86400))))
+        P.run([mt, fa], e)
+        old = P.Env(funcs=env.funcs, **e)
+        for k, x in V62_SC.items():
+            old[k] = P.evaluate(x, old)
+            e[k] = P.evaluate(sc[k], e)
+        live = [e[f"htf{k}Available"] for k in ("5m", "15m", "1h", "4h", "1d")]
+        got, want_old = P.evaluate(bd, e), P.evaluate(V62_BD, old)
+        n += 2
+        if all(live):
+            bad += got != want_old
+            bad += P.evaluate(ag, e) != P.evaluate(V62_AG, old)
+        else:
+            exp_inst = (e["htf1hScore"] + e["htf4hScore"]) / 2.0 if live[2] else e["htf4hScore"] if live[3] else None
+            want = ("C" + (str(int(e["htf5mScore"])) if live[0] else "—") + " S" + (str(int(e["htf15mScore"])) if live[1] else "—")
+                    + " I" + (str(int(P._round(exp_inst))) if exp_inst is not None else "—"))
+            bad += got != want
+            nl = sum(live)
+            bad += P.evaluate(ag, e) != ("Agree " + (str(int(e["_agreeCount"] * 100.0 / nl)) if nl else "—") + "%")
+report("MTF C/S/I scores and Agree %: = v62 when every layer is live, live layers only otherwise (8 TFs)", bad, n)
+
 left = [i + 1 for i, l in enumerate(L) if re.search(r"array\.get\(gDash[SCF], \d+\)", l)]
 helpers = all(any(l.startswith(f"_g{c}(int i) => array.get(gDash{c}, i)") for l in L) for c in "SCF")
 report("dashboard array reads go through _gS / _gC / _gF (identical: array.get(gDash*, i))", 0 if helpers and not left else 1, 1)

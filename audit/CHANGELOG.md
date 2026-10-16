@@ -2066,3 +2066,55 @@ the Master read H2 MIXED, last none yet. The POC matched (4163.12).
   Treatment twin, which has no H2 block).
 - **Tokens:** Master 39,056 lexical (unchanged, 2.02% under).
 - Compile NOT RUN on v62.
+
+---
+
+# Build v62 → v63 — every timeframe and every input, executed (F-A61, F-A62, F-A63)
+
+The operator asked for the code to run correctly on every timeframe, and for every input, default and calibration
+setting to be verified. Two new tools execute that.
+
+- **`tf_check.py`:**
+  - It runs the timeframe-dependent code of each engine copy as written for 13 chart timeframes (1m … 1M).
+  - **Sizing:** history sizes and offsets stay inside `max_bars_back`.
+  - **Layers:** each higher-timeframe layer is live only above the chart. No raw higher-timeframe value is read
+    without its gate (H2 excepted, F-A60).
+  - **Sessions:** the session engine runs bar by bar over 2020–2027 with its `var` state, and its DST flags are
+    checked against the IANA zones.
+  - **Visuals:** its session shading must equal the engine's sessions.
+- **`inputs_check.py`:** covers all 644 inputs in the nine files. Each default must be valid (bounds, step,
+  options) and consistent across engine copies, and must equal the frozen v33 build in the five pre-registered files.
+  Tooltips that state a default must be right. Lengths must have `minval >= 1`. Reviewed differences print with
+  their reason; anything else fails.
+
+**Fixed:**
+- **F-A62 (P1), London DST.** It was wrong on up to 5 trading days a year (38 days over 2020–2027; 52,560 one-minute
+  bars). The last Sunday of March / October is now computed from the date. The fix is in the Master, the three arms,
+  Diagnostics, Brief and Visuals. Result: 0 errors on every timeframe; US DST was already correct. This changes
+  `sessionQuality` on those days only, and so the entry gate, TQ and confidence there.
+- **F-A61, length bounds.** EMA / ATR / ADX lengths now have `minval=1` in every engine copy and in Visuals. Typing 0
+  no longer stops the script. No default changed.
+- **F-A63, MTF display.** C / S / I print "—" for a layer that is not live, INST averages live layers only, and
+  "Agree %" is over the live layers ("—" on D and above). It equals v62 wherever every layer is live.
+
+**Identical-output rewrites:** `_htfBullCnt` / `_htfBearCnt` reuse `_inst*Cnt`, and `_agreeCount` reuses
+`htfFull*`. `refactor_check.py` checks these on 12,288 cases.
+
+**Defaults:** none changed. Every default in the pre-registered files equals the frozen build (`inputs_check.py`
+check 3). The best results are not a reason to change a default: choosing defaults on this history is tuning
+(AUDIT_PROMPT §9).
+
+**Timeframe facts (not changed; they are the design):**
+- The entry gate needs `sessionQuality >= 30`. A D / W / M bar opens at the 17:00 New York rollover and scores 13, so
+  BUY / SELL cannot occur there. The DECISION shows the reason (`SESS 13/30`).
+- The HTF veto needs 2 live layers of 15m / 1H / 4H / 1D, so it cannot fire on 4H and above.
+- The registered timeframe is 15M.
+
+**Tokens (lexical):** Master 39,035 (2.08% under the limit); Diagnostics 39,697 (≈ 99,840 compiled, 0.42% under);
+Brief 38,777.
+
+**Pre-registration:** F-A62 changes engine code in the arms. Under A7 every file on this branch is display only, and
+the website on the default branch is the system of record, so nothing restarts and nothing here is counted. The
+website was not touched.
+
+Compile NOT RUN on v63.

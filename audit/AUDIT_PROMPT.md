@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5876 | 379812 | `66ebdf6d9b592500939e8aac1a614173bffced28e07c22f97b3ce6f14c362c76` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5411 | 341685 | `7ec465ad992aef9305f780fbb58c8a087296011f3cb327320691e2964cccd0e4` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5411 | 341750 | `cb5c30d0bda665038cab3f15d7586b0ba85330bc37649343e28946605ecdd020` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5422 | 342669 | `4163c610c71ed1c8f6a42a3d1e97791d1d6ef9a4b7a36ab532af542b0fb583dc` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5883 | 380538 | `aec6d729387e0959fc9e5707146c9d89957c7645015a51821bd214abd7fa10f2` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5416 | 342407 | `8a30e698c3436e80dcc6f378b4d00d240510ef03f7b58c9b3f57334edcb73047` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5416 | 342472 | `037f45f41aa3548d69d297b3ee6a8524c638f70c7515b8cad8855de72198d9b3` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5427 | 343391 | `72ade99294fa89227299c1c7adb11ea52b43ee0391922b3862140b5982064d2d` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1217 | 78999 | `10143aefdb7c4f47b95112599850971dd437c590d60641a57f8695f0b3a8bba6` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5648 | 359106 | `c30e8884e7ca7ebc2aa1766c03afa7ab50e0c90b3f24cdbf5d05c593ec04a15b` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5468 | 347180 | `b51942220c0f8b0ff9f56d717ecfbff80f2973364aba1b53c7d843a8b072e0e5` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1219 | 79195 | `80a7b210c32780900a92905489ceeb1adf7971ad76c22ade7dc5d6ae867b6c6a` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5653 | 359827 | `3ae09cf1c2970ba3c1fba90d2beffe5ca9ee0104ea5607bcc5a3cc42a7807912` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5473 | 347901 | `442fdf844eb259385418c64572a7dedad874c62c33c18c5421ea3a87961dea01` |
 
-> **BUILD v62 — this prompt pins the current build.** The originally audited build
+> **BUILD v63 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -108,6 +108,7 @@ scope, and no other build of these scripts is in scope.
 > **v60:** Mobile layout = Strip (desktop cells folded 3 x 3 in a top band, plan on one line) or Card; identical-output rewrites for room (`refactor_check.py`).
 > **v61: F-A59** — no NaN on screen; Master analog lines fit and carry !FIT; Diagnostics labels; Brief trigger / TF wording.
 > **v62: F-A60** — the Master's H2 SETUP reads the raw 1H / 4H / 1D trend scores, as the H2 arm does (it could not fire on 1H+ charts); `h2_parity.py` checks the block's inputs.
+> **v63: F-A61 / F-A62 / F-A63** — length inputs bounded; London DST fixed (wrong up to 5 trading days a year); MTF line counts only live layers. Every timeframe executed (`tf_check.py`), every input checked (`inputs_check.py`).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v51   (challenger H1; card header)  ║
+// ║  BUILD STAMP — this file last CHANGED in v63   (challenger H1; London DST)    ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -409,11 +409,11 @@ useNewsSuppress = input.bool(false, "Suppress Signals on News Events", group=grp
 newsSession = input.session("", "News Event Window (UTC)", group=grpRisk, tooltip="Session during which signals are suppressed, e.g. 1300-1500:4 for FOMC Wednesdays. Leave empty to disable.")
 
 grpCore = "CORE"
-ema20Len = input.int(20, "EMA20", group=grpCore)
-ema100Len = input.int(100, "EMA100", group=grpCore)
-ema200Len = input.int(200, "EMA200", group=grpCore)
-atrLen = input.int(14, "ATR Base", group=grpCore)
-adxLen = input.int(14, "ADX", group=grpCore)
+ema20Len = input.int(20, "EMA20", minval=1, group=grpCore)
+ema100Len = input.int(100, "EMA100", minval=1, group=grpCore)
+ema200Len = input.int(200, "EMA200", minval=1, group=grpCore)
+atrLen = input.int(14, "ATR Base", minval=1, group=grpCore)
+adxLen = input.int(14, "ADX", minval=1, group=grpCore)
 adxThreshold = input.int(25, "ADX Threshold", minval=10, maxval=50, group=grpCore)
 rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, group=grpCore)
 internalPivotLen = input.int(2, "Internal Pivot Len (fast)", minval=1, maxval=5, group=grpCore)
@@ -924,10 +924,13 @@ if _yr != _lastEuDstYr
     euDstStartDom := 25
     euDstEndDom := 25
     _lastEuDstYr := _yr
-if _mon == 3 and _dow == 1
-    euDstStartDom := math.max(euDstStartDom, _dom) // last Sunday of March
-if _mon == 10 and _dow == 1
-    euDstEndDom := math.max(euDstEndDom, _dom) // last Sunday of October
+// v63 (F-A62): the last Sunday of the month, from today's date (March and October have 31 days). The old tracker
+// waited to SEE that Sunday and assumed the 25th until then, so in years whose last Sunday falls after the 25th
+// the days from the 25th to it had London DST wrong (up to 5 trading days a year; tf_check.py vs the IANA zone).
+if _mon == 3
+    euDstStartDom := 31 - ((_dow - 1 + 31 - _dom) % 7) // last Sunday of March
+if _mon == 10
+    euDstEndDom := 31 - ((_dow - 1 + 31 - _dom) % 7) // last Sunday of October
 bool euIsDST = (_mon > 3 and _mon < 10) or (_mon == 3 and _dom >= euDstStartDom) or (_mon == 10 and _dom < euDstEndDom)
 
 // Session hours in UTC
@@ -5086,23 +5089,25 @@ f_dashData1() =>
     int _instBullCnt = (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0)
     int _instBearCnt = (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0)
     string _instBias = _instBullCnt >= 2 ? "BULL" : _instBearCnt >= 2 ? "BEAR" : _instBullCnt > _instBearCnt ? "BULL-ISH" : _instBearCnt > _instBullCnt ? "BEAR-ISH" : "MIX"
-    int _htfBullCnt = (htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0)
-    int _htfBearCnt = (htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0)
+    int _htfBullCnt = (htf15mBull ? 1 : 0) + _instBullCnt
+    int _htfBearCnt = (htf15mBear ? 1 : 0) + _instBearCnt
     string _htfBias = _htfBullCnt >= 2 ? "BULL" : _htfBearCnt >= 2 ? "BEAR" : _htfBullCnt > _htfBearCnt ? "BULL-ISH" : _htfBearCnt > _htfBullCnt ? "BEAR-ISH" : "MIX"
     // Layer arrows
     string _cS = _currBias == "BULL" ? "▲" : _currBias == "BEAR" ? "▼" : "≈"
     string _sS = _swingBias == "BULL" ? "▲" : _swingBias == "BEAR" ? "▼" : "≈"
     string _iS = _instBias == "BULL" ? "▲" : _instBias == "BEAR" ? "▼" : _instBias == "BULL-ISH" ? "↗" : _instBias == "BEAR-ISH" ? "↘" : "≈"
-    int _currScore = int(math.round(htf5mScore))
-    int _swingScore = int(math.round(htf15mScore))
-    int _instScore = int(math.round((htf1hScore + htf4hScore) / 2.0))
+    // v63 (F-A63): a layer at or below the chart timeframe is not live (htf*Available, F-A40): it prints —, not a
+    // neutral-looking 50, and INST averages only the live layers (1H + 4H; 4H alone on a 1H-3H chart).
+    float _currScore = htf5mAvailable ? math.round(htf5mScore) : na
+    float _swingScore = htf15mAvailable ? math.round(htf15mScore) : na
+    float _instScore = math.round(htf1hAvailable ? (htf1hScore + htf4hScore) / 2.0 : htf4hAvailable ? htf4hScore : na)
     // Counter-trend detection: current disagrees with institutional
     bool _counterTrend = (_currBias == "BULL") and (_instBias == "BEAR" or _instBias == "BEAR-ISH")
     bool _counterTrendBear = (_currBias == "BEAR") and (_instBias == "BULL" or _instBias == "BULL-ISH")
     string _ctLabel = _counterTrend or _counterTrendBear ? "↕" : ""
     // R5.1: MTF agreement tier wired (consumes mtfAgreementHigh/Med/Low)
     string _agreeTier = mtfAgreementHigh ? "A:HI" : mtfAgreementMed ? "A:MED" : mtfAgreementLow ? "A:LO" : "A:—"
-    string _biasBreakdown = "C" + _cS + str.tostring(_currScore) + " S" + _sS + str.tostring(_swingScore) + " I" + _iS + str.tostring(_instScore)
+    string _biasBreakdown = "C" + _cS + (na(_currScore) ? "—" : str.tostring(int(_currScore))) + " S" + _sS + (na(_swingScore) ? "—" : str.tostring(int(_swingScore))) + " I" + _iS + (na(_instScore) ? "—" : str.tostring(int(_instScore)))
     // Confidence / quality
     int _setupScore = math.min(math.max(int(confidenceScore / 20), 0), 5)
     string _gradeLabel = _setupScore >= 4 ? "A" : _setupScore >= 3 ? "B" : _setupScore >= 2 ? "C" : "D"
