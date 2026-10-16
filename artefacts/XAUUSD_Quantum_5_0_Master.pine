@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v59   (all features restored)        ║
+// ║  BUILD STAMP — this file last CHANGED in v60   (Mobile Strip top band)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -291,10 +291,10 @@ bayesRate(w, t) => t > 0 ? (w + 1) / (t + 2) : 0.5
 // TOKEN RECLAMATION: fully-transparent panel background, used at 6 sites.
 color cTransp = color.new(#0F172A, 100)
 color cBloomBg = color.new(#0d0d1a, 40)
-color cBloomBull = color.new(#00C853, 0)
-color cBloomBear = color.new(#FF5252, 0)
-color cBloomWarn = color.new(#FFC107, 0)
-color cBloomNeut = color.new(#9E9E9E, 0)
+color cBloomBull = #00C853
+color cBloomBear = #FF5252
+color cBloomWarn = #FFC107
+color cBloomNeut = #9E9E9E
 // Extended color system for visual hierarchy
 color cBloomBull_D = color.new(#00C853, 55)
 color cBloomBear_D = color.new(#FF5252, 55)
@@ -324,6 +324,9 @@ dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet
 mobileOverride = input.bool(false, "☰ Mobile Layout", group=grpLayout, tooltip="Same as Dash Mode = Mobile")
 _resolvedMode = mobileOverride ? "Mobile" : dashMode
 textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group=grpLayout)
+// v60: the two size mappings used in several places, computed once (same values)
+string _szHd = textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
+string _szSe = textSize == "Large" or textSize == "Medium" ? "small" : "tiny"
 density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group=grpLayout)
 mobNext = input.bool(true, "Mobile card: NEXT row", group=grpLayout)
 mobH2 = input.bool(true, "Mobile card: H2 row", group=grpLayout)
@@ -335,7 +338,10 @@ mobH2 = input.bool(true, "Mobile card: H2 row", group=grpLayout)
 // NOTE ON "Auto": Pine cannot detect viewport size, so Auto resolves to Desktop and
 // always has. On a phone you must set this yourself -- that is a platform limit, not a
 // preference. The tooltip now says so instead of implying detection.
-bool _dashMobile = _resolvedMode == "Mobile"
+mobLayout = input.string("Strip (top band)", "Mobile layout", options=["Strip (top band)", "Card"], group=grpLayout, tooltip="Strip: the desktop dashboard folded into three columns across the top ~15-20% of a phone screen, plan on one line, candles stay visible. Card: the full phone card (headlines, plan rows, H2, details).")
+// v60: Mobile = Strip (the desktop cells, folded 3 x 3 at the top) or Card (the v57 phone card)
+bool _dashStrip = _resolvedMode == "Mobile" and mobLayout != "Card"
+bool _dashMobile = _resolvedMode == "Mobile" and mobLayout == "Card"
 showDowTracker = input.bool(true, "Show Day-of-Week Bias Tracker", group=grpLayout)
 
 grpRisk = "RISK MANAGEMENT"
@@ -4638,7 +4644,7 @@ if showStatsEngine and oMatch >= 30
     calProbStr := not na(array.get(gCalFit, 0)) or useRawScores ? "mP=" + str.tostring(math.round(_calibratedProb * 100.0)) + (na(_calibratedProbBear) ? "" : "/S" + str.tostring(math.round(_calibratedProbBear * 100.0))) + "%" : "mP unfit"
 
 // V27 ENGINE 8: INSTITUTIONAL DASHBOARD — Titled metrics + breakdown
-color cGray = color.new(#A0A0A0, 0)
+color cGray = #A0A0A0
 // Regime label with Volatile
 f_tqEngine() =>
     // ═══════════════ R6.0 TRADE QUALITY SCORE ═══════════════
@@ -5211,12 +5217,12 @@ string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " ·
 // v25: in Mobile the desktop table is not created; the renderer still runs (the card reads
 // its strings) and these helpers simply skip the desktop cells. The v8 column map (_dCol) and
 // the portrait row cut went with the merged MobileLand/MobilePort layouts.
-tc(col, row, txt, tcol, ts, w) =>
-    if not _dashMobile
-        table.cell(tblA, col, row, txt, text_color=tcol, text_size=ts, width=w)
+// v60: Strip folds the 9 desktop columns into 3 (column k -> k % 3, header / value rows 2 * int(k / 3) + row);
+// only the header and primary rows are shown there, in tiny text (small at Text Size Medium / Large)
 tcb(col, row, txt, tcol, bg, ts, w) =>
-    if not _dashMobile
-        table.cell(tblA, col, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)
+    if not _dashMobile and (not _dashStrip or row < 2)
+        table.cell(tblA, _dashStrip ? col % 3 : col, _dashStrip ? int(col / 3) * 2 + row : row, txt, text_color=tcol, bgcolor=bg, text_size=_dashStrip ? _szSe : ts, width=_dashStrip ? 0 : w)
+tc(col, row, txt, tcol, ts, w) => tcb(col, row, txt, tcol, color(na), ts, w)
 // v25: in Mobile the plan is written into the card itself (rows 8-15, one line per cell), so
 // the card and the plan can never overlap on a narrow screen.
 // v59: every call passed row 0 and width 0; the two constant parameters are folded in (same cells)
@@ -5533,9 +5539,9 @@ f_dashRender() =>
     // ── Layout sizing ──
     // R5-F14: "Medium" now maps to a valid size constant ("small") instead of leaking
     // the raw option string into table.cell.
-    string _hdSize = textSize == "Auto" ? "small" : textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
-    string _prSize = textSize == "Auto" ? "normal" : textSize == "Large" ? "large" : textSize == "Small" ? "small" : "normal"
-    string _seSize = textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"
+    string _hdSize = _szHd
+    string _prSize = textSize == "Large" ? "large" : textSize == "Small" ? "small" : "normal"
+    string _seSize = _szSe
     // R5.1: density input wired — scales all table column widths
     float _densW = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
     int _w0 = int(10 * _densW)
@@ -5583,15 +5589,8 @@ f_dashRender() =>
     // ── DESKTOP/TABLET LAYOUT ──
     if true // Q5.4-CORE: mobile branch removed (token limit); desktop layout serves all modes
         // ROW 0 — COLUMN HEADERS
-        tc(0, 0, "MARKET", C_TEXT, _hdSize, _w0)
-        tc(1, 0, "BIAS", C_TEXT, _hdSize, _w1)
-        tc(2, 0, "SIGNAL", C_TEXT, _hdSize, _w2)
-        tc(3, 0, "STRUCTURE", C_TEXT, _hdSize, _w3)
-        tc(4, 0, "LIQUIDITY", C_TEXT, _hdSize, _w4)
-        tc(5, 0, "PRICE", C_TEXT, _hdSize, _w5)
-        tc(6, 0, "MACRO", C_TEXT, _hdSize, _w6)
-        tc(7, 0, "RISK", C_TEXT, _hdSize, _w7)
-        tc(8, 0, "DECISION", C_TEXT, _hdSize, _w8)
+        for [k, h] in array.from("MARKET", "BIAS", "SIGNAL", "STRUCTURE", "LIQUIDITY", "PRICE", "MACRO", "RISK", "DECISION")
+            tc(k, 0, h, C_TEXT, _hdSize, 0)
         // ROW 1 — PRIMARY METRICS
         tc(0, 1, _priceStr + " " + _chgStr, _chgCol, _prSize, _w0)
         tc(1, 1, _dirStrength, _biasCol, _prSize, _w1) // R5.1: wires _biasCol (WARN amber when mixed)
@@ -5692,7 +5691,7 @@ var bool modeChanged = false
 // disagree with the desktop view or with the alerts. Rows 0/2/4/6 are the four headlines;
 // rows 1/3/5/7 their details (hidden at Compact density).
 _bc(int _r, string _k, string _v, color _c, _ts) =>
-    table.cell(tblBrief, 0, _r + 1, _k, text_color=color.new(#8FA3B8, 0), text_size=_ts, text_halign=text.align_left)
+    table.cell(tblBrief, 0, _r + 1, _k, text_color=#8FA3B8, text_size=_ts, text_halign=text.align_left)
     table.cell(tblBrief, 1, _r + 1, _v, text_color=_c, text_size=_ts, text_halign=text.align_left)
 if showDashboard and barstate.islast
     string _mode2 = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
@@ -5717,19 +5716,24 @@ if showDashboard and barstate.islast
         modeChanged := false
     if na(tblA) and not _dashMobile
         // Q6.7: dashboard top, plan bottom -- collision-proof on any screen width.
-        tblA := table.new(_mode2 == "Desktop" ? position.top_right : position.top_left, 9, 4, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if _planOn and na(tblPlan) and not _dashMobile
+        tblA := table.new(_dashStrip ? position.top_center : _mode2 == "Desktop" ? position.top_right : position.top_left, _dashStrip ? 3 : 9, _dashStrip ? 7 : 4, bgcolor=cBloomBg, border_width=0, frame_width=0)
+        if _dashStrip
+            table.cell(tblA, 0, 6, "")
+            table.merge_cells(tblA, 0, 6, 2, 6)
+    if _planOn and na(tblPlan) and not _dashMobile and not _dashStrip
         tblPlan := table.new(_mode2 == "Tablet" ? position.bottom_left : position.bottom_right, 8, 1, bgcolor=cBloomBg, border_width=0, frame_width=0)
-    if (not _planOn or _dashMobile) and not na(tblPlan)
+    if (not _planOn or _dashMobile or _dashStrip) and not na(tblPlan)
         table.delete(tblPlan)
         tblPlan := na
     f_dashData1()
     f_dashData2()
     f_dashRender()
+    if _dashStrip
+        table.cell(tblA, 0, 6, tpDirStr + " " + tpEntryStr + " · SL " + tpSLStr + " · TP1 " + tp1Str + " · TP2 " + tp2Str, text_color=C_TEXT, bgcolor=tpIsLong ? cBloomBull_D : cBloomBear_D, text_size=_szSe)
     if _dashMobile
         if na(tblBrief)
             // v56: top LEFT on a phone, so the card covers older bars, not the live candle and the price scale
-            tblBrief := table.new(position.top_left, 2, (_planOn ? 16 : _mDet ? 8 : 4) + 2, bgcolor=cBloomBg, border_width=1, border_color=color.new(#2A3340, 0))
+            tblBrief := table.new(position.top_left, 2, (_planOn ? 16 : _mDet ? 8 : 4) + 2, bgcolor=cBloomBg, border_width=1, border_color=#2A3340)
             table.cell(tblBrief, 0, 0, "")
             table.merge_cells(tblBrief, 0, 0, 1, 0)
         _bts = textSize == "Large" ? size.large : textSize == "Medium" ? size.normal : size.small
@@ -5737,7 +5741,7 @@ if showDashboard and barstate.islast
         int _hs = density == "Spacious" ? 2 : 1
         _bds = textSize == "Large" ? size.normal : size.small // v55: never tiny on a phone
         // v57: title row -- symbol, timeframe, the DECISION and the price basis, before any detail
-        table.cell(tblBrief, 0, 0, "XAUUSD " + timeframe.period + " · " + _confDirLabel + " · MT5 prices", text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=_bts, text_halign=text.align_left)
+        table.cell(tblBrief, 0, 0, "XAUUSD " + timeframe.period + " · " + _confDirLabel + " · MT5 prices", text_color=color.white, bgcolor=#1F3A5F, text_size=_bts, text_halign=text.align_left)
         // Details (Standard / Spacious). Each is the desktop cell's own string:
         //   TREND   bias strength, C/S/I breakdown, agreement, HTF | MTF arrows, session, volume,
         //           CVD, delta, regime, session stats | macro verdict + day-of-week tracker
@@ -5777,7 +5781,7 @@ if showDashboard and barstate.islast
     if _planOn and not na(_dashMobile ? tblBrief : tblPlan)
         float _pLots = _gF(6)
         color _pBg = tpIsLong ? cBloomBull_D : cBloomBear_D
-        string _pSz = textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"
+        string _pSz = _szHd
         tcp(0, tpDirStr, _pBg, _pSz)
         tcp(1, "ENTRY " + tpEntryStr + (mt5Offset != 0.0 ? "  [MT5" + _sg(mt5Offset, "#.##") + "]" : ""), cBloomBg, _pSz)
         tcp(2, "SL " + tpSLStr + _pp(pSLhit, true), cBloomBg, _pSz)

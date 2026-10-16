@@ -1972,3 +1972,27 @@ we have to link it up / wire it up. Show me the mobile dashboard as well."
 - **Mobile dashboard preview:** `audit/mobile_card_preview_v59.png`. It is a layout render of the v59 card using the
   code's rows, order and colours, with sample values from the operator's 16 Oct screenshots; not live data.
 - Compile NOT RUN on v59.
+
+# Build v59 → v60 — Mobile "Strip": the desktop dashboard as a top band (operator)
+
+Operator: "the mobile dashboard should look like the web dashboard, but adjusted to 15-20% at the top of the screen so
+the candles are visible".
+
+- **New setting "Mobile layout"** under Dash Mode = Mobile:
+  - **Strip (top band)** is the new default. It shows the desktop dashboard's OWN header and primary cells (MARKET, BIAS,
+    SIGNAL / STRUCTURE, LIQUIDITY, PRICE / MACRO, RISK, DECISION) folded into three columns at the top centre, with the
+    MT5 plan on one line underneath: "LONG PLAN entry · SL · TP1 · TP2".
+  - **Card** is the v57 phone card, unchanged. Nothing is removed: the desktop detail rows, H2 and the full plan stay in
+    the Card layout and on desktop.
+- **Size:** text is tiny (small at Text Size Medium / Large), so the band is about 18% of a phone's chart area in the
+  preview (`audit/mobile_strip_preview_v60.png`, sample values from the operator's 16 Oct 13:09 screenshot).
+- **Mechanism:** one cell writer, `tcb`. In Strip it maps desktop column k to (k % 3, 2 · int(k / 3) + row) and skips the
+  detail rows. `refactor_check.py` executes that fold: 9 headers and 9 values on unique cells of the 3 × 6 grid, each
+  header directly above its value, details skipped.
+- **Token room, by identical-output rewrites** (`refactor_check.py`, executed):
+  - the nine header cells become one loop (same names, same order; header width auto, the value row sets the column);
+  - `tc` = `tcb` with no background;
+  - the text-size mappings are computed once (`_szHd`, `_szSe`; all four Text Size values give the same sizes);
+  - `color.new(#rrggbb, 0)` becomes `#rrggbb` (8 places, identical opaque colours).
+- **Master:** 39,037 lexical tokens (2.08% under the limit). 0 dead, 0 structural, 0 values computed unseen.
+- Compile NOT RUN on v60.

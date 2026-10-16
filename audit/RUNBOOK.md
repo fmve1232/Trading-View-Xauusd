@@ -80,6 +80,10 @@ establish that the Master is wired to those expressions — that is a separate, 
 
 ## Phone layout (v55)
 
+- v60: Dash Mode = **Mobile** with Mobile layout = **Strip (top band)** (the default) shows the desktop dashboard as a
+  band across the top ~15-20% of the screen, plan on one line, candles visible below. Mobile layout = **Card** gives the full
+  phone card (headlines, plan rows, H2, details). Preview: `audit/mobile_strip_preview_v60.png`.
+
 - Master: Settings → Dash Mode = **Mobile**, Density = **Standard**. That gives the headlines plus the MT5 plan. Choose
   Spacious only on a tablet, because it adds the long desktop detail rows.
 - The Mobile card sits top-left (v56). The desktop layout is not readable on a phone, so switch Dash Mode to Mobile there.

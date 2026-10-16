@@ -18,7 +18,7 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5868 | 378587 | `a52283fd2602142b2c95ccec3d52ba425a5c90e31f33e75018aeb41bb56044c8` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5872 | 379399 | `911d38accdbef0add7f50829a58e8771f5b82e4e2c66347069564a68e013bdd4` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5411 | 341685 | `7ec465ad992aef9305f780fbb58c8a087296011f3cb327320691e2964cccd0e4` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5411 | 341750 | `cb5c30d0bda665038cab3f15d7586b0ba85330bc37649343e28946605ecdd020` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5422 | 342669 | `4163c610c71ed1c8f6a42a3d1e97791d1d6ef9a4b7a36ab532af542b0fb583dc` |
@@ -28,7 +28,7 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5646 | 358921 | `8cfcf4be39bf2605d1e97a36904286dfc3190044a22775c33b68ba6f199a32ec` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5467 | 346627 | `1206e156ccd3be67c23e06fc59a700d5bf53e2cb804f76d0b4c6ae5fa1e7d014` |
 
-> **BUILD v59 — this prompt pins the current build.** The originally audited build
+> **BUILD v60 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -105,6 +105,7 @@ scope, and no other build of these scripts is in scope.
 > **v57:** cross-check line moved Master → Brief (ENGINE / DATA rows); Master phone card (title, DECISION first, LIQ DRAW, switches); desktop H2 cell; Brief Compact layout.
 > **v58: F-A58** — the Master computes nothing it does not show (7 documented exceptions, enforced by `deadcode.py`); moved features held to their v56 definitions by `moved_check.py`.
 > **v59:** nothing removed — v57/v58 removals restored from v56 and wired; the Master displays every value it computes (0 dead, 0 structural, 0 companion-only); identical-output rewrites proven by `refactor_check.py`.
+> **v60:** Mobile layout = Strip (desktop cells folded 3 x 3 in a top band, plan on one line) or Card; identical-output rewrites for room (`refactor_check.py`).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

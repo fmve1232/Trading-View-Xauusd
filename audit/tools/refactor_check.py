@@ -118,6 +118,53 @@ ok = "_dashMobile ? 9 + col : 0," in tcpdef and "width=0" in tcpdef and len(re.f
      and len(re.findall(r"tcp\(\d, 0, ", "\n".join(V56))) == 8
 report("plan rows: 8 tcp calls, row 0 / width 0 folded into the helper", 0 if ok else 1, 8)
 
+
+# ---- v60 (Mobile Strip): size mappings computed once, headers in a loop, tc via tcb, opaque colour literals
+V59 = subprocess.run(["git", "show", "c919dc5d:" + M], capture_output=True, text=True, check=True).stdout.split("\n")
+OLD_SZ = {"_hdSize": 'textSize == "Auto" ? "small" : textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"',
+          "_prSize": 'textSize == "Auto" ? "normal" : textSize == "Large" ? "large" : textSize == "Small" ? "small" : "normal"',
+          "_seSize": 'textSize == "Auto" ? "tiny" : textSize == "Large" ? "small" : textSize == "Small" ? "tiny" : "small"',
+          "_pSz": 'textSize == "Large" ? "normal" : textSize == "Small" ? "tiny" : "small"'}
+glob = {l.split(" = ", 1)[0].split()[-1]: l.split(" = ", 1)[1] for l in L if l.startswith(("string _szHd = ", "string _szSe = "))}
+bad = 0
+for ts in ("Auto", "Small", "Medium", "Large"):
+    e = P.Env(textSize=ts)
+    e["_szHd"], e["_szSe"] = P.evaluate(glob["_szHd"], e), P.evaluate(glob["_szSe"], e)
+    for v, old in OLD_SZ.items():
+        new = next(l for l in L if l.lstrip().startswith("string " + v + " = ")).split(" = ", 1)[1].split("//")[0].strip()
+        bad += P.evaluate(old, e) != P.evaluate(new, e)
+report("text sizes _hdSize / _prSize / _seSize / _pSz (v59 ternaries == v60 shared mappings)", bad, 16)
+heads59 = re.findall(r'tc\(\d, 0, "([A-Z]+)", C_TEXT, _hdSize, _w\d\)', "\n".join(V59))
+heads60 = re.findall(r'"([A-Z]+)"', next(l for l in L if l.lstrip().startswith("for [k, h] in array.from(")))
+report("desktop headers: same 9 names, same order (loop)", 0 if heads59 == heads60 and len(heads60) == 9 else 1, 9)
+ok = any(l.startswith("tc(col, row, txt, tcol, ts, w) => tcb(col, row, txt, tcol, color(na), ts, w)") for l in L)
+report("tc = tcb with no background (table.cell's default bgcolor is na)", 0 if ok else 1, 1)
+lit59 = re.findall(r"color\.new\((#[0-9A-Fa-f]{6}), 0\)", "\n".join(l for l in V59 if not l.lstrip().startswith("//")))
+left = re.findall(r"color\.new\((#[0-9A-Fa-f]{6}), 0\)", "\n".join(l for l in L if not l.lstrip().startswith("//")))
+report(f"opaque colours: {len(lit59)} color.new(#rrggbb, 0) -> #rrggbb (identical: transparency 0)", len(left), len(lit59))
+
+
+# ---- v60 Strip fold, the coordinate expressions of tcb executed as written
+tl = next(l for l in L if l.lstrip().startswith("table.cell(tblA, _dashStrip ? col % 3 : col,"))
+cx, cy = [x.strip() for x in P._split_args(tl.strip()[len("table.cell("):-1])[1:3]]
+gate = next(L[i] for i, l in enumerate(L) if l.startswith("tcb(col, row, txt, tcol, bg, ts, w) =>") for _ in [0])
+cond = L[L.index(gate) + 1].strip()[3:]
+P.BUILTINS["int"] = lambda x: P.NA if P.isna(x) else int(x)
+seen, bad = {}, 0
+for col in range(9):
+    for row in range(4):
+        e = P.Env(col=float(col), row=float(row), _dashStrip=True, _dashMobile=False)
+        shown = bool(P.evaluate(cond, e))
+        if row >= 2:
+            bad += shown                          # detail rows must not be written in the strip
+            continue
+        x, y = int(P.evaluate(cx.replace("%", "%"), e)), int(P.evaluate(cy, e))
+        bad += not (0 <= x < 3 and 0 <= y < 6) or (x, y) in seen
+        seen[(x, y)] = (col, row)
+        if row == 1:
+            bad += seen.get((x, y - 1)) != (col, 0)   # each value sits directly under its own header
+report("Strip fold: 9 headers + 9 values on unique cells of the 3 x 6 grid, header above value, details skipped", bad, 36)
+
 left = [i + 1 for i, l in enumerate(L) if re.search(r"array\.get\(gDash[SCF], \d+\)", l)]
 helpers = all(any(l.startswith(f"_g{c}(int i) => array.get(gDash{c}, i)") for l in L) for c in "SCF")
 report("dashboard array reads go through _gS / _gC / _gF (identical: array.get(gDash*, i))", 0 if helpers and not left else 1, 1)
