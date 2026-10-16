@@ -248,6 +248,42 @@ for sec in (60, 300, 900, 3600, 7200, 14400, 86400, 604800):
             bad += P.evaluate(ag, e) != ("Agree " + (str(int(e["_agreeCount"] * 100.0 / nl)) if nl else "—") + "%")
 report("MTF C/S/I scores and Agree %: = v62 when every layer is live, live layers only otherwise (8 TFs)", bad, n)
 
+# ---- v64: the valid-feed count is computed once (v63 had _numStab, _numValid and an inline sum of the same six
+# flags) and the session literals lose their int((x.0)) wrappers. v63 text frozen here; v64 read from the Master.
+VF = ["dxyValid", "yieldValid", "silverValid", "spxValid", "eurusdValid", "tipsValid"]
+V63_STAB = (["float _numStab = 0.0"] + [f"_numStab := {v} ? _numStab + 1.0 : _numStab" for v in VF]
+            + ["avgStability = _numStab > 0 ? (stabDXY + stabYld + stabSlv + stabSPX + stabEUR + stabTIPS) / _numStab : 0.0"])
+V63_CONF = "(((dxyValid ? 1 : 0) + (yieldValid ? 1 : 0) + (silverValid ? 1 : 0) + (spxValid ? 1 : 0) + (eurusdValid ? 1 : 0) + (tipsValid ? 1 : 0)) / 6.0) * 30.0"
+V63_SESS = ["sessionQuality = 0",
+            "sessionQuality += inKillzone ? int((30.0 + regimeStrength * 20.0)) : inLondon or inNY ? int((25.0)) : inAsian ? int((10.0)) : 0",
+            "sessionQuality += (not inAsian or inLondonKZ) ? int((10.0)) : 0"]
+a = L.index("float _numValid = 0.0")
+v64_stab = L[a:a + 8]
+assert v64_stab[-1].startswith("avgStability = _numValid > 0 ? ")
+conf = next(l for l in L if l.startswith("macroStrengthConf = int(math.round((_numValid / 6.0) * 30.0"))
+V64_CONF = "(_numValid / 6.0) * 30.0"
+sess = ["sessionQuality = 0"] + [l for l in L if l.startswith("sessionQuality += inKillzone ? ") or
+                                 l.startswith("sessionQuality += (not inAsian or inLondonKZ) ? ")]
+bad = n = 0
+for _ in range(4000):
+    e = P.Env(funcs=env.funcs)
+    for v in VF:
+        e[v] = rng.random() < 0.7
+    for k in ("DXY", "Yld", "Slv", "SPX", "EUR", "TIPS"):
+        e["stab" + k] = rng.uniform(0, 2)
+    for k in ("inKillzone", "inLondon", "inNY", "inAsian", "inLondonKZ"):
+        e[k] = rng.random() < 0.5
+    e["regimeStrength"] = rng.choice([0.0, 0.25, 0.5, 1.0])
+    o, w = P.Env(funcs=env.funcs, **e), P.Env(funcs=env.funcs, **e)
+    P.run(V63_STAB + V63_SESS, o)
+    P.run(v64_stab + sess, w)
+    n += 3
+    bad += o["avgStability"] != w["avgStability"]
+    bad += P.evaluate(V63_CONF, o) != P.evaluate(V64_CONF, w)
+    bad += o["sessionQuality"] != w["sessionQuality"]
+report("valid-feed count once (avgStability, macroStrengthConf availability) + session literals (v63 == v64)",
+       bad if len(sess) == 3 and V64_CONF in conf else n, n)
+
 left = [i + 1 for i, l in enumerate(L) if re.search(r"array\.get\(gDash[SCF], \d+\)", l)]
 helpers = all(any(l.startswith(f"_g{c}(int i) => array.get(gDash{c}, i)") for l in L) for c in "SCF")
 report("dashboard array reads go through _gS / _gC / _gF (identical: array.get(gDash*, i))", 0 if helpers and not left else 1, 1)

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v63   (London DST; length bounds)    ║
+// ║  BUILD STAMP — this file last CHANGED in v64   (macro correlation timing)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -950,10 +950,10 @@ inKillzone = inLondonKZ or inNYKZ or inLondonCloseKZ or inLondonFixKZ
 
 sessionQuality = 0
 // Regime-aware session weights: trending → KZ/NY heavier, ranging → London heavier
-sessionQuality += inKillzone ? int((30.0 + regimeStrength * 20.0)) : inLondon or inNY ? int((25.0)) : inAsian ? int((10.0)) : 0
+sessionQuality += inKillzone ? int((30.0 + regimeStrength * 20.0)) : inLondon or inNY ? 25 : inAsian ? 10 : 0
 sessionQuality += inLondonFixKZ ? int((25.0 - regimeStrength * 10.0)) : 0
 sessionQuality += inNYKZ ? int((10.0 + regimeStrength * 10.0)) : 0
-sessionQuality += (not inAsian or inLondonKZ) ? int((10.0)) : 0
+sessionQuality += (not inAsian or inLondonKZ) ? 10 : 0
 sessionQuality += (inLondon and not inLondonKZ) ? int((10.0 - regimeStrength * 5.0)) : 0
 sessionQuality := math.min(int(math.round(sessionQuality / (80.0) * 100.0)), 100)
 f_sessionIntel() =>
@@ -1287,30 +1287,49 @@ yieldRet = yieldValid and not na(yieldClose[1]) ? safeDiv(yieldClose, yieldClose
 eurRet = eurusdValid and not na(eurusdClose[1]) ? safeDiv(eurusdClose, eurusdClose[1]) - 1 : na
 spxRet = spxValid and not na(spxClose[1]) ? safeDiv(spxClose, spxClose[1]) - 1 : na
 tipsRet = tipsValid and not na(tipsClose[1]) ? safeDiv(tipsClose, tipsClose[1]) - 1 : na
-_ccGoldDXY_30 = ta.correlation(goldRet, dxyRet, corrShortLen)
-_ccGoldDXY_60 = ta.correlation(goldRet, dxyRet, corrMedLen)
-_ccGoldDXY_120 = ta.correlation(goldRet, dxyRet, corrLongLen)
-_ccGoldYld_30 = ta.correlation(goldRet, yieldRet, corrShortLen)
-_ccGoldYld_60 = ta.correlation(goldRet, yieldRet, corrMedLen)
-_ccGoldYld_120 = ta.correlation(goldRet, yieldRet, corrLongLen)
-_ccGoldSlv_30 = ta.correlation(goldRet, silverRet, corrShortLen)
-_ccGoldSlv_60 = ta.correlation(goldRet, silverRet, corrMedLen)
-_ccGoldSlv_120 = ta.correlation(goldRet, silverRet, corrLongLen)
-_ccGoldSPX_30 = ta.correlation(goldRet, spxRet, corrShortLen)
-_ccGoldSPX_60 = ta.correlation(goldRet, spxRet, corrMedLen)
-_ccGoldSPX_120 = ta.correlation(goldRet, spxRet, corrLongLen)
-_ccGoldEUR_30 = ta.correlation(goldRet, eurRet, corrShortLen)
-_ccGoldEUR_60 = ta.correlation(goldRet, eurRet, corrMedLen)
-_ccGoldEUR_120 = ta.correlation(goldRet, eurRet, corrLongLen)
-_ccGoldTIPS_30 = ta.correlation(goldRet, tipsRet, corrShortLen)
-_ccGoldTIPS_60 = ta.correlation(goldRet, tipsRet, corrMedLen)
-_ccGoldTIPS_120 = ta.correlation(goldRet, tipsRet, corrLongLen)
-corrGoldDXY_30 = dxyValid ? _ccGoldDXY_30 : na
-corrGoldDXY_60 = dxyValid ? _ccGoldDXY_60 : na
-corrGoldDXY_120 = dxyValid ? _ccGoldDXY_120 : na
-corrGoldYld_30 = yieldValid ? _ccGoldYld_30 : na
-corrGoldYld_60 = yieldValid ? _ccGoldYld_60 : na
-corrGoldYld_120 = yieldValid ? _ccGoldYld_120 : na
+// v64 (F-A64): every correlation now pairs gold with the macro asset over the SAME completed bar. Each macro return is
+// built from request close[1] (the bar before), while goldRet is this bar's return, so the engine measured gold now
+// against the asset one bar earlier: a lag-1 cross-correlation, near zero for liquid markets (a true +0.80 read as
+// -0.02 in a model; every macro arrow showed ~ on the operator's chart). Fix, without using any unfinished bar:
+//  * chart-timeframe assets (silver, EURUSD, SPX): gold's previous-bar return, goldRetL = goldRet[1];
+//  * macroTF assets (DXY, US10Y, TIPS): gold read exactly as they are (macroTF, close[1], lookahead_on), so both
+//    returns change on the same bars; windows are counted in macroTF bars (x _kM), so a 1H series on a 15M chart
+//    keeps the sample size its significance threshold assumes. A window that would exceed the history limit
+//    (e.g. 120 hours on a 1m chart) reads as no data, never as a shorter window judged by the longer one's threshold.
+float goldRetL = goldRet[1]
+int _kM = math.max(1, int(timeframe.in_seconds(macroTF) / chartTFSeconds))
+float _gM = request.security(syminfo.tickerid, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_on)
+float goldRetM = not na(_gM[1]) ? safeDiv(_gM, _gM[1]) - 1 : na
+int _wS = math.min(corrShortLen * _kM, 4500)
+int _wM = math.min(corrMedLen * _kM, 4500)
+int _wL = math.min(corrLongLen * _kM, 4500)
+bool _fS = corrShortLen * _kM <= 4500
+bool _fM = corrMedLen * _kM <= 4500
+bool _fL = corrLongLen * _kM <= 4500
+_ccGoldDXY_30 = ta.correlation(goldRetM, dxyRet, _wS)
+_ccGoldDXY_60 = ta.correlation(goldRetM, dxyRet, _wM)
+_ccGoldDXY_120 = ta.correlation(goldRetM, dxyRet, _wL)
+_ccGoldYld_30 = ta.correlation(goldRetM, yieldRet, _wS)
+_ccGoldYld_60 = ta.correlation(goldRetM, yieldRet, _wM)
+_ccGoldYld_120 = ta.correlation(goldRetM, yieldRet, _wL)
+_ccGoldSlv_30 = ta.correlation(goldRetL, silverRet, corrShortLen)
+_ccGoldSlv_60 = ta.correlation(goldRetL, silverRet, corrMedLen)
+_ccGoldSlv_120 = ta.correlation(goldRetL, silverRet, corrLongLen)
+_ccGoldSPX_30 = ta.correlation(goldRetL, spxRet, corrShortLen)
+_ccGoldSPX_60 = ta.correlation(goldRetL, spxRet, corrMedLen)
+_ccGoldSPX_120 = ta.correlation(goldRetL, spxRet, corrLongLen)
+_ccGoldEUR_30 = ta.correlation(goldRetL, eurRet, corrShortLen)
+_ccGoldEUR_60 = ta.correlation(goldRetL, eurRet, corrMedLen)
+_ccGoldEUR_120 = ta.correlation(goldRetL, eurRet, corrLongLen)
+_ccGoldTIPS_30 = ta.correlation(goldRetM, tipsRet, _wS)
+_ccGoldTIPS_60 = ta.correlation(goldRetM, tipsRet, _wM)
+_ccGoldTIPS_120 = ta.correlation(goldRetM, tipsRet, _wL)
+corrGoldDXY_30 = dxyValid and _fS ? _ccGoldDXY_30 : na
+corrGoldDXY_60 = dxyValid and _fM ? _ccGoldDXY_60 : na
+corrGoldDXY_120 = dxyValid and _fL ? _ccGoldDXY_120 : na
+corrGoldYld_30 = yieldValid and _fS ? _ccGoldYld_30 : na
+corrGoldYld_60 = yieldValid and _fM ? _ccGoldYld_60 : na
+corrGoldYld_120 = yieldValid and _fL ? _ccGoldYld_120 : na
 corrGoldSlv_30 = silverValid ? _ccGoldSlv_30 : na
 corrGoldSlv_60 = silverValid ? _ccGoldSlv_60 : na
 corrGoldSlv_120 = silverValid ? _ccGoldSlv_120 : na
@@ -1320,9 +1339,9 @@ corrGoldSPX_120 = spxValid ? _ccGoldSPX_120 : na
 corrGoldEUR_30 = eurusdValid ? _ccGoldEUR_30 : na
 corrGoldEUR_60 = eurusdValid ? _ccGoldEUR_60 : na
 corrGoldEUR_120 = eurusdValid ? _ccGoldEUR_120 : na
-corrGoldTIPS_30 = tipsValid ? _ccGoldTIPS_30 : na
-corrGoldTIPS_60 = tipsValid ? _ccGoldTIPS_60 : na
-corrGoldTIPS_120 = tipsValid ? _ccGoldTIPS_120 : na
+corrGoldTIPS_30 = tipsValid and _fS ? _ccGoldTIPS_30 : na
+corrGoldTIPS_60 = tipsValid and _fM ? _ccGoldTIPS_60 : na
+corrGoldTIPS_120 = tipsValid and _fL ? _ccGoldTIPS_120 : na
 avgCorrDXY = (nz(corrGoldDXY_30) + nz(corrGoldDXY_60) + nz(corrGoldDXY_120)) / 3.0
 avgCorrYld = (nz(corrGoldYld_30) + nz(corrGoldYld_60) + nz(corrGoldYld_120)) / 3.0
 avgCorrSlv = (nz(corrGoldSlv_30) + nz(corrGoldSlv_60) + nz(corrGoldSlv_120)) / 3.0
@@ -1335,14 +1354,16 @@ stabSlv = math.abs(nz(corrGoldSlv_30) - nz(corrGoldSlv_120))
 stabSPX = math.abs(nz(corrGoldSPX_30) - nz(corrGoldSPX_120))
 stabEUR = math.abs(nz(corrGoldEUR_30) - nz(corrGoldEUR_120))
 stabTIPS = math.abs(nz(corrGoldTIPS_30) - nz(corrGoldTIPS_120))
-float _numStab = 0.0
-_numStab := dxyValid ? _numStab + 1.0 : _numStab
-_numStab := yieldValid ? _numStab + 1.0 : _numStab
-_numStab := silverValid ? _numStab + 1.0 : _numStab
-_numStab := spxValid ? _numStab + 1.0 : _numStab
-_numStab := eurusdValid ? _numStab + 1.0 : _numStab
-_numStab := tipsValid ? _numStab + 1.0 : _numStab
-avgStability = _numStab > 0 ? (stabDXY + stabYld + stabSlv + stabSPX + stabEUR + stabTIPS) / _numStab : 0.0
+// v64: one count of the valid macro feeds (it was computed twice, as _numStab here and _numValid below, and a
+// third time inline in macroStrengthConf); the same six flags, so every value is unchanged (refactor_check.py).
+float _numValid = 0.0
+_numValid := dxyValid ? _numValid + 1.0 : _numValid
+_numValid := yieldValid ? _numValid + 1.0 : _numValid
+_numValid := silverValid ? _numValid + 1.0 : _numValid
+_numValid := spxValid ? _numValid + 1.0 : _numValid
+_numValid := eurusdValid ? _numValid + 1.0 : _numValid
+_numValid := tipsValid ? _numValid + 1.0 : _numValid
+avgStability = _numValid > 0 ? (stabDXY + stabYld + stabSlv + stabSPX + stabEUR + stabTIPS) / _numValid : 0.0
 
 // Inverse t-distribution quantile via Cornish-Fisher expansion from normal
 // (Abramowitz-Stegun 26.2.23 + Fisher expansion). Accurate to ~1% for df>=8.
@@ -1399,13 +1420,6 @@ corrHealthSlv = silverValid ? corrHealthMW(nz(corrGoldSlv_30), nz(corrGoldSlv_60
 corrHealthSPX = spxValid ? corrHealthMW(nz(corrGoldSPX_30), nz(corrGoldSPX_60), nz(corrGoldSPX_120), _corrSig30, _corrSig60, _corrSig120, 1.0) : 0.0
 corrHealthEUR = eurusdValid ? corrHealthMW(nz(corrGoldEUR_30), nz(corrGoldEUR_60), nz(corrGoldEUR_120), _corrSig30, _corrSig60, _corrSig120, 1.0) : 0.0
 corrHealthTIPS = tipsValid ? corrHealthMW(nz(corrGoldTIPS_30), nz(corrGoldTIPS_60), nz(corrGoldTIPS_120), _corrSig30, _corrSig60, _corrSig120, -1.0) : 0.0
-float _numValid = 0.0
-_numValid := dxyValid ? _numValid + 1.0 : _numValid
-_numValid := yieldValid ? _numValid + 1.0 : _numValid
-_numValid := silverValid ? _numValid + 1.0 : _numValid
-_numValid := spxValid ? _numValid + 1.0 : _numValid
-_numValid := eurusdValid ? _numValid + 1.0 : _numValid
-_numValid := tipsValid ? _numValid + 1.0 : _numValid
 avgCorrHealth = _numValid > 0 ? (corrHealthDXY + corrHealthYld + corrHealthSlv + corrHealthSPX + corrHealthEUR + corrHealthTIPS) / _numValid : 0.0
 
 _wDXYr = math.min(math.abs(avgCorrDXY) * 100, 30)
@@ -1434,7 +1448,7 @@ msRate = (yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 
 macroStrengthScore = int(math.max(math.min(msDXY + msYld + msSPX + msEUR + msSlv + msTIPS + msMom + msRate, 100), -100))
 // Confidence = data availability (30%) + correlation health (50%) + score stability (20%)
 float _macroStDev = nz(ta.stdev(macroStrengthScore, 20), 50.0)
-macroStrengthConf = int(math.round((((dxyValid ? 1 : 0) + (yieldValid ? 1 : 0) + (silverValid ? 1 : 0) + (spxValid ? 1 : 0) + (eurusdValid ? 1 : 0) + (tipsValid ? 1 : 0)) / 6.0) * 30.0 + avgCorrHealth * 0.50 + (1.0 - math.min(_macroStDev / 100.0, 1.0)) * 20.0))
+macroStrengthConf = int(math.round((_numValid / 6.0) * 30.0 + avgCorrHealth * 0.50 + (1.0 - math.min(_macroStDev / 100.0, 1.0)) * 20.0))
 // macroStrengthScore is an ordinal composite (−100 to +100), NOT a probability.
 
 // WEIGHTED TREND ENGINE

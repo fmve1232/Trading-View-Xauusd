@@ -2118,3 +2118,45 @@ the website on the default branch is the system of record, so nothing restarts a
 website was not touched.
 
 Compile NOT RUN on v63.
+
+---
+
+# Build v63 → v64 — macro correlations measured over the same bar (F-A64)
+
+The operator asked for every macro factor to be checked, then for the best fix for the real XAUUSD spot market.
+
+- **Defect:**
+  - `goldRet` is this bar's return. Every macro return is built from `request.security(…, close[1], …)`, so it is the
+    bar before.
+  - Each `ta.correlation(goldRet, <asset>Ret, n)` therefore measured gold now against the asset one bar earlier.
+  - Model (`macro_check.py` B): a true +0.80 reads −0.003, and a true −0.60 reads +0.04. On a 15M chart the 1H assets
+    change on 1 bar in 4, giving +0.18 for +0.80.
+  - Affected:
+    - the adaptive weights (`|avg corr|`), so the fixed-20 EURUSD weight dominated;
+    - correlation health, which is 50% of macro confidence;
+    - the arrow strength (the "every arrow ≈" screen).
+  - Not affected: the vote directions.
+- **Fix:**
+  - Silver, EURUSD and SPX (chart timeframe) are paired with `goldRetL = goldRet[1]`.
+  - DXY, US10Y and TIPS (macroTF) are paired with `goldRetM`, the chart symbol requested exactly as they are
+    (macroTF, `close[1]`, lookahead_on).
+  - Their windows are counted in macroTF bars (`_kM` = macroTF / chart TF), so a 1H series on a 15M chart keeps the
+    sample size its significance threshold assumes.
+  - A window over 4,500 bars (e.g. 120 hours on 1m) reads as no data.
+  - Nothing reads an unfinished bar.
+  - Applied to the Master and the three arms; Diagnostics and Brief rebuilt. One more request (`_gM`).
+- **Paid for by identical-output rewrites** (`refactor_check.py`, 12,000 cases):
+  - the valid-feed count is computed once (it was `_numStab`, `_numValid` and an inline sum in `macroStrengthConf`);
+  - the session literals `int((25.0))` / `int((10.0))` become `25` / `10`.
+- **Visible change:**
+  - macro arrows and their strength, macro confidence and the weights now reflect the measured same-period
+    relationship;
+  - so the macro score, the evidence score, the TQ and the DECISION can differ from v63.
+  - Directions, gates and thresholds are unchanged, and nothing was tuned.
+- **Tokens (lexical):**
+  - Master 39,056 (2.02% under the limit);
+  - Diagnostics 39,718 (≈ 99,890 compiled, 0.37% under);
+  - Brief 38,798.
+- **Pre-registration:** A7, display only; nothing restarts. The website was not touched; whether its engine shares
+  this construction was NOT checked from here.
+- Compile NOT RUN on v64.
