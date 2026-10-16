@@ -1938,3 +1938,37 @@ Operator: "no compromise on quality, every feature maintained, wired up properly
 - **Master:** 37,984 lexical tokens (≈ 5% under the limit); 18 request.security call sites (was 20).
 - **RUNBOOK:** the phone-card table is rewritten for the v57 rows.
 - Compile NOT RUN on v58.
+
+# Build v58 → v59 — nothing removed: every value restored and wired (operator)
+
+Operator: "We'll not remove anything as we have to maintain every feature and every value was added with a purpose, so
+we have to link it up / wire it up. Show me the mobile dashboard as well."
+
+- **Rebuilt from v56** (the last Master before any removal, commit 2f7f56d7). Only the additive v57 work was replayed:
+  - phone card: title row, DECISION first, LIQ DRAW with distance, left-aligned plan, NEXT / H2 switches;
+  - desktop: DRAW label, wrapped DECISION footer, H2 in its own cell.
+- **Everything v57 / v58 removed is back in the Master:**
+  - the cross-check line on the desktop cell and in the Spacious phone details;
+  - the GC / OI / COT / 2s10s states, VIX, the schema / feed status, the volume climax, the value area, the V2 census;
+  - the settings: VIX symbol, US 2Y symbol, climax, `gcVolMult`, `showSR`.
+  - The Brief keeps its ENGINE / DATA copy as well.
+  - `moved_check.py` now holds BOTH copies to the frozen v56 definitions.
+- **Values the Master computed but never showed (since v37), now wired** into the SIGNAL cell (third and fourth lines,
+  also in the Spacious NEXT details):
+  - the analog structure evidence: PDH-first / PDL-first %, BOS continue / fail %, MAE, calibration detail;
+  - the calibration grade and Brier score;
+  - the in-sample win rate and n;
+  - the per-feature edges S / H / L / M / C.
+- **Result:** `deadcode.py` reports the Master at 0 dead, 0 structural, and 0 values read only by a companion. The
+  guard now allows no exceptions.
+- **Token room without removing anything:** identical-output rewrites in the display layer.
+  - Helpers: `_gS` / `_gC` / `_gF` (dashboard array reads), `_pp` (plan-row probabilities), `_si`, `_sg`, `_b1`, `_v`,
+    `_ud`, `_byDest`, and `_al` (alert prefix and frequency).
+  - `tcp` loses two parameters that were always 0.
+  - Two redundant guards are removed: the na-check before na-false comparisons, and the duplicated BUY / SELL branches.
+  - `refactor_check.py` (new) executes each rewrite against the v56 code it replaced: 51,000+ cases, 0 mismatches; all
+    6 alert messages are unchanged.
+- **Master:** 39,033 lexical tokens (2.09% under the limit).
+- **Mobile dashboard preview:** `audit/mobile_card_preview_v59.png`. It is a layout render of the v59 card using the
+  code's rows, order and colours, with sample values from the operator's 16 Oct screenshots; not live data.
+- Compile NOT RUN on v59.

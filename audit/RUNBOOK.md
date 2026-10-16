@@ -85,10 +85,10 @@ establish that the Master is wired to those expressions — that is a separate, 
 - The Mobile card sits top-left (v56). The desktop layout is not readable on a phone, so switch Dash Mode to Mobile there.
 - v57: the card reads title → DECISION → TREND → LIQ DRAW → NEXT → plan → H2. Hide NEXT or H2 with the "Mobile card" switches.
 - Brief on a phone: Panel layout = **Compact (phone)**, Gold-arrow grid position = **Hidden**.
-- v58: the VIX symbol, US 2Y symbol, Volume Climax settings and GC volume-expansion threshold are set in the **Brief's**
-  settings now; they only fed the displays that moved there.
-- The engine cross-check line (T/S/L/M/Q, TQ, C, VIX, GC / OI / COT, feed status) moved to the Brief's ENGINE and DATA
-  rows (v57).
+- v59: nothing is removed. The VIX symbol, US 2Y symbol, Volume Climax and GC volume-expansion settings are back in
+  the Master and also in the Brief; set them the same in both.
+- The engine cross-check line is on the Master (restored v59) and on the Brief's ENGINE / DATA rows.
+- A layout preview of the phone card is in `audit/mobile_card_preview_v59.png` (sample values, not live).
 - Visuals: H2 card layout = **Compact (phone)**; H2 card text size = Normal if it reads too small.
 
 ## Step 2a — Market Brief companion (v52)
@@ -172,8 +172,8 @@ engine values and strings as the desktop view):
 | H2 | the separate H2 sweep-to-value idea, MT5 prices (switch: "Mobile card: H2 row") | — |
 
 **Density:** Standard = the rows above. Compact = title + the four headlines + H2. Spacious adds the details (tablet).
-The engine cross-check line (T/S/L/M/Q, TQ, C, VA, VIX, climax, GC / OI / COT) moved to the Brief's ENGINE / DATA rows
-in v57. TradingView keeps settings per chart layout, so use a separate layout for the phone. *Text Size* enlarges the card.
+The engine cross-check line (T/S/L/M/Q, TQ, C, VA, VIX, climax, GC / OI / COT) is on the Master's desktop and in its
+Spacious NEXT details (restored v59) and also on the Brief's ENGINE / DATA rows. TradingView keeps settings per chart layout, so use a separate layout for the phone. *Text Size* enlarges the card.
 
 ---
 

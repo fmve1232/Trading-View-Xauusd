@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Moved-feature ledger (v57): a feature moved out of a file for token room must keep EXACTLY its definition
 and stay displayed where it went. Each entry: the definition frozen from the build it left (here the v56 Master,
-commit 2f7f56d7), the file it moved to, and the panel that must read it. Fails if a definition drifts, a moved
-value stops being displayed, or it comes back into the Master unannounced.
+commit 2f7f56d7), the file it moved to, and the panel that must read it. Fails if a definition drifts or a moved
+value stops being displayed. v59: the Master keeps them too (nothing removed), so both copies are held to v56.
 
 v57: the Master's engine cross-check line + data-feed status -> Brief ENGINE / DATA rows.
   Equivalences, documented rather than frozen:
@@ -76,10 +76,19 @@ for v, d in FROZEN.items():
     if not re.search(r"(?<![\w.])" + re.escape(v) + r"(?!\w)", pb):
         bad += 1
         print(f"FAIL  {v}: moved to the Brief but not displayed by its panel")
-for v in ("gcState", "oiState", "cotState", "curveState", "xcheckStr", "crossCheck", "schemaLine"):
-    if defs(ml, v):
+# v59 (operator: "we will not remove anything"): the features are back in the Master AND kept in the Brief.
+# Both copies must equal the frozen v56 definition; the Master must display them again (its cross-check line).
+for v, d in FROZEN.items():
+    if defs(ml, v) != [d]:
         bad += 1
-        print(f"FAIL  {v}: defined in the Master again -- update this ledger if it moved back")
+        print(f"FAIL  {v}: Master definition differs from v56 (restored copy)\n   frozen: {d}\n   Master: {defs(ml, v)}")
+for v in ("xcheckStr", "crossCheck", "schemaLine", "dataStatusLine", "migState"):
+    if len(defs(ml, v)) != 1:
+        bad += 1
+        print(f"FAIL  {v}: the Master's cross-check / schema display is not back (v59 restores it)")
+if "_mktLine + \"\\n\" + xcheckStr" not in "\n".join(ml):
+    bad += 1
+    print("FAIL  the Master's desktop cell no longer shows the cross-check line (xcheckStr)")
 for lit in SCHEMA_LITERALS:
     if lit not in pb:
         bad += 1
@@ -103,5 +112,5 @@ if body(ml, "f_tqEngine() =>") != body(bl, "f_tqEngine() =>"):
     print("FAIL  f_tqEngine (TQ shown in the Brief's ENGINE row) differs Master vs Brief")
 if bad:
     sys.exit(1)
-print(f"PASS  moved features: {len(FROZEN)} definitions identical to the v56 Master, each displayed by the Brief panel; "
-      "f_tqEngine identical; schema text = the Master's wording; none re-defined in the Master")
+print(f"PASS  moved features: {len(FROZEN)} definitions identical to v56 in BOTH the Master (restored, v59) and the Brief, "
+      "each displayed by both; f_tqEngine identical; schema text = the Master's wording")
