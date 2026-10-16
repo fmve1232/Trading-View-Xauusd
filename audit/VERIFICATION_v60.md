@@ -85,6 +85,8 @@ Each line below names the tool that checked the claim and what it executed. **PA
 | Broker economics | assumption | Spread, commission and slippage defaults are placeholders, and the MT5 offset is set by hand. Size from your own fills. |
 | Volume-based signals | approximation | OANDA tick volume, not exchange volume (Diagnostics "Volume (free plan)" row). |
 
+**Correction (v62, F-A60).** Row A "H2 signal" and row C "H2 block byte-identical" were executed and passed, but neither covered the block's inputs, which sit outside the fences. On 1H and higher charts the Master fed H2 the engine's timeframe-gated trend scores, so its H2 SETUP could never fire there while Visuals' H2 card did. Fixed in v62; `h2_parity.py` now checks the inputs and fails on v60 / v61.
+
 **Verdict.** Every calculation, gate, veto, decision rule, sequence and display that can be executed outside
 TradingView has been executed and passes. No value is computed without being shown. Two things are not established:
 that the build compiles on TradingView, and that the signals are profitable. The first needs your paste. The second

@@ -398,13 +398,24 @@ def define(lines, env):
     def fn(*args):
         loc = Env(funcs=env.funcs, **env)
         loc.update(zip(params, args, strict=True))
-        _block(body, 0, len(body) - 1, loc)
-        last = body[-1].strip()
-        if last.startswith('[') and last.endswith(']'):
-            return tuple(evaluate(x, loc) for x in _split_args(last[1:-1]))
-        return evaluate(last, loc)
+        return _ret(body, loc)
     env.funcs[name] = fn
     return fn
+
+
+def _ret(body, loc):
+    """Run a function body and return its value. v62: a body that is one top-level `if c` / `else`
+    is an if-EXPRESSION (Pine returns the last line of the branch taken), e.g. htfTrendScore."""
+    if body[0].startswith('if ') and all(_ind(l) > 0 or l.strip() == 'else' or l is body[0] for l in body):
+        e = next(i for i, l in enumerate(body) if l.strip() == 'else')
+        br = body[1:e] if evaluate(body[0][3:].strip(), loc) else body[e + 1:]
+        base = min(_ind(l) for l in br)
+        return _ret([l[base:] for l in br], loc)
+    _block(body, 0, len(body) - 1, loc)
+    last = body[-1].strip()
+    if last.startswith('[') and last.endswith(']'):
+        return tuple(evaluate(x, loc) for x in _split_args(last[1:-1]))
+    return evaluate(last, loc)
 
 
 def _split_args(s):

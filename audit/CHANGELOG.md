@@ -2030,3 +2030,39 @@ The operator's 4H screenshots (2026-10-16) show v60 compiling: Master, Brief, Di
     carries that.
 - **Tokens:** Master 39,056 lexical (2.02% under the limit); Brief 38,732; Diagnostics 39,652.
 - Compile NOT RUN on v61.
+
+---
+
+# Build v61 → v62 — Master H2 SETUP disagreed with the H2 arm above 30M (F-A60)
+
+The operator's v60 4H screenshots: Visuals' H2 card read TREND DOWN (1H 100, 4H 20, 1D 0) with a last SELL on 05-29;
+the Master read H2 MIXED, last none yet. The POC matched (4163.12).
+
+- **Cause:** the H2 block is byte-identical in the three files, but its inputs are not inside the fences.
+  - The Master set `h2S1 = htf1hScore`, `h2S4 = htf4hScore`, `h2SD = htf1dScore`.
+  - Those are the engine's availability-gated scores: 50 when the layer is not above the chart timeframe.
+  - On a 4H chart, 1H and 4H were 50, so "2 of 3 agree" could not happen and the Master's H2 could never fire on 1H,
+    4H or D charts.
+  - Visuals and Strategy_H2 use the raw scores of the same requests (`h2HtfScore`, the same formula).
+  - On 15M and 30M every layer is available, so the two always agreed there. 15M is the registered timeframe.
+- **Fix (Master only, token-neutral):**
+  - `int h2S1 / h2S4 / h2SD = htfTrendScore(...)` are the raw scores, computed once.
+  - The engine reads `htf1hScore = htf1hAvailable ? h2S1 : 50` (and 4H / 1D), the same values as before.
+  - The H2 block reads the raw ones, as the H2 arm does.
+- **Checks:**
+  - `h2_parity.py` now traces the inputs: one definition each, a score function applied straight to exactly one
+    60 / 240 / D request, the request text the same in all three files, and `h2HtfScore == htfTrendScore` executed on
+    625 cases (na and every ordering).
+  - It FAILS on v61 (verified).
+  - `refactor_check.py`: the engine's `htf1hScore / htf4hScore / htf1dScore` in v62 equal the v61 lines (12,000 cases).
+    A deliberate mutation fails (1,642 mismatches).
+  - `pine_exec.py` can now run a function whose body is an if / else expression (`htfTrendScore`).
+- **Visible change:**
+  - On 1H, 4H and D charts the Master's H2 SETUP now shows the same trend, signal, last signal and alert as Visuals'
+    H2 card.
+  - On 15M and 30M nothing changes.
+  - The DECISION, the gates and the engine HTF scores are unchanged.
+- **Unchanged:** Visuals, Brief, Diagnostics and the repo set (Brief and Diagnostics take their engine from the
+  Treatment twin, which has no H2 block).
+- **Tokens:** Master 39,056 lexical (unchanged, 2.02% under).
+- Compile NOT RUN on v62.

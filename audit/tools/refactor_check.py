@@ -165,6 +165,27 @@ for col in range(9):
             bad += seen.get((x, y - 1)) != (col, 0)   # each value sits directly under its own header
 report("Strip fold: 9 headers + 9 values on unique cells of the 3 x 6 grid, header above value, details skipped", bad, 36)
 
+# ---- v62 (F-A60): the raw HTF scores are computed once (h2S1 / h2S4 / h2SD) and the engine gates them as before.
+# The v61 engine lines are frozen here; the v62 lines are read from the Master. The engine's htf*Score must not move.
+V61_HTF = {f"htf{k}Score": f"htf{k}Available ? htfTrendScore(htf{k}Close, htf{k}Ema20, htf{k}Ema100M, htf{k}Ema200) : 50"
+           for k in ("1h", "4h", "1d")}
+P.define(fn("htfTrendScore(htfClose, htfEma20, htfEma100M, htfEma200) =>"), env)
+raw = [l for l in L if re.match(r"^int h2S[14D] = htfTrendScore\(", l)]
+gated = [l for l in L if re.match(r"^htf(1h|4h|1d)Score = ", l)]
+bad = n = 0
+for _ in range(4000):
+    e = P.Env(funcs=env.funcs)
+    for k in ("1h", "4h", "1d"):
+        e[f"htf{k}Available"] = rng.random() < 0.5
+        for v in ("Close", "Ema20", "Ema100M", "Ema200"):
+            e[f"htf{k}{v}"] = NA if rng.random() < 0.1 else float(rng.choice([1, 2, 3, 4]))
+    old = {k: P.evaluate(x, e) for k, x in V61_HTF.items()}
+    P.run(raw + gated, e)
+    n += 3
+    bad += sum(old[k] != e[k] for k in old)
+report("engine htf1hScore / htf4hScore / htf1dScore (v61 inline == v62 gated h2S*)",
+       bad if len(raw) == 3 and len(gated) == 3 else n, n)
+
 left = [i + 1 for i, l in enumerate(L) if re.search(r"array\.get\(gDash[SCF], \d+\)", l)]
 helpers = all(any(l.startswith(f"_g{c}(int i) => array.get(gDash{c}, i)") for l in L) for c in "SCF")
 report("dashboard array reads go through _gS / _gC / _gF (identical: array.get(gDash*, i))", 0 if helpers and not left else 1, 1)

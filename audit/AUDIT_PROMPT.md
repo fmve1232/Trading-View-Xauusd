@@ -18,7 +18,7 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5873 | 379507 | `a356c91954e2a623aa8ba5c4304472e455dd0f1618e15050170fcdcff773ba4f` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5876 | 379812 | `66ebdf6d9b592500939e8aac1a614173bffced28e07c22f97b3ce6f14c362c76` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5411 | 341685 | `7ec465ad992aef9305f780fbb58c8a087296011f3cb327320691e2964cccd0e4` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5411 | 341750 | `cb5c30d0bda665038cab3f15d7586b0ba85330bc37649343e28946605ecdd020` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5422 | 342669 | `4163c610c71ed1c8f6a42a3d1e97791d1d6ef9a4b7a36ab532af542b0fb583dc` |
@@ -28,7 +28,7 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5648 | 359106 | `c30e8884e7ca7ebc2aa1766c03afa7ab50e0c90b3f24cdbf5d05c593ec04a15b` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5468 | 347180 | `b51942220c0f8b0ff9f56d717ecfbff80f2973364aba1b53c7d843a8b072e0e5` |
 
-> **BUILD v61 — this prompt pins the current build.** The originally audited build
+> **BUILD v62 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -107,6 +107,7 @@ scope, and no other build of these scripts is in scope.
 > **v59:** nothing removed — v57/v58 removals restored from v56 and wired; the Master displays every value it computes (0 dead, 0 structural, 0 companion-only); identical-output rewrites proven by `refactor_check.py`.
 > **v60:** Mobile layout = Strip (desktop cells folded 3 x 3 in a top band, plan on one line) or Card; identical-output rewrites for room (`refactor_check.py`).
 > **v61: F-A59** — no NaN on screen; Master analog lines fit and carry !FIT; Diagnostics labels; Brief trigger / TF wording.
+> **v62: F-A60** — the Master's H2 SETUP reads the raw 1H / 4H / 1D trend scores, as the H2 arm does (it could not fire on 1H+ charts); `h2_parity.py` checks the block's inputs.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

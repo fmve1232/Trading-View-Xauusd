@@ -69,8 +69,8 @@ ROWS = [
     ("9 MT5", "BUY / SELL alert text", "_mt5Plan", r"string _mt5Plan = ",
      "the same strings as the PLAN box", "v46 review"),
     ("10 H2", "H2 SETUP", "h2Long / h2Short, h2Plan", r"string h2Plan = ",
-     "sweep of the last unswept 5-bar swing + 2-of-3 HTF trend + value side of POC; SL wick +/- 0.15 ATR; TP1 max(POC,1R), TP2 max(VAH,2R)",
-     "h2_parity.py; h2_trace.py"),
+     "sweep of the last unswept 5-bar swing + 2-of-3 RAW 1H/4H/1D trend scores (not TF-gated, = H2 arm, F-A60) + value side of POC; SL wick +/- 0.15 ATR; TP1 max(POC,1R), TP2 max(VAH,2R)",
+     "h2_parity.py (block + inputs); h2_trace.py"),
 ]
 # v52: the Market Brief companion (Treatment engine verbatim, diag_parity.py); display only
 BROWS = [

@@ -87,7 +87,8 @@ sha256sum -c audit/MANIFEST.sha256
   the A/B hunk counts break. The registered timeframe is 15M; 5M is for timing only (PREREG A2.4).
 - **H2 block:** `// H2-BEGIN` … `// H2-END` must stay byte-identical in Visuals, Strategy_H2 and the
   Master (`h2_parity.py`, which also checks Visuals' `SESSIntel` block equals the Treatment's
-  `f_sessionIntel`); `h2_trace.py` executes it against its specification. The Master's H2 SETUP is
+  `f_sessionIntel`, and since v62 the block's INPUTS: `h2S1 / h2S4 / h2SD` are the RAW 1H / 4H / 1D scores in every
+  file, never the engine's timeframe-gated `htf*Score`, F-A60); `h2_trace.py` executes it against its specification. The Master's H2 SETUP is
   display + alert only: it never changes the DECISION (PREREG A4).
 - **Token estimates are estimates.** Compiled ≈ lexical × 2.515 (measured on v23: 100,820 /
   40,081; v14 gave 2.466). Keep the Master ≥ 2% under 100,256 at that ratio.
@@ -102,7 +103,7 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A59. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A60. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |

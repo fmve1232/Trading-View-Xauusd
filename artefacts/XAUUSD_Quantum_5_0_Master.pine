@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v61   (no NaN; analog lines fit)     ║
+// ║  BUILD STAMP — this file last CHANGED in v62   (H2 trend = H2 arm, all TFs)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -720,9 +720,15 @@ htfTrendScore(htfClose, htfEma20, htfEma100M, htfEma200) =>
 
 htf5mScore = htf5mAvailable ? htfTrendScore(htf5mClose, htf5mEma20, htf5mEma100M, htf5mEma200) : 50
 htf15mScore = htf15mAvailable ? htfTrendScore(htf15mClose, htf15mEma20, htf15mEma100M, htf15mEma200) : 50
-htf1hScore = htf1hAvailable ? htfTrendScore(htf1hClose, htf1hEma20, htf1hEma100M, htf1hEma200) : 50
-htf4hScore = htf4hAvailable ? htfTrendScore(htf4hClose, htf4hEma20, htf4hEma100M, htf4hEma200) : 50
-htf1dScore = htf1dAvailable ? htfTrendScore(htf1dClose, htf1dEma20, htf1dEma100M, htf1dEma200) : 50
+// v62 (F-A60): the RAW 1H / 4H / 1D trend scores, computed once. The engine gates them by availability exactly as
+// before (a layer counts only above the chart timeframe); the H2 block reads the raw ones, as the H2 arm does
+// (h2HtfScore: same requests, same formula), so H2 SETUP matches the H2 arm on every chart timeframe.
+int h2S1 = htfTrendScore(htf1hClose, htf1hEma20, htf1hEma100M, htf1hEma200)
+int h2S4 = htfTrendScore(htf4hClose, htf4hEma20, htf4hEma100M, htf4hEma200)
+int h2SD = htfTrendScore(htf1dClose, htf1dEma20, htf1dEma100M, htf1dEma200)
+htf1hScore = htf1hAvailable ? h2S1 : 50
+htf4hScore = htf4hAvailable ? h2S4 : 50
+htf1dScore = htf1dAvailable ? h2SD : 50
 htf5mBull = htf5mScore >= 60
 htf5mBear = htf5mScore <= 40
 htf15mBull = htf15mScore >= 60
@@ -5109,9 +5115,6 @@ float vdK = volDelta50 / 1000.0
 // expressions (close[1], EMA 20/100/200 of close[1], lookahead off) and scores them with the same
 // 40/40/20 rule (htfTrendScore). On charts below 1H -- the registered 15M and the 5M timing chart --
 // these ARE H2's scores. On a 1H+ chart the layer at the chart's own timeframe reads a neutral 50 here.
-float h2S1 = htf1hScore
-float h2S4 = htf4hScore
-float h2SD = htf1dScore
 // H2-TREND-END
 // H2-BEGIN
 // ═══ HYPOTHESIS H2 — SWEEP-TO-VALUE (pre-registered: PREREGISTRATION amendment A3) ═══
