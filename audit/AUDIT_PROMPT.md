@@ -18,7 +18,7 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5836 | 377902 | `e5ba975e54b767a4647cae710b674191f73c96f62bc68aedc6abe8357a76f1ea` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5813 | 374899 | `23be4dadf074575fc11c072a8e9577b7ae9da7de4696849dff33b898f365a8b0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5411 | 341685 | `7ec465ad992aef9305f780fbb58c8a087296011f3cb327320691e2964cccd0e4` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5411 | 341750 | `cb5c30d0bda665038cab3f15d7586b0ba85330bc37649343e28946605ecdd020` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5422 | 342669 | `4163c610c71ed1c8f6a42a3d1e97791d1d6ef9a4b7a36ab532af542b0fb583dc` |
@@ -26,9 +26,9 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1217 | 78999 | `10143aefdb7c4f47b95112599850971dd437c590d60641a57f8695f0b3a8bba6` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5646 | 358921 | `8cfcf4be39bf2605d1e97a36904286dfc3190044a22775c33b68ba6f199a32ec` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5454 | 344849 | `7bd7cb9e5122996f57b764b4e8f56770ca933aef83f07a84e206f845734e21c7` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5466 | 346273 | `67b1be345924e34b66f8165a604d2c28bf999bee42094c815e72478309b189bb` |
 
-> **BUILD v56 — this prompt pins the current build.** The originally audited build
+> **BUILD v57 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -102,6 +102,7 @@ scope, and no other build of these scripts is in scope.
 > **v54: F-A55** — Brief DO NOW reads the DECISION; **F-A56** disclosed (twin stats cadence); **F-A43 closed** (EdgeCases cites code, `edgecase_cites.py`); Diagnostics arrow rows coloured.
 > **v55: F-A57** — Brief compile fix (CE10165), `pinelimits.py` G11 / G12; H2 card and Master mobile card redesigned for phone width.
 > **v56:** Master Mobile card fits a phone (rationale at Spacious only, top-left, LONG PLAN label); Brief lines re-flowed.
+> **v57:** cross-check line moved Master → Brief (ENGINE / DATA rows); Master phone card (title, DECISION first, LIQ DRAW, switches); desktop H2 cell; Brief Compact layout.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

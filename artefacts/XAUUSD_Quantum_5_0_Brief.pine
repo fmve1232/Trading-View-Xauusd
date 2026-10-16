@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v56   (short lines)                  ║
+// ║  BUILD STAMP — this file last CHANGED in v57   (ENGINE/DATA rows, compact)    ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5215,6 +5215,9 @@ brTxt = input.string("Small", "Text size", options=["Tiny", "Small", "Normal"], 
 brOffset = input.float(0.0, "MT5 Price Offset (MT5 - TradingView)", minval=-50.0, maxval=50.0, step=0.01, group=grpBrief, tooltip="Use the same value as in the Master. Shifts DISPLAYED prices only; distances do not change.")
 brAlert = input.bool(true, "Alert when a playbook trigger fires (info, not a DECISION)", group=grpBrief)
 brGPos = input.string("Bottom Right", "Gold-arrow grid position", options=["Bottom Right", "Bottom Left", "Middle Right", "Top Left", "Hidden"], group=grpBrief)
+brLayout = input.string("Full", "Panel layout", options=["Full", "Compact (phone)"], group=grpBrief, tooltip="Compact: TREND, DO NOW, the playbook and the gates only, for a phone-width chart. Full adds heading, last sweep, target, playbook note, engine cross-check and data feeds.")
+bool brCompact = brLayout == "Compact (phone)"
+f_brSt(int c) => c == 0 ? "OK" : c == 1 ? "NA" : c == 2 ? "STALE" : "BAD"
 brSz = brTxt == "Tiny" ? size.tiny : brTxt == "Normal" ? size.normal : size.small
 
 f_brP(float x) => na(x) ? "—" : str.tostring(x + brOffset, "#.##")
@@ -5361,7 +5364,7 @@ if barstate.isconfirmed and bar_index >= last_bar_index - 2
     brSd := regSLMult * adaptiveATR
     brSnap := bar_index
 
-var table brT = table.new(brPos == "Middle Right" ? position.middle_right : brPos == "Bottom Right" ? position.bottom_right : brPos == "Bottom Left" ? position.bottom_left : brPos == "Top Left" ? position.top_left : position.top_right, 2, 10, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+var table brT = table.new(brPos == "Middle Right" ? position.middle_right : brPos == "Bottom Right" ? position.bottom_right : brPos == "Bottom Left" ? position.bottom_left : brPos == "Top Left" ? position.top_left : position.top_right, 2, 12, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
 // v55: the text size is the global brSz (v52 declared an `sz` parameter that no call passed: CE10165)
 f_brC(table t, int r, string k, string v, color col) =>
     table.cell(t, 0, r, k, text_color=color.new(#D1D4DC, 0), text_size=brSz, text_halign=text.align_left)
@@ -5383,13 +5386,16 @@ if barstate.islast
     string sess = inLondon and inNY ? "London/NY" : inNY ? "New York" : inLondon ? "London" : inAsian ? "Asia" : "off-hours"
     f_brC(brT, 0, "MARKET BRIEF " + timeframe.period, "display only · prices MT5\nthe Master's DECISION rules", cT)
     f_brC(brT, 1, "TREND", bias + ((bU and h4 == "down" and h1d == "down") or (bD and h4 == "up" and h1d == "up") ? "  · against the 4H and 1D trend" : "") + "\nprice " + (close > ema200 ? "above" : "below") + " EMA200\nstructure " + (bullStructActive ? "bullish " + bullStructType + " (" + str.tostring(bullStructAge) + " bars ago)" : bearStructActive ? "bearish " + bearStructType + " (" + str.tostring(bearStructAge) + " bars ago)" : "no active break") + "\n4H " + h4 + " · 1D " + h1d + " · " + str.lower(mktRegime), bU ? cU : bD ? cD : cT)
-    f_brC(brT, 2, "HEADING", (lean ? (up ? "Leaning up" : "Leaning down") : "No clear lean") + "\nL " + str.tostring(bullScore, "#") + "% · S " + str.tostring(bearScore, "#") + "% · R " + str.tostring(rangeScore, "#") + "%\nreach PDH " + str.tostring(pdhReachScore, "#") + "% vs PDL " + str.tostring(pdlReachScore, "#") + "%\nengine scores, not a forecast", prim > 0 ? cU : prim < 0 ? cD : cT)
-    f_brC(brT, 3, "LIQ TAKEN", na(brSwBar) ? "none in view" : (brSwDir < 0 ? "Buy-side @ " : "Sell-side @ ") + f_brP(brSwPx) + "\nwick through " + brSwPool + " " + f_brP(brSwLvl) + "\nclosed back " + (brSwDir < 0 ? "below" : "above") + "\n" + str.format_time(brSwT, "dd MMM HH:mm", "UTC") + " UTC · " + str.tostring(bar_index - brSwBar) + " bars ago", brSwDir < 0 ? cD : brSwDir > 0 ? cU : cT)
+    if not brCompact
+        f_brC(brT, 2, "HEADING", (lean ? (up ? "Leaning up" : "Leaning down") : "No clear lean") + "\nL " + str.tostring(bullScore, "#") + "% · S " + str.tostring(bearScore, "#") + "% · R " + str.tostring(rangeScore, "#") + "%\nreach PDH " + str.tostring(pdhReachScore, "#") + "% vs PDL " + str.tostring(pdlReachScore, "#") + "%\nengine scores, not a forecast", prim > 0 ? cU : prim < 0 ? cD : cT)
+    if not brCompact
+        f_brC(brT, 3, "LIQ TAKEN", na(brSwBar) ? "none in view" : (brSwDir < 0 ? "Buy-side @ " : "Sell-side @ ") + f_brP(brSwPx) + "\nwick through " + brSwPool + " " + f_brP(brSwLvl) + "\nclosed back " + (brSwDir < 0 ? "below" : "above") + "\n" + str.format_time(brSwT, "dd MMM HH:mm", "UTC") + " UTC · " + str.tostring(bar_index - brSwBar) + " bars ago", brSwDir < 0 ? cD : brSwDir > 0 ? cU : cT)
     int dir = up ? 1 : -1
     [tX, tN] = f_brNear(brNv, brNn, px, dir, float(na))
     [nX, nN] = f_brNear(brNv, brNn, px, dir, tX)
     [oX, oN] = f_brNear(brNv, brNn, px, -dir, float(na))
-    f_brC(brT, 4, "TARGET", na(tX) ? "no liquidity level on that side" : tN + " " + f_brP(tX) + " (" + f_brD(tX - px) + ")" + (na(nX) ? "" : " · then " + nN + " " + f_brP(nX)) + (na(oX) ? "" : "\nopposite liquidity: " + oN + " " + f_brP(oX) + " (" + f_brD(oX - px) + ")"), up ? cU : cD)
+    if not brCompact
+        f_brC(brT, 4, "TARGET", na(tX) ? "no liquidity level on that side" : tN + " " + f_brP(tX) + " (" + f_brD(tX - px) + ")" + (na(nX) ? "" : " · then " + nN + " " + f_brP(nX)) + (na(oX) ? "" : "\nopposite liquidity: " + oN + " " + f_brP(oX) + " (" + f_brD(oX - px) + ")"), up ? cU : cD)
     [sT, sN, sS, s1, s1n, s2, s2n, sR] = f_brSide(brV, brN, brSp, brSa, brSd, -1)
     [bT, bN, bS, b1, b1n, b2, b2n, bR] = f_brSide(brV, brN, brSp, brSa, brSd, 1)
     bool sig = _confDirLabel == "BUY" or _confDirLabel == "SELL"
@@ -5410,7 +5416,13 @@ if barstate.islast
     f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "close < " + f_brP(sT) + " " + sN + " · away " + f_brD(sT - px) + "\nstop " + f_brP(sS) + " · R:R 1:" + str.tostring(sR, "0.0") + "\nTP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? "\nTP2 " + s2n + " " + f_brP(s2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cD)
     f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "close > " + f_brP(bT) + " " + bN + " · away " + f_brD(bT - px) + "\nstop " + f_brP(bS) + " · R:R 1:" + str.tostring(bR, "0.0") + "\nTP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? "\nTP2 " + b2n + " " + f_brP(b2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cU)
     f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
-    f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\narm H4's record is on the website\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
+    if not brCompact
+        f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\narm H4's record is on the website\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
+    // v57: the engine cross-check and data feeds, MOVED here from the Master (token room for its phone card);
+    // same engine (diag_parity.py), so the same values the Master's cross-check line showed
+    if not brCompact
+        f_brC(brT, 10, "ENGINE", _xT + " " + _xS + " " + _xL + " " + _xM + " " + _xQ + "\nTQ " + str.tostring(tradeQuality) + "/100" + tqBasis + " · C " + str.tostring(confidenceScore) + "/100" + (vaPos != "—" ? "\nVA" + vaPos + " " + str.tostring(int(vaRatio)) + "% · " : "\n") + structStr + (riskLockStr != "" ? "\n" + riskLockStr : "") + (not na(vixD) ? "\nVIX " + str.tostring(vixD, "#.#") : "") + (climaxUp ? " · CLIMAX▲" : climaxDown ? " · CLIMAX▼" : ""), cT)
+        f_brC(brT, 11, "DATA", gcState + " · " + oiState + cotState + curveState + "\nGC:" + f_brSt(GC_STATUS) + " OI:" + f_brSt(OI_STATUS) + " 2Y:" + f_brSt(US2Y_STATUS) + " COT:" + f_brSt(COT_STATUS) + migState, cT)
 
 // ---- v53 GOLD ARROWS: every arrowed indicator in its own cell, coloured by what it means FOR GOLD ----
 // d > 0 supports gold UP (green ▲, ▲▲ strong), d < 0 supports gold DOWN (red ▼), 0 neutral (grey ≈), na no data (—).

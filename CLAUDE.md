@@ -26,7 +26,8 @@ byte-identical in Visuals and (v37) the Master, which shows it as a second decis
 `Brief.pine` (v52) is the website's Market Brief on the chart (trend, lean, last sweep, target,
 what to do, the arm-H4 playbook, gates), on the Treatment engine verbatim like Diagnostics: build it
 with `audit/tools/build_brief.py` (panel source `audit/tools/brief_panel.pine`), check it with
-`brief_trace.py`, which executes it against the website's own `arm_h4.py` and `app.js`.
+`brief_trace.py`, which executes it against the website's own `arm_h4.py` and `app.js`. Since v57 it also carries the
+engine cross-check line and data-feed status (ENGINE / DATA rows), moved from the Master for token room.
 Which of the nine are sent each time: see the chart set / repo set rule above.
 
 **The chat record must include**, every time:

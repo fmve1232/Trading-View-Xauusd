@@ -1881,3 +1881,32 @@ Mobile card. On a phone (1H) the Master's Mobile card was wider than the screen 
   - The Master's mobile "HTF BULL" and the Brief's "4H down · 1D down" measure different timeframes.
   - The desktop "TGT —" and the mobile "TARGET PDH" screenshots are 2 minutes apart, across a 5m bar close.
 - Compile NOT RUN on v56.
+
+# Build v56 → v57 — professional phone card; LIQ DRAW; H2 cell; cross-check moved to the Brief
+
+Operator: "Approve all, rename to LIQ DRAW and move features".
+
+- **Moved (not deleted), Master → Brief:** the engine cross-check line.
+  - Contents: T / S / L / M / Q, TQ / C, VA, structure, risk lock, VIX, CLIMAX; GC / OI / COT / 2s10s; the GC / OI / 2Y /
+    COT feed status and the schema state.
+  - The Brief runs the same engine (`diag_parity.py`) and shows them as the ENGINE and DATA rows.
+  - The Master no longer computes those display strings or the VIX feed. That frees 745 lexical tokens and one
+    request.security call; nothing that feeds a gate, the DECISION or the plan was touched.
+  - Dropped with it: two labels that echoed settings, the Dash Mode tag "[Desktop]" and the "SR@Visuals" pointer (whose
+    `showSR` input did nothing else; S/R is drawn by Visuals).
+- **Master phone card** (Dash Mode = Mobile):
+  - A title row reads "XAUUSD <tf> · <DECISION> · MT5 prices".
+  - DECISION is the FIRST headline, then TREND, LIQ DRAW and NEXT; Spacious details follow the same order.
+  - Plan rows are left-aligned.
+  - New switches: "Mobile card: NEXT row" and "Mobile card: H2 row".
+  - LIQ DRAW shows its distance from price, e.g. "PDH 4177.46 (-2.7)".
+- **LIQ DRAW:** the Master's engine liquidity destination was labelled TARGET / TGT, the same word as the Brief's
+  nearest-level TARGET. It now reads LIQ DRAW (mobile) and DRAW (desktop).
+- **Desktop DECISION:** the footer wraps onto 3 lines, and H2 SETUP has its own cell underneath (row 3), green / red by
+  side.
+- **Brief:**
+  - The ENGINE and DATA rows are added.
+  - New "Panel layout" input: Full, or Compact (phone) showing header, TREND, DO NOW, SELL, BUY and GATES.
+- **Tokens:** Master 38,461 lexical (≈ 3.5% under the limit; it was 39,064); Brief 38,595.
+- **Value map:** 32 values (adds the ENGINE / DATA rows).
+- Compile NOT RUN on v57.

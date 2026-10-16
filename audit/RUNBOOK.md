@@ -83,6 +83,10 @@ establish that the Master is wired to those expressions — that is a separate, 
 - Master: Settings → Dash Mode = **Mobile**, Density = **Standard**. That gives the headlines plus the MT5 plan. Choose
   Spacious only on a tablet, because it adds the long desktop detail rows.
 - The Mobile card sits top-left (v56). The desktop layout is not readable on a phone, so switch Dash Mode to Mobile there.
+- v57: the card reads title → DECISION → TREND → LIQ DRAW → NEXT → plan → H2. Hide NEXT or H2 with the "Mobile card" switches.
+- Brief on a phone: Panel layout = **Compact (phone)**, Gold-arrow grid position = **Hidden**.
+- The engine cross-check line (T/S/L/M/Q, TQ, C, VIX, GC / OI / COT, feed status) moved to the Brief's ENGINE and DATA
+  rows (v57).
 - Visuals: H2 card layout = **Compact (phone)**; H2 card text size = Normal if it reads too small.
 
 ## Step 2a — Market Brief companion (v52)
