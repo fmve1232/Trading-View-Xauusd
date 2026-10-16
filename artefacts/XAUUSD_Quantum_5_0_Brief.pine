@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v58   (schema text = Master)         ║
+// ║  BUILD STAMP — this file last CHANGED in v61   (TF n/a, through, 1 bar)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5214,7 +5214,7 @@ brPos = input.string("Top Right", "Panel position", options=["Top Right", "Middl
 brTxt = input.string("Small", "Text size", options=["Tiny", "Small", "Normal"], group=grpBrief)
 brOffset = input.float(0.0, "MT5 Price Offset (MT5 - TradingView)", minval=-50.0, maxval=50.0, step=0.01, group=grpBrief, tooltip="Use the same value as in the Master. Shifts DISPLAYED prices only; distances do not change.")
 brAlert = input.bool(true, "Alert when a playbook trigger fires (info, not a DECISION)", group=grpBrief)
-brGPos = input.string("Bottom Right", "Gold-arrow grid position", options=["Bottom Right", "Bottom Left", "Middle Right", "Top Left", "Hidden"], group=grpBrief)
+brGPos = input.string("Bottom Left", "Gold-arrow grid position", options=["Bottom Left", "Bottom Right", "Middle Right", "Top Left", "Hidden"], group=grpBrief) // v61: default off the panel's column
 brLayout = input.string("Full", "Panel layout", options=["Full", "Compact (phone)"], group=grpBrief, tooltip="Compact: TREND, DO NOW, the playbook and the gates only, for a phone-width chart. Full adds heading, last sweep, target, playbook note, engine cross-check and data feeds.")
 bool brCompact = brLayout == "Compact (phone)"
 f_brSt(int c) => c == 0 ? "OK" : c == 1 ? "NA" : c == 2 ? "STALE" : "BAD"
@@ -5222,6 +5222,7 @@ brSz = brTxt == "Tiny" ? size.tiny : brTxt == "Normal" ? size.normal : size.smal
 
 f_brP(float x) => na(x) ? "—" : str.tostring(x + brOffset, "#.##")
 f_brD(float x) => na(x) ? "—" : (x >= 0 ? "+" : "") + str.tostring(x, "#.##")
+f_brAgo(int n) => str.tostring(n) + (n == 1 ? " bar ago" : " bars ago")
 f_brHtf(float s) => na(s) or s == 50 ? "n/a" : s >= 60 ? "up" : s <= 40 ? "down" : "mixed"
 f_brAdd(float[] v, string[] n, string nm, float x) =>
     if not na(x)
@@ -5332,7 +5333,7 @@ if barstate.isconfirmed and bar_index >= last_bar_index - 2
         bool fS = not na(sT) and close < sT and close > s1
         bool fB = not fS and not na(bT) and close > bT and close < b1
         if fS or fB
-            brFired := (fS ? "▼ SELL " : "▲ BUY ") + "fired " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC at " + f_brP(close) + ": stop " + f_brP(fS ? sS : bS) + " · TP1 " + f_brP(fS ? s1 : b1) + " · TP2 " + f_brP(fS ? s2 : b2)
+            brFired := (fS ? "▼ SELL " : "▲ BUY ") + "fired " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC at " + f_brP(close) + ": stop " + f_brP(fS ? sS : bS) + " · TP1 " + f_brP(fS ? s1 : b1) + ((fS ? s2 : b2) != (fS ? s1 : b1) ? " · TP2 " + f_brP(fS ? s2 : b2) : "")
             if brAlert
                 alert("XAUUSD " + timeframe.period + " playbook " + brFired + " (MT5) | info, not a DECISION", alert.freq_once_per_bar_close)
     array.clear(brV)
@@ -5385,11 +5386,11 @@ if barstate.islast
     string h1d = f_brHtf(htf1dScore)
     string sess = inLondon and inNY ? "London/NY" : inNY ? "New York" : inLondon ? "London" : inAsian ? "Asia" : "off-hours"
     f_brC(brT, 0, "MARKET BRIEF " + timeframe.period, "display only · prices MT5\nthe Master's DECISION rules", cT)
-    f_brC(brT, 1, "TREND", bias + ((bU and h4 == "down" and h1d == "down") or (bD and h4 == "up" and h1d == "up") ? "  · against the 4H and 1D trend" : "") + "\nprice " + (close > ema200 ? "above" : "below") + " EMA200\nstructure " + (bullStructActive ? "bullish " + bullStructType + " (" + str.tostring(bullStructAge) + " bars ago)" : bearStructActive ? "bearish " + bearStructType + " (" + str.tostring(bearStructAge) + " bars ago)" : "no active break") + "\n4H " + h4 + " · 1D " + h1d + " · " + str.lower(mktRegime), bU ? cU : bD ? cD : cT)
+    f_brC(brT, 1, "TREND", bias + ((bU and h4 == "down" and h1d == "down") or (bD and h4 == "up" and h1d == "up") ? "  · against the 4H and 1D trend" : "") + "\nprice " + (close > ema200 ? "above" : "below") + " EMA200\nstructure " + (bullStructActive ? "bullish " + bullStructType + " (" + f_brAgo(bullStructAge) + ")" : bearStructActive ? "bearish " + bearStructType + " (" + f_brAgo(bearStructAge) + ")" : "no active break") + "\n4H " + h4 + " · 1D " + h1d + " · " + str.lower(mktRegime), bU ? cU : bD ? cD : cT)
     if not brCompact
         f_brC(brT, 2, "HEADING", (lean ? (up ? "Leaning up" : "Leaning down") : "No clear lean") + "\nL " + str.tostring(bullScore, "#") + "% · S " + str.tostring(bearScore, "#") + "% · R " + str.tostring(rangeScore, "#") + "%\nreach PDH " + str.tostring(pdhReachScore, "#") + "% vs PDL " + str.tostring(pdlReachScore, "#") + "%\nengine scores, not a forecast", prim > 0 ? cU : prim < 0 ? cD : cT)
     if not brCompact
-        f_brC(brT, 3, "LIQ TAKEN", na(brSwBar) ? "none in view" : (brSwDir < 0 ? "Buy-side @ " : "Sell-side @ ") + f_brP(brSwPx) + "\nwick through " + brSwPool + " " + f_brP(brSwLvl) + "\nclosed back " + (brSwDir < 0 ? "below" : "above") + "\n" + str.format_time(brSwT, "dd MMM HH:mm", "UTC") + " UTC · " + str.tostring(bar_index - brSwBar) + " bars ago", brSwDir < 0 ? cD : brSwDir > 0 ? cU : cT)
+        f_brC(brT, 3, "LIQ TAKEN", na(brSwBar) ? "none in view" : (brSwDir < 0 ? "Buy-side @ " : "Sell-side @ ") + f_brP(brSwPx) + "\nwick through " + brSwPool + " " + f_brP(brSwLvl) + "\nclosed back " + (brSwDir < 0 ? "below" : "above") + "\n" + str.format_time(brSwT, "dd MMM HH:mm", "UTC") + " UTC · " + f_brAgo(bar_index - brSwBar), brSwDir < 0 ? cD : brSwDir > 0 ? cU : cT)
     int dir = up ? 1 : -1
     [tX, tN] = f_brNear(brNv, brNn, px, dir, float(na))
     [nX, nN] = f_brNear(brNv, brNn, px, dir, tX)
@@ -5413,8 +5414,8 @@ if barstate.islast
     // site/app.js doNow, same order: signal > risk lock > playbook > WAIT > no trade (brief_trace.py runs both)
     string doNow = sig ? _confDirLabel + " now" : _confDirLabel == "RISK LOCK" ? "Stop · risk lock" : pbOK ? "Wait for a trigger" : _confDirLabel == "WAIT" ? "Stay flat · wait" : "No trade"
     f_brC(brT, 5, "DO NOW", doNow + (sig ? "\nenter with the Master's MT5 plan" : " · DECISION " + _confDirLabel) + (sig or not pbOK ? "" : "\n" + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : "\n") + (na(bT) ? "" : "buy above " + f_brP(bT)) + "\n(on a " + timeframe.period + " close)") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : need == "" ? "\nall 7 gates pass, blocked by\n" + (_confDirLabel == "RISK LOCK" ? "the risk lock" : _confDirLabel == "WARMUP" ? "the statistics warm-up" : "the TQ floor / negative EV / calibration veto") : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session\n(the engine trades London / NY)" : ""), sig ? (_confDirLabel == "BUY" ? cU : cD) : cW)
-    f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "close < " + f_brP(sT) + " " + sN + " · away " + f_brD(sT - px) + "\nstop " + f_brP(sS) + " · R:R 1:" + str.tostring(sR, "0.0") + "\nTP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? "\nTP2 " + s2n + " " + f_brP(s2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cD)
-    f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "close > " + f_brP(bT) + " " + bN + " · away " + f_brD(bT - px) + "\nstop " + f_brP(bS) + " · R:R 1:" + str.tostring(bR, "0.0") + "\nTP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? "\nTP2 " + b2n + " " + f_brP(b2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cU)
+    f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "close < " + f_brP(sT) + " " + sN + (px < sT ? " · price through it: fires if this bar closes here" : " · away " + f_brD(sT - px)) + "\nstop " + f_brP(sS) + " · R:R 1:" + str.tostring(sR, "0.0") + "\nTP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? "\nTP2 " + s2n + " " + f_brP(s2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cD)
+    f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "close > " + f_brP(bT) + " " + bN + (px > bT ? " · price through it: fires if this bar closes here" : " · away " + f_brD(bT - px)) + "\nstop " + f_brP(bS) + " · R:R 1:" + str.tostring(bR, "0.0") + "\nTP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? "\nTP2 " + b2n + " " + f_brP(b2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cU)
     f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
     if not brCompact
         f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\narm H4's record is on the website\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
@@ -5446,11 +5447,11 @@ if barstate.islast and brGPos != "Hidden"
     f_brA(5, "VWAP", f_brS(close > vwapVal, close < vwapVal), close > vwapVal ? "price above" : "price below")
     f_brA(6, "VALUE", f_brS(close > vahPrice, close < valPrice), close > vahPrice ? "above VAH" : close < valPrice ? "below VAL" : "inside value")
     f_brA(7, "MTF", f_brS(mtfConfluenceScore > 20, mtfConfluenceScore < -20), "confluence " + str.tostring(mtfConfluenceScore, "#"))
-    f_brA(8, "5M", f_brS(htf5mBull, htf5mBear), "")
-    f_brA(9, "15M", f_brS(htf15mBull, htf15mBear), "")
-    f_brA(10, "1H", f_brS(htf1hBull, htf1hBear), "")
-    f_brA(11, "4H", f_brS(htf4hBull, htf4hBear), "")
-    f_brA(12, "1D", f_brS(htf1dScore >= 60, htf1dScore <= 40), "")
+    f_brA(8, "5M", htf5mAvailable ? f_brS(htf5mBull, htf5mBear) : na, htf5mAvailable ? "" : "no data on this TF")
+    f_brA(9, "15M", htf15mAvailable ? f_brS(htf15mBull, htf15mBear) : na, htf15mAvailable ? "" : "no data on this TF")
+    f_brA(10, "1H", htf1hAvailable ? f_brS(htf1hBull, htf1hBear) : na, htf1hAvailable ? "" : "no data on this TF")
+    f_brA(11, "4H", htf4hAvailable ? f_brS(htf4hBull, htf4hBear) : na, htf4hAvailable ? "" : "no data on this TF")
+    f_brA(12, "1D", htf1dAvailable ? f_brS(htf1dScore >= 60, htf1dScore <= 40) : na, htf1dAvailable ? "" : "no data on this TF")
     f_brA(13, "CVD", f_brS(cvdBull, cvdEma20 < cvdEma100), "volume delta")
     f_brA(14, "DISPL", f_brS(displacementUp, displacementDown), "displacement")
     f_brA(15, "RSI DIV", f_brS(bullRsiDiv, bearRsiDiv), "divergence")

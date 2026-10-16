@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v54   (arrow rows coloured)          ║
+// ║  BUILD STAMP — this file last CHANGED in v61   (no NaN; labels)               ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5600,7 +5600,9 @@ string dgEvid = showStatsEngine ? "A" + str.tostring(oMatch) + (oMatch < 30 ? "!
 string dgAnl = showStatsEngine and oMatch >= 30 ? (not na(oPdh1stPct) ? "  PDH1st" + str.tostring(oPdh1stPct) + "/PDL" + str.tostring(oPdl1stPct) + "%" : "") + (not na(oMaxAdverseATR) ? " MAE" + str.tostring(oMaxAdverseATR, "#.#") + "R" : "") + " BOScont" + str.tostring(int(oBosCont)) + "/fail" + str.tostring(int(oBosFail)) + "%" : ""
 string dgCal = (showStatsEngine and oCalDetail != "" ? "  Cal " + oCalDetail : "") + (showStatsEngine and __cg != "N/A" ? "  Cal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : "")
 string dgIsOos = showStatsEngine and __in >= 10 and oOosN >= 10 ? "  IS" + str.tostring(int(__iw)) + "%/ROLL" + str.tostring(int(oOosWr)) + "%" + (__iw - oOosWr > 15 ? "!FIT" : "") : ""
-string dgFeatW = showStatsEngine and oMatch >= 30 ? "  edge S/H/L/M/C " + str.tostring(int(__fs)) + "/" + str.tostring(int(__fh)) + "/" + str.tostring(int(__fl)) + "/" + str.tostring(int(__fm)) + "/" + str.tostring(int(__fc)) : ""
+// v61 (F-A59): "—" for a feature with no resolved analogs yet, never "NaN"
+f_dgI(float x) => na(x) ? "—" : str.tostring(int(x))
+string dgFeatW = showStatsEngine and oMatch >= 30 ? "  edge S/H/L/M/C " + f_dgI(__fs) + "/" + f_dgI(__fh) + "/" + f_dgI(__fl) + "/" + f_dgI(__fm) + "/" + f_dgI(__fc) : ""
 string evidLine = dgEvid + dgAnl + dgCal + dgIsOos + dgFeatW
 
 // ---- PANEL -----------------------------------------------------------------------------
@@ -5610,7 +5612,7 @@ _dRow(int _r, string _k, string _v, color _c) =>
     table.cell(tDiag, 1, _r, _v, text_color=_c, text_size=dgTs, text_halign=text.align_left)
 if barstate.islast
     color _cT = color.new(#E6EDF3, 0)
-    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  v44 " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
+    table.cell(tDiag, 0, 0, "QUANTUM DIAGNOSTICS  " + QVERSION + "  B" + str.tostring(SCHEMA_BUILD), text_color=color.white, bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     table.cell(tDiag, 1, 0, "ROLL, NOT A HOLDOUT — VALIDITY: NOT ESTABLISHED", text_color=color.new(#FFB020, 0), bgcolor=color.new(#1F3A5F, 0), text_size=size.tiny)
     _dRow(1, "Forecast cone", dgConeStatus, array.get(dgBreach, 0) ? cBloomBull : array.get(dgBreach, 1) ? cBloomBear : _cT) // v54: breach ↑ green / ↓ red
     _dRow(2, "V1/V2 shadow", shadowLine, _cT)
@@ -5623,7 +5625,7 @@ if barstate.islast
     _dRow(12, "Gate funnel", funnel1, _cT)
     _dRow(13, "Vetoes (of signals)", funnel2, _cT)
     if not dgCompact
-        _dRow(15, "Decision log", xDecision, _cT)
+        _dRow(15, "Decision log (control set)", xDecision, _cT) // v61: the twin's log scores the control arm's filter set (F-A03); the Master shows the real 7 gates
         _dRow(16, "Signal / conf / cal", xSignal, _cT)
         _dRow(17, "Macro feeds", xMacro, _cT)
         _dRow(18, "Structure stats", xStruct, _cT)

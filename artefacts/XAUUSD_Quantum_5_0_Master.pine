@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v60   (Mobile Strip top band)        ║
+// ║  BUILD STAMP — this file last CHANGED in v61   (no NaN; analog lines fit)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5250,7 +5250,8 @@ _ud(bool u, bool d) => u ? "▲" : d ? "▼" : "·"
 _b1(bool b) => b ? 1 : 0
 _v(bool u, bool d) => u ? 1 : d ? -1 : 0
 // v59: str.tostring(int(x)), written out 12 times in the display layer -- same text
-_si(float x) => str.tostring(int(x))
+// v61 (F-A59): "—" for no data, never "NaN"
+_si(float x) => na(x) ? "—" : str.tostring(int(x))
 f_dashData1() =>
     // ── [SHARED DATA] ──────────────────────────────────────────────
     string _tfLabel = timeframe.period
@@ -5636,7 +5637,7 @@ f_dashRender() =>
         tc(1, 2, _biasLine, _biasCol, _seSize, _w1) // v53: C/S/I arrows take the BIAS colour (was grey)
         // v59: the analog structure evidence, calibration grade / Brier, in-sample WR and the per-feature edges -- all
         // computed by the Master's stats engine and previously shown only in Diagnostics (twin engine) -- wired here
-        string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel + (na(oPdh1stPct) ? "" : "\nPDH1st " + str.tostring(oPdh1stPct) + "/" + str.tostring(oPdl1stPct) + "% BOS " + str.tostring(oBosCont, "#") + "/" + str.tostring(oBosFail, "#") + "% MAE " + str.tostring(oMaxAdverseATR, "#.#") + " " + oCalDetail) + (__cg != "N/A" ? "\nCal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : "") + (__in >= 10 ? " IS" + _si(__iw) + "% n" + _si(__in) : "") + (oMatch >= 30 ? "\nedge S/H/L/M/C " + _si(__fs) + "/" + _si(__fh) + "/" + _si(__fl) + "/" + _si(__fm) + "/" + _si(__fc) : "")
+        string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel + (na(oPdh1stPct) ? "" : "\nH/L 1st " + str.tostring(oPdh1stPct) + "/" + str.tostring(oPdl1stPct) + " · BOS " + str.tostring(oBosCont, "#") + "/" + str.tostring(oBosFail, "#") + "%\nMAE " + str.tostring(oMaxAdverseATR, "#.#") + " · " + oCalDetail) + (__cg != "N/A" ? "\nCal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : "") + (__in >= 10 ? " IS" + _si(__iw) + "% n" + _si(__in) + (__iw - oOosWr > 15 ? " !FIT" : "") : "") + (oMatch >= 30 ? "\nedge S/H/L/M/C " + _si(__fs) + "/" + _si(__fh) + "/" + _si(__fl) + "/" + _si(__fm) + "/" + _si(__fc) : "")
         tc(2, 2, _evConf, _evCol, _seSize, _w2)
         tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)
         // R5.1: per-target reach scores wired — the suffix now shows the reach score of the

@@ -88,7 +88,7 @@ for _ in range(4000):
     e = P.Env(funcs=env.funcs, x=x, u=u, d=d, liqDestLabel=rng.choice(["PDH", "PDL", "PWH", "PWL", "PMH", "PML", "EQH", "EQL", "—"]),
               a1=1.0, a2=2.0, a3=3.0, a4=4.0, a5=5.0, a6=6.0, a7=7.0, a8=NA)
     env["liqDestLabel"] = e["liqDestLabel"]
-    pairs = [("str.tostring(int(x))", "_si(x)"), ('(x >= 0 ? "+" : "") + str.tostring(x, "#.##")', '_sg(x, "#.##")'),
+    pairs = [('na(x) ? "—" : str.tostring(int(x))', "_si(x)"),   # v61 F-A59: intentional, "—" instead of "NaN" ('(x >= 0 ? "+" : "") + str.tostring(x, "#.##")', '_sg(x, "#.##")'),
              ("(u ? 1 : 0)", "_b1(u)"), ("(u ? 1 : d ? -1 : 0)", "_v(u, d)"), ('(u ? "▲" : d ? "▼" : "·")', "_ud(u, d)"),
              ('liqDestLabel == "PDH" ? a1 : liqDestLabel == "PDL" ? a2 : liqDestLabel == "PWH" ? a3 : liqDestLabel == "PWL" ? a4 : liqDestLabel == "PMH" ? a5 : liqDestLabel == "PML" ? a6 : liqDestLabel == "EQH" ? a7 : liqDestLabel == "EQL" ? a8 : na',
               "_byDest(a1, a2, a3, a4, a5, a6, a7, a8)")]

@@ -1996,3 +1996,37 @@ the candles are visible".
   - `color.new(#rrggbb, 0)` becomes `#rrggbb` (8 places, identical opaque colours).
 - **Master:** 39,037 lexical tokens (2.08% under the limit). 0 dead, 0 structural, 0 values computed unseen.
 - Compile NOT RUN on v60.
+
+# Build v60 → v61 — review of the v60 chart run (F-A59)
+
+The operator's 4H screenshots (2026-10-16) show v60 compiling: Master, Brief, Diagnostics, Visuals.
+
+- **Cross-checked and consistent across scripts:**
+  - the gates (Master "▲6/7 [✗Trend]" = Brief GATES);
+  - the rolling WR (Master WR 16% / ROLL 17% = Diagnostics);
+  - the levels (PDH 4177.46, PML 4110 = Visuals);
+  - the gate funnel and vetoes (Diagnostics);
+  - L/S/R (Master 39/33/26 vs Brief 40/34/26: the known F-A56 lag);
+  - the H2 cell and the header widths.
+- **Fixed (F-A59):**
+  - "NaN" edges become "—" (Master `_si`, Diagnostics `f_dgI`).
+  - The Master's analog lines are re-flowed to fit the SIGNAL column: "H/L 1st · BOS", then "MAE · calibration
+    detail", then "Cal / Brier · IS WR n !FIT", then "edge S/H/L/M/C".
+  - The Master shows the overfit flag **!FIT** (in-sample WR more than rolling + 15, the same rule as Diagnostics). On
+    this chart it fires: IS 38% vs ROLL 17%.
+  - Diagnostics: the header no longer says "v44"; the row "Decision log (control set)" is labelled as the twin's
+    control-arm filter log.
+  - Brief:
+    - a crossed trigger reads "price through it: fires if this bar closes here";
+    - layers with no data on the chart's timeframe read "— no data on this TF";
+    - "1 bar ago";
+    - TP2 is shown only when it differs from TP1;
+    - the GOLD ARROWS grid defaults to Bottom Left.
+- **Reviewed, not a bug:** "Macro BULL 82" while every macro arrow is ≈.
+  - The score is the direction consensus: DXY falling, EURUSD and silver rising, the rest flat, weighted by |r| and
+    normalised.
+  - The arrows show the IMPACT magnitude, ≈ when |r| <= 0.25.
+  - With weak correlations the macro case is unanimous but weakly coupled to gold today; the macro confidence (MED)
+    carries that.
+- **Tokens:** Master 39,056 lexical (2.02% under the limit); Brief 38,732; Diagnostics 39,652.
+- Compile NOT RUN on v61.
