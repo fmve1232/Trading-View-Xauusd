@@ -117,6 +117,70 @@ def gate_sides(L: dict, F: dict, i: int) -> dict | None:
     return {**sides, "logged": side} if sides[side] == logged else None
 
 
+HTF_SEC = {"5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400}
+
+
+def gold_arrows(L: dict, F: dict, i: int, tf_sec: int) -> list[dict]:
+    """The Pine v53-v73 GOLD ARROWS grid (Brief `f_brGrid`), display only: each indicator's state as what it means FOR
+    GOLD. d > 0 supports gold up (2 = strong), d < 0 down, 0 neutral, None no data. Macro cells are the impact on gold,
+    scaled by |avg corr| (> 0.5 strong, > 0.25 moderate, else neutral), as the Master's arrows (F-A54)."""
+    def s(up, dn):
+        return 1 if up else -1 if dn else 0
+
+    def mag(valid, up, dn, r):
+        if not valid:
+            return None
+        r = abs(float(r)) if r is not None and math.isfinite(float(r)) else 0.0
+        return s(up, dn) * (2 if r > 0.5 else 1 if r > 0.25 else 0)
+
+    def mv(valid, rise, fall):
+        return "no data" if not valid else "rising" if rise else "falling" if fall else "flat"
+
+    ev, st, fl, mt = L.get("evidence") or {}, L.get("struct") or {}, L.get("flow") or {}, L.get("mtf") or {}
+    c = float(F["c"][i]); b, br = float(L["bull_score"]), float(L["bear_score"])
+    e200, vw = float(F["ema200"][i]), float(F["vwap"][i])
+    vah, val = fl.get("vah"), fl.get("val")
+    g = lambda k: bool(F[k][i])                                                       # noqa: E731
+    ac = lambda k: F["avg_corr"][k][i]                                                 # noqa: E731
+    cells = [
+        ("TREND", s(ev.get("bull_trend"), ev.get("bear_trend")), "engine trend gate"),
+        ("STRUCT", s(st.get("bull_act"), st.get("bear_act")),
+         st.get("bull_type") if st.get("bull_act") else st.get("bear_type") if st.get("bear_act") else "none active"),
+        ("BIAS", 0 if abs(b - br) < 5 else s(b > br, br > b), f"L {b:.0f} / S {br:.0f}"),
+        ("LIQ", s(ev.get("liq_bull", 0) > ev.get("liq_bear", 0) + 3, ev.get("liq_bear", 0) > ev.get("liq_bull", 0) + 3), "liquidity draw"),
+        ("EMA200", s(c > e200, c < e200), "price above" if c > e200 else "price below"),
+        ("VWAP", s(c > vw, c < vw), "price above" if c > vw else "price below"),
+        ("VALUE", s(vah is not None and c > vah, val is not None and c < val),
+         "above VAH" if vah is not None and c > vah else "below VAL" if val is not None and c < val else "inside value"),
+        ("MTF", s(mt.get("conf_score", 0) > 20, mt.get("conf_score", 0) < -20), f"confluence {mt.get('conf_score', 0)}"),
+    ]
+    for k, nm in (("5", "5M"), ("15", "15M"), ("60", "1H"), ("240", "4H"), ("D", "1D")):
+        live = tf_sec < HTF_SEC[k]                                                      # F-A63: a layer votes only above the chart
+        cells.append((nm, s(bool(F["htf_bull"][k][i]), bool(F["htf_bear"][k][i])) if live else None,
+                      f"score {F['htf_scores'][k][i]:.0f}" if live else "no data on this TF"))
+    cells += [
+        ("CVD", s(fl.get("cvd_bull"), ev.get("cvd_bear")), "volume delta"),
+        ("DISPL", s(st.get("disp_up"), st.get("disp_dn")), "displacement"),
+        # the engine sets both flags True when its RSI-divergence filter is off (the default): that is no divergence
+        ("RSI DIV", s(ev.get("rsi_div_bull"), ev.get("rsi_div_bear")) if ev.get("rsi_div_filter") else None,
+         "divergence" if ev.get("rsi_div_filter") else "filter off (engine default)"),
+        ("DXY", mag(g("dxy_valid"), g("dxy_bear"), g("dxy_bull"), ac("DXY")), "dollar " + mv(g("dxy_valid"), g("dxy_bull"), g("dxy_bear"))),
+        ("10Y", mag(g("yld_valid"), g("yld_falling"), g("yld_rising"), ac("Yld")), "yields " + mv(g("yld_valid"), g("yld_rising"), g("yld_falling"))),
+        ("TIPS", mag(g("tips_valid"), g("tips_falling"), g("tips_rising"), ac("TIPS")),
+         ("real yield " + mv(g("tips_valid"), g("tips_rising"), g("tips_falling"))) if F.get("tips_on", True) else "off: same feed as 10Y"),
+        ("EUR", mag(g("eur_valid"), g("eur_bull"), g("eur_bear"), ac("EUR")),
+         "EURUSD " + mv(g("eur_valid"), g("eur_bull"), g("eur_bear")) + (" · confirms DXY" if g("dxy_valid") else " · USD vote")),
+        ("XAG", mag(g("slv_valid"), g("slv_bull"), g("slv_bear"), ac("Slv")), "silver " + mv(g("slv_valid"), g("slv_bull"), g("slv_bear"))),
+        ("SPX", s(g("spx_bull"), g("spx_bear")) if g("spx_valid") else None, "stocks " + mv(g("spx_valid"), g("spx_bull"), g("spx_bear"))),
+        ("MACRO", s(F["macro_strength"][i] >= 15, F["macro_strength"][i] <= -15), f"score {F['macro_strength'][i]:.0f}"),
+    ]
+    out = [{"name": n_, "d": d, "text": t} for n_, d, t in cells]
+    cu, cd = bool(fl.get("climax_up")), bool(fl.get("climax_dn"))   # exhaustion either way: amber, not a side
+    out.append({"name": "CLIMAX", "d": None, "amber": cu or cd, "glyph": "▲" if cu else "▼" if cd else "·",
+                "text": "exhaustion risk" if cu or cd else "none"})
+    return out
+
+
 def _isnan(x):
     return x is None or (isinstance(x, float) and math.isnan(x))
 
@@ -328,7 +392,7 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "SPX": macro_row("SPX", "spx", F["spx_bull"], F["spx_bear"]),
         "EURUSD": macro_row("EUR", "eur", F["eur_bull"], F["eur_bear"]),
         "TIPS": macro_row("TIPS", "tips", F["tips_falling"], F["tips_rising"]),
-        "tips_source": cfg.tips_source,
+        "tips_source": cfg.tips_source, "tips_on": bool(F.get("tips_on", True)),
         "dxy_rsi": _f(F["dxy_rsi"][i], 1),
         "curve_2s10s": _f(F["curve_2s10s"][i], 3), "curve_steepening": bool(F["curve_steep"][i]),
         "vix": _f(F["vix"][i], 2),
@@ -429,7 +493,7 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "holdout": {k: man.get(k) for k in ("freeze_key", "config_hash", "engine_code_hash", "engine_version", "freeze_utc", "status", "history")},
         "chart": chart, "markers": markers, "zones": zones, "sr": sr_scanner(F), "decisions": decisions, "cone": cone,
         "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks,
-                      "gate_sides": gate_sides(L, F, n - 1)},
+                      "gate_sides": gate_sides(L, F, n - 1), "gold_arrows": gold_arrows(L, F, n - 1, market.tf_sec)},
         "analog": {**A, "scan": L["analog_scan"], "hit_prob": L["hit_prob"], "hit_n": L["hit_n"],
                    "race_prob": L["race_prob"], "race_n": L["race_n"], "reliability": rel, "base_rate": _f(cr[15], 1),
                    "wr_ci": _f(diag_wr_ci, 1), "oos_ci": _f(diag_oos_ci, 1), "cal_q": L["cal_q"]},

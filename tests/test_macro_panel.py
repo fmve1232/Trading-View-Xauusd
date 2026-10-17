@@ -50,9 +50,17 @@ def test_build_reports_each_instrument_and_never_raises(tmp_path):
         if sym == "CL=F":
             raise OSError("blocked")
         return _frame(100 + np.cumsum(np.random.default_rng(len(sym)).normal(0, 0.1, 300)))
-    out = macro_panel.build(str(chart), fetch=fetch)
+    def fred(sid):
+        if sid == "T10YIE":
+            raise OSError("fred down")
+        idx = pd.date_range("2026-06-01", periods=80, freq="B", tz="UTC")
+        return pd.Series(1.8 + np.arange(80) * 0.01, index=idx)                   # steadily rising
+    out = macro_panel.build(str(chart), fetch=fetch, fetch_daily=fred)
     keys = {it["key"]: it for it in out["items"]}
-    assert set(keys) == {"DXY", "EURUSD", "JPYUSD", "US10Y", "WTI", "BTC"}
+    assert set(keys) == {"DXY", "EURUSD", "JPYUSD", "US10Y", "WTI", "BTC", "REALYLD", "BREAKEVEN", "US2Y"}
+    ry = keys["REALYLD"]
+    assert ry["ok"] and ry["daily"] and ry["trend"] == 1 and ry["gold"] == -1 and ry["corr"] is None   # real yield rising: gold down
+    assert keys["US2Y"]["gold"] == -1 and not keys["BREAKEVEN"]["ok"] and "fred down" in keys["BREAKEVEN"]["note"]
     assert not keys["WTI"]["ok"] and "blocked" in keys["WTI"]["note"]
     d = keys["DXY"]
     assert d["ok"] and len(d["spark"]["v"]) == 192 and len(d["spark"]["gold"]) == 192 and d["gold"] in (-1, 0, 1)

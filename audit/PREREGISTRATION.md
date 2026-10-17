@@ -468,3 +468,67 @@ displays is the one `arm_h4.py` publishes for the last closed bar, so what is sh
 timeframes are reported only. After N ≥ 50 closed trades, H4 shows an edge only if the 95% t-interval of mean R
 is above 0 and PF ≥ 1.2; decide by 2027-03-31, otherwise NOT SHOWN. **Multiplicity:** H4 is a sixth hypothesis
 on the same market and period; each arm is reported on its own terms and none borrows another's evidence.
+
+## Amendment 9 (2026-10-17, operator decision; written before any code below was changed or run)
+
+**Why.** The operator asked that every improvement of the TradingView line up to its current build (v73; files on
+branch `claude/xauusd-developed-files-tmnk9g`, reference copy and hashes in `reference/pine-v73/`) be brought to the
+website. Amendment 6 still holds: only the website's records count; the Pine line's scorecards are not evidence.
+Of the Pine builds v51–v73, two engine fixes also apply to the website. The operator chose (17 Oct, in chat): port
+both and restart the forward test. Every other item is display only (§3).
+
+**1. F-A64 (Pine v64): macro correlations over the same period.** Each macro series is read as `close[1]` of its
+last bar before the chart bar's close (D-01 alignment, no look-ahead), but the engine correlated those returns with
+gold's return over the *current* bar: gold now against the asset one bar earlier. Measured on the website's own
+store (17 Oct, 1H, median |r| over the last 1,500 bars; the fix is chosen by the defect, not by these numbers):
+silver 0.09 instead of 0.83, EURUSD 0.09 instead of 0.50, DXY 0.09 instead of 0.53. These correlations set the
+macro weights, the correlation health (half of macro confidence) and the stability.
+- Chart-timeframe assets (silver, EURUSD, SPX): correlated with gold's previous-bar return, `gold_ret[i−1]`, the
+  period their `close[1]` return spans.
+- Macro-timeframe assets (DXY, US10Y, TIPS; 1H): correlated with gold read exactly as they are, the gold 1H series
+  through the same alignment (`close[1]` of the last 1H bar before the chart bar's close). Windows are counted in
+  1H bars: length × k, k = max(1, ⌊3600 / chart seconds⌋), so a 1H series on a 15m chart keeps the sample its
+  significance threshold assumes; a window over 4,500 chart bars reads as no data.
+- Nothing reads an unfinished bar; the Bonferroni thresholds, windows (30 / 60 / 120), caps and signs are unchanged.
+
+**2. F-A65 (Pine v65): each macro factor counted once.**
+- **Dollar:** EURUSD is 57.6% of DXY. EURUSD votes, weighs (by its |corr|, cap 30, instead of a fixed 20) and adds
+  its ±5 momentum term only when DXY has no data. The score term is gated as well, so the fallback weights cannot
+  count the dollar twice.
+- **TIPS:** off while its source is the 10Y yield itself (`tips_source = "us10y"`, the default). It is on only for
+  its own feed (`fred_dfii10`).
+- **Majority:** pool = 4 (USD, 10Y, SPX, silver) + TIPS when on + GC when valid; need = ⌈pool / 2⌉ (the existing
+  rule over independent factors). Confidence availability = valid feeds / (5 + TIPS on).
+- Not changed: vote directions, thresholds, the caps of DXY / 10Y / silver / SPX, the DXY and 10Y momentum terms.
+
+**Effect on the records.** `features.py` is in the engine key, so the §7 key and every arm key that contains it
+(H2, H3, H4) change; all restart at the first pipeline run of the new code. At this decision (ledger
+`forward-ledger` @ `a48c4653`, 2026-10-17 01:00 UTC; no open positions) the records that move to the archive are
+(closed trades / wins / total R):
+
+| Arm | 1H | 4H | 15m | 5m |
+|---|---|---|---|---|
+| Treatment | 0 | 0 | 0 | 2 / 0 / −2.256R |
+| Control | 0 | 0 | 0 | 0 |
+| Challenger | 0 | 0 | 0 | 2 / 0 / −2.256R |
+| H2 | 0 | 1 / 0 / −1.024R | 0 | 2 / 0 / −2.216R |
+| H3 | 1 / 0 / −1.054R | 0 | 3 / 1 / +0.518R | 3 / 0 / −3.920R |
+| H4 | 13 / 4 / −3.410R | 9 / 2 / −0.420R | **72 / 21 / −8.767R** | 232 / 80 / −36.971R |
+
+**H4 interim reading, recorded before the restart.** H4's deciding record (15m, Amendment 8) passed N ≥ 50 on
+2026-10-15 (50th closed trade exit 22:15 UTC). At this decision: N = 72, mean −0.122R, 95% t-interval
+[−0.318, +0.075], PF 0.681. Under Amendment 8's rule that is **no edge shown**. This reading stays with the
+archived trades and is reported beside H4's final result; the restart does not erase it.
+
+The Amendment 4 rule applies: the final report lists every archived trade of every earlier freeze next to the
+counted result. Decision rules and the decision date (2027-03-31) are unchanged.
+
+**3. Display only (outside the freeze key; no record restarts for these).** Ported from v51–v73 where the website
+lacked them: every indicator arrow coloured by what it means for gold, flat or weakly correlated (|r| ≤ 0.25) shown
+as ≈ (F-A54), as a "gold arrows" grid; the five further gold drivers USDJPY, oil, real 10Y yield, 10Y breakeven and
+US 2Y (v65; the website already shows USDJPY and oil); the in-sample overfit flag !FIT (in-sample win rate more than
+rolling + 15, v61); "price through it: fires if this bar closes here" for a crossed playbook trigger (v61); MTF
+layers that cannot vote on the chart's timeframe shown as "—" (F-A63); the engine's liquidity destination as
+"liquidity draw", distinct from the nearest-level target (v57); ADX with DI+ / DI− (v67); a vetoed bar names its
+block (F-A55). Already on the website: F-A62 (London DST from the IANA database, D-02), F-A60 (the website's H3
+reads raw HTF scores), F-A55's DO NOW rule, the Market Brief (v52 was ported from the website).

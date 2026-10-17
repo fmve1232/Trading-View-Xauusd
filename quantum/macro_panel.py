@@ -1,4 +1,5 @@
-"""Macro panel for the site: DXY, EUR/USD, JPY/USD, the US 10-year yield, WTI oil and Bitcoin beside gold.
+"""Macro panel for the site: DXY, EUR/USD, JPY/USD, the US 10-year yield, WTI oil and Bitcoin beside gold, plus the
+daily real 10Y yield, 10Y breakeven and US 2Y yield (FRED).
 DISPLAY ONLY: outside `holdout.ENGINE_SOURCES`; the engine never reads `site/data/macro_panel.json`.
 
 For each instrument: the last price, the 24-hour change, a 15-minute sparkline (last 2 days), the
@@ -32,6 +33,14 @@ INSTRUMENTS = [   # key, label, Yahoo symbol, textbook sign of its move for gold
     ("WTI", "WTI crude oil", "CL=F", +1, "$", 2),
     ("BTC", "Bitcoin", "BTC-USD", 0, "$", 0),         # no established relation with gold: measured r only
 ]
+# Pine v65 "five gold drivers" (Amendment 9 section 3): the three DAILY ones, from FRED (no key). Direction as Pine reads
+# them: the last observation vs its EMA10 / EMA20 ("rising" = last > EMA10 > EMA20); no intraday correlation.
+DAILY = [   # key, label, FRED id, textbook sign of a RISE for gold, unit, decimals
+    ("REALYLD", "Real 10Y yield", "DFII10", -1, "%", 2),
+    ("BREAKEVEN", "10Y breakeven", "T10YIE", +1, "%", 2),
+    ("US2Y", "US 2Y yield", "DGS2", -1, "%", 2),
+]
+DAILY_SPARK = 60          # observations (about 3 months)
 SPARK_BARS = 192          # 2 days of 15-minute bars
 CORR_BARS = 96            # 1 day of 15-minute returns
 CORR_CLEAR = 0.2
@@ -123,7 +132,31 @@ def live_bridge(df: pd.DataFrame, proxy: str, fetch) -> dict:
         return {"ok": False, "why": sources.redact(f"{type(e).__name__}: {e}")[:120]}
 
 
-def build(chart_path: str, fetch=sources.yahoo) -> dict:
+def ema(x: pd.Series, n: int) -> pd.Series:
+    return x.ewm(span=n, adjust=False).mean()
+
+
+def daily_item(key, label, sid, textbook, unit, dec, s: pd.Series | None, err: str = "") -> dict:
+    out = {"key": key, "label": label, "symbol": "FRED:" + sid, "unit": unit, "dec": dec, "textbook": textbook, "ok": False,
+           "daily": True, "note": err}
+    if s is None or len(s.dropna()) < 25:
+        out["note"] = out["note"] or "not enough observations"
+        return out
+    s = s.dropna().astype(float)
+    e10, e20 = ema(s, 10), ema(s, 20)
+    last, f10, f20 = float(s.iloc[-1]), float(e10.iloc[-1]), float(e20.iloc[-1])
+    trend = 1 if last > f10 > f20 else -1 if last < f10 < f20 else 0
+    ref = float(s.iloc[-2])
+    sp = s.tail(DAILY_SPARK)
+    out.update(ok=True, last=round(last, 4), t=int(s.index[-1].timestamp()), ref=round(ref, 4), change=round(last - ref, 4),
+               change_pct=round((last - ref) / ref * 100, 3) if ref else None, corr=None, corr_n=0, trend=trend,
+               ema10=round(f10, 4), ema20=round(f20, 4),
+               spark={"t": [int(x.timestamp()) for x in sp.index], "v": [round(float(v), 4) for v in sp.values], "gold": None},
+               gold=int(trend * textbook), basis="daily trend (last vs EMA10 / EMA20), textbook relation")
+    return out
+
+
+def build(chart_path: str, fetch=sources.yahoo, fetch_daily=sources.fred) -> dict:
     gold = _gold(chart_path)
     items = []
     for key, label, sym, tb, unit, dec in INSTRUMENTS:
@@ -135,6 +168,11 @@ def build(chart_path: str, fetch=sources.yahoo) -> dict:
             items.append(it)
         except Exception as e:  # noqa: BLE001 - reported per instrument
             items.append(item(key, label, sym, tb, unit, dec, None, gold, sources.redact(f"{type(e).__name__}: {e}")[:160]))
+    for key, label, sid, tb, unit, dec in DAILY:
+        try:
+            items.append(daily_item(key, label, sid, tb, unit, dec, fetch_daily(sid)))
+        except Exception as e:  # noqa: BLE001 - reported per instrument
+            items.append(daily_item(key, label, sid, tb, unit, dec, None, sources.redact(f"{type(e).__name__}: {e}")[:160]))
     return {"generated_ts": int(time.time()), "gold_bars": 0 if gold is None else int(len(gold)), "items": items,
             "note": "Display only. 15-minute bars from Yahoo; correlations of 15-minute returns with the engine's gold series over the last day."}
 
