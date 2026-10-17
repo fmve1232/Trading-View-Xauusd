@@ -533,16 +533,16 @@ function renderGoldArrows() {
       <div class="gs-cnt"><span class="bull">${r.up} up</span><span class="bear">${r.dn} down</span><span>${r.nt} neutral</span></div></div>`; };
   const dot = (x) => (x.amber ? '<span class="gs-tag amber">Exhaustion</span>' : x.d === null || x.d === undefined ? '<span class="gs-tag na">No data</span>'
     : x.d > 0 ? `<span class="gs-tag bull">Up${x.d >= 2 ? " · strong" : ""}</span>` : x.d < 0 ? `<span class="gs-tag bear">Down${x.d <= -2 ? " · strong" : ""}</span>` : '<span class="gs-tag">Neutral</span>');
-  const list = ["Trend & structure", "Momentum & flow", "Macro & drivers"].map((h, gi) => `<div class="gs-lg"><h4>${h}</h4>` +
+  const list = ["Trend & structure", "Momentum & flow", "Macro & drivers"].map((h, gi) => `<div class="gs-lg">${bar(h, rows.filter((x) => x.grp === gi))}` +
     rows.filter((x) => x.grp === gi).map((x) => `<div class="gs-li${x.drv ? " drv" : ""}"><span class="n">${esc(x.name)}</span><span class="t">${esc(x.t)}</span>${dot(x)}</div>`).join("") + `</div>`).join("");
-  let open = false; try { open = localStorage.getItem("gs-open") === "1"; } catch (e) { /* private mode */ }
-  el.innerHTML = `<div class="gs-top">
-      <div class="gs-overall">${gauge}<div class="gs-ol ${allC}">${allL}</div><div class="gs-os">${all.up} up · ${all.dn} down · ${all.nt} neutral</div></div>
-      <div class="gs-rows">${bar("Trend & structure", rows.filter((x) => x.grp === 0))}${bar("Momentum & flow", rows.filter((x) => x.grp === 1))}${bar("Macro & drivers", rows.filter((x) => x.grp === 2))}</div>
-    </div>
-    <details class="gs-more"${open ? " open" : ""}><summary>All ${rows.length} indicators</summary><div class="gs-list">${list}</div></details>
-    <div class="gs-note dim">Each indicator counts once, as up, down or neutral for gold. This is a summary of the evidence, not the model's decision. Indicators marked “context” are outside drivers, shown for context only.</div>`;
-  const det = el.querySelector(".gs-more"); det.addEventListener("toggle", () => { try { localStorage.setItem("gs-open", det.open ? "1" : "0"); } catch (e) { /* ignore */ } });
+  // only the gauge shows; the category bars and every indicator sit in one section that starts closed
+  // (S.gsOpen keeps it open across the page's own refreshes; a new visit starts closed)
+  el.innerHTML = `<div class="gs-top"><div class="gs-overall">${gauge}<div><div class="gs-ol ${allC}">${allL}</div><div class="gs-os">${all.up} up · ${all.dn} down · ${all.nt} neutral</div>
+      <div class="gs-os dim">${all.n} of ${rows.length} indicators have data here · a summary, not the model's decision</div></div></div></div>
+    <details class="gs-more"${S.gsOpen ? " open" : ""}><summary>Details: 3 categories · ${rows.length} indicators</summary>
+      <div class="gs-list">${list}</div>
+      <div class="gs-note dim">Each indicator counts once, as up, down or neutral for gold. Indicators marked “context” are outside drivers, shown for context only.</div></details>`;
+  const det = el.querySelector(".gs-more"); det.addEventListener("toggle", () => { S.gsOpen = det.open; });
 }
 function spark(it, gold) {
   const v = it.spark && it.spark.v; if (!v || v.length < 2) return "";
