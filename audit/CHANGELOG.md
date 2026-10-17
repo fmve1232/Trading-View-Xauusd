@@ -2160,3 +2160,55 @@ The operator asked for every macro factor to be checked, then for the best fix f
 - **Pre-registration:** A7, display only; nothing restarts. The website was not touched; whether its engine shares
   this construction was NOT checked from here.
 - Compile NOT RUN on v64.
+
+---
+
+# Build v64 → v65 — each macro factor counted once (F-A65); five more gold drivers in the Brief
+
+The operator approved options 1, 3 and 4 of the macro review. Option 1 (same-bar correlations) shipped in v64.
+
+**Option 3, each factor counted once (F-A65; engine: Master, three arms, Diagnostics, Brief).**
+- **USD:** DXY carries the dollar. EURUSD votes, weighs (by its |corr|, capped 30, instead of a fixed 20) and adds its
+  ±5 momentum only when DXY has no data.
+  - The score term is gated as well: with every |corr| at 0 the fallback weights still gave EURUSD 20, so the dollar
+    would have been counted twice again.
+  - `macro_check.py` C found this gap in the first pass (70 states) before the fix.
+- **TIPS:** the layer is off while its symbol equals the 10Y yield's (the default `TVC:US10Y`). The tooltip says why,
+  and that the daily `FRED:DFII10` belongs in the Brief, not in a 1H correlation.
+- **Majority:** `_macroPool` = 4 + TIPS-as-own-feed + GC-when-valid, and the need is ceil(pool / 2): the same rule
+  over independent factors. On the default settings that is 2 of 4 (3 of 5 with GC), where it was 3 of 6 (4 of 7).
+- **Confidence:** availability is over the same feeds.
+- **Diagnostics:** the V1 shadow uses the same majority.
+- **Not changed:** the vote directions, the thresholds, the weights' caps for DXY / 10Y / silver / SPX, the momentum
+  terms of DXY and the 10Y. Nothing was tuned.
+
+**Room:** the 36 correlation lines are now one `f_cc3` call per asset. Each call expands to exactly the v64 lines;
+`refactor_check.py` compares them with the v64 commit itself. Master 39,029 lexical (2.10% under the limit);
+Diagnostics 39,713 (0.38% under).
+
+**Option 4, five drivers in the Brief (display only: no vote, weight or gate; the DECISION is unchanged).**
+- Rows 7–8 of the GOLD ARROWS grid add five drivers, each read as the engine reads DXY (`close[1]`, EMA10 / EMA20,
+  lookahead_on):
+  - USDJPY (`OANDA:USDJPY`, rising = gold down);
+  - OIL (`OANDA:WTICOUSD`, rising = up);
+  - REAL YLD (`FRED:DFII10`, daily, rising = down);
+  - BREAKEVEN (`FRED:T10YIE`, daily, rising = up);
+  - US 2Y (the engine's `y2Symbol`, rising = down).
+- USDJPY and oil carry the same-bar correlation (v64 pairing), which scales the arrow as for DXY.
+- The daily series show their level and direction only.
+- Every symbol is an input, and a blank symbol is off.
+- `macro_check.py` D executes the five cells (54 cases).
+- The TIPS cell reads "off: same feed as 10Y"; the EUR cell says "confirms DXY" or "USD vote".
+- Brief 39,603 lexical (≈ 99,600 compiled, 0.65% under); 22 request call sites (26 at runtime, the Pine limit is 40).
+
+**Visible change:**
+- the macro score, its confidence and the macro verdict can differ from v64, and through them the evidence score, the
+  TQ and the DECISION;
+- the Brief grid grows by two rows.
+
+**Not verified here:** whether the free plan serves `OANDA:WTICOUSD`, `FRED:DFII10` and `FRED:T10YIE` (NOT RUN). An
+unavailable one shows "—" / "no data".
+
+**Pre-registration:** A7, display only; nothing restarts. The website was not touched.
+
+Compile NOT RUN on v65.

@@ -260,8 +260,8 @@ V63_SESS = ["sessionQuality = 0",
 a = L.index("float _numValid = 0.0")
 v64_stab = L[a:a + 8]
 assert v64_stab[-1].startswith("avgStability = _numValid > 0 ? ")
-conf = next(l for l in L if l.startswith("macroStrengthConf = int(math.round((_numValid / 6.0) * 30.0"))
-V64_CONF = "(_numValid / 6.0) * 30.0"
+conf = next(l for l in L if l.startswith("macroStrengthConf = int(math.round((_numValid / (5.0 + (_tipsOn ? 1 : 0))) * 30.0"))
+V64_CONF = "(_numValid / (5.0 + (_tipsOn ? 1 : 0))) * 30.0"     # v65 (F-A65): = v64's / 6.0 whenever TIPS is its own feed
 sess = ["sessionQuality = 0"] + [l for l in L if l.startswith("sessionQuality += inKillzone ? ") or
                                  l.startswith("sessionQuality += (not inAsian or inLondonKZ) ? ")]
 bad = n = 0
@@ -274,6 +274,7 @@ for _ in range(4000):
     for k in ("inKillzone", "inLondon", "inNY", "inAsian", "inLondonKZ"):
         e[k] = rng.random() < 0.5
     e["regimeStrength"] = rng.choice([0.0, 0.25, 0.5, 1.0])
+    e["_tipsOn"] = True
     o, w = P.Env(funcs=env.funcs, **e), P.Env(funcs=env.funcs, **e)
     P.run(V63_STAB + V63_SESS, o)
     P.run(v64_stab + sess, w)
@@ -283,6 +284,27 @@ for _ in range(4000):
     bad += o["sessionQuality"] != w["sessionQuality"]
 report("valid-feed count once (avgStability, macroStrengthConf availability) + session literals (v63 == v64)",
        bad if len(sess) == 3 and V64_CONF in conf else n, n)
+
+# ---- v65: the 36 correlation lines are one f_cc3 call per asset. Expanding each call through the function body
+# must give back exactly the v64 lines (read from the v64 commit 28dabac1, not retyped here).
+V64 = subprocess.run(["git", "show", "28dabac1:" + M], capture_output=True, text=True, check=True).stdout.split("\n")
+h = L.index(next(l for l in L if l.startswith("f_cc3(")))
+fbody = [l.strip() for l in L[h + 1:h + 5]]
+params = [x.split()[-1] for x in L[h][len("f_cc3("):L[h].index(")")].split(",")]
+ok = fbody == ["float x = ta.correlation(g, r, a)", "float y = ta.correlation(g, r, b)", "float z = ta.correlation(g, r, c)",
+               "[v and fa ? x : na, v and fb ? y : na, v and fc ? z : na]"]
+calls = [l for l in L if re.match(r"^\[corrGold\w+_30, corrGold\w+_60, corrGold\w+_120\] = f_cc3\(", l)]
+bad = 0
+for c in calls:
+    asset = re.match(r"^\[corrGold(\w+)_30", c).group(1)
+    args = dict(zip(params, P._split_args(c[c.index("f_cc3(") + 6:-1])))
+    for w, ln, fl in (("30", "a", "fa"), ("60", "b", "fb"), ("120", "c", "fc")):
+        cc = f"_ccGold{asset}_{w} = ta.correlation({args['g']}, {args['r']}, {args[ln]})"
+        gate = f"corrGold{asset}_{w} = {args['v']}{'' if args[fl] == 'true' else ' and ' + args[fl]} ? _ccGold{asset}_{w} : na"
+        bad += cc not in V64
+        bad += gate not in V64
+report("f_cc3 calls expand to exactly the v64 correlation and gating lines (36 lines, from commit 28dabac1)",
+       bad if ok and len(calls) == 6 else 36, 36)
 
 left = [i + 1 for i, l in enumerate(L) if re.search(r"array\.get\(gDash[SCF], \d+\)", l)]
 helpers = all(any(l.startswith(f"_g{c}(int i) => array.get(gDash{c}, i)") for l in L) for c in "SCF")

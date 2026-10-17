@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v64   (macro correlation timing)     ║
+// ║  BUILD STAMP — this file last CHANGED in v65   (macro factors counted once)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -526,7 +526,7 @@ cotExtreme = input.int(85, "  Crowding percentile", minval=60, maxval=99, group=
 y2Symbol = input.symbol("TVC:US02Y", "US 2Y Yield (blank=off)", group=grpV17, tooltip="With US10Y this gives the 2y10y curve spread — steepening favours gold, flattening pressures it. Context only, adds no macro vote.")
 eurusdSymbol = input.symbol("OANDA:EURUSD", "EURUSD Symbol", group=grpV17)
 spxSymbol = input.symbol("SP:SPX", "S&P 500 Symbol", group=grpV17)
-tipsSymbol = input.symbol("TVC:US10Y", "TIPS/Real-Yield Symbol (blank=off)", group=grpV17, tooltip="Q5.5: default changed from the unprefixed US10YTIPS (which errored on many feeds) to TVC:US10Y. For a true real-yield proxy use FRED:DFII10 if your plan has it, or blank this field to disable the feed. ignore_invalid_symbol protects the math regardless.")
+tipsSymbol = input.symbol("TVC:US10Y", "TIPS/Real-Yield Symbol (blank=off)", group=grpV17, tooltip="Q5.5: default changed from the unprefixed US10YTIPS (which errored on many feeds) to TVC:US10Y. v65: while it equals the Yield Symbol (the default) the TIPS layer is OFF, because it would count the 10Y twice. FRED:DFII10 (the real yield) is DAILY: the Brief shows it as daily context; here it would be correlated on 1H bars. Leave it equal to the Yield Symbol unless you have an intraday real-yield feed. ignore_invalid_symbol protects the math regardless.")
 
 grpV19c = "V19 CORRELATION"
 corrShortLen = input.int(30, "Corr Short Window", minval=10, maxval=50, group=grpV19c)
@@ -1097,7 +1097,9 @@ yieldValid = not na(yieldClose) and not na(_rawYieldFast) and not na(_rawYieldSl
 silverValid = not na(silverClose) and not na(_rawSilverEMA) and silverStaleCount < MACRO_STALE_MAX
 eurusdValid = not na(eurusdClose) and not na(_rawEURFast) and not na(_rawEURSlow) and eurusdStaleCount < MACRO_STALE_MAX
 spxValid = not na(spxClose) and not na(_rawSPXFast) and not na(_rawSPXSlow) and spxStaleCount < MACRO_STALE_MAX
-tipsValid = not na(tipsClose) and not na(_rawTIPSFast) and not na(_rawTIPSSlow) and tipsStaleCount < MACRO_STALE_MAX
+// v65 (F-A65): a TIPS symbol that IS the 10Y yield's (the default, Q5.5) counts the 10Y twice: the layer is off.
+bool _tipsOn = tipsSymbol != yieldSymbol
+tipsValid = _tipsOn and not na(tipsClose) and not na(_rawTIPSFast) and not na(_rawTIPSSlow) and tipsStaleCount < MACRO_STALE_MAX
 
 dxyEMAFast = _rawDXYFast
 dxyEMASlow = _rawDXYSlow
@@ -1242,8 +1244,10 @@ bool gcStrongBull = gcConfirmsBull and gcVolExp
 bool gcStrongBear = gcConfirmsBear and gcVolExp
 string gcState = gcFailWhy != "" ? "GC" + gcFailWhy : not gcValid ? "GC —" : gcDiverges ? "GC DIV" : gcStrongBull ? "GC ++" : gcStrongBear ? "GC --" : gcConfirmsBull ? "GC +" : gcConfirmsBear ? "GC -" : "GC ~"
 
-macroBullVotes = (gcConfirmsBull ? 1 : 0) + (dxyBear ? 1 : 0) + (yieldFalling ? 1 : 0) + (spxBull ? 1 : 0) + (eurusdBull ? 1 : 0) + (silverBull ? 1 : 0) + (tipsFalling ? 1 : 0)
-macroBearVotes = (gcConfirmsBear ? 1 : 0) + (dxyBull ? 1 : 0) + (yieldRising ? 1 : 0) + (spxBear ? 1 : 0) + (eurusdBear ? 1 : 0) + (silverBear ? 1 : 0) + (tipsRising ? 1 : 0)
+// v65 (F-A65): the dollar is ONE factor. EUR is 57.6% of DXY, so a DXY vote and a EURUSD vote were the same move
+// counted twice; EURUSD now votes only when DXY has no data.
+macroBullVotes = (gcConfirmsBull ? 1 : 0) + ((dxyValid ? dxyBear : eurusdBull) ? 1 : 0) + (yieldFalling ? 1 : 0) + (spxBull ? 1 : 0) + (silverBull ? 1 : 0) + (tipsFalling ? 1 : 0)
+macroBearVotes = (gcConfirmsBear ? 1 : 0) + ((dxyValid ? dxyBull : eurusdBear) ? 1 : 0) + (yieldRising ? 1 : 0) + (spxBear ? 1 : 0) + (silverBear ? 1 : 0) + (tipsRising ? 1 : 0)
 // THRESHOLD SCALED WITH THE VOTE POOL — this is a correctness detail, not tuning.
 // The macro gate was 3-of-6 (50%). Adding GC as a 7th source while leaving the threshold
 // at 3 would have made it 3-of-7 (43%) — a SILENT LOOSENING of a risk gate, and exactly
@@ -1262,7 +1266,8 @@ macroBearVotes = (gcConfirmsBear ? 1 : 0) + (dxyBull ? 1 : 0) + (yieldRising ? 1
 //   pool 6 -> 3 (50%)   pool 7 -> 4 (57%)   pool 8 -> 4 (50%)   pool 9 -> 5 (56%)
 // Verify by hand: math.ceil(6/2)=3 reproduces the original gate exactly, so with GC off
 // behaviour is bit-identical to the pre-GC build.
-int _macroPool = 6 + (gcValid ? 1 : 0)
+// v65: the factor slots: USD, 10Y, SPX, silver, TIPS when it is its own feed, GC when valid (majority rule unchanged)
+int _macroPool = 4 + (_tipsOn ? 1 : 0) + (gcValid ? 1 : 0)
 int _macroNeed = int(math.ceil(_macroPool / 2.0))
 macroBull = macroBullVotes >= _macroNeed
 macroBear = macroBearVotes >= _macroNeed
@@ -1306,42 +1311,19 @@ int _wL = math.min(corrLongLen * _kM, 4500)
 bool _fS = corrShortLen * _kM <= 4500
 bool _fM = corrMedLen * _kM <= 4500
 bool _fL = corrLongLen * _kM <= 4500
-_ccGoldDXY_30 = ta.correlation(goldRetM, dxyRet, _wS)
-_ccGoldDXY_60 = ta.correlation(goldRetM, dxyRet, _wM)
-_ccGoldDXY_120 = ta.correlation(goldRetM, dxyRet, _wL)
-_ccGoldYld_30 = ta.correlation(goldRetM, yieldRet, _wS)
-_ccGoldYld_60 = ta.correlation(goldRetM, yieldRet, _wM)
-_ccGoldYld_120 = ta.correlation(goldRetM, yieldRet, _wL)
-_ccGoldSlv_30 = ta.correlation(goldRetL, silverRet, corrShortLen)
-_ccGoldSlv_60 = ta.correlation(goldRetL, silverRet, corrMedLen)
-_ccGoldSlv_120 = ta.correlation(goldRetL, silverRet, corrLongLen)
-_ccGoldSPX_30 = ta.correlation(goldRetL, spxRet, corrShortLen)
-_ccGoldSPX_60 = ta.correlation(goldRetL, spxRet, corrMedLen)
-_ccGoldSPX_120 = ta.correlation(goldRetL, spxRet, corrLongLen)
-_ccGoldEUR_30 = ta.correlation(goldRetL, eurRet, corrShortLen)
-_ccGoldEUR_60 = ta.correlation(goldRetL, eurRet, corrMedLen)
-_ccGoldEUR_120 = ta.correlation(goldRetL, eurRet, corrLongLen)
-_ccGoldTIPS_30 = ta.correlation(goldRetM, tipsRet, _wS)
-_ccGoldTIPS_60 = ta.correlation(goldRetM, tipsRet, _wM)
-_ccGoldTIPS_120 = ta.correlation(goldRetM, tipsRet, _wL)
-corrGoldDXY_30 = dxyValid and _fS ? _ccGoldDXY_30 : na
-corrGoldDXY_60 = dxyValid and _fM ? _ccGoldDXY_60 : na
-corrGoldDXY_120 = dxyValid and _fL ? _ccGoldDXY_120 : na
-corrGoldYld_30 = yieldValid and _fS ? _ccGoldYld_30 : na
-corrGoldYld_60 = yieldValid and _fM ? _ccGoldYld_60 : na
-corrGoldYld_120 = yieldValid and _fL ? _ccGoldYld_120 : na
-corrGoldSlv_30 = silverValid ? _ccGoldSlv_30 : na
-corrGoldSlv_60 = silverValid ? _ccGoldSlv_60 : na
-corrGoldSlv_120 = silverValid ? _ccGoldSlv_120 : na
-corrGoldSPX_30 = spxValid ? _ccGoldSPX_30 : na
-corrGoldSPX_60 = spxValid ? _ccGoldSPX_60 : na
-corrGoldSPX_120 = spxValid ? _ccGoldSPX_120 : na
-corrGoldEUR_30 = eurusdValid ? _ccGoldEUR_30 : na
-corrGoldEUR_60 = eurusdValid ? _ccGoldEUR_60 : na
-corrGoldEUR_120 = eurusdValid ? _ccGoldEUR_120 : na
-corrGoldTIPS_30 = tipsValid and _fS ? _ccGoldTIPS_30 : na
-corrGoldTIPS_60 = tipsValid and _fM ? _ccGoldTIPS_60 : na
-corrGoldTIPS_120 = tipsValid and _fL ? _ccGoldTIPS_120 : na
+// v65: one function per asset, expanding to exactly the v64 lines (refactor_check.py): the three windows are computed
+// every bar and gated after, as before; a macroTF asset passes its macroTF-bar windows and fit flags (F-A64).
+f_cc3(float g, float r, bool v, int a, int b, int c, bool fa, bool fb, bool fc) =>
+    float x = ta.correlation(g, r, a)
+    float y = ta.correlation(g, r, b)
+    float z = ta.correlation(g, r, c)
+    [v and fa ? x : na, v and fb ? y : na, v and fc ? z : na]
+[corrGoldDXY_30, corrGoldDXY_60, corrGoldDXY_120] = f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)
+[corrGoldYld_30, corrGoldYld_60, corrGoldYld_120] = f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)
+[corrGoldSlv_30, corrGoldSlv_60, corrGoldSlv_120] = f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)
+[corrGoldSPX_30, corrGoldSPX_60, corrGoldSPX_120] = f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)
+[corrGoldEUR_30, corrGoldEUR_60, corrGoldEUR_120] = f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)
+[corrGoldTIPS_30, corrGoldTIPS_60, corrGoldTIPS_120] = f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)
 avgCorrDXY = (nz(corrGoldDXY_30) + nz(corrGoldDXY_60) + nz(corrGoldDXY_120)) / 3.0
 avgCorrYld = (nz(corrGoldYld_30) + nz(corrGoldYld_60) + nz(corrGoldYld_120)) / 3.0
 avgCorrSlv = (nz(corrGoldSlv_30) + nz(corrGoldSlv_60) + nz(corrGoldSlv_120)) / 3.0
@@ -1426,7 +1408,8 @@ _wDXYr = math.min(math.abs(avgCorrDXY) * 100, 30)
 _wYldr = math.min(math.abs(avgCorrYld) * 100, 30)
 _wSlvr = math.min(math.abs(avgCorrSlv) * 100, 25)
 _wSPXr = spxValid ? math.min(math.abs(avgCorrSPX) * 100, 15) : 0.0 // R5.1: adaptive by |corr| like the other assets (wires avgCorrSPX)
-_wEURr = eurusdValid ? 20.0 : 0.0
+// v65 (F-A65): EURUSD weighs only as the dollar's stand-in (DXY no data), by |corr| like DXY, not a fixed 20.
+_wEURr = eurusdValid and not dxyValid ? math.min(math.abs(avgCorrEUR) * 100, 30) : 0.0
 _wTIPSr = math.min(math.abs(avgCorrTIPS) * 100, 25)
 _wTot = _wDXYr + _wYldr + _wSlvr + _wSPXr + _wEURr + _wTIPSr
 wDXY = _wTot > 0 ? _wDXYr / _wTot * 100 : 30.0
@@ -1438,17 +1421,19 @@ wTIPS = _wTot > 0 ? _wTIPSr / _wTot * 100 : 10.0
 msDXY = dxyValid ? (dxyBear ? wDXY : dxyBull ? -wDXY : 0.0) : 0.0
 msYld = yieldValid ? (yieldFalling ? wYld : yieldRising ? -wYld : 0.0) : 0.0
 msSPX = spxValid ? (spxBull ? wSPX : spxBear ? -wSPX : 0.0) : 0.0
-msEUR = eurusdValid ? (eurusdBull ? wEUR : eurusdBear ? -wEUR : 0.0) : 0.0
+// v65 (F-A65): EURUSD scores only as the dollar's stand-in. Gated here, not only through _wEURr, because when every
+// |corr| is 0 the weights fall back to fixed defaults (EUR 20) and the dollar would again be counted twice.
+msEUR = eurusdValid and not dxyValid ? (eurusdBull ? wEUR : eurusdBear ? -wEUR : 0.0) : 0.0
 msSlv = silverValid ? (silverClose > silverEMA ? wSlv : silverClose < silverEMA ? -wSlv : 0.0) : 0.0
 msTIPS = tipsValid ? (tipsFalling ? wTIPS : tipsRising ? -wTIPS : 0.0) : 0.0
 msMom = dxyValid ? (dxyMomBear ? 10.0 : dxyMomBull ? -10.0 : 0.0) : 0.0
 // R5.1: rate/FX momentum wired into the macro score (yield ROC falling = gold-bullish;
 // EURUSD ROC rising = gold-bullish). Clamp below keeps the composite in [-100, 100].
-msRate = (yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 0.0) + (eurusdValid ? (eurusdROC > 0.15 ? 5.0 : eurusdROC < -0.15 ? -5.0 : 0.0) : 0.0)
+msRate = (yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 0.0) + (eurusdValid and not dxyValid ? (eurusdROC > 0.15 ? 5.0 : eurusdROC < -0.15 ? -5.0 : 0.0) : 0.0)
 macroStrengthScore = int(math.max(math.min(msDXY + msYld + msSPX + msEUR + msSlv + msTIPS + msMom + msRate, 100), -100))
 // Confidence = data availability (30%) + correlation health (50%) + score stability (20%)
 float _macroStDev = nz(ta.stdev(macroStrengthScore, 20), 50.0)
-macroStrengthConf = int(math.round((_numValid / 6.0) * 30.0 + avgCorrHealth * 0.50 + (1.0 - math.min(_macroStDev / 100.0, 1.0)) * 20.0))
+macroStrengthConf = int(math.round((_numValid / (5.0 + (_tipsOn ? 1 : 0))) * 30.0 + avgCorrHealth * 0.50 + (1.0 - math.min(_macroStDev / 100.0, 1.0)) * 20.0))
 // macroStrengthScore is an ordinal composite (−100 to +100), NOT a probability.
 
 // WEIGHTED TREND ENGINE

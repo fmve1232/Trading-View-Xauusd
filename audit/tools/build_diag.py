@@ -21,7 +21,7 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v64   (macro correlation timing)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v65   (macro factors counted once)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '
@@ -96,8 +96,10 @@ if dgShowCone and not dgClean and not dgPro
 // rounding and 70/40 categorisation (thresholded on the RAW float, as F-021 requires).
 int _mbvV1 = macroBullVotes - (gcConfirmsBull ? 1 : 0)
 int _mbrV1 = macroBearVotes - (gcConfirmsBear ? 1 : 0)
-bool _macroBullV1 = _mbvV1 >= 3
-bool _macroBearV1 = _mbrV1 >= 3
+// v65 (F-A65): the majority of the engine's non-GC factor slots (was the fixed 3 of the six double-counted slots)
+int _needV1 = int(math.ceil((4 + (_tipsOn ? 1 : 0)) / 2.0))
+bool _macroBullV1 = _mbvV1 >= _needV1
+bool _macroBearV1 = _mbrV1 >= _needV1
 int _macroRegimeV1 = (_macroBullV1 or _macroBearV1) ? 100 : (_mbvV1 >= 2 or _mbrV1 >= 2) ? 60 : 30
 float regimeCompositeRawV1 = (regimeScore * 0.30) + (volRegime * 0.15) + (structureRegime * 0.20) + (_macroRegimeV1 * 0.20) + (sessionRegime * 0.15)
 int regimeCompositeV1 = int(math.round(regimeCompositeRawV1))
