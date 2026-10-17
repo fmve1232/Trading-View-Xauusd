@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v70   (gold drivers, leaner)         ║
+// ║  BUILD STAMP — this file last CHANGED in v73   (one terminal panel)           ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -118,6 +118,14 @@ zoneFlatCol  = input.bool(true,  "Spec colors (OB brown / FVG orange)", group = 
 grpC = "Candle Info Panel"
 showCandle   = input.bool(true,  "Show candle info panel",  group = grpC)
 candlePos    = input.string("Top Right", "Panel position", options = ["Top Right", "Middle Right", "Bottom Right", "Top Left"], group = grpC)
+// v73: ONE terminal panel (candle + H2 + gold drivers, one style) is the default; the three separate v72 cards stay
+// selectable. The panel's sections follow the cards' own switches: Show candle info panel, Show H2 signals and card,
+// Gold drivers panel = Hidden; the H2 card layout "Full" adds the session rows and its text size sets the panel's.
+grpTm = "TERMINAL PANEL (v73)"
+vLayout = input.string("Terminal (one panel)", "Panel layout", options = ["Terminal (one panel)", "Separate cards (v72)"], group = grpTm, tooltip = "Terminal: market, H2 and gold drivers in one docked panel, one style. Separate cards: the three v72 cards, each at its own position.")
+vPos = input.string("Middle Left", "Terminal position", options = ["Middle Left", "Bottom Left", "Top Left", "Middle Right"], group = grpTm, tooltip = "The Master's dashboard sits top right and its trade plan bottom right; the left side keeps both and the newest candles clear.")
+vDetail = input.string("Standard", "Terminal detail", options = ["Standard", "Compact"], group = grpTm, tooltip = "Standard: every row. Compact: price + flow, signal + next, and the five drivers as one line (hover it for the detail).")
+bool vSep = vLayout == "Separate cards (v72)"
 
 grpSess = "Sessions (UTC)"
 showSess     = input.bool(true,  "Session shading",         group = grpSess)
@@ -740,7 +748,7 @@ if barstate.islast
 
 // ═══════════════════ CANDLE INFO PANEL ═══════════════════
 var table tblC = na
-if showCandle and barstate.islast
+if vSep and showCandle and barstate.islast
     if na(tblC)
         tblC := table.new(candlePos == "Top Right" ? position.top_right : candlePos == "Middle Right" ? position.middle_right : candlePos == "Bottom Right" ? position.bottom_right : position.top_left, 1, 1, bgcolor = color.new(#101418, 12), border_width = 0, frame_width = 0)
     float rngC   = high - low
@@ -749,7 +757,7 @@ if showCandle and barstate.islast
     bool  isUp   = close >= open
     string cTxt = "O " + str.tostring(open, format.mintick) + "   H " + str.tostring(high, format.mintick) + "\nL " + str.tostring(low, format.mintick) + "   C " + str.tostring(close, format.mintick) + "\nRNG " + str.tostring(rngC, "#.##") + "  (" + str.tostring(atr14 > 0 ? rngC / atr14 : na, "#.##") + " ATR)\nATR% " + str.tostring(atrPct, "#.###") + "   " + (isUp ? "▲ UP" : "▼ DOWN") + (na(rvol) ? "" : "\nRVOL " + str.tostring(rvol, "#.##") + "x") + (na(adxValV) ? "" : "\nADX " + str.tostring(adxValV, "#.#") + "  DI+ " + str.tostring(_diPV, "#.#") + " / DI- " + str.tostring(_diMV, "#.#"))
     table.cell(tblC, 0, 0, cTxt, bgcolor = color.new(#101418, 12), text_color = isUp ? cBull : cBear, text_size = size.small, text_halign = text.align_left)
-if not showCandle and not na(tblC)
+if (not showCandle or not vSep) and not na(tblC)
     table.delete(tblC)
     tblC := na
 
@@ -1199,7 +1207,7 @@ h2Sz = h2TxtSize == "Normal" ? size.normal : size.small
 _h2Row(int _r, string _k, string _x, color _c) =>
     table.cell(h2Card, 0, _r, _k, text_color = color.new(#8FA3B8, 0), text_size = h2Sz, text_halign = text.align_left)
     table.cell(h2Card, 1, _r, _x, text_color = _c, text_size = h2Sz, text_halign = text.align_left)
-if h2Show and barstate.islast
+if vSep and h2Show and barstate.islast
     color _h2t = color.new(#E6EDF3, 0)
     color _h2u = color.new(#00D084, 0)
     color _h2d = color.new(#FF4D4D, 0)
@@ -1295,7 +1303,7 @@ f_gdRow(int r, string nm, float d, string how) =>
     color c = na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)
     table.cell(gdT, 0, r, nm + " " + (na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"), text_color=c, text_size=size.small, text_halign=text.align_left)
     table.cell(gdT, 1, r, how, text_color=c, text_size=size.small, text_halign=text.align_left)
-if barstate.islast and gdPos != "Hidden"
+if vSep and barstate.islast and gdPos != "Hidden"
     table.cell(gdT, 0, 0, "GOLD DRIVERS · green = supports gold UP · red = DOWN · display only", text_color=color.new(#D1D4DC, 0), text_size=size.small, text_halign=text.align_left)
     table.merge_cells(gdT, 0, 0, 1, 0)
     f_gdRow(1, "USDJPY", brJd, brJh)
@@ -1303,3 +1311,86 @@ if barstate.islast and gdPos != "Hidden"
     f_gdRow(3, "REAL YLD", brRd, brRh)
     f_gdRow(4, "BREAKEVEN", brBd, brBh)
     f_gdRow(5, "US 2Y", br2d, br2h)
+
+// ═══════════════════ TERMINAL PANEL (v73) — one panel, one style ═══════════════════
+// The three cards' values in one docked panel: MARKET (the candle panel), H2 SWEEP → VALUE (the H2 card's rows,
+// same expressions) and GOLD DRIVERS (the drivers panel's rows, same glyphs and colours). Grey = labels, white =
+// values, colour only for direction (teal supports gold up / the bar closed up, red down). Display only.
+var table tblV = table.new(vPos == "Bottom Left" ? position.bottom_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.middle_left, 2, 24, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
+color _tmK = color.new(#7D8FA3, 0)
+color _tmV = color.new(#E6EDF3, 0)
+color _tmUp = color.new(#26A69A, 0)
+color _tmDn = color.new(#EF5350, 0)
+color _tmSec = color.new(#16202B, 0)
+f_tmG(float d) => na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"
+f_tmC(float d) => na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)
+_tmRow(int r, string k, string v, color c) =>
+    table.cell(tblV, 0, r, k, text_color = _tmK, text_size = h2Sz, text_halign = text.align_left)
+    table.cell(tblV, 1, r, v, text_color = c, text_size = h2Sz, text_halign = text.align_left)
+_tmHead(int r, string k, string v, color bg) =>
+    table.cell(tblV, 0, r, k, text_color = color.white, bgcolor = bg, text_size = h2Sz, text_halign = text.align_left)
+    table.cell(tblV, 1, r, v, text_color = color.new(#AEBBC9, 0), bgcolor = bg, text_size = h2Sz, text_halign = text.align_right)
+if not vSep and barstate.islast
+    table.clear(tblV, 0, 0, 1, 23)
+    bool _cmp = vDetail == "Compact"
+    int r = 0
+    _tmHead(r, "XAUUSD · " + timeframe.period, "VISUALS · " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC", color.new(#1F3A5F, 0))
+    if showCandle
+        float _rng = high - low
+        bool _up = close >= open
+        float _rv = not na(volSma20) and volSma20 > 0 ? volume / volSma20 : na
+        r += 1
+        _tmHead(r, "MARKET", "last bar " + (_up ? "▲ UP" : "▼ DOWN"), _tmSec)
+        r += 1
+        _tmRow(r, "PRICE", (_cmp ? "" : "O " + str.tostring(open, format.mintick) + "  H " + str.tostring(high, format.mintick) + "  L " + str.tostring(low, format.mintick) + "  ") + "C " + str.tostring(close, format.mintick), _up ? _tmUp : _tmDn)
+        if not _cmp
+            r += 1
+            _tmRow(r, "RANGE", str.tostring(_rng, "#.##") + "  (" + str.tostring(atr14 > 0 ? _rng / atr14 : na, "#.##") + " ATR)  ATR% " + str.tostring(close > 0 ? atr14 / close * 100.0 : na, "#.###"), _tmV)
+        r += 1
+        _tmRow(r, "FLOW", (na(_rv) ? "" : "RVOL " + str.tostring(_rv, "#.##") + "x  ") + (na(adxValV) ? "ADX —" : "ADX " + str.tostring(adxValV, "#.#") + "  DI+ " + str.tostring(_diPV, "#.#") + " / DI- " + str.tostring(_diMV, "#.#")), _tmV)
+    if h2Show
+        r += 1
+        _tmHead(r, "H2 SWEEP → VALUE", "pre-registered · display only", _tmSec)
+        r += 1
+        _tmRow(r, "SIGNAL", h2SigCard, h2SigCard == "none yet" ? _tmV : str.startswith(h2SigCard, "BUY") ? _tmUp : _tmDn)
+        if not _cmp
+            r += 1
+            _tmRow(r, "TREND", h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+            r += 1
+            _tmRow(r, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
+            r += 1
+            _tmRow(r, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
+            r += 1
+            _tmRow(r, "SWEEP", h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
+        r += 1
+        _tmRow(r, "NEXT", h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+        if h2Layout == "Full"
+            string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
+            r += 1
+            _tmRow(r, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _tmV)
+            r += 1
+            _tmRow(r, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _tmV)
+            r += 1
+            _tmRow(r, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _tmV)
+    if gdPos != "Hidden"
+        r += 1
+        _tmHead(r, "GOLD DRIVERS", "▲ supports gold up · ▼ down", _tmSec)
+        if _cmp
+            float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
+            r += 1
+            table.cell(tblV, 0, r, "MACRO", text_color = _tmK, text_size = h2Sz, text_halign = text.align_left)
+            table.cell(tblV, 1, r, "JPY" + f_tmG(brJd) + "  OIL" + f_tmG(brOd) + "  RY" + f_tmG(brRd) + "  BE" + f_tmG(brBd) + "  2Y" + f_tmG(br2d), text_color = f_tmC(_net), text_size = h2Sz, text_halign = text.align_left, tooltip = "USDJPY: " + brJh + "\nOIL: " + brOh + "\nREAL YLD: " + brRh + "\nBREAKEVEN: " + brBh + "\nUS 2Y: " + br2h)
+        else
+            r += 1
+            _tmRow(r, "USDJPY " + f_tmG(brJd), brJh, f_tmC(brJd))
+            r += 1
+            _tmRow(r, "OIL " + f_tmG(brOd), brOh, f_tmC(brOd))
+            r += 1
+            _tmRow(r, "REAL YLD " + f_tmG(brRd), brRh, f_tmC(brRd))
+            r += 1
+            _tmRow(r, "BREAKEVEN " + f_tmG(brBd), brBh, f_tmC(brBd))
+            r += 1
+            _tmRow(r, "US 2Y " + f_tmG(br2d), br2h, f_tmC(br2d))
+    r += 1
+    table.cell(tblV, 0, r, "display only · the DECISION is the Master's · H2 record: the website", text_color = color.new(#5D6B7A, 0), text_size = size.tiny, text_halign = text.align_left)
+    table.merge_cells(tblV, 0, r, 1, r)

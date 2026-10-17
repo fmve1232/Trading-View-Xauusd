@@ -2505,3 +2505,40 @@ Compile NOT RUN on v71.
 - `fix_v70.py` / `fix_v71.py` are kept as the record and are not applied.
 
 Compile: the Master is the same bytes as the v69 Master, which the operator compiled. **Confirmed (operator, 2026-10-18): v72 Master compiled and runs (5,882 lines).**
+
+---
+
+# Build v72 → v73 — Visuals: one terminal panel instead of three cards (operator: "professional layout, institutional level")
+
+**Before:** Visuals drew three cards, each in its own style:
+- CANDLE, top right. This is where the Master's dashboard sits.
+- H2, middle left.
+- GOLD DRIVERS, bottom right. This is where the Master's trade plan sits.
+
+**v73: one docked panel, `TERMINAL PANEL` (default: Middle Left, Standard detail).**
+- **Title bar:** `XAUUSD · <timeframe>` and the bar time in UTC.
+- **Three sections:**
+  - **MARKET:** price O H L C, then range / ATR / ATR%, then flow (RVOL, ADX, DI+ / DI-).
+  - **H2 SWEEP → VALUE:** signal, trend, value, swings, sweep, next; with the H2 layout set to Full, also session,
+    history and volume.
+  - **GOLD DRIVERS:** USDJPY, oil, real yield, breakeven, US 2Y.
+- **Footer:** "display only · the DECISION is the Master's · H2 record: the website".
+- **One palette:** grey labels, white values, colour only for direction (teal up / supports gold, red down), and
+  thin borders.
+- **Compact detail:** price + flow, signal + next, and the five drivers as one line (`JPY▲ OIL≈ RY≈ BE▼ 2Y▲`) with the
+  detail on hover.
+- **Sections follow the cards' own switches:** Show candle info panel / Show H2 signals and card / Gold drivers
+  panel = Hidden.
+- **The three v72 cards are unchanged and selectable** (Panel layout = Separate cards (v72)). Nothing is removed.
+
+**Checks:**
+- `panel_check.py` (new):
+  - each H2 row in the panel has the card's own text expression and colour;
+  - the drivers use the card's glyphs and colours;
+  - every candle value is printed;
+  - the rows fit the table.
+- Mutation-tested: a changed colour and a swapped driver text each FAIL.
+- The H2 and GD blocks are untouched (`h2_parity.py`, `macro_check.py` E).
+
+Visuals size: best-fit 30,306 / pessimistic 36,126 (limit 100,256). Master, Brief, Diagnostics and the arms are
+unchanged. Compile NOT RUN on v73.

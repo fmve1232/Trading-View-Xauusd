@@ -24,11 +24,11 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 345889 | `42a6e6e5eb0acb3d11dfd73f43d17f488e2b93afcbb19b4eaa60b6051a4045c8` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1305 | 87645 | `117f8347d1711e7567848070e9519123d2e19f58bca035c305f029b8b58584cb` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1396 | 95470 | `c8b81cca19fdd929b173d5328c52db74eef7b53e85a118ab321af11a0188799b` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 361996 | `e91a9a431f20b67279c59dffc94706d20836556d4566f1a9bc0bd4170e5b6709` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 357944 | `ab85c87344149df5eed7ec16a0f1c83e437602344fed7686b9afb7bc049a40e8` |
 
-> **BUILD v72 — this prompt pins the current build.** The originally audited build
+> **BUILD v73 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -118,6 +118,7 @@ scope, and no other build of these scripts is in scope.
 > **v70:** the five gold drivers in the Master's MACRO cell (same GD block as Visuals / Brief); dashboard cells queued (DCell) and written once; leaner GD block.
 > **v71: F-A68** — v70 Master failed at 103,989 compiled tokens; blamed on its record type and rebuilt with plain arrays. v71 failed too, at 104,510, which refutes that cause.
 > **v72: F-A68 reverted** — the Master is the v69 file byte for byte (it compiled); the five gold drivers stay in Visuals and the Brief; `compile_est.py` shows both misses and fails a Master containing the GD block.
+> **v73:** Visuals' candle, H2 and gold-driver cards in ONE terminal panel (default middle left, one style; the cards stay selectable); `panel_check.py` holds the panel equal to the cards.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
