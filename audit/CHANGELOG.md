@@ -2360,3 +2360,32 @@ than v66. `compile_est.py` now also checks every confirmed compile (KNOWN_UNDER:
 The operator also confirmed the **v66 Brief compiled**. The model put it at ~101,000 best-fit and ~104,400 pessimistic,
 so for the Brief the model is cautious (by ≥ 0.7%). That is the safe side, and the v68 Brief is lower under both models.
 `compile_est.py` lists each confirmed compile (v60 Master, v66 Master, v66 Brief) as INFO.
+
+---
+
+# Build v68 → v69 — the Master's main body back under its limit (F-A67, P0)
+
+**Operator's v68 paste:**
+- **Brief, Visuals and Diagnostics:** compiled. The Brief shows a "Heavy script" notice: it is close to the free plan's
+  20 s run-time limit. That is a warning, not an error.
+- **Master:** failed, `The main body of the script is too long. Try wrapping code in functions` (CE10295).
+
+**Cause:** v68 inlined `f_dashData1`, `f_dashData2` and `f_dashRender` to save compiled tokens. That moved their code
+into the main body: 23,732 → 28,122 lexical tokens outside function definitions. TradingView limits the main body
+separately; the largest that compiled is 26,538 (v68 Diagnostics).
+
+**v69:**
+- The three functions stay functions (`fix_v68.transform(..., inline_one_call=False)`).
+- The Master is the v66 Master (which compiled) plus only the small-helper write-outs (`_gS/_gC/_gF`, `tc`, `_m`):
+  - main body 23,794 (v60: 23,796, compiled);
+  - model 99,000–99,540, against v66 at 100,100–100,200 (compiled).
+- `refactor_check.py` derives it from the v66 commit byte for byte.
+- Nothing is removed, and no value or display changes. The Brief, Visuals, Diagnostics and arms are unchanged from v68.
+
+**Gates (`compile_est.py`), now evidence-based:**
+- both models below the limit and no higher than a build that compiled;
+- main body ≤ 26,538.
+
+They fail the v67 Master (tokens) and the v68 Master (main body).
+
+Compile NOT RUN on v69.

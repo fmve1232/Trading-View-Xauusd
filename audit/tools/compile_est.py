@@ -7,8 +7,13 @@ function (recursively: helpers that call helpers) fits the compiler's own report
     v67 Master  100,335 reported  ->  1.6190            "            (lexical alone gave 2.515 vs 2.581)
     v14 Master  100,627 reported  ->  1.5798   outlier, kept on record
 A second model counts the expansion WITHOUT the definitions (top-level code + expanded calls): 2.1293 / 2.1884 / 2.1497.
-Both are estimates. Gates (each chart script and arm): best-fit <= 98% of the limit, pessimistic < 100%. The real
-compiler is the judge; a reported figure is added to CALIBRATION below.
+Both are estimates. Gates (each chart script and arm), v69:
+  * best-fit and pessimistic both below the limit, AND at most the estimate of a build that really compiled
+    (the v66 Master, 100,204 / 100,109; the Brief's own v66, which compiled at a model 101,003 / 104,385);
+  * MAIN BODY (lexical tokens outside function definitions) at most 26,538, the largest that compiled (v68
+    Diagnostics). TradingView has a separate main-body limit: the v68 Master failed at 28,122 with CE10295 "The main
+    body of the script is too long" after single-call functions were inlined. So never inline big functions.
+The real compiler is the judge; every report is added below.
 Usage: python3 audit/tools/compile_est.py [files]   (default: every artefact)"""
 import glob
 import os
@@ -26,6 +31,9 @@ CALIBRATION = {"v14": 100627, "v23": 100820, "v67": 100335}   # compiler-reporte
 # side): reported as INFO. The v66 Brief compiled although the model said ~101,000.
 KNOWN_UNDER = {"v60 Master": ("Master", "eb3e0c00"), "v66 Master": ("Master", "a5fc12ce"), "v66 Brief": ("Brief", "a5fc12ce")}
 BEST, PESS = 1.6197, 2.1497        # best fit (v23 / v67, the higher); pessimistic model at its v67 ratio
+MAIN_BODY_OK, MAIN_BODY_FAIL = 26538, 28122   # v68 Diagnostics compiled / v68 Master CE10295
+CEILING = {"Brief": (101003, 104385)}       # a file's own confirmed compile, where the model is cautious for it
+DEFAULT_CEILING = (100204, 100109)          # the v66 Master compiled at these estimates
 
 
 def model(text):
@@ -80,10 +88,11 @@ if __name__ == "__main__":
     for p in files:
         la, lt, inl = model(open(p, encoding="utf-8").read())
         b, w = (la + inl) * BEST, (lt + inl) * PESS
-        ok = b <= 0.98 * LIMIT and w < LIMIT
+        cb, cw = next((v for k, v in CEILING.items() if k in os.path.basename(p)), DEFAULT_CEILING)
+        ok = b <= max(cb, 0) and w <= max(cw, 0) and (b < LIMIT or cb >= LIMIT) and lt <= MAIN_BODY_OK
         fails += not ok
         print(f"{'PASS' if ok else 'FAIL'}  {os.path.basename(p):46s} best-fit {b:9,.0f} ({b / LIMIT - 1:+.2%})"
-              f"   pessimistic {w:9,.0f} ({w / LIMIT - 1:+.2%})   lexical {la:,}")
+              f"   pessimistic {w:9,.0f} ({w / LIMIT - 1:+.2%})   main body {lt:,} (max OK {MAIN_BODY_OK:,})")
     import subprocess
     for tag, (fname, commit) in KNOWN_UNDER.items():   # every compile the operator confirmed
         t = subprocess.run(["git", "show", f"{commit}:artefacts/XAUUSD_Quantum_5_0_{fname}.pine"], capture_output=True, text=True).stdout

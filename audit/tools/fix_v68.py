@@ -5,8 +5,9 @@ count suggests. Nothing is removed: each call becomes the code it expands to.
 
 transform(master_v66_text) -> master_v68_text, used both to build v68 and by refactor_check.py, which requires
 transform(v66 commit) == the Master as it stands, and checks that every expanded helper uses each parameter once.
-  1. f_dashData1 / f_dashData2 / f_dashRender (one call each) -> their body at the call site, inside `if true`
-     (keeps each body's locals in their own scope, as the function did);
+  1. (v68 only, UNDONE v69) f_dashData1 / f_dashData2 / f_dashRender inlined at their call site. The compiler
+     then reported CE10295 "The main body of the script is too long": the main body has its own limit, so the
+     three stay functions (inline_one_call=False);
   2. _gS / _gC / _gF (i) -> array.get(gDashS / gDashC / gDashF, i);  tc(...) -> tcb(..., color(na), ...);
      _m(x) -> str.tostring(x + mt5Offset, "#.##")   (not inside the H2 block, which stays byte-identical).
 """
@@ -16,7 +17,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pine_exec as P  # noqa: E402
 
-STAMP = "// ║  BUILD STAMP — this file last CHANGED in v68   (fits the compiler limit)"
+STAMP = "// ║  BUILD STAMP — this file last CHANGED in v69   (compiles: both limits)"
 HELPERS = {
     "_gS": (["i"], "array.get(gDashS, i)"), "_gC": (["i"], "array.get(gDashC, i)"), "_gF": (["i"], "array.get(gDashF, i)"),
     "tc": (["col", "row", "txt", "tcol", "ts", "w"], "tcb(col, row, txt, tcol, color(na), ts, w)"),
@@ -60,19 +61,21 @@ def _expand(l, name, params, body):
         l = l[:m.start()] + out + l[j + 1:]
 
 
-def transform(text):
+def transform(text, inline_one_call=False):
+    """v69: inline_one_call stays False. Inlining the three dashboard functions (v68) pushed the main body past
+    TradingView's main-body limit (CE10295 "The main body of the script is too long"), so they stay functions."""
     L = text.split("\n")
     i = next(k for k, l in enumerate(L[:6]) if "BUILD STAMP" in l)
     L[i] = STAMP + " " * (len(L[i + 1]) - len(STAMP) - 1) + "║"
     bodies = {}
-    for f in ONE_CALL:
+    for f in (ONE_CALL if inline_one_call else ()):
         h, j = _span(L, f)
         bodies[f] = L[h + 1:j]
-    for f in sorted(ONE_CALL, key=lambda f: _span(L, f)[0], reverse=True):
+    for f in sorted(ONE_CALL if inline_one_call else (), key=lambda f: _span(L, f)[0], reverse=True):
         h, j = _span(L, f)
         L[h:j] = ["// v68: " + f + "() was called once; its body now sits at the call site (scoped in `if true`), so the",
                   "// compiler no longer counts it twice. Same statements, same order, same scope rules."]
-    for f in ONE_CALL:
+    for f in (ONE_CALL if inline_one_call else ()):
         c = [k for k, l in enumerate(L) if l == "    " + f + "()"]
         assert len(c) == 1, (f, c)
         L[c[0]:c[0] + 1] = ["    if true    // v68: was " + f + "() (one call)"] + [("    " + b if b.strip() else b) for b in bodies[f]]
