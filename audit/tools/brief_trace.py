@@ -274,7 +274,10 @@ P.define(MS[a:a + 2], env)
 magl = next(l for l in MS if l.startswith('string dxyMag = '))
 for f in ('f_brS', 'f_brM'):
     P.define(func(f)[0], env)
-fa, fal = func('f_brA')
+# v68: the grid is one table.cell in a loop (it was f_brA, called 28 times); read glyph / colour from that line
+fal = next(i for i, l in enumerate(SRC) if l.lstrip().startswith('table.cell(brG, k % 4, 1 + int(k / 4), nm + '))
+fa = [None, SRC[fal]]
+fal += 1
 glyph = re.search(r'\(na\(d\) \? "—" : .*?"≈"\)', fa[1]).group(0)
 colr = re.search(r'text_color=(na\(d\) \? .*?color\.new\(#B2B5BE, 0\))', fa[1]).group(1)
 GREEN, RED = 'color.new(#26A69A, 0)', 'color.new(#EF5350, 0)'

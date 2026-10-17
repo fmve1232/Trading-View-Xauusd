@@ -57,7 +57,7 @@ ROWS = [
      "TQ below floor OR EV < 0 OR calibrated P below minimum; + risk lock", "decision_check.py (truth table)"),
     ("8 Decision", "DECISION", "_confDirLabel", r"_confDirLabel := _rkBlockedConf",
      "RISK LOCK > NO TRADE > BUY / SELL > WARMUP > WAIT", "decision_check.py (precedence; never BUY/SELL while vetoed)"),
-    ("9 MT5", "Entry / SL / TP prices", "tpEntryStr ... tp3Str", r"string tpEntryStr = _m\(tpEntry\)",
+    ("9 MT5", "Entry / SL / TP prices", "tpEntryStr ... tp3Str", r"string tpEntryStr = str\.tostring\(tpEntry \+ mt5Offset",
      "_m(x) = TradingView price + MT5 Price Offset, 2 decimals (one helper for every order price)", "v46 review (offset applied everywhere an order price is shown)"),
     ("9 MT5", "Risk %", "_kellyPct", r"_kellyPct := math\.min\(riskPercent",
      "half-Kelly on the Wilson 95% LOWER win probability at effective N, capped at Risk %, x skew/kurtosis/drawdown haircuts", "formula_trace.py test_kelly"),
@@ -91,7 +91,7 @@ BROWS = [
     ("11 Brief", "ENGINE / DATA rows (moved from the Master's cross-check line, v57)", "_xT.._xQ, tradeQuality, confidenceScore, gcState ...", r"f_brC\(brT, 10, \"ENGINE\"",
      "T/S/L/M arrows, Q veto state, TQ / C scores, value-area position, structure, risk lock, VIX, climax; GC / OI / COT / 2s10s and the feed status codes",
      "diag_parity.py (same engine); read from code"),
-    ("11 Brief", "GOLD ARROWS grid (24 cells)", "f_brA / f_brM", r"f_brA\(int i, string nm",
+    ("11 Brief", "GOLD ARROWS grid (24 cells)", "f_brA / f_brM", r"for \[k, nm\] in gN",
      "green = supports gold up, red = down, grey = neutral, dim = no data; macro = impact on gold (DXY/yields/TIPS falling = up), weak |r| <= 0.25 = neutral",
      "brief_trace.py (grid == Master _arrowStr; colour == direction)"),
 ]

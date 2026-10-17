@@ -2301,3 +2301,53 @@ gone). Any unread value in any file fails the build; the v66 Visuals now fails i
 **Unchanged:** the engine values. The DECISION is identical to v66.
 
 Compile NOT RUN on v67.
+
+---
+
+# Build v67 → v68 — fit the compiler limit (F-A66, P0)
+
+The operator pasted the v67 Master. TradingView reported `Compiled code contains too many tokens: 100335. The limit is
+100256` (CE10117).
+
+**Why the estimate was wrong:**
+- The checks multiplied lexical tokens by 2.515, which gave ~97,800.
+- TradingView expands every user-function call, so a helper called many times costs its body each time.
+- v67's `(x ? 1 : 0)` → `_b1(x)` (53 calls in the Master) lowered the lexical count but raised the compiled one.
+- The same holds for earlier helper rewrites (`_gS/_gC/_gF`, `tc`, `_m`, `_si`, v59–v61).
+- Counting lexical tokens plus every call's expanded body (recursively) fits two compiler reports to 0.04%: v23
+  (1.6197) and v67 (1.6190). v14 is an outlier at 1.5798.
+- In that model a large function called once is counted twice (definition + expansion). The v67 Brief was over by the
+  same model (~101,860) and had not been pasted yet.
+
+**v68: nothing removed, every value and feature unchanged.**
+- **Engine:** `_b1` rewrite undone in the Master and the three arms (the v66 engine text). The arms keep the v67
+  engine-stats scorecard row.
+- **Master:**
+  - `f_dashData1`, `f_dashData2` and `f_dashRender` (one call each) sit at their call site, each in an `if true`
+    block that keeps its locals private as the function did.
+  - `_gS/_gC/_gF(i)` → `array.get(gDash*, i)`, `tc(...)` → `tcb(..., color(na), ...)`, `_m(x)` →
+    `str.tostring(x + mt5Offset, "#.##")` (64 + 15 + 12 calls; not in the H2 block).
+  - `fix_v68.py` holds the transformation. `refactor_check.py` requires the Master to equal `transform(v66 commit)`
+    byte for byte, and every expanded helper to use each parameter exactly once.
+- **Brief:**
+  - The GOLD ARROWS grid is one `table.cell` in a loop over its 28 cells (names, arrows and texts pushed in cell order,
+    cell 23 the CLIMAX cell as before), instead of 28 expanded `f_brA` / `f_brT` calls.
+  - `brief_trace.py` and `macro_check.py` read the glyph / colour rule from the loop line.
+- **Diagnostics:** rebuilt (engine text back to v66).
+- **Visuals:** unchanged.
+
+**Estimates** (`compile_est.py`, new; the gates are best-fit ≤ 98% of the limit and pessimistic < 100%):
+
+| Script | best-fit | pessimistic |
+|---|---:|---:|
+| Master | 92,500 | 99,000 |
+| Brief | 96,600 | 98,700 |
+| Diagnostics | 94,800 | 97,500 |
+| Visuals | 25,700 | 30,100 |
+| Arms | ~84,000 | ~84,000 |
+
+The tool puts the v67 Master at 100,340–100,380 (actual 100,335) and the v60 Master at about 99,300–99,500 (compiled).
+
+**Visible change:** none. The same cells, text and values as v67.
+
+Compile NOT RUN on v68: the compiler is the judge, and a reported figure goes into `compile_est.py`'s CALIBRATION.

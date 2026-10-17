@@ -198,7 +198,8 @@ P.BUILTINS["nz"] = lambda x, y=0.0: y if P.isna(x) else x
 VAR = {"USDJPY": "brJd", "OIL": "brOd", "REAL YLD": "brRd", "BREAKEVEN": "brBd", "US 2Y": "br2d"}
 cells = {}
 for nm, var in VAR.items():
-    cl = [l for l in BL if re.match(rf'^\s+f_brA\(2[4-8], "{re.escape(nm)}", {var}, ', l)]
+    # v68: the grid cells are pushed as data: array.push(gN, "NAME") then array.push(gD, <var>)
+    cl = [i for i, l in enumerate(BL) if l.strip() == f'array.push(gN, "{nm}")' and BL[i + 1].strip() == f"array.push(gD, {var})"]
     df = [l for l in BL if l.startswith(f"float {var} = ")]
     if len(cl) == 1 and len(df) == 1:
         cells[nm] = df[0].split(" = ", 1)[1]
@@ -253,7 +254,7 @@ rows = [l.strip() for l in VL if l.strip().startswith("f_gdRow(") and "=>" not i
 want = [f'f_gdRow({i}, "{nm}", {var}, {var[:-1]}h)' for i, (nm, var) in enumerate(VAR.items(), 1)]
 glyph = '(na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈")'
 col = 'na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)'
-bglyph = next((l for l in BL if l.lstrip().startswith("table.cell(brG, i % 4,")), "")
+bglyph = next((l for l in BL if l.lstrip().startswith("table.cell(brG, k % 4,")), "")
 vbody = "\n".join(VL[next(i for i, l in enumerate(VL) if l.startswith("f_gdRow(")):][:4])
 report(rows == want and glyph in bglyph and col in bglyph and glyph in vbody and col in vbody,
        "Visuals panel rows show the five fenced values, glyphs and colours as the Brief's grid")
