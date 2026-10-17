@@ -40,7 +40,7 @@ none exercises the TradingView runtime (that is the operator's compile and chart
 | 11 Brief | GATES n/7 | `g` | `Brief.pine:5409` | the seven conditions of shouldBuy / shouldSell on the bias side | brief_trace.py (7/7 <=> engine signal) |
 | 11 Brief | DO NOW | `doNow` | `Brief.pine:5419` | the engine DECISION (_confDirLabel, the Master's line, diag_parity.py): BUY/SELL now > risk lock > wait for a playbook trigger > stay flat > no trade | brief_trace.py (vs the site's doNow, Node); diag_parity.py (22 DECISION/gate/veto lines Master == twin) |
 | 11 Brief | ENGINE / DATA rows (moved from the Master's cross-check line, v57) | `_xT.._xQ, tradeQuality, confidenceScore, gcState ...` | `Brief.pine:5430` | T/S/L/M arrows, Q veto state, TQ / C scores, value-area position, structure, risk lock, VIX, climax; GC / OI / COT / 2s10s and the feed status codes | diag_parity.py (same engine); read from code |
-| 11 Brief | GOLD ARROWS grid (24 cells) | `f_brA / f_brM` | `Brief.pine:5469` | green = supports gold up, red = down, grey = neutral, dim = no data; macro = impact on gold (DXY/yields/TIPS falling = up), weak |r| <= 0.25 = neutral | brief_trace.py (grid == Master _arrowStr; colour == direction) |
+| 11 Brief | GOLD ARROWS grid (24 cells) | `f_brA / f_brM` | `Brief.pine:5484` | green = supports gold up, red = down, grey = neutral, dim = no data; macro = impact on gold (DXY/yields/TIPS falling = up), weak |r| <= 0.25 = neutral | brief_trace.py (grid == Master _arrowStr; colour == direction) |
 
 Not listed: chart drawings and reference levels (PDH/PDL, VWAP, FVG, OB). They are TradingView prices for orientation,
 not order prices; order prices come only from the PLAN box and the alerts. The Brief's playbook prices are

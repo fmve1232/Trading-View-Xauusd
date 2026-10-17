@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v65   (macro once; 5 new factors)    ║
+// ║  BUILD STAMP — this file last CHANGED in v66   (drivers fenced, = Visuals)    ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5435,6 +5435,9 @@ if barstate.islast
 // Macro arrows are the IMPACT on gold, as in the Master (F-A54): DXY / yields / TIPS falling = ▲; the
 // second line says what the market itself did. Weak correlation (|r| <= 0.25) = ≈, as the Master prints it.
 var table brG = table.new(brGPos == "Bottom Left" ? position.bottom_left : brGPos == "Middle Right" ? position.middle_right : brGPos == "Top Left" ? position.top_left : position.bottom_right, 4, 9, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))
+// GD-BEGIN gold drivers: byte-identical in the Brief and Visuals (v66, macro_check.py E). Display only: no vote,
+// no weight, no gate. It reads goldRetM / _wM / _fM / macroTF / y2Symbol / safeDiv, which each file defines as the
+// engine does (Visuals copies those lines from the Master; macro_check.py E and inputs_check.py hold them equal).
 f_brS(bool up, bool dn) => up ? 1.0 : dn ? -1.0 : 0.0
 f_brM(bool v, bool up, bool dn, float r) => v ? f_brS(up, dn) * (math.abs(r) > 0.5 ? 2.0 : math.abs(r) > 0.25 ? 1.0 : 0.0) : na
 f_brMv(bool v, bool rise, bool fall) => not v ? "no data" : rise ? "rising" : fall ? "falling" : "flat"
@@ -5443,10 +5446,10 @@ f_brMv(bool v, bool rise, bool fall) => not v ? "no data" : rise ? "rising" : fa
 // "rising" = close > EMA10 > EMA20. Impact on gold: USDJPY / real yield / 2Y falling = up; oil / breakeven rising = up.
 // USDJPY and oil also carry the same-bar correlation with gold (macroTF, the v64 pairing, F-A64), which scales the
 // arrow as for DXY (|r| <= 0.25 = neutral). The real yield and breakeven are DAILY series (FRED): direction only.
-brJpySym = input.symbol("OANDA:USDJPY", "USDJPY symbol (blank = off)", group=grpBrief)
-brOilSym = input.symbol("OANDA:WTICOUSD", "Oil (WTI) symbol (blank = off)", group=grpBrief)
-brRySym = input.symbol("FRED:DFII10", "Real 10Y yield, daily (blank = off)", group=grpBrief, tooltip="10-year TIPS yield. Daily, published with a lag: shown as the day's direction, no intraday correlation.")
-brBeSym = input.symbol("FRED:T10YIE", "10Y breakeven inflation, daily (blank = off)", group=grpBrief, tooltip="10Y nominal minus TIPS yield = the market's inflation expectation. Daily.")
+brJpySym = input.symbol("OANDA:USDJPY", "USDJPY symbol (blank = off)", group="GOLD DRIVERS (display only)")
+brOilSym = input.symbol("OANDA:WTICOUSD", "Oil (WTI) symbol (blank = off)", group="GOLD DRIVERS (display only)")
+brRySym = input.symbol("FRED:DFII10", "Real 10Y yield, daily (blank = off)", group="GOLD DRIVERS (display only)", tooltip="10-year TIPS yield. Daily, published with a lag: shown as the day's direction, no intraday correlation.")
+brBeSym = input.symbol("FRED:T10YIE", "10Y breakeven inflation, daily (blank = off)", group="GOLD DRIVERS (display only)", tooltip="10Y nominal minus TIPS yield = the market's inflation expectation. Daily.")
 f_brQ(string sym, string tf) => request.security(sym != "" ? sym : syminfo.tickerid, tf, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
 [brJc, brJf, brJs] = f_brQ(brJpySym, macroTF)
 [brOc, brOf, brOs] = f_brQ(brOilSym, macroTF)
@@ -5466,6 +5469,18 @@ float brJr = ta.correlation(goldRetM, not na(brJc[1]) ? safeDiv(brJc, brJc[1]) -
 float brOr = ta.correlation(goldRetM, not na(brOc[1]) ? safeDiv(brOc, brOc[1]) - 1 : na, _wM)
 f_brRv(bool v, float r) => v and _fM ? r : na
 f_brN(float r) => na(r) ? "" : " r" + str.tostring(r, "#.##")
+// each driver's arrow (d: > 0 supports gold up) and its line of text
+float brJd = f_brM(brJv, f_brDn(brJc, brJf, brJs), f_brUp(brJc, brJf, brJs), nz(f_brRv(brJv, brJr)))
+string brJh = "yen-dollar " + f_brMv(brJv, f_brUp(brJc, brJf, brJs), f_brDn(brJc, brJf, brJs)) + f_brN(f_brRv(brJv, brJr))
+float brOd = f_brM(brOv, f_brUp(brOc, brOf, brOs), f_brDn(brOc, brOf, brOs), nz(f_brRv(brOv, brOr)))
+string brOh = "WTI " + f_brMv(brOv, f_brUp(brOc, brOf, brOs), f_brDn(brOc, brOf, brOs)) + f_brN(f_brRv(brOv, brOr))
+float brRd = brRv ? f_brS(f_brDn(brRc, brRf, brRs), f_brUp(brRc, brRf, brRs)) : na
+string brRh = (brRv ? str.tostring(brRc, "#.##") + "% " : "") + f_brMv(brRv, f_brUp(brRc, brRf, brRs), f_brDn(brRc, brRf, brRs)) + " · daily"
+float brBd = brBv ? f_brS(f_brUp(brBc, brBf, brBs), f_brDn(brBc, brBf, brBs)) : na
+string brBh = (brBv ? str.tostring(brBc, "#.##") + "% " : "") + f_brMv(brBv, f_brUp(brBc, brBf, brBs), f_brDn(brBc, brBf, brBs)) + " · daily"
+float br2d = br2v ? f_brS(f_brDn(br2c, br2f, br2s), f_brUp(br2c, br2f, br2s)) : na
+string br2h = (br2v ? str.tostring(br2c, "#.##") + "% " : "") + f_brMv(br2v, f_brUp(br2c, br2f, br2s), f_brDn(br2c, br2f, br2s)) + " · Fed path"
+// GD-END
 f_brA(int i, string nm, float d, string how) =>
     table.cell(brG, i % 4, 1 + int(i / 4), nm + " " + (na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈") + "\n" + how, text_color=na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0), text_size=brSz, text_halign=text.align_left)
 if barstate.islast and brGPos != "Hidden"
@@ -5494,11 +5509,11 @@ if barstate.islast and brGPos != "Hidden"
     f_brA(20, "XAG", f_brM(silverValid, silverClose > silverEMA, silverClose < silverEMA, avgCorrSlv), "silver " + f_brMv(silverValid, silverClose > silverEMA, silverClose < silverEMA))
     f_brA(21, "SPX", spxValid ? f_brS(spxBull, spxBear) : na, "stocks " + f_brMv(spxValid, spxBull, spxBear))
     f_brA(22, "MACRO", f_brS(macroStrengthScore >= 15, macroStrengthScore <= -15), "score " + str.tostring(macroStrengthScore))
-    f_brA(24, "USDJPY", f_brM(brJv, f_brDn(brJc, brJf, brJs), f_brUp(brJc, brJf, brJs), nz(f_brRv(brJv, brJr))), "yen-dollar " + f_brMv(brJv, f_brUp(brJc, brJf, brJs), f_brDn(brJc, brJf, brJs)) + f_brN(f_brRv(brJv, brJr)))
-    f_brA(25, "OIL", f_brM(brOv, f_brUp(brOc, brOf, brOs), f_brDn(brOc, brOf, brOs), nz(f_brRv(brOv, brOr))), "WTI " + f_brMv(brOv, f_brUp(brOc, brOf, brOs), f_brDn(brOc, brOf, brOs)) + f_brN(f_brRv(brOv, brOr)))
-    f_brA(26, "REAL YLD", brRv ? f_brS(f_brDn(brRc, brRf, brRs), f_brUp(brRc, brRf, brRs)) : na, (brRv ? str.tostring(brRc, "#.##") + "% " : "") + f_brMv(brRv, f_brUp(brRc, brRf, brRs), f_brDn(brRc, brRf, brRs)) + " · daily")
-    f_brA(27, "BREAKEVEN", brBv ? f_brS(f_brUp(brBc, brBf, brBs), f_brDn(brBc, brBf, brBs)) : na, (brBv ? str.tostring(brBc, "#.##") + "% " : "") + f_brMv(brBv, f_brUp(brBc, brBf, brBs), f_brDn(brBc, brBf, brBs)) + " · daily")
-    f_brA(28, "US 2Y", br2v ? f_brS(f_brDn(br2c, br2f, br2s), f_brUp(br2c, br2f, br2s)) : na, (br2v ? str.tostring(br2c, "#.##") + "% " : "") + f_brMv(br2v, f_brUp(br2c, br2f, br2s), f_brDn(br2c, br2f, br2s)) + " · Fed path")
+    f_brA(24, "USDJPY", brJd, brJh)
+    f_brA(25, "OIL", brOd, brOh)
+    f_brA(26, "REAL YLD", brRd, brRh)
+    f_brA(27, "BREAKEVEN", brBd, brBh)
+    f_brA(28, "US 2Y", br2d, br2h)
     table.cell(brG, 1, 8, "v65: these five are display only\n(no vote, weight or gate)", text_color=color.new(#787B86, 0), text_size=brSz)
     table.merge_cells(brG, 1, 8, 3, 8)
     // a volume climax is exhaustion either way (the engine scores it as exhaustion, not as a side): amber, not green/red

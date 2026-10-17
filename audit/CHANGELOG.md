@@ -2212,3 +2212,39 @@ unavailable one shows "—" / "no data".
 **Pre-registration:** A7, display only; nothing restarts. The website was not touched.
 
 Compile NOT RUN on v65.
+
+---
+
+# Build v65 → v66 — the five gold drivers in Visuals too (Master + Visuals = the everyday pair)
+
+The operator: the free TradingView plan allows two indicators per chart. Merging the four chart scripts into two was
+measured and is not possible without cutting features:
+- Master, Brief and Diagnostics each carry the same ~34,600-token engine, at 98–99.6% of the per-script limit.
+- Their unique parts (Brief panel 5,024, Diagnostics blocks 4,954, Visuals 9,861) do not fit beside it.
+
+Plan, approved:
+- Master + Visuals are always on the chart.
+- Brief and Diagnostics are swapped into the second slot when needed. Nothing is deleted.
+
+**v66:** the five drivers that only the Brief showed are copied into Visuals: USDJPY, oil, real 10Y yield, 10Y
+breakeven and US 2Y (display only, as in v65).
+- **The fence:** their whole definition (helpers, inputs, requests, same-bar correlation, arrow and text) sits
+  between `// GD-BEGIN` and `// GD-END`. The block is byte-identical in `brief_panel.pine`, the Brief and Visuals.
+- **The engine lines it reads:** `safeDiv`, `chartTFSeconds`, `_kM`, `_gM`, `goldRetM`, `_wM`, `_fM` are copied into
+  Visuals from the Master, line for line.
+- **The inputs:** `macroTF`, `y2Symbol` and `corrMedLen` keep the Master's names, defaults and bounds
+  (`inputs_check.py` compares them).
+- **Checks:** `macro_check.py` E checks the fence, the dependency lines and the panel wiring; a one-character
+  mutation of the fenced block fails it. D now evaluates the fenced variables.
+- **The Brief:** its five cells read the fenced values. It shows the same arrows and text as v65, and the four driver
+  symbol inputs move to the group "GOLD DRIVERS (display only)".
+
+**Visible change:**
+- a "GOLD DRIVERS" panel in Visuals, bottom right by default (Bottom Center / Bottom Left / Middle Right / Hidden);
+- in the Brief, the driver symbol inputs move to their own settings group.
+
+**Unchanged:** no engine change, and the DECISION is unchanged.
+
+**Tokens (lexical):** Visuals 11,221 (≈ 28% of the limit), 11 request call sites; Brief 39,643 (≈ 0.55% under).
+
+Compile NOT RUN on v66.

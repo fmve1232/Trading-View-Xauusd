@@ -24,11 +24,11 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5426 | 345089 | `ee0843ac6e377e0885867f5181b737a939588ac0894744800e81524cb658cb9d` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1219 | 79195 | `80a7b210c32780900a92905489ceeb1adf7971ad76c22ade7dc5d6ae867b6c6a` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1296 | 86609 | `f16423009a23dedec72d5ff46beafeb321b482093178e4dfa612622bce9123c0` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5654 | 361712 | `8ed389f5889a5c2605d707d37d2b48670f2f59fff83555028cdb963c7dd9b2c1` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5507 | 353411 | `01e21b7f6c7ece963db707e40621d50a26c40e3a6dcf6abbe35fc6b6ebd6d561` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5522 | 354105 | `1d97c7bc0cdc9a504d0996254d04e144bd173c39e2fabe511101376ab48e0640` |
 
-> **BUILD v65 — this prompt pins the current build.** The originally audited build
+> **BUILD v66 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -111,6 +111,7 @@ scope, and no other build of these scripts is in scope.
 > **v63: F-A61 / F-A62 / F-A63** — length inputs bounded; London DST fixed (wrong up to 5 trading days a year); MTF line counts only live layers. Every timeframe executed (`tf_check.py`), every input checked (`inputs_check.py`).
 > **v64: F-A64** — macro correlations pair gold and each asset over the same completed bar (they compared gold now with the asset one bar earlier); `macro_check.py`.
 > **v65: F-A65** — each macro factor counted once (USD via DXY, TIPS off while it is the 10Y feed, majority over independent factors); the Brief adds USDJPY, oil, real yield, breakeven and US 2Y (display only).
+> **v66:** the Brief's five gold drivers copied into Visuals (GD block byte-identical, `macro_check.py` E): Master + Visuals is the everyday pair on the free plan's two indicator slots.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

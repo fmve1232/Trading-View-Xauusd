@@ -7,6 +7,10 @@ plus any other artefact that changed, and post the build record in chat.**
 
 - **Chart set** (pasted routinely): `Master.pine`, `Visuals.pine` and `Brief.pine`, and `Diagnostics.pine`
   (the operator adds it when wanted).
+- **On the chart (operator, 2026-10-17):** the free plan allows two indicators, so **Master + Visuals** are always on;
+  Brief or Diagnostics is swapped into the second slot when needed. The four cannot be merged into two without cutting
+  features (each engine copy is at 98-99.6% of the token limit). Anything the operator needs every day must therefore
+  be visible in Master or Visuals (v66 copied the Brief's five gold drivers into Visuals).
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.
@@ -93,6 +97,9 @@ sha256sum -c audit/MANIFEST.sha256
   `f_sessionIntel`, and since v62 the block's INPUTS: `h2S1 / h2S4 / h2SD` are the RAW 1H / 4H / 1D scores in every
   file, never the engine's timeframe-gated `htf*Score`, F-A60); `h2_trace.py` executes it against its specification. The Master's H2 SETUP is
   display + alert only: it never changes the DECISION (PREREG A4).
+- **GD block (v66):** `// GD-BEGIN` … `// GD-END` (the five display-only gold drivers) must stay byte-identical in
+  `brief_panel.pine`, the Brief and Visuals, and the engine lines Visuals copies for it must equal the Master's
+  (`macro_check.py` E). Edit the panel source, rebuild the Brief, then copy the block into Visuals.
 - **Token estimates are estimates.** Compiled ≈ lexical × 2.515 (measured on v23: 100,820 /
   40,081; v14 gave 2.466). Keep the Master ≥ 2% under 100,256 at that ratio.
 - The checkers narrow the search; **they do not replace the compiler.** Three static passes

@@ -23,6 +23,11 @@
      moves gold (USDJPY / real yield / US 2Y rising = down; oil / breakeven rising = up), flat = neutral, no data = —,
      and USDJPY / oil are neutral when |r| <= 0.25, as the engine's DXY arrow.
 
+  E. the same five drivers in Visuals (v66; the free plan's two indicators are Master + Visuals): the block between
+     GD-BEGIN and GD-END is byte-identical in the Brief panel source, the Brief and Visuals; the engine lines it reads
+     (safeDiv, chartTFSeconds, _kM, _gM, goldRetM, _wM, _fM) are the Master's, line for line; the Visuals panel shows
+     the five fenced values with the Brief's glyph and colour rules.
+
 Usage: python3 audit/tools/macro_check.py [file ...]     (default: the engine copies)"""
 import math
 import random
@@ -189,11 +194,14 @@ for head in ("f_brS(bool up, bool dn) =>", "f_brM(bool v, bool up, bool dn, floa
              "f_brDn(float c, float f, float s) =>", "f_brRv(bool v, float r) =>"):
     P.define([next(l for l in BL if l.startswith(head))], benv)
 P.BUILTINS["nz"] = lambda x, y=0.0: y if P.isna(x) else x
+# v66: each cell reads a variable computed inside the GD fence; evaluate that variable's definition
+VAR = {"USDJPY": "brJd", "OIL": "brOd", "REAL YLD": "brRd", "BREAKEVEN": "brBd", "US 2Y": "br2d"}
 cells = {}
-for l in BL:
-    m = re.match(r'^\s+f_brA\((2[4-8]), "([^"]+)", (.*)\)$', l)
-    if m:
-        cells[m.group(2)] = P._split_args(m.group(3))[0]
+for nm, var in VAR.items():
+    cl = [l for l in BL if re.match(rf'^\s+f_brA\(2[4-8], "{re.escape(nm)}", {var}, ', l)]
+    df = [l for l in BL if l.startswith(f"float {var} = ")]
+    if len(cl) == 1 and len(df) == 1:
+        cells[nm] = df[0].split(" = ", 1)[1]
 # driver -> (close, ema10, ema20 names, valid name, corr name or None, +1 if RISING supports gold up)
 DRV = {"USDJPY": ("brJ", "brJv", "brJr", -1), "OIL": ("brO", "brOv", "brOr", 1), "REAL YLD": ("brR", "brRv", None, -1),
        "BREAKEVEN": ("brB", "brBv", None, 1), "US 2Y": ("br2", "br2v", None, -1)}
@@ -219,6 +227,35 @@ for name, (pre, vv, rr, sign) in DRV.items():
                     bad.append(f"{name} {state} valid={valid} r={r}: d={d}, want {want}")
 report(not bad and len(cells) == 5, f"5 drivers, {n} cases: impact direction, strength by |r|, flat neutral, no data —"
        + "".join("\n        " + b for b in bad[:5]))
+
+# ---- E: the five drivers in Visuals = the Brief's, byte for byte
+print("== Visuals: the same five drivers (copied, not moved)")
+def fence(path):
+    T = open(path, encoding="utf-8").read().split("\n")
+    a = [i for i, l in enumerate(T) if l.startswith("// GD-BEGIN")]
+    b = [i for i, l in enumerate(T) if l == "// GD-END"]
+    return T[a[0]:b[0] + 1] if len(a) == 1 and len(b) == 1 and b[0] > a[0] else None
+VF = "artefacts/XAUUSD_Quantum_5_5_Visuals.pine"
+fb, fv, fs = fence(BP), fence(VF), fence("audit/tools/brief_panel.pine")
+report(fb is not None and fb == fv == fs, f"GD block identical in brief_panel.pine, Brief and Visuals ({len(fb or [])} lines)")
+VL = open(VF, encoding="utf-8").read().split("\n")
+ML = open(A + "Master.pine", encoding="utf-8").read().split("\n")
+dep_bad = []
+for pre in ("safeDiv(a, b) =>", "chartTFSeconds = timeframe.in_seconds()", "int _kM = ", "float _gM = ", "float goldRetM = ",
+            "int _wM = ", "bool _fM = "):
+    m = [l for l in ML if l.startswith(pre)]
+    v = [l for l in VL if l.startswith(pre)]
+    if len(m) != 1 or v != m:
+        dep_bad.append(pre)
+report(not dep_bad, "Visuals' engine lines for the drivers = the Master's, line for line" + (f": {dep_bad}" if dep_bad else ""))
+rows = [l.strip() for l in VL if l.strip().startswith("f_gdRow(") and "=>" not in l]
+want = [f'f_gdRow({i}, "{nm}", {var}, {var[:-1]}h)' for i, (nm, var) in enumerate(VAR.items(), 1)]
+glyph = '(na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈")'
+col = 'na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)'
+bglyph = next((l for l in BL if l.lstrip().startswith("table.cell(brG, i % 4,")), "")
+vbody = "\n".join(VL[next(i for i, l in enumerate(VL) if l.startswith("f_gdRow(")):][:4])
+report(rows == want and glyph in bglyph and col in bglyph and glyph in vbody and col in vbody,
+       "Visuals panel rows show the five fenced values, glyphs and colours as the Brief's grid")
 
 # ---- B: model of the request semantics (Python; the TradingView runtime is NOT exercised)
 print("== model: known true correlation through the request semantics")
