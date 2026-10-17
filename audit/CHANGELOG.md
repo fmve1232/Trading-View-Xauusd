@@ -2540,5 +2540,8 @@ Compile: the Master is the same bytes as the v69 Master, which the operator comp
 - Mutation-tested: a changed colour and a swapped driver text each FAIL.
 - The H2 and GD blocks are untouched (`h2_parity.py`, `macro_check.py` E).
 
+**Confirmed (operator, 2026-10-18): Visuals v73 compiled and draws the panel** (MARKET hidden there: the chart has
+"Show candle info panel" off, so the section follows that switch).
+
 Visuals size: best-fit 30,306 / pessimistic 36,126 (limit 100,256). Master, Brief, Diagnostics and the arms are
 unchanged. Compile NOT RUN on v73.
