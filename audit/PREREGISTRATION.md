@@ -532,3 +532,16 @@ layers that cannot vote on the chart's timeframe shown as "—" (F-A63); the eng
 "liquidity draw", distinct from the nearest-level target (v57); ADX with DI+ / DI− (v67); a vetoed bar names its
 block (F-A55). Already on the website: F-A62 (London DST from the IANA database, D-02), F-A60 (the website's H3
 reads raw HTF scores), F-A55's DO NOW rule, the Market Brief (v52 was ported from the website).
+
+**Amendment 9 — start record** (filled in after the merge; facts only, nothing decided here). PR #39 merged 2026-10-17
+(merge commit `a7ef371e`); the first pipeline run of the new code (workflow run `39070785877`, engine `Q7.2-web.6`) froze:
+
+| Test | Freeze key | Start (UTC) | Status |
+|---|---|---|---|
+| §7 Treatment / Control / Challenger | `5e4630924d663fc5:6f3964ad97813cc9` | 2026-10-17 21:26:18 | RESET (previous key `…:92b67584f33cc1f0` in the manifest history) |
+| H2 (Amendment 5) | `5e4630924d663fc5:6f3964ad97813cc9:adeaccb163806651` | 2026-10-17 21:26:18 | RESET |
+| H3 (Amendment 7 §3) | `5e4630924d663fc5:6f3964ad97813cc9:0eb650f81d99803e` | 2026-10-17 21:26:18 | RESET |
+| H4 (Amendment 8) | `5e4630924d663fc5:6f3964ad97813cc9:090418672c210848` | 2026-10-17 21:26:18 | RESET |
+
+Checked on `forward-ledger` @ `4cd5cb3b`: every new ledger starts empty, and the archive holds the earlier trades (H4 15m: all
+72; H4 1h: 13; Treatment 5m: 12 across both earlier freezes). The decision rules and the decision date are unchanged.
