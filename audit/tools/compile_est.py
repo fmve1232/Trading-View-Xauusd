@@ -20,6 +20,9 @@ from lexcount import toks  # noqa: E402
 
 LIMIT = 100256
 CALIBRATION = {"v14": 100627, "v23": 100820, "v67": 100335}   # compiler-reported totals (Master)
+# Compiled WITHOUT error (operator), i.e. under 100,256: the model must not put these over the limit.
+# v66 Master (39,029 lexical) compiled while v67 (38,870 lexical, FEWER) did not: lexical x ratio is refuted.
+KNOWN_UNDER = {"v60 Master": "eb3e0c00", "v66 Master": "a5fc12ce"}
 BEST, PESS = 1.6197, 2.1497        # best fit (v23 / v67, the higher); pessimistic model at its v67 ratio
 
 
@@ -79,6 +82,14 @@ if __name__ == "__main__":
         fails += not ok
         print(f"{'PASS' if ok else 'FAIL'}  {os.path.basename(p):46s} best-fit {b:9,.0f} ({b / LIMIT - 1:+.2%})"
               f"   pessimistic {w:9,.0f} ({w / LIMIT - 1:+.2%})   lexical {la:,}")
+    import subprocess
+    for tag, commit in KNOWN_UNDER.items():      # the model must agree with every compile the operator confirmed
+        t = subprocess.run(["git", "show", f"{commit}:artefacts/XAUUSD_Quantum_5_0_Master.pine"], capture_output=True, text=True).stdout
+        if t:
+            la, lt, inl = model(t)
+            agree = (la + inl) * BEST < LIMIT and (lt + inl) * PESS < LIMIT
+            fails += not agree
+            print(f"{'PASS' if agree else 'FAIL'}  calibration: {tag} compiled; model best-fit {(la + inl) * BEST:,.0f}, pessimistic {(lt + inl) * PESS:,.0f}")
     print("RESULT:", "PASS" if not fails else "FAIL", "-- estimates calibrated on compiler reports", CALIBRATION,
           "; the compiler is the judge")
     sys.exit(1 if fails else 0)

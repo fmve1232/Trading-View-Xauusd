@@ -2351,3 +2351,9 @@ The tool puts the v67 Master at 100,340–100,380 (actual 100,335) and the v60 M
 **Visible change:** none. The same cells, text and values as v67.
 
 Compile NOT RUN on v68: the compiler is the judge, and a reported figure goes into `compile_est.py`'s CALIBRATION.
+
+**Calibration added after v68 (operator, 2026-10-17): "V66 was also working fine".** The v66 Master (39,029 lexical)
+compiled; the v67 Master (38,870 lexical, fewer) reported 100,335. This refutes lexical × ratio outright. The expansion
+model has the v66 Master at 100,100–100,200 (under) and the v67 Master at 100,340–100,380 (over): it agrees with both.
+The v68 Master is the v66 Master plus changes that only lower the expanded count, so it should compile with more room
+than v66. `compile_est.py` now also checks every confirmed compile (KNOWN_UNDER: v60, v66).
