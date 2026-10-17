@@ -500,25 +500,49 @@ document.querySelectorAll(".card.fold").forEach((card) => {
 function renderGoldArrows() {
   const el = $("#gold-arrows"), D = S.data; if (!el || !D) return;
   const G = (D.dashboard && D.dashboard.gold_arrows) || [];
-  const glyph = (d) => (d === null || d === undefined ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈");
-  const cls = (d) => (d === null || d === undefined ? "na" : d > 0 ? "bull" : d < 0 ? "bear" : "flat");
   const NAME = { TREND: "Trend", STRUCT: "Market structure", BIAS: "Model bias", LIQ: "Liquidity pull", EMA200: "200 EMA", VWAP: "VWAP",
     VALUE: "Value area", MTF: "Timeframe agreement", "5M": "5-min trend", "15M": "15-min trend", "1H": "1-hour trend", "4H": "4-hour trend",
     "1D": "Daily trend", CVD: "Volume flow", DISPL: "Momentum candle", "RSI DIV": "RSI divergence", DXY: "US dollar (DXY)", "10Y": "US 10Y yield",
     TIPS: "Real yield (TIPS)", EUR: "Euro (EUR/USD)", XAG: "Silver", SPX: "S&P 500", MACRO: "Macro score", CLIMAX: "Volume climax" };
-  const cells = G.map((g) => g.name === "CLIMAX" ? { name: NAME[g.name], g: g.glyph, c: g.amber ? "amber" : "flat", t: g.text } : { name: NAME[g.name] || g.name, g: glyph(g.d), c: cls(g.d), t: g.text, d: g.d });
+  const GROUP = { TREND: 0, STRUCT: 0, EMA200: 0, VWAP: 0, VALUE: 0, MTF: 0, "5M": 0, "15M": 0, "1H": 0, "4H": 0, "1D": 0,
+    BIAS: 1, LIQ: 1, CVD: 1, DISPL: 1, "RSI DIV": 1, CLIMAX: 1 };            // everything else: macro (2)
+  const rows = G.map((g) => ({ key: g.name, name: NAME[g.name] || g.name, d: g.name === "CLIMAX" ? null : g.d, t: g.text, amber: !!g.amber, grp: GROUP[g.name] ?? 2 }));
   const items = ((S.macroPanel && S.macroPanel.items) || []).filter((it) => ["JPYUSD", "WTI", "REALYLD", "BREAKEVEN", "US2Y"].includes(it.key));
-  for (const it of items) {
+  for (const it of items) {                         // the outside drivers take the macro panel's own verdict
     let d = null, t = "no data";
     if (it.ok && it.daily) { d = it.gold; t = `${it.last.toFixed(it.dec)}% ${it.trend > 0 ? "rising" : it.trend < 0 ? "falling" : "flat"} · daily`; }
-    else if (it.ok) { const mv = panelMove(it); d = panelGold(it, mv.chg, mv.dir);
-      t = `${mv.chg > 0 ? "rising" : mv.chg < 0 ? "falling" : "flat"} · macro panel`; }
-    cells.push({ name: { JPYUSD: "Yen (JPY/USD)", WTI: "Oil (WTI)", REALYLD: "Real 10Y yield", BREAKEVEN: "10Y breakeven", US2Y: "US 2Y yield" }[it.key], g: glyph(d), c: cls(d), t, drv: true, d });
+    else if (it.ok) { const mv = panelMove(it); d = panelGold(it, mv.chg, mv.dir); t = `${mv.chg > 0 ? "rising" : mv.chg < 0 ? "falling" : "flat"}`; }
+    rows.push({ key: it.key, name: { JPYUSD: "Yen (JPY/USD)", WTI: "Oil (WTI)", REALYLD: "Real 10Y yield", BREAKEVEN: "10Y breakeven", US2Y: "US 2Y yield" }[it.key], d, t, grp: 2, drv: true });
   }
-  const nUp = cells.filter((x) => x.d > 0).length, nDn = cells.filter((x) => x.d < 0).length, nN = cells.filter((x) => x.d === 0).length;
-  const lean = nUp - nDn >= 3 ? ["bull", "More indicators support gold up"] : nDn - nUp >= 3 ? ["bear", "More indicators support gold down"] : ["", "Indicators are mixed"];
-  el.innerHTML = `<div class="ga-sum"><b class="${lean[0]}">${lean[1]}</b><span><span class="bull">▲ ${nUp} up</span> · <span class="bear">▼ ${nDn} down</span> · ≈ ${nN} neutral</span><span class="dim">a count, not a weighted score; the model decision above weighs them</span></div>` + cells.map((x) => `<div class="ga ${x.c}${x.drv ? " drv" : ""}" title="${esc(x.name + ": " + x.t)}"><b>${esc(x.name)} <span class="gg">${x.g}</span></b><span>${esc(x.t)}</span></div>`).join("") +
-    `<div class="ga-key dim"><span class="bull">Green = supports gold up</span> · <span class="bear">red = supports gold down</span> · grey ≈ neutral or weakly linked to gold · — not available on this timeframe · <span class="amber">amber = exhaustion</span> · dashed edge = outside driver, shown for context only</div>`;
+  // a rating = (supporting up − supporting down) / indicators with data, in [-1, 1]; strength marks (▲▲) count once
+  const rate = (rs) => { const v = rs.filter((x) => x.d !== null && x.d !== undefined); const up = v.filter((x) => x.d > 0).length, dn = v.filter((x) => x.d < 0).length;
+    return { up, dn, nt: v.length - up - dn, n: v.length, s: v.length ? (up - dn) / v.length : 0 }; };
+  const label = (s) => (s >= 0.5 ? ["Strong up", "bull"] : s >= 0.1 ? ["Up", "bull"] : s <= -0.5 ? ["Strong down", "bear"] : s <= -0.1 ? ["Down", "bear"] : ["Neutral", ""]);
+  const all = rate(rows), [allL, allC] = label(all.s);
+  // the gauge: one half-circle path (pathLength 100) cut into five zones by dashes; the needle is a rotation
+  const cx = 90, cy = 84, R = 70, half = `M${cx - R},${cy} A${R},${R} 0 0 1 ${cx + R},${cy}`;
+  const Z = [[0, 25, "z-sb"], [25, 45, "z-b"], [45, 55, "z-n"], [55, 75, "z-u"], [75, 100, "z-su"]];   // rating -1 … +1 along 0 … 100
+  const ang = ((all.s + 1) / 2) * 180;              // 0° points left (strong down), 180° right (strong up)
+  const gauge = `<svg class="gs-gauge" viewBox="0 0 180 100" role="img" aria-label="Overall rating ${allL}">` +
+    Z.map(([a0, a1, c]) => `<path d="${half}" pathLength="100" stroke-dasharray="${a1 - a0 - 0.8} 200" stroke-dashoffset="${-(a0 + 0.4)}" class="${c}"/>`).join("") +
+    `<line x1="${cx}" y1="${cy}" x2="${cx - R + 16}" y2="${cy}" class="needle" transform="rotate(${ang.toFixed(1)} ${cx} ${cy})"/><circle cx="${cx}" cy="${cy}" r="5" class="hub"/></svg>`;
+  const bar = (title, rs) => { const r = rate(rs), [l, c] = label(r.s), w = Math.abs(r.s) * 50;
+    return `<div class="gs-row" title="${esc(`${title}: ${r.up} support up, ${r.dn} support down, ${r.nt} neutral (of ${r.n} with data)`)}">
+      <div class="gs-rh"><b>${title}</b><span class="gs-rl ${c}">${l}</span></div>
+      <div class="gs-bar"><span class="mid"></span><span class="fill ${r.s >= 0 ? "bull" : "bear"}" style="${r.s >= 0 ? "left:50%" : `left:${50 - w}%`};width:${w}%"></span></div>
+      <div class="gs-cnt"><span class="bull">${r.up} up</span><span class="bear">${r.dn} down</span><span>${r.nt} neutral</span></div></div>`; };
+  const dot = (x) => (x.amber ? '<span class="gs-tag amber">Exhaustion</span>' : x.d === null || x.d === undefined ? '<span class="gs-tag na">No data</span>'
+    : x.d > 0 ? `<span class="gs-tag bull">Up${x.d >= 2 ? " · strong" : ""}</span>` : x.d < 0 ? `<span class="gs-tag bear">Down${x.d <= -2 ? " · strong" : ""}</span>` : '<span class="gs-tag">Neutral</span>');
+  const list = ["Trend & structure", "Momentum & flow", "Macro & drivers"].map((h, gi) => `<div class="gs-lg"><h4>${h}</h4>` +
+    rows.filter((x) => x.grp === gi).map((x) => `<div class="gs-li${x.drv ? " drv" : ""}"><span class="n">${esc(x.name)}</span><span class="t">${esc(x.t)}</span>${dot(x)}</div>`).join("") + `</div>`).join("");
+  let open = false; try { open = localStorage.getItem("gs-open") === "1"; } catch (e) { /* private mode */ }
+  el.innerHTML = `<div class="gs-top">
+      <div class="gs-overall">${gauge}<div class="gs-ol ${allC}">${allL}</div><div class="gs-os">${all.up} up · ${all.dn} down · ${all.nt} neutral</div></div>
+      <div class="gs-rows">${bar("Trend & structure", rows.filter((x) => x.grp === 0))}${bar("Momentum & flow", rows.filter((x) => x.grp === 1))}${bar("Macro & drivers", rows.filter((x) => x.grp === 2))}</div>
+    </div>
+    <details class="gs-more"${open ? " open" : ""}><summary>All ${rows.length} indicators</summary><div class="gs-list">${list}</div></details>
+    <div class="gs-note dim">Each indicator counts once, as up, down or neutral for gold. This is a summary of the evidence, not the model's decision. Indicators marked “context” are outside drivers, shown for context only.</div>`;
+  const det = el.querySelector(".gs-more"); det.addEventListener("toggle", () => { try { localStorage.setItem("gs-open", det.open ? "1" : "0"); } catch (e) { /* ignore */ } });
 }
 function spark(it, gold) {
   const v = it.spark && it.spark.v; if (!v || v.length < 2) return "";
