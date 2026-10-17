@@ -446,7 +446,7 @@ function onMacro(q) {
     const first = prev && prev.first && now - prev.first.rx < 300000 ? prev.first : { p: v.p, rx: now };
     MQ[k] = { p: v.p, t: v.t, rx: now, first };
   }
-  renderMacroPanel();
+  renderMacroPanel(); renderGoldArrows();
 }
 const freshQ = (k) => MQ[k] && Date.now() - MQ[k].rx < 600000 ? MQ[k] : null;
 function liveMacro(key, it) {
@@ -472,7 +472,40 @@ function liveMacro(key, it) {
   return null;
 }
 const estNote = (it) => `live est.: ^TNX ${it.live.anchor_v.toFixed(3)}% at ${new Date(it.live.anchor_t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} ${it.live.beta < 0 ? "−" : "+"} ${Math.abs(it.live.beta).toFixed(3)} × T-note move (fit r² ${it.live.r2.toFixed(2)}, ${it.live.n} bars)`;
-async function loadMacroPanel() { try { S.macroPanel = await getJSON("data/macro_panel.json"); } catch (e) { S.macroPanel = null; } renderMacroPanel(); }
+// what an instrument's move means for gold, as the macro panel shows it: sign(move) x sign(r) when r is clear
+// (|r| >= 0.2), else the textbook relation; a daily series by its trend. One verdict per instrument on the page.
+function panelGold(it, chg, dirOnly) {
+  if (it.daily) return it.gold || 0;
+  const sgnR = isNum(it.corr) && Math.abs(it.corr) >= 0.2 ? Math.sign(it.corr) : it.textbook;
+  return dirOnly ? dirOnly * sgnR : chg ? Math.sign(chg) * sgnR : 0;
+}
+function panelMove(it) {                            // the panel's change, live when the relay streams the instrument
+  const lv = it.daily ? null : liveMacro(it.key, it);
+  if (lv && isNum(lv.v)) return { chg: lv.v - it.ref, dir: null };
+  return { chg: it.change, dir: lv && isNum(lv.dir) ? lv.dir : null };
+}
+async function loadMacroPanel() { try { S.macroPanel = await getJSON("data/macro_panel.json"); } catch (e) { S.macroPanel = null; } renderMacroPanel(); renderGoldArrows(); }
+/* ---------- gold arrows (Pine v53-v73 GOLD ARROWS grid; computed by report.gold_arrows; DISPLAY ONLY) ----------
+   Every indicator by what it means for gold: green supports up, red down, grey neutral, — no data; CLIMAX amber
+   (exhaustion either way). The five drivers take the macro panel's own verdict (one verdict per instrument on the
+   page): intraday by the measured r or the textbook relation, daily by their trend. None votes or gates anything. */
+function renderGoldArrows() {
+  const el = $("#gold-arrows"), D = S.data; if (!el || !D) return;
+  const G = (D.dashboard && D.dashboard.gold_arrows) || [];
+  const glyph = (d) => (d === null || d === undefined ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈");
+  const cls = (d) => (d === null || d === undefined ? "na" : d > 0 ? "bull" : d < 0 ? "bear" : "flat");
+  const cells = G.map((g) => g.name === "CLIMAX" ? { name: g.name, g: g.glyph, c: g.amber ? "amber" : "flat", t: g.text } : { name: g.name, g: glyph(g.d), c: cls(g.d), t: g.text });
+  const items = ((S.macroPanel && S.macroPanel.items) || []).filter((it) => ["JPYUSD", "WTI", "REALYLD", "BREAKEVEN", "US2Y"].includes(it.key));
+  for (const it of items) {
+    let d = null, t = "no data";
+    if (it.ok && it.daily) { d = it.gold; t = `${it.last.toFixed(it.dec)}% ${it.trend > 0 ? "rising" : it.trend < 0 ? "falling" : "flat"} · daily`; }
+    else if (it.ok) { const mv = panelMove(it); d = panelGold(it, mv.chg, mv.dir);
+      t = `${mv.chg > 0 ? "rising" : mv.chg < 0 ? "falling" : "flat"} · macro panel`; }
+    cells.push({ name: { JPYUSD: "JPY/USD", WTI: "OIL", REALYLD: "REAL YLD", BREAKEVEN: "BREAKEVEN", US2Y: "US 2Y" }[it.key], g: glyph(d), c: cls(d), t, drv: true });
+  }
+  el.innerHTML = cells.map((x) => `<div class="ga ${x.c}${x.drv ? " drv" : ""}" title="${esc(x.name + ": " + x.t)}"><b>${esc(x.name)} <span class="gg">${x.g}</span></b><span>${esc(x.t)}</span></div>`).join("") +
+    `<div class="ga-key dim"><span class="bull">green = supports gold up</span> · <span class="bear">red = down</span> · grey ≈ neutral or weakly correlated · — no data on this timeframe · <span class="amber">amber = exhaustion</span> · the drivers (dashed) are display only: no vote, weight or gate</div>`;
+}
 function spark(it, gold) {
   const v = it.spark && it.spark.v; if (!v || v.length < 2) return "";
   const W = 220, H = 54, pad = 3, n = v.length;
@@ -498,13 +531,20 @@ function renderMacroPanel() {
         (lv0 && isNum(lv0.v) ? `<div class="mv"><span class="num">${it.unit === "$" ? "$" : ""}${lv0.v.toFixed(it.dec)}</span><span class="dim">no 24 h history yet</span></div>` : "") +
         `<div class="muted mnote">15-minute data unavailable${it.note ? " · " + esc(it.note) : ""}</div></div>`;
     }
+    if (it.daily) {                                   // FRED daily: trend vs EMA10 / EMA20, no intraday correlation (Pine v65)
+      const cls = it.gold > 0 ? "bull" : it.gold < 0 ? "bear" : "", asof = new Date(it.t * 1000).toISOString().slice(0, 10);
+      const pct = it.ref ? it.change / it.ref * 100 : null;
+      return `<div class="mbox ${cls}"><div class="mh"><b>${esc(it.label)}</b><span class="lt" title="FRED ${esc(it.symbol)}, observation of ${asof}">daily</span></div>
+      <div class="mv"><span class="num">${it.last.toFixed(it.dec)}%</span><span class="mchg ${cls}">${it.change > 0 ? "▲" : it.change < 0 ? "▼" : "■"} ${fs(it.change, it.dec)} (${isNum(pct) ? fs(pct, 2) : "—"}%)</span></div>
+      ${spark(it)}
+      <div class="mf"><span class="gi ${cls}">${it.gold > 0 ? "▲ supports gold up" : it.gold < 0 ? "▼ supports gold down" : "■ neutral for gold"}</span>
+        <span class="dim" title="${esc(it.basis || "")}">${it.trend > 0 ? "rising" : it.trend < 0 ? "falling" : "flat"} · ${asof}</span></div></div>`;
+    }
     const lv = liveMacro(it.key, it);
     let last = it.last, chg = it.change, live = false, dirOnly = null;
     if (lv && isNum(lv.v)) { last = lv.v; chg = lv.v - it.ref; live = true; }
     if (lv && isNum(lv.dir)) dirOnly = lv.dir;
-    // what the move means for gold: sign(move) x sign(r) when r is clear, else the textbook relation
-    const sgnR = isNum(it.corr) && Math.abs(it.corr) >= 0.2 ? Math.sign(it.corr) : it.textbook;
-    const gimp = dirOnly ? dirOnly * sgnR : chg ? Math.sign(chg) * sgnR : 0;
+    const gimp = panelGold(it, chg, dirOnly);
     const cls = gimp > 0 ? "bull" : gimp < 0 ? "bear" : "";
     const pct = it.ref ? chg / it.ref * 100 : null;
     const fmt = (x) => (isNum(x) ? x.toFixed(it.dec) : "—");
@@ -723,12 +763,14 @@ function h4rec(D) {
     (is.n ? ` · in-sample ${is.n} trades, win ${f(is.win_rate, 0)}%, mean ${fs(is.avg_r, 2)} R, PF ${f(is.profit_factor, 2)}` : "") +
     (neg ? ' · <b class="warn">measured mean R is negative: levels to watch, not a proven edge</b>' : "");
 }
+const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "P below minimum" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
 function pbLine(x, tf, primary) {
   if (!x) return "";
-  const s = x.dir < 0;
+  const s = x.dir < 0, through = isNum(x.dist) && (s ? x.dist > 0 : x.dist < 0);   // live price already beyond the trigger
   return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(x.tname)}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
     `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span><i>TP1 ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
-    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span><i>TP2 ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>R:R</i><b>1:${f(x.rr, 1)}</b></span><span><i>Away</i><b>${fs(x.dist, 2)}</b></span></div></div>`;
+    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span><i>TP2 ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>R:R</i><b>1:${f(x.rr, 1)}</b></span><span><i>Away</i><b>${fs(x.dist, 2)}</b></span></div>` +
+    (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") + `</div>`;
 }
 function renderBrief() {
   const el = $("#brief"), D = S.data; if (!el || !D) return;
@@ -756,7 +798,8 @@ function renderBrief() {
   // 4 next target: the nearest liquidity on the side of the lean; the other side is the risk
   const nl = nextLevels(D, price), tgt = (up ? nl.above : nl.below)[0], nxt = (up ? nl.above : nl.below)[1], opp = (up ? nl.below : nl.above)[0];
   const t4 = tgt ? tile(up ? "bull" : "bear", "target", "Next target", `${esc(tgt[0])} ${px(tgt[1])}`,
-    `${fs(tgt[1] - price, 2)} from price${nxt ? ` · then ${esc(nxt[0])} ${px(nxt[1])}` : ""}<br>${opp ? `Opposite liquidity: ${esc(opp[0])} ${px(opp[1])} (${fs(opp[1] - price, 2)})` : ""}`)
+    `${fs(tgt[1] - price, 2)} from price${nxt ? ` · then ${esc(nxt[0])} ${px(nxt[1])}` : ""}<br>${opp ? `Opposite liquidity: ${esc(opp[0])} ${px(opp[1])} (${fs(opp[1] - price, 2)})` : ""}` +
+    (d.liquidity && d.liquidity.dest && d.liquidity.dest !== "—" ? `<br>Engine liquidity draw: ${esc(d.liquidity.dest)} (score ${d.liquidity.dest_score})` : ""))
     : tile("", "target", "Next target", "—", "No liquidity level on that side");
   // 5 what to do now
   const dec = d.decision, sig = dec === "BUY" || dec === "SELL";
@@ -771,7 +814,9 @@ function renderBrief() {
   const t5 = tile(sig ? (dec === "BUY" ? "bull act" : "bear act") : "warn act", sig ? (dec === "BUY" ? "up" : "dn") : "hand", "What to do now", esc(doNow),
     (warn ? `<b class="warn">${warn}</b><br>` : "") + (sig ? `Entry ${px(p.entry)} · stop ${px(p.sl)} · TQ ${d.trade_quality}` :
       (pb0 && (pb0.buy || pb0.sell) ? `Act only on a ${esc(M.tf)} close beyond a playbook trigger.<br>` : "") +
-      (/^RANGE/.test(log) ? "Engine: ranging, no side has an edge." : need ? `Engine (${gs ? gsd : mm && mm[1] === "▲" ? "long" : "short"} side) waits for: ${esc(need)}` : esc(d.blk_why || "")) +
+      (dec === "NO TRADE" ? `All 7 gates met, but the setup is vetoed: ${esc(vetoes(d) || "veto")}.` :
+        dec === "RISK LOCK" ? `Risk lock: no new trades${d.risk && d.risk.lock_str ? ` (${esc(d.risk.lock_str)})` : ""}.` :
+        /^RANGE/.test(log) ? "Engine: ranging, no side has an edge." : need ? `Engine (${gs ? gsd : mm && mm[1] === "▲" ? "long" : "short"} side) waits for: ${esc(need)}` : esc(d.blk_why || "")) +
       (d.session && d.session.quality < 30 ? ` · ${esc(d.session.label.toLowerCase())} session (the engine trades London / New York)` : "")));
   // 6 trade plan
   const side = p.long ? "LONG" : "SHORT";
@@ -844,7 +889,7 @@ function renderSide() {
   const dec = d.decision;
   const cls = dec === "BUY" ? "buy" : dec === "SELL" ? "sell" : dec === "NO TRADE" ? "notrade" : dec === "RISK LOCK" ? "risk" : "";
   const sub = dec === "BUY" || dec === "SELL" ? `confidence ${d.confidence}/100 (agreement score, not a probability)`
-    : dec === "NO TRADE" ? `setup vetoed — ${[d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "P below minimum" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ")}`
+    : dec === "NO TRADE" ? `setup vetoed — ${vetoes(d)}`
     : dec === "RISK LOCK" ? d.risk.lock_str
     : dec === "WARMUP" ? `statistics warming up: ROLL effective N ${d.oos_neff}/10`
     : `no setup${d.blk_why ? " — " + d.blk_why : ""}`;
@@ -899,7 +944,7 @@ function renderSide() {
     ["Calibration gate", d.cal_gate_ready ? `live · min P ${pct(M.config.cal_gate_min_p * 100)}` : "inactive (needs a fit and ROLL N≥10)"],
     ["Analog EV / match", `${a.match > 0 ? fs(a.ev, 2) + " R" : "—"} · A${a.match}${a.match < 30 ? " LOW" : ""}`],
     ["Win rate (ROLL)", `${pctN(a.oos_wr, a.oos_n)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
-    ["IS vs ROLL", `${pctN(a.is_wr, a.is_n)} / ${pctN(a.oos_wr, a.oos_n)}${a.is_n > 0 && a.oos_n > 0 && a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
+    ["IS vs ROLL", `${pctN(a.is_wr, a.is_n)} / ${pctN(a.oos_wr, a.oos_n)}${a.is_n >= 10 && a.oos_n > 0 && a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
     ["Calibration grade", `${esc(a.cal_grade)} ${a.cal_grade_pct}/100 ${esc(a.cal_detail || "")}`],
     ["Check on this timeframe's trades", calCheck(D)],
   ]) + `<p class="note">ROLL is a rolling trailing slice, <b>not</b> a holdout (F-037). The only out-of-sample evidence is the frozen forward holdout in the Backtest tab.</p>`;
@@ -1308,6 +1353,7 @@ function renderOverview() {
       ["Signal agreement", `▲${d.signals.bull} / ▼${d.signals.bear}${d.signals.conflict ? ' <span class="warn">CONFLICT</span>' : ""}`],
       ["Forecast adj.", fs(d.f_adj, 2)]])),
     card("Regime", kv([["Regime", `${esc(reg.label)} ${esc(reg.vol_tag)}`], ["Composite", `${reg.composite}/100 (${reg.strong ? "strong" : reg.moderate ? "moderate" : "weak"})`],
+      ["Trend strength", d.evidence ? `ADX ${f(d.adx, 1)} · DI+ ${f(d.evidence.di_plus, 1)} / DI− ${f(d.evidence.di_minus, 1)}` : `ADX ${f(d.adx, 1)}`],
       ["ATR percentile", pct(reg.atr_pct)], ["SL multiple", f(reg.sl_mult, 2) + " × ATR"], ["Confidence cap", reg.conf_cap],
       ["Persistence", `T${reg.transitions.T} R${reg.transitions.R} D${reg.transitions.D}`]])),
     card("Session", kv([["Session", `${esc(se.label)} · quality ${se.quality}/100`], ["Spread model", f(se.spread, 2) + " pts"], ["Range vs avg", pct(se.exp_pct)],
@@ -1324,23 +1370,28 @@ function renderOverview() {
       ["Value area", `${esc(fl.va_pos)} POC ${f(fl.vpoc)} (${f(fl.va_ratio, 0)}%)`], ["Rel. volume", f(fl.rel_vol, 2) + "×"], ["Volume pct", pct(fl.vol_pct)],
       ["Climax", fl.climax_up ? '<span class="bull">up</span>' : fl.climax_dn ? '<span class="bear">down</span>' : "—"]]) +
       `<p class="note">${esc(M.volume_source || "")}. Volume is signed by the bar's direction (close vs open); this is a proxy, not true CVD: no trade-by-trade aggressor data is used.</p>`),
-    card("Liquidity target", kv([["Destination", `${esc(li.dest)} ${li.dest_score} ${esc(li.dest_conf)}`], ["Reach score", f(li.reach, 0) + "/100"], ["Health", li.health + "/100"],
+    card("Liquidity draw (engine)", kv([["Destination", `${esc(li.dest)} ${li.dest_score} ${esc(li.dest_conf)}`], ["Reach score", f(li.reach, 0) + "/100"], ["Health", li.health + "/100"],
       ["PDH / PDL reach", `${f(li.reach_scores.PDH, 0)} / ${f(li.reach_scores.PDL, 0)}`], ["Sweep", li.sweep_bull ? "bull sweep" : li.sweep_bear ? "bear sweep" : "—"]])),
   ];
   $("#tab-overview").innerHTML = html.join("");
 }
+// Impact on gold (F-A54, Pine _arrowStr): ▲▲ / ▼▼ when |avg corr| > 0.5, ▲ / ▼ when > 0.25, ≈ when flat or weakly
+// correlated, — without data. The colour is the direction for gold.
 function arrow(m) {
-  if (!m || !m.valid) return '<span class="dim">—</span>';
-  return m.gold_bullish ? '<span class="bull">▲</span>' : m.gold_bearish ? '<span class="bear">▼</span>' : "≈";
+  if (!m || !m.valid) return '<span class="dim" title="no data">—</span>';
+  const r = Math.abs(isNum(m.avg_corr) ? m.avg_corr : 0), up = m.gold_bullish, dn = m.gold_bearish;
+  const t = `title="avg r ${isNum(m.avg_corr) ? m.avg_corr.toFixed(2) : "—"}"`;
+  if (!(up || dn) || r <= 0.25) return `<span class="dim" ${t}>≈</span>`;
+  return `<span class="${up ? "bull" : "bear"}" ${t}>${(up ? "▲" : "▼").repeat(r > 0.5 ? 2 : 1)}</span>`;
 }
 function renderMacro() {
   const D = S.data, m = D.macro;
-  const rows = [["DXY", m.DXY, "inverse"], ["US10Y", m.US10Y, "inverse"], ["TIPS" + (m.tips_source === "us10y" ? " (=US10Y, Pine default)" : ""), m.TIPS, "inverse"],
+  const rows = [["DXY", m.DXY, "inverse"], ["US10Y", m.US10Y, "inverse"], ["TIPS" + (m.tips_on === false ? " (off: same feed as 10Y)" : ""), m.TIPS, "inverse"],
     ["EURUSD", m.EURUSD, "direct"], ["XAG", m.XAG, "direct"], ["SPX", m.SPX, "direct"]];
   const t = `<div class="scroll"><table class="t"><tr><th>Asset</th><th>Value</th><th>EMA10/20</th><th>For gold</th><th>ρ30</th><th>ρ60</th><th>ρ120</th><th>Health</th></tr>` +
     rows.map(([n, r, rel]) => `<tr><td>${n} <span class="dim">${rel}</span></td><td>${r.valid ? f(r.value, 3) : '<span class="dim">n/a</span>'}</td><td>${f(r.ema10, 3)} / ${f(r.ema20, 3)}</td><td>${arrow(r)}</td>` +
       r.corr.map((x) => `<td class="${x > 0 ? "bull" : x < 0 ? "bear" : ""}">${f(x, 2)}</td>`).join("") + `<td>${f(r.health, 0)}</td></tr>`).join("") + `</table></div>` +
-    `<p class="note">Correlations of chart-bar returns; the significance band is the Bonferroni-corrected t critical value (|ρ| ≥ ${Object.values(m.corr_sig).map((x) => f(x, 2)).join(" / ")} for 30/60/120). Health 50 = no evidence either way.</p>`;
+    `<p class="note">Correlations of returns over the same period (Amendment 9 / F-A64): silver, EURUSD and SPX with gold's previous chart bar, DXY / 10Y / TIPS with gold's own 1H bars. The dollar votes once: EURUSD stands in only when DXY has no data (F-A65). The significance band is the Bonferroni-corrected t critical value (|ρ| ≥ ${Object.values(m.corr_sig).map((x) => f(x, 2)).join(" / ")} for 30/60/120). Health 50 = no evidence either way.</p>`;
   $("#tab-macro").innerHTML = card("Cross-asset drivers", t) +
     card("Rates, volatility, positioning", kv([["2s10s curve", `${f(m.curve_2s10s, 2)} ${m.curve_steepening ? "steepening" : "flattening"}`], ["VIX (prior close)", f(m.vix, 2)],
       ["CFTC COT percentile", m.cot.valid ? `${f(m.cot.pct, 0)} ${m.cot.crowded_long ? '<span class="warn">LONG-CROWDED</span>' : m.cot.crowded_short ? '<span class="warn">SHORT-CROWDED</span>' : ""}` : "—"],
@@ -1493,7 +1544,7 @@ function renderStrip() {
   el.innerHTML = [
     cell("Signal", esc(dec), `L ${f(d.bull_score, 0)} · S ${f(d.bear_score, 0)} · R ${f(d.range_score, 0)}`, dec === "BUY" ? "bull" : dec === "SELL" ? "bear" : ""),
     cell("Structure", esc(structStr(d.struct)), esc(d.regime ? d.regime.label : "")),
-    cell("Liquidity", esc(d.liquidity ? d.liquidity.dest : "—"), `PDH ${px(lq.PDH)} · PDL ${px(lq.PDL)}`),
+    cell("Liquidity draw", esc(d.liquidity ? d.liquidity.dest : "—"), `PDH ${px(lq.PDH)} · PDL ${px(lq.PDL)}`),
     cell("Price", px(d.close), `VWAP D ${px(vw)}`),
     cell("Macro", esc(d.macro ? d.macro.label : "—"), d.macro ? `${fs(d.macro.strength, 0)} · votes ${d.macro.bull_votes}/${d.macro.bear_votes}` : ""),
     cell("Risk", isNum(p.rr1) ? `1:${f(p.rr1, 1)} · SL ${f(p.dist, 2)}` : "—", `Kelly ${d.kelly ? f(d.kelly.kelly_pct, 2) : "—"}%${sig ? "" : " · no signal"}`),
@@ -1503,7 +1554,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderBrief); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderBrief); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

@@ -313,7 +313,10 @@ def _rest(F, m, cfg, c, h, l, o, v, c1, aatr, atr, adx, dip, dim, vwap, bb_basis
     slv_valid = F["slv_ok"] & ~np.isnan(F["slv_e20"])
     eur_valid = F["eur_ok"] & ~np.isnan(F["eur_e10"]) & ~np.isnan(F["eur_e20"])
     spx_valid = F["spx_ok"] & ~np.isnan(F["spx_e10"]) & ~np.isnan(F["spx_e20"])
-    tips_valid = F["tips_ok"] & ~np.isnan(F["tips_e10"]) & ~np.isnan(F["tips_e20"])
+    # Amendment 9 / F-A65 (Pine v65): TIPS is a factor only on its own feed; on the 10Y yield it would count it twice
+    tips_on = cfg.tips_source != "us10y"
+    F["tips_on"] = tips_on
+    tips_valid = F["tips_ok"] & ~np.isnan(F["tips_e10"]) & ~np.isnan(F["tips_e20"]) & tips_on
     F.update(dxy_valid=dxy_valid, yld_valid=yld_valid, slv_valid=slv_valid, eur_valid=eur_valid,
              spx_valid=spx_valid, tips_valid=tips_valid)
     dxc, yc, sc_, ec, pc, tc = F["dxy_c1"], F["yld_c1"], F["slv_c1"], F["eur_c1"], F["spx_c1"], F["tips_c1"]
@@ -442,9 +445,12 @@ def _rest(F, m, cfg, c, h, l, o, v, c1, aatr, atr, adx, dip, dim, vwap, bb_basis
     F["US2Y_STATUS"] = np.where(y2_valid, 0, 1)
     F["COT_STATUS"] = np.where(F["cot_valid"] & cot_on, 0, 1)
 
-    mbv = (F["gc_confirms_bull"].astype(int) + dxy_bear + yld_falling + spx_bull + eur_bull + slv_bull + tips_falling)
-    mbr = (F["gc_confirms_bear"].astype(int) + dxy_bull + yld_rising + spx_bear + eur_bear + slv_bear + tips_rising)
-    pool = 6 + gc_valid.astype(int)
+    # Amendment 9 / F-A65: the dollar is ONE factor (EUR is 57.6% of DXY); EURUSD votes only when DXY has no data
+    usd_bull = np.where(dxy_valid, dxy_bear, eur_bull)
+    usd_bear = np.where(dxy_valid, dxy_bull, eur_bear)
+    mbv = (F["gc_confirms_bull"].astype(int) + usd_bull.astype(int) + yld_falling + spx_bull + slv_bull + tips_falling)
+    mbr = (F["gc_confirms_bear"].astype(int) + usd_bear.astype(int) + yld_rising + spx_bear + slv_bear + tips_rising)
+    pool = 4 + int(tips_on) + gc_valid.astype(int)
     need = np.ceil(pool / 2.0)
     F["macro_bull_votes"], F["macro_bear_votes"] = mbv, mbr
     F["macro_bull"] = mbv >= need
@@ -460,9 +466,21 @@ def _rest(F, m, cfg, c, h, l, o, v, c1, aatr, atr, adx, dip, dim, vwap, bb_basis
             rr = np.where(np.abs(x1) > 1e-10, x / x1, 0.0) - 1.0
         return np.where(valid & ~np.isnan(x1), rr, np.nan)
 
-    series = {"DXY": (dxc, dxy_valid, -1.0), "Yld": (yc, yld_valid, 1.0 if cfg.invert_yield else -1.0),
-              "Slv": (sc_, slv_valid, 1.0), "SPX": (pc, spx_valid, 1.0), "EUR": (ec, eur_valid, 1.0),
-              "TIPS": (tc, tips_valid, -1.0)}
+    # Amendment 9 / F-A64 (Pine v64): gold and each asset over the SAME completed bar. Every macro return spans the
+    # bar before (it is built from close[1]); gold_ret spans this bar. Chart-TF assets pair with gold_ret[i-1];
+    # 1H assets pair with gold's 1H series read exactly as they are (close[1] of the last 1H bar, same alignment),
+    # their windows counted in 1H bars (x k); a window over 4,500 chart bars reads as no data.
+    gold_ret_l = ta.shift(gold_ret, 1)
+    g1h = m.htf.get("60")
+    if g1h is not None and len(g1h):
+        gm = align(close_t, pd.DataFrame({"c1": ta.shift(g1h["close"].to_numpy(float), 1)}, index=g1h.index), ["c1"])["c1"]
+    else:
+        gm = np.full(n, np.nan)
+    gold_ret_m = rets(gm, ~np.isnan(gm))
+    k_m = max(1, int(3600 // tf_sec))
+    series = {"DXY": (dxc, dxy_valid, -1.0, gold_ret_m, k_m), "Yld": (yc, yld_valid, 1.0 if cfg.invert_yield else -1.0, gold_ret_m, k_m),
+              "Slv": (sc_, slv_valid, 1.0, gold_ret_l, 1), "SPX": (pc, spx_valid, 1.0, gold_ret_l, 1),
+              "EUR": (ec, eur_valid, 1.0, gold_ret_l, 1), "TIPS": (tc, tips_valid, -1.0, gold_ret_m, k_m)}
     p_upper = 1.0 - (0.05 / 18.0) / 2.0
     sig = {}
     for L in (cfg.corr_short_len, cfg.corr_med_len, cfg.corr_long_len):
@@ -474,9 +492,10 @@ def _rest(F, m, cfg, c, h, l, o, v, c1, aatr, atr, adx, dip, dim, vwap, bb_basis
     health = {}
     avg_corr = {}
     stab = {}
-    for key, (x, valid, sign) in series.items():
+    for key, (x, valid, sign, gr, k) in series.items():
         rr = rets(x, valid)
-        cs = [np.where(valid, ta.correlation(gold_ret, rr, L), np.nan) for L in (cfg.corr_short_len, cfg.corr_med_len, cfg.corr_long_len)]
+        cs = [np.where(valid, ta.correlation(gr, rr, L * k), np.nan) if L * k <= 4500 else np.full(n, np.nan)
+              for L in (cfg.corr_short_len, cfg.corr_med_len, cfg.corr_long_len)]
         corr[key] = cs
         z = [np.nan_to_num(q, nan=0.0) for q in cs]
         avg_corr[key] = (z[0] + z[1] + z[2]) / 3.0
@@ -501,7 +520,8 @@ def _rest(F, m, cfg, c, h, l, o, v, c1, aatr, atr, adx, dip, dim, vwap, bb_basis
     wy = np.minimum(np.abs(avg_corr["Yld"]) * 100, 30)
     ws = np.minimum(np.abs(avg_corr["Slv"]) * 100, 25)
     wp = np.where(spx_valid, np.minimum(np.abs(avg_corr["SPX"]) * 100, 15), 0.0)
-    we = np.where(eur_valid, 20.0, 0.0)
+    eur_usd = eur_valid & ~dxy_valid      # F-A65: EURUSD weighs only as the dollar's stand-in, by |corr| like DXY
+    we = np.where(eur_usd, np.minimum(np.abs(avg_corr["EUR"]) * 100, 30), 0.0)
     wt = np.minimum(np.abs(avg_corr["TIPS"]) * 100, 25)
     wtot = wd + wy + ws + wp + we + wt
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -514,16 +534,16 @@ def _rest(F, m, cfg, c, h, l, o, v, c1, aatr, atr, adx, dip, dim, vwap, bb_basis
     ms = (np.where(dxy_valid, np.where(dxy_bear, wD, np.where(dxy_bull, -wD, 0.0)), 0.0)
           + np.where(yld_valid, np.where(yld_falling, wY, np.where(yld_rising, -wY, 0.0)), 0.0)
           + np.where(spx_valid, np.where(spx_bull, wP, np.where(spx_bear, -wP, 0.0)), 0.0)
-          + np.where(eur_valid, np.where(eur_bull, wE, np.where(eur_bear, -wE, 0.0)), 0.0)
+          + np.where(eur_usd, np.where(eur_bull, wE, np.where(eur_bear, -wE, 0.0)), 0.0)
           + np.where(slv_valid, np.where(sc_ > F["slv_e20"], wS, np.where(sc_ < F["slv_e20"], -wS, 0.0)), 0.0)
           + np.where(tips_valid, np.where(tips_falling, wT, np.where(tips_rising, -wT, 0.0)), 0.0)
           + np.where(dxy_valid, np.where(dxy_roc < -0.15, 10.0, np.where(dxy_roc > 0.15, -10.0, 0.0)), 0.0)
           + np.where(yld_valid, np.where(zn_roc < -0.1, 5.0, np.where(zn_roc > 0.1, -5.0, 0.0)), 0.0)
-          + np.where(eur_valid, np.where(eur_roc > 0.15, 5.0, np.where(eur_roc < -0.15, -5.0, 0.0)), 0.0))
+          + np.where(eur_usd, np.where(eur_roc > 0.15, 5.0, np.where(eur_roc < -0.15, -5.0, 0.0)), 0.0))
     mss = np.trunc(np.clip(ms, -100, 100))
     F["macro_strength"] = mss
     msd = np.nan_to_num(ta.stdev(mss, 20), nan=50.0)
-    nvalid6 = (dxy_valid.astype(int) + yld_valid + slv_valid + spx_valid + eur_valid + tips_valid) / 6.0
+    nvalid6 = (dxy_valid.astype(int) + yld_valid + slv_valid + spx_valid + eur_valid + tips_valid) / (5.0 + int(tips_on))
     F["macro_strength_conf"] = np.floor(nvalid6 * 30.0 + F["avg_corr_health"] * 0.50 + (1.0 - np.minimum(msd / 100.0, 1.0)) * 20.0 + 0.5)
     F["dxy_rsi"] = F["dxy_rsi"]
 

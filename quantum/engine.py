@@ -1493,6 +1493,10 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
                              bias=("LONG-REV" if auc_state == "REJ-LO" else "LONG-CONT") if (should_buy and not tq_veto)
                              else ("SHORT-REV" if auc_state == "REJ-HI" else "SHORT-CONT") if (should_sell and not tq_veto)
                              else "NO-TRADE" if (should_buy or should_sell) else "WAIT"),
+                # display only (Amendment 9 section 3): values the engine already computes on this bar, for the gold-arrows grid
+                evidence=dict(liq_bull=ev_lb, liq_bear=ev_ls, rsi_div_bull=bool(bull_rsi_div), rsi_div_bear=bool(bear_rsi_div),
+                              rsi_div_filter=bool(cfg.use_rsi_div_filter), bull_trend=bool(bt), bear_trend=bool(brt),
+                              di_plus=dip[i], di_minus=dim[i], cvd_bear=bool(F["cvd_bear"][i])),
                 flow=dict(cvd_bull=bool(F["cvd_bull"][i]), vd_k=vdkq, vpoc=vpoc, vah=vah, val=val, va_ratio=va_ratio, va_pos=va_pos,
                           rel_vol=rel_vol, vol_pct=vol_pct, climax_up=climax_up, climax_dn=climax_dn),
                 signals=dict(bull=bull_sig_n, bear=bear_sig_n, conflict=pipeline_conflict, smt_bull=smt_bull, smt_bear=smt_bear),
