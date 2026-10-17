@@ -2433,3 +2433,50 @@ The Master's figures are between those of the v69 (99,542 / 99,004) and v66 (100
 compiled.
 
 Compile NOT RUN on v70.
+
+---
+
+# Build v70 → v71 — F-A68: the v70 Master failed to compile; the drivers stay, without a user-defined type
+
+**Compiler report (operator's v70 paste, 2026-10-18):**
+- Master v70: `Compiled code contains too many tokens: 103989. The limit is 100256` (CE10117).
+- The Brief v70, Visuals v70 and Diagnostics v68 compiled. The v70 Brief is recorded in `compile_est.py` KNOWN_UNDER.
+
+**Cause (F-A68):**
+- `compile_est.py` had said 99,616. v70's only new construct was the `DCell` record type (37 `DCell.new` calls).
+- The 4,373 missing tokens are 73.0 raw tokens per constructor call. TradingView expands a UDT constructor at every
+  call, as it does a user function, so the queue cost more than the ~2,000 tokens it saved.
+- `compile_est.py` now counts UDT constructors (73.0 best fit, 69.4 pessimistic, fitted on this report). It lists the
+  v70 Master in KNOWN_OVER and fails if the model ever puts it under the limit again.
+- CLAUDE.md: no user-defined types in chart scripts.
+
+**v71 Master** — rebuilt from the v69 Master, which compiled (`fix_v71.py`); nothing removed, every output the same:
+- **Dashboard (20 `tcb` calls, 28 cells):**
+  - Each cell pushes only its text, text colour and background onto three arrays. One loop at the end of
+    f_dashRender writes them with tcb's own condition and `table.cell`.
+  - The calls are unconditional and in a fixed order, so cell j is col `j % 9` and row `int(j / 9)`, or (8, 3) for the
+    last cell. Its size and width follow from the row and column.
+  - `fix_v71.py` asserts this for every call. `refactor_check.py` executes the loop's expressions against all 28 cells
+    of the v69 calls.
+- **Plan panel:** the 8 `tcp` calls push text and background; the column is the queue index and the size is `_pSz`.
+- **Phone card:** the 9 `_bc` calls (some conditional) push all five arguments.
+- No other code writes those tables between a queue's first push and its loop.
+- **Gold drivers:**
+  - The same GD block as Visuals and the Brief.
+  - The MACRO detail cell ends `JPY▲ OIL≈ RY≈ BE▼ 2Y▲`.
+  - The hover text is set with `table.cell_set_tooltip` where the cell is drawn: desktop / tablet, not Strip or Mobile
+    (tcb's own condition).
+- **Derivation:** `refactor_check.py` requires `Master == fix_v71.transform(fix_v68.transform(v66 commit), GD block)`
+  byte for byte.
+
+**Size** (`compile_est.py`):
+
+| Script | best-fit | pessimistic | main body |
+|---|---:|---:|---:|
+| Master v71 | 99,602 | 98,605 | 25,045 |
+| *v69 Master (compiled)* | *99,542* | *99,004* | *23,794* |
+| *v70 Master (FAILED at 103,989)* | *103,989* | *103,989* | *24,932* |
+
+Visuals, Brief, Diagnostics and the arms are unchanged.
+
+Compile NOT RUN on v71.

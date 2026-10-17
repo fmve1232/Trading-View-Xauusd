@@ -41,8 +41,9 @@ V56_ROWS = {
     "TP2": '"TP2 " + tp2Str + (not na(pTP2) ? "  ~" + str.tostring(int(pTP2)) + "%" : "")',
     "TP3": '"TP3 " + tp3Str + (not na(pTP3) ? "  ~" + str.tostring(int(pTP3)) + "%" : "")',
 }
-# v70: the plan rows are queued (DCell.new(col, 0, txt, C_TEXT, bg, ts, 0)) and written by f_planFlush = tcp's table.cell
-NEW = {k: re.search(r'DCell\.new\(\d, 0, (' + re.escape('"' + k + ' "') + r'.*?), C_TEXT, cBloomBg', "\n".join(L)).group(1) for k in V56_ROWS}
+# v71: the plan rows are queued (array.push(_pqT, txt)) and written after the last row with tcp's table.cell
+NEW = {k: next(l.strip()[len("array.push(_pqT, "):-1] for l in L if l.strip().startswith('array.push(_pqT, "' + k + ' "'))
+       for k in V56_ROWS}
 bad = n = 0
 for _ in range(3000):
     env["_ciN"] = rng.choice([0.0, 2.0, 3.0, 12.0, 250.0])   # the global f_ciHalf reads (defining scope)
@@ -114,10 +115,10 @@ for o in miss[:3]:
     print("     missing:", o[:100])
 
 # ---- plan rows: row 0 / width 0 were the only values ever passed; the 8 rows are the same calls without them
-# v70: tcp's table.cell lives in f_planFlush (the rows are queued DCell records, row 0 / width 0 as before)
-_fl = L.index("f_planFlush(DCell[] q) =>")
-tcpdef = L[_fl + 2]
-ok = "_dashMobile ? 9 + c.col : 0," in tcpdef and "width=0" in tcpdef and len(re.findall(r"array\.push\(_pq, DCell\.new\(\d, 0, ", cur)) == 8 \
+# v71: tcp's table.cell is the loop after the last plan row (row 0 / width 0 as before; col = the row's queue index)
+_fl = next(i for i, l in enumerate(L) if l.strip() == "for [col, txt] in _pqT")
+tcpdef = L[_fl + 1]
+ok = "_dashMobile ? 9 + col : 0," in tcpdef and "width=0" in tcpdef and len(re.findall(r"array\.push\(_pqT, ", cur)) == 8 \
      and len(re.findall(r"tcp\(\d, 0, ", "\n".join(V56))) == 8
 report("plan rows: 8 tcp calls, row 0 / width 0 folded into the helper", 0 if ok else 1, 8)
 
@@ -148,11 +149,12 @@ report(f"opaque colours: {len(lit59)} color.new(#rrggbb, 0) -> #rrggbb (identica
 
 
 # ---- v60 Strip fold, the coordinate expressions of tcb executed as written
-# v70: tcb's table.cell is f_dashFlush's, on the queued record's fields (c.col / c.row): read it there, fields as names
-tl = next(l for l in L if l.lstrip().startswith("table.cell(tblA, _dashStrip ? c.col % 3 : c.col,")).replace("c.", "")
+# v71: tcb's table.cell is the flush loop at the end of f_dashRender (col / row rebuilt from the queue index)
+_tq = next(i for i, l in enumerate(L) if l.strip() == "for [j, txt] in _dqT")
+tl = L[_tq + 4]
+assert tl.lstrip().startswith("table.cell(tblA, _dashStrip ? col % 3 : col,")
 cx, cy = [x.strip() for x in P._split_args(tl.strip()[len("table.cell("):-1])[1:3]]
-gate = next(L[i] for i, l in enumerate(L) if l.startswith("f_dashFlush(DCell[] cells) =>") for _ in [0])
-cond = L[L.index(gate) + 2].strip()[3:].replace("c.", "")
+cond = L[_tq + 3].strip()[3:]
 P.BUILTINS["int"] = lambda x: P.NA if P.isna(x) else int(x)
 seen, bad = {}, 0
 for col in range(9):
@@ -168,6 +170,34 @@ for col in range(9):
         if row == 1:
             bad += seen.get((x, y - 1)) != (col, 0)   # each value sits directly under its own header
 report("Strip fold: 9 headers + 9 values on unique cells of the 3 x 6 grid, header above value, details skipped", bad, 36)
+
+# ---- v71 (F-A68): the dashboard queue. Each of the 28 cells the v69 tcb calls wrote (header loop k = 0..8, then the
+# 19 calls in order) must get back, from its queue index j, the same col / row / text size / width, executed as written.
+import fix_v70 as F70  # noqa: E402
+V69 = subprocess.run(["git", "show", "61871d60:" + M], capture_output=True, text=True, check=True).stdout.split("\n")
+_h = next(i for i, l in enumerate(V69) if l.startswith("f_dashRender() =>"))
+calls69 = []
+for l in V69[_h + 1:]:
+    if l and not l.startswith((" ", "//")):
+        break
+    if not l.lstrip().startswith("//"):
+        for _s, _f, a in F70._calls(l, "tcb"):
+            calls69 += [[str(k), *a[1:]] for k in range(9)] if a[0] == "k" else [a]
+xcol, xrow = (L[_tq + i].split(" = ", 1)[1] for i in (1, 2))
+targs = {x.split("=", 1)[0].strip(): x.split("=", 1)[1].strip() for x in P._split_args(tl.strip()[len("table.cell("):-1]) if "=" in x
+         and x.split("=", 1)[0].strip() in ("text_size", "width")}
+wexpr = next(l for l in L if l.strip().startswith("int[] _dqW = ")).split(" = ", 1)[1]
+bad = 0
+for j, a in enumerate(calls69):
+    e = P.Env(j=float(j), _dashStrip=False, _hdSize="H", _prSize="P", _seSize="S", _szSe="Z",
+              **{f"_w{i}": float(10 + i) for i in range(9)})
+    col, row = P.evaluate(xcol, e), P.evaluate(xrow, e)
+    e["col"], e["row"] = col, row
+    e["_dqW"] = P.evaluate(wexpr, e)
+    bad += (col, row) != (float(a[0]), float(a[1]))
+    bad += P.evaluate(targs["text_size"], e) != P.evaluate(a[5], e) or P.evaluate(targs["width"], e) != P.evaluate(a[6], e)
+report(f"dashboard queue: the {len(calls69)} cells of the v69 tcb calls get back their col / row / size / width from the index",
+       bad, len(calls69))
 
 # ---- v62 (F-A60): the raw HTF scores are computed once (h2S1 / h2S4 / h2SD) and the engine gates them as before.
 # The v61 engine lines are frozen here; the v62 lines are read from the Master. The engine's htf*Score must not move.
@@ -320,10 +350,10 @@ v66m = subprocess.run(["git", "show", "a5fc12ce:" + M], capture_output=True, tex
 P.define(fn("_b1(bool b) =>"), env)
 b1ok = all(P.evaluate(f"_b1({str(x).lower()})", P.Env(funcs=env.funcs)) == (1 if x else 0) == P.BUILTINS["_b1"](x)
            for x in (True, False))
-import fix_v70 as F70  # noqa: E402
+import fix_v71 as F71  # noqa: E402
 _V = open("artefacts/XAUUSD_Quantum_5_5_Visuals.pine", encoding="utf-8").read()
 _fence = _V[_V.index("// GD-BEGIN"):_V.index("// GD-END") + len("// GD-END")]
-derived = F70.transform(F.transform(v66m), _fence) == open(M, encoding="utf-8").read()   # v70: + DCell queues, GD block
+derived = F71.transform(F.transform(v66m), _fence) == open(M, encoding="utf-8").read()   # v71: + array queues, GD block
 once = F.params_once(v66m)
 arms_bad = 0
 for f in ("Strategy", "Strategy_OLDGATES", "Strategy_CHALLENGER"):
@@ -334,7 +364,7 @@ for f in ("Strategy", "Strategy_OLDGATES", "Strategy_CHALLENGER"):
            if "BUILD STAMP" not in l and not l.startswith("_fwI(float x) =>") and "engine-stats row" not in l
            and not l.lstrip().startswith('_fwRow(10, "Engine stats (display)"') and "computed but never showed (as the Master" not in l]
     arms_bad += old != new
-report("Master == fix_v70.transform(fix_v68.transform(v66 commit)), byte for byte; expanded helpers use each parameter once; arms == v66 "
+report("Master == fix_v71.transform(fix_v68.transform(v66 commit)), byte for byte; expanded helpers use each parameter once; arms == v66 "
        "+ the v67 scorecard row; _b1 executed", 0 if derived and not once and not arms_bad and b1ok else 1, 1)
 
 # v59's '_gS / _gC / _gF' helpers are written out since v68 (array.get(gDash*, i)); the derivation case proves it.

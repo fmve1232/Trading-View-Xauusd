@@ -13,6 +13,9 @@ Both are estimates. Gates (each chart script and arm), v69:
   * MAIN BODY (lexical tokens outside function definitions) at most 26,538, the largest that compiled (v68
     Diagnostics). TradingView has a separate main-body limit: the v68 Master failed at 28,122 with CE10295 "The main
     body of the script is too long" after single-call functions were inlined. So never inline big functions.
+  * v71 (F-A68): a USER-DEFINED TYPE's constructor is expanded at every call. The v70 Master (37 DCell.new calls)
+    compiled at 103,989 where this model said 99,616 / 98,467: 73.0 raw tokens per .new call (best fit; 69.4
+    pessimistic), now part of the model. Fitted on that one report; a chart script should not use a UDT.
 The real compiler is the judge; every report is added below.
 Usage: python3 audit/tools/compile_est.py [files]   (default: every artefact)"""
 import glob
@@ -24,13 +27,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lexcount import toks  # noqa: E402
 
 LIMIT = 100256
-CALIBRATION = {"v14": 100627, "v23": 100820, "v67": 100335}   # compiler-reported totals (Master)
+CALIBRATION = {"v14": 100627, "v23": 100820, "v67": 100335, "v70": 103989}   # compiler-reported totals (Master)
+UDT_NEW = (72.96, 69.43)    # raw tokens per UDT .new() call (best fit, pessimistic), fitted on the v70 report
+KNOWN_OVER = {"v70 Master": ("Master", "cb88ecc0", 103989)}   # failed: the model must put these over the limit
 # Compiled WITHOUT error (operator), i.e. under 100,256: the model must not put these over the limit.
 # v66 Master (39,029 lexical) compiled while v67 (38,870 lexical, FEWER) did not: lexical x ratio is refuted.
 # (file, commit). A confirmed compile the model puts OVER the limit means the model is cautious for that file (safe
 # side): reported as INFO. The v66 Brief compiled although the model said ~101,000.
 KNOWN_UNDER = {"v60 Master": ("Master", "eb3e0c00"), "v66 Master": ("Master", "a5fc12ce"), "v66 Brief": ("Brief", "a5fc12ce"),
-               "v69 Master": ("Master", "61871d60"), "v68 Brief": ("Brief", "c524e2a7"), "v68 Diagnostics": ("Diagnostics", "c524e2a7")}
+               "v69 Master": ("Master", "61871d60"), "v68 Brief": ("Brief", "c524e2a7"), "v68 Diagnostics": ("Diagnostics", "c524e2a7"),
+               "v70 Brief": ("Brief", "cb88ecc0")}
 BEST, PESS = 1.6197, 2.1497        # best fit (v23 / v67, the higher); pessimistic model at its v67 ratio
 MAIN_BODY_OK, MAIN_BODY_FAIL = 26538, 28122   # v68 Diagnostics compiled / v68 Master CE10295
 CEILING = {"Brief": (101003, 104385)}       # a file's own confirmed compile, where the model is cautious for it
@@ -80,15 +86,25 @@ def model(text):
     lex_all = sum(len(toks(l)) for l in L)
     lex_top = sum(len(toks(l)) for l in top)
     inl = sum(n * cost(f) for f, n in calls_in(top).items())
-    return lex_all, lex_top, inl
+    return lex_all, lex_top, inl, udt_news(text)
+
+
+def udt_news(text):
+    """calls of a user-defined type's constructor (Name.new(...)), outside comments"""
+    code = "\n".join(l.split("//")[0] if '"' not in l else l for l in text.split("\n"))
+    return sum(len(re.findall(r"(?<![\w.])" + t + r"\.new\s*\(", code)) for t in re.findall(r"(?m)^type\s+(\w+)", code))
+
+
+def estimate(text):
+    la, lt, inl, nu = model(text)
+    return (la + inl + nu * UDT_NEW[0]) * BEST, (lt + inl + nu * UDT_NEW[1]) * PESS, lt
 
 
 if __name__ == "__main__":
     files = sys.argv[1:] or sorted(glob.glob("artefacts/*.pine"))
     fails = 0
     for p in files:
-        la, lt, inl = model(open(p, encoding="utf-8").read())
-        b, w = (la + inl) * BEST, (lt + inl) * PESS
+        b, w, lt = estimate(open(p, encoding="utf-8").read())
         cb, cw = next((v for k, v in CEILING.items() if k in os.path.basename(p)), DEFAULT_CEILING)
         ok = b <= max(cb, 0) and w <= max(cw, 0) and (b < LIMIT or cb >= LIMIT) and lt <= MAIN_BODY_OK
         fails += not ok
@@ -98,10 +114,17 @@ if __name__ == "__main__":
     for tag, (fname, commit) in KNOWN_UNDER.items():   # every compile the operator confirmed
         t = subprocess.run(["git", "show", f"{commit}:artefacts/XAUUSD_Quantum_5_0_{fname}.pine"], capture_output=True, text=True).stdout
         if t:
-            la, lt, inl = model(t)
-            b, w = (la + inl) * BEST, (lt + inl) * PESS
+            b, w, lt = estimate(t)
             tag2 = "agrees" if b < LIMIT and w < LIMIT else "is CAUTIOUS for this file (it compiled; the model said over)"
             print(f"INFO  calibration: {tag} compiled; model best-fit {b:,.0f}, pessimistic {w:,.0f} -- model {tag2}")
+    for tag, (fname, commit, rep) in KNOWN_OVER.items():   # every compile that FAILED: the model must say over
+        t = subprocess.run(["git", "show", f"{commit}:artefacts/XAUUSD_Quantum_5_0_{fname}.pine"], capture_output=True, text=True).stdout
+        if t:
+            b, w, lt = estimate(t)
+            ok = b > LIMIT or w > LIMIT
+            fails += not ok
+            print(f"{'INFO' if ok else 'FAIL'}  calibration: {tag} FAILED at {rep:,}; model best-fit {b:,.0f}, pessimistic {w:,.0f}"
+                  f" -- {'model agrees' if ok else 'model MISSES a real failure'}")
     print("RESULT:", "PASS" if not fails else "FAIL", "-- estimates calibrated on compiler reports", CALIBRATION,
           "; the compiler is the judge")
     sys.exit(1 if fails else 0)
