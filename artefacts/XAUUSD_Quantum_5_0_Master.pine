@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v71   (drivers, no UDT)              ║
+// ║  BUILD STAMP — this file last CHANGED in v69   (compiles: both limits)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5118,60 +5118,6 @@ float vdK = volDelta50 / 1000.0
 // 40/40/20 rule (htfTrendScore). On charts below 1H -- the registered 15M and the 5M timing chart --
 // these ARE H2's scores. On a 1H+ chart the layer at the chart's own timeframe reads a neutral 50 here.
 // H2-TREND-END
-// GD-BEGIN gold drivers: byte-identical in the Brief and Visuals (v66, macro_check.py E). Display only: no vote,
-// no weight, no gate. It reads goldRetM / _wM / _fM / macroTF / y2Symbol / safeDiv, which each file defines as the
-// engine does (Visuals copies those lines from the Master; macro_check.py E and inputs_check.py hold them equal).
-f_brS(bool up, bool dn) => up ? 1.0 : dn ? -1.0 : 0.0
-f_brM(bool v, bool up, bool dn, float r) => v ? f_brS(up, dn) * (math.abs(r) > 0.5 ? 2.0 : math.abs(r) > 0.25 ? 1.0 : 0.0) : na
-f_brMv(bool v, bool rise, bool fall) => not v ? "no data" : rise ? "rising" : fall ? "falling" : "flat"
-// ---- v65 (option 4): five more gold drivers, DISPLAY ONLY: no vote, no weight, no gate, the DECISION is unchanged.
-// Read as the engine reads DXY: close[1], EMA10 / EMA20 of it, lookahead_on (the last COMPLETED bar, F-A41), and
-// "rising" = close > EMA10 > EMA20. Impact on gold: USDJPY / real yield / 2Y falling = up; oil / breakeven rising = up.
-// USDJPY and oil also carry the same-bar correlation with gold (macroTF, the v64 pairing, F-A64), which scales the
-// arrow as for DXY (|r| <= 0.25 = neutral). The real yield and breakeven are DAILY series (FRED): direction only.
-brJpySym = input.symbol("OANDA:USDJPY", "USDJPY symbol (blank = off)", group="GOLD DRIVERS (display only)")
-brOilSym = input.symbol("OANDA:WTICOUSD", "Oil (WTI) symbol (blank = off)", group="GOLD DRIVERS (display only)")
-brRySym = input.symbol("FRED:DFII10", "Real 10Y yield, daily (blank = off)", group="GOLD DRIVERS (display only)", tooltip="10-year TIPS yield. Daily, published with a lag: shown as the day's direction, no intraday correlation.")
-brBeSym = input.symbol("FRED:T10YIE", "10Y breakeven inflation, daily (blank = off)", group="GOLD DRIVERS (display only)", tooltip="10Y nominal minus TIPS yield = the market's inflation expectation. Daily.")
-// v70: written out (TradingView expands every helper call): each line is what the v69 helper call expanded to,
-// same values; refactor_check.py executes old and new side by side.
-[brJc, brJf, brJs] = request.security(brJpySym != "" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
-[brOc, brOf, brOs] = request.security(brOilSym != "" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
-[brRc, brRf, brRs] = request.security(brRySym != "" ? brRySym : syminfo.tickerid, "D", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
-[brBc, brBf, brBs] = request.security(brBeSym != "" ? brBeSym : syminfo.tickerid, "D", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
-[br2c, br2f, br2s] = request.security(y2Symbol != "" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
-bool brJv = brJpySym != "" and not na(brJc) and not na(brJf) and not na(brJs)
-bool brOv = brOilSym != "" and not na(brOc) and not na(brOf) and not na(brOs)
-bool brRv = brRySym != "" and not na(brRc) and not na(brRf) and not na(brRs)
-bool brBv = brBeSym != "" and not na(brBc) and not na(brBf) and not na(brBs)
-bool br2v = y2Symbol != "" and not na(br2c) and not na(br2f) and not na(br2s)
-bool brJu = brJc > brJf and brJf > brJs
-bool brJn = brJc < brJf and brJf < brJs
-bool brOu = brOc > brOf and brOf > brOs
-bool brOn = brOc < brOf and brOf < brOs
-bool brRu = brRc > brRf and brRf > brRs
-bool brRn = brRc < brRf and brRf < brRs
-bool brBu = brBc > brBf and brBf > brBs
-bool brBn = brBc < brBf and brBf < brBs
-bool br2u = br2c > br2f and br2f > br2s
-bool br2n = br2c < br2f and br2f < br2s
-// same-bar correlation with gold over the macroTF-bar window (goldRetM / _wM / _fM), every bar; shown only when valid
-float brJr = ta.correlation(goldRetM, not na(brJc[1]) ? safeDiv(brJc, brJc[1]) - 1 : na, _wM)
-float brJR = brJv and _fM ? brJr : na
-float brOr = ta.correlation(goldRetM, not na(brOc[1]) ? safeDiv(brOc, brOc[1]) - 1 : na, _wM)
-float brOR = brOv and _fM ? brOr : na
-// each driver's arrow (d: > 0 supports gold up) and its line of text
-float brJd = f_brM(brJv, brJn, brJu, nz(brJR))
-string brJh = "yen-dollar " + f_brMv(brJv, brJu, brJn) + (na(brJR) ? "" : " r" + str.tostring(brJR, "#.##"))
-float brOd = f_brM(brOv, brOu, brOn, nz(brOR))
-string brOh = "WTI " + f_brMv(brOv, brOu, brOn) + (na(brOR) ? "" : " r" + str.tostring(brOR, "#.##"))
-float brRd = brRv ? f_brS(brRn, brRu) : na
-string brRh = (brRv ? str.tostring(brRc, "#.##") + "% " : "") + f_brMv(brRv, brRu, brRn) + " · daily"
-float brBd = brBv ? f_brS(brBu, brBn) : na
-string brBh = (brBv ? str.tostring(brBc, "#.##") + "% " : "") + f_brMv(brBv, brBu, brBn) + " · daily"
-float br2d = br2v ? f_brS(br2n, br2u) : na
-string br2h = (br2v ? str.tostring(br2c, "#.##") + "% " : "") + f_brMv(br2v, br2u, br2n) + " · Fed path"
-// GD-END
 // H2-BEGIN
 // ═══ HYPOTHESIS H2 — SWEEP-TO-VALUE (pre-registered: PREREGISTRATION amendment A3) ═══
 // Operator's specification: a signal from the market trend, swing highs and lows, a liquidity
@@ -5278,15 +5224,14 @@ string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " ·
 // the portrait row cut went with the merged MobileLand/MobilePort layouts.
 // v60: Strip folds the 9 desktop columns into 3 (column k -> k % 3, header / value rows 2 * int(k / 3) + row);
 // only the header and primary rows are shown there, in tiny text (small at Text Size Medium / Large)
-// v71: tcb() is queued: f_dashRender pushes each cell's 7 arguments onto _dq* and writes them once, at its end,
-// with tcb's own condition and table.cell (TradingView expands every call; v70's DCell records cost more, F-A68)
-// v70: a driver's arrow, as the Brief / Visuals grid prints it
-f_gdG(float d) => na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"
+tcb(col, row, txt, tcol, bg, ts, w) =>
+    if not _dashMobile and (not _dashStrip or row < 2)
+        table.cell(tblA, _dashStrip ? col % 3 : col, _dashStrip ? int(col / 3) * 2 + row : row, txt, text_color=tcol, bgcolor=bg, text_size=_dashStrip ? _szSe : ts, width=_dashStrip ? 0 : w)
 // v68: tc() was written out at each call site (TradingView expands every call; same expression each time)
 // v25: in Mobile the plan is written into the card itself (rows 8-15, one line per cell), so
 // the card and the plan can never overlap on a narrow screen.
 // v59: every call passed row 0 and width 0; the two constant parameters are folded in (same cells)
-// v71: tcp() is queued (_pq*) and written after its last call with this same table.cell
+tcp(col, txt, bg, ts) => table.cell(_dashMobile ? tblBrief : tblPlan, _dashMobile ? 1 : col, _dashMobile ? 9 + col : 0, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=0, text_halign=_dashMobile ? text.align_left : text.align_center)
 
 // v15 (token ceiling): forecast-cone breach state and status removed (default OFF).
 
@@ -5553,10 +5498,6 @@ f_dashData2() =>
     array.set(gDashS, 24, _yldStr)
     true
 f_dashRender() =>
-    // v71: the cells, written once at the end (tcb's condition and table.cell)
-    string[] _dqT = array.new<string>()
-    color[] _dqF = array.new<color>()
-    color[] _dqB = array.new<color>()
     string _agreeTier = array.get(gDashS, 0)
     int _bearPct = int(array.get(gDashF, 0))
     string _biasBreakdown = array.get(gDashS, 1)
@@ -5659,39 +5600,21 @@ f_dashRender() =>
     if true // Q5.4-CORE: mobile branch removed (token limit); desktop layout serves all modes
         // ROW 0 — COLUMN HEADERS
         for [k, h] in array.from("MARKET", "BIAS", "SIGNAL", "STRUCTURE", "LIQUIDITY", "PRICE", "MACRO", "RISK", "DECISION")
-            array.push(_dqT, h)
-            array.push(_dqF, C_TEXT)
-            array.push(_dqB, color(na))
+            tcb(k, 0, h, C_TEXT, color(na), _hdSize, 0)
         // ROW 1 — PRIMARY METRICS
-        array.push(_dqT, _priceStr + " " + _chgStr)
-        array.push(_dqF, _chgCol)
-        array.push(_dqB, color(na))
-        array.push(_dqT, _dirStrength) // R5.1: wires _biasCol (WARN amber when mixed)
-        array.push(_dqF, _biasCol)
-        array.push(_dqB, color(na))
+        tcb(0, 1, _priceStr + " " + _chgStr, _chgCol, color(na), _prSize, _w0)
+        tcb(1, 1, _dirStrength, _biasCol, color(na), _prSize, _w1) // R5.1: wires _biasCol (WARN amber when mixed)
         color _fDomCol = fBullScore >= fBearScore and fBullScore >= fRngScore ? cBloomBull : fBearScore >= fBullScore and fBearScore >= fRngScore ? cBloomBear : cBloomNeut
         string _probDisp = _confDirLabel + "\nL " + _si(na(fBullScore) ? 50 : fBullScore) + "% S " + _si(na(fBearScore) ? 50 : fBearScore) + "% R " + _si(na(fRngScore) ? 0 : fRngScore) + "%"
-        array.push(_dqT, _probDisp)
-        array.push(_dqF, _fDomCol)
-        array.push(_dqB, color(na))
-        array.push(_dqT, _bosStr + " " + _chochStr + " " + _mssStr)
-        array.push(_dqF, _structActiveCol)
-        array.push(_dqB, color(na))
-        array.push(_dqT, not na(_nearAbove) or not na(_nearBelow) ? _nearAboveStr + "/" + _nearBelowStr : "LIQ —")
-        array.push(_dqF, cBloomNeut)
-        array.push(_dqB, color(na))
-        array.push(_dqT, "V " + _vwapStr)
-        array.push(_dqF, C_TEXT)
-        array.push(_dqB, color(na))
-        array.push(_dqT, "Corr " + _dxyStr + " " + _yldStr + " " + tipsC)
-        array.push(_dqF, _dxyYldCol)
-        array.push(_dqB, color.new(_macroBg, 85))
+        tcb(2, 1, _probDisp, _fDomCol, color(na), _prSize, _w2)
+        tcb(3, 1, _bosStr + " " + _chochStr + " " + _mssStr, _structActiveCol, color(na), _prSize, _w3)
+        tcb(4, 1, not na(_nearAbove) or not na(_nearBelow) ? _nearAboveStr + "/" + _nearBelowStr : "LIQ —", cBloomNeut, color(na), _prSize, _w4)
+        tcb(5, 1, "V " + _vwapStr, C_TEXT, color(na), _prSize, _w5)
+        tcb(6, 1, "Corr " + _dxyStr + " " + _yldStr + " " + tipsC, _dxyYldCol, color.new(_macroBg, 85), _prSize, _w6)
         float _costToTargetPct = tpDist > 0 and not na(_liveCostATR) ? _liveCostATR * adaptiveATR / tpDist * 100.0 : 0.0
         _kellyPct := _kellyPct * regSizeMult // R6.0: size guidance haircut in high-vol/abnormal regimes
         string _riskPrimary = "RRg " + (not na(tpRR2) ? "1:" + str.tostring(tpRR2, "#.#") : "—") + " SL " + (not na(tpSL) and not na(tpEntry) ? str.tostring(math.abs(tpSL - tpEntry) / adaptiveATR, "#.#") + " ATR" : "—") + "\nRisk " + str.tostring(_kellyPct, "0.0#") + "% $" + _si(_riskUSD) + " " + (_lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L") + " Cst " + str.tostring(_costToTargetPct, "#.#") + "%"
-        array.push(_dqT, _riskPrimary) // R5.1: tinted by volatility percentile (wires _volCol)
-        array.push(_dqF, _volCol)
-        array.push(_dqB, color(na))
+        tcb(7, 1, _riskPrimary, _volCol, color(na), _prSize, _w7) // R5.1: tinted by volatility percentile (wires _volCol)
         // RED-2C-FIX: _dirLabel here is still the LIVE per-tick decision (unchanged,
         // via gDashS[6]). Template selection now branches on _confDirLabel (global,
         // read directly — no transfer needed) so the box's wording matches the
@@ -5713,29 +5636,19 @@ f_dashRender() =>
         // The block reason follows it, so a WAIT now says WHY it is waiting.
         string _biasRow = (_confDirLabel == "WAIT" or _confDirLabel == "NO TRADE" or _confDirLabel == "WARMUP") ? "\nBIAS " + biasLabel + (_blkWhy != "" ? "  · " + _blkWhy : "") : ""
         string _decBox = _confDirLabel == "RISK LOCK" ? riskLockStr : _confDirLabel == "WAIT" or _confDirLabel == "NO TRADE" or _confDirLabel == "WARMUP" ? _dirConfLabel + " TQ" + str.tostring(tradeQuality) + tqGrade + _biasRow + _liveTag : _dirConfLabel + " " + _gradeLabel + " TQ" + str.tostring(tradeQuality) + tqGrade + _liveTag
-        array.push(_dqT, _decBox)
-        array.push(_dqF, C_TEXT)
-        array.push(_dqB, _dirBg)
+        tcb(8, 1, _decBox, C_TEXT, _dirBg, _prSize, _w8)
         // ROW 2 — SECONDARY / DIAGNOSTIC METRICS
         string _mtfArrows = "5M" + _ud(htf5mBull, htf5mBear) + " 15M" + _ud(htf15mBull, htf15mBear) + " 1H" + _ud(htf1hBull, htf1hBear) + " 4H" + _ud(htf4hBull, htf4hBear) + " 1D" + _ud(htf1dBull, htf1dBear)
         string _mktLine = _mtfArrows + "\n" + _sessTicks + _cvdStr + _dltStr + " " + regLabel
         // v53: text = MTF direction (green up / red down for gold, as its arrows); session quality stays as the tint
-        array.push(_dqT, _mktLine + "\n" + xcheckStr)
-        array.push(_dqF, mtfConfluenceScore > 20 ? cBloomBull : mtfConfluenceScore < -20 ? cBloomBear : cBloomNeut)
-        array.push(_dqB, color.new(_sessCol, 88))
+        tcb(0, 2, _mktLine + "\n" + xcheckStr, mtfConfluenceScore > 20 ? cBloomBull : mtfConfluenceScore < -20 ? cBloomBear : cBloomNeut, color.new(_sessCol, 88), _seSize, _w0)
         string _biasLine = _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : "")
-        array.push(_dqT, _biasLine) // v53: C/S/I arrows take the BIAS colour (was grey)
-        array.push(_dqF, _biasCol)
-        array.push(_dqB, color(na))
+        tcb(1, 2, _biasLine, _biasCol, color(na), _seSize, _w1) // v53: C/S/I arrows take the BIAS colour (was grey)
         // v59: the analog structure evidence, calibration grade / Brier, in-sample WR and the per-feature edges -- all
         // computed by the Master's stats engine and previously shown only in Diagnostics (twin engine) -- wired here
         string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel + (na(oPdh1stPct) ? "" : "\nH/L 1st " + str.tostring(oPdh1stPct) + "/" + str.tostring(oPdl1stPct) + " · BOS " + str.tostring(oBosCont, "#") + "/" + str.tostring(oBosFail, "#") + "%\nMAE " + str.tostring(oMaxAdverseATR, "#.#") + " · " + oCalDetail) + (__cg != "N/A" ? "\nCal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : "") + (__in >= 10 ? " IS" + _si(__iw) + "% n" + _si(__in) + (__iw - oOosWr > 15 ? " !FIT" : "") : "") + (oMatch >= 30 ? "\nedge S/H/L/M/C " + _si(__fs) + "/" + _si(__fh) + "/" + _si(__fl) + "/" + _si(__fm) + "/" + _si(__fc) : "")
-        array.push(_dqT, _evConf)
-        array.push(_dqF, _evCol)
-        array.push(_dqB, color(na))
-        array.push(_dqT, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""))
-        array.push(_dqF, cBloomNeut)
-        array.push(_dqB, _structActiveBg)
+        tcb(2, 2, _evConf, _evCol, color(na), _seSize, _w2)
+        tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)
         // R5.1: per-target reach scores wired — the suffix now shows the reach score of the
         // ACTUAL destination pool (previously it always displayed PDH's number)
         float _destReach = _byDest(pdhReachScore, pdlReachScore, pwhReachScore, pwlReachScore, pmhReachScore, pmlReachScore, eqhReachScore, eqlReachScore)
@@ -5747,38 +5660,26 @@ f_dashRender() =>
         // na when no gap is active, so the row simply disappears rather than printing na.
         string _fvgZone = not na(fvgUpperLine) and not na(fvgLowerLine) ? "\nFVG " + str.tostring(math.min(fvgLowerLine, fvgUpperLine), format.mintick) + "-" + str.tostring(math.max(fvgLowerLine, fvgUpperLine), format.mintick) + (fvgWasBullish ? " BULL" : " BEAR") : ""
         string _liqReachDisp = (liqDestLabel != "—" ? "DRAW " + liqDestLabel + " R" + str.tostring(liqDestScore) + _pdhReachSuffix + "\nRCH " + _si(na(liqReachScore) ? 50 : liqReachScore) + "% " + liqDestConfidence : _liqTargetLbl) + _fvgZone
-        array.push(_dqT, _liqReachDisp)
-        array.push(_dqF, _liqTargetCol)
-        array.push(_dqB, color(na))
-        array.push(_dqT, "E200 " + (not na(ema200) ? str.tostring(ema200, "#.##") : "—") + " " + _updTime)
-        array.push(_dqF, cBloomNeut)
-        array.push(_dqB, color(na))
+        tcb(4, 2, _liqReachDisp, _liqTargetCol, color(na), _seSize, _w4)
+        tcb(5, 2, "E200 " + (not na(ema200) ? str.tostring(ema200, "#.##") : "—") + " " + _updTime, cBloomNeut, color(na), _seSize, _w5)
         // v50 (F-A53): '+' meant the WEAKER reading (score 15..39) but read as stronger; now bull-ish / bear-ish, with the
         // score (-100..+100: >= 40 BULL, 15..39 bull-ish, -14..14 MIX, -39..-15 bear-ish, <= -40 BEAR).
         string _macroVerdict = "Macro " + (macroIntelLabel == "BULL" ? "BULL" : macroIntelLabel == "BEAR" ? "BEAR" : macroIntelLabel == "BULL-ISH" ? "bull-ish" : macroIntelLabel == "BEAR-ISH" ? "bear-ish" : macroIntelLabel == "N/A" ? "—" : "MIX") + " " + str.tostring(macroIntelScore)
         string _dowStr = showDowTracker ? _dowBiasStr() : ""
         string _macroRow2 = _macroVerdict + (_dowStr != "" ? "\n" + _dowStr : "")
         // v53: text = gold direction of the arrows (was correlation health); health stays as the tint and CR%
-        array.push(_dqT, _macroLine2 + " CR" + _si(_crVal) + "%\n" + _macroRow2 + "\nJPY" + f_gdG(brJd) + " OIL" + f_gdG(brOd) + " RY" + f_gdG(brRd) + " BE" + f_gdG(brBd) + " 2Y" + f_gdG(br2d))
-        array.push(_dqF, _macro2Col)
-        array.push(_dqB, color.new(_crCol, 88))
+        tcb(6, 2, _macroLine2 + " CR" + _si(_crVal) + "%\n" + _macroRow2, _macro2Col, color.new(_crCol, 88), _seSize, _w6)
         string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp
-        array.push(_dqT, _riskSec)
-        array.push(_dqF, pfCol)
-        array.push(_dqB, color(na))
+        tcb(7, 2, _riskSec, pfCol, color(na), _seSize, _w7)
         // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement
         // that the trade cannot be placed at this account size; "0.00L" read as a valid
         // instruction to trade nothing, which is a different and misleading claim.
         string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L"
         string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + _si(_riskUSD) + " " + _lotStr : ""
         string _decFoot = _rrStr + _riskDisp + "\n" + decisionLog + "\n" + _agreePct
-        array.push(_dqT, _decFoot)
-        array.push(_dqF, C_TEXT)
-        array.push(_dqB, color(na))
+        tcb(8, 2, _decFoot, C_TEXT, color(na), _seSize, _w8)
         // v57: H2 in its own cell under DECISION (it crowded and clipped the footer)
-        array.push(_dqT, h2Line)
-        array.push(_dqF, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT)
-        array.push(_dqB, color(na))
+        tcb(8, 3, h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, color(na), _seSize, _w8)
         // v25: hand the composite strings to the Mobile card (slots 25-34), so the phone shows
         // exactly what the desktop cells show, built once.
         array.set(gDashS, 25, _mktLine)
@@ -5791,14 +5692,6 @@ f_dashRender() =>
         array.set(gDashS, 32, _decFoot)
         array.set(gDashS, 33, _liqReachDisp)
         array.set(gDashS, 34, _macroRow2)
-    int[] _dqW = array.from(_w0, _w1, _w2, _w3, _w4, _w5, _w6, _w7, _w8)
-    for [j, txt] in _dqT
-        int col = j < 27 ? j % 9 : 8
-        int row = j < 27 ? int(j / 9) : 3
-        if not _dashMobile and (not _dashStrip or row < 2)
-            table.cell(tblA, _dashStrip ? col % 3 : col, _dashStrip ? int(col / 3) * 2 + row : row, txt, text_color=array.get(_dqF, j), bgcolor=array.get(_dqB, j), text_size=_dashStrip ? _szSe : row == 0 ? _hdSize : row == 1 ? _prSize : _seSize, width=_dashStrip ? 0 : row == 0 ? 0 : array.get(_dqW, col))
-    if not _dashMobile and not _dashStrip
-        table.cell_set_tooltip(tblA, 6, 2, "USDJPY: " + brJh + "\nOIL: " + brOh + "\nREAL YLD: " + brRh + "\nBREAKEVEN: " + brBh + "\nUS 2Y: " + br2h)
     true
 // Detect responsive mode for table creation and indicator visibility
 var string _prevDashMode = "Desktop"
@@ -5807,7 +5700,9 @@ var bool modeChanged = false
 // engine already computes for the full dashboard; nothing is recalculated, so the card cannot
 // disagree with the desktop view or with the alerts. Rows 0/2/4/6 are the four headlines;
 // rows 1/3/5/7 their details (hidden at Compact density).
-// v71: _bc() is queued (_bq*) and written after its last call with these same two table.cells
+_bc(int _r, string _k, string _v, color _c, _ts) =>
+    table.cell(tblBrief, 0, _r + 1, _k, text_color=#8FA3B8, text_size=_ts, text_halign=text.align_left)
+    table.cell(tblBrief, 1, _r + 1, _v, text_color=_c, text_size=_ts, text_halign=text.align_left)
 if showDashboard and barstate.islast
     string _mode2 = _resolvedMode == "Auto" ? "Desktop" : _resolvedMode
     bool _mDet = density != "Compact"
@@ -5868,70 +5763,26 @@ if showDashboard and barstate.islast
         //           LIVE tag) | RR, SL in ATR, risk %, $, lots, cost | RR, risk, decision log,
         //           MTF agreement
         // v55 (mobile): the long desktop detail strings only at Spacious; Standard = headlines + plan
-        int[] _bqR = array.new<int>()
-        string[] _bqK = array.new<string>()
-        string[] _bqV = array.new<string>()
-        color[] _bqC = array.new<color>()
-        string[] _bqS = array.new<string>()
         if density == "Spacious"
-            array.push(_bqR, 3)
-            array.push(_bqK, "")
-            array.push(_bqV, array.get(gDashS, 26) + "\n" + array.get(gDashS, 25) + "\n" + array.get(gDashS, 34))
-            array.push(_bqC, C_TEXT)
-            array.push(_bqS, _bds)
-            array.push(_bqR, 5)
-            array.push(_bqK, "")
-            array.push(_bqV, "TV price: above " + array.get(gDashS, 17) + " / below " + array.get(gDashS, 19) + "\n" + array.get(gDashS, 33))
-            array.push(_bqC, C_TEXT)
-            array.push(_bqS, _bds)
-            array.push(_bqR, 7)
-            array.push(_bqK, "")
-            array.push(_bqV, array.get(gDashS, 20) + " " + array.get(gDashS, 2) + "\n" + array.get(gDashS, 27) + "\n" + array.get(gDashS, 28) + "\n" + array.get(gDashS, 29) + (density == "Spacious" ? "\n" + xcheckStr : ""))
-            array.push(_bqC, C_TEXT)
-            array.push(_bqS, _bds)
-            array.push(_bqR, 1)
-            array.push(_bqK, "")
-            array.push(_bqV, array.get(gDashS, 31) + "\n" + array.get(gDashS, 32))
-            array.push(_bqC, C_TEXT)
-            array.push(_bqS, _bds)
+            _bc(3, "", array.get(gDashS, 26) + "\n" + array.get(gDashS, 25) + "\n" + array.get(gDashS, 34), C_TEXT, _bds)
+            _bc(5, "", "TV price: above " + array.get(gDashS, 17) + " / below " + array.get(gDashS, 19) + "\n" + array.get(gDashS, 33), C_TEXT, _bds)
+            _bc(7, "", array.get(gDashS, 20) + " " + array.get(gDashS, 2) + "\n" + array.get(gDashS, 27) + "\n" + array.get(gDashS, 28) + "\n" + array.get(gDashS, 29) + (density == "Spacious" ? "\n" + xcheckStr : ""), C_TEXT, _bds)
+            _bc(1, "", array.get(gDashS, 31) + "\n" + array.get(gDashS, 32), C_TEXT, _bds)
         // 1 TREND: composite bias, regime, higher-timeframe bias, bull/bear score split
-        array.push(_bqR, _hs)
-        array.push(_bqK, "TREND")
-        array.push(_bqV, biasLabel + " · " + mktRegime + "\n15m-4h " + array.get(gDashS, 8) + "\nscore L " + str.tostring(bullScore, "#") + " / S " + str.tostring(bearScore, "#"))
-        array.push(_bqC, bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT)
-        array.push(_bqS, _bts)
+        _bc(_hs, "TREND", biasLabel + " · " + mktRegime + "\n15m-4h " + array.get(gDashS, 8) + "\nscore L " + str.tostring(bullScore, "#") + " / S " + str.tostring(bearScore, "#"), bullScore > bearScore ? cBloomBull : bearScore > bullScore ? cBloomBear : C_TEXT, _bts)
         // 2 TARGET: the engine's liquidity destination, at the MT5 price, with its reach score
         float _bTgt = _byDest(poolPdH, poolPdL, poolPwH, poolPwL, poolPmH, poolPmL, poolEqH, poolEqL)
-        array.push(_bqR, 2 * _hs)
-        array.push(_bqK, "LIQ DRAW")
-        array.push(_bqV, na(_bTgt) ? "no dominant draw" : liqDestLabel + " " + str.tostring(_bTgt + mt5Offset, "#.##") + " (" + _sg(_bTgt - close, "#.##") + ")\nreach " + _si(liqReachScore) + "% " + liqDestConfidence)
-        array.push(_bqC, C_TEXT)
-        array.push(_bqS, _bts)
+        _bc(2 * _hs, "LIQ DRAW", na(_bTgt) ? "no dominant draw" : liqDestLabel + " " + str.tostring(_bTgt + mt5Offset, "#.##") + " (" + _sg(_bTgt - close, "#.##") + ")\nreach " + _si(liqReachScore) + "% " + liqDestConfidence, C_TEXT, _bts)
         // 3 PREVIOUS -> NEXT: last structure event and last bar's change; calibrated
         // probability that the next 1R move goes up vs down (the gate's own probability)
         if mobNext
-            array.push(_bqR, 3 * _hs)
-            array.push(_bqK, "NEXT")
-            array.push(_bqV, (structStr == "" ? "no active structure" : structStr) + "\nlast bar " + array.get(gDashS, 2) + "\nnext 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : "\nEV " + str.tostring(planExpectancy, "#.##") + "R"))
-            array.push(_bqC, C_TEXT)
-            array.push(_bqS, _bts)
+            _bc(3 * _hs, "NEXT", (structStr == "" ? "no active structure" : structStr) + "\nlast bar " + array.get(gDashS, 2) + "\nnext 1R: UP " + str.tostring(math.round(_calPLong * 100.0)) + "% / DOWN " + str.tostring(math.round(_calPShort * 100.0)) + "%" + (na(planExpectancy) ? "" : "\nEV " + str.tostring(planExpectancy, "#.##") + "R"), C_TEXT, _bts)
         // 4 DECISION: the CONFIRMED decision (same as alerts); the MT5 plan when it is a trade
         // v37: 5 H2 SETUP -- the separate H2 idea, after the plan rows
         if mobH2
-            array.push(_bqR, _planOn ? 16 : _mDet ? 8 : 4)
-            array.push(_bqK, "H2")
-            array.push(_bqV, h2Line)
-            array.push(_bqC, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT)
-            array.push(_bqS, _bds)
+            _bc(_planOn ? 16 : _mDet ? 8 : 4, "H2", h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, _bds)
         bool _bTrade = _confDirLabel == "BUY" or _confDirLabel == "SELL"
-        array.push(_bqR, 0)
-        array.push(_bqK, "DECISION")
-        array.push(_bqV, array.get(gDashS, 30) + (_bTrade ? "\nMT5 entry " + tpEntryStr + "\nSL " + tpSLStr + "\nTP1 " + tp1Str + "\nTP2 " + tp2Str : ""))
-        array.push(_bqC, _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange)
-        array.push(_bqS, _bts)
-        for [i, r] in _bqR
-            table.cell(tblBrief, 0, r + 1, array.get(_bqK, i), text_color=#8FA3B8, text_size=array.get(_bqS, i), text_halign=text.align_left)
-            table.cell(tblBrief, 1, r + 1, array.get(_bqV, i), text_color=array.get(_bqC, i), text_size=array.get(_bqS, i), text_halign=text.align_left)
+        _bc(0, "DECISION", array.get(gDashS, 30) + (_bTrade ? "\nMT5 entry " + tpEntryStr + "\nSL " + tpSLStr + "\nTP1 " + tp1Str + "\nTP2 " + tp2Str : ""), _confDirLabel == "BUY" ? cBloomBull : _confDirLabel == "SELL" ? cBloomBear : _confDirLabel == "WAIT" or _confDirLabel == "WARMUP" ? C_TEXT : color.orange, _bts)
     // ═══ Q5.9: TRADE PLAN PANEL POPULATION (regression fix) ═══
     // The cell-writing block for tblPlan was swept together with the ROW 3 removal
     // during the token-limit cuts: the table was still being CREATED each bar, so the
@@ -5941,20 +5792,12 @@ if showDashboard and barstate.islast
         float _pLots = array.get(gDashF, 6)
         color _pBg = tpIsLong ? cBloomBull_D : cBloomBear_D
         string _pSz = _szHd
-        string[] _pqT = array.new<string>()
-        color[] _pqB = array.new<color>()
-        array.push(_pqT, tpDirStr)
-        array.push(_pqB, _pBg)
-        array.push(_pqT, "ENTRY " + tpEntryStr + (mt5Offset != 0.0 ? "  [MT5" + _sg(mt5Offset, "#.##") + "]" : ""))
-        array.push(_pqB, cBloomBg)
-        array.push(_pqT, "SL " + tpSLStr + _pp(pSLhit, true))
-        array.push(_pqB, cBloomBg)
-        array.push(_pqT, "TP1 " + tp1Str + _pp(pTP1, true))
-        array.push(_pqB, cBloomBg)
-        array.push(_pqT, "TP2 " + tp2Str + _pp(pTP2, false))
-        array.push(_pqB, cBloomBg)
-        array.push(_pqT, "TP3 " + tp3Str + _pp(pTP3, false))
-        array.push(_pqB, cBloomBg)
+        tcp(0, tpDirStr, _pBg, _pSz)
+        tcp(1, "ENTRY " + tpEntryStr + (mt5Offset != 0.0 ? "  [MT5" + _sg(mt5Offset, "#.##") + "]" : ""), cBloomBg, _pSz)
+        tcp(2, "SL " + tpSLStr + _pp(pSLhit, true), cBloomBg, _pSz)
+        tcp(3, "TP1 " + tp1Str + _pp(pTP1, true), cBloomBg, _pSz)
+        tcp(4, "TP2 " + tp2Str + _pp(pTP2, false), cBloomBg, _pSz)
+        tcp(5, "TP3 " + tp3Str + _pp(pTP3, false), cBloomBg, _pSz)
         // F-002 decode + F-003 relabel. RR is GROSS: tpRR = |tp-entry|/|entry-SL| and
         // NEITHER term carries spread, commission or slippage, so a displayed 1:1.5 is an
         // executable 1:0.99 at a 3-point stop (-34%), or 1:0.48 at 0.75 points (-76%).
@@ -5963,14 +5806,10 @@ if showDashboard and barstate.islast
         // wrong number is worse than an honestly qualified one. Switch to true net once
         // the user's own fills replace the [BROKER CONFIG] defaults.
         string _pLotStr = _pLots < 0.0 ? "<min" : str.tostring(_pLots, "0.00") + "L"
-        array.push(_pqT, "RRg " + tpRRStr + "  " + _pLotStr)
-        array.push(_pqB, cBloomBg)
+        tcp(6, "RRg " + tpRRStr + "  " + _pLotStr, cBloomBg, _pSz)
         // v56: the ~75-character plan rationale is what made the phone card wider than the screen;
         // on the mobile card it shows at Spacious only (desktop unchanged)
-        array.push(_pqT, density != "Spacious" and _dashMobile ? "" : planReason)
-        array.push(_pqB, cBloomBg)
-        for [col, txt] in _pqT
-            table.cell(_dashMobile ? tblBrief : tblPlan, _dashMobile ? 1 : col, _dashMobile ? 9 + col : 0, txt, bgcolor=array.get(_pqB, col), text_color=C_TEXT, text_size=_pSz, width=0, text_halign=_dashMobile ? text.align_left : text.align_center)
+        tcp(7, density != "Spacious" and _dashMobile ? "" : planReason, cBloomBg, _pSz)
 
 
 

@@ -2480,3 +2480,28 @@ Compile NOT RUN on v70.
 Visuals, Brief, Diagnostics and the arms are unchanged.
 
 Compile NOT RUN on v71.
+
+---
+
+# Build v71 → v72 — the v71 Master failed too (104,510); the Master goes back to v69
+
+**Compiler report (operator's v71 paste, 2026-10-18):** `Compiled code contains too many tokens: 104510. The limit is
+100256` (CE10117). `compile_est.py` had said 99,602.
+
+**What this shows (F-A68 revised):**
+- v71 had no record type, and it came out 521 tokens HIGHER than v70. So the record-type explanation is refuted.
+- Beyond the v69 Master (which compiled), v70 and v71 share two things: the GD block and a cell queue. The model misses
+  4,400-4,900 tokens there, and the cause is not identified. The model's record-type term is removed.
+
+**v72:**
+- **Master:** the v69 file, byte for byte (SHA `1f9e48dc…`), which compiled. Its stamp still reads v69, because that is
+  the build of its content.
+- **The five gold drivers** stay on screen in Visuals, which is always on the chart beside the Master, and in the Brief.
+- **`compile_est.py`:** lists the v70 / v71 failures in KNOWN_OVER and prints the model's miss on every run. It FAILS a
+  Master that contains the GD block.
+- **`macro_check.py` E:** the GD block must be identical in the panel source, the Brief and Visuals, and absent from the
+  Master.
+- **`refactor_check.py`:** back to its v69 form (Master == `fix_v68.transform(v66)`).
+- `fix_v70.py` / `fix_v71.py` are kept as the record and are not applied.
+
+Compile: the Master is the same bytes as the v69 Master, which the operator compiled.

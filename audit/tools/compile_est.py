@@ -13,9 +13,10 @@ Both are estimates. Gates (each chart script and arm), v69:
   * MAIN BODY (lexical tokens outside function definitions) at most 26,538, the largest that compiled (v68
     Diagnostics). TradingView has a separate main-body limit: the v68 Master failed at 28,122 with CE10295 "The main
     body of the script is too long" after single-call functions were inlined. So never inline big functions.
-  * v71 (F-A68): a USER-DEFINED TYPE's constructor is expanded at every call. The v70 Master (37 DCell.new calls)
-    compiled at 103,989 where this model said 99,616 / 98,467: 73.0 raw tokens per .new call (best fit; 69.4
-    pessimistic), now part of the model. Fitted on that one report; a chart script should not use a UDT.
+  * F-A68: the Master with the GD block (five gold drivers) FAILED twice, at 103,989 (v70) and 104,510 (v71), where this
+    model said ~99,600. The model misses ~4,400-4,900 tokens there and the cause is NOT identified (v70's record type was
+    blamed first; v71 had none and came out higher). So the model is NOT trusted for that block: a Master containing
+    `// GD-BEGIN` FAILS here, and both reports are listed in KNOWN_OVER (the model's miss is shown, not hidden).
 The real compiler is the judge; every report is added below.
 Usage: python3 audit/tools/compile_est.py [files]   (default: every artefact)"""
 import glob
@@ -27,9 +28,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lexcount import toks  # noqa: E402
 
 LIMIT = 100256
-CALIBRATION = {"v14": 100627, "v23": 100820, "v67": 100335, "v70": 103989}   # compiler-reported totals (Master)
-UDT_NEW = (72.96, 69.43)    # raw tokens per UDT .new() call (best fit, pessimistic), fitted on the v70 report
-KNOWN_OVER = {"v70 Master": ("Master", "cb88ecc0", 103989)}   # failed: the model must put these over the limit
+CALIBRATION = {"v14": 100627, "v23": 100820, "v67": 100335}   # compiler-reported totals (Master) the model fits
+# compiler-reported FAILURES the model does not reproduce (F-A68): shown on every run, never fitted away
+KNOWN_OVER = {"v70 Master": ("Master", "cb88ecc0", 103989), "v71 Master": ("Master", "adbe2bc1", 104510)}
 # Compiled WITHOUT error (operator), i.e. under 100,256: the model must not put these over the limit.
 # v66 Master (39,029 lexical) compiled while v67 (38,870 lexical, FEWER) did not: lexical x ratio is refuted.
 # (file, commit). A confirmed compile the model puts OVER the limit means the model is cautious for that file (safe
@@ -86,18 +87,12 @@ def model(text):
     lex_all = sum(len(toks(l)) for l in L)
     lex_top = sum(len(toks(l)) for l in top)
     inl = sum(n * cost(f) for f, n in calls_in(top).items())
-    return lex_all, lex_top, inl, udt_news(text)
-
-
-def udt_news(text):
-    """calls of a user-defined type's constructor (Name.new(...)), outside comments"""
-    code = "\n".join(l.split("//")[0] if '"' not in l else l for l in text.split("\n"))
-    return sum(len(re.findall(r"(?<![\w.])" + t + r"\.new\s*\(", code)) for t in re.findall(r"(?m)^type\s+(\w+)", code))
+    return lex_all, lex_top, inl
 
 
 def estimate(text):
-    la, lt, inl, nu = model(text)
-    return (la + inl + nu * UDT_NEW[0]) * BEST, (lt + inl + nu * UDT_NEW[1]) * PESS, lt
+    la, lt, inl = model(text)
+    return (la + inl) * BEST, (lt + inl) * PESS, lt
 
 
 if __name__ == "__main__":
@@ -106,7 +101,11 @@ if __name__ == "__main__":
     for p in files:
         b, w, lt = estimate(open(p, encoding="utf-8").read())
         cb, cw = next((v for k, v in CEILING.items() if k in os.path.basename(p)), DEFAULT_CEILING)
-        ok = b <= max(cb, 0) and w <= max(cw, 0) and (b < LIMIT or cb >= LIMIT) and lt <= MAIN_BODY_OK
+        txt = open(p, encoding="utf-8").read()
+        gd = "Master" in os.path.basename(p) and "// GD-BEGIN" in txt
+        ok = b <= max(cb, 0) and w <= max(cw, 0) and (b < LIMIT or cb >= LIMIT) and lt <= MAIN_BODY_OK and not gd
+        if gd:
+            print("FAIL  the Master contains the GD block: v70 / v71 with it failed to compile and the model misses why (F-A68)")
         fails += not ok
         print(f"{'PASS' if ok else 'FAIL'}  {os.path.basename(p):46s} best-fit {b:9,.0f} ({b / LIMIT - 1:+.2%})"
               f"   pessimistic {w:9,.0f} ({w / LIMIT - 1:+.2%})   main body {lt:,} (max OK {MAIN_BODY_OK:,})")
@@ -122,9 +121,8 @@ if __name__ == "__main__":
         if t:
             b, w, lt = estimate(t)
             ok = b > LIMIT or w > LIMIT
-            fails += not ok
-            print(f"{'INFO' if ok else 'FAIL'}  calibration: {tag} FAILED at {rep:,}; model best-fit {b:,.0f}, pessimistic {w:,.0f}"
-                  f" -- {'model agrees' if ok else 'model MISSES a real failure'}")
+            print(f"INFO  calibration: {tag} FAILED at {rep:,}; model best-fit {b:,.0f}, pessimistic {w:,.0f}"
+                  f" -- {'model agrees' if ok else 'model MISSES this failure by ' + format(rep - max(b, w), ',.0f') + ' (cause not identified, F-A68)'}")
     print("RESULT:", "PASS" if not fails else "FAIL", "-- estimates calibrated on compiler reports", CALIBRATION,
           "; the compiler is the judge")
     sys.exit(1 if fails else 0)

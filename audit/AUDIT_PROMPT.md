@@ -18,7 +18,7 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 6043 | 393025 | `7b337115d3fcb2854a62c22d61cb44dcf3667d42ff3db409faff6afd02f04313` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5882 | 383926 | `1f9e48dc4e51bbaf4b3dd24b92d42054003b27dc616e78ec24af69e3d24b03ed` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5419 | 344905 | `24046013a1deba5e855694c2ea60b426dac618558871588a1a087c706137be30` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5419 | 344970 | `d56641f731b28d6f04f52ff41886cb506892a5b320e56da66184909c4841b4f0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 345889 | `42a6e6e5eb0acb3d11dfd73f43d17f488e2b93afcbb19b4eaa60b6051a4045c8` |
@@ -28,7 +28,7 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 361996 | `e91a9a431f20b67279c59dffc94706d20836556d4566f1a9bc0bd4170e5b6709` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 357944 | `ab85c87344149df5eed7ec16a0f1c83e437602344fed7686b9afb7bc049a40e8` |
 
-> **BUILD v71 — this prompt pins the current build.** The originally audited build
+> **BUILD v72 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -116,7 +116,8 @@ scope, and no other build of these scripts is in scope.
 > **v68: F-A66** — v67 Master exceeded the compiler limit (100,335); calls are expanded by the compiler, so helper rewrites were undone or written out and single-call dashboard functions inlined; `compile_est.py` replaces lexical x 2.515.
 > **v69: F-A67** — v68 Master failed CE10295 (main body too long) after inlining the dashboard functions; they stay functions, the Master is v66 + small-helper write-outs; `compile_est.py` gates the main body.
 > **v70:** the five gold drivers in the Master's MACRO cell (same GD block as Visuals / Brief); dashboard cells queued (DCell) and written once; leaner GD block.
-> **v71: F-A68** — v70 Master failed at 103,989 compiled tokens: a user-defined type's constructor is expanded at every call (37 `DCell.new` ≈ 4,400 tokens). Rebuilt from the v69 Master with the cells queued in plain arrays; drivers kept; `compile_est.py` models UDT constructors and reproduces the v70 failure.
+> **v71: F-A68** — v70 Master failed at 103,989 compiled tokens; blamed on its record type and rebuilt with plain arrays. v71 failed too, at 104,510, which refutes that cause.
+> **v72: F-A68 reverted** — the Master is the v69 file byte for byte (it compiled); the five gold drivers stay in Visuals and the Brief; `compile_est.py` shows both misses and fails a Master containing the GD block.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

@@ -238,7 +238,10 @@ def fence(path):
     return T[a[0]:b[0] + 1] if len(a) == 1 and len(b) == 1 and b[0] > a[0] else None
 VF = "artefacts/XAUUSD_Quantum_5_5_Visuals.pine"
 fb, fv, fs, fm = fence(BP), fence(VF), fence("audit/tools/brief_panel.pine"), fence(A + "Master.pine")
-report(fb is not None and fb == fv == fs == fm, f"GD block identical in brief_panel.pine, Brief, Visuals and the Master (v70) ({len(fb or [])} lines)")
+report(fb is not None and fb == fv == fs, f"GD block identical in brief_panel.pine, Brief and Visuals ({len(fb or [])} lines)")
+# v72 (F-A68): the GD block put the Master over the compiled-token limit twice (v70 103,989; v71 104,510); not in the Master
+report(fm is None and "// GD-BEGIN" not in open(A + "Master.pine", encoding="utf-8").read(),
+       "GD block NOT in the Master (F-A68: v70 / v71 with it failed to compile); Visuals shows the drivers beside it")
 VL = open(VF, encoding="utf-8").read().split("\n")
 ML = open(A + "Master.pine", encoding="utf-8").read().split("\n")
 dep_bad = []
