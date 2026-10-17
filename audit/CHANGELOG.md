@@ -2357,3 +2357,6 @@ compiled; the v67 Master (38,870 lexical, fewer) reported 100,335. This refutes 
 model has the v66 Master at 100,100–100,200 (under) and the v67 Master at 100,340–100,380 (over): it agrees with both.
 The v68 Master is the v66 Master plus changes that only lower the expanded count, so it should compile with more room
 than v66. `compile_est.py` now also checks every confirmed compile (KNOWN_UNDER: v60, v66).
+The operator also confirmed the **v66 Brief compiled**. The model put it at ~101,000 best-fit and ~104,400 pessimistic,
+so for the Brief the model is cautious (by ≥ 0.7%). That is the safe side, and the v68 Brief is lower under both models.
+`compile_est.py` lists each confirmed compile (v60 Master, v66 Master, v66 Brief) as INFO.
