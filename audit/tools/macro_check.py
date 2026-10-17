@@ -190,8 +190,7 @@ print("== Brief: five display-only drivers (executed)")
 BP = "artefacts/XAUUSD_Quantum_5_0_Brief.pine"
 BL = open(BP, encoding="utf-8").read().split("\n")
 benv = P.Env(funcs={}, _fM=True)       # f_brRv reads the global fit flag (its defining scope)
-for head in ("f_brS(bool up, bool dn) =>", "f_brM(bool v, bool up, bool dn, float r) =>", "f_brUp(float c, float f, float s) =>",
-             "f_brDn(float c, float f, float s) =>", "f_brRv(bool v, float r) =>", "f_brL(bool v, float c) =>"):
+for head in ("f_brS(bool up, bool dn) =>", "f_brM(bool v, bool up, bool dn, float r) =>"):   # v70: the rest is written out
     P.define([next(l for l in BL if l.startswith(head))], benv)
 P.BUILTINS["nz"] = lambda x, y=0.0: y if P.isna(x) else x
 # v66: each cell reads a variable computed inside the GD fence; evaluate that variable's definition
@@ -218,7 +217,7 @@ for name, (pre, vv, rr, sign) in DRV.items():
                 e.update({pre + "c": c, pre + "f": f, pre + "s": s_, vv: valid})
                 if rr:
                     e[rr] = r
-                P.run([l for l in BL if l.startswith((f"bool {pre}u = ", f"bool {pre}n = "))], e)   # v67: states once
+                P.run([l for l in BL if l.startswith((f"bool {pre}u = ", f"bool {pre}n = ", f"float {pre}R = "))], e)   # states, gated r
                 d = P.evaluate(cells[name], e)
                 n += 1
                 want = None if not valid else 0.0 if state == "flat" else (sign if state == "rising" else -sign)
@@ -238,8 +237,8 @@ def fence(path):
     b = [i for i, l in enumerate(T) if l == "// GD-END"]
     return T[a[0]:b[0] + 1] if len(a) == 1 and len(b) == 1 and b[0] > a[0] else None
 VF = "artefacts/XAUUSD_Quantum_5_5_Visuals.pine"
-fb, fv, fs = fence(BP), fence(VF), fence("audit/tools/brief_panel.pine")
-report(fb is not None and fb == fv == fs, f"GD block identical in brief_panel.pine, Brief and Visuals ({len(fb or [])} lines)")
+fb, fv, fs, fm = fence(BP), fence(VF), fence("audit/tools/brief_panel.pine"), fence(A + "Master.pine")
+report(fb is not None and fb == fv == fs == fm, f"GD block identical in brief_panel.pine, Brief, Visuals and the Master (v70) ({len(fb or [])} lines)")
 VL = open(VF, encoding="utf-8").read().split("\n")
 ML = open(A + "Master.pine", encoding="utf-8").read().split("\n")
 dep_bad = []

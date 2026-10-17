@@ -2389,3 +2389,47 @@ separately; the largest that compiled is 26,538 (v68 Diagnostics).
 They fail the v67 Master (tokens) and the v68 Master (main body).
 
 Compile NOT RUN on v69.
+
+---
+
+# Build v69 → v70 — every macro factor in the Master (operator: "all macros can be adjusted in master")
+
+The operator's v69 paste compiled (Master, plus the v68 Brief / Diagnostics and the v67 Visuals). These are recorded in
+`compile_est.py` KNOWN_UNDER.
+
+**What the Master shows now:**
+- The five gold drivers the Brief and Visuals show (USDJPY, oil, real 10Y yield, 10Y breakeven, US 2Y) are in the
+  MACRO detail cell: `JPY▼ OIL≈ RY≈ BE▼ 2Y▲`, the same arrows as the grid.
+- Their full text (direction, level, same-bar r) is that cell's hover tooltip.
+- They come from the same GD block as Visuals and the Brief, byte-identical (`macro_check.py` E now includes the Master).
+- They are display only: no vote, weight or gate, and the DECISION is unchanged.
+
+**How it fits (nothing removed, every output the same):**
+- **Dashboard cells:** f_dashRender's 20 `tcb(...)` calls are queued as `DCell` records (a Pine type).
+  `f_dashFlush` writes them with tcb's own `table.cell`.
+- **Plan panel and phone card:** the same queue for the 8 `tcp` calls and the 9 `_bc` calls, flushed right after the
+  last call of each block by tcp's / _bc's own `table.cell`. Nothing else writes those tables in between, so the order
+  is the same.
+- **The GD block:** leaner. Seven helpers used only inside it are written out at their uses: `f_brQ`, `f_brV`,
+  `f_brUp/Dn`, `f_brRv`, `f_brN`, `f_brL`.
+  - Each correlation is still computed every bar and gated afterwards.
+  - Same in Visuals and the Brief.
+- **The Brief's GOLD ARROWS grid:** drawn by `f_brGrid()`, its unchanged body in a function. This keeps ~900 tokens
+  out of the main body, which the leaner block had pushed above 26,538.
+- **Derivation:** `fix_v70.py` holds the Master transformation. `refactor_check.py` requires the Master to equal
+  `fix_v70.transform(fix_v68.transform(v66 commit), GD block)` byte for byte.
+- **Tools:** `trace.py` and `undeclared.py` now understand `type` blocks.
+
+**Size** (`compile_est.py`):
+
+| Script | best-fit | pessimistic | main body |
+|---|---:|---:|---:|
+| Master | 99,616 | 98,467 | 24,932 |
+| Brief | 97,938 | 98,265 | 25,439 |
+| Visuals | 25,091 | 29,683 | 9,653 |
+| Diagnostics (unchanged) | 94,845 | 97,450 | 26,538 |
+
+The Master's figures are between those of the v69 (99,542 / 99,004) and v66 (100,204 / 100,109) Masters, both of which
+compiled.
+
+Compile NOT RUN on v70.

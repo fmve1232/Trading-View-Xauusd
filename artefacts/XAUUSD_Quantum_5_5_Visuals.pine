@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v67   (DI+/DI- shown; drivers)       ║
+// ║  BUILD STAMP — this file last CHANGED in v70   (gold drivers, leaner)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1251,48 +1251,44 @@ brJpySym = input.symbol("OANDA:USDJPY", "USDJPY symbol (blank = off)", group="GO
 brOilSym = input.symbol("OANDA:WTICOUSD", "Oil (WTI) symbol (blank = off)", group="GOLD DRIVERS (display only)")
 brRySym = input.symbol("FRED:DFII10", "Real 10Y yield, daily (blank = off)", group="GOLD DRIVERS (display only)", tooltip="10-year TIPS yield. Daily, published with a lag: shown as the day's direction, no intraday correlation.")
 brBeSym = input.symbol("FRED:T10YIE", "10Y breakeven inflation, daily (blank = off)", group="GOLD DRIVERS (display only)", tooltip="10Y nominal minus TIPS yield = the market's inflation expectation. Daily.")
-f_brQ(string sym, string tf) => request.security(sym != "" ? sym : syminfo.tickerid, tf, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
-[brJc, brJf, brJs] = f_brQ(brJpySym, macroTF)
-[brOc, brOf, brOs] = f_brQ(brOilSym, macroTF)
-[brRc, brRf, brRs] = f_brQ(brRySym, "D")
-[brBc, brBf, brBs] = f_brQ(brBeSym, "D")
-[br2c, br2f, br2s] = f_brQ(y2Symbol, macroTF)
-f_brV(string sym, float c, float f, float s) => sym != "" and not na(c) and not na(f) and not na(s)
-bool brJv = f_brV(brJpySym, brJc, brJf, brJs)
-bool brOv = f_brV(brOilSym, brOc, brOf, brOs)
-bool brRv = f_brV(brRySym, brRc, brRf, brRs)
-bool brBv = f_brV(brBeSym, brBc, brBf, brBs)
-bool br2v = f_brV(y2Symbol, br2c, br2f, br2s)
-f_brUp(float c, float f, float s) => c > f and f > s
-f_brDn(float c, float f, float s) => c < f and f < s
-// same-bar correlation with gold over the macroTF-bar window (goldRetM / _wM / _fM, as the engine's DXY)
+// v70: written out (TradingView expands every helper call): each line is what the v69 helper call expanded to,
+// same values; refactor_check.py executes old and new side by side.
+[brJc, brJf, brJs] = request.security(brJpySym != "" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+[brOc, brOf, brOs] = request.security(brOilSym != "" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+[brRc, brRf, brRs] = request.security(brRySym != "" ? brRySym : syminfo.tickerid, "D", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+[brBc, brBf, brBs] = request.security(brBeSym != "" ? brBeSym : syminfo.tickerid, "D", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+[br2c, br2f, br2s] = request.security(y2Symbol != "" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+bool brJv = brJpySym != "" and not na(brJc) and not na(brJf) and not na(brJs)
+bool brOv = brOilSym != "" and not na(brOc) and not na(brOf) and not na(brOs)
+bool brRv = brRySym != "" and not na(brRc) and not na(brRf) and not na(brRs)
+bool brBv = brBeSym != "" and not na(brBc) and not na(brBf) and not na(brBs)
+bool br2v = y2Symbol != "" and not na(br2c) and not na(br2f) and not na(br2s)
+bool brJu = brJc > brJf and brJf > brJs
+bool brJn = brJc < brJf and brJf < brJs
+bool brOu = brOc > brOf and brOf > brOs
+bool brOn = brOc < brOf and brOf < brOs
+bool brRu = brRc > brRf and brRf > brRs
+bool brRn = brRc < brRf and brRf < brRs
+bool brBu = brBc > brBf and brBf > brBs
+bool brBn = brBc < brBf and brBf < brBs
+bool br2u = br2c > br2f and br2f > br2s
+bool br2n = br2c < br2f and br2f < br2s
+// same-bar correlation with gold over the macroTF-bar window (goldRetM / _wM / _fM), every bar; shown only when valid
 float brJr = ta.correlation(goldRetM, not na(brJc[1]) ? safeDiv(brJc, brJc[1]) - 1 : na, _wM)
+float brJR = brJv and _fM ? brJr : na
 float brOr = ta.correlation(goldRetM, not na(brOc[1]) ? safeDiv(brOc, brOc[1]) - 1 : na, _wM)
-f_brRv(bool v, float r) => v and _fM ? r : na
-f_brN(float r) => na(r) ? "" : " r" + str.tostring(r, "#.##")
-// v67: each driver's trend state computed once (it was evaluated twice, for the arrow and for the text)
-bool brJu = f_brUp(brJc, brJf, brJs)
-bool brJn = f_brDn(brJc, brJf, brJs)
-bool brOu = f_brUp(brOc, brOf, brOs)
-bool brOn = f_brDn(brOc, brOf, brOs)
-bool brRu = f_brUp(brRc, brRf, brRs)
-bool brRn = f_brDn(brRc, brRf, brRs)
-bool brBu = f_brUp(brBc, brBf, brBs)
-bool brBn = f_brDn(brBc, brBf, brBs)
-bool br2u = f_brUp(br2c, br2f, br2s)
-bool br2n = f_brDn(br2c, br2f, br2s)
-f_brL(bool v, float c) => v ? str.tostring(c, "#.##") + "% " : ""
+float brOR = brOv and _fM ? brOr : na
 // each driver's arrow (d: > 0 supports gold up) and its line of text
-float brJd = f_brM(brJv, brJn, brJu, nz(f_brRv(brJv, brJr)))
-string brJh = "yen-dollar " + f_brMv(brJv, brJu, brJn) + f_brN(f_brRv(brJv, brJr))
-float brOd = f_brM(brOv, brOu, brOn, nz(f_brRv(brOv, brOr)))
-string brOh = "WTI " + f_brMv(brOv, brOu, brOn) + f_brN(f_brRv(brOv, brOr))
+float brJd = f_brM(brJv, brJn, brJu, nz(brJR))
+string brJh = "yen-dollar " + f_brMv(brJv, brJu, brJn) + (na(brJR) ? "" : " r" + str.tostring(brJR, "#.##"))
+float brOd = f_brM(brOv, brOu, brOn, nz(brOR))
+string brOh = "WTI " + f_brMv(brOv, brOu, brOn) + (na(brOR) ? "" : " r" + str.tostring(brOR, "#.##"))
 float brRd = brRv ? f_brS(brRn, brRu) : na
-string brRh = f_brL(brRv, brRc) + f_brMv(brRv, brRu, brRn) + " · daily"
+string brRh = (brRv ? str.tostring(brRc, "#.##") + "% " : "") + f_brMv(brRv, brRu, brRn) + " · daily"
 float brBd = brBv ? f_brS(brBu, brBn) : na
-string brBh = f_brL(brBv, brBc) + f_brMv(brBv, brBu, brBn) + " · daily"
+string brBh = (brBv ? str.tostring(brBc, "#.##") + "% " : "") + f_brMv(brBv, brBu, brBn) + " · daily"
 float br2d = br2v ? f_brS(br2n, br2u) : na
-string br2h = f_brL(br2v, br2c) + f_brMv(br2v, br2u, br2n) + " · Fed path"
+string br2h = (br2v ? str.tostring(br2c, "#.##") + "% " : "") + f_brMv(br2v, br2u, br2n) + " · Fed path"
 // GD-END
 var table gdT = table.new(gdPos == "Bottom Center" ? position.bottom_center : gdPos == "Bottom Left" ? position.bottom_left : gdPos == "Middle Right" ? position.middle_right : position.bottom_right, 2, 6, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A2E39, 0))
 f_gdRow(int r, string nm, float d, string how) =>

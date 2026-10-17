@@ -17,6 +17,16 @@ def strip_code(src):
             if c=='/' and i+1<n and ln[i+1]=='/': r+=' '*(n-i);break
             r+=c;i+=1
         out.append(r)
+    # v70: `type X` declares X; its indented field lines are members, not names to resolve (same line numbers)
+    in_type=False
+    for k,r in enumerate(out):
+        m=re.match(r'^type\s+([A-Za-z_]\w*)\s*$',r)
+        if m:
+            out[k]=m.group(1)+' = 0'; in_type=True
+        elif in_type and r.startswith((' ','\t')) and r.strip():
+            out[k]=''
+        elif r.strip():
+            in_type=False
     return out
 
 HEX=re.compile(r'#[0-9A-Fa-f]{3,8}')

@@ -41,7 +41,8 @@ V56_ROWS = {
     "TP2": '"TP2 " + tp2Str + (not na(pTP2) ? "  ~" + str.tostring(int(pTP2)) + "%" : "")',
     "TP3": '"TP3 " + tp3Str + (not na(pTP3) ? "  ~" + str.tostring(int(pTP3)) + "%" : "")',
 }
-NEW = {k: re.search(r'tcp\(\d, (' + re.escape('"' + k + ' "') + r'.*?), cBloomBg', "\n".join(L)).group(1) for k in V56_ROWS}
+# v70: the plan rows are queued (DCell.new(col, 0, txt, C_TEXT, bg, ts, 0)) and written by f_planFlush = tcp's table.cell
+NEW = {k: re.search(r'DCell\.new\(\d, 0, (' + re.escape('"' + k + ' "') + r'.*?), C_TEXT, cBloomBg', "\n".join(L)).group(1) for k in V56_ROWS}
 bad = n = 0
 for _ in range(3000):
     env["_ciN"] = rng.choice([0.0, 2.0, 3.0, 12.0, 250.0])   # the global f_ciHalf reads (defining scope)
@@ -113,8 +114,10 @@ for o in miss[:3]:
     print("     missing:", o[:100])
 
 # ---- plan rows: row 0 / width 0 were the only values ever passed; the 8 rows are the same calls without them
-tcpdef = next(l for l in L if l.startswith("tcp(col, txt, bg, ts) =>"))
-ok = "_dashMobile ? 9 + col : 0," in tcpdef and "width=0" in tcpdef and len(re.findall(r"(?<![\w.])tcp\(\d, ", cur)) == 8 \
+# v70: tcp's table.cell lives in f_planFlush (the rows are queued DCell records, row 0 / width 0 as before)
+_fl = L.index("f_planFlush(DCell[] q) =>")
+tcpdef = L[_fl + 2]
+ok = "_dashMobile ? 9 + c.col : 0," in tcpdef and "width=0" in tcpdef and len(re.findall(r"array\.push\(_pq, DCell\.new\(\d, 0, ", cur)) == 8 \
      and len(re.findall(r"tcp\(\d, 0, ", "\n".join(V56))) == 8
 report("plan rows: 8 tcp calls, row 0 / width 0 folded into the helper", 0 if ok else 1, 8)
 
@@ -145,10 +148,11 @@ report(f"opaque colours: {len(lit59)} color.new(#rrggbb, 0) -> #rrggbb (identica
 
 
 # ---- v60 Strip fold, the coordinate expressions of tcb executed as written
-tl = next(l for l in L if l.lstrip().startswith("table.cell(tblA, _dashStrip ? col % 3 : col,"))
+# v70: tcb's table.cell is f_dashFlush's, on the queued record's fields (c.col / c.row): read it there, fields as names
+tl = next(l for l in L if l.lstrip().startswith("table.cell(tblA, _dashStrip ? c.col % 3 : c.col,")).replace("c.", "")
 cx, cy = [x.strip() for x in P._split_args(tl.strip()[len("table.cell("):-1])[1:3]]
-gate = next(L[i] for i, l in enumerate(L) if l.startswith("tcb(col, row, txt, tcol, bg, ts, w) =>") for _ in [0])
-cond = L[L.index(gate) + 1].strip()[3:]
+gate = next(L[i] for i, l in enumerate(L) if l.startswith("f_dashFlush(DCell[] cells) =>") for _ in [0])
+cond = L[L.index(gate) + 2].strip()[3:].replace("c.", "")
 P.BUILTINS["int"] = lambda x: P.NA if P.isna(x) else int(x)
 seen, bad = {}, 0
 for col in range(9):
@@ -316,7 +320,10 @@ v66m = subprocess.run(["git", "show", "a5fc12ce:" + M], capture_output=True, tex
 P.define(fn("_b1(bool b) =>"), env)
 b1ok = all(P.evaluate(f"_b1({str(x).lower()})", P.Env(funcs=env.funcs)) == (1 if x else 0) == P.BUILTINS["_b1"](x)
            for x in (True, False))
-derived = F.transform(v66m) == open(M, encoding="utf-8").read()
+import fix_v70 as F70  # noqa: E402
+_V = open("artefacts/XAUUSD_Quantum_5_5_Visuals.pine", encoding="utf-8").read()
+_fence = _V[_V.index("// GD-BEGIN"):_V.index("// GD-END") + len("// GD-END")]
+derived = F70.transform(F.transform(v66m), _fence) == open(M, encoding="utf-8").read()   # v70: + DCell queues, GD block
 once = F.params_once(v66m)
 arms_bad = 0
 for f in ("Strategy", "Strategy_OLDGATES", "Strategy_CHALLENGER"):
@@ -327,7 +334,7 @@ for f in ("Strategy", "Strategy_OLDGATES", "Strategy_CHALLENGER"):
            if "BUILD STAMP" not in l and not l.startswith("_fwI(float x) =>") and "engine-stats row" not in l
            and not l.lstrip().startswith('_fwRow(10, "Engine stats (display)"') and "computed but never showed (as the Master" not in l]
     arms_bad += old != new
-report("Master == fix_v68.transform(v66 commit), byte for byte; expanded helpers use each parameter once; arms == v66 "
+report("Master == fix_v70.transform(fix_v68.transform(v66 commit)), byte for byte; expanded helpers use each parameter once; arms == v66 "
        "+ the v67 scorecard row; _b1 executed", 0 if derived and not once and not arms_bad and b1ok else 1, 1)
 
 # v59's '_gS / _gC / _gF' helpers are written out since v68 (array.get(gDash*, i)); the derivation case proves it.

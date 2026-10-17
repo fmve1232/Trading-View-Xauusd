@@ -39,6 +39,18 @@ def strip(src):
                 r+=' '*(n-i); break
             r+=c; i+=1
         out.append(r)
+    # v70: a Pine user-defined type. `type X` declares X (read as X.new / X[] / array.new<X>); its indented field lines
+    # are member declarations, not variables, so they are blanked for the analysis (same line numbers).
+    in_type = False
+    for k, r in enumerate(out):
+        m = re.match(r'^type\s+([A-Za-z_]\w*)\s*$', r)
+        if m:
+            out[k] = m.group(1) + ' = 0'
+            in_type = True
+        elif in_type and r.startswith((' ', '\t')) and r.strip():
+            out[k] = ''
+        elif r.strip():
+            in_type = False
     return out
 
 TYPES = r'(?:float|int|bool|string|color|line|label|box|table|array<[^>]+>|matrix<[^>]+>|map<[^>]+>|[A-Za-z_]\w*\[\])'

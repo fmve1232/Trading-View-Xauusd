@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5882 | 383926 | `1f9e48dc4e51bbaf4b3dd24b92d42054003b27dc616e78ec24af69e3d24b03ed` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5963 | 391674 | `59002062b655d59b8c1be088457240c0663a9b0bc67268faa3d02a210f848b7d` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5419 | 344905 | `24046013a1deba5e855694c2ea60b426dac618558871588a1a087c706137be30` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5419 | 344970 | `d56641f731b28d6f04f52ff41886cb506892a5b320e56da66184909c4841b4f0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 345889 | `42a6e6e5eb0acb3d11dfd73f43d17f488e2b93afcbb19b4eaa60b6051a4045c8` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1309 | 86908 | `02aede5f43b38fa9c38df85fda44b3f42accfd207c18751abf0a5ef970fa84c6` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1305 | 87645 | `117f8347d1711e7567848070e9519123d2e19f58bca035c305f029b8b58584cb` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 361996 | `e91a9a431f20b67279c59dffc94706d20836556d4566f1a9bc0bd4170e5b6709` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 356949 | `73f8000c07db574ba9d4625f00cc567f1847bafd9569e722bc0a2314aacbbe7a` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 357944 | `ab85c87344149df5eed7ec16a0f1c83e437602344fed7686b9afb7bc049a40e8` |
 
-> **BUILD v69 — this prompt pins the current build.** The originally audited build
+> **BUILD v70 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -115,6 +115,7 @@ scope, and no other build of these scripts is in scope.
 > **v67:** every value wired in every file (0 dead, 0 structural; `deadcode.py` has no exemptions): DI+/DI- in Visuals, the stats-engine slots in Diagnostics / Brief / the arms' scorecard; `(x ? 1 : 0)` → `_b1(x)` for room.
 > **v68: F-A66** — v67 Master exceeded the compiler limit (100,335); calls are expanded by the compiler, so helper rewrites were undone or written out and single-call dashboard functions inlined; `compile_est.py` replaces lexical x 2.515.
 > **v69: F-A67** — v68 Master failed CE10295 (main body too long) after inlining the dashboard functions; they stay functions, the Master is v66 + small-helper write-outs; `compile_est.py` gates the main body.
+> **v70:** the five gold drivers in the Master's MACRO cell (same GD block as Visuals / Brief); dashboard cells queued (DCell) and written once; leaner GD block.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
