@@ -2504,4 +2504,4 @@ Compile NOT RUN on v71.
 - **`refactor_check.py`:** back to its v69 form (Master == `fix_v68.transform(v66)`).
 - `fix_v70.py` / `fix_v71.py` are kept as the record and are not applied.
 
-Compile: the Master is the same bytes as the v69 Master, which the operator compiled.
+Compile: the Master is the same bytes as the v69 Master, which the operator compiled. **Confirmed (operator, 2026-10-18): v72 Master compiled and runs (5,882 lines).**
