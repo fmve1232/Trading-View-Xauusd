@@ -519,14 +519,13 @@ function renderGoldArrows() {
     return { up, dn, nt: v.length - up - dn, n: v.length, s: v.length ? (up - dn) / v.length : 0 }; };
   const label = (s) => (s >= 0.5 ? ["Strong up", "bull"] : s >= 0.1 ? ["Up", "bull"] : s <= -0.5 ? ["Strong down", "bear"] : s <= -0.1 ? ["Down", "bear"] : ["Neutral", ""]);
   const all = rate(rows), [allL, allC] = label(all.s);
-  // the gauge: a half circle in five zones, needle at the rating
-  const R = 70, cx = 90, cy = 84, pt = (a, r = R) => [cx + r * Math.cos(Math.PI * (1 - a)), cy - r * Math.sin(Math.PI * (1 - a))];
-  const arc = (a0, a1) => { const [x0, y0] = pt(a0), [x1, y1] = pt(a1); return `M${x0.toFixed(1)},${y0.toFixed(1)} A${R},${R} 0 0 1 ${x1.toFixed(1)},${y1.toFixed(1)}`; };
-  const Z = [[0, 0.25, "z-sb"], [0.25, 0.45, "z-b"], [0.45, 0.55, "z-n"], [0.55, 0.75, "z-u"], [0.75, 1, "z-su"]];   // rating -1 … +1 mapped to 0 … 1
-  const a = (all.s + 1) / 2, [nx, ny] = pt(a, R - 16);
+  // the gauge: one half-circle path (pathLength 100) cut into five zones by dashes; the needle is a rotation
+  const cx = 90, cy = 84, R = 70, half = `M${cx - R},${cy} A${R},${R} 0 0 1 ${cx + R},${cy}`;
+  const Z = [[0, 25, "z-sb"], [25, 45, "z-b"], [45, 55, "z-n"], [55, 75, "z-u"], [75, 100, "z-su"]];   // rating -1 … +1 along 0 … 100
+  const ang = ((all.s + 1) / 2) * 180;              // 0° points left (strong down), 180° right (strong up)
   const gauge = `<svg class="gs-gauge" viewBox="0 0 180 100" role="img" aria-label="Overall rating ${allL}">` +
-    Z.map(([a0, a1, c]) => `<path d="${arc(a0 + 0.006, a1 - 0.006)}" class="${c}"/>`).join("") +
-    `<line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" class="needle"/><circle cx="${cx}" cy="${cy}" r="5" class="hub"/></svg>`;
+    Z.map(([a0, a1, c]) => `<path d="${half}" pathLength="100" stroke-dasharray="${a1 - a0 - 0.8} 200" stroke-dashoffset="${-(a0 + 0.4)}" class="${c}"/>`).join("") +
+    `<line x1="${cx}" y1="${cy}" x2="${cx - R + 16}" y2="${cy}" class="needle" transform="rotate(${ang.toFixed(1)} ${cx} ${cy})"/><circle cx="${cx}" cy="${cy}" r="5" class="hub"/></svg>`;
   const bar = (title, rs) => { const r = rate(rs), [l, c] = label(r.s), w = Math.abs(r.s) * 50;
     return `<div class="gs-row" title="${esc(`${title}: ${r.up} support up, ${r.dn} support down, ${r.nt} neutral (of ${r.n} with data)`)}">
       <div class="gs-rh"><b>${title}</b><span class="gs-rl ${c}">${l}</span></div>
