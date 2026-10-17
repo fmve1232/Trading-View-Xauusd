@@ -142,25 +142,32 @@ def gold_arrows(L: dict, F: dict, i: int, tf_sec: int) -> list[dict]:
     vah, val = fl.get("vah"), fl.get("val")
     g = lambda k: bool(F[k][i])                                                       # noqa: E731
     ac = lambda k: F["avg_corr"][k][i]                                                 # noqa: E731
+    STRUCT = {"BOS": "break of structure", "CHoCH": "change of character", "MSS": "structure shift"}
+    stype = st.get("bull_type") if st.get("bull_act") else st.get("bear_type") if st.get("bear_act") else None
+    lb, ls_ = ev.get("liq_bull", 0), ev.get("liq_bear", 0)
     cells = [
-        ("TREND", s(ev.get("bull_trend"), ev.get("bear_trend")), "engine trend gate"),
+        ("TREND", s(ev.get("bull_trend"), ev.get("bear_trend")),
+         "uptrend" if ev.get("bull_trend") else "downtrend" if ev.get("bear_trend") else "no clear trend"),
         ("STRUCT", s(st.get("bull_act"), st.get("bear_act")),
-         st.get("bull_type") if st.get("bull_act") else st.get("bear_type") if st.get("bear_act") else "none active"),
-        ("BIAS", 0 if abs(b - br) < 5 else s(b > br, br > b), f"L {b:.0f} / S {br:.0f}"),
-        ("LIQ", s(ev.get("liq_bull", 0) > ev.get("liq_bear", 0) + 3, ev.get("liq_bear", 0) > ev.get("liq_bull", 0) + 3), "liquidity draw"),
-        ("EMA200", s(c > e200, c < e200), "price above" if c > e200 else "price below"),
-        ("VWAP", s(c > vw, c < vw), "price above" if c > vw else "price below"),
+         f"{'bullish' if st.get('bull_act') else 'bearish'} {STRUCT.get(stype, stype)} ({stype})" if stype else "no active break"),
+        ("BIAS", 0 if abs(b - br) < 5 else s(b > br, br > b), f"long {b:.0f} vs short {br:.0f}"),
+        ("LIQ", s(lb > ls_ + 3, ls_ > lb + 3), "pull toward the highs" if lb > ls_ + 3 else "pull toward the lows" if ls_ > lb + 3 else "balanced"),
+        ("EMA200", s(c > e200, c < e200), "price above it" if c > e200 else "price below it"),
+        ("VWAP", s(c > vw, c < vw), "price above it" if c > vw else "price below it"),
         ("VALUE", s(vah is not None and c > vah, val is not None and c < val),
-         "above VAH" if vah is not None and c > vah else "below VAL" if val is not None and c < val else "inside value"),
-        ("MTF", s(mt.get("conf_score", 0) > 20, mt.get("conf_score", 0) < -20), f"confluence {mt.get('conf_score', 0)}"),
+         "above the value area" if vah is not None and c > vah else "below the value area" if val is not None and c < val else "inside the value area"),
+        ("MTF", s(mt.get("conf_score", 0) > 20, mt.get("conf_score", 0) < -20), f"agreement {mt.get('conf_score', 0):+d}"),
     ]
     for k, nm in (("5", "5M"), ("15", "15M"), ("60", "1H"), ("240", "4H"), ("D", "1D")):
         live = tf_sec < HTF_SEC[k]                                                      # F-A63: a layer votes only above the chart
+        sc_ = F["htf_scores"][k][i]
         cells.append((nm, s(bool(F["htf_bull"][k][i]), bool(F["htf_bear"][k][i])) if live else None,
-                      f"score {F['htf_scores'][k][i]:.0f}" if live else "no data on this TF"))
+                      (f"{'uptrend' if sc_ >= 60 else 'downtrend' if sc_ <= 40 else 'mixed'} ({sc_:.0f}/100)") if live else "no data on this TF"))
     cells += [
-        ("CVD", s(fl.get("cvd_bull"), ev.get("cvd_bear")), "volume delta"),
-        ("DISPL", s(st.get("disp_up"), st.get("disp_dn")), "displacement"),
+        ("CVD", s(fl.get("cvd_bull"), ev.get("cvd_bear")),
+         "buyers stronger" if fl.get("cvd_bull") else "sellers stronger" if ev.get("cvd_bear") else "balanced"),
+        ("DISPL", s(st.get("disp_up"), st.get("disp_dn")),
+         "strong up candle" if st.get("disp_up") else "strong down candle" if st.get("disp_dn") else "none"),
         # the engine sets both flags True when its RSI-divergence filter is off (the default): that is no divergence
         ("RSI DIV", s(ev.get("rsi_div_bull"), ev.get("rsi_div_bear")) if ev.get("rsi_div_filter") else None,
          "divergence" if ev.get("rsi_div_filter") else "filter off (engine default)"),
@@ -172,12 +179,12 @@ def gold_arrows(L: dict, F: dict, i: int, tf_sec: int) -> list[dict]:
          "EURUSD " + mv(g("eur_valid"), g("eur_bull"), g("eur_bear")) + (" · confirms DXY" if g("dxy_valid") else " · USD vote")),
         ("XAG", mag(g("slv_valid"), g("slv_bull"), g("slv_bear"), ac("Slv")), "silver " + mv(g("slv_valid"), g("slv_bull"), g("slv_bear"))),
         ("SPX", s(g("spx_bull"), g("spx_bear")) if g("spx_valid") else None, "stocks " + mv(g("spx_valid"), g("spx_bull"), g("spx_bear"))),
-        ("MACRO", s(F["macro_strength"][i] >= 15, F["macro_strength"][i] <= -15), f"score {F['macro_strength'][i]:.0f}"),
+        ("MACRO", s(F["macro_strength"][i] >= 15, F["macro_strength"][i] <= -15), f"score {F['macro_strength'][i]:+.0f} (±15 = a side)"),
     ]
     out = [{"name": n_, "d": d, "text": t} for n_, d, t in cells]
     cu, cd = bool(fl.get("climax_up")), bool(fl.get("climax_dn"))   # exhaustion either way: amber, not a side
     out.append({"name": "CLIMAX", "d": None, "amber": cu or cd, "glyph": "▲" if cu else "▼" if cd else "·",
-                "text": "exhaustion risk" if cu or cd else "none"})
+                "text": ("buying" if cu else "selling") + " climax" if cu or cd else "none"})
     return out
 
 
