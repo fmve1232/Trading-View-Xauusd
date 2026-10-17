@@ -485,6 +485,14 @@ function panelMove(it) {                            // the panel's change, live 
   return { chg: it.change, dir: lv && isNum(lv.dir) ? lv.dir : null };
 }
 async function loadMacroPanel() { try { S.macroPanel = await getJSON("data/macro_panel.json"); } catch (e) { S.macroPanel = null; } renderMacroPanel(); renderGoldArrows(); }
+/* ---------- collapsible research cards: one line by default, the full rule check on click ---------- */
+document.querySelectorAll(".card.fold").forEach((card) => {
+  const hd = card.querySelector(".hd"), key = "fold:" + card.id;
+  const set = (open) => { card.classList.toggle("collapsed", !open); hd.setAttribute("aria-expanded", String(open)); try { localStorage.setItem(key, open ? "1" : "0"); } catch (e) { /* private mode */ } };
+  try { if (localStorage.getItem(key) === "1") set(true); } catch (e) { /* default: collapsed */ }
+  hd.addEventListener("click", () => set(card.classList.contains("collapsed")));
+  hd.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set(card.classList.contains("collapsed")); } });
+});
 /* ---------- gold arrows (Pine v53-v73 GOLD ARROWS grid; computed by report.gold_arrows; DISPLAY ONLY) ----------
    Every indicator by what it means for gold: green supports up, red down, grey neutral, — no data; CLIMAX amber
    (exhaustion either way). The five drivers take the macro panel's own verdict (one verdict per instrument on the
@@ -494,17 +502,23 @@ function renderGoldArrows() {
   const G = (D.dashboard && D.dashboard.gold_arrows) || [];
   const glyph = (d) => (d === null || d === undefined ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈");
   const cls = (d) => (d === null || d === undefined ? "na" : d > 0 ? "bull" : d < 0 ? "bear" : "flat");
-  const cells = G.map((g) => g.name === "CLIMAX" ? { name: g.name, g: g.glyph, c: g.amber ? "amber" : "flat", t: g.text } : { name: g.name, g: glyph(g.d), c: cls(g.d), t: g.text });
+  const NAME = { TREND: "Trend", STRUCT: "Market structure", BIAS: "Model bias", LIQ: "Liquidity pull", EMA200: "200 EMA", VWAP: "VWAP",
+    VALUE: "Value area", MTF: "Timeframe agreement", "5M": "5-min trend", "15M": "15-min trend", "1H": "1-hour trend", "4H": "4-hour trend",
+    "1D": "Daily trend", CVD: "Volume flow", DISPL: "Momentum candle", "RSI DIV": "RSI divergence", DXY: "US dollar (DXY)", "10Y": "US 10Y yield",
+    TIPS: "Real yield (TIPS)", EUR: "Euro (EUR/USD)", XAG: "Silver", SPX: "S&P 500", MACRO: "Macro score", CLIMAX: "Volume climax" };
+  const cells = G.map((g) => g.name === "CLIMAX" ? { name: NAME[g.name], g: g.glyph, c: g.amber ? "amber" : "flat", t: g.text } : { name: NAME[g.name] || g.name, g: glyph(g.d), c: cls(g.d), t: g.text, d: g.d });
   const items = ((S.macroPanel && S.macroPanel.items) || []).filter((it) => ["JPYUSD", "WTI", "REALYLD", "BREAKEVEN", "US2Y"].includes(it.key));
   for (const it of items) {
     let d = null, t = "no data";
     if (it.ok && it.daily) { d = it.gold; t = `${it.last.toFixed(it.dec)}% ${it.trend > 0 ? "rising" : it.trend < 0 ? "falling" : "flat"} · daily`; }
     else if (it.ok) { const mv = panelMove(it); d = panelGold(it, mv.chg, mv.dir);
       t = `${mv.chg > 0 ? "rising" : mv.chg < 0 ? "falling" : "flat"} · macro panel`; }
-    cells.push({ name: { JPYUSD: "JPY/USD", WTI: "OIL", REALYLD: "REAL YLD", BREAKEVEN: "BREAKEVEN", US2Y: "US 2Y" }[it.key], g: glyph(d), c: cls(d), t, drv: true });
+    cells.push({ name: { JPYUSD: "Yen (JPY/USD)", WTI: "Oil (WTI)", REALYLD: "Real 10Y yield", BREAKEVEN: "10Y breakeven", US2Y: "US 2Y yield" }[it.key], g: glyph(d), c: cls(d), t, drv: true, d });
   }
-  el.innerHTML = cells.map((x) => `<div class="ga ${x.c}${x.drv ? " drv" : ""}" title="${esc(x.name + ": " + x.t)}"><b>${esc(x.name)} <span class="gg">${x.g}</span></b><span>${esc(x.t)}</span></div>`).join("") +
-    `<div class="ga-key dim"><span class="bull">green = supports gold up</span> · <span class="bear">red = down</span> · grey ≈ neutral or weakly correlated · — no data on this timeframe · <span class="amber">amber = exhaustion</span> · the drivers (dashed) are display only: no vote, weight or gate</div>`;
+  const nUp = cells.filter((x) => x.d > 0).length, nDn = cells.filter((x) => x.d < 0).length, nN = cells.filter((x) => x.d === 0).length;
+  const lean = nUp - nDn >= 3 ? ["bull", "More indicators support gold up"] : nDn - nUp >= 3 ? ["bear", "More indicators support gold down"] : ["", "Indicators are mixed"];
+  el.innerHTML = `<div class="ga-sum"><b class="${lean[0]}">${lean[1]}</b><span><span class="bull">▲ ${nUp} up</span> · <span class="bear">▼ ${nDn} down</span> · ≈ ${nN} neutral</span><span class="dim">a count, not a weighted score; the model decision above weighs them</span></div>` + cells.map((x) => `<div class="ga ${x.c}${x.drv ? " drv" : ""}" title="${esc(x.name + ": " + x.t)}"><b>${esc(x.name)} <span class="gg">${x.g}</span></b><span>${esc(x.t)}</span></div>`).join("") +
+    `<div class="ga-key dim"><span class="bull">Green = supports gold up</span> · <span class="bear">red = supports gold down</span> · grey ≈ neutral or weakly linked to gold · — not available on this timeframe · <span class="amber">amber = exhaustion</span> · dashed edge = outside driver, shown for context only</div>`;
 }
 function spark(it, gold) {
   const v = it.spark && it.spark.v; if (!v || v.length < 2) return "";
@@ -601,7 +615,8 @@ function renderQuote() {
 function renderHeader() {
   const D = S.data; if (!D) return;
   const M = D.meta;
-  $("#engine-ver").textContent = `engine ${M.engine_version} · schema B${M.schema_build} · cfg ${M.config_hash}`;
+  $("#engine-ver").textContent = "Institutional gold analytics";
+  $("#engine-ver").title = `engine ${M.engine_version} · schema B${M.schema_build} · config ${M.config_hash}`;
   const fr = freshness();
   $("#updated").textContent = ago(M.generated_utc) + (fr && fr.behind >= 2 ? ` · ${fr.behind} bars behind` : "");
   const chip = $("#chip-updated");
@@ -737,9 +752,29 @@ function tickClock() {
   // the scheduler dispatches at :01 / :16 / :31 / :46; a run takes about 2-3 minutes to publish
   const d0 = new Date(now), m = d0.getUTCMinutes(), slot = [1, 16, 31, 46].find((x) => x > m);
   const disp = new Date(Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), d0.getUTCDate(), d0.getUTCHours() + (slot === undefined ? 1 : 0), slot === undefined ? 1 : slot) + 180000);
-  ck.textContent = closed ? "engine resumes when the market reopens" : `${D.meta.tf} bar closes in ${mmss(nextClose - t)} · next engine update ≈ ${tfmt(disp.getTime() / 1000, false)}`;
+  ck.textContent = closed ? "updates resume when the market reopens" : `${D.meta.tf} candle closes in ${mmss(nextClose - t)} · next model update ≈ ${tfmt(disp.getTime() / 1000, false)}`;
 }
 setInterval(tickClock, 1000);
+/* ---------- plain language: the names a reader needs, the abbreviation the chart uses in brackets ---------- */
+// [plain name, the chart's abbreviation or ""]
+const LEVEL = { PDH: ["Yesterday's high", "PDH"], PDL: ["Yesterday's low", "PDL"], PWH: ["Last week's high", "PWH"], PWL: ["Last week's low", "PWL"],
+  PMH: ["Last month's high", "PMH"], PML: ["Last month's low", "PML"], EQH: ["Equal highs", "EQH"], EQL: ["Equal lows", "EQL"],
+  CDH: ["Today's high", "CDH"], CDL: ["Today's low", "CDL"], "Day high": ["Today's high", "CDH"], "Day low": ["Today's low", "CDL"],
+  VAH: ["Value-area high", "VAH"], VAL: ["Value-area low", "VAL"], POC: ["Busiest price", "POC"], "Internal high": ["Recent swing high", ""],
+  "Internal low": ["Recent swing low", ""], "Swing high": ["Swing high", ""], "Swing low": ["Swing low", ""], "2R": ["2 × the stop distance", ""] };
+const lvl = (k) => (LEVEL[k] ? LEVEL[k][0] + (LEVEL[k][1] ? ` (${LEVEL[k][1]})` : "") : k);   // "Equal lows (EQL)"
+const REGIME = { ABNORMAL: "unusually volatile", COMPRESS: "quiet, compressing", EXPANSION: "expanding", "STRONG TR": "strong trend", "WEAK TR": "weak trend", RANGE: "ranging" };
+const STRUCT = { BOS: "break of structure", CHoCH: "change of character", MSS: "structure shift" };
+const BIAS = { BULL: "bullish", BEAR: "bearish", "BULL-ISH": "slightly bullish", "BEAR-ISH": "slightly bearish", RANGE: "ranging", NEUTRAL: "neutral" };
+const EXIT = { SL: "stopped out", BE: "closed at break-even after TP1", TP2: "reached TP2", FLIP: "closed by an opposite signal", OPEN: "still open" };
+function whyPlain(w) {                              // the engine's short WAIT reason, in words
+  if (!w) return "";
+  let m;
+  if ((m = w.match(/^SESS (\d+)\/(\d+)/))) return `outside London / New York hours (session quality ${m[1]} of ${m[2]} needed)`;
+  if ((m = w.match(/^TREND (\d+)\/(\d+)/))) return `trend not strong enough (${m[1]} of ${m[2]} needed)`;
+  return { "HTF-OPP": "the higher timeframes point the other way", "NO-TRIGGER": "waiting for a trigger candle", "OLD-BAR": "data is not current",
+    DD: "drawdown lock", NEWS: "news block" }[w] || w;
+}
 /* ---------- Playbook: conditional directions when the engine has no signal ----------
    The playbook is arm H4 (pre-registered, Amendment 8; quantum/arm_h4.py): the pipeline publishes the
    triggers for the next bar from the last closed bar, and the same rule is measured as a forward test, so
@@ -755,21 +790,22 @@ function playbook(D, price) {
 }
 // H4's record in one line: the forward record decides (15m, Amendment 8); in-sample is history only
 function h4rec(D) {
-  const H = D.h4; if (!H || H.error) return "Measured as arm H4 (Amendment 8)";
+  const H = D.h4; if (!H || H.error) return "These triggers are tracked as a test (arm H4).";
   const fw = H.forward || {}, is = H.in_sample || {};
-  const fr = fw.n ? `${fw.n} closed · win ${f(fw.win_rate, 0)}% · mean ${fs(fw.avg_r, 2)} R · PF ${f(fw.profit_factor, 2)}` : "no closed trades yet";
+  const full = `Arm H4 (Amendment 8). Forward: ${fw.n ? `${fw.n} closed, win ${f(fw.win_rate, 0)}%, mean ${fs(fw.avg_r, 2)} R, profit factor ${f(fw.profit_factor, 2)}` : "no closed trades yet"}` +
+    (is.n ? `. Past data: ${is.n} trades, win ${f(is.win_rate, 0)}%, mean ${fs(is.avg_r, 2)} R, profit factor ${f(is.profit_factor, 2)}` : "") + ". Judged on 15m after 50 forward trades.";
   const neg = (fw.n >= 50 ? fw.avg_r : is.avg_r) < 0;
-  return `Measured as arm H4: forward record ${fr} (decides on 15m after 50 trades)` +
-    (is.n ? ` · in-sample ${is.n} trades, win ${f(is.win_rate, 0)}%, mean ${fs(is.avg_r, 2)} R, PF ${f(is.profit_factor, 2)}` : "") +
-    (neg ? ' · <b class="warn">measured mean R is negative: levels to watch, not a proven edge</b>' : "");
+  const rec = fw.n ? `Live record: ${fw.n} trades, ${f(fw.win_rate, 0)}% won.` : "Live record: tracking started, no closed trades yet.";
+  return `<span title="${esc(full)}">${rec}${is.n ? ` In past data these triggers won ${f(is.win_rate, 0)}% of ${is.n} times.` : ""}</span>` +
+    (neg ? ' <b class="warn">On average they have lost money: treat them as levels to watch, not as signals.</b>' : "");
 }
 const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "P below minimum" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
 function pbLine(x, tf, primary) {
   if (!x) return "";
   const s = x.dir < 0, through = isNum(x.dist) && (s ? x.dist > 0 : x.dist < 0);   // live price already beyond the trigger
-  return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(x.tname)}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
-    `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span><i>TP1 ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
-    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span><i>TP2 ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>R:R</i><b>1:${f(x.rr, 1)}</b></span><span><i>Away</i><b>${fs(x.dist, 2)}</b></span></div>` +
+  return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(lvl(x.tname))}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
+    `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span title="${esc(lvl(x.tp1n))}"><i>Target 1 · ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
+    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>Reward:risk</i><b>${f(x.rr, 1)} : 1</b></span><span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
     (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") + `</div>`;
 }
 function renderBrief() {
@@ -780,26 +816,27 @@ function renderBrief() {
   const tile = (cls, icon, k, v, sub) => `<div class="bt ${cls}"><div class="bk">${IC[icon] || ""}${k}</div><div class="bv">${v}</div><div class="bs">${sub}</div></div>`;
   // 1 trend
   const bl = d.bias_label || "—", tUp = /BULL/.test(bl), tDn = /BEAR/.test(bl);
-  const st = d.struct || {}, sType = st.bull_act ? `bullish ${st.bull_type}` : st.bear_act ? `bearish ${st.bear_type}` : "no active break";
+  const st = d.struct || {}, sT = st.bull_act ? st.bull_type : st.bear_act ? st.bear_type : null;
+  const sPlain = sT ? `${st.bull_act ? "bullish" : "bearish"} ${STRUCT[sT] || sT} (${sT})` : "no active break";
   const sAge = st.bull_act ? st.bull_age : st.bear_act ? st.bear_age : null;
   const mtf = (d.mtf && d.mtf.scores) || {};
   const t1 = tile(tUp ? "bull" : tDn ? "bear" : "", tUp ? "up" : tDn ? "dn" : "side", `Current trend · ${esc(M.tf)}`, esc(bl.replace("-ISH", "ISH").replace("BULLISH", "Bullish").replace("BEARISH", "Bearish").replace("BULL", "Bull").replace("BEAR", "Bear").replace("RANGE", "Range").replace("NEUTRAL", "Neutral")),
-    ((tUp && htfDir(mtf["240"]) === "down" && htfDir(mtf.D) === "down") || (tDn && htfDir(mtf["240"]) === "up" && htfDir(mtf.D) === "up") ? '<b class="warn">Against the 4H and 1D trend.</b><br>' : "") + `Price ${isNum(e200) ? (price > e200 ? "above" : "below") + " EMA 200" : ""} · structure ${esc(sType)}${isNum(sAge) && sAge >= 0 ? ` (${sAge} bars ago)` : ""}<br>Higher timeframes: 4H ${htfDir(mtf["240"])} · 1D ${htfDir(mtf.D)} · ${esc(d.regime ? d.regime.label.toLowerCase() : "")}`);
+    ((tUp && htfDir(mtf["240"]) === "down" && htfDir(mtf.D) === "down") || (tDn && htfDir(mtf["240"]) === "up" && htfDir(mtf.D) === "up") ? '<b class="warn">Against the 4H and 1D trend.</b><br>' : "") + `${isNum(e200) ? `Price ${price > e200 ? "above" : "below"} its 200-period average (EMA 200)<br>` : ""}Last structure: ${esc(sPlain)}${isNum(sAge) && sAge >= 0 ? ` · ${sAge} bars ago` : ""}<br>Bigger picture: 4-hour ${htfDir(mtf["240"])} · daily ${htfDir(mtf.D)} · market ${esc(d.regime ? REGIME[d.regime.label] || d.regime.label.toLowerCase() : "")}`);
   // 2 where it is heading (the engine's lean, not a forecast)
   const rs = (d.liquidity && d.liquidity.reach_scores) || {};
   const lean = Math.abs(d.bull_score - d.bear_score) < 5 ? "No clear lean" : up ? "Leaning up" : "Leaning down";
   const t2 = tile(lean === "No clear lean" ? "" : up ? "bull" : "bear", lean === "No clear lean" ? "side" : up ? "up" : "dn", `Where it is heading · ${esc(M.tf)}`, lean,
-    `Long ${f(d.bull_score, 0)}% · Short ${f(d.bear_score, 0)}% · Range ${f(d.range_score, 0)}%<br>${isNum(rs.PDH) ? `Reach: PDH ${f(rs.PDH, 0)}% vs PDL ${f(rs.PDL, 0)}%` : ""} <span class="dim">engine scores, not a forecast</span>`);
+    `Model scores: long ${f(d.bull_score, 0)} · short ${f(d.bear_score, 0)} · range ${f(d.range_score, 0)}<br>${isNum(rs.PDH) ? `More likely next: ${rs.PDL > rs.PDH ? `yesterday's low (${f(rs.PDL, 0)}%) before the high (${f(rs.PDH, 0)}%)` : `yesterday's high (${f(rs.PDH, 0)}%) before the low (${f(rs.PDL, 0)}%)`}<br>` : ""}<span class="dim">model scores, not a forecast</span>`);
   // 3 last liquidity sweep
   const sw = lastSweep(D);
   const t3 = sw ? tile(sw.dir < 0 ? "bear" : "bull", "drop", "Last liquidity taken", `${sw.dir < 0 ? "Buy-side" : "Sell-side"} @ ${px(sw.px)}`,
-    `Wick through ${sw.pool}${isNum(sw.lvl) ? " " + px(sw.lvl) : ""}, closed back ${sw.dir < 0 ? "below" : "above"}<br>${tfmt(sw.t)}${isNum(sw.barsAgo) ? ` · ${sw.barsAgo} bars ago` : ""}`)
-    : tile("", "drop", "Last liquidity taken", "None in view", "No PDH/PDL/PWH/PWL sweep on the chart window");
+    `Price poked ${sw.dir < 0 ? "above" : "below"} ${esc(lvl(sw.pool))}${isNum(sw.lvl) ? " " + px(sw.lvl) : ""} and closed back ${sw.dir < 0 ? "below" : "above"}: the stops there were taken<br>${tfmt(sw.t)}${isNum(sw.barsAgo) ? ` · ${sw.barsAgo} bars ago` : ""}`)
+    : tile("", "drop", "Last liquidity taken", "None in view", "No sweep of yesterday's or last week's high / low in the chart window");
   // 4 next target: the nearest liquidity on the side of the lean; the other side is the risk
   const nl = nextLevels(D, price), tgt = (up ? nl.above : nl.below)[0], nxt = (up ? nl.above : nl.below)[1], opp = (up ? nl.below : nl.above)[0];
   const t4 = tgt ? tile(up ? "bull" : "bear", "target", "Next target", `${esc(tgt[0])} ${px(tgt[1])}`,
-    `${fs(tgt[1] - price, 2)} from price${nxt ? ` · then ${esc(nxt[0])} ${px(nxt[1])}` : ""}<br>${opp ? `Opposite liquidity: ${esc(opp[0])} ${px(opp[1])} (${fs(opp[1] - price, 2)})` : ""}` +
-    (d.liquidity && d.liquidity.dest && d.liquidity.dest !== "—" ? `<br>Engine liquidity draw: ${esc(d.liquidity.dest)} (score ${d.liquidity.dest_score})` : ""))
+    `${esc(lvl(tgt[0]))} · ${fs(tgt[1] - price, 2)} from price${nxt ? `<br>Then ${esc(lvl(nxt[0]))} ${px(nxt[1])}` : ""}<br>${opp ? `Risk the other way: ${esc(lvl(opp[0]))} ${px(opp[1])} (${fs(opp[1] - price, 2)})` : ""}` +
+    (d.liquidity && d.liquidity.dest && d.liquidity.dest !== "—" ? `<br>Model's liquidity draw: ${esc(lvl(d.liquidity.dest))}` : ""))
     : tile("", "target", "Next target", "—", "No liquidity level on that side");
   // 5 what to do now
   const dec = d.decision, sig = dec === "BUY" || dec === "SELL";
@@ -816,22 +853,22 @@ function renderBrief() {
       (pb0 && (pb0.buy || pb0.sell) ? `Act only on a ${esc(M.tf)} close beyond a playbook trigger.<br>` : "") +
       (dec === "NO TRADE" ? `All 7 gates met, but the setup is vetoed: ${esc(vetoes(d) || "veto")}.` :
         dec === "RISK LOCK" ? `Risk lock: no new trades${d.risk && d.risk.lock_str ? ` (${esc(d.risk.lock_str)})` : ""}.` :
-        /^RANGE/.test(log) ? "Engine: ranging, no side has an edge." : need ? `Engine (${gs ? gsd : mm && mm[1] === "▲" ? "long" : "short"} side) waits for: ${esc(need)}` : esc(d.blk_why || "")) +
-      (d.session && d.session.quality < 30 ? ` · ${esc(d.session.label.toLowerCase())} session (the engine trades London / New York)` : "")));
+        /^RANGE/.test(log) ? "The model sees a range: no side has an edge." : need ? `For a ${gs ? gsd : mm && mm[1] === "▲" ? "long" : "short"}, the model still needs: ${esc(need.toLowerCase())}` : esc(whyPlain(d.blk_why))) +
+      (d.session && d.session.quality < 30 ? `<br>Outside London / New York hours: the model trades only those` : "")));
   // 6 trade plan
   const side = p.long ? "LONG" : "SHORT";
   const planV = isNum(p.entry) ? `<span class="${p.long ? "bull" : "bear"}">${side}</span> ${px(p.entry)}` : "—";
   const pb = !sig ? playbook(D, price) : null;
   const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
-  const t6 = !sig ? `<div class="bt plan pbk"><div class="bk">${IC.plan}Playbook <span class="hyp">conditional · not yet triggered</span></div>
+  const t6 = !sig ? `<div class="bt plan pbk"><div class="bk">${IC.plan}Playbook <span class="hyp">if-then plan · not triggered</span></div>
     ${pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : '<div class="bv">—</div>'}
-    <div class="bs">Engine decision: <b>${esc(dec)}</b>. ${h4rec(D)}${pb && pb.lowSession ? ' · <b class="warn">low-liquidity session</b>' : ""}.</div></div>`
+    <div class="bs">Model decision: <b>${esc(dec)}</b>. ${h4rec(D)}${pb && pb.lowSession ? ' <b class="warn">Thin trading hours now.</b>' : ""}</div></div>`
     : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
     <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
     <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
     <div class="bs">Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
   el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="lpill" id="brief-live"></span><span class="bpx">${px(price)}</span>` +
-    `<span class="dim">XAUUSD · ${esc(M.tf)} · analysis as of the bar closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</span><span class="dim clk" id="brief-clock"></span></div>
+    `<span class="dim">XAUUSD · ${esc(M.tf)} · analysis as of the candle that closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</span><span class="dim clk" id="brief-clock"></span></div>
     <div class="bgrid">${t1}${t2}${t3}${t4}${t5}${t6}</div>`;
   tickClock();
 }
@@ -844,11 +881,11 @@ function ruleMeter(n, total) {
 
 /* ---------- decision transparency (DISPLAY ONLY; reads what the engine already published) ---------- */
 // The engine's decision log, e.g. "▼5/7 [✗Sess Trig] NO-TRIG ctx:RgM+R+", in plain words.
-const GATES = [["Trend", "Trend strong enough"], ["HTF", "Higher timeframe not against it"], ["Sess", "Active session (London / New York)"],
-  ["Recent", "Recent bar"], ["News", "No news block"], ["DD", "No drawdown lock"], ["Trig", "Trigger bar: structure break or displacement"]];
+const GATES = [["Trend", "A strong enough trend"], ["HTF", "Higher timeframes not against it"], ["Sess", "London or New York hours"],
+  ["Recent", "Current data"], ["News", "No news block"], ["DD", "No drawdown lock"], ["Trig", "A trigger candle (structure break or strong candle)"]];
 function whyHtml(d, D) {
   const log = String(d.decision_log || "");
-  if (/^RANGE/.test(log)) return `<div class="why"><b>Why ${esc(d.decision)}:</b> the market is ranging, so no side has an edge. The engine trades only in a trend.</div>`;
+  if (/^RANGE/.test(log)) return `<div class="why"><b>Why ${d.decision === "WAIT" ? "no trade" : esc(d.decision)}:</b> the market is ranging, so neither side has an edge. The model trades only in a trend.</div>`;
   const m = log.match(/^([▲▼])\d\/7(?: \[✗([^\]]*)\])?/); if (!m) return "";
   // gate_sides (report.py, checked against this log): show the side of the final scores, the same side as the
   // WAIT reason and the brief; the engine's log can describe the other side (its side comes from the bias step).
@@ -861,18 +898,17 @@ function whyHtml(d, D) {
   const passed = isNum(fn.pass_) && fn.bars ? fn.pass_ / fn.bars : null;
   const waitFor = d.decision === "WAIT" ? (fails.length === 1 && fails[0] === "Trig" ? `Everything is in place for a ${side}. It is waiting for a trigger bar.` :
     `A ${side} still needs: ${fails.map((f) => (GATES.find((g) => g[0] === f) || [f, f])[1]).join("; ")}.`) : "";
-  return `<div class="why"><div class="rhead"><b>${d.decision === "WAIT" ? "Why WAIT" : "Gates"} · ${side} side · ${7 - fails.length}/7 gates</b>${ruleMeter(7 - fails.length, 7)}</div>${waitFor ? `<p class="lead">${esc(waitFor)}</p>` : ""}<ul class="gates">${rows}</ul>` +
+  return `<div class="why"><div class="rhead"><b>${d.decision === "WAIT" ? "Why no trade" : "Conditions"} · ${side} side · ${7 - fails.length} of 7 met</b>${ruleMeter(7 - fails.length, 7)}</div>${waitFor ? `<p class="lead">${esc(waitFor)}</p>` : ""}<ul class="gates">${rows}</ul>` +
     (G ? `<div class="dim">${other === "long" ? "Long" : "Short"} side: ${7 - ofails.length}/7${ofails.length ? " · missing " + ofails.map((x) => (GATES.find((g) => g[0] === x) || [x, x])[1].toLowerCase()).join(", ") : " · all gates met"}</div>` : "") +
-    (rate !== null ? `<div class="dim">Over the last ${fn.bars} ${esc(D.meta.tf)} bars, entry signals fired on ${fn.sig} (${(rate * 100).toFixed(1)}%)` +
-      (passed !== null ? ` and ${fn.pass_} also passed the quality, EV and probability vetoes (about ${(passed * wk).toFixed(1)} a week)` : "") +
-      `. Most bars are WAIT by design: an entry needs every gate on the same bar.</div>` : "") + `</div>`;
+    (rate !== null ? `<div class="dim">Waiting is normal: a trade needs all 7 conditions on the same candle. Over the last ${fn.bars} candles that happened ${fn.sig} times (${(rate * 100).toFixed(1)}%)` +
+      (passed !== null ? `; ${fn.pass_} also passed every quality check, about ${(passed * wk).toFixed(1)} a week` : "") + `.</div>` : "") + `</div>`;
 }
 function lastSignalHtml(D) {
   const B = D.backtest && D.backtest.treatment; if (!B) return "";
   const open = (B.open || [])[0], tr = (B.trades || []).filter((t) => !t.open), last = tr[tr.length - 1];
   const when = (iso) => tfmt(Date.parse(iso) / 1000);
   if (open) return `<div class="why"><b>Open trade:</b> ${esc(open.dir)} since ${when(open.entry_time)} · entry ${px(open.entry)} · SL ${px(open.sl)} · TP1 ${px(open.tp1)} · TP2 ${px(open.tp2)} <span class="dim">(treatment arm; WAIT on later bars does not close it)</span></div>`;
-  if (last) return `<div class="why dim">Last signal: ${esc(last.dir)} ${when(last.entry_time)} at ${px(last.entry)} → ${esc(last.exit_reason)} ${fs(last.r, 2)} R (${when(last.exit_time)})</div>`;
+  if (last) return `<div class="why dim">Last trade signal: ${esc(last.dir)} on ${when(last.entry_time)} at ${px(last.entry)}, ${esc(EXIT[last.exit_reason] || last.exit_reason)} on ${when(last.exit_time)} (${fs(last.r, 2)} R)</div>`;
   return "";
 }
 // Is P better than always quoting the base rate? Brier of the trades' entry P vs the constant base rate.
@@ -892,16 +928,17 @@ function renderSide() {
     : dec === "NO TRADE" ? `setup vetoed — ${vetoes(d)}`
     : dec === "RISK LOCK" ? d.risk.lock_str
     : dec === "WARMUP" ? `statistics warming up: ROLL effective N ${d.oos_neff}/10`
-    : `no setup${d.blk_why ? " — " + d.blk_why : ""}`;
+    : `No trade setup${d.blk_why ? ": " + whyPlain(d.blk_why) : ""}`;
   const b = d.bull_score, s = d.bear_score, r = d.range_score;
   $("#decision").className = "card decision " + cls;
   $("#decision").innerHTML = `
-    <div class="sub">DECISION · ${esc(M.tf)} · bar closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</div>
+    <div class="sub">MODEL DECISION · ${esc(M.tf)} · candle closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</div>
     <div class="label ${dec === "BUY" ? "bull" : dec === "SELL" ? "bear" : dec === "NO TRADE" || dec === "RISK LOCK" ? "warn" : ""}">${esc(dec)}</div>
     <div class="sub">${esc(sub)}</div>
     <div class="bar3" title="Bull / Range / Bear composite"><span style="width:${b}%;background:var(--bull)"></span><span style="width:${r}%;background:var(--neutral)"></span><span style="width:${s}%;background:var(--bear)"></span></div>
-    <div class="sub mono">L ${f(b, 0)} · R ${f(r, 0)} · S ${f(s, 0)} · bias <b>${esc(d.bias_label)}</b> · ${esc(d.regime.label)} ${esc(d.regime.vol_tag)} · ${esc(d.session.label)}</div>
-    ${d.gate_sides ? "" : `<div class="sub mono" title="Which gate terms pass">${esc(d.decision_log)}</div>`}` + whyHtml(d, D) + lastSignalHtml(D);
+    <div class="dchips"><span class="bull">Long ${f(b, 0)}</span><span>Range ${f(r, 0)}</span><span class="bear">Short ${f(s, 0)}</span></div>
+    <div class="sub" title="${esc(`bias ${d.bias_label} · regime ${d.regime.label} ${d.regime.vol_tag} · session ${d.session.label} · ${d.decision_log}`)}">Bias: <b>${esc(BIAS[d.bias_label] || d.bias_label)}</b> · market ${esc(REGIME[d.regime.label] || d.regime.label)} · ${d.session.quality >= 30 ? esc(d.session.label.toLowerCase()) + " session" : "off-hours"}</div>
+    ` + whyHtml(d, D) + lastSignalHtml(D);
 
   const sig = dec === "BUY" || dec === "SELL";
   $("#plan-dir").textContent = sig ? (p.long ? "LONG" : "SHORT") : "playbook";
@@ -913,9 +950,9 @@ function renderSide() {
   if (!sig) {
     const lp = livePrice(), pb = playbook(D, isNum(lp) ? lp : d.close);
     const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
-    $("#plan").innerHTML = `<div class="noplan"><b>No engine signal</b> (decision ${esc(dec)}). Conditional playbook from the published levels:</div>` +
+    $("#plan").innerHTML = `<div class="noplan"><b>No model signal right now</b> (decision: ${esc(dec)}). If-then plan from the current levels:</div>` +
       (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : "") +
-      `<p class="note">Entry only on a ${esc(M.tf)} close beyond the trigger. Stop = the engine's regime stop (${pb ? f(pb.stopD, 2) : "—"} = multiple × adaptive ATR); targets = the next liquidity at least one stop distance away. ${h4rec(D)}.</p>`;
+      `<p class="note">Act only when a ${esc(M.tf)} candle closes beyond the trigger. The stop sits ${pb ? f(pb.stopD, 2) : "—"} beyond it (the model's volatility-based stop); targets are the next liquidity levels at least one stop distance further. ${h4rec(D)}</p>`;
   } else {
   $("#plan").innerHTML = `
     <div class="plan-grid">
