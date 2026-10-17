@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v66   (5 gold drivers, as the Brief) ║
+// ║  BUILD STAMP — this file last CHANGED in v67   (DI+/DI- shown; drivers)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -202,6 +202,7 @@ float atrRangingV  = ta.atr(21)
 // _diPV/_diMV are UNREAD ON PURPOSE and must not be swept: ta.dmi returns a 3-tuple and
 // Pine requires every element be named. Only adxValV is needed here (the Master does use
 // its diplus/diminus, in bullTrendScore -- this file has no trend score to feed).
+// v67 (operator: nothing is dead, wire it): DI+ / DI- are now shown with ADX in the candle info panel.
 [_diPV, _diMV, adxValV] = ta.dmi(adxLenV, adxLenV)
 float regimeStrengthV = math.min(math.max((adxValV - (adxThresholdV - 5)) / 10.0, 0.0), 1.0)
 float _rawAdaptiveATRV = showAdaptiveATRV ? (atrRangingV * (1.0 - regimeStrengthV) + atrTrendingV * regimeStrengthV) : atr14
@@ -746,7 +747,7 @@ if showCandle and barstate.islast
     float atrPct = close > 0 ? atr14 / close * 100.0 : na
     float rvol   = not na(volSma20) and volSma20 > 0 ? volume / volSma20 : na
     bool  isUp   = close >= open
-    string cTxt = "O " + str.tostring(open, format.mintick) + "   H " + str.tostring(high, format.mintick) + "\nL " + str.tostring(low, format.mintick) + "   C " + str.tostring(close, format.mintick) + "\nRNG " + str.tostring(rngC, "#.##") + "  (" + str.tostring(atr14 > 0 ? rngC / atr14 : na, "#.##") + " ATR)\nATR% " + str.tostring(atrPct, "#.###") + "   " + (isUp ? "▲ UP" : "▼ DOWN") + (na(rvol) ? "" : "\nRVOL " + str.tostring(rvol, "#.##") + "x")
+    string cTxt = "O " + str.tostring(open, format.mintick) + "   H " + str.tostring(high, format.mintick) + "\nL " + str.tostring(low, format.mintick) + "   C " + str.tostring(close, format.mintick) + "\nRNG " + str.tostring(rngC, "#.##") + "  (" + str.tostring(atr14 > 0 ? rngC / atr14 : na, "#.##") + " ATR)\nATR% " + str.tostring(atrPct, "#.###") + "   " + (isUp ? "▲ UP" : "▼ DOWN") + (na(rvol) ? "" : "\nRVOL " + str.tostring(rvol, "#.##") + "x") + (na(adxValV) ? "" : "\nADX " + str.tostring(adxValV, "#.#") + "  DI+ " + str.tostring(_diPV, "#.#") + " / DI- " + str.tostring(_diMV, "#.#"))
     table.cell(tblC, 0, 0, cTxt, bgcolor = color.new(#101418, 12), text_color = isUp ? cBull : cBear, text_size = size.small, text_halign = text.align_left)
 if not showCandle and not na(tblC)
     table.delete(tblC)
@@ -1269,17 +1270,29 @@ float brJr = ta.correlation(goldRetM, not na(brJc[1]) ? safeDiv(brJc, brJc[1]) -
 float brOr = ta.correlation(goldRetM, not na(brOc[1]) ? safeDiv(brOc, brOc[1]) - 1 : na, _wM)
 f_brRv(bool v, float r) => v and _fM ? r : na
 f_brN(float r) => na(r) ? "" : " r" + str.tostring(r, "#.##")
+// v67: each driver's trend state computed once (it was evaluated twice, for the arrow and for the text)
+bool brJu = f_brUp(brJc, brJf, brJs)
+bool brJn = f_brDn(brJc, brJf, brJs)
+bool brOu = f_brUp(brOc, brOf, brOs)
+bool brOn = f_brDn(brOc, brOf, brOs)
+bool brRu = f_brUp(brRc, brRf, brRs)
+bool brRn = f_brDn(brRc, brRf, brRs)
+bool brBu = f_brUp(brBc, brBf, brBs)
+bool brBn = f_brDn(brBc, brBf, brBs)
+bool br2u = f_brUp(br2c, br2f, br2s)
+bool br2n = f_brDn(br2c, br2f, br2s)
+f_brL(bool v, float c) => v ? str.tostring(c, "#.##") + "% " : ""
 // each driver's arrow (d: > 0 supports gold up) and its line of text
-float brJd = f_brM(brJv, f_brDn(brJc, brJf, brJs), f_brUp(brJc, brJf, brJs), nz(f_brRv(brJv, brJr)))
-string brJh = "yen-dollar " + f_brMv(brJv, f_brUp(brJc, brJf, brJs), f_brDn(brJc, brJf, brJs)) + f_brN(f_brRv(brJv, brJr))
-float brOd = f_brM(brOv, f_brUp(brOc, brOf, brOs), f_brDn(brOc, brOf, brOs), nz(f_brRv(brOv, brOr)))
-string brOh = "WTI " + f_brMv(brOv, f_brUp(brOc, brOf, brOs), f_brDn(brOc, brOf, brOs)) + f_brN(f_brRv(brOv, brOr))
-float brRd = brRv ? f_brS(f_brDn(brRc, brRf, brRs), f_brUp(brRc, brRf, brRs)) : na
-string brRh = (brRv ? str.tostring(brRc, "#.##") + "% " : "") + f_brMv(brRv, f_brUp(brRc, brRf, brRs), f_brDn(brRc, brRf, brRs)) + " · daily"
-float brBd = brBv ? f_brS(f_brUp(brBc, brBf, brBs), f_brDn(brBc, brBf, brBs)) : na
-string brBh = (brBv ? str.tostring(brBc, "#.##") + "% " : "") + f_brMv(brBv, f_brUp(brBc, brBf, brBs), f_brDn(brBc, brBf, brBs)) + " · daily"
-float br2d = br2v ? f_brS(f_brDn(br2c, br2f, br2s), f_brUp(br2c, br2f, br2s)) : na
-string br2h = (br2v ? str.tostring(br2c, "#.##") + "% " : "") + f_brMv(br2v, f_brUp(br2c, br2f, br2s), f_brDn(br2c, br2f, br2s)) + " · Fed path"
+float brJd = f_brM(brJv, brJn, brJu, nz(f_brRv(brJv, brJr)))
+string brJh = "yen-dollar " + f_brMv(brJv, brJu, brJn) + f_brN(f_brRv(brJv, brJr))
+float brOd = f_brM(brOv, brOu, brOn, nz(f_brRv(brOv, brOr)))
+string brOh = "WTI " + f_brMv(brOv, brOu, brOn) + f_brN(f_brRv(brOv, brOr))
+float brRd = brRv ? f_brS(brRn, brRu) : na
+string brRh = f_brL(brRv, brRc) + f_brMv(brRv, brRu, brRn) + " · daily"
+float brBd = brBv ? f_brS(brBu, brBn) : na
+string brBh = f_brL(brBv, brBc) + f_brMv(brBv, brBu, brBn) + " · daily"
+float br2d = br2v ? f_brS(br2n, br2u) : na
+string br2h = f_brL(br2v, br2c) + f_brMv(br2v, br2u, br2n) + " · Fed path"
 // GD-END
 var table gdT = table.new(gdPos == "Bottom Center" ? position.bottom_center : gdPos == "Bottom Left" ? position.bottom_left : gdPos == "Middle Right" ? position.middle_right : position.bottom_right, 2, 6, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A2E39, 0))
 f_gdRow(int r, string nm, float d, string how) =>

@@ -79,6 +79,9 @@ BUILTINS = {
     'math.ceil': lambda x: NA if isna(x) else float(math.ceil(x)),
     'na': isna, 'nz': lambda x, y=0.0: y if isna(x) else x,
     'int': lambda x: NA if isna(x) else int(x), 'float': lambda x: float(x),
+    # v67: the engines' one-line `_b1(bool b) => b ? 1 : 0` (refactor_check.py executes the file's own definition
+    # and asserts it equals this)
+    '_b1': lambda b: 1 if b else 0,
     'array.get': lambda a, i: a[int(i)],
     'array.from': lambda *a: list(a),
     'array.new_float': lambda n=0, v=NA: [v] * int(n),

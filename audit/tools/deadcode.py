@@ -27,7 +27,7 @@ through Diagnostics, and is reported as such.
 The Master is included since v37: its analog-evidence readout (oPdh1stPct, oCalDetail, ...)
 moved to the Diagnostics "Analog evidence" row (token ceiling); the same engine computes them.
 
-Usage: python3 audit/tools/deadcode.py artefacts/*.pine
+Usage: python3 audit/tools/deadcode.py [--all] artefacts/*.pine   (--all also lists structural / companion-wired names)
 """
 import re
 import sys
@@ -38,10 +38,16 @@ import trace as T
 WR = re.compile(r'array\.(set|fill|push|clear|unshift|insert|remove|shift|pop)\s*\(\s*([A-Za-z_]\w*)')
 _rt = os.path.join(os.path.dirname(__file__), 'retained.txt')
 RETAINED = set(l.strip() for l in open(_rt) if l.strip() and not l.startswith('#')) if os.path.exists(_rt) else set()
-STRUCTURAL = {'_diPV', '_diMV', 'bullStructActive', 'bearStructActive', 'regimeConfHigh'}
+# v67 (operator, 2026-10-17: "don't delete anything, look for its purpose and wire it up"): no exemptions left. The
+# tuple slots (__xx), DI+ / DI- in Visuals and the cross-arm gate inputs are all displayed now, so a STRUCTURAL hit is
+# a failure like any other unread value. A companion-wired value (computed here, displayed by Diagnostics / Visuals,
+# which run the same code) is still accepted, because the companion is checked to read it.
+STRUCTURAL = set()
 
 total = 0
-for p in sys.argv[1:]:
+SHOW_ALL = '--all' in sys.argv
+for p in [a for a in sys.argv[1:] if a != '--all']:
+    via = []
     res = T.analyze(p)
     raw = open(p, encoding='utf-8').read().split('\n')
     lines = T.strip(open(p, encoding='utf-8').read())
@@ -70,7 +76,7 @@ for p in sys.argv[1:]:
             if not real and not re.search(r'\b(line|label|box|linefill|polyline)\[\]', decl_src):
                 tag = 'WRITE-ONLY-ARRAY'
         if tag:
-            structural = nm.startswith('__') or nm in STRUCTURAL
+            structural = nm in STRUCTURAL
             hits.append((tag, nm, (r['decl'] or r['assign'] or [0])[0], structural))
     for f, ln in res['funcs'].items():
         n = sum(len(re.findall(r'(?<![\w.])' + re.escape(f) + r'\s*\(', l)) for l in lines)
@@ -107,5 +113,11 @@ for p in sys.argv[1:]:
     print(f"{os.path.basename(p)}: {len(real)} dead, {len(kept)} retained (operator instruction), {len(hits) - len(real) - len(kept)} structural")
     for h in real:
         print(f"    {h[0]:17s} {h[1]}  L{h[2]}")
+    if SHOW_ALL:                     # v67: list the structural and companion-wired names too, for review
+        for h in hits:
+            if h[3]:
+                print(f"    structural {h[0]:17s} {h[1]}  L{h[2]}")
+        for h in via:
+            print(f"    via-companion {h[0]:17s} {h[1]}  L{h[2]}")
     total += len(real)
 raise SystemExit(1 if total else 0)

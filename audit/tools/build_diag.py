@@ -21,7 +21,7 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v65   (macro factors counted once)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v67   (every value wired; _b1)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '
@@ -431,7 +431,9 @@ string dgIsOos = showStatsEngine and __in >= 10 and oOosN >= 10 ? "  IS" + str.t
 // v61 (F-A59): "—" for a feature with no resolved analogs yet, never "NaN"
 f_dgI(float x) => na(x) ? "—" : str.tostring(int(x))
 string dgFeatW = showStatsEngine and oMatch >= 30 ? "  edge S/H/L/M/C " + f_dgI(__fs) + "/" + f_dgI(__fh) + "/" + f_dgI(__fl) + "/" + f_dgI(__fm) + "/" + f_dgI(__fc) : ""
-string evidLine = dgEvid + dgAnl + dgCal + dgIsOos + dgFeatW
+// v67 (operator: every value wired): the stats engine's EV and profit factor, formatted as the Master's evStr / pfStr
+string dgEvPf = "  EV " + (na(__el) ? "—" : (__el > 0 ? "+" : "") + str.tostring(__ev, "#.#")) + " PF " + (na(__pf) ? "—" : str.tostring(__pf, "#.##"))
+string evidLine = dgEvid + dgAnl + dgCal + dgIsOos + dgFeatW + dgEvPf
 
 // ---- PANEL -----------------------------------------------------------------------------
 var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 26, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))

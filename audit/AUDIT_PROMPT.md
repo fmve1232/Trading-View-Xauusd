@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5882 | 382236 | `25f57b7711f7b655ed853424b3b1a83f778d3cb24687c01cfd87248b1a8dc3f7` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5415 | 344105 | `58c950384240d0a493fe1c57e3690de19a052fad788f9f70e787f588fa19e259` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5415 | 344170 | `40cdcf50e77710ddd008ca9ded9e3cab5564173369add27d712cda757232e4a9` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5426 | 345089 | `ee0843ac6e377e0885867f5181b737a939588ac0894744800e81524cb658cb9d` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5883 | 382060 | `b92f0161bf3bb2b5016ff6a4a8ac3a05c16e89e368281df7a73bbfa842382ad1` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5421 | 344684 | `d5904f5db74aabe26afc5e2d2465a1773a36237de37b37102b30ea36db17339e` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5421 | 344749 | `aac4df4534667fb65de9394231817501df23e0bdb3bacb9a921c1a1cecf921d1` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5432 | 345668 | `19accaecbc3590662c103c317ecd1ae2967fb139897b209730b0f4fc9b01e070` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1296 | 86609 | `f16423009a23dedec72d5ff46beafeb321b482093178e4dfa612622bce9123c0` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5654 | 361712 | `8ed389f5889a5c2605d707d37d2b48670f2f59fff83555028cdb963c7dd9b2c1` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5522 | 354105 | `1d97c7bc0cdc9a504d0996254d04e144bd173c39e2fabe511101376ab48e0640` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1309 | 86908 | `02aede5f43b38fa9c38df85fda44b3f42accfd207c18751abf0a5ef970fa84c6` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5658 | 361775 | `a058cfe5027876e369ffe84be53ddb1e9607b7240e762b482a31eaab3defc685` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5544 | 354639 | `96b52e7bce7555c8ff9b98ed781a5bc25c644ef107a2b3bd79077fd15e879b3e` |
 
-> **BUILD v66 — this prompt pins the current build.** The originally audited build
+> **BUILD v67 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -112,6 +112,7 @@ scope, and no other build of these scripts is in scope.
 > **v64: F-A64** — macro correlations pair gold and each asset over the same completed bar (they compared gold now with the asset one bar earlier); `macro_check.py`.
 > **v65: F-A65** — each macro factor counted once (USD via DXY, TIPS off while it is the 10Y feed, majority over independent factors); the Brief adds USDJPY, oil, real yield, breakeven and US 2Y (display only).
 > **v66:** the Brief's five gold drivers copied into Visuals (GD block byte-identical, `macro_check.py` E): Master + Visuals is the everyday pair on the free plan's two indicator slots.
+> **v67:** every value wired in every file (0 dead, 0 structural; `deadcode.py` has no exemptions): DI+/DI- in Visuals, the stats-engine slots in Diagnostics / Brief / the arms' scorecard; `(x ? 1 : 0)` → `_b1(x)` for room.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v65   (macro factors counted once)   ║
+// ║  BUILD STAMP — this file last CHANGED in v67   (every value wired; _b1)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -338,6 +338,8 @@ string QVERSION = "Q7.2"
 // epsilon closes the near-zero case too. NUMERICAL STABILITY, not a behavioural change:
 // the only results it alters are ones that were already numerically meaningless.
 safeDiv(a, b) => not na(a) and not na(b) and math.abs(b) > 1e-10 ? a / b : 0.0
+// v67: (x ? 1 : 0) as a function, defined before the engine's first use (identical int)
+_b1(bool b) => b ? 1 : 0
 
 // Bayesian-smoothed win rate: (wins + 1) / (total + 2), uniform Beta(1,1) prior
 // Pulls small-sample bin rates toward 50%, preventing overfitting on <30 samples
@@ -760,12 +762,12 @@ htf4hBear = htf4hScore <= 40
 htf1dBull = htf1dScore >= 60
 htf1dBear = htf1dScore <= 40
 // Alignment = slower 4 TFs (15m, 1h, 4h, 1D)
-htfAlignmentLong = (htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0) + (htf1dBull ? 1 : 0)
-htfAlignmentShort = (htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0) + (htf1dBear ? 1 : 0)
+htfAlignmentLong = _b1(htf15mBull) + _b1(htf1hBull) + _b1(htf4hBull) + _b1(htf1dBull)
+htfAlignmentShort = _b1(htf15mBear) + _b1(htf1hBear) + _b1(htf4hBear) + _b1(htf1dBear)
 htfBullScoreGate = htfAlignmentLong >= 2
 htfBearScoreGate = htfAlignmentShort >= 2
-htfFullLong = (htf5mBull ? 1 : 0) + (htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0) + (htf1dBull ? 1 : 0)
-htfFullShort = (htf5mBear ? 1 : 0) + (htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0) + (htf1dBear ? 1 : 0)
+htfFullLong = _b1(htf5mBull) + _b1(htf15mBull) + _b1(htf1hBull) + _b1(htf4hBull) + _b1(htf1dBull)
+htfFullShort = _b1(htf5mBear) + _b1(htf15mBear) + _b1(htf1hBear) + _b1(htf4hBear) + _b1(htf1dBear)
 
 // R5-F6: EWMA volatility block removed — it was never consumed downstream and its
 // "0.5-day half-life" comment was wrong (lambda=0.94 => ~11-bar half-life).
@@ -1246,8 +1248,8 @@ string gcState = gcFailWhy != "" ? "GC" + gcFailWhy : not gcValid ? "GC —" : g
 
 // v65 (F-A65): the dollar is ONE factor. EUR is 57.6% of DXY, so a DXY vote and a EURUSD vote were the same move
 // counted twice; EURUSD now votes only when DXY has no data.
-macroBullVotes = (gcConfirmsBull ? 1 : 0) + ((dxyValid ? dxyBear : eurusdBull) ? 1 : 0) + (yieldFalling ? 1 : 0) + (spxBull ? 1 : 0) + (silverBull ? 1 : 0) + (tipsFalling ? 1 : 0)
-macroBearVotes = (gcConfirmsBear ? 1 : 0) + ((dxyValid ? dxyBull : eurusdBear) ? 1 : 0) + (yieldRising ? 1 : 0) + (spxBear ? 1 : 0) + (silverBear ? 1 : 0) + (tipsRising ? 1 : 0)
+macroBullVotes = _b1(gcConfirmsBull) + ((dxyValid ? dxyBear : eurusdBull) ? 1 : 0) + _b1(yieldFalling) + _b1(spxBull) + _b1(silverBull) + _b1(tipsFalling)
+macroBearVotes = _b1(gcConfirmsBear) + ((dxyValid ? dxyBull : eurusdBear) ? 1 : 0) + _b1(yieldRising) + _b1(spxBear) + _b1(silverBear) + _b1(tipsRising)
 // THRESHOLD SCALED WITH THE VOTE POOL — this is a correctness detail, not tuning.
 // The macro gate was 3-of-6 (50%). Adding GC as a 7th source while leaving the threshold
 // at 3 would have made it 3-of-7 (43%) — a SILENT LOOSENING of a risk gate, and exactly
@@ -1267,7 +1269,7 @@ macroBearVotes = (gcConfirmsBear ? 1 : 0) + ((dxyValid ? dxyBull : eurusdBear) ?
 // Verify by hand: math.ceil(6/2)=3 reproduces the original gate exactly, so with GC off
 // behaviour is bit-identical to the pre-GC build.
 // v65: the factor slots: USD, 10Y, SPX, silver, TIPS when it is its own feed, GC when valid (majority rule unchanged)
-int _macroPool = 4 + (_tipsOn ? 1 : 0) + (gcValid ? 1 : 0)
+int _macroPool = 4 + _b1(_tipsOn) + _b1(gcValid)
 int _macroNeed = int(math.ceil(_macroPool / 2.0))
 macroBull = macroBullVotes >= _macroNeed
 macroBear = macroBearVotes >= _macroNeed
@@ -1433,7 +1435,7 @@ msRate = (yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 
 macroStrengthScore = int(math.max(math.min(msDXY + msYld + msSPX + msEUR + msSlv + msTIPS + msMom + msRate, 100), -100))
 // Confidence = data availability (30%) + correlation health (50%) + score stability (20%)
 float _macroStDev = nz(ta.stdev(macroStrengthScore, 20), 50.0)
-macroStrengthConf = int(math.round((_numValid / (5.0 + (_tipsOn ? 1 : 0))) * 30.0 + avgCorrHealth * 0.50 + (1.0 - math.min(_macroStDev / 100.0, 1.0)) * 20.0))
+macroStrengthConf = int(math.round((_numValid / (5.0 + _b1(_tipsOn))) * 30.0 + avgCorrHealth * 0.50 + (1.0 - math.min(_macroStDev / 100.0, 1.0)) * 20.0))
 // macroStrengthScore is an ordinal composite (−100 to +100), NOT a probability.
 
 // WEIGHTED TREND ENGINE
@@ -2299,7 +2301,7 @@ mtfConfluenceBear = mtfVotesBear + macroVotesBear
 // timeframe: at most 9 of 10 votes on 5M, 8 on 15M, 7 on 1H. The same market scored lower on 15M
 // than on 5M purely because of the chart. Normalised by the votes AVAILABLE on this timeframe
 // (MTF layers above the chart + the 6 macro votes); identical to before wherever all 4 layers vote.
-int mtfAvail = (htf5mAvailable ? 1 : 0) + (htf15mAvailable ? 1 : 0) + (htf1hAvailable ? 1 : 0) + (htf4hAvailable ? 1 : 0)
+int mtfAvail = _b1(htf5mAvailable) + _b1(htf15mAvailable) + _b1(htf1hAvailable) + _b1(htf4hAvailable)
 mtfConfluenceScore = int(math.round((mtfConfluenceBull - mtfConfluenceBear) / (mtfAvail + 6.0) * 100.0))
 mtfConfluenceMag = math.abs(mtfConfluenceScore)
 mtfAgreementHigh = mtfConfluenceMag >= 60
@@ -2336,7 +2338,7 @@ bool rangeDominant = biasRegimeCall == "RANGE"
 // V27 ENGINE 6: CONFIDENCE SCORE — equal-weight base from 5 independent dimensions
 confStruct = structureRegime >= 80 ? 100 : structureRegime >= 50 ? 60 : structureRegime >= 20 ? 30 : 10
 // v34 F-A40: same normalisation for the 5-layer agreement (layers above the chart only).
-int htfFullAvail = math.max(mtfAvail + (htf1dAvailable ? 1 : 0), 1)
+int htfFullAvail = math.max(mtfAvail + _b1(htf1dAvailable), 1)
 confMTF = int(math.round(math.max(htfFullLong, htfFullShort) * 100.0 / htfFullAvail))
 confLiquidity = 0
 confLiquidity += bullBOS or bearBOS ? 25 : 0
@@ -2364,8 +2366,8 @@ confidenceScore := int(math.min(math.round(confidenceScore * sessionConfMult), 1
 // R6.0: never present high confidence in news-like/abnormal conditions.
 confidenceScore := int(math.min(confidenceScore, regConfCap))
 // Multiple-comparison awareness: count aligned structural signals
-int _bullSignals = (bullBOS ? 1 : 0) + (displacementUp ? 1 : 0) + (mssActiveBull ? 1 : 0) + (chochActiveBull ? 1 : 0) + (smtBullPair ? 1 : 0) + (liqSweepBull ? 1 : 0) + (vwapRejectBull ? 1 : 0)
-int _bearSignals = (bearBOS ? 1 : 0) + (displacementDown ? 1 : 0) + (mssActiveBear ? 1 : 0) + (chochActiveBear ? 1 : 0) + (smtBearPair ? 1 : 0) + (liqSweepBear ? 1 : 0) + ((high >= vwapUpper2 and close < vwapVal) ? 1 : 0)
+int _bullSignals = _b1(bullBOS) + _b1(displacementUp) + _b1(mssActiveBull) + _b1(chochActiveBull) + _b1(smtBullPair) + _b1(liqSweepBull) + _b1(vwapRejectBull)
+int _bearSignals = _b1(bearBOS) + _b1(displacementDown) + _b1(mssActiveBear) + _b1(chochActiveBear) + _b1(smtBearPair) + _b1(liqSweepBear) + ((high >= vwapUpper2 and close < vwapVal) ? 1 : 0)
 int _maxAgree = math.max(_bullSignals, _bearSignals)
 bool _pipelineConflict = _bullSignals > 0 and _bearSignals > 0
 bool _lowAgreement = _maxAgree < 2
@@ -2592,7 +2594,7 @@ _buyFilterLog := regimeConfHigh ? _buyFilterLog : _buyFilterLog + "Regime "
 _buyFilterLog := bullRsiDiv ? _buyFilterLog : _buyFilterLog + "RSI "
 _buyFilterLog := recentBars ? _buyFilterLog : _buyFilterLog + "Recent "
 _buyFilterLog := sessionQuality >= 30 ? _buyFilterLog : _buyFilterLog + "Sess "
-int _buyPass = (bullTrend ? 1 : 0) + (htfBullScoreGate ? 1 : 0) + (macroBull ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bullRsiDiv ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0)
+int _buyPass = _b1(bullTrend) + _b1(htfBullScoreGate) + _b1(macroBull) + _b1(regimeConfHigh) + _b1(bullRsiDiv) + _b1(recentBars) + (sessionQuality >= 30 ? 1 : 0)
 string _buyLog = "▲" + str.tostring(_buyPass) + "/7" + (_buyPass < 7 ? " [✗" + _buyFilterLog + "]" : "")
 _sellFilterLog := bearTrend ? _sellFilterLog : _sellFilterLog + "Trend "
 _sellFilterLog := htfBearScoreGate ? _sellFilterLog : _sellFilterLog + "HTF "
@@ -2601,7 +2603,7 @@ _sellFilterLog := regimeConfHigh ? _sellFilterLog : _sellFilterLog + "Regime "
 _sellFilterLog := bearRsiDiv ? _sellFilterLog : _sellFilterLog + "RSI "
 _sellFilterLog := recentBars ? _sellFilterLog : _sellFilterLog + "Recent "
 _sellFilterLog := sessionQuality >= 30 ? _sellFilterLog : _sellFilterLog + "Sess "
-int _sellPass = (bearTrend ? 1 : 0) + (htfBearScoreGate ? 1 : 0) + (macroBear ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bearRsiDiv ? 1 : 0) + (recentBars ? 1 : 0) + (sessionQuality >= 30 ? 1 : 0)
+int _sellPass = _b1(bearTrend) + _b1(htfBearScoreGate) + _b1(macroBear) + _b1(regimeConfHigh) + _b1(bearRsiDiv) + _b1(recentBars) + (sessionQuality >= 30 ? 1 : 0)
 string _sellLog = "▼" + str.tostring(_sellPass) + "/7" + (_sellPass < 7 ? " [✗" + _sellFilterLog + "]" : "")
 string _trigLog = (bullBOS or displacementUp or bearBOS or displacementDown) ? "" : " NO-TRIG"
 string _newsLog = inNewsWindow ? " NEWS-BLK" : ""
@@ -5105,11 +5107,11 @@ f_dashData1() =>
     // 3-layer bias breakdown: CURRENT = 5M | SWING = 15M | INST = 1H + 4H
     string _currBias = htf5mBull ? "BULL" : htf5mBear ? "BEAR" : "MIX"
     string _swingBias = htf15mBull ? "BULL" : htf15mBear ? "BEAR" : "MIX"
-    int _instBullCnt = (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0)
-    int _instBearCnt = (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0)
+    int _instBullCnt = _b1(htf1hBull) + _b1(htf4hBull)
+    int _instBearCnt = _b1(htf1hBear) + _b1(htf4hBear)
     string _instBias = _instBullCnt >= 2 ? "BULL" : _instBearCnt >= 2 ? "BEAR" : _instBullCnt > _instBearCnt ? "BULL-ISH" : _instBearCnt > _instBullCnt ? "BEAR-ISH" : "MIX"
-    int _htfBullCnt = (htf15mBull ? 1 : 0) + _instBullCnt
-    int _htfBearCnt = (htf15mBear ? 1 : 0) + _instBearCnt
+    int _htfBullCnt = _b1(htf15mBull) + _instBullCnt
+    int _htfBearCnt = _b1(htf15mBear) + _instBearCnt
     string _htfBias = _htfBullCnt >= 2 ? "BULL" : _htfBearCnt >= 2 ? "BEAR" : _htfBullCnt > _htfBearCnt ? "BULL-ISH" : _htfBearCnt > _htfBullCnt ? "BEAR-ISH" : "MIX"
     // Layer arrows
     string _cS = _currBias == "BULL" ? "▲" : _currBias == "BEAR" ? "▼" : "≈"
@@ -5609,7 +5611,9 @@ string dgIsOos = showStatsEngine and __in >= 10 and oOosN >= 10 ? "  IS" + str.t
 // v61 (F-A59): "—" for a feature with no resolved analogs yet, never "NaN"
 f_dgI(float x) => na(x) ? "—" : str.tostring(int(x))
 string dgFeatW = showStatsEngine and oMatch >= 30 ? "  edge S/H/L/M/C " + f_dgI(__fs) + "/" + f_dgI(__fh) + "/" + f_dgI(__fl) + "/" + f_dgI(__fm) + "/" + f_dgI(__fc) : ""
-string evidLine = dgEvid + dgAnl + dgCal + dgIsOos + dgFeatW
+// v67 (operator: every value wired): the stats engine's EV and profit factor, formatted as the Master's evStr / pfStr
+string dgEvPf = "  EV " + (na(__el) ? "—" : (__el > 0 ? "+" : "") + str.tostring(__ev, "#.#")) + " PF " + (na(__pf) ? "—" : str.tostring(__pf, "#.##"))
+string evidLine = dgEvid + dgAnl + dgCal + dgIsOos + dgFeatW + dgEvPf
 
 // ---- PANEL -----------------------------------------------------------------------------
 var table tDiag = table.new(diagPos == "Top Right" ? position.top_right : diagPos == "Bottom Right" ? position.bottom_right : diagPos == "Bottom Left" ? position.bottom_left : position.top_left, 2, 26, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A3340, 0))

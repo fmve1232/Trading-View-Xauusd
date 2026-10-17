@@ -2248,3 +2248,56 @@ breakeven and US 2Y (display only, as in v65).
 **Tokens (lexical):** Visuals 11,221 (≈ 28% of the limit), 11 request call sites; Brief 39,643 (≈ 0.55% under).
 
 Compile NOT RUN on v66.
+
+---
+
+# Build v66 → v67 — every value wired, in every file (operator rule, 2026-10-17)
+
+Operator: "maintain all the features without deleting any feature or dead code; everything was added with a purpose,
+so don't delete anything, look for its purpose and wire it up."
+
+**Audit:** `deadcode.py --all` (new flag) listed the values a file computes but never shows.
+- The Master was already clean (0 dead, 0 structural).
+- **Visuals:** DI+ / DI− (`_diPV` / `_diMV`) were computed by `ta.dmi` but only ADX was used. They are now shown, with
+  ADX, in the candle info panel. ADX itself had not been displayed in Visuals.
+- **Stats-engine tuple slots** (`__ev __el __pf __cg __cb __iw __in __fs __fh __fl __fm __fc`): the Master shows all
+  twelve (SIGNAL cell, EV, PF). Elsewhere:
+  - **Diagnostics** read 9 and now also shows EV and PF on its "Analog evidence" row.
+  - **Brief** read none; a new STATS row (Full layout) shows all twelve, formatted as the Master's.
+  - **The three arms** read none; a new "Engine stats (display)" row on the forward-test scorecard, identical in all
+    three arms, shows them. The A/B hunks stay at 5 and 4.
+- **Companion-wired values** (computed in the Brief or an arm, displayed by Diagnostics): 63 names, each checked to be
+  read by Diagnostics. 40 of them are also shown in the Master; the other 23 are engine extras the Diagnostics panel
+  shows (order-block / FVG line handles, auction state, what-if stats, the WR interval text, data status, debug).
+
+**Enforced:** `deadcode.py` has no exemptions any more (the `__` tuple-slot and named STRUCTURAL exemptions are
+gone). Any unread value in any file fails the build; the v66 Visuals now fails it.
+
+**Room for the new rows, without removing anything:**
+- `(x ? 1 : 0)` → `_b1(x)` across the engine: 53 sites in the Master, 67 in each arm, outside the H2 block and
+  `f_sessionIntel`.
+  - `_b1` moves above the engine.
+  - `refactor_check.py`: each engine file equals its v66 commit after that substitution only (13,744 lines). A
+    one-argument mutation fails it.
+- In the Brief panel:
+  - the five timeframe cells go through `f_brT`;
+  - the drivers' trend states are computed once (in the GD block, so Visuals gets the same edit);
+  - the "x% " prefix is `f_brL`;
+  - one position mapping serves both tables.
+- `pine_exec.py` registers `_b1`; `refactor_check.py` asserts that it equals the file's own definition.
+
+**Tokens (lexical):**
+- Master 38,870 (2.5% under the limit);
+- Diagnostics 39,573 (0.73% under);
+- Brief 39,586 (0.70% under);
+- Visuals 11,224.
+
+**Visible change:**
+- Visuals' candle panel shows "ADX x  DI+ y / DI- z";
+- Diagnostics' Analog evidence row ends "EV ±x PF y";
+- the Brief has a STATS row;
+- the arms' scorecard has an "Engine stats" row.
+
+**Unchanged:** the engine values. The DECISION is identical to v66.
+
+Compile NOT RUN on v67.

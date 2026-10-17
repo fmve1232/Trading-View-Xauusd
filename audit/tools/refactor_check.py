@@ -260,8 +260,8 @@ V63_SESS = ["sessionQuality = 0",
 a = L.index("float _numValid = 0.0")
 v64_stab = L[a:a + 8]
 assert v64_stab[-1].startswith("avgStability = _numValid > 0 ? ")
-conf = next(l for l in L if l.startswith("macroStrengthConf = int(math.round((_numValid / (5.0 + (_tipsOn ? 1 : 0))) * 30.0"))
-V64_CONF = "(_numValid / (5.0 + (_tipsOn ? 1 : 0))) * 30.0"     # v65 (F-A65): = v64's / 6.0 whenever TIPS is its own feed
+conf = next(l for l in L if l.startswith("macroStrengthConf = int(math.round((_numValid / (5.0 + _b1(_tipsOn))) * 30.0"))
+V64_CONF = "(_numValid / (5.0 + _b1(_tipsOn))) * 30.0"     # v65 (F-A65): = v64's / 6.0 whenever TIPS is its own feed
 sess = ["sessionQuality = 0"] + [l for l in L if l.startswith("sessionQuality += inKillzone ? ") or
                                  l.startswith("sessionQuality += (not inAsian or inLondonKZ) ? ")]
 bad = n = 0
@@ -305,6 +305,33 @@ for c in calls:
         bad += gate not in V64
 report("f_cc3 calls expand to exactly the v64 correlation and gating lines (36 lines, from commit 28dabac1)",
        bad if ok and len(calls) == 6 else 36, 36)
+
+# ---- v67: (x ? 1 : 0) -> _b1(x) across the engine copies. Each file must equal its v66 commit (a5fc12ce) after the
+# same substitution, apart from the _b1 definition (moved up), the build stamp and comment lines; and _b1 is executed.
+B1 = re.compile(r"\(([A-Za-z_][A-Za-z0-9_.]*) \? 1 : 0\)")
+P.define(fn("_b1(bool b) =>"), env)
+b1ok = all(P.evaluate(f"_b1({str(x).lower()})", P.Env(funcs=env.funcs)) == (1 if x else 0) == P.BUILTINS["_b1"](x)
+           for x in (True, False))                 # the file's definition == the executor's builtin == 1 / 0
+bad = n = 0
+for f in ("Master", "Strategy", "Strategy_OLDGATES", "Strategy_CHALLENGER"):
+    path = f"artefacts/XAUUSD_Quantum_5_0_{f}.pine"
+    def norm(lines):
+        out = []
+        for l in lines:
+            if l.lstrip().startswith("//") or "BUILD STAMP" in l or l == "_b1(bool b) => b ? 1 : 0" or not l.strip():
+                continue
+            out.append(B1.sub(r"_b1(\1)", l.split("//")[0].rstrip() if '"' not in l else l))
+        return out
+    old = subprocess.run(["git", "show", "a5fc12ce:" + path], capture_output=True, text=True, check=True).stdout.split("\n")
+    new = [l.replace(", 2, 11, bgco", ", 2, 10, bgco") for l in open(path, encoding="utf-8").read().split("\n")
+           if not l.startswith("_fwI(float x) =>") and not l.lstrip().startswith('_fwRow(10, "Engine stats (display)"')]
+    # (v67 also ADDED the arms' engine-stats scorecard row; it is excluded here, everything else must match)
+    no, nn = norm(old), [x.split("//")[0].rstrip() if '"' not in x else x for x in norm(new)]
+    no = [x.split("//")[0].rstrip() if '"' not in x else x for x in no]
+    n += len(nn)
+    bad += sum(1 for a_, b_ in zip(no, nn) if a_ != b_) + abs(len(no) - len(nn))
+report("(x ? 1 : 0) -> _b1(x): every engine copy == its v66 commit after that substitution only; _b1 executed",
+       bad if b1ok else n, n)
 
 left = [i + 1 for i, l in enumerate(L) if re.search(r"array\.get\(gDash[SCF], \d+\)", l)]
 helpers = all(any(l.startswith(f"_g{c}(int i) => array.get(gDash{c}, i)") for l in L) for c in "SCF")

@@ -191,7 +191,7 @@ BP = "artefacts/XAUUSD_Quantum_5_0_Brief.pine"
 BL = open(BP, encoding="utf-8").read().split("\n")
 benv = P.Env(funcs={}, _fM=True)       # f_brRv reads the global fit flag (its defining scope)
 for head in ("f_brS(bool up, bool dn) =>", "f_brM(bool v, bool up, bool dn, float r) =>", "f_brUp(float c, float f, float s) =>",
-             "f_brDn(float c, float f, float s) =>", "f_brRv(bool v, float r) =>"):
+             "f_brDn(float c, float f, float s) =>", "f_brRv(bool v, float r) =>", "f_brL(bool v, float c) =>"):
     P.define([next(l for l in BL if l.startswith(head))], benv)
 P.BUILTINS["nz"] = lambda x, y=0.0: y if P.isna(x) else x
 # v66: each cell reads a variable computed inside the GD fence; evaluate that variable's definition
@@ -217,6 +217,7 @@ for name, (pre, vv, rr, sign) in DRV.items():
                 e.update({pre + "c": c, pre + "f": f, pre + "s": s_, vv: valid})
                 if rr:
                     e[rr] = r
+                P.run([l for l in BL if l.startswith((f"bool {pre}u = ", f"bool {pre}n = "))], e)   # v67: states once
                 d = P.evaluate(cells[name], e)
                 n += 1
                 want = None if not valid else 0.0 if state == "flat" else (sign if state == "rising" else -sign)
