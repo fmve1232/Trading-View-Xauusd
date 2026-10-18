@@ -2545,3 +2545,36 @@ Compile: the Master is the same bytes as the v69 Master, which the operator comp
 
 Visuals size: best-fit 30,306 / pessimistic 36,126 (limit 100,256). Master, Brief, Diagnostics and the arms are
 unchanged. Compile NOT RUN on v73.
+
+---
+
+# Build v73 → v74 — Visuals: the gold drivers under the Master's MACRO column (operator: "look like one feature")
+
+**What changes on the chart:**
+- **The five gold drivers sit directly under the Master dashboard's MACRO cell**, in its column width, background and
+  detail text size.
+  - The header is `GOLD DRIVERS <net arrow>`.
+  - Then one cell per driver: `USDJPY ≈` with its text on the line below.
+  - The Master's macro information and the drivers read as one block.
+- **The terminal panel** (market + H2) moves to **bottom left**, the lower area. Its drivers section is left out while
+  the drivers are docked.
+
+**How it lines up:**
+- The Master's dashboard has fixed geometry: top right on Desktop / Auto (top left on Tablet), no border, no frame, and
+  column widths 10/10/12/11/13/10/11/11/13 % of the chart × Density (0.8 / 1.0 / 1.25).
+- Visuals' docked table uses the same anchor and frame and the same nine widths. Its column 6 therefore lands exactly
+  under MACRO, at every chart width.
+- Row 0 is a transparent spacer, **Gap below the Master dashboard** (% of chart height, default 17). The Master's height
+  depends on its text, so this is the one value to adjust.
+- `dashMode`, `textSize` and `density` are the Master's own inputs, copied (same names, options and defaults).
+  `inputs_check.py` holds them equal, and they must be set as in the Master.
+- Not docked with the Master on Mobile. Set **Gold drivers placement = In the panel / card** to bring them back into
+  the terminal panel or the separate card.
+
+**Checks:**
+- `panel_check.py` 5 reads the widths, Density scaling, anchor, frame and detail text size from the Master's own code
+  and requires Visuals to reproduce them. It also checks that each driver cell reads its own value and text.
+- Mutation-tested: one width changed, or one driver text swapped, each FAIL.
+
+Visuals size: best-fit 32,002 / pessimistic 38,376. Master, Brief, Diagnostics and the arms are unchanged. Compile and
+the on-screen alignment are NOT RUN on v74 (TradingView renders the tables; only a screenshot confirms the fit).

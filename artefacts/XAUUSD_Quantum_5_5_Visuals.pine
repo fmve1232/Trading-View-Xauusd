@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v73   (one terminal panel)           ║
+// ║  BUILD STAMP — this file last CHANGED in v74   (drivers under Master MACRO)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -123,7 +123,7 @@ candlePos    = input.string("Top Right", "Panel position", options = ["Top Right
 // Gold drivers panel = Hidden; the H2 card layout "Full" adds the session rows and its text size sets the panel's.
 grpTm = "TERMINAL PANEL (v73)"
 vLayout = input.string("Terminal (one panel)", "Panel layout", options = ["Terminal (one panel)", "Separate cards (v72)"], group = grpTm, tooltip = "Terminal: market, H2 and gold drivers in one docked panel, one style. Separate cards: the three v72 cards, each at its own position.")
-vPos = input.string("Middle Left", "Terminal position", options = ["Middle Left", "Bottom Left", "Top Left", "Middle Right"], group = grpTm, tooltip = "The Master's dashboard sits top right and its trade plan bottom right; the left side keeps both and the newest candles clear.")
+vPos = input.string("Bottom Left", "Terminal position", options = ["Bottom Left", "Middle Left", "Top Left", "Middle Right"], group = grpTm, tooltip = "The Master's dashboard sits top right and its trade plan bottom right (Desktop); bottom left keeps both and the newest candles clear. With the Master on Tablet its plan is bottom left: pick Middle Left.")
 vDetail = input.string("Standard", "Terminal detail", options = ["Standard", "Compact"], group = grpTm, tooltip = "Standard: every row. Compact: price + flow, signal + next, and the five drivers as one line (hover it for the detail).")
 bool vSep = vLayout == "Separate cards (v72)"
 
@@ -1234,6 +1234,16 @@ if vSep and h2Show and barstate.islast
 // the Master's own (below, verbatim; the inputs keep the Master's names and defaults, inputs_check.py). No vote,
 // no weight, no gate: the Master's DECISION is unchanged by anything here.
 gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Right", "Bottom Center", "Bottom Left", "Middle Right", "Hidden"], group="GOLD DRIVERS (display only)")
+// v74: the drivers can sit directly UNDER the Master's MACRO column, so the two read as one macro block. The Master's
+// dashboard has fixed geometry: top right (Desktop / Auto) or top left (Tablet), no border, no frame, column widths
+// 10/10/12/11/13/10/11/11/13 % of the chart x its Density. These three inputs are the Master's own (same names,
+// options, defaults; inputs_check.py holds them equal) -- set them as in the Master. Only the gap is free.
+gdDock = input.string("Under the Master's MACRO", "Gold drivers placement", options=["Under the Master's MACRO", "In the panel / card"], group="GOLD DRIVERS (display only)", tooltip="Under the Master's MACRO: a column aligned under the Master dashboard's MACRO cell (Desktop / Tablet; not with the Master on Mobile). In the panel / card: inside the terminal panel, or the separate drivers card.")
+gdGap = input.int(17, "Gap below the Master dashboard (% of chart height)", minval=0, maxval=60, group="GOLD DRIVERS (display only)", tooltip="Moves the docked drivers up or down until they sit just under the Master's MACRO cell; the Master's height depends on its text size and density.")
+dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
+textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
+density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
+bool gdDocked = gdDock == "Under the Master's MACRO" and gdPos != "Hidden" and dashMode != "Mobile"
 safeDiv(a, b) => not na(a) and not na(b) and math.abs(b) > 1e-10 ? a / b : 0.0
 macroTF = input.timeframe("60", "Macro Correlation Timeframe", group="GOLD DRIVERS (display only)", tooltip="Keep equal to the Master's.")
 y2Symbol = input.symbol("TVC:US02Y", "US 2Y Yield (blank=off)", group="GOLD DRIVERS (display only)", tooltip="With US10Y this gives the 2y10y curve spread — steepening favours gold, flattening pressures it. Context only, adds no macro vote.")
@@ -1303,7 +1313,7 @@ f_gdRow(int r, string nm, float d, string how) =>
     color c = na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)
     table.cell(gdT, 0, r, nm + " " + (na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"), text_color=c, text_size=size.small, text_halign=text.align_left)
     table.cell(gdT, 1, r, how, text_color=c, text_size=size.small, text_halign=text.align_left)
-if vSep and barstate.islast and gdPos != "Hidden"
+if vSep and barstate.islast and gdPos != "Hidden" and not gdDocked
     table.cell(gdT, 0, 0, "GOLD DRIVERS · green = supports gold UP · red = DOWN · display only", text_color=color.new(#D1D4DC, 0), text_size=size.small, text_halign=text.align_left)
     table.merge_cells(gdT, 0, 0, 1, 0)
     f_gdRow(1, "USDJPY", brJd, brJh)
@@ -1316,7 +1326,7 @@ if vSep and barstate.islast and gdPos != "Hidden"
 // The three cards' values in one docked panel: MARKET (the candle panel), H2 SWEEP → VALUE (the H2 card's rows,
 // same expressions) and GOLD DRIVERS (the drivers panel's rows, same glyphs and colours). Grey = labels, white =
 // values, colour only for direction (teal supports gold up / the bar closed up, red down). Display only.
-var table tblV = table.new(vPos == "Bottom Left" ? position.bottom_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.middle_left, 2, 24, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
+var table tblV = table.new(vPos == "Middle Left" ? position.middle_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.bottom_left, 2, 24, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
 color _tmK = color.new(#7D8FA3, 0)
 color _tmV = color.new(#E6EDF3, 0)
 color _tmUp = color.new(#26A69A, 0)
@@ -1372,7 +1382,7 @@ if not vSep and barstate.islast
             _tmRow(r, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _tmV)
             r += 1
             _tmRow(r, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _tmV)
-    if gdPos != "Hidden"
+    if gdPos != "Hidden" and not gdDocked
         r += 1
         _tmHead(r, "GOLD DRIVERS", "▲ supports gold up · ▼ down", _tmSec)
         if _cmp
@@ -1394,3 +1404,23 @@ if not vSep and barstate.islast
     r += 1
     table.cell(tblV, 0, r, "display only · the DECISION is the Master's · H2 record: the website", text_color = color.new(#5D6B7A, 0), text_size = size.tiny, text_halign = text.align_left)
     table.merge_cells(tblV, 0, r, 1, r)
+
+// ═══════════════════ GOLD DRIVERS docked under the Master's MACRO (v74) ═══════════════════
+// Same anchor, no border / frame and the same nine column widths as the Master's dashboard, so this table's column 6
+// sits exactly under the Master's MACRO column; row 0 is a transparent spacer of gdGap % of the chart height. The
+// cells use the Master's dashboard background and detail text size, and the drivers card's glyphs and colours.
+var table gdD = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 7, border_width = 0, frame_width = 0)
+if gdDocked and barstate.islast
+    float _dw = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
+    string _dsz = textSize == "Large" or textSize == "Medium" ? "small" : "tiny"
+    color _dbg = color.new(#0d0d1a, 40)
+    int _w6d = int(11 * _dw)
+    for [c, w] in array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)
+        table.cell(gdD, c, 0, "", width = int(w * _dw), height = c == 6 ? gdGap : 0)
+    float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
+    table.cell(gdD, 6, 1, "GOLD DRIVERS " + f_tmG(_net), text_color = f_tmC(_net), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left, tooltip = "Display only: no vote, weight or gate. Green = supports gold up, red = down.")
+    table.cell(gdD, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, text_color = f_tmC(brJd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
+    table.cell(gdD, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, text_color = f_tmC(brOd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
+    table.cell(gdD, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, text_color = f_tmC(brRd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
+    table.cell(gdD, 6, 5, "BREAKEVEN " + f_tmG(brBd) + "\n" + brBh, text_color = f_tmC(brBd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
+    table.cell(gdD, 6, 6, "US 2Y " + f_tmG(br2d) + "\n" + br2h, text_color = f_tmC(br2d), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)

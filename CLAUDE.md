@@ -11,8 +11,11 @@ plus any other artefact that changed, and post the build record in chat.**
   Brief or Diagnostics is swapped into the second slot when needed. The four cannot be merged into two without cutting
   features (each engine copy is at 98-99.6% of the token limit). Anything the operator needs every day must therefore
   be visible in Master or Visuals (v66 copied the Brief's five gold drivers into Visuals). Since v73 Visuals shows its
-  candle, H2 and driver values in ONE terminal panel (default middle left, clear of the Master's top-right dashboard and
-  bottom-right plan); the three separate cards stay selectable (`panel_check.py` holds the panel equal to them).
+  candle, H2 and driver values in ONE terminal panel (default bottom left since v74, clear of the Master's top-right
+  dashboard and bottom-right plan); the three separate cards stay selectable (`panel_check.py` holds the panel equal to
+  them). Since v74 the five drivers are docked UNDER the Master's MACRO column by default (same anchor, no frame, the
+  Master's nine column widths x Density; `dashMode` / `textSize` / `density` copied from the Master and held equal by
+  `inputs_check.py`; `panel_check.py` 5 reads the geometry from the Master's code).
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.

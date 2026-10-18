@@ -89,5 +89,25 @@ size = int(re.search(r"var table tblV = table\.new\(.*?, 2, (\d+),", V).group(1)
 clear = re.search(r"table\.clear\(tblV, 0, 0, 1, (\d+)\)", V)
 report(n <= size and clear and int(clear.group(1)) == size - 1,
        f"rows: at most {n} written (every branch), table has {size}, clear covers all")
+# ---- 5 (v74): the docked drivers line up under the Master's MACRO column, read from the Master's own code
+M = open("artefacts/XAUUSD_Quantum_5_0_Master.pine", encoding="utf-8").read()
+mw = [int(x) for x in re.findall(r"int _w\d = int\((\d+) \* _densW\)", M)]
+mdens = re.search(r"float _densW = (.*)", M).group(1).strip()
+vw = [int(x) for x in re.search(r"for \[c, w\] in array\.from\(([\d, ]+)\)", V).group(1).split(",")]
+vdens = re.search(r"float _dw = (.*)", V).group(1).strip()
+manch = re.search(r"tblA := table\.new\((.*?), _dashStrip \? 3", M).group(1)
+vanch = re.search(r"var table gdD = table\.new\((.*?), 9, 7, border_width = 0, frame_width = 0\)", V)
+mframe = "border_width=0, frame_width=0" in re.search(r"tblA := table\.new\(.*", M).group(0)
+msz = re.search(r'(?m)^string _szSe = (.*)', M).group(1).split("//")[0].strip()
+vsz = re.search(r'string _dsz = (.*)', V).group(1).strip()
+cells = re.findall(r'table\.cell\(gdD, 6, (\d), "([A-Z 0-9]+) " \+ f_tmG\((\w+)\) \+ "\\n" \+ (\w+), text_color = f_tmC\((\w+)\)', V)
+want = [("2", "USDJPY", "brJd", "brJh", "brJd"), ("3", "OIL", "brOd", "brOh", "brOd"), ("4", "REAL YLD", "brRd", "brRh", "brRd"),
+        ("5", "BREAKEVEN", "brBd", "brBh", "brBd"), ("6", "US 2Y", "br2d", "br2h", "br2d")]
+ok5 = (vw == mw and len(mw) == 9 and vdens == mdens.replace("_densW", "_dw") and mframe and vanch is not None
+       and manch.endswith('_mode2 == "Desktop" ? position.top_right : position.top_left')
+       and vanch.group(1) == 'dashMode == "Tablet" ? position.top_left : position.top_right'
+       and msz == vsz and cells == want)
+report(ok5, f"dock: Master column widths {mw} x Density, anchor, no border / frame and detail text size reproduced; "
+       "the five driver cells read their own value and text, in the MACRO column (6)")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- static read of the Pine text; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)
