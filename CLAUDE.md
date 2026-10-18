@@ -15,7 +15,9 @@ plus any other artefact that changed, and post the build record in chat.**
   dashboard and bottom-right plan); the three separate cards stay selectable (`panel_check.py` holds the panel equal to
   them). Since v74 the five drivers are docked UNDER the Master's MACRO column by default (same anchor, no frame, the
   Master's nine column widths x Density; `dashMode` / `textSize` / `density` copied from the Master and held equal by
-  `inputs_check.py`; `panel_check.py` 5 reads the geometry from the Master's code).
+  `inputs_check.py`; `panel_check.py` 5 reads the geometry from the Master's code). Since v75 the H2 card (the website's
+  arm H3 is the same rule) docks under DECISION and a LIQUIDITY · SWEEPS block under LIQUIDITY, each its own table and
+  gap (`panel_check.py` 6); the bottom-left panel is drawn only while it has a section.
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.

@@ -2578,3 +2578,44 @@ unchanged. Compile NOT RUN on v73.
 
 Visuals size: best-fit 32,002 / pessimistic 38,376. Master, Brief, Diagnostics and the arms are unchanged. Compile and
 the on-screen alignment are NOT RUN on v74 (TradingView renders the tables; only a screenshot confirms the fit).
+
+---
+
+# Build v74 → v75 — Visuals: the H2 card and liquidity / sweeps docked under the Master (operator: "like the macro indicators")
+
+**What changes on the chart:** each block sits under its matching Master column.
+
+| Master column | Docked below it (Visuals) |
+|---|---|
+| LIQUIDITY | **LIQUIDITY · SWEEPS** (new view of existing values): PDH/PDL, PWH/PWL, PMH/PML, CDH/CDL, each with its distance from price (TradingView prices, as the level tags); the last pivot sweep (the ✕ markers) and the last H2 sweep |
+| MACRO | GOLD DRIVERS (v74) |
+| DECISION | **H2 SWEEP → VALUE**: the H2 card's signal, trend, value, swings, sweep, next and note |
+
+**Each dock is its own table with its own gap** (% of chart height). The Master's DECISION column is the tallest (its
+H2 SETUP cell), so the H2 dock defaults to 30 %. LIQUIDITY and MACRO default to 17 %.
+
+**H3:** on the website (the system of record), arm **H3 "Sweep-to-Value" is the TradingView line's H2 rule**,
+pre-registered there under that name (`quantum/arm_h3.py`). It is the same signal, so the H2 dock is labelled
+"website: arm H3, same rule". No separate H3 signal exists on the chart.
+
+**Behaviour:**
+- The bottom-left terminal panel leaves out whatever is docked, and is drawn only while it still has a section.
+- New inputs in group `DOCK UNDER THE MASTER (v75)`:
+  - H2 card placement and H2 gap;
+  - Liquidity & sweeps placement (under LIQUIDITY / in the panel / hidden) and Liquidity gap.
+- With the Master on Mobile, nothing docks: H2 and liquidity go back into the panel.
+- The gold-driver, layout and Master-matching inputs moved up the file so the H2 card can read them (same names and
+  defaults).
+- The only new state is `pvLastSweep`, the last ✕ marker's level and time. Everything else displays values Visuals
+  already computes.
+
+**Checks:**
+- `panel_check.py` 5 covers all three dock tables: the anchor, frame and widths come from the Master's code, and every
+  dock cell uses the shared spacer and width.
+- `panel_check.py` 6 (new):
+  - the H2 dock's six rows are the card's own text and colour, plus its note;
+  - the liquidity dock and the panel's LIQUIDITY section show all eight levels and both sweeps.
+- Mutation-tested: a changed colour or a dropped level each FAIL.
+
+Visuals size: best-fit 36,518 / pessimistic 44,030. Master, Brief, Diagnostics and the arms are unchanged. Compile and
+the on-screen alignment are NOT RUN on v75.

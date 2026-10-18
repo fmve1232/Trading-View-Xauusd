@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v74   (drivers under Master MACRO)   ║
+// ║  BUILD STAMP — this file last CHANGED in v75   (H2 + liquidity docked)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -126,6 +126,28 @@ vLayout = input.string("Terminal (one panel)", "Panel layout", options = ["Termi
 vPos = input.string("Bottom Left", "Terminal position", options = ["Bottom Left", "Middle Left", "Top Left", "Middle Right"], group = grpTm, tooltip = "The Master's dashboard sits top right and its trade plan bottom right (Desktop); bottom left keeps both and the newest candles clear. With the Master on Tablet its plan is bottom left: pick Middle Left.")
 vDetail = input.string("Standard", "Terminal detail", options = ["Standard", "Compact"], group = grpTm, tooltip = "Standard: every row. Compact: price + flow, signal + next, and the five drivers as one line (hover it for the detail).")
 bool vSep = vLayout == "Separate cards (v72)"
+gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Right", "Bottom Center", "Bottom Left", "Middle Right", "Hidden"], group="GOLD DRIVERS (display only)")
+// v74: the drivers can sit directly UNDER the Master's MACRO column, so the two read as one macro block. The Master's
+// dashboard has fixed geometry: top right (Desktop / Auto) or top left (Tablet), no border, no frame, column widths
+// 10/10/12/11/13/10/11/11/13 % of the chart x its Density. These three inputs are the Master's own (same names,
+// options, defaults; inputs_check.py holds them equal) -- set them as in the Master. Only the gap is free.
+gdDock = input.string("Under the Master's MACRO", "Gold drivers placement", options=["Under the Master's MACRO", "In the panel / card"], group="GOLD DRIVERS (display only)", tooltip="Under the Master's MACRO: a column aligned under the Master dashboard's MACRO cell (Desktop / Tablet; not with the Master on Mobile). In the panel / card: inside the terminal panel, or the separate drivers card.")
+gdGap = input.int(17, "Gap below the Master dashboard (% of chart height)", minval=0, maxval=60, group="GOLD DRIVERS (display only)", tooltip="Moves the docked drivers up or down until they sit just under the Master's MACRO cell; the Master's height depends on its text size and density.")
+dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
+textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
+density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
+bool gdDocked = gdDock == "Under the Master's MACRO" and gdPos != "Hidden" and dashMode != "Mobile"
+// v75: the H2 card (= the website's arm H3, the same rule) and a LIQUIDITY · SWEEPS block can sit under the
+// Master's DECISION and LIQUIDITY columns, as the drivers sit under MACRO; each dock is its own table with its own gap
+// (the Master's DECISION column is taller: its H2 SETUP cell). These inputs moved up here so the cards can read them.
+grpDk = "DOCK UNDER THE MASTER (v75)"
+h2Dock = input.string("Under the Master's DECISION", "H2 card placement", options=["Under the Master's DECISION", "In the panel / card"], group=grpDk, tooltip="The H2 sweep-to-value card (the website records the same rule as arm H3) under the Master dashboard's DECISION column, or in the terminal panel / its own card.")
+h2Gap = input.int(30, "H2 gap below the Master dashboard (% of chart height)", minval=0, maxval=70, group=grpDk, tooltip="The DECISION column is the tallest (its H2 SETUP cell): raise until the card clears it.")
+lqDock = input.string("Under the Master's LIQUIDITY", "Liquidity & sweeps placement", options=["Under the Master's LIQUIDITY", "In the panel", "Hidden"], group=grpDk, tooltip="PDH/PDL, PWH/PWL, PMH/PML, CDH/CDL with distance from price, the unswept swings and the last sweeps, under the Master's LIQUIDITY column or in the terminal panel. Display only.")
+lqGap = input.int(17, "Liquidity gap below the Master dashboard (% of chart height)", minval=0, maxval=70, group=grpDk)
+bool h2Docked = h2Dock == "Under the Master's DECISION" and dashMode != "Mobile"
+bool lqDocked = lqDock == "Under the Master's LIQUIDITY" and dashMode != "Mobile"
+bool lqInPanel = lqDock == "In the panel" or lqDock == "Under the Master's LIQUIDITY" and dashMode == "Mobile"
 
 grpSess = "Sessions (UTC)"
 showSess     = input.bool(true,  "Session shading",         group = grpSess)
@@ -421,6 +443,10 @@ bool sweepUp = showSweep and not na(lastPH) and high > lastPH and close < lastPH
 bool sweepDn = showSweep and not na(lastPL) and low  < lastPL and close > lastPL and barstate.isconfirmed
 plotshape(sweepUp ? high : na, "Sweep High", shape.xcross, location.absolute, cSweep, size = size.tiny)
 plotshape(sweepDn ? low  : na, "Sweep Low",  shape.xcross, location.absolute, cSweep, size = size.tiny)
+// v75: the last pivot sweep the ✕ markers show, kept for the LIQUIDITY · SWEEPS block (display only)
+var string pvLastSweep = "none yet"
+if sweepUp or sweepDn
+    pvLastSweep := (sweepUp ? "HIGH " + str.tostring(lastPH, format.mintick) : "LOW " + str.tostring(lastPL, format.mintick)) + "  " + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC"
 
 // ═══════════════════ FAIR VALUE GAPS (Master's corrected bounds) ═══════════════════
 // Bullish (BISI): low[0] > high[2] -> gap [high[2], low[0]]
@@ -1207,7 +1233,7 @@ h2Sz = h2TxtSize == "Normal" ? size.normal : size.small
 _h2Row(int _r, string _k, string _x, color _c) =>
     table.cell(h2Card, 0, _r, _k, text_color = color.new(#8FA3B8, 0), text_size = h2Sz, text_halign = text.align_left)
     table.cell(h2Card, 1, _r, _x, text_color = _c, text_size = h2Sz, text_halign = text.align_left)
-if vSep and h2Show and barstate.islast
+if vSep and h2Show and not h2Docked and barstate.islast
     color _h2t = color.new(#E6EDF3, 0)
     color _h2u = color.new(#00D084, 0)
     color _h2d = color.new(#FF4D4D, 0)
@@ -1233,17 +1259,6 @@ if vSep and h2Show and barstate.islast
 // between GD-BEGIN and GD-END is byte-identical to the Brief's (macro_check.py E), and the engine lines it reads are
 // the Master's own (below, verbatim; the inputs keep the Master's names and defaults, inputs_check.py). No vote,
 // no weight, no gate: the Master's DECISION is unchanged by anything here.
-gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Right", "Bottom Center", "Bottom Left", "Middle Right", "Hidden"], group="GOLD DRIVERS (display only)")
-// v74: the drivers can sit directly UNDER the Master's MACRO column, so the two read as one macro block. The Master's
-// dashboard has fixed geometry: top right (Desktop / Auto) or top left (Tablet), no border, no frame, column widths
-// 10/10/12/11/13/10/11/11/13 % of the chart x its Density. These three inputs are the Master's own (same names,
-// options, defaults; inputs_check.py holds them equal) -- set them as in the Master. Only the gap is free.
-gdDock = input.string("Under the Master's MACRO", "Gold drivers placement", options=["Under the Master's MACRO", "In the panel / card"], group="GOLD DRIVERS (display only)", tooltip="Under the Master's MACRO: a column aligned under the Master dashboard's MACRO cell (Desktop / Tablet; not with the Master on Mobile). In the panel / card: inside the terminal panel, or the separate drivers card.")
-gdGap = input.int(17, "Gap below the Master dashboard (% of chart height)", minval=0, maxval=60, group="GOLD DRIVERS (display only)", tooltip="Moves the docked drivers up or down until they sit just under the Master's MACRO cell; the Master's height depends on its text size and density.")
-dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
-textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
-density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
-bool gdDocked = gdDock == "Under the Master's MACRO" and gdPos != "Hidden" and dashMode != "Mobile"
 safeDiv(a, b) => not na(a) and not na(b) and math.abs(b) > 1e-10 ? a / b : 0.0
 macroTF = input.timeframe("60", "Macro Correlation Timeframe", group="GOLD DRIVERS (display only)", tooltip="Keep equal to the Master's.")
 y2Symbol = input.symbol("TVC:US02Y", "US 2Y Yield (blank=off)", group="GOLD DRIVERS (display only)", tooltip="With US10Y this gives the 2y10y curve spread — steepening favours gold, flattening pressures it. Context only, adds no macro vote.")
@@ -1326,12 +1341,14 @@ if vSep and barstate.islast and gdPos != "Hidden" and not gdDocked
 // The three cards' values in one docked panel: MARKET (the candle panel), H2 SWEEP → VALUE (the H2 card's rows,
 // same expressions) and GOLD DRIVERS (the drivers panel's rows, same glyphs and colours). Grey = labels, white =
 // values, colour only for direction (teal supports gold up / the bar closed up, red down). Display only.
-var table tblV = table.new(vPos == "Middle Left" ? position.middle_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.bottom_left, 2, 24, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
+var table tblV = table.new(vPos == "Middle Left" ? position.middle_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.bottom_left, 2, 30, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
 color _tmK = color.new(#7D8FA3, 0)
 color _tmV = color.new(#E6EDF3, 0)
 color _tmUp = color.new(#26A69A, 0)
 color _tmDn = color.new(#EF5350, 0)
 color _tmSec = color.new(#16202B, 0)
+// v75: a liquidity level and its distance from price (TradingView prices, as the level tags)
+f_lv(string n, float p) => na(p) ? n + " —" : n + " " + str.tostring(p, format.mintick) + "  (" + (p >= close ? "+" : "") + str.tostring(p - close, "#.##") + ")"
 f_tmG(float d) => na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"
 f_tmC(float d) => na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)
 _tmRow(int r, string k, string v, color c) =>
@@ -1341,7 +1358,9 @@ _tmHead(int r, string k, string v, color bg) =>
     table.cell(tblV, 0, r, k, text_color = color.white, bgcolor = bg, text_size = h2Sz, text_halign = text.align_left)
     table.cell(tblV, 1, r, v, text_color = color.new(#AEBBC9, 0), bgcolor = bg, text_size = h2Sz, text_halign = text.align_right)
 if not vSep and barstate.islast
-    table.clear(tblV, 0, 0, 1, 23)
+    table.clear(tblV, 0, 0, 1, 29)
+// v75: drawn only while it has a section (everything docked under the Master + candle panel off = no empty frame)
+if not vSep and barstate.islast and (showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel)
     bool _cmp = vDetail == "Compact"
     int r = 0
     _tmHead(r, "XAUUSD · " + timeframe.period, "VISUALS · " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC", color.new(#1F3A5F, 0))
@@ -1358,7 +1377,7 @@ if not vSep and barstate.islast
             _tmRow(r, "RANGE", str.tostring(_rng, "#.##") + "  (" + str.tostring(atr14 > 0 ? _rng / atr14 : na, "#.##") + " ATR)  ATR% " + str.tostring(close > 0 ? atr14 / close * 100.0 : na, "#.###"), _tmV)
         r += 1
         _tmRow(r, "FLOW", (na(_rv) ? "" : "RVOL " + str.tostring(_rv, "#.##") + "x  ") + (na(adxValV) ? "ADX —" : "ADX " + str.tostring(adxValV, "#.#") + "  DI+ " + str.tostring(_diPV, "#.#") + " / DI- " + str.tostring(_diMV, "#.#")), _tmV)
-    if h2Show
+    if h2Show and not h2Docked
         r += 1
         _tmHead(r, "H2 SWEEP → VALUE", "pre-registered · display only", _tmSec)
         r += 1
@@ -1401,26 +1420,65 @@ if not vSep and barstate.islast
             _tmRow(r, "BREAKEVEN " + f_tmG(brBd), brBh, f_tmC(brBd))
             r += 1
             _tmRow(r, "US 2Y " + f_tmG(br2d), br2h, f_tmC(br2d))
+    if lqInPanel
+        r += 1
+        _tmHead(r, "LIQUIDITY · SWEEPS", "TradingView prices", _tmSec)
+        r += 1
+        _tmRow(r, "DAY", f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
+        r += 1
+        _tmRow(r, "WEEK", f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
+        r += 1
+        _tmRow(r, "MONTH", f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
+        r += 1
+        _tmRow(r, "TODAY", f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
+        r += 1
+        _tmRow(r, "SWEEPS", "pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
     r += 1
     table.cell(tblV, 0, r, "display only · the DECISION is the Master's · H2 record: the website", text_color = color.new(#5D6B7A, 0), text_size = size.tiny, text_halign = text.align_left)
     table.merge_cells(tblV, 0, r, 1, r)
 
-// ═══════════════════ GOLD DRIVERS docked under the Master's MACRO (v74) ═══════════════════
-// Same anchor, no border / frame and the same nine column widths as the Master's dashboard, so this table's column 6
-// sits exactly under the Master's MACRO column; row 0 is a transparent spacer of gdGap % of the chart height. The
-// cells use the Master's dashboard background and detail text size, and the drivers card's glyphs and colours.
+// ═══════════════════ DOCKS UNDER THE MASTER'S DASHBOARD (v74 drivers; v75 H2 card, liquidity) ═══════════════════
+// Same anchor, no border / frame and the same nine column widths as the Master's dashboard, so a dock's column c sits
+// exactly under the Master's column c (4 LIQUIDITY, 6 MACRO, 8 DECISION); row 0 is a transparent spacer of the dock's
+// gap (% of chart height). Each dock is its own table so each has its own gap. The cells use the Master's dashboard
+// background and detail text size; the drivers use the drivers card's glyphs and colours, the H2 dock the H2 card's
+// row texts and colours.
+int[] _dkW = array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)
+float _dw = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
+string _dsz = textSize == "Large" or textSize == "Medium" ? "small" : "tiny"
+color _dbg = color.new(#0d0d1a, 40)
+f_dock(table t, int col, int gap) =>
+    for [c, w] in _dkW
+        table.cell(t, c, 0, "", width = int(w * _dw), height = c == col ? gap : 0)
+f_dkCell(table t, int col, int r, string txt, color tc) =>
+    table.cell(t, col, r, txt, text_color = tc, bgcolor = _dbg, text_size = _dsz, width = int(array.get(_dkW, col) * _dw), text_halign = text.align_left)
 var table gdD = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 7, border_width = 0, frame_width = 0)
+var table lqD = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 7, border_width = 0, frame_width = 0)
+var table h2D = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 9, border_width = 0, frame_width = 0)
 if gdDocked and barstate.islast
-    float _dw = density == "Compact" ? 0.8 : density == "Spacious" ? 1.25 : 1.0
-    string _dsz = textSize == "Large" or textSize == "Medium" ? "small" : "tiny"
-    color _dbg = color.new(#0d0d1a, 40)
-    int _w6d = int(11 * _dw)
-    for [c, w] in array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)
-        table.cell(gdD, c, 0, "", width = int(w * _dw), height = c == 6 ? gdGap : 0)
+    f_dock(gdD, 6, gdGap)
     float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
-    table.cell(gdD, 6, 1, "GOLD DRIVERS " + f_tmG(_net), text_color = f_tmC(_net), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left, tooltip = "Display only: no vote, weight or gate. Green = supports gold up, red = down.")
-    table.cell(gdD, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, text_color = f_tmC(brJd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
-    table.cell(gdD, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, text_color = f_tmC(brOd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
-    table.cell(gdD, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, text_color = f_tmC(brRd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
-    table.cell(gdD, 6, 5, "BREAKEVEN " + f_tmG(brBd) + "\n" + brBh, text_color = f_tmC(brBd), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
-    table.cell(gdD, 6, 6, "US 2Y " + f_tmG(br2d) + "\n" + br2h, text_color = f_tmC(br2d), bgcolor = _dbg, text_size = _dsz, width = _w6d, text_halign = text.align_left)
+    table.cell(gdD, 6, 1, "GOLD DRIVERS " + f_tmG(_net), text_color = f_tmC(_net), bgcolor = _dbg, text_size = _dsz, width = int(11 * _dw), text_halign = text.align_left, tooltip = "Display only: no vote, weight or gate. Green = supports gold up, red = down.")
+    f_dkCell(gdD, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, f_tmC(brJd))
+    f_dkCell(gdD, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, f_tmC(brOd))
+    f_dkCell(gdD, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, f_tmC(brRd))
+    f_dkCell(gdD, 6, 5, "BREAKEVEN " + f_tmG(brBd) + "\n" + brBh, f_tmC(brBd))
+    f_dkCell(gdD, 6, 6, "US 2Y " + f_tmG(br2d) + "\n" + br2h, f_tmC(br2d))
+if lqDocked and barstate.islast
+    f_dock(lqD, 4, lqGap)
+    f_dkCell(lqD, 4, 1, "LIQUIDITY · SWEEPS", color.new(#AEBBC9, 0))
+    f_dkCell(lqD, 4, 2, f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
+    f_dkCell(lqD, 4, 3, f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
+    f_dkCell(lqD, 4, 4, f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
+    f_dkCell(lqD, 4, 5, f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
+    f_dkCell(lqD, 4, 6, "SWEPT pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+if h2Docked and h2Show and barstate.islast
+    f_dock(h2D, 8, h2Gap)
+    f_dkCell(h2D, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + "\n(website: arm H3, same rule)", color.new(#AEBBC9, 0))
+    f_dkCell(h2D, 8, 2, "SIGNAL  " + h2SigCard, h2SigCard == "none yet" ? _tmV : str.startswith(h2SigCard, "BUY") ? _tmUp : _tmDn)
+    f_dkCell(h2D, 8, 3, "TREND  " + h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+    f_dkCell(h2D, 8, 4, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
+    f_dkCell(h2D, 8, 5, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
+    f_dkCell(h2D, 8, 6, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
+    f_dkCell(h2D, 8, 7, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+    f_dkCell(h2D, 8, 8, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
