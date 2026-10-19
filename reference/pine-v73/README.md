@@ -51,3 +51,10 @@ changed it:
 3. **MTF confluence denominator (shared, not changed).** After F-A65 the macro vote pool is 4–6, but both Pine v73
    (`mtfConfluenceScore … / (mtfAvail + 6.0)`) and the website still divide the MTF confluence score by
    available MTF layers + 6. The two stay identical; changing it would be a further engine amendment.
+
+## Later builds (not copied here)
+
+| Pine | What | Website |
+|---|---|---|
+| v74, v75 | Visuals docks the gold drivers, the H2 card and liquidity / sweeps under the Master's columns | TradingView table layout; the site shows the same values in its own cards |
+| v76 | H2 card: the last signal's age, outcome and LIVE / STALE | **ported** to the H2 and H3 cards (`report.signal_status`, display only) |

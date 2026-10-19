@@ -540,3 +540,7 @@ footer a { color: var(--muted); }
 .card.fold.collapsed > .bd { display: none; }
 .decision .dchips { display: flex; gap: 6px; margin: 6px 0 2px; font: 600 12px var(--mono); }
 .decision .dchips span { padding: 2px 8px; border-radius: 3px; background: var(--bg-2); }
+
+/* Pine v76: last-signal status line */
+.sigst { margin-top: 4px; font: 600 11.5px var(--mono); }
+.sigst.bull { color: var(--bull); } .sigst.bear { color: var(--bear); } .sigst.stale { color: var(--dim); }
