@@ -2619,3 +2619,35 @@ pre-registered there under that name (`quantum/arm_h3.py`). It is the same signa
 
 Visuals size: best-fit 36,518 / pessimistic 44,030. Master, Brief, Diagnostics and the arms are unchanged. Compile and
 the on-screen alignment are NOT RUN on v75.
+
+---
+
+# Build v75 → v76 — H2 card: the last signal's age, outcome and LIVE / STALE (operator: "market going up but H2 says sell")
+
+**Why:**
+- The SIGNAL row showed the LAST H2 signal with no age. On 18-19 Oct it still read `SELL 10-16 02:30 UTC` while price
+  rose, which looked like a live sell.
+- H2's trend is a 2-of-3 vote of the completed 1H / 4H / 1D bars. 1H 80 / 4H 20 / 1D 0 = DOWN, so H2 can only sell
+  there. It is a fade setup: it sells a failed push above a swing high.
+- Nothing was wrong in the rule. The display was ambiguous.
+
+**What changes on the chart** (the H2 card, the terminal panel's H2 section and the H2 dock under DECISION):
+- The SIGNAL row gains a status line, for example `○ STALE · 47 bars · 2 d ago · stopped · trend no longer DOWN`, or
+  `● LIVE · 3 bars · 1.5 h ago · TP1 hit`.
+- A stale signal is grey; a live one keeps its green / red.
+- **Outcome:** on each confirmed bar after the signal, the bar's range is checked against the signal's own stop, TP1 and
+  TP2 (TradingView prices). If one bar touches both the stop and a target, the stop is taken first: the order inside a
+  bar is unknown, so this is the conservative reading. After TP1, a stop reads "TP1 hit, then stop".
+- **STALE** = closed (stopped, TP2, or TP1 then stop), older than **Mark the last H2 signal stale after (bars)** (new
+  input, default 24, display only), or H2's trend vote no longer agrees with the signal's direction.
+
+**Unchanged:** the H2 rule and the H2 block (byte-identical, `h2_parity.py`), the alerts, the Master, and the website's
+arm H3. The Master's own H2 SETUP line has no age; the Master has no token room.
+
+**Checks:**
+- `h2_age_check.py` (new) runs the v76 block line by line over 400 random paths (19,565 bars) against an independent
+  Python reference: 0 mismatches, and every outcome exercised.
+- Mutation-tested: target-before-stop, or evaluating unconfirmed bars, each FAIL.
+- `panel_check.py` maps the grey stale colour across the card, panel and dock.
+
+Visuals size: best-fit 37,198 / pessimistic 44,933. Compile NOT RUN on v76.

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v75   (H2 + liquidity docked)        ║
+// ║  BUILD STAMP — this file last CHANGED in v76   (H2 signal age + stale)        ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1223,6 +1223,41 @@ if h2Long or h2Short
     h2LastSig := (h2Long ? "BUY " : "SELL ") + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC  entry " + _h2p(close) + "  SL " + _h2p(h2Sl) + "  TP1 " + _h2p(h2Tp1) + "  TP2 " + _h2p(h2Tp2)
     h2SigCard := (h2Long ? "BUY " : "SELL ") + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC\nentry " + _h2p(close) + "  SL " + _h2p(h2Sl) + "\nTP1 " + _h2p(h2Tp1) + "  TP2 " + _h2p(h2Tp2)
     alert("XAUUSD " + timeframe.period + " H2 sweep-to-value " + h2LastSig + " (MT5 prices) | trend " + h2Trend, alert.freq_once_per_bar_close)
+// v76: the LAST H2 signal's age, outcome and whether it is still live. DISPLAY ONLY: the H2 rule (H2-BEGIN..END,
+// = the website's arm H3) is unchanged; the card used to show the last signal with no age, so an old SELL could read
+// as a live call. After the signal bar, each CONFIRMED bar checks its plan against the bar's range (TradingView
+// prices, as the rule): stop first when one bar touches both stop and target (order inside a bar is unknown, so the
+// conservative reading). STALE = closed (stopped / TP2), older than the bar limit, or H2's 1H/4H/1D trend vote no
+// longer agrees with the signal's direction.
+h2StaleBars = input.int(24, "Mark the last H2 signal stale after (bars)", minval = 1, maxval = 1000, group = grpH2, tooltip = "Display only: greys the card's SIGNAL row out after this many bars. The H2 rule has no expiry; this does not change it.")
+var int h2SigBar = na
+var int h2SigTime = na
+var int h2SigDir = 0
+var float h2SigSlV = na
+var float h2SigT1 = na
+var float h2SigT2 = na
+var string h2SigOut = ""
+if h2Long or h2Short
+    h2SigBar := bar_index
+    h2SigTime := time
+    h2SigDir := h2Long ? 1 : -1
+    h2SigSlV := h2Sl
+    h2SigT1 := h2Tp1
+    h2SigT2 := h2Tp2
+    h2SigOut := ""
+else if h2SigDir != 0 and barstate.isconfirmed and h2SigOut != "stopped" and h2SigOut != "TP2 hit" and h2SigOut != "TP1 hit, then stop"
+    bool _slHit = h2SigDir == 1 ? low <= h2SigSlV : high >= h2SigSlV
+    bool _t1Hit = h2SigDir == 1 ? high >= h2SigT1 : low <= h2SigT1
+    bool _t2Hit = h2SigDir == 1 ? high >= h2SigT2 : low <= h2SigT2
+    h2SigOut := _slHit ? (h2SigOut == "TP1 hit" ? "TP1 hit, then stop" : "stopped") : _t2Hit ? "TP2 hit" : _t1Hit ? "TP1 hit" : h2SigOut
+int h2AgeB = na(h2SigBar) ? na : bar_index - h2SigBar
+float h2AgeH = na(h2SigTime) ? na : (time - h2SigTime) / 3600000.0
+bool h2TrendAgrees = h2SigDir == 1 ? h2TrendUp : h2SigDir == -1 ? h2TrendDn : true
+bool h2SigDone = h2SigOut == "stopped" or h2SigOut == "TP2 hit" or h2SigOut == "TP1 hit, then stop"
+bool h2Stale = h2SigDir != 0 and (h2SigDone or h2AgeB > h2StaleBars or not h2TrendAgrees)
+// 0 = none yet, 1 = live BUY, -1 = live SELL, 2 = stale (any direction)
+int h2SigState = h2SigDir == 0 ? 0 : h2Stale ? 2 : h2SigDir
+string h2SigStat = h2SigDir == 0 ? "" : "\n" + (h2Stale ? "○ STALE · " : "● LIVE · ") + (h2AgeB == 0 ? "this bar" : str.tostring(h2AgeB) + " bars · " + (h2AgeH >= 48 ? str.tostring(math.floor(h2AgeH / 24)) + " d" : str.tostring(h2AgeH, "#.#") + " h") + " ago") + (h2SigOut != "" ? " · " + h2SigOut : "") + (h2TrendAgrees ? "" : " · trend no longer " + (h2SigDir == 1 ? "UP" : "DOWN"))
 alertcondition(h2Long, "H2 BUY", "XAUUSD H2 sweep-to-value BUY on {{interval}} at {{close}} (TradingView price)")
 alertcondition(h2Short, "H2 SELL", "XAUUSD H2 sweep-to-value SELL on {{interval}} at {{close}} (TradingView price)")
 // v55 H2 CARD, redesigned for a phone-width chart: two columns, short keys, each line <= ~30
@@ -1237,10 +1272,11 @@ if vSep and h2Show and not h2Docked and barstate.islast
     color _h2t = color.new(#E6EDF3, 0)
     color _h2u = color.new(#00D084, 0)
     color _h2d = color.new(#FF4D4D, 0)
+    color _h2s = color.new(#787B86, 0)
     bool _full = h2Layout == "Full"
     table.cell(h2Card, 0, 0, "H2 SWEEP→VALUE", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
     table.cell(h2Card, 1, 0, timeframe.period + " · display only", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
-    _h2Row(1, "SIGNAL", h2SigCard, h2SigCard == "none yet" ? _h2t : str.startswith(h2SigCard, "BUY") ? _h2u : _h2d)
+    _h2Row(1, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _h2u : h2SigState == -1 ? _h2d : h2SigState == 2 ? _h2s : _h2t)
     _h2Row(2, "TREND", h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _h2u : h2TrendDn ? _h2d : _h2t)
     _h2Row(3, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _h2t)
     _h2Row(4, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _h2t)
@@ -1347,6 +1383,7 @@ color _tmV = color.new(#E6EDF3, 0)
 color _tmUp = color.new(#26A69A, 0)
 color _tmDn = color.new(#EF5350, 0)
 color _tmSec = color.new(#16202B, 0)
+color _tmS = color.new(#787B86, 0)
 // v75: a liquidity level and its distance from price (TradingView prices, as the level tags)
 f_lv(string n, float p) => na(p) ? n + " —" : n + " " + str.tostring(p, format.mintick) + "  (" + (p >= close ? "+" : "") + str.tostring(p - close, "#.##") + ")"
 f_tmG(float d) => na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"
@@ -1381,7 +1418,7 @@ if not vSep and barstate.islast and (showCandle or h2Show and not h2Docked or gd
         r += 1
         _tmHead(r, "H2 SWEEP → VALUE", "pre-registered · display only", _tmSec)
         r += 1
-        _tmRow(r, "SIGNAL", h2SigCard, h2SigCard == "none yet" ? _tmV : str.startswith(h2SigCard, "BUY") ? _tmUp : _tmDn)
+        _tmRow(r, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
         if not _cmp
             r += 1
             _tmRow(r, "TREND", h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
@@ -1475,7 +1512,7 @@ if lqDocked and barstate.islast
 if h2Docked and h2Show and barstate.islast
     f_dock(h2D, 8, h2Gap)
     f_dkCell(h2D, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + "\n(website: arm H3, same rule)", color.new(#AEBBC9, 0))
-    f_dkCell(h2D, 8, 2, "SIGNAL  " + h2SigCard, h2SigCard == "none yet" ? _tmV : str.startswith(h2SigCard, "BUY") ? _tmUp : _tmDn)
+    f_dkCell(h2D, 8, 2, "SIGNAL  " + h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
     f_dkCell(h2D, 8, 3, "TREND  " + h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
     f_dkCell(h2D, 8, 4, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
     f_dkCell(h2D, 8, 5, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)

@@ -51,13 +51,13 @@ for l in L[a + 1:]:
     blk.append(l)
 card = {args(l, "_h2Row")[1]: args(l, "_h2Row") for l in L if l.strip().startswith("_h2Row(") and "=>" not in l}
 term = {args(l, "_tmRow")[1]: args(l, "_tmRow") for l in blk if l.strip().startswith("_tmRow(")}
-MAP = {"_h2t": "_tmV", "_h2u": "_tmUp", "_h2d": "_tmDn"}
+MAP = {"_h2t": "_tmV", "_h2u": "_tmUp", "_h2d": "_tmDn", "_h2s": "_tmS"}
 bad = []
 for k, c in card.items():
     if k == '"NOTE"':
         continue
     t = term.get(k)
-    col = re.sub(r"\b(_h2[tud])\b", lambda m: MAP[m.group(1)], c[3])
+    col = re.sub(r"\b(_h2[tuds])\b", lambda m: MAP[m.group(1)], c[3])
     if not t or t[2] != c[2] or t[3] != col:
         bad.append(k)
 foot = next((l for l in blk if "H2 record: the website" in l), None)
@@ -121,7 +121,7 @@ for l in L:
         if m:
             dock['"' + m.group(1) + '"'] = (m.group(2), x[4])
 bad6 = [k for k, c in card.items() if k not in ('"NOTE"', '"SESSION"', '"HISTORY"', '"VOLUME"')
-        and dock.get(k) != (c[2], re.sub(r"\b(_h2[tud])\b", lambda m: MAP[m.group(1)], c[3]))]
+        and dock.get(k) != (c[2], re.sub(r"\b(_h2[tuds])\b", lambda m: MAP[m.group(1)], c[3]))]
 note = any("f_dkCell(h2D, 8, 8, " in l and "H2 record: the website" in l for l in L)
 lv = ["pdh", "pdl", "pwh", "pwl", "pmh", "pml", "cdh", "cdl"]
 lqd = "\n".join(l for l in L if "f_dkCell(lqD, 4," in l)
