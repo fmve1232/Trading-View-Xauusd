@@ -256,6 +256,46 @@ def _arm_record(arm, key, market, trades, cfg, now, store_dir):
     return man2, pre, post
 
 
+STALE_BARS = 24   # Pine v76 "Mark the last H2 signal stale after (bars)" default; display only
+
+
+def signal_status(F: dict, i0: int, plan: dict, trend_ok: bool, stale_bars: int = STALE_BARS) -> dict:
+    """The last signal's age, outcome and LIVE / STALE (Pine v76, display only; the arm's rule is untouched).
+    Each confirmed bar after the signal is checked against the signal's own stop, TP1 and TP2; a bar that touches the
+    stop and a target counts the stop first (the order inside a bar is unknown, so this is the conservative reading).
+    STALE = the trade is over (stopped, TP2, or TP1 then stop), older than `stale_bars`, or the arm's trend vote no
+    longer agrees with the signal's direction."""
+    n = len(F["c"])
+    long_ = plan["dir"] == "LONG"
+    sl, t1, t2 = plan.get("sl"), plan.get("tp1"), plan.get("tp2")
+    out, tp1_hit = "open", False
+    if None not in (sl, t1, t2):
+        for j in range(i0 + 1, n):
+            hi, lo = float(F["h"][j]), float(F["l"][j])
+            stop = lo <= sl if long_ else hi >= sl
+            r1 = hi >= t1 if long_ else lo <= t1
+            r2 = hi >= t2 if long_ else lo <= t2
+            if stop:
+                out = "TP1 hit, then stop" if tp1_hit else "stopped"
+                break
+            if r2:
+                out = "TP2 hit"
+                break
+            if r1 and not tp1_hit:
+                tp1_hit, out = True, "TP1 hit"
+    closed = out in ("stopped", "TP2 hit", "TP1 hit, then stop")
+    bars = n - 1 - i0
+    why = [x for x, on in (("trade over", closed), (f"older than {stale_bars} bars", bars > stale_bars),
+                          ("trend no longer agrees", not trend_ok)) if on]
+    return {"bars": bars, "outcome": out, "closed": closed, "trend_ok": bool(trend_ok), "stale": bool(why), "why": why,
+            "stale_bars": stale_bars}
+
+
+def _with_status(F, i0, p, checklist):
+    side = "long" if p["dir"] == "LONG" else "short"
+    return {**p, "status": signal_status(F, i0, p, bool((checklist.get(side) or {}).get("trend")))}
+
+
 def h3_section(market, res, cfg, man, now, store_dir, idx) -> dict:
     trades, ev = arm_h3.simulate(res, market, cfg)
     key = arm_h3.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
@@ -269,7 +309,7 @@ def h3_section(market, res, cfg, man, now, store_dir, idx) -> dict:
                 "swept": _f(ev["swept"][i])}
     return {"rules": H3_RULES, "freeze": man3, "checklist": ev["checklist"],
             "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None,
-            "last_signal": plan(sig[-1]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
+            "last_signal": _with_status(res.F, sig[-1], plan(sig[-1]), ev["checklist"]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
             "open": [t for t in trades if t.get("open")],
             "next_move_in_sample": arm_h2.next_move_stats(pre),
             "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
@@ -313,7 +353,7 @@ def h2_section(market, res, cfg, man, now, store_dir, idx) -> dict:
                 "sweep_t": int(pd.Timestamp(idx[ev["sweep_bar"][i]]).timestamp())}
     return {"rules": H2_RULES, "freeze": man2, "checklist": ev["checklist"],
             "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None,
-            "last_signal": plan(sig[-1]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
+            "last_signal": _with_status(res.F, sig[-1], plan(sig[-1]), ev["checklist"]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
             "open": [t for t in trades if t.get("open")],
             "next_move_in_sample": arm_h2.next_move_stats(pre),
             "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),

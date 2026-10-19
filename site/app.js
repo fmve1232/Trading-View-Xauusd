@@ -662,6 +662,15 @@ function renderHeader() {
 
 /* ---------- side panels ---------- */
 /* ---------- arm H2 "Sweep and Value" (pre-registered, Amendment 5; computed by quantum/arm_h2.py) ---------- */
+// Pine v76: the last signal's age, outcome and LIVE / STALE (report.signal_status). A stale signal is grey, so an old
+// SELL never reads as a live one while price moves the other way.
+function sigStatus(p, D) {
+  const s = p && p.status; if (!s) return "";
+  const mins = (Date.now() / 1000 - (p.t + D.meta.tf_sec)) / 60;
+  const ago = mins < 90 ? `${Math.max(0, Math.round(mins))} min ago` : mins < 48 * 60 ? `${(mins / 60).toFixed(1)} h ago` : `${Math.round(mins / 1440)} d ago`;
+  return `<div class="sigst ${s.stale ? "stale" : p.dir === "LONG" ? "bull" : "bear"}" title="Stale after ${s.stale_bars} bars, when the trade is over, or when the trend vote no longer agrees (display only; the rule is unchanged)">` +
+    `${s.stale ? "○ STALE" : "● LIVE"} · ${s.bars} bar${s.bars === 1 ? "" : "s"} · ${ago} · ${esc(s.outcome)}${s.stale && s.why.length ? " · " + esc(s.why.join(", ")) : ""}</div>`;
+}
 function renderH2() {
   const D = S.data, el = $("#h2"), st = $("#h2-state"); if (!el || !D) return;
   const H = D.h2;
@@ -681,7 +690,7 @@ function renderH2() {
   const other = side === "long" ? "short" : "long";
   const rows = (H.rules || []).map(([k, lt, stx]) => `<li class="${c[k] ? "ok" : "bad"}"><span class="sr">${c[k] ? "met:" : "missing:"}</span>${esc(side === "short" ? stx : lt)}</li>`).join("");
   const p = now || H.last_signal;
-  const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}${held ? " (not taken)" : ""}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(sweep bar ${tfmt(p.sweep_t)})</span>` +
+  const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}${held ? " (not taken)" : ""}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(sweep bar ${tfmt(p.sweep_t)})</span>${sigStatus(p, D)}` +
     (held ? ` <span class="warn">H2 already holds this ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)}; it takes one position at a time, so the open trade below is the one that counts.</span>` : "") + `</div>` : "";
   const openHtml = open ? `<div class="why"><b>Open H2 trade:</b> ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)} · entry ${px(open.entry)} · SL ${px(open.sl)} · TP1 ${px(open.tp1)}</div>` : "";
   const nm = H.next_move_in_sample || {}, fw = H.forward || {}, fr = H.freeze || {};
@@ -711,7 +720,7 @@ function renderH3() {
   const sc = ck.scores || {};
   const trendLine = `<span class="dim">trend scores 1H ${f(sc["60"], 0)} · 4H ${f(sc["240"], 0)} · 1D ${f(sc.D, 0)} · swing ${side === "long" ? "low " + px(ck.swing_low) : "high " + px(ck.swing_high)}</span>`;
   const p = now || H.last_signal;
-  const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}${held ? " (not taken)" : ""}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(swept ${px(p.swept)})</span>` +
+  const planHtml = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}${held ? " (not taken)" : ""}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · SL ${px(p.sl)} · TP1 ${px(p.tp1)} · TP2 ${px(p.tp2)} <span class="dim">(swept ${px(p.swept)})</span>${sigStatus(p, D)}` +
     (held ? ` <span class="warn">H3 already holds this ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)}; it takes one position at a time, so the open trade below is the one that counts.</span>` : "") + `</div>` : "";
   const openHtml = open ? `<div class="why"><b>Open H3 trade:</b> ${esc(open.dir)} since ${tfmt(Date.parse(open.entry_time) / 1000)} · entry ${px(open.entry)} · SL ${px(open.sl)} · TP1 ${px(open.tp1)}</div>` : "";
   const nm = H.next_move_in_sample || {}, fw = H.forward || {}, fr = H.freeze || {};
