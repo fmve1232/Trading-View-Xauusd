@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v70   (leaner drivers; grid fn)      ║
+// ║  BUILD STAMP — this file last CHANGED in v83   (news window: NY time)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -404,7 +404,7 @@ cleanInstitutional = input.bool(false, "Clean Institutional Appearance", group=g
 professionalMode = input.bool(false, "Professional Execution Mode", group=grpClean)
 holdoutRatio = input.float(0.20, "Holdout Ratio (OOS validation)", minval=0.0, maxval=0.5, step=0.05, group=grpRisk)
 useNewsSuppress = input.bool(false, "Suppress Signals on News Events", group=grpRisk, tooltip="Blocks signals during FOMC/NFP windows")
-newsSession = input.session("", "News Event Window (UTC)", group=grpRisk, tooltip="Session during which signals are suppressed, e.g. 1300-1500:4 for FOMC Wednesdays. Leave empty to disable.")
+newsSession = input.session("", "News Event Window (New York time)", group=grpRisk, tooltip="Session during which signals are suppressed, in the chart symbol's exchange time zone (New York for OANDA XAUUSD), NOT UTC: e.g. 1300-1500:4 = 13:00-15:00 New York on Wednesdays, around the 14:00 FOMC statement. Leave empty to disable.")
 
 grpCore = "CORE"
 ema20Len = input.int(20, "EMA20", minval=1, group=grpCore)

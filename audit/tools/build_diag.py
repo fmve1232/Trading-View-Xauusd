@@ -21,7 +21,7 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v68   (fits the compiler limit)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v83   (news window: NY time)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '

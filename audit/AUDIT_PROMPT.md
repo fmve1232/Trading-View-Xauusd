@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5882 | 383926 | `1f9e48dc4e51bbaf4b3dd24b92d42054003b27dc616e78ec24af69e3d24b03ed` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5419 | 344905 | `24046013a1deba5e855694c2ea60b426dac618558871588a1a087c706137be30` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5419 | 344970 | `d56641f731b28d6f04f52ff41886cb506892a5b320e56da66184909c4841b4f0` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 345889 | `42a6e6e5eb0acb3d11dfd73f43d17f488e2b93afcbb19b4eaa60b6051a4045c8` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5882 | 384065 | `dad15e8919900fb7c85697362f530acd9d6aa2f93cc7159b6ebcf5d5bd40c862` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5419 | 345044 | `dc076fde70ad1525cb4b7a18f60d48498e326850c1adcf9b7c04c9c95708c5ab` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5419 | 345109 | `31596bd703c2b20a3594df8dd5d9bd25158f61114090fdc2a875519790600974` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 346028 | `9d406afa1bcf91719cec01b6739a4b9a37efbfc7281ad5651e3d9d1c144dbf12` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
 | `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1660 | 121968 | `0e9291736230b130a72cf2a7aba71db98adcce143900bcab62583ce0b8009bf5` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 361996 | `e91a9a431f20b67279c59dffc94706d20836556d4566f1a9bc0bd4170e5b6709` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 357944 | `ab85c87344149df5eed7ec16a0f1c83e437602344fed7686b9afb7bc049a40e8` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 362135 | `c08a42235c41e20529700f3bf5a01c738b27a7382f723d84db69f9656d8c75ce` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 358083 | `87ad3fba1c94e935f83032d97db5b8c65a64e7c55fa723df56f0350b418c979c` |
 
-> **BUILD v82 — this prompt pins the current build.** The originally audited build
+> **BUILD v83 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -128,6 +128,7 @@ scope, and no other build of these scripts is in scope.
 > **v80:** the glance as gauges (default): 1H/4H/1D score bars, value and room sliders, macro arrows, history bars; the v79 text style stays selectable.
 > **v81:** the glance as a bottom ticker (operator's choice B of three mock-ups): six tiles, lifted above the Master's plan strip; drawings trimmed by default (BB, FVG / OB boxes, session shading, footprint off; every switch kept; the Master's engine inputs untouched).
 > **v82: F-A70** — the H2 TREND rows printed "NaN" for a missing 1H / 4H / 1D score; `f_sc()` prints "—" (found by executing every tile with missing data before deployment).
+> **v83: F-A71** — the news window's label said UTC but it runs in exchange (New York) time; label + tooltip corrected in every engine copy (logic unchanged). `bug_scan.py` + the strategy map and bug catalogue.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

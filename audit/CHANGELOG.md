@@ -2865,3 +2865,26 @@ missing number inside text as "NaN" with no error, so no static check can see it
 - The build number moves to v82 because the file differs from the v81 that was sent.
 
 All other values and the layout are as v81. Visuals only. Compile / rendering NOT RUN on v82.
+
+---
+
+# Build v82 → v83 — strategy map, bug catalogue, F-A71 (operator: "list all strategies and possible bugs, then test and validate everything")
+
+- **`audit/STRATEGY_MAP_AND_BUG_CATALOGUE.md`** (new):
+  - **Strategy map:** 16 XAUUSD strategy families, where each is implemented and which tool executes it. MACD,
+    Fibonacci and grid / martingale are not implemented.
+  - **Bug catalogue:** 16 bug classes, with the tool and the result on all nine files for each.
+- **`bug_scan.py`** (new):
+  - **Classes:** look-ahead, higher-TF repaint, `varip` / `timenow`, unconfirmed alerts, time zones, same-position
+    tables, strategy fill / cost settings, divisions.
+  - **Positive control:** a file with one deliberate bug per class; every class flags its bug.
+  - **Triage:** every hit triaged by hand. All ~80 engine division sites are guarded (0 real defects). Look-ahead is 0.
+- **F-A71 fixed:**
+  - The news window was labelled UTC, but it runs in exchange (New York) time, and its own FOMC example is New York
+    time.
+  - The label and tooltip are corrected in the Master, the three arms (A/B hunks 5 / 4), and the rebuilt Diagnostics
+    and Brief. Logic, default and token count are unchanged.
+  - `refactor_check.py` now derives the Master as `fix_v83.master(fix_v68.transform(v66))`.
+- **Changed files:** Master, Strategy, Strategy_OLDGATES and Strategy_CHALLENGER (label + stamp), plus Diagnostics and
+  Brief (rebuilt). Visuals and Strategy_H2 are unchanged.
+- **Compile:** the token estimates equal the compiled builds' (string-only change). Compile NOT RUN on v83.

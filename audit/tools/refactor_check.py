@@ -316,18 +316,19 @@ v66m = subprocess.run(["git", "show", "a5fc12ce:" + M], capture_output=True, tex
 P.define(fn("_b1(bool b) =>"), env)
 b1ok = all(P.evaluate(f"_b1({str(x).lower()})", P.Env(funcs=env.funcs)) == (1 if x else 0) == P.BUILTINS["_b1"](x)
            for x in (True, False))
-derived = F.transform(v66m) == open(M, encoding="utf-8").read()
+import fix_v83 as F83  # noqa: E402
+derived = F83.master(F.transform(v66m, inline_one_call=False)) == open(M, encoding="utf-8").read()   # v83: + news label
 once = F.params_once(v66m)
 arms_bad = 0
 for f in ("Strategy", "Strategy_OLDGATES", "Strategy_CHALLENGER"):
     path = f"artefacts/XAUUSD_Quantum_5_0_{f}.pine"
     old = [l for l in subprocess.run(["git", "show", "a5fc12ce:" + path], capture_output=True, text=True, check=True).stdout.split("\n")
            if "BUILD STAMP" not in l]
-    new = [l.replace(", 2, 11, bgco", ", 2, 10, bgco") for l in open(path, encoding="utf-8").read().split("\n")
+    new = [l.replace(", 2, 11, bgco", ", 2, 10, bgco").replace(F83.NEW, F83.OLD) for l in open(path, encoding="utf-8").read().split("\n")
            if "BUILD STAMP" not in l and not l.startswith("_fwI(float x) =>") and "engine-stats row" not in l
            and not l.lstrip().startswith('_fwRow(10, "Engine stats (display)"') and "computed but never showed (as the Master" not in l]
     arms_bad += old != new
-report("Master == fix_v68.transform(v66 commit), byte for byte; expanded helpers use each parameter once; arms == v66 "
+report("Master == fix_v83.master(fix_v68.transform(v66 commit)), byte for byte; expanded helpers use each parameter once; arms == v66 "
        "+ the v67 scorecard row; _b1 executed", 0 if derived and not once and not arms_bad and b1ok else 1, 1)
 
 # v59's '_gS / _gC / _gF' helpers are written out since v68 (array.get(gDash*, i)); the derivation case proves it.
