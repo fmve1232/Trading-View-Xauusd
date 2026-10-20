@@ -22,7 +22,8 @@ plus any other artefact that changed, and post the build record in chat.**
   and no other Visuals table may take its corner. Its rows share heights, so since v78 every dock cell is at most 2 lines
   and headers 1 (`panel_check.py` 6). Since v79 the panel opens with MARKET AT A GLANCE (eight plain answers from values
   Visuals computes; BIAS and ODDS name the Master's cells, never a second engine number; `panel_check.py` 7 executes
-  the nearest-level search and the ROOM marks).
+  the nearest-level search and the ROOM marks). Since v80 its default style is text GAUGES (`f_gBar` score bars, `f_gPos`
+  sliders; executed vs references in `panel_check.py` 7); the v79 sentences stay as "Glance style = Text (v79)".
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.

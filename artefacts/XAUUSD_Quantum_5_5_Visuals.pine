@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v79   (market at a glance)           ║
+// ║  BUILD STAMP — this file last CHANGED in v80   (glance gauges)                ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -132,6 +132,7 @@ bool vSep = vLayout == "Separate cards (v72)"
 glShow = input.bool(true, "Market at a glance (8 answers)", group = grpTm, tooltip = "Trend, bias, heading, liquidity, macro, room for a move, history, probability, in plain words. Display only.")
 glMoveA = input.float(10.0, "Move to plan for: at least ($)", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm, tooltip = "The ROOM row checks whether price has this much space before the nearest liquidity level on each side. Display only: no gate, no signal.")
 glMoveB = input.float(20.0, "Move to plan for: target ($)", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm)
+glStyle = input.string("Gauges (compact)", "Glance style", options = ["Gauges (compact)", "Text (v79)"], group = grpTm, tooltip = "Gauges: the same answers as bars and sliders, about one line each. Text: the v79 sentences.")
 gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Right", "Bottom Center", "Bottom Left", "Middle Right", "Hidden"], group="GOLD DRIVERS (display only)")
 // v74: the drivers can sit directly UNDER the Master's MACRO column, so the two read as one macro block. The Master's
 // dashboard has fixed geometry: top right (Desktop / Auto) or top left (Tablet), no border, no frame, column widths
@@ -1385,7 +1386,7 @@ if vSep and barstate.islast and gdPos != "Hidden" and not gdDocked
 // The three cards' values in one docked panel: MARKET (the candle panel), H2 SWEEP → VALUE (the H2 card's rows,
 // same expressions) and GOLD DRIVERS (the drivers panel's rows, same glyphs and colours). Grey = labels, white =
 // values, colour only for direction (teal supports gold up / the bar closed up, red down). Display only.
-var table tblV = table.new(vPos == "Middle Left" ? position.middle_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.bottom_left, 2, 40, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
+var table tblV = table.new(vPos == "Middle Left" ? position.middle_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.bottom_left, 2, 50, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
 color _tmK = color.new(#7D8FA3, 0)
 color _tmV = color.new(#E6EDF3, 0)
 color _tmUp = color.new(#26A69A, 0)
@@ -1403,6 +1404,25 @@ f_glNear(bool up, float from) =>
             best := p
             nm := array.get(array.from("PDH", "PDL", "PWH", "PWL", "PMH", "PML", "CDH", "CDL"), i)
     [best, nm]
+// v80: text gauges for the glance. f_gBar: a 0-100 value as n segments (▰ filled, ▱ empty; Pine's half-away rounding).
+// f_gPos: where x sits between lo and hi on an n-character track (● inside, ◀ / ▶ beyond an end; "—" if undefined).
+f_gBar(float pct, int n) =>
+    string out = ""
+    if na(pct)
+        out := "—"
+    else
+        int k = int(math.round(math.max(0.0, math.min(100.0, pct)) / 100.0 * n))
+        for i = 0 to n - 1
+            out += i < k ? "▰" : "▱"
+    out
+f_gPos(float lo, float x, float hi, int n) =>
+    string out = "—"
+    if not na(lo) and not na(hi) and not na(x) and hi > lo
+        int k = int(math.round((x - lo) / (hi - lo) * (n - 1)))
+        out := ""
+        for i = 0 to n - 1
+            out += x < lo and i == 0 ? "◀" : x > hi and i == n - 1 ? "▶" : x >= lo and x <= hi and i == k ? "●" : "━"
+    out
 f_tmG(float d) => na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"
 f_tmC(float d) => na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)
 _tmRow(int r, string k, string v, color c) =>
@@ -1412,7 +1432,7 @@ _tmHead(int r, string k, string v, color bg) =>
     table.cell(tblV, 0, r, k, text_color = color.white, bgcolor = bg, text_size = h2Sz, text_halign = text.align_left)
     table.cell(tblV, 1, r, v, text_color = color.new(#AEBBC9, 0), bgcolor = bg, text_size = h2Sz, text_halign = text.align_right)
 if not vSep and barstate.islast
-    table.clear(tblV, 0, 0, 1, 39)
+    table.clear(tblV, 0, 0, 1, 49)
 // v75: drawn only while it has a section (everything docked under the Master + candle panel off = no empty frame)
 if not vSep and barstate.islast and (glShow or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel)
     bool _cmp = vDetail == "Compact"
@@ -1426,24 +1446,45 @@ if not vSep and barstate.islast and (glShow or showCandle or h2Show and not h2Do
         float _gNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
         float _upR = na(_upP) ? na : _upP - close
         float _dnR = na(_dnP) ? na : close - _dnP
-        r += 1
-        _tmHead(r, "MARKET AT A GLANCE", "display only · plain words", _tmSec)
-        r += 1
-        _tmRow(r, "1 TREND", h2Trend + " on 1H/4H/1D (2 of 3 vote) · price " + (na(ema200) ? "—" : close > ema200 ? "above" : "below") + " EMA200", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
-        r += 1
-        _tmRow(r, "2 BIAS", "the Master's BIAS + DECISION cells (top): its engine's call", _tmK)
-        r += 1
-        _tmRow(r, "3 HEADING", h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
-        r += 1
-        _tmRow(r, "4 LIQUIDITY", "last swept: " + pvLastSweep + "\nnext above: " + (na(_upP) ? "none tagged" : _upN + " " + str.tostring(_upP, format.mintick) + " (+" + str.tostring(_upR, "#.##") + ")") + " · below: " + (na(_dnP) ? "none tagged" : _dnN + " " + str.tostring(_dnP, format.mintick) + " (−" + str.tostring(_dnR, "#.##") + ")"), _tmV)
-        r += 1
-        _tmRow(r, "5 MACRO", "gold drivers net " + f_tmG(_gNet) + (_gNet > 0 ? " · lean supports gold" : _gNet < 0 ? " · lean against gold" : " · no lean") + " (display only)", f_tmC(_gNet))
-        r += 1
-        _tmRow(r, "6 ROOM", "up $" + (na(_upR) ? "—" : str.tostring(_upR, "#.##")) + (na(_upR) ? "" : _upR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_up2P) ? "" : " (then " + _up2N + " +" + str.tostring(_up2P - close, "#.##") + ")")) + "\ndown $" + (na(_dnR) ? "—" : str.tostring(_dnR, "#.##")) + (na(_dnR) ? "" : _dnR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_dn2P) ? "" : " (then " + _dn2N + " −" + str.tostring(close - _dn2P, "#.##") + ")")) + " · plan: the Master's plan strip", _tmV)
-        r += 1
-        _tmRow(r, "7 HISTORY", "this session: manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + " · continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nlast H2 signal: " + (h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY " : "SELL ") + (h2SigOut == "" ? "open" : h2SigOut) + (h2Stale ? " · stale" : " · live")), _tmV)
-        r += 1
-        _tmRow(r, "8 ODDS", "the Master's SIGNAL cell: L / S / R % (calibrated next-1R)", _tmK)
+        if glStyle == "Text (v79)"
+            r += 1
+            _tmHead(r, "MARKET AT A GLANCE", "display only · plain words", _tmSec)
+            r += 1
+            _tmRow(r, "1 TREND", h2Trend + " on 1H/4H/1D (2 of 3 vote) · price " + (na(ema200) ? "—" : close > ema200 ? "above" : "below") + " EMA200", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+            r += 1
+            _tmRow(r, "2 BIAS", "the Master's BIAS + DECISION cells (top): its engine's call", _tmK)
+            r += 1
+            _tmRow(r, "3 HEADING", h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+            r += 1
+            _tmRow(r, "4 LIQUIDITY", "last swept: " + pvLastSweep + "\nnext above: " + (na(_upP) ? "none tagged" : _upN + " " + str.tostring(_upP, format.mintick) + " (+" + str.tostring(_upR, "#.##") + ")") + " · below: " + (na(_dnP) ? "none tagged" : _dnN + " " + str.tostring(_dnP, format.mintick) + " (−" + str.tostring(_dnR, "#.##") + ")"), _tmV)
+            r += 1
+            _tmRow(r, "5 MACRO", "gold drivers net " + f_tmG(_gNet) + (_gNet > 0 ? " · lean supports gold" : _gNet < 0 ? " · lean against gold" : " · no lean") + " (display only)", f_tmC(_gNet))
+            r += 1
+            _tmRow(r, "6 ROOM", "up $" + (na(_upR) ? "—" : str.tostring(_upR, "#.##")) + (na(_upR) ? "" : _upR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_up2P) ? "" : " (then " + _up2N + " +" + str.tostring(_up2P - close, "#.##") + ")")) + "\ndown $" + (na(_dnR) ? "—" : str.tostring(_dnR, "#.##")) + (na(_dnR) ? "" : _dnR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_dn2P) ? "" : " (then " + _dn2N + " −" + str.tostring(close - _dn2P, "#.##") + ")")) + " · plan: the Master's plan strip", _tmV)
+            r += 1
+            _tmRow(r, "7 HISTORY", "this session: manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + " · continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nlast H2 signal: " + (h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY " : "SELL ") + (h2SigOut == "" ? "open" : h2SigOut) + (h2Stale ? " · stale" : " · live")), _tmV)
+            r += 1
+            _tmRow(r, "8 ODDS", "the Master's SIGNAL cell: L / S / R % (calibrated next-1R)", _tmK)
+        else
+            string _mk = "✗<$" + str.tostring(glMoveA, "#")
+            r += 1
+            _tmHead(r, "AT A GLANCE · " + timeframe.period, h2TrendUp ? "▲ TREND UP" : h2TrendDn ? "▼ TREND DOWN" : "◆ TREND MIXED", _tmSec)
+            r += 1
+            _tmRow(r, "TREND", "1H " + f_gBar(h2S1, 5) + "  4H " + f_gBar(h2S4, 5) + "  1D " + f_gBar(h2SD, 5) + (na(ema200) ? "" : close > ema200 ? "  ▲EMA200" : "  ▼EMA200"), h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+            r += 1
+            _tmRow(r, "VALUE", "VAL " + f_gPos(h2Val, close, h2Vah, 11) + " VAH" + (na(h2Poc) ? "" : close >= h2Poc ? "  over POC" : "  under POC"), na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+            r += 1
+            _tmRow(r, "ROOM", (na(_dnP) ? "—" : _dnN + " −" + str.tostring(_dnR, "#.#")) + " " + f_gPos(_dnP, close, _upP, 11) + " " + (na(_upP) ? "—" : "+" + str.tostring(_upR, "#.#") + " " + _upN) + "\n↓ " + (na(_dnR) ? "—" : _dnR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk) + "    ↑ " + (na(_upR) ? "—" : _upR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk), _tmV)
+            r += 1
+            _tmRow(r, "MACRO", f_tmG(_gNet) + "  JPY" + f_tmG(brJd) + " OIL" + f_tmG(brOd) + " RY" + f_tmG(brRd) + " BE" + f_tmG(brBd) + " 2Y" + f_tmG(br2d), f_tmC(_gNet))
+            r += 1
+            _tmRow(r, "SWEPT", pvLastSweep, str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+            r += 1
+            _tmRow(r, "HISTORY", "manip " + f_gBar(sessManipProb, 5) + (na(sessManipProb) ? "" : " " + str.tostring(int(sessManipProb)) + "%") + "  cont " + f_gBar(sessContProb, 5) + (na(sessContProb) ? "" : " " + str.tostring(int(sessContProb)) + "%"), _tmV)
+            r += 1
+            _tmRow(r, "H2", h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " · ○ stale" : " · ● live") + (h2SigOut != "" ? " · " + h2SigOut : ""), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
+            r += 1
+            _tmRow(r, "BIAS · ODDS", "→ the Master's BIAS / SIGNAL cells", _tmK)
     if showCandle
         float _rng = high - low
         bool _up = close >= open

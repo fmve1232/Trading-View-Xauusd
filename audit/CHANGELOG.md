@@ -2756,3 +2756,46 @@ of the test missed the second mutation because it never hit an exact boundary; t
 
 Visuals size: best-fit 39,937 / pessimistic 48,323. Master, Brief, Diagnostics and the arms are unchanged. Compile NOT
 RUN on v79.
+
+---
+
+# Build v79 → v80 — the glance as gauges (operator: "modern visual with compact information … graphics or gauge type")
+
+**Operator's v79 screenshot (2026-10-21):** Visuals v79 compiled, and MARKET AT A GLANCE answers the eight questions,
+but in long sentences. The screenshot also shows the candles drawn over the panel. That is TradingView's visual order,
+not the script: Visuals sits behind the price series. Right-click Visuals → Visual order → Bring to front.
+
+**v80: "Glance style = Gauges (compact)"** (new default). Pine tables hold text only, so the gauges are made of
+characters, about one line per answer:
+
+```
+AT A GLANCE · 15                         ▼ TREND DOWN
+TREND    1H ▰▰▰▰▱  4H ▰▱▱▱▱  1D ▱▱▱▱▱  ▼EMA200
+VALUE    VAL ━━━━●━━━━━━ VAH  under POC
+ROOM     PDL −8.6 ━━━●━━━━━━━ +11.7 CDH
+         ↓ ✗<$10    ↑ ✓$10
+MACRO    ▼▼  JPY≈ OIL▼▼ RY≈ BE≈ 2Y▼
+SWEPT    HIGH 4127.05  10-20 22:30 UTC
+HISTORY  manip ▰▰▱▱▱ 40%  cont ▰▰▰▱▱ 60%
+H2       SELL · ○ stale · stopped
+BIAS · ODDS  → the Master's BIAS / SIGNAL cells
+```
+
+- **TREND:** the H2 trend-score inputs (0-100) as 5-segment bars.
+- **VALUE:** where price sits between VAL and VAH (◀ / ▶ outside the value area).
+- **ROOM:** price on the track between the nearest tagged level below and above, with the ✓ / ✗ marks against the two
+  move sizes.
+- **HISTORY:** the session engine's percentages as bars.
+
+The v79 sentences stay available as **Glance style = Text (v79)**. The values are the same in both styles; only the
+form differs. The panel's table grows to 50 rows: the checker counts both styles' rows, though only one style is drawn.
+
+**Checks:**
+- `panel_check.py` 7 executes `f_gBar` and `f_gPos` against references, including the ends, the outside cases and
+  undefined inputs: 8,000 cases, 0 mismatches.
+- It also checks that the gauge rows read the same values as the text rows.
+- Mutation-tested: the slider marker rounded down instead of to nearest FAILs. Removing the 0-100 clamp in `f_gBar` is
+  an equivalent mutant: values beyond either end already fill all or none of the segments, so the output is
+  identical.
+
+Visuals size: best-fit 42,992 / pessimistic 51,986. Visuals only. Compile NOT RUN on v80.

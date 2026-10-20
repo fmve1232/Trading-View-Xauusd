@@ -70,7 +70,7 @@ col = 'na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? c
 tg = next(l for l in L if l.startswith("f_tmG(float d) => ")).split("=> ", 1)[1]
 tc = next(l for l in L if l.startswith("f_tmC(float d) => ")).split("=> ", 1)[1]
 rows = [args(l, "_tmRow") for l in blk if l.strip().startswith('_tmRow(r, "') and "f_tmG(" in l
-        and not re.match(r'_tmRow\(r, "\d ', l.strip())]   # v79: the glance rows ("5 MACRO") are checked in 7
+        and not re.match(r'_tmRow\(r, "\d ', l.strip()) and "+ f_tmG(" in args(l, "_tmRow")[1]]   # v79/v80: glance rows -> 7
 want = [('"USDJPY "', "brJ"), ('"OIL "', "brO"), ('"REAL YLD "', "brR"), ('"BREAKEVEN "', "brB"), ('"US 2Y "', "br2")]
 rows_ok = [(r_[1], r_[2], r_[3]) for r_ in rows] == [(f"{n} + f_tmG({v}d)", f"{v}h", f"f_tmC({v}d)") for n, v in want]
 tape = next((l for l in blk if '"JPY" + f_tmG(brJd)' in l), "")
@@ -209,6 +209,55 @@ for _ in range(3000):
         want = "—" if P.isna(r_) else f"✓ ${B_:g}" if r_ >= B_ else f"✓ ${A_:g}" if r_ >= A_ else f"✗ <${A_:g}"
         br += want not in line or (want.startswith("✗") and "(then " not in line)
 report(br == 0, f"glance ROOM: ✓ target / ✓ minimum / ✗ + next level, executed ({nr} cases, mismatches {br})")
+# v80: the gauge style -- f_gBar / f_gPos executed against references, and its rows read the same values
+def fnsrc(head):
+    i = next(k for k, l in enumerate(L) if l.startswith(head))
+    out = [L[i]]
+    for l in L[i + 1:]:
+        if l and not l.startswith(" "):
+            break
+        out.append(l)
+    return out
+genv = P.Env()
+P.define(fnsrc("f_gBar(float pct, int n) =>"), genv)
+P.define(fnsrc("f_gPos(float lo, float x, float hi, int n) =>"), genv)
+def bar_ref(pct, n):
+    if pct is None:
+        return "—"
+    k = int(math.floor(max(0.0, min(100.0, pct)) / 100.0 * n + 0.5))
+    return "▰" * k + "▱" * (n - k)
+def pos_ref(lo, x, hi, n):
+    if lo is None or hi is None or hi <= lo:
+        return "—"
+    if x < lo:
+        return "◀" + "━" * (n - 1)
+    if x > hi:
+        return "━" * (n - 1) + "▶"
+    k = int(math.floor((x - lo) / (hi - lo) * (n - 1) + 0.5))
+    return "━" * k + "●" + "━" * (n - 1 - k)
+import math
+bg = ng = 0
+for _ in range(4000):
+    n_ = rng.choice([5, 11])
+    pct = None if rng.random() < 0.05 else rng.choice([0.0, 100.0, 50.0, 10.0, 30.0, rng.uniform(-20, 120)])
+    e = P.Env(funcs=genv.funcs)
+    ng += 1
+    bg += P.evaluate(f"f_gBar({'na' if pct is None else repr(pct)}, {n_})", e) != bar_ref(pct, n_)
+    lo = None if rng.random() < 0.05 else 4100 + rng.uniform(-5, 5)
+    hi = None if rng.random() < 0.05 else (lo or 4100) + rng.choice([-1.0, 0.0, rng.uniform(1, 40)])
+    x = rng.choice([lo if lo is not None else 4100, hi if hi is not None else 4120, 4100 + rng.uniform(-20, 60)])
+    ng += 1
+    got = P.evaluate(f"f_gPos({'na' if lo is None else repr(lo)}, {x!r}, {'na' if hi is None else repr(hi)}, {n_})", e)
+    want = pos_ref(lo, x, hi, n_)
+    bg += got != want
+    if got != want and bg <= 3:
+        print("      gauge mismatch", lo, x, hi, n_, repr(got), repr(want))
+gsec = "\n".join(blk[next(i for i, l in enumerate(blk) if '_tmHead(r, "AT A GLANCE · "' in l):next(i for i, l in enumerate(blk) if '"BIAS · ODDS"' in l) + 1])
+gauge_ok = all(x in gsec for x in ("f_gBar(h2S1, 5)", "f_gBar(h2S4, 5)", "f_gBar(h2SD, 5)", "f_gPos(h2Val, close, h2Vah, 11)",
+                                   "f_gPos(_dnP, close, _upP, 11)", "glMoveA", "glMoveB", "f_tmG(_gNet)", "pvLastSweep",
+                                   "f_gBar(sessManipProb, 5)", "f_gBar(sessContProb, 5)", "h2SigState", "the Master's BIAS / SIGNAL"))
+report(bg == 0 and gauge_ok, f"glance gauges: f_gBar / f_gPos executed vs reference ({ng} cases, mismatches {bg}); the gauge rows read "
+       "the same values as the text rows")
 report(exec_ok and bad7 == 0 and n7 > 0 and static7,
        f"glance: nearest tagged level above / below executed vs reference ({n7} cases, mismatches {bad7}); 8 rows, each "
        "reads its value; bias and odds point at the Master's cells")
