@@ -671,6 +671,29 @@ function sigStatus(p, D) {
   return `<div class="sigst ${s.stale ? "stale" : p.dir === "LONG" ? "bull" : "bear"}" title="Stale after ${s.stale_bars} bars, when the trade is over, or when the trend vote no longer agrees (display only; the rule is unchanged)">` +
     `${s.stale ? "○ STALE" : "● LIVE"} · ${s.bars} bar${s.bars === 1 ? "" : "s"} · ${ago} · ${esc(s.outcome)}${s.stale && s.why.length ? " · " + esc(s.why.join(", ")) : ""}</div>`;
 }
+/* ---------- arm H5 "High confidence" (Amendment 10; quantum/arm_h5.py): the engine's own signal only when every layer agrees ---------- */
+function renderH5() {
+  const D = S.data, el = $("#h5"), st = $("#h5-state"); if (!el || !D) return;
+  const H = D.h5;
+  if (!H || H.error) { el.innerHTML = `<span class="muted">${H ? "H5 error: " + esc(H.error) : "Appears after the next pipeline run."}</span>`; st.textContent = "—"; return; }
+  const ck = H.checklist || {}, sc = (c) => Object.values(c || {}).filter(Boolean).length;
+  const side = H.signal_now ? (H.signal_now.dir === "LONG" ? "long" : "short") : sc(ck.long) >= sc(ck.short) ? "long" : "short";
+  const c = ck[side] || {}, other = side === "long" ? "short" : "long";
+  const htfTxt = (ck.htf_live || []).length ? (ck.htf_live || []).map((k) => `${k === "240" ? "4H" : "1D"} ${f(ck.htf_scores[k], 0)}`).join(" · ") : "none live on this timeframe";
+  const RULES = [["engine", "The model itself gives a " + (side === "long" ? "BUY" : "SELL") + " (all its checks passed)"],
+    ["conviction", `Full conviction: bias ${side === "long" ? "BULL" : "BEAR"} (not just “-ish”)`],
+    ["htf", `4-hour and daily trends agree (${htfTxt})`], ["macro", "Macro vote agrees (dollar, yields, silver …)"],
+    ["session", "London or New York hours"]];
+  const rows = RULES.map(([k, t]) => `<li class="${c[k] ? "ok" : "bad"}"><span class="sr">${c[k] ? "met:" : "missing:"}</span>${esc(t)}</li>`).join("");
+  const now = H.signal_now, last = H.last_signal, p = now || last;
+  st.textContent = now ? `${now.dir === "LONG" ? "BUY" : "SELL"} NOW` : "NO TRADE"; st.className = "pill " + (now ? (now.dir === "LONG" ? "bull" : "bear") : "");
+  const plan = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · stop ${px(p.sl)} · target 1 ${px(p.tp1)} · target 2 ${px(p.tp2)}${sigStatus(p, D)}</div>` : `<div class="why dim">No H5 signal on this timeframe in the chart's history yet.</div>`;
+  const fw = H.forward || {}, is = H.in_sample || {}, fr = H.freeze || {};
+  const rec = (m) => m.n ? `${m.n} trades · ${f(m.win_rate, 0)}% won · average ${fs(m.avg_r, 2)} R · profit factor ${f(m.profit_factor, 2)}` : "no closed trades yet";
+  el.innerHTML = `<div class="why"><div class="rhead"><b>${side === "long" ? "Long" : "Short"} side · ${sc(c)} of 5 met</b>${ruleMeter(sc(c), 5)}<span class="dim">${other} side ${sc(ck[other])} of 5</span></div><ul class="gates">${rows}</ul></div>` + plan +
+    `<div class="why"><b>Live record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${rec(fw)}.<br><span class="dim">Past data (${esc(D.meta.tf)}): ${rec(is)}.</span></div>` +
+    `<div class="why note-h5"><b>Read this before trading.</b> H5 takes a trade only when all five agree, so it is rare: a few per month at most, often none. No rule wins every trade, and a 90% win rate is not promised. It is judged on its 1-hour live record after 30 trades: average R above 0 and profit factor at least 1.2. Risk only what a stop-out can cost you.</div>`;
+}
 function renderH2() {
   const D = S.data, el = $("#h2"), st = $("#h2-state"); if (!el || !D) return;
   const H = D.h2;
@@ -1624,7 +1647,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderBrief); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderBrief); safe(renderH5); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

@@ -544,3 +544,10 @@ footer a { color: var(--muted); }
 /* Pine v76: last-signal status line */
 .sigst { margin-top: 4px; font: 600 11.5px var(--mono); }
 .sigst.bull { color: var(--bull); } .sigst.bear { color: var(--bear); } .sigst.stale { color: var(--dim); }
+
+/* arm H5 card */
+.h5card { border-top: 2px solid var(--accent); }
+.h5card .pill.bull { color: var(--bull); border-color: color-mix(in srgb, var(--bull) 45%, transparent); }
+.h5card .pill.bear { color: var(--bear); border-color: color-mix(in srgb, var(--bear) 45%, transparent); }
+.h5card .note-h5 { font-size: 12px; color: var(--muted); border-left: 2px solid var(--warn); padding-left: 8px; }
+.h5card .note-h5 b { color: var(--warn); }

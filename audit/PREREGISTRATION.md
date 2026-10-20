@@ -545,3 +545,34 @@ reads raw HTF scores), F-A55's DO NOW rule, the Market Brief (v52 was ported fro
 
 Checked on `forward-ledger` @ `4cd5cb3b`: every new ledger starts empty, and the archive holds the earlier trades (H4 15m: all
 72; H4 1h: 13; Treatment 5m: 12 across both earlier freezes). The decision rules and the decision date are unchanged.
+
+## Amendment 10 (2026-10-20, operator request; written before H5 was run on any price history): arm H5 "High confidence"
+
+**Why.** The operator asked for "quality trades to avoid loss", with a 90% win rate. A win rate cannot be promised:
+no rule on this market can guarantee one, and choosing rules on past prices until they look accurate would be tuning
+(§9 of the audit prompt), which this registration forbids. H5 is therefore a **stricter filter written down before
+it is run**, measured forward like every other arm. It changes nothing in the engine, the §7 arms or H2–H4.
+
+**Rule at the close of bar i** (every input is already published per bar by the frozen engine; no new threshold):
+- **LONG** only if all of:
+  1. the treatment engine itself signals BUY on bar i after all its own gates and vetoes (`exec_buy[i]`);
+  2. the bias label is **BULL** (the engine's existing ≥ 62 conviction label, not BULL-ISH);
+  3. every higher-timeframe trend layer that is live on the chart's timeframe among **4H and 1D** reads up (score ≥ 60,
+     the engine's own HTF threshold), and at least one of them is live;
+  4. the macro vote is bullish (`macro_bull[i]`, the engine's majority rule);
+  5. session quality ≥ 30 (London / New York; the engine's own session gate, restated).
+- **SHORT** is the mirror (SELL, BEAR, ≤ 40, `macro_bear`).
+- **Plan:** the engine's own entry (close), stop and targets for that bar (`plan_sl`, `plan_tp1`, `plan_tp2`).
+- **Execution and costs:** `backtest.simulate`, as every other arm: one position at a time, stop first on a same-bar
+  tie, 50% at TP1 then breakeven.
+
+**Freeze:** key = the §7 engine key + SHA-256 of `quantum/arm_h5.py`; ledger `holdout/<tf>_h5.json`; starts at the first
+pipeline run after this amendment is merged. Earlier trades are in-sample only and are labelled so.
+
+**Decision:** the **1H** record decides (the engine's registered timeframe); others are reported. After N ≥ 30 closed
+trades (fewer than other arms because the filter is strict; set now, before any count is seen), H5 shows an edge only if
+the 95% t-interval of mean R is above 0 and PF ≥ 1.2; decide by 2027-03-31, otherwise NOT SHOWN. The **win rate is
+reported, not used to decide**: a trade that reaches TP1 and is then stopped at breakeven counts as a win at about +0.5R,
+so the win rate depends on the exit design, and only the mean R and PF say whether money is made. **Multiplicity:** H5 is a
+seventh hypothesis on the same market and period; it is a subset of the treatment arm's signals and borrows no evidence
+from it.
