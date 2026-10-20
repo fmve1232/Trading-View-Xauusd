@@ -16,8 +16,10 @@ plus any other artefact that changed, and post the build record in chat.**
   them). Since v74 the five drivers are docked UNDER the Master's MACRO column by default (same anchor, no frame, the
   Master's nine column widths x Density; `dashMode` / `textSize` / `density` copied from the Master and held equal by
   `inputs_check.py`; `panel_check.py` 5 reads the geometry from the Master's code). Since v75 the H2 card (the website's
-  arm H3 is the same rule) docks under DECISION and a LIQUIDITY · SWEEPS block under LIQUIDITY, each its own table and
-  gap (`panel_check.py` 6); the bottom-left panel is drawn only while it has a section.
+  arm H3 is the same rule) docks under DECISION and a LIQUIDITY · SWEEPS block under LIQUIDITY (`panel_check.py` 6); the
+  bottom-left panel is drawn only while it has a section. **TradingView shows ONE table per position per script**
+  (F-A69: v75/v76's three top-right dock tables showed only the last): since v77 all docks are one table with one gap,
+  and no other Visuals table may take its corner.
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.
@@ -134,7 +136,7 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A68. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A69. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |

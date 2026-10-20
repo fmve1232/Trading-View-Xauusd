@@ -2651,3 +2651,33 @@ arm H3. The Master's own H2 SETUP line has no age; the Master has no token room.
 - `panel_check.py` maps the grey stale colour across the card, panel and dock.
 
 Visuals size: best-fit 37,198 / pessimistic 44,933. Compile NOT RUN on v76.
+
+---
+
+# Build v76 → v77 — F-A69: the liquidity and gold-driver docks were hidden; all docks in one table
+
+**Operator's v76 screenshot (2026-10-20):**
+- Visuals v76 compiled. The H2 dock under DECISION showed the new status line (`○ STALE · 213 bars · … · stopped`).
+- But nothing appeared under LIQUIDITY or MACRO.
+
+**Cause:**
+- The three docks were three tables, all at `position.top_right`.
+- TradingView displays one table per position per script, the last one created, so only the H2 dock showed.
+- This is a rendering rule; none of the static checkers model it.
+
+**v77:**
+- **One dock table, `dkT`:**
+  - column 4 = LIQUIDITY · SWEEPS;
+  - column 6 = GOLD DRIVERS;
+  - column 8 = H2 SWEEP → VALUE;
+  - one transparent spacer row.
+- **One gap: "Dock gap below the Master dashboard"**, default 25 % (the v76 screenshot puts the Master's DECISION column,
+  its tallest, ending at ~23 %).
+  - The v75 per-dock `lqGap` / `h2Gap` inputs are gone: one table has one spacer, so they could not work.
+  - The rows line up as a second band under the Master's dashboard.
+- **Corners:** in the separate-cards layout, the candle card's "Top Right" moves to middle right while any dock is on,
+  since the docks take that corner. The Terminal position tooltip warns that the docks take Top Left with the Master on
+  Tablet.
+- **`panel_check.py` 5:** now requires exactly one dock table, no other top-right table, and the candle card's move.
+
+Values, rows, colours and the H2 rule are unchanged. Visuals only. Compile / rendering NOT RUN on v77.

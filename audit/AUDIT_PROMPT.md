@@ -24,11 +24,11 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 345889 | `42a6e6e5eb0acb3d11dfd73f43d17f488e2b93afcbb19b4eaa60b6051a4045c8` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1521 | 107632 | `46c1242a35a4e2ada820b9f479d4890fab2fc37b9fe6387e080474200ce0d717` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1522 | 107570 | `c2cd29ac201f74d69c487230d993756f21268836c2bc3a1ab4d74e7f30c8039a` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 361996 | `e91a9a431f20b67279c59dffc94706d20836556d4566f1a9bc0bd4170e5b6709` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 357944 | `ab85c87344149df5eed7ec16a0f1c83e437602344fed7686b9afb7bc049a40e8` |
 
-> **BUILD v76 — this prompt pins the current build.** The originally audited build
+> **BUILD v77 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -122,6 +122,7 @@ scope, and no other build of these scripts is in scope.
 > **v74:** Visuals' five gold drivers docked directly under the Master's MACRO column (the Master's anchor, frame and column widths reproduced; gap adjustable); the terminal panel moves to bottom left.
 > **v75:** Visuals' H2 card docked under the Master's DECISION column (the website's arm H3 is the same rule) and a LIQUIDITY · SWEEPS block (8 levels + last sweeps) under LIQUIDITY; each dock its own gap.
 > **v76:** the H2 card's SIGNAL row shows the last signal's age, outcome (TP1 / TP2 / stopped) and LIVE / STALE (display only; the H2 rule is unchanged); `h2_age_check.py` executes it.
+> **v77: F-A69** — the liquidity and driver docks were hidden (TradingView shows one table per position per script); all docks are now one table with one gap.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

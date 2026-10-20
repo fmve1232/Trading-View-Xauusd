@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v76   (H2 signal age + stale)        ║
+// ║  BUILD STAMP — this file last CHANGED in v77   (all docks in one table)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -123,7 +123,7 @@ candlePos    = input.string("Top Right", "Panel position", options = ["Top Right
 // Gold drivers panel = Hidden; the H2 card layout "Full" adds the session rows and its text size sets the panel's.
 grpTm = "TERMINAL PANEL (v73)"
 vLayout = input.string("Terminal (one panel)", "Panel layout", options = ["Terminal (one panel)", "Separate cards (v72)"], group = grpTm, tooltip = "Terminal: market, H2 and gold drivers in one docked panel, one style. Separate cards: the three v72 cards, each at its own position.")
-vPos = input.string("Bottom Left", "Terminal position", options = ["Bottom Left", "Middle Left", "Top Left", "Middle Right"], group = grpTm, tooltip = "The Master's dashboard sits top right and its trade plan bottom right (Desktop); bottom left keeps both and the newest candles clear. With the Master on Tablet its plan is bottom left: pick Middle Left.")
+vPos = input.string("Bottom Left", "Terminal position", options = ["Bottom Left", "Middle Left", "Top Left", "Middle Right"], group = grpTm, tooltip = "The Master's dashboard sits top right and its trade plan bottom right (Desktop); bottom left keeps both and the newest candles clear. With the Master on Tablet its plan is bottom left: pick Middle Left (not Top Left: the docks take that corner then; TradingView shows one table per corner).")
 vDetail = input.string("Standard", "Terminal detail", options = ["Standard", "Compact"], group = grpTm, tooltip = "Standard: every row. Compact: price + flow, signal + next, and the five drivers as one line (hover it for the detail).")
 bool vSep = vLayout == "Separate cards (v72)"
 gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Right", "Bottom Center", "Bottom Left", "Middle Right", "Hidden"], group="GOLD DRIVERS (display only)")
@@ -132,21 +132,23 @@ gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Righ
 // 10/10/12/11/13/10/11/11/13 % of the chart x its Density. These three inputs are the Master's own (same names,
 // options, defaults; inputs_check.py holds them equal) -- set them as in the Master. Only the gap is free.
 gdDock = input.string("Under the Master's MACRO", "Gold drivers placement", options=["Under the Master's MACRO", "In the panel / card"], group="GOLD DRIVERS (display only)", tooltip="Under the Master's MACRO: a column aligned under the Master dashboard's MACRO cell (Desktop / Tablet; not with the Master on Mobile). In the panel / card: inside the terminal panel, or the separate drivers card.")
-gdGap = input.int(17, "Gap below the Master dashboard (% of chart height)", minval=0, maxval=60, group="GOLD DRIVERS (display only)", tooltip="Moves the docked drivers up or down until they sit just under the Master's MACRO cell; the Master's height depends on its text size and density.")
+gdGap = input.int(25, "Dock gap below the Master dashboard (% of chart height)", minval=0, maxval=70, group="GOLD DRIVERS (display only)", tooltip="All docks (liquidity, gold drivers, H2) start this far down: raise it until they clear the Master's tallest column (DECISION, with its H2 SETUP cell).")
 dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
 textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
 density = input.string("Standard", "Density", options=["Compact", "Standard", "Spacious"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
 bool gdDocked = gdDock == "Under the Master's MACRO" and gdPos != "Hidden" and dashMode != "Mobile"
 // v75: the H2 card (= the website's arm H3, the same rule) and a LIQUIDITY · SWEEPS block can sit under the
-// Master's DECISION and LIQUIDITY columns, as the drivers sit under MACRO; each dock is its own table with its own gap
-// (the Master's DECISION column is taller: its H2 SETUP cell). These inputs moved up here so the cards can read them.
+// Master's DECISION and LIQUIDITY columns, as the drivers sit under MACRO. v77: ONE table for all docks (TradingView
+// shows one table per position per script: v76's three top-right tables showed only the last one), so they share one
+// gap below the Master's tallest column. These inputs moved up here so the cards can read them.
 grpDk = "DOCK UNDER THE MASTER (v75)"
 h2Dock = input.string("Under the Master's DECISION", "H2 card placement", options=["Under the Master's DECISION", "In the panel / card"], group=grpDk, tooltip="The H2 sweep-to-value card (the website records the same rule as arm H3) under the Master dashboard's DECISION column, or in the terminal panel / its own card.")
-h2Gap = input.int(30, "H2 gap below the Master dashboard (% of chart height)", minval=0, maxval=70, group=grpDk, tooltip="The DECISION column is the tallest (its H2 SETUP cell): raise until the card clears it.")
 lqDock = input.string("Under the Master's LIQUIDITY", "Liquidity & sweeps placement", options=["Under the Master's LIQUIDITY", "In the panel", "Hidden"], group=grpDk, tooltip="PDH/PDL, PWH/PWL, PMH/PML, CDH/CDL with distance from price, the unswept swings and the last sweeps, under the Master's LIQUIDITY column or in the terminal panel. Display only.")
-lqGap = input.int(17, "Liquidity gap below the Master dashboard (% of chart height)", minval=0, maxval=70, group=grpDk)
 bool h2Docked = h2Dock == "Under the Master's DECISION" and dashMode != "Mobile"
 bool lqDocked = lqDock == "Under the Master's LIQUIDITY" and dashMode != "Mobile"
+// v77: the separate candle card's "Top Right" would share the docks' corner (one table per position): it moves to
+// middle right while any dock is on
+bool dkOn = gdDocked or lqDocked or h2Docked
 bool lqInPanel = lqDock == "In the panel" or lqDock == "Under the Master's LIQUIDITY" and dashMode == "Mobile"
 
 grpSess = "Sessions (UTC)"
@@ -776,7 +778,7 @@ if barstate.islast
 var table tblC = na
 if vSep and showCandle and barstate.islast
     if na(tblC)
-        tblC := table.new(candlePos == "Top Right" ? position.top_right : candlePos == "Middle Right" ? position.middle_right : candlePos == "Bottom Right" ? position.bottom_right : position.top_left, 1, 1, bgcolor = color.new(#101418, 12), border_width = 0, frame_width = 0)
+        tblC := table.new(candlePos == "Top Right" ? (dkOn ? position.middle_right : position.top_right) : candlePos == "Middle Right" ? position.middle_right : candlePos == "Bottom Right" ? position.bottom_right : position.top_left, 1, 1, bgcolor = color.new(#101418, 12), border_width = 0, frame_width = 0)
     float rngC   = high - low
     float atrPct = close > 0 ? atr14 / close * 100.0 : na
     float rvol   = not na(volSma20) and volSma20 > 0 ? volume / volSma20 : na
@@ -1476,8 +1478,8 @@ if not vSep and barstate.islast and (showCandle or h2Show and not h2Docked or gd
 
 // ═══════════════════ DOCKS UNDER THE MASTER'S DASHBOARD (v74 drivers; v75 H2 card, liquidity) ═══════════════════
 // Same anchor, no border / frame and the same nine column widths as the Master's dashboard, so a dock's column c sits
-// exactly under the Master's column c (4 LIQUIDITY, 6 MACRO, 8 DECISION); row 0 is a transparent spacer of the dock's
-// gap (% of chart height). Each dock is its own table so each has its own gap. The cells use the Master's dashboard
+// exactly under the Master's column c (4 LIQUIDITY, 6 MACRO, 8 DECISION); row 0 is a transparent spacer of the dock
+// gap (% of chart height). v77: one table for all three (one table per position per script is what TradingView shows). The cells use the Master's dashboard
 // background and detail text size; the drivers use the drivers card's glyphs and colours, the H2 dock the H2 card's
 // row texts and colours.
 int[] _dkW = array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)
@@ -1489,33 +1491,32 @@ f_dock(table t, int col, int gap) =>
         table.cell(t, c, 0, "", width = int(w * _dw), height = c == col ? gap : 0)
 f_dkCell(table t, int col, int r, string txt, color tc) =>
     table.cell(t, col, r, txt, text_color = tc, bgcolor = _dbg, text_size = _dsz, width = int(array.get(_dkW, col) * _dw), text_halign = text.align_left)
-var table gdD = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 7, border_width = 0, frame_width = 0)
-var table lqD = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 7, border_width = 0, frame_width = 0)
-var table h2D = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 9, border_width = 0, frame_width = 0)
+var table dkT = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 9, border_width = 0, frame_width = 0)
+if barstate.islast
+    table.clear(dkT, 0, 0, 8, 8)
+if (gdDocked or lqDocked or h2Docked and h2Show) and barstate.islast
+    f_dock(dkT, 0, gdGap)
 if gdDocked and barstate.islast
-    f_dock(gdD, 6, gdGap)
     float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
-    table.cell(gdD, 6, 1, "GOLD DRIVERS " + f_tmG(_net), text_color = f_tmC(_net), bgcolor = _dbg, text_size = _dsz, width = int(11 * _dw), text_halign = text.align_left, tooltip = "Display only: no vote, weight or gate. Green = supports gold up, red = down.")
-    f_dkCell(gdD, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, f_tmC(brJd))
-    f_dkCell(gdD, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, f_tmC(brOd))
-    f_dkCell(gdD, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, f_tmC(brRd))
-    f_dkCell(gdD, 6, 5, "BREAKEVEN " + f_tmG(brBd) + "\n" + brBh, f_tmC(brBd))
-    f_dkCell(gdD, 6, 6, "US 2Y " + f_tmG(br2d) + "\n" + br2h, f_tmC(br2d))
+    table.cell(dkT, 6, 1, "GOLD DRIVERS " + f_tmG(_net), text_color = f_tmC(_net), bgcolor = _dbg, text_size = _dsz, width = int(11 * _dw), text_halign = text.align_left, tooltip = "Display only: no vote, weight or gate. Green = supports gold up, red = down.")
+    f_dkCell(dkT, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, f_tmC(brJd))
+    f_dkCell(dkT, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, f_tmC(brOd))
+    f_dkCell(dkT, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, f_tmC(brRd))
+    f_dkCell(dkT, 6, 5, "BREAKEVEN " + f_tmG(brBd) + "\n" + brBh, f_tmC(brBd))
+    f_dkCell(dkT, 6, 6, "US 2Y " + f_tmG(br2d) + "\n" + br2h, f_tmC(br2d))
 if lqDocked and barstate.islast
-    f_dock(lqD, 4, lqGap)
-    f_dkCell(lqD, 4, 1, "LIQUIDITY · SWEEPS", color.new(#AEBBC9, 0))
-    f_dkCell(lqD, 4, 2, f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
-    f_dkCell(lqD, 4, 3, f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
-    f_dkCell(lqD, 4, 4, f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
-    f_dkCell(lqD, 4, 5, f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
-    f_dkCell(lqD, 4, 6, "SWEPT pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+    f_dkCell(dkT, 4, 1, "LIQUIDITY · SWEEPS", color.new(#AEBBC9, 0))
+    f_dkCell(dkT, 4, 2, f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
+    f_dkCell(dkT, 4, 3, f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
+    f_dkCell(dkT, 4, 4, f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
+    f_dkCell(dkT, 4, 5, f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
+    f_dkCell(dkT, 4, 6, "SWEPT pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
 if h2Docked and h2Show and barstate.islast
-    f_dock(h2D, 8, h2Gap)
-    f_dkCell(h2D, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + "\n(website: arm H3, same rule)", color.new(#AEBBC9, 0))
-    f_dkCell(h2D, 8, 2, "SIGNAL  " + h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
-    f_dkCell(h2D, 8, 3, "TREND  " + h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
-    f_dkCell(h2D, 8, 4, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
-    f_dkCell(h2D, 8, 5, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
-    f_dkCell(h2D, 8, 6, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
-    f_dkCell(h2D, 8, 7, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
-    f_dkCell(h2D, 8, 8, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
+    f_dkCell(dkT, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + "\n(website: arm H3, same rule)", color.new(#AEBBC9, 0))
+    f_dkCell(dkT, 8, 2, "SIGNAL  " + h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
+    f_dkCell(dkT, 8, 3, "TREND  " + h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+    f_dkCell(dkT, 8, 4, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
+    f_dkCell(dkT, 8, 5, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
+    f_dkCell(dkT, 8, 6, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
+    f_dkCell(dkT, 8, 7, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+    f_dkCell(dkT, 8, 8, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))

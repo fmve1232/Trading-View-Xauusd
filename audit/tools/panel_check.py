@@ -96,14 +96,19 @@ mdens = re.search(r"float _densW = (.*)", M).group(1).strip()
 vw = [int(x) for x in re.search(r"int\[\] _dkW = array\.from\(([\d, ]+)\)", V).group(1).split(",")]
 vdens = re.search(r"float _dw = (.*)", V).group(1).strip()
 manch = re.search(r"tblA := table\.new\((.*?), _dashStrip \? 3", M).group(1)
-anch = re.findall(r"var table (\w+D) = table\.new\((.*?), 9, \d, border_width = 0, frame_width = 0\)", V)
-vanch = len(anch) == 3 and all(x[1] == 'dashMode == "Tablet" ? position.top_left : position.top_right' for x in anch)
+anch = re.findall(r"var table (\w+) = table\.new\((.*?), 9, \d+, border_width = 0, frame_width = 0\)", V)
+# v77: ONE dock table, the only table that can take the top-right corner (TradingView shows one table per position per
+# script: v76's three top-right tables showed only the last); the candle card leaves it while a dock is on
+tops = re.findall(r"table\.new\([^\n]*?position\.top_right", V)
+cand = 'candlePos == "Top Right" ? (dkOn ? position.middle_right : position.top_right)' in V
+vanch = (len(anch) == 1 and anch[0][1] == 'dashMode == "Tablet" ? position.top_left : position.top_right' and len(tops) == 2
+         and cand and "bool dkOn = gdDocked or lqDocked or h2Docked" in V)
 mframe = "border_width=0, frame_width=0" in re.search(r"tblA := table\.new\(.*", M).group(0)
 msz = re.search(r'(?m)^string _szSe = (.*)', M).group(1).split("//")[0].strip()
 vsz = re.search(r'string _dsz = (.*)', V).group(1).strip()
 spacer = "for [c, w] in _dkW\n        table.cell(t, c, 0, \"\", width = int(w * _dw), height = c == col ? gap : 0)" in V
 dcell = "width = int(array.get(_dkW, col) * _dw)" in V
-cells = re.findall(r'f_dkCell\(gdD, 6, (\d), "([A-Z 0-9]+) " \+ f_tmG\((\w+)\) \+ "\\n" \+ (\w+), f_tmC\((\w+)\)\)', V)
+cells = re.findall(r'f_dkCell\(dkT, 6, (\d), "([A-Z 0-9]+) " \+ f_tmG\((\w+)\) \+ "\\n" \+ (\w+), f_tmC\((\w+)\)\)', V)
 want = [("2", "USDJPY", "brJd", "brJh", "brJd"), ("3", "OIL", "brOd", "brOh", "brOd"), ("4", "REAL YLD", "brRd", "brRh", "brRd"),
         ("5", "BREAKEVEN", "brBd", "brBh", "brBd"), ("6", "US 2Y", "br2d", "br2h", "br2d")]
 ok5 = (vw == mw and len(mw) == 9 and vdens == mdens.replace("_densW", "_dw") and mframe
@@ -115,16 +120,16 @@ report(ok5, f"dock: Master column widths {mw} x Density, anchor, no border / fra
 # LIQUIDITY section show all eight levels and both sweeps
 dock = {}
 for l in L:
-    if l.strip().startswith("f_dkCell(h2D, 8, "):
+    if l.strip().startswith("f_dkCell(dkT, 8, "):
         x = args(l, "f_dkCell")
         m = re.match(r'"([A-Z]+)  " \+ (.*)$', x[3])
         if m:
             dock['"' + m.group(1) + '"'] = (m.group(2), x[4])
 bad6 = [k for k, c in card.items() if k not in ('"NOTE"', '"SESSION"', '"HISTORY"', '"VOLUME"')
         and dock.get(k) != (c[2], re.sub(r"\b(_h2[tuds])\b", lambda m: MAP[m.group(1)], c[3]))]
-note = any("f_dkCell(h2D, 8, 8, " in l and "H2 record: the website" in l for l in L)
+note = any("f_dkCell(dkT, 8, 8, " in l and "H2 record: the website" in l for l in L)
 lv = ["pdh", "pdl", "pwh", "pwl", "pmh", "pml", "cdh", "cdl"]
-lqd = "\n".join(l for l in L if "f_dkCell(lqD, 4," in l)
+lqd = "\n".join(l for l in L if "f_dkCell(dkT, 4," in l)
 lqp = "\n".join(blk)
 lv_ok = all(f'f_lv("{x.upper()}", {x})' in lqd and f'f_lv("{x.upper()}", {x})' in lqp for x in lv) and all(
     x in lqd and x in lqp for x in ("pvLastSweep", "h2LastSweep"))
