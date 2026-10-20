@@ -2722,3 +2722,37 @@ rendering NOT RUN on v78.
 - Visuals v78 compiled.
 - The band renders with every row at one 2-line height: LIQUIDITY · SWEEPS and GOLD DRIVERS sit tight beside the H2
   rows, the SIGNAL split reads as one block, and the band starts just under the Master's DECISION column.
+
+---
+
+# Build v78 → v79 — Visuals: MARKET AT A GLANCE; dock gap 24 (operator: "a new trader can get an idea of the market in a few seconds")
+
+**Dock gap:** the default is now 24 % (was 25). The v78 screenshot shows the Master's DECISION column ending at about
+23 %.
+
+**MARKET AT A GLANCE** is the bottom-left panel's first section (on by default). It gives eight plain-language answers,
+one per question the operator asked, and colour shows direction only.
+
+| # | Question | Answer, and where it comes from |
+|---|---|---|
+| 1 | Current trend | H2's 2-of-3 vote of the completed 1H / 4H / 1D bars (`h2Trend`), plus price above / below EMA200 |
+| 2 | Current bias | **The Master's BIAS + DECISION cells.** Bias is the engine's call. Visuals cannot read another script's values, and a second home-made bias could disagree with the Master, so the row points there |
+| 3 | Where it is heading | H2's NEXT: where price sits against value, toward POC (`h2Next`) |
+| 4 | Last liquidity / next target | The last pivot sweep (the ✕ markers), and the nearest tagged level above and below price (PDH/PDL, PWH/PWL, PMH/PML, CDH/CDL) with its distance |
+| 5 | Macro | The five gold drivers' net arrow: supports / against / no lean (display only) |
+| 6 | Plan for a $10-20 move | ROOM: the space up and down to the nearest level. ✓ $20 if it reaches the target, ✓ $10 if it reaches the minimum, ✗ plus the next level if not. Then "plan: the Master's plan strip". The two amounts are inputs (default 10 / 20), display only |
+| 7 | Historical data | This session's manipulation and continuation rates (n ≥ 5, the session engine's own counts), and the last H2 signal's outcome and live / stale state |
+| 8 | Probability of the next move | **The Master's SIGNAL cell** (L / S / R %, calibrated next-1R). It is the engine's number, so the row points there |
+
+The panel's table grows to 40 rows (at most 38 written).
+
+**Checks:** `panel_check.py` 7 (new):
+- executes `f_glNear` (the nearest level beyond a price) against a reference: 6,000 cases, 0 mismatches;
+- executes the ROOM row's marks, including the exact $10 / $20 boundaries: 6,000 cases, 0 mismatches;
+- checks that each row reads the value it names, and that the bias and odds rows name the Master's cells.
+
+Mutation-tested: the nearest-level search reversed, or `>=` turned into `>` at the target, each FAIL. The first version
+of the test missed the second mutation because it never hit an exact boundary; the boundaries were then added.
+
+Visuals size: best-fit 39,937 / pessimistic 48,323. Master, Brief, Diagnostics and the arms are unchanged. Compile NOT
+RUN on v79.

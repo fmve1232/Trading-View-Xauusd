@@ -20,7 +20,9 @@ plus any other artefact that changed, and post the build record in chat.**
   bottom-left panel is drawn only while it has a section. **TradingView shows ONE table per position per script**
   (F-A69: v75/v76's three top-right dock tables showed only the last): since v77 all docks are one table with one gap,
   and no other Visuals table may take its corner. Its rows share heights, so since v78 every dock cell is at most 2 lines
-  and headers 1 (`panel_check.py` 6).
+  and headers 1 (`panel_check.py` 6). Since v79 the panel opens with MARKET AT A GLANCE (eight plain answers from values
+  Visuals computes; BIAS and ODDS name the Master's cells, never a second engine number; `panel_check.py` 7 executes
+  the nearest-level search and the ROOM marks).
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.

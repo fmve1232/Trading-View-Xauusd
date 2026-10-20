@@ -69,7 +69,8 @@ glyph = '(na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼"
 col = 'na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)'
 tg = next(l for l in L if l.startswith("f_tmG(float d) => ")).split("=> ", 1)[1]
 tc = next(l for l in L if l.startswith("f_tmC(float d) => ")).split("=> ", 1)[1]
-rows = [args(l, "_tmRow") for l in blk if l.strip().startswith('_tmRow(r, "') and "f_tmG(" in l]
+rows = [args(l, "_tmRow") for l in blk if l.strip().startswith('_tmRow(r, "') and "f_tmG(" in l
+        and not re.match(r'_tmRow\(r, "\d ', l.strip())]   # v79: the glance rows ("5 MACRO") are checked in 7
 want = [('"USDJPY "', "brJ"), ('"OIL "', "brO"), ('"REAL YLD "', "brR"), ('"BREAKEVEN "', "brB"), ('"US 2Y "', "br2")]
 rows_ok = [(r_[1], r_[2], r_[3]) for r_ in rows] == [(f"{n} + f_tmG({v}d)", f"{v}h", f"f_tmC({v}d)") for n, v in want]
 tape = next((l for l in blk if '"JPY" + f_tmG(brJd)' in l), "")
@@ -150,5 +151,66 @@ report(not bad6 and len(dock) == 6 and note and lv_ok and hdr1 and body2,
        "H2 dock: the card's 6 rows, same text and colour (SIGNAL split in two cells), + its note; liquidity dock and panel "
        "section: 8 levels + both sweeps; every dock cell <= 2 lines, headers 1 (rows share heights)"
        + (f" -- differ: {bad6}" if bad6 else ""))
+# ---- 7 (v79): MARKET AT A GLANCE -- executed: the nearest-level search and the ROOM marks against a reference;
+# statically: every row reads the value it names, and the two engine rows point at the Master instead of a number
+import os, random
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pine_exec as P  # noqa: E402
+fn = []
+i0 = next(i for i, l in enumerate(L) if l.startswith("f_glNear(bool up, float from) =>"))
+for l in L[i0:]:
+    if fn and l and not l.startswith(" "):
+        break
+    fn.append(l)
+NAMES = ["PDH", "PDL", "PWH", "PWL", "PMH", "PML", "CDH", "CDL"]
+VARS = [x.lower() for x in NAMES]
+rng = random.Random(79)
+bad7 = n7 = 0
+def near_ref(lv, up, frm):
+    c = [(abs(p - frm), k) for k, p in enumerate(lv) if p is not None and (p > frm if up else p < frm)]
+    return (None, "") if not c else (lv[min(c)[1]], NAMES[min(c)[1]])
+body = "\n".join(fn)
+try:
+    env = P.Env()
+    P.define(fn, env)
+    exec_ok = True
+except Exception as ex:   # pine_exec cannot run it: say so, do not pass silently
+    exec_ok = False
+    print("      note: f_glNear not executable by pine_exec:", ex)
+if exec_ok:
+    for _ in range(3000):
+        close_ = 4130 + rng.gauss(0, 20)
+        lv = [None if rng.random() < 0.15 else 4130 + rng.gauss(0, 40) for _ in NAMES]
+        env.update({v: (P.NA if x is None else x) for v, x in zip(VARS, lv)})   # globals: the defining scope
+        e = P.Env(funcs=env.funcs, close=close_)
+        for up in (True, False):
+            frm = close_ if rng.random() < 0.5 else close_ + rng.gauss(0, 10)
+            got = P.evaluate(f"f_glNear({'true' if up else 'false'}, {frm!r})", e)
+            want = near_ref(lv, up, frm)
+            gp = None if P.isna(got[0]) else got[0]
+            n7 += 1
+            bad7 += not ((gp is None and want[0] is None) or (gp is not None and want[0] is not None and abs(gp - want[0]) < 1e-9 and got[1] == want[1]))
+gl = "\n".join(l for l in blk if "_tmRow(r, \"" in l and re.search(r'_tmRow\(r, "\d ', l))
+static7 = all(x in gl for x in ('"1 TREND", h2Trend', '"3 HEADING", h2Next', 'pvLastSweep', '_upN', '_dnN', '"5 MACRO"', 'f_tmC(_gNet)',
+                                'glMoveA', 'glMoveB', 'sessManipProb', 'sessContProb', 'h2SigOut', "the Master's BIAS + DECISION",
+                                "the Master's SIGNAL cell")) and gl.count('_tmRow(r, "') == 8
+# the ROOM row, executed: ✓ $B when the room reaches the target, ✓ $A when it reaches the minimum, else ✗ (+ the next level)
+room = args(next(l for l in blk if l.strip().startswith('_tmRow(r, "6 ROOM"')), "_tmRow")[2]
+nr = br = 0
+for _ in range(3000):
+    A_, B_ = rng.choice([(10.0, 20.0), (5.0, 15.0)])
+    up_, dn_ = (P.NA if rng.random() < 0.1 else rng.choice([A_, B_, A_ - 0.01, B_ - 0.01, abs(rng.gauss(12, 10))])
+                for _k in range(2))   # the exact boundaries too: "at least $10" includes $10
+    e = P.Env(_upR=up_, _dnR=dn_, glMoveA=A_, glMoveB=B_, close=4130.0, _up2P=4160.0, _dn2P=4100.0, _up2N="PWH", _dn2N="PWL")
+    txt = P.evaluate(room, e)
+    upline, dnline = txt.split("\n")
+    for r_, line in ((up_, upline), (dn_, dnline.split(" · plan")[0])):
+        nr += 1
+        want = "—" if P.isna(r_) else f"✓ ${B_:g}" if r_ >= B_ else f"✓ ${A_:g}" if r_ >= A_ else f"✗ <${A_:g}"
+        br += want not in line or (want.startswith("✗") and "(then " not in line)
+report(br == 0, f"glance ROOM: ✓ target / ✓ minimum / ✗ + next level, executed ({nr} cases, mismatches {br})")
+report(exec_ok and bad7 == 0 and n7 > 0 and static7,
+       f"glance: nearest tagged level above / below executed vs reference ({n7} cases, mismatches {bad7}); 8 rows, each "
+       "reads its value; bias and odds point at the Master's cells")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- static read of the Pine text; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)
