@@ -1062,5 +1062,33 @@
 "recorded_utc": "2026-10-20T19:34:41.010102+00:00",
 "freeze_key": "5e4630924d663fc5:6f3964ad97813cc9:090418672c210848",
 "price_source": "twelvedata:XAU/USD"
+},
+{
+"dir": "LONG",
+"entry_time": "2026-10-20T19:15:00+00:00",
+"exit_time": "2026-10-20T19:30:00+00:00",
+"entry_i": 4961,
+"exit_i": 4962,
+"entry": 4123.05,
+"sl": 4115.918,
+"tp1": 4137.004,
+"tp2": 4144.335,
+"exit": 4120.964,
+"exit_reason": "FLIP",
+"tp1_hit": false,
+"pts": -2.856,
+"gross_pts": -2.086,
+"cost_pts": 0.77,
+"r": -0.4005,
+"bars": 1,
+"tq": 0,
+"p": null,
+"ev": null,
+"session": "NY",
+"regime": "RANGE",
+"open": false,
+"recorded_utc": "2026-10-20T19:49:30.999146+00:00",
+"freeze_key": "5e4630924d663fc5:6f3964ad97813cc9:090418672c210848",
+"price_source": "twelvedata:XAU/USD"
 }
 ]
