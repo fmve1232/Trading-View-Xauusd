@@ -2717,3 +2717,8 @@ Values, rows, colours and the H2 rule are unchanged. Visuals only. Compile / ren
 
 Visuals only. The gap stays at 25 %, which the v77 screenshot shows clearing the Master's DECISION column. Compile /
 rendering NOT RUN on v78.
+
+**Confirmed (operator's v78 screenshot, 2026-10-21):**
+- Visuals v78 compiled.
+- The band renders with every row at one 2-line height: LIQUIDITY · SWEEPS and GOLD DRIVERS sit tight beside the H2
+  rows, the SIGNAL split reads as one block, and the band starts just under the Master's DECISION column.
