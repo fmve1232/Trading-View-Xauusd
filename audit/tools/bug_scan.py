@@ -36,7 +36,7 @@ def code_lines(text):
 
 
 def call_spans(line, name):
-    for m in re.finditer(re.escape(name) + r"\(", line):
+    for m in re.finditer(r"(?<![\w.])" + re.escape(name) + r"\(", line):
         d, j = 0, m.end() - 1
         q = False
         while j < len(line):
@@ -94,9 +94,12 @@ for p in files:
             hits["R3"].append((i, l.strip()[:90]))
         if re.search(r"\btimenow\b", l):
             hits["R4"].append((i, l.strip()[:90]))
+        lq = re.sub(r'"[^"]*"', '""', l)                # an "alert()" inside text is not a call
         for nm in ("alert", "alertcondition"):
-            for a in call_spans(l, nm):
+            for a in call_spans(lq, nm):
                 if nm == "alert" and "freq_once_per_bar_close" in a:
+                    continue
+                if nm == "alertcondition" and "barstate.isconfirmed" in split_args(a)[0]:
                     continue
                 hits["A1"].append((i, f"{nm}(" + a[:70]))
         for fn in ("hour", "minute", "dayofweek", "dayofmonth"):

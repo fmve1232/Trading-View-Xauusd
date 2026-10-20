@@ -110,5 +110,24 @@ if ev and evs:
     flags = ["bosLabelBull", "bosLabelBear", "chochLabelBull", "chochLabelBear", "mssLabelBull", "mssLabelBear", "liqSweepBull", "liqSweepBear"]
     miss = [f for f in flags if "_ev(" + f + "," not in evs]
     check(not miss, "alert covers BOS / CHoCH / MSS (both sides) and liquidity sweeps (both sides): " + ("all 8 flags" if not miss else "missing " + ", ".join(miss)))
+    # v84: H2's swing sweeps ride in the same alert, with the swept level (h2SweptLvl, which survives the consumption
+    # of h2SwL / h2SwH) at the MT5 price -- the whole event line EXECUTED with random flags and levels
+    import re as _re
+    expr = evs.split(" = ", 1)[1]
+    fenv = P.Env()
+    P.define([ev], fenv)
+    bad2 = n2 = 0
+    for _ in range(3000):
+        fl = {f: P.Series([rng.random() < 0.3, rng.random() < 0.3]) for f in flags}
+        sL, sH = rng.random() < 0.3, rng.random() < 0.15
+        lvl = 4100 + rng.uniform(0, 80)
+        off = rng.choice([0.0, 0.35, -0.2])
+        e = P.Env(funcs=fenv.funcs, h2SweepL=sL, h2SweepH=sH, h2SweptLvl=lvl if (sL or sH) else P.NA, mt5Offset=off,
+                  h2Long=False, h2Short=False, h2Plan="", **fl)
+        out = P.evaluate(expr, e)
+        n2 += 1
+        want = "" if not (sL or sH) else (" H2-SWEEP-LOW " if sL else " H2-SWEEP-HIGH ") + P._tostr(lvl + off, "#.##") + (" (+HIGH)" if sL and sH else "") + " (MT5)"
+        bad2 += (want not in out) or ("H2-SWEEP" in out) != bool(sL or sH)
+    check(bad2 == 0, f"alert carries H2's swing sweeps with the swept level at the MT5 price (event line executed, {n2} cases): mismatches {bad2}")
 print("RESULT: " + ("PASS" if fails == 0 else f"FAIL ({fails})") + " -- Pine text executed in Python; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

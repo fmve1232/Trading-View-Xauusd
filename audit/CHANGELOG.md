@@ -2888,3 +2888,37 @@ All other values and the layout are as v81. Visuals only. Compile / rendering NO
 - **Changed files:** Master, Strategy, Strategy_OLDGATES and Strategy_CHALLENGER (label + stamp), plus Diagnostics and
   Brief (rebuilt). Visuals and Strategy_H2 are unchanged.
 - **Compile:** the token estimates equal the compiled builds' (string-only change). Compile NOT RUN on v83.
+
+---
+
+# Build v83 → v84 — alerts on every sweep, CHoCH and confirmed signal (operator request); re-audit
+
+**Audit of what already fired:** the Master's single `alert()` channel (all `freq_once_per_bar_close`, MT5 prices)
+already carried:
+- the confirmed BUY / SELL with the full MT5 plan;
+- every DECISION change;
+- BOS / CHoCH / MSS (first bar);
+- the pool sweeps;
+- the H2 SETUP;
+- the risk lock and tracked outcomes.
+
+Missing: H2's swing-high / low sweeps, and Visuals' ✕ pivot sweeps.
+
+**v84:**
+- **Master:** H2's swing sweeps join the same event line: `H2-SWEEP-LOW 4118.74 (MT5)`, `(+HIGH)` when a bar sweeps
+  both sides.
+  - It reads `h2SweptLvl`, because the H2 block consumes `h2SwL` / `h2SwH` after a sweep.
+  - Alert text only: the DECISION and the H2 block are unchanged.
+  - `fix_v84.py`; `refactor_check.py` derives the Master as `fix_v84.master(fix_v83.master(fix_v68.transform(v66)))`.
+  - Model 99,602 / 99,084, between the compiled v72 (99,542) and v66 (100,204).
+- **Visuals:** an optional ✕ pivot-sweep `alert()` (bar close), input "Alert on pivot sweeps (✕)".
+- **`decision_check.py`:** executes the whole event line with random flags, levels and MT5 offsets (3,000 cases,
+  0 mismatches). Mutation-tested: swapping LOW / HIGH FAILs.
+- **`bug_scan.py` A1 refined:** text inside strings is not a call, and `alertcondition`s gated on
+  `barstate.isconfirmed` pass. The Master has 0 A1 hits. Visuals' remaining hits are the intrabar-by-design touch
+  alerts and the confirmed-only H2 conditions.
+- **`audit/ALERTS_SETUP.md`:** what fires, and the one-alert setup. Recreate the alert after every paste. Free-plan
+  limits are unconfirmed (sources disagree).
+
+Full suite, formula_trace 61 / 61, sequence / trace / A/B / rebuild checks PASS. Compile NOT RUN on v84. A v83 Master
+fallback (= the compiled v72 + the F-A71 label) is kept.

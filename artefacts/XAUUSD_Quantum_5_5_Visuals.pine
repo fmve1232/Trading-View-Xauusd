@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v82   (ticker; no NaN in scores)     ║
+// ║  BUILD STAMP — this file last CHANGED in v84   (+ pivot-sweep alert)          ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -473,6 +473,12 @@ if sweepUp or sweepDn
     pvLastTime := time
     pvLastUp := sweepUp
     pvLastSweep := (sweepUp ? "HIGH " + str.tostring(lastPH, format.mintick) : "LOW " + str.tostring(lastPL, format.mintick)) + "  " + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC"
+// v84: the ✕ pivot sweeps as an alert() too. It fires only if an alert is created on Visuals ("Any alert() function
+// call"); the Master's one alert already carries the engine's pool sweeps (PDH/PDL, PWH/PWL, PMH/PML), H2's swing
+// sweeps, CHoCH / BOS / MSS and the confirmed BUY / SELL with its plan. Bar close only (sweepUp / sweepDn are confirmed).
+alertOnPvSweep = input.bool(true, "Alert on pivot sweeps (✕)", group = grpS, tooltip = "Needs an alert on Visuals (Any alert() function call); on a plan with one alert, put it on the Master instead: it carries the engine's sweeps, CHoCH and the confirmed signals.")
+if alertOnPvSweep and (sweepUp or sweepDn)
+    alert("XAUUSD " + timeframe.period + " pivot sweep " + pvLastSweep + " (TradingView price; Visuals' detector, info only)", alert.freq_once_per_bar_close)
 
 // ═══════════════════ FAIR VALUE GAPS (Master's corrected bounds) ═══════════════════
 // Bullish (BISI): low[0] > high[2] -> gap [high[2], low[0]]
