@@ -2681,3 +2681,9 @@ Visuals size: best-fit 37,198 / pessimistic 44,933. Compile NOT RUN on v76.
 - **`panel_check.py` 5:** now requires exactly one dock table, no other top-right table, and the candle card's move.
 
 Values, rows, colours and the H2 rule are unchanged. Visuals only. Compile / rendering NOT RUN on v77.
+
+**Confirmed (operator's v77 screenshot, 2026-10-21):**
+- Visuals v77 compiled.
+- All three docks render in one band under the Master: LIQUIDITY · SWEEPS under LIQUIDITY, GOLD DRIVERS under MACRO,
+  and H2 SWEEP → VALUE (STALE, stopped) under DECISION. Each is aligned to its column.
+- The rows share heights across the band, so the liquidity and driver cells are spaced to the taller H2 rows.
