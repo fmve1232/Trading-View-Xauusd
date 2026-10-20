@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v77   (all docks in one table)       ║
+// ║  BUILD STAMP — this file last CHANGED in v78   (dock rows tightened)          ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1491,9 +1491,12 @@ f_dock(table t, int col, int gap) =>
         table.cell(t, c, 0, "", width = int(w * _dw), height = c == col ? gap : 0)
 f_dkCell(table t, int col, int r, string txt, color tc) =>
     table.cell(t, col, r, txt, text_color = tc, bgcolor = _dbg, text_size = _dsz, width = int(array.get(_dkW, col) * _dw), text_halign = text.align_left)
-var table dkT = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 9, border_width = 0, frame_width = 0)
+// v78: the band's rows share heights, so every cell is kept to the same 2 lines (headers 1): the H2 header is one line
+// and its 4-line SIGNAL is split into two 2-line cells (same text, same colour). No gaps between the liquidity and the
+// driver lines; nothing removed.
+var table dkT = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 10, border_width = 0, frame_width = 0)
 if barstate.islast
-    table.clear(dkT, 0, 0, 8, 8)
+    table.clear(dkT, 0, 0, 8, 9)
 if (gdDocked or lqDocked or h2Docked and h2Show) and barstate.islast
     f_dock(dkT, 0, gdGap)
 if gdDocked and barstate.islast
@@ -1512,11 +1515,15 @@ if lqDocked and barstate.islast
     f_dkCell(dkT, 4, 5, f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
     f_dkCell(dkT, 4, 6, "SWEPT pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
 if h2Docked and h2Show and barstate.islast
-    f_dkCell(dkT, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + "\n(website: arm H3, same rule)", color.new(#AEBBC9, 0))
-    f_dkCell(dkT, 8, 2, "SIGNAL  " + h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
-    f_dkCell(dkT, 8, 3, "TREND  " + h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
-    f_dkCell(dkT, 8, 4, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
-    f_dkCell(dkT, 8, 5, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
-    f_dkCell(dkT, 8, 6, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
-    f_dkCell(dkT, 8, 7, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
-    f_dkCell(dkT, 8, 8, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
+    f_dkCell(dkT, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + " · = website H3", color.new(#AEBBC9, 0))
+    array<string> _sp = str.split("SIGNAL  " + h2SigCard + h2SigStat, "\n")
+    int _ns = array.size(_sp)
+    color _sgc = h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV
+    f_dkCell(dkT, 8, 2, _ns > 1 ? array.get(_sp, 0) + "\n" + array.get(_sp, 1) : array.get(_sp, 0), _sgc)
+    f_dkCell(dkT, 8, 3, _ns > 2 ? array.join(array.slice(_sp, 2, _ns), "\n") : "", _sgc)
+    f_dkCell(dkT, 8, 4, "TREND  " + h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+    f_dkCell(dkT, 8, 5, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
+    f_dkCell(dkT, 8, 6, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
+    f_dkCell(dkT, 8, 7, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
+    f_dkCell(dkT, 8, 8, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+    f_dkCell(dkT, 8, 9, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))

@@ -2687,3 +2687,33 @@ Values, rows, colours and the H2 rule are unchanged. Visuals only. Compile / ren
 - All three docks render in one band under the Master: LIQUIDITY · SWEEPS under LIQUIDITY, GOLD DRIVERS under MACRO,
   and H2 SWEEP → VALUE (STALE, stopped) under DECISION. Each is aligned to its column.
 - The rows share heights across the band, so the liquidity and driver cells are spaced to the taller H2 rows.
+
+---
+
+# Build v77 → v78 — the dock band's rows tightened (operator: "tighten the spacing … save space")
+
+**Why the gaps:**
+- The three docks are one table, and a table's rows share heights: every row is as tall as its tallest cell.
+- Two H2 cells set the height. The H2 header was 2 lines where the others were 1, and the SIGNAL cell was 4 lines (the
+  signal's 3 lines plus the v76 status line) where every liquidity and driver cell is 2.
+- So the liquidity and driver lines sat with blank space between them.
+
+**v78:**
+- The H2 header is one line: `H2 SWEEP → VALUE · 15 · = website H3`.
+- The SIGNAL text is split into two 2-line cells, rows 2 and 3, in the same colour. Their text, joined, is exactly the
+  card's `"SIGNAL  " + h2SigCard + h2SigStat`.
+- The other H2 rows move down one, rows 4-9.
+- Every row of the band is now 2 lines (headers 1), so the liquidity and driver cells sit tight.
+- Each driver keeps its own colour, and nothing is merged or removed.
+- The band ends where H2 ends. The liquidity and driver blocks end four rows earlier.
+
+**Checks:**
+- `panel_check.py` 6 now requires:
+  - the split text is exactly the card's SIGNAL text;
+  - both cells take the card's SIGNAL colour;
+  - every dock cell is at most 2 lines and every header 1. A `"\n"` inside `str.replace_all` does not count, since it
+    removes line breaks.
+- Mutation-tested: a 2-line header, or swapped SIGNAL colours, each FAIL.
+
+Visuals only. The gap stays at 25 %, which the v77 screenshot shows clearing the Master's DECISION column. Compile /
+rendering NOT RUN on v78.

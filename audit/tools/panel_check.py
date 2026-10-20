@@ -125,16 +125,30 @@ for l in L:
         m = re.match(r'"([A-Z]+)  " \+ (.*)$', x[3])
         if m:
             dock['"' + m.group(1) + '"'] = (m.group(2), x[4])
+# v78: SIGNAL is split into two 2-line cells: the split text must be exactly "SIGNAL  " + the card's text, and both
+# cells take the card's SIGNAL colour (mapped); every other row is a single cell as before
+sig = card['"SIGNAL"']
+sp = re.search(r'array<string> _sp = str\.split\("SIGNAL  " \+ (.*), "\\n"\)', V)
+sgc = re.search(r"color _sgc = (.*)", V)
+sig_ok = (sp and sp.group(1) == sig[2] and sgc and sgc.group(1).strip() == re.sub(r"\b(_h2[tuds])\b", lambda m: MAP[m.group(1)], sig[3])
+          and "f_dkCell(dkT, 8, 2, _ns > 1 ? array.get(_sp, 0) + \"\\n\" + array.get(_sp, 1) : array.get(_sp, 0), _sgc)" in V
+          and 'f_dkCell(dkT, 8, 3, _ns > 2 ? array.join(array.slice(_sp, 2, _ns), "\\n") : "", _sgc)' in V)
+dock['"SIGNAL"'] = (sig[2], re.sub(r"\b(_h2[tuds])\b", lambda m: MAP[m.group(1)], sig[3])) if sig_ok else None
 bad6 = [k for k, c in card.items() if k not in ('"NOTE"', '"SESSION"', '"HISTORY"', '"VOLUME"')
         and dock.get(k) != (c[2], re.sub(r"\b(_h2[tuds])\b", lambda m: MAP[m.group(1)], c[3]))]
-note = any("f_dkCell(dkT, 8, 8, " in l and "H2 record: the website" in l for l in L)
+note = any("f_dkCell(dkT, 8, 9, " in l and "H2 record: the website" in l for l in L)
+# v78: the band's rows share heights: every body cell of the three docks is at most 2 lines, headers 1
+blines = [l for l in L if l.strip().startswith(("f_dkCell(dkT, ", "table.cell(dkT, 6, 1,"))]
+hdr1 = all(l.count("\\n") == 0 for l in blines if re.search(r"\(dkT, \d, 1, ", l))
+body2 = all(re.sub(r'str\.replace_all\([^)]*\)', "", l).count("\\n") <= 1 for l in blines if not re.search(r"\(dkT, \d, 1, ", l)) and len(blines) == 21
 lv = ["pdh", "pdl", "pwh", "pwl", "pmh", "pml", "cdh", "cdl"]
 lqd = "\n".join(l for l in L if "f_dkCell(dkT, 4," in l)
 lqp = "\n".join(blk)
 lv_ok = all(f'f_lv("{x.upper()}", {x})' in lqd and f'f_lv("{x.upper()}", {x})' in lqp for x in lv) and all(
     x in lqd and x in lqp for x in ("pvLastSweep", "h2LastSweep"))
-report(not bad6 and len(dock) == 6 and note and lv_ok,
-       "H2 dock: the card's 6 rows, same text and colour, + its note; liquidity dock and panel section: 8 levels + both sweeps"
+report(not bad6 and len(dock) == 6 and note and lv_ok and hdr1 and body2,
+       "H2 dock: the card's 6 rows, same text and colour (SIGNAL split in two cells), + its note; liquidity dock and panel "
+       "section: 8 levels + both sweeps; every dock cell <= 2 lines, headers 1 (rows share heights)"
        + (f" -- differ: {bad6}" if bad6 else ""))
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- static read of the Pine text; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

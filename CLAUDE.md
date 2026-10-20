@@ -19,7 +19,8 @@ plus any other artefact that changed, and post the build record in chat.**
   arm H3 is the same rule) docks under DECISION and a LIQUIDITY · SWEEPS block under LIQUIDITY (`panel_check.py` 6); the
   bottom-left panel is drawn only while it has a section. **TradingView shows ONE table per position per script**
   (F-A69: v75/v76's three top-right dock tables showed only the last): since v77 all docks are one table with one gap,
-  and no other Visuals table may take its corner.
+  and no other Visuals table may take its corner. Its rows share heights, so since v78 every dock cell is at most 2 lines
+  and headers 1 (`panel_check.py` 6).
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.
