@@ -276,5 +276,48 @@ place_ok = (len(bc) == 2 and '(tkOn ? position.bottom_right : position.bottom_ce
             and "glShow and not tkOn or showCandle" in V and "    if glShow and not tkOn\n" in V)
 report(tk_ok and place_ok, "ticker: 6 tiles read the glance's values (trend vote, value, room, macro, sweep, H2); bias / odds -> Master; "
        "the only bottom-centre table while on; lift row see-through; no duplicate glance in the panel")
+# ---- 9 (v81): every ticker tile (value, label, tooltip) and every H2 TREND row (card, panel, dock) EXECUTED over random
+# states with missing data (na): no "NaN" may reach the screen, and every text must evaluate (Pine prints "NaN" for a
+# na number in a string, silently). This found the H2 TREND rows' str.tostring(h2S1, "#") -> NaN (fixed: f_sc).
+env9 = P.Env()
+for h in ("f_tmG(float d) =>", "f_tmC(float d) =>", "_h2p(float _x) =>", "f_sc(float x) =>", "f_gBar(float pct, int n) =>"):
+    P.define(fnsrc(h), env9)
+P.BUILTINS.setdefault("str.replace_all", lambda s_, a_, b_: s_.replace(a_, b_))
+texts = []
+for l in L:
+    st = l.strip()
+    if st.startswith("f_tk(") and "=>" not in st:
+        a_ = args(st, "f_tk")
+        texts += [("tile " + a_[0], a_[k]) for k in (1, 3, 4)]
+    for name, key in (("_h2Row", '"TREND"'), ("_tmRow", '"TREND"')):
+        if st.startswith(name + "(") and "=>" not in st and args(st, name)[1] == key:
+            texts.append((name + " TREND", args(st, name)[2]))
+    if st.startswith('f_dkCell(dkT, 8, 4, "TREND'):
+        texts.append(("dock TREND", args(st, "f_dkCell")[3]))
+nan9, err9, n9 = [], set(), 0
+for _ in range(1500):
+    na_ = lambda x: P.NA if rng.random() < 0.25 else x
+    st9 = dict(close=4125.0, h2TrendUp=rng.random() < .3, h2TrendDn=rng.random() < .3, h2S1=na_(rng.uniform(0, 100)),
+               h2S4=na_(rng.uniform(0, 100)), h2SD=na_(rng.uniform(0, 100)), ema200=na_(4130.0), h2Poc=na_(4121.0),
+               h2Val=na_(4116.6), h2Vah=na_(4134.2), h2Next="in value", h2Trend="DOWN", _tUpR=na_(13.3), _tDnR=na_(0.3),
+               _tUpP=na_(4138.4), _tDnP=na_(4124.7), _tUpN="CDH", _tDnN="CDL", glMoveA=10.0, glMoveB=20.0,
+               _tNet=na_(-2.0), brJd=na_(0.0), brOd=na_(-2.0), brRd=na_(0.0), brBd=na_(0.0), br2d=na_(-1.0),
+               pvLastLvl=na_(4127.05), pvLastUp=rng.random() < .5, pvLastTime=na_(0.0), time=7200000.0 * rng.random(),
+               pvLastSweep="HIGH 4127.050  10-20 22:30 UTC", h2LastSweep="HIGH 4127.02\n10-20 11:45 UTC",
+               h2SigDir=rng.choice([0, 1, -1]), h2Stale=rng.random() < .5, h2SigOut=rng.choice(["", "stopped"]),
+               h2SigState=rng.choice([0, 1, -1, 2]), h2SigCard="SELL 10-16 14:00 UTC", h2SigStat="\n○ STALE",
+               _ok="✓", _no="✗", _tmUp="U", _tmDn="D", _tmV="V", _tmS="S", h2Mt5=0.0, **{"format.mintick": "#.###"})
+    env9.update(st9)
+    e9 = P.Env(funcs=env9.funcs, **st9)
+    for who, src in texts:
+        n9 += 1
+        try:
+            out = P.evaluate(src, e9)
+            if not isinstance(out, str) or "NaN" in out:
+                nan9.append((who, str(out)[:50]))
+        except Exception as ex:
+            err9.add((who, str(ex)[:60]))
+report(not nan9 and not err9 and len(texts) == 22, f"tiles + TREND rows executed with missing data: {len(texts)} texts, {n9} evaluations, "
+       f"{len(nan9)} showed NaN, {len(err9)} could not be evaluated" + (f" -- e.g. {nan9[:2]} {sorted(err9)[:2]}" if nan9 or err9 else ""))
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- static read of the Pine text; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

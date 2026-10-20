@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v81   (bottom ticker, trimmed)       ║
+// ║  BUILD STAMP — this file last CHANGED in v82   (ticker; no NaN in scores)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1238,6 +1238,9 @@ h2Mt5 = input.float(0.0, "MT5 price offset (same value as the Master)", minval =
 plotshape(h2Show and h2Long, "H2 BUY", shape.triangleup, location.belowbar, color.new(#00D084, 0), size = size.small, text = "H2")
 plotshape(h2Show and h2Short, "H2 SELL", shape.triangledown, location.abovebar, color.new(#FF4D4D, 0), size = size.small, text = "H2")
 _h2p(float _x) => na(_x) ? "—" : str.tostring(_x + h2Mt5, "#.##")
+// v81: a 0-100 trend score as text, "—" when missing (early history, a data gap). Every H2 TREND row used
+// str.tostring(x, "#"), which prints "NaN" for na (found by executing the tiles, panel_check.py 9).
+f_sc(float x) => na(x) ? "—" : str.tostring(x, "#")
 // v55: MT5 prices like every other row (was TradingView prices), short enough for a phone
 string h2Next = na(h2Poc) ? "building profile" : close < h2Val ? "below value → POC " + _h2p(h2Poc) : close > h2Vah ? "above value → POC " + _h2p(h2Poc) : close < h2Poc ? "in value, under POC " + _h2p(h2Poc) : "in value, over POC " + _h2p(h2Poc)
 var string h2LastSig = "none yet"
@@ -1303,7 +1306,7 @@ if vSep and h2Show and not h2Docked and barstate.islast
     table.cell(h2Card, 0, 0, "H2 SWEEP→VALUE", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
     table.cell(h2Card, 1, 0, timeframe.period + " · display only", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
     _h2Row(1, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _h2u : h2SigState == -1 ? _h2d : h2SigState == 2 ? _h2s : _h2t)
-    _h2Row(2, "TREND", h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _h2u : h2TrendDn ? _h2d : _h2t)
+    _h2Row(2, "TREND", h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _h2u : h2TrendDn ? _h2d : _h2t)
     _h2Row(3, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _h2t)
     _h2Row(4, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _h2t)
     _h2Row(5, "SWEEP", h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _h2u : str.startswith(h2LastSweep, "HIGH") ? _h2d : _h2t)
@@ -1522,7 +1525,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
         _tmRow(r, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
         if not _cmp
             r += 1
-            _tmRow(r, "TREND", h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+            _tmRow(r, "TREND", h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
             r += 1
             _tmRow(r, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
             r += 1
@@ -1620,7 +1623,7 @@ if h2Docked and h2Show and barstate.islast
     color _sgc = h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV
     f_dkCell(dkT, 8, 2, _ns > 1 ? array.get(_sp, 0) + "\n" + array.get(_sp, 1) : array.get(_sp, 0), _sgc)
     f_dkCell(dkT, 8, 3, _ns > 2 ? array.join(array.slice(_sp, 2, _ns), "\n") : "", _sgc)
-    f_dkCell(dkT, 8, 4, "TREND  " + h2Trend + "  1H " + str.tostring(h2S1, "#") + " 4H " + str.tostring(h2S4, "#") + " 1D " + str.tostring(h2SD, "#") + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+    f_dkCell(dkT, 8, 4, "TREND  " + h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
     f_dkCell(dkT, 8, 5, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
     f_dkCell(dkT, 8, 6, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
     f_dkCell(dkT, 8, 7, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
@@ -1647,7 +1650,7 @@ if tkOn and barstate.islast
     float _tNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
     string _ok = "✓"
     string _no = "✗"
-    f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + str.tostring(h2S1, "#") + " · 4H " + str.tostring(h2S4, "#") + " · 1D " + str.tostring(h2SD, "#") + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and odds: the Master's BIAS / SIGNAL cells.")
+    f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and odds: the Master's BIAS / SIGNAL cells.")
     f_tk(1, na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
     f_tk(2, "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
     f_tk(3, f_tmG(_tNet), f_tmC(_tNet), "macro · " + (_tNet > 0 ? "supports gold" : _tNet < 0 ? "against gold" : "no lean"), "USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")

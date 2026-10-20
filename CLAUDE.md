@@ -26,7 +26,8 @@ plus any other artefact that changed, and post the build record in chat.**
   sliders; executed vs references in `panel_check.py` 7); the v79 sentences stay as "Glance style = Text (v79)". Since v81 the glance is a BOTTOM TICKER by default (six tiles at
   bottom centre, lifted above the Master's plan strip; `panel_check.py` 8), and Visuals' drawings are trimmed by default
   (BB, FVG / OB boxes, session shading, footprint OFF; every switch kept; `showFVG` / `showOB` there only DRAW, the
-  Master's same-named inputs are the engine's and stay ON, recorded in `inputs_check.py` KNOWN).
+  Master's same-named inputs are the engine's and stay ON, recorded in `inputs_check.py` KNOWN). `panel_check.py` 9 EXECUTES
+  every ticker tile and H2 TREND text with missing (na) inputs: no "NaN" may reach the screen (F-A70).
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.
@@ -143,7 +144,7 @@ sha256sum -c audit/MANIFEST.sha256
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A69. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A70. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |

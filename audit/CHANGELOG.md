@@ -2843,3 +2843,25 @@ The operator chose **B · Bottom ticker** and **trim the drawings**.
 
 Visuals size: best-fit 46,236 / pessimistic 56,071. Master, Brief, Diagnostics and the arms are unchanged. Compile /
 rendering NOT RUN on v81.
+
+---
+
+# Build v81 → v82 — F-A70: no "NaN" in the trend scores (found by the pre-deployment test; operator: "before applying test everything")
+
+**The test:** the full suite on v81 (every checker in `audit/tools`), plus one new test. It executes every ticker tile's
+value, label and tooltip, and every H2 TREND row, over random market states with **missing data**. Pine prints a
+missing number inside text as "NaN" with no error, so no static check can see it.
+
+**What it found (F-A70):**
+- All H2 TREND rows (separate card, terminal panel, dock and the v81 TREND tooltip) printed the 1H / 4H / 1D scores
+  with `str.tostring(x, "#")`, so a missing score showed as `4H NaN`. This was in the card before v81.
+
+**v82:**
+- `f_sc()` prints "—" for a missing score, in all 12 places. All are outside the byte-locked H2 block
+  (`h2_parity.py` PASS).
+- The card, panel and dock still print the same expression (`panel_check.py` 1 / 6).
+- `panel_check.py` 9 (new) runs 22 texts × 1,500 random states with missing inputs: 0 NaN, 0 unevaluable.
+  Mutation-tested: restoring one old print brings 369 NaNs back and fails three checks.
+- The build number moves to v82 because the file differs from the v81 that was sent.
+
+All other values and the layout are as v81. Visuals only. Compile / rendering NOT RUN on v82.
