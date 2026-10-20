@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v80   (glance gauges)                ║
+// ║  BUILD STAMP — this file last CHANGED in v81   (bottom ticker, trimmed)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -51,7 +51,8 @@ ema100Len    = input.int(100, "EMA mid length",    minval = 5, group = grpT)
 ema200Len    = input.int(200, "EMA slow length",   minval = 10, group = grpT)
 showVwap     = input.bool(true,  "VWAP (daily anchor)",     group = grpT)
 showVwapWM   = input.bool(false, "VWAP weekly + monthly",   group = grpT)
-showBB       = input.bool(true,  "Bollinger Bands (20, 2)", group = grpT)
+// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
+showBB       = input.bool(false, "Bollinger Bands (20, 2)", group = grpT)
 
 grpTag = "Labels"
 showTags      = input.bool(true, "Label every line at right edge", group = grpTag)
@@ -85,10 +86,12 @@ structKeep   = input.int(25,     "BOS/CHoCH markers kept", minval = 5, maxval = 
 showSweep    = input.bool(true,  "Liquidity sweep markers", group = grpS)
 
 grpZ = "Zones"
-showFVG      = input.bool(true,  "Fair Value Gaps",         group = grpZ)
+// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
+showFVG      = input.bool(false, "Fair Value Gaps",         group = grpZ)
 fvgMaxBars   = input.int(60,     "FVG max age (bars)", minval = 5, group = grpZ)
 fvgMinATR    = input.float(0.3,  "FVG min size (ATR)", minval = 0.05, step = 0.05, group = grpZ)
-showOB       = input.bool(true,  "Order Blocks",            group = grpZ)
+// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
+showOB       = input.bool(false, "Order Blocks",            group = grpZ)
 obDispATR    = input.float(2.5,  "OB displacement (xATR)", minval = 1.5, maxval = 5.0, step = 0.1, group = grpZ, tooltip = "F-A08: was 1.0 while the Master's dispMult is 2.5, so this chart drew order blocks on candles the engine does not treat as displacement at all. Now matched to the Master default. Keep the two equal or the boxes will not be the ones the engine scored.")
 // F-A08 PARITY INPUTS. Mirrors of the Master's ADX and Adaptive-ATR controls, needed
 // because the displacement threshold below is measured in adaptiveATR units, not raw ATR.
@@ -132,6 +135,12 @@ bool vSep = vLayout == "Separate cards (v72)"
 glShow = input.bool(true, "Market at a glance (8 answers)", group = grpTm, tooltip = "Trend, bias, heading, liquidity, macro, room for a move, history, probability, in plain words. Display only.")
 glMoveA = input.float(10.0, "Move to plan for: at least ($)", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm, tooltip = "The ROOM row checks whether price has this much space before the nearest liquidity level on each side. Display only: no gate, no signal.")
 glMoveB = input.float(20.0, "Move to plan for: target ($)", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm)
+// v81: the glance as a BOTTOM TICKER (operator's choice B): six tiles in one strip at the bottom centre, lifted above
+// the Master's plan strip; the panel keeps only what is not docked. "In the panel" restores the v79 / v80 section.
+glPlace = input.string("Bottom ticker", "Glance placement", options = ["Bottom ticker", "In the panel"], group = grpTm, tooltip = "Bottom ticker: six tiles along the bottom (trend, value, room, macro, last sweep, H2), the price area stays clear. In the panel: the glance section of the bottom-left panel.")
+tkLift = input.int(5, "Ticker lift above the Master's plan strip (% of chart height)", minval = 0, maxval = 40, group = grpTm, tooltip = "Raise it if the ticker overlaps the Master's plan strip; 0 = on the bottom edge.")
+tkSize = input.string("Normal", "Ticker text size", options = ["Small", "Normal", "Large"], group = grpTm)
+bool tkOn = glShow and glPlace == "Bottom ticker"
 glStyle = input.string("Gauges (compact)", "Glance style", options = ["Gauges (compact)", "Text (v79)"], group = grpTm, tooltip = "Gauges: the same answers as bars and sliders, about one line each. Text: the v79 sentences.")
 gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Right", "Bottom Center", "Bottom Left", "Middle Right", "Hidden"], group="GOLD DRIVERS (display only)")
 // v74: the drivers can sit directly UNDER the Master's MACRO column, so the two read as one macro block. The Master's
@@ -159,10 +168,12 @@ bool dkOn = gdDocked or lqDocked or h2Docked
 bool lqInPanel = lqDock == "In the panel" or lqDock == "Under the Master's LIQUIDITY" and dashMode == "Mobile"
 
 grpSess = "Sessions (UTC)"
-showSess     = input.bool(true,  "Session shading",         group = grpSess)
+// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
+showSess     = input.bool(false, "Session shading",         group = grpSess)
 
 grpF = "Footprint (approximation)"
-showFP       = input.bool(true,  "Enable footprint engine", group = grpF)
+// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
+showFP       = input.bool(false, "Enable footprint engine", group = grpF)
 fpTf         = input.timeframe("1", "Intrabar timeframe",   group = grpF, tooltip = "Must be LOWER than the chart timeframe. 1 minute on a 5M chart gives 5 intrabars per candle.")
 fpBars       = input.int(25,     "Bars to render", minval = 5, maxval = 60, group = grpF)
 fpBins       = input.int(6,      "Price bins per bar", minval = 3, maxval = 10, group = grpF)
@@ -454,7 +465,13 @@ plotshape(sweepUp ? high : na, "Sweep High", shape.xcross, location.absolute, cS
 plotshape(sweepDn ? low  : na, "Sweep Low",  shape.xcross, location.absolute, cSweep, size = size.tiny)
 // v75: the last pivot sweep the ✕ markers show, kept for the LIQUIDITY · SWEEPS block (display only)
 var string pvLastSweep = "none yet"
+var float pvLastLvl = na
+var int pvLastTime = na
+var bool pvLastUp = false
 if sweepUp or sweepDn
+    pvLastLvl := sweepUp ? lastPH : lastPL
+    pvLastTime := time
+    pvLastUp := sweepUp
     pvLastSweep := (sweepUp ? "HIGH " + str.tostring(lastPH, format.mintick) : "LOW " + str.tostring(lastPL, format.mintick)) + "  " + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC"
 
 // ═══════════════════ FAIR VALUE GAPS (Master's corrected bounds) ═══════════════════
@@ -1368,7 +1385,7 @@ string brBh = (brBv ? str.tostring(brBc, "#.##") + "% " : "") + f_brMv(brBv, brB
 float br2d = br2v ? f_brS(br2n, br2u) : na
 string br2h = (br2v ? str.tostring(br2c, "#.##") + "% " : "") + f_brMv(br2v, br2u, br2n) + " · Fed path"
 // GD-END
-var table gdT = table.new(gdPos == "Bottom Center" ? position.bottom_center : gdPos == "Bottom Left" ? position.bottom_left : gdPos == "Middle Right" ? position.middle_right : position.bottom_right, 2, 6, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A2E39, 0))
+var table gdT = table.new(gdPos == "Bottom Center" ? (tkOn ? position.bottom_right : position.bottom_center) : gdPos == "Bottom Left" ? position.bottom_left : gdPos == "Middle Right" ? position.middle_right : position.bottom_right, 2, 6, bgcolor=color.new(#0B0F14, 5), border_width=1, border_color=color.new(#2A2E39, 0))
 f_gdRow(int r, string nm, float d, string how) =>
     color c = na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)
     table.cell(gdT, 0, r, nm + " " + (na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"), text_color=c, text_size=size.small, text_halign=text.align_left)
@@ -1434,11 +1451,11 @@ _tmHead(int r, string k, string v, color bg) =>
 if not vSep and barstate.islast
     table.clear(tblV, 0, 0, 1, 49)
 // v75: drawn only while it has a section (everything docked under the Master + candle panel off = no empty frame)
-if not vSep and barstate.islast and (glShow or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel)
+if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel)
     bool _cmp = vDetail == "Compact"
     int r = 0
     _tmHead(r, "XAUUSD · " + timeframe.period, "VISUALS · " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC", color.new(#1F3A5F, 0))
-    if glShow
+    if glShow and not tkOn
         [_upP, _upN] = f_glNear(true, close)
         [_dnP, _dnN] = f_glNear(false, close)
         [_up2P, _up2N] = f_glNear(true, nz(_upP, close))
@@ -1609,3 +1626,32 @@ if h2Docked and h2Show and barstate.islast
     f_dkCell(dkT, 8, 7, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
     f_dkCell(dkT, 8, 8, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
     f_dkCell(dkT, 8, 9, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
+
+// ═══════════════════ BOTTOM TICKER (v81) — the glance in one strip ═══════════════════
+// Six tiles, each a large value over a small grey label, the same values as the glance (trend vote, value position,
+// room to the nearest tagged levels, macro net, last pivot sweep, last H2 signal). Bias and odds stay the Master's
+// (its BIAS / SIGNAL cells; the TREND tile's tooltip says so). Row 2 is a transparent spacer that lifts the strip above
+// the Master's plan strip; it has no background (the tiles carry their own), so it stays see-through. Bottom centre is
+// this script's only bottom-centre table while the ticker is on.
+var table tkT = table.new(position.bottom_center, 6, 3, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)
+f_tk(int c, string v, color vc, string lbl, string tip) =>
+    table.cell(tkT, c, 0, v, text_color = vc, bgcolor = color.new(#0F141B, 0), text_size = tkSize == "Large" ? size.large : tkSize == "Small" ? size.small : size.normal, tooltip = tip)
+    table.cell(tkT, c, 1, lbl, text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#0F141B, 0), text_size = size.tiny, tooltip = tip)
+if barstate.islast
+    table.clear(tkT, 0, 0, 5, 2)
+if tkOn and barstate.islast
+    [_tUpP, _tUpN] = f_glNear(true, close)
+    [_tDnP, _tDnN] = f_glNear(false, close)
+    float _tUpR = na(_tUpP) ? na : _tUpP - close
+    float _tDnR = na(_tDnP) ? na : close - _tDnP
+    float _tNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
+    string _ok = "✓"
+    string _no = "✗"
+    f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + str.tostring(h2S1, "#") + " · 4H " + str.tostring(h2S4, "#") + " · 1D " + str.tostring(h2SD, "#") + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and odds: the Master's BIAS / SIGNAL cells.")
+    f_tk(1, na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
+    f_tk(2, "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
+    f_tk(3, f_tmG(_tNet), f_tmC(_tNet), "macro · " + (_tNet > 0 ? "supports gold" : _tNet < 0 ? "against gold" : "no lean"), "USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
+    f_tk(4, na(pvLastLvl) ? "none yet" : (pvLastUp ? "HIGH " : "LOW ") + str.tostring(pvLastLvl, format.mintick), na(pvLastLvl) ? _tmV : pvLastUp ? _tmDn : _tmUp, "last sweep" + (na(pvLastTime) ? "" : " · " + str.tostring((time - pvLastTime) / 3600000.0, "#.#") + " h ago"), "Pivot sweep (the ✕ markers): " + pvLastSweep + "\nH2 sweep: " + str.replace_all(h2LastSweep, "\n", "  "))
+    f_tk(5, h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " ○" : " ●"), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV, "H2 · " + (h2SigDir == 0 ? "no signal" : (h2Stale ? "stale" : "live") + (h2SigOut != "" ? " · " + h2SigOut : "")), h2SigCard + h2SigStat)
+    for c = 0 to 5
+        table.cell(tkT, c, 2, "", height = tkLift, bgcolor = color(na))

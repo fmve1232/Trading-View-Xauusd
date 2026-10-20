@@ -44,6 +44,9 @@ KNOWN = {
                           "boxes, ATR(14) size filter); the Master expires its single engine FVG after 30 bars",
     "fvgMaxBars.min": "as fvgMaxBars.default", "fvgMaxBars.max": "as fvgMaxBars.default",
     "showSR.default": "Visuals draws S/R; the Master switch only annotates its dashboard (its tooltip says so)",
+    "showFVG.default": "different features: Visuals' switch only DRAWS the FVG boxes (off by default since v81, clutter); "
+                       "the Master's is the ENGINE input (F-A30) that feeds trade quality and the plan, unchanged ON",
+    "showOB.default": "as showFVG.default: Visuals draws the OB boxes (off since v81); the Master's is the engine input (F-A30), ON",
 }
 
 

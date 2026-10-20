@@ -24,11 +24,11 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 345889 | `42a6e6e5eb0acb3d11dfd73f43d17f488e2b93afcbb19b4eaa60b6051a4045c8` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1611 | 115814 | `0d96fe9f4a8aab667b4faaaf647669f9c93d674e6d5bca35376273e0b871a83d` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1657 | 121860 | `89d2a72884837c46328401e5d7e32e5af24c05d8423bfc2d5f6f1aee77dd6b13` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 361996 | `e91a9a431f20b67279c59dffc94706d20836556d4566f1a9bc0bd4170e5b6709` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 357944 | `ab85c87344149df5eed7ec16a0f1c83e437602344fed7686b9afb7bc049a40e8` |
 
-> **BUILD v80 — this prompt pins the current build.** The originally audited build
+> **BUILD v81 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -126,6 +126,7 @@ scope, and no other build of these scripts is in scope.
 > **v78:** the dock band's rows tightened: every cell 2 lines (headers 1), the H2 SIGNAL split into two cells; same text and colours.
 > **v79:** Visuals' MARKET AT A GLANCE (8 plain-language answers: trend, bias, heading, liquidity, macro, room for a $10-20 move, history, odds); bias and odds point at the Master's engine cells; dock gap 24.
 > **v80:** the glance as gauges (default): 1H/4H/1D score bars, value and room sliders, macro arrows, history bars; the v79 text style stays selectable.
+> **v81:** the glance as a bottom ticker (operator's choice B of three mock-ups): six tiles, lifted above the Master's plan strip; drawings trimmed by default (BB, FVG / OB boxes, session shading, footprint off; every switch kept; the Master's engine inputs untouched).
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

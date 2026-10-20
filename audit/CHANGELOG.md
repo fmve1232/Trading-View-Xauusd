@@ -2799,3 +2799,47 @@ form differs. The panel's table grows to 50 rows: the checker counts both styles
   identical.
 
 Visuals size: best-fit 42,992 / pessimistic 51,986. Visuals only. Compile NOT RUN on v80.
+
+---
+
+# Build v80 → v81 — the bottom ticker; drawings trimmed (operator: "still not happy with these visuals")
+
+**Diagnosis from the operator's v80 screenshot:**
+1. Too many surfaces at once: the Master dashboard, the dock band, a ~30-row panel, the plan strip, and every chart
+   drawing.
+2. H2 and liquidity appeared two or three times.
+3. The panel covered about half of the price action, and the candles drew over it (TradingView's visual order).
+4. Tiny gauge characters.
+
+**Process:** three layout mock-ups (side rail / bottom ticker / gauge cards) were rendered and sent before any code.
+The operator chose **B · Bottom ticker** and **trim the drawings**.
+
+**v81:**
+- **Bottom ticker** (default "Glance placement = Bottom ticker"):
+  - six tiles at the bottom centre, each a large value over a small grey label;
+  - the tiles are TREND (2-of-3 vote, EMA200), VALUE (above / below value, over / under POC), ROOM (↓ / ↑ distance to
+    the nearest tagged level, ✓ / ✗ against the move minimum), MACRO (net arrow), LAST SWEEP (level, hours ago) and H2
+    (last signal, ● live / ○ stale);
+  - each tile's tooltip carries the detail. The TREND tooltip names the Master's BIAS / SIGNAL cells for bias and odds.
+- **Placement:**
+  - A transparent spacer row lifts the strip above the Master's plan strip: "Ticker lift", default 5 %.
+  - Text size is selectable: Small / Normal / Large.
+  - While the ticker is on, it is the only bottom-centre table; the separate drivers card's "Bottom Center" moves to
+    bottom right (F-A69).
+  - The panel drops its glance section, so the glance is not shown twice. "In the panel" restores it.
+- **Drawings trimmed by default:** Bollinger Bands, FVG boxes, OB boxes, session shading and the footprint engine are
+  OFF. EMAs, key levels, sweeps and BOS / CHoCH stay on. Every switch is kept.
+  - In Visuals, `showFVG` / `showOB` only draw boxes. The Master's same-named inputs are ENGINE inputs (F-A30) and are
+    untouched (ON).
+  - `inputs_check.py` records the difference as KNOWN, as it already did for `showSR`.
+
+**Checks:**
+- `panel_check.py` 8 (new):
+  - the six tiles read the glance's values;
+  - the ticker is the only bottom-centre table while it is on;
+  - the lift row has no background;
+  - there is no duplicate glance.
+- Mutation-tested: re-allowing the drivers card at bottom centre FAILs.
+
+Visuals size: best-fit 46,236 / pessimistic 56,071. Master, Brief, Diagnostics and the arms are unchanged. Compile /
+rendering NOT RUN on v81.
