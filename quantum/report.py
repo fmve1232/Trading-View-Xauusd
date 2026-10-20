@@ -10,7 +10,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, arm_h4, backtest, holdout, ta
+from . import arm_h2, arm_h3, arm_h4, arm_h5, backtest, holdout, ta
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -335,6 +335,28 @@ def h4_section(market, res, cfg, man, now, store_dir, idx) -> dict:
             "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None}
 
 
+def h5_section(market, res, cfg, man, now, store_dir, idx) -> dict:
+    """Arm H5 "High confidence" (Amendment 10): the engine's own signal only when every layer agrees."""
+    trades, ev = arm_h5.simulate(res, cfg, market.tf_sec)
+    key = arm_h5.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
+    man5, pre, post = _arm_record("h5", key, market, trades, cfg, now, store_dir)
+    n = len(idx)
+    sig = [i for i in range(n) if ev["exec_buy"][i] or ev["exec_sell"][i]]
+
+    def plan(i):
+        return {"t": int(pd.Timestamp(idx[i]).timestamp()), "dir": "LONG" if ev["exec_buy"][i] else "SHORT", "entry": _f(res.F["c"][i]),
+                "sl": _f(ev["plan_sl"][i]), "tp1": _f(ev["plan_tp1"][i]), "tp2": _f(ev["plan_tp2"][i])}
+    ck = ev["checklist"]
+    last = plan(sig[-1]) if sig else None
+    if last:
+        side = "long" if last["dir"] == "LONG" else "short"
+        last = {**last, "status": signal_status(res.F, sig[-1], last, bool(ck[side]["htf"]))}
+    return {"freeze": man5, "checklist": ck, "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None,
+            "last_signal": last, "signals": [plan(i) for i in sig[-200:]], "open": [t for t in trades if t.get("open")],
+            "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
+            "forward_trades": post[-100:], "in_sample_trades": pre[-30:], "signals_per_bar": len(sig) / n if n else None}
+
+
 def h2_section(market, res, cfg, man, now, store_dir, idx) -> dict:
     trades, ev = arm_h2.simulate(res, cfg)
     key = arm_h2.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
@@ -514,6 +536,10 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         h4 = h4_section(market, res, cfg, man, now, store_dir, idx)
     except Exception as e:  # noqa: BLE001 - H4 must never break the page
         h4 = {"error": f"{type(e).__name__}: {e}"[:200]}
+    try:   # arm H5 "High confidence" (Amendment 10): its own freeze key and ledger
+        h5 = h5_section(market, res, cfg, man, now, store_dir, idx)
+    except Exception as e:  # noqa: BLE001 - H5 must never break the page
+        h5 = {"error": f"{type(e).__name__}: {e}"[:200]}
     # arm H3 "Sweep-to-Value" (the Pine line's H2 rule, Amendment 7): its own freeze key and ledger
     try:
         h3 = h3_section(market, res, cfg, man, now, store_dir, idx)
@@ -549,5 +575,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "h2": h2,
         "h3": h3,
         "h4": h4,
+        "h5": h5,
     }
     return _clean(payload)
