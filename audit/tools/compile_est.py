@@ -38,7 +38,7 @@ KNOWN_OVER = {"v70 Master": ("Master", "cb88ecc0", 103989), "v71 Master": ("Mast
 # side): reported as INFO. The v66 Brief compiled although the model said ~101,000.
 KNOWN_UNDER = {"v60 Master": ("Master", "eb3e0c00"), "v66 Master": ("Master", "a5fc12ce"), "v66 Brief": ("Brief", "a5fc12ce"),
                "v69 Master": ("Master", "61871d60"), "v68 Brief": ("Brief", "c524e2a7"), "v68 Diagnostics": ("Diagnostics", "c524e2a7"),
-               "v70 Brief": ("Brief", "cb88ecc0"), "v72 Master": ("Master", "89078a56")}
+               "v70 Brief": ("Brief", "cb88ecc0"), "v72 Master": ("Master", "89078a56"), "v83 Master": ("Master", "85bb6f7a")}
 BEST, PESS = 1.6197, 2.1497        # best fit (v23 / v67, the higher); pessimistic model at its v67 ratio
 MAIN_BODY_OK, MAIN_BODY_FAIL = 26538, 28122   # v68 Diagnostics compiled / v68 Master CE10295
 CEILING = {"Brief": (101003, 104385),       # a file's own confirmed compile, where the model is cautious for it
