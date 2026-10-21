@@ -2955,4 +2955,4 @@ Compile NOT RUN on v85. The Master has the same tokens as the compiled v72; the 
 - The v83 Master (= the v85 Master, same bytes `dad15e89…`) compiled and runs.
 - Visuals v84 compiled: the bottom ticker renders above the plan strip (`▼ DOWN | under POC | ↓5.5✗ ↑14.3✓ | ▼▼ |
   HIGH 4127.050 | SELL ○`).
-- Visuals v85 differs from v84 only by the H2 swing-sweep alert (NOT RUN).
+- Visuals v85 differs from v84 only by the H2 swing-sweep alert. **Confirmed compiled (operator's screenshot, 2026-10-21)**, alongside the Master (v83 file), Diagnostics and Brief (v83).
