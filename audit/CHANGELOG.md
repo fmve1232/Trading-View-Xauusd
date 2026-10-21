@@ -2973,3 +2973,9 @@ Compile NOT RUN on v85. The Master has the same tokens as the compiled v72; the 
 - A repeated-sequence scan of the Master finds no identical-output saving of useful size. The only long repeats are
   the per-symbol `request.security` expressions, which each run in their own context and cannot be shared, and the
   input declarations. Earlier passes (v59-v69) took the rest.
+
+**Operator decision (2026-10-21): keep the current setup.**
+- Linking the Master to Visuals needs one packed hidden plot (~150-200 tokens) and the Master has 45-85 free, so it
+  would require moving a Master display element out.
+- The operator chose no Master change. Master + Visuals stay as built (v85); the Brief is swapped in for GATES / DO NOW
+  when wanted.

@@ -132,7 +132,7 @@ sha256sum -c audit/MANIFEST.sha256
   failed at 103,989 and 104,510 while the model said ~99,600; the cause is not identified (not the record type: v71 had
   none). Measure a construct's real cost with a compile before relying on the model for it. **The Master has < ~80 tokens of
   headroom** (F-A72: v84, +~40 raw tokens of alert text, failed at 100,332): `compile_est.py` caps it at the v72 estimate;
-  any Master addition needs identical-output savings measured first, otherwise it goes into Visuals. **And never inline a big function into the main body:**
+  any Master addition needs identical-output savings measured first, otherwise it goes into Visuals. Measured (v85 probes): the Master is about 100,170-100,212 (45-85 free); a Master -> Visuals link (hidden plot + input.source) was declined by the operator (2026-10-21) rather than move anything out of the Master. **And never inline a big function into the main body:**
   TradingView also limits the main body (CE10295, v68 Master at 28,122 main-body lexical; 26,538 compiled). Gate
   (`compile_est.py`): both models below the limit and no higher than a build that really compiled, main body
   ≤ 26,538. Each compiler report goes into the tool's calibration.
