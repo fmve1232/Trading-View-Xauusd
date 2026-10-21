@@ -2922,3 +2922,31 @@ Missing: H2's swing-high / low sweeps, and Visuals' ✕ pivot sweeps.
 
 Full suite, formula_trace 61 / 61, sequence / trace / A/B / rebuild checks PASS. Compile NOT RUN on v84. A v83 Master
 fallback (= the compiled v72 + the F-A71 label) is kept.
+
+---
+
+# Build v84 → v85 — F-A72: the v84 Master failed at 100,332 tokens; the H2 sweep alert moves to Visuals
+
+**Compiler report (operator's v84 paste, 2026-10-21):** `Compiled code contains too many tokens: 100332. The limit is
+100256`.
+- v84 was the compiled v72 Master, plus the F-A71 label (text only), plus about 40 raw tokens of H2-sweep alert text.
+- The model said 99,602, below the v66 Master's 100,204, which compiled.
+- So the v72 Master had less than ~80 tokens of real headroom, and the v66 ceiling is too loose for the post-v68
+  lineage.
+
+**v85:**
+- **Master:** the v83 file, byte for byte (SHA `dad15e89…`): the compiled v72 plus the F-A71 label. `refactor_check.py`
+  derives it as `fix_v83.master(fix_v68.transform(v66))` again. Its alert keeps the confirmed BUY / SELL with the MT5
+  plan, DECISION changes, CHoCH / BOS / MSS, the pool sweeps, the H2 SETUP and the risk lock.
+- **Visuals:** the **H2 swing-sweep alert** (`H2-SWEEP-LOW 4118.74 (MT5) | trend … | info, not a DECISION`, bar
+  close, own switch), next to the ✕ pivot-sweep alert. `panel_check.py` 10 executes both messages: 3,438 cases,
+  0 mismatches. Swapping LOW / HIGH FAILs.
+- **`compile_est.py`:**
+  - v84 is listed in KNOWN_OVER.
+  - The Master's ceiling is the v72 estimate (99,543 / 99,005, rounded up).
+  - The failed v84 Master now FAILS the gate.
+- **CLAUDE.md:** the Master has less than ~80 tokens of headroom. Additions go to Visuals unless savings are measured
+  first.
+- `decision_check.py` is back to its v83 form; the alert line it tested is not in the Master.
+
+Compile NOT RUN on v85. The Master has the same tokens as the compiled v72; the label is text only.

@@ -1,4 +1,4 @@
-# Alerts: what fires, and how to set it up in TradingView (v84)
+# Alerts: what fires, and how to set it up in TradingView (v85)
 
 ## What the Master sends: ONE alert covers everything
 
@@ -11,12 +11,15 @@ value, and it never fires intrabar on a signal that disappears by the close. Pri
 | **DECISION change** | `XAUUSD 15 DECISION WAIT -> SELL \| MT5 plan …` (also BUY → NO TRADE when a veto engages) |
 | **CHoCH / BOS / MSS** (first bar) | `XAUUSD 15 CHoCH▼ \| info, not a DECISION` (BOS▲ / BOS▼, MSS▲ / MSS▼ alike) |
 | **Pool sweep** (PDH / PDL, PWH / PWL, PMH / PML: wick through, close back) | `… SWEEP-HIGH \| info, not a DECISION` |
-| **H2 swing sweep** (v84) | `… H2-SWEEP-LOW 4118.74 (MT5) \| info, not a DECISION` |
 | **H2 SETUP** | `… \| H2 SETUP SELL entry … SL … TP1 … (MT5)` (rides in the event alert) |
 | Risk lock / tracked outcome | `… RISK LOCK engaged …`, `… tracked SELL reached TP1 …` |
 
-**Visuals** (optional, needs a second alert): ✕ pivot sweeps (v84), 4H / PDH / PDL **touches** (these fire intrabar,
-the moment price touches, by design) and H2 signals.
+**Visuals** (needs a second alert, "Any alert() function call" on Visuals):
+- **H2 swing sweeps**: `XAUUSD 15 H2-SWEEP-LOW 4118.74 (MT5) | trend DOWN | info, not a DECISION`. Since v85 it lives
+  here, because the Master is at its token limit (F-A72).
+- ✕ pivot sweeps.
+- The 4H / PDH / PDL **touches**: these fire intrabar, the moment price touches, by design.
+- The H2 BUY / SELL signals.
 
 ## Setup (do this AFTER pasting the new Master)
 

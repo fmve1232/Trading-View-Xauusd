@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v84   (+ pivot-sweep alert)          ║
+// ║  BUILD STAMP — this file last CHANGED in v85   (sweep alerts here)            ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1254,6 +1254,12 @@ var string h2LastSweep = "none yet"
 var string h2SigCard = "none yet"
 if h2SweepL or h2SweepH
     h2LastSweep := (h2SweepL ? "LOW " : "HIGH ") + _h2p(h2SweptLvl) + "\n" + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC"
+// v85: H2's swing sweeps as an alert() here (the Master is at its token limit: v84 with this line in its alert failed
+// to compile at 100,332, F-A72). Needs an alert on Visuals ("Any alert() function call"); bar close (h2Sweep* are
+// confirmed-bar flags); the swept level at the MT5 price, as the card shows it.
+alertOnH2Sweep = input.bool(true, "Alert on H2 swing sweeps", group = grpH2, tooltip = "Needs an alert on Visuals (Any alert() function call). The Master's alert carries the confirmed signals, CHoCH / BOS / MSS and the pool sweeps.")
+if alertOnH2Sweep and (h2SweepL or h2SweepH)
+    alert("XAUUSD " + timeframe.period + " H2-SWEEP-" + (h2SweepL ? "LOW " : "HIGH ") + _h2p(h2SweptLvl) + (h2SweepL and h2SweepH ? " (+HIGH)" : "") + " (MT5) | trend " + h2Trend + " | info, not a DECISION", alert.freq_once_per_bar_close)
 if h2Long or h2Short
     h2LastSig := (h2Long ? "BUY " : "SELL ") + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC  entry " + _h2p(close) + "  SL " + _h2p(h2Sl) + "  TP1 " + _h2p(h2Tp1) + "  TP2 " + _h2p(h2Tp2)
     h2SigCard := (h2Long ? "BUY " : "SELL ") + str.format_time(time, "MM-dd HH:mm", "UTC") + " UTC\nentry " + _h2p(close) + "  SL " + _h2p(h2Sl) + "\nTP1 " + _h2p(h2Tp1) + "  TP2 " + _h2p(h2Tp2)

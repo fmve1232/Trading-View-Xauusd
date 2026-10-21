@@ -30,7 +30,8 @@ from lexcount import toks  # noqa: E402
 LIMIT = 100256
 CALIBRATION = {"v14": 100627, "v23": 100820, "v67": 100335}   # compiler-reported totals (Master) the model fits
 # compiler-reported FAILURES the model does not reproduce (F-A68): shown on every run, never fitted away
-KNOWN_OVER = {"v70 Master": ("Master", "cb88ecc0", 103989), "v71 Master": ("Master", "adbe2bc1", 104510)}
+KNOWN_OVER = {"v70 Master": ("Master", "cb88ecc0", 103989), "v71 Master": ("Master", "adbe2bc1", 104510),
+              "v84 Master": ("Master", "c56ec329", 100332)}
 # Compiled WITHOUT error (operator), i.e. under 100,256: the model must not put these over the limit.
 # v66 Master (39,029 lexical) compiled while v67 (38,870 lexical, FEWER) did not: lexical x ratio is refuted.
 # (file, commit). A confirmed compile the model puts OVER the limit means the model is cautious for that file (safe
@@ -40,7 +41,11 @@ KNOWN_UNDER = {"v60 Master": ("Master", "eb3e0c00"), "v66 Master": ("Master", "a
                "v70 Brief": ("Brief", "cb88ecc0"), "v72 Master": ("Master", "89078a56")}
 BEST, PESS = 1.6197, 2.1497        # best fit (v23 / v67, the higher); pessimistic model at its v67 ratio
 MAIN_BODY_OK, MAIN_BODY_FAIL = 26538, 28122   # v68 Diagnostics compiled / v68 Master CE10295
-CEILING = {"Brief": (101003, 104385)}       # a file's own confirmed compile, where the model is cautious for it
+CEILING = {"Brief": (101003, 104385),       # a file's own confirmed compile, where the model is cautious for it
+           # v85 (F-A72): the Master's lineage since v68 compiled at 99,542 / 99,004 (v72 = v83) and FAILED at 100,332 with
+           # 99,602 / 99,084 (v84, +~40 raw tokens of alert text). The v66 ceiling is too loose for it: the Master may not
+           # exceed the v72 estimate until a compile proves otherwise. Real headroom at v72: under ~80 tokens.
+           "Master": (99543, 99005)}   # rounded up: the v72 estimate is 99,542.3 / 99,004.x
 DEFAULT_CEILING = (100204, 100109)          # the v66 Master compiled at these estimates
 
 

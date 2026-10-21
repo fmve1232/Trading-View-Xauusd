@@ -319,5 +319,34 @@ for _ in range(1500):
             err9.add((who, str(ex)[:60]))
 report(not nan9 and not err9 and len(texts) == 22, f"tiles + TREND rows executed with missing data: {len(texts)} texts, {n9} evaluations, "
        f"{len(nan9)} showed NaN, {len(err9)} could not be evaluated" + (f" -- e.g. {nan9[:2]} {sorted(err9)[:2]}" if nan9 or err9 else ""))
+# ---- 10 (v85): Visuals' sweep alerts (the Master is at its token limit, F-A72): the H2 swing-sweep and the ✕ pivot-sweep
+# alert() messages EXECUTED -- the right side, the swept level (MT5 via _h2p for H2), bar-close frequency, no NaN
+msgs = {}
+for l in L:
+    st = l.strip()
+    if st.startswith("alert(") and ("H2-SWEEP-" in st or "pivot sweep" in st):
+        a_ = args(st, "alert")
+        msgs["H2" if "H2-SWEEP-" in st else "PV"] = a_
+bad10 = n10 = 0
+env10 = P.Env()
+P.define(fnsrc("_h2p(float _x) =>"), env10)
+for _ in range(2000):
+    sL, sH = rng.random() < 0.6, rng.random() < 0.3
+    lvl, off = 4100 + rng.uniform(0, 80), rng.choice([0.0, 0.35, -0.2])
+    env10.update({"h2Mt5": off})
+    e = P.Env(funcs=env10.funcs, h2SweepL=sL, h2SweepH=sH, h2SweptLvl=lvl, h2Mt5=off, h2Trend="DOWN", pvLastSweep="HIGH 4127.050  10-20 22:30 UTC",
+              **{"timeframe.period": "15"})
+    if "H2" in msgs and (sL or sH):
+        n10 += 1
+        out = P.evaluate(msgs["H2"][0], e)
+        want = ("H2-SWEEP-LOW " if sL else "H2-SWEEP-HIGH ") + P._tostr(lvl + off, "#.##") + (" (+HIGH)" if sL and sH else "") + " (MT5)"
+        bad10 += want not in out or "NaN" in out
+    n10 += 1
+    out = P.evaluate(msgs["PV"][0], e) if "PV" in msgs else ""
+    bad10 += "pivot sweep HIGH 4127.050" not in out or "NaN" in out
+freq_ok = all(m[1] == "alert.freq_once_per_bar_close" for m in msgs.values()) and len(msgs) == 2
+gate_ok = "if alertOnH2Sweep and (h2SweepL or h2SweepH)" in V and "if alertOnPvSweep and (sweepUp or sweepDn)" in V
+report(bad10 == 0 and freq_ok and gate_ok, f"sweep alerts (H2 swing, ✕ pivot) executed ({n10} cases, mismatches {bad10}); bar-close "
+       "frequency; each behind its own switch")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- static read of the Pine text; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

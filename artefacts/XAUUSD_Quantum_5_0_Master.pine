@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v84   (alerts: + H2 sweeps)          ║
+// ║  BUILD STAMP — this file last CHANGED in v83   (news window: NY time)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5875,7 +5875,7 @@ if barstate.isconfirmed and not perfMode and _confDirLabel != _confDirLabel[1]
 // Information only: these are not entries; the DECISION rule is unchanged. The H2 SETUP message rides in the same
 // alert (one alert() call; same trigger and text as before).
 _ev(bool _x, string _s) => _x and not _x[1] ? _s : ""
-string _evS = _ev(bosLabelBull, " BOS▲") + _ev(bosLabelBear, " BOS▼") + _ev(chochLabelBull, " CHoCH▲") + _ev(chochLabelBear, " CHoCH▼") + _ev(mssLabelBull, " MSS▲") + _ev(mssLabelBear, " MSS▼") + _ev(liqSweepBull, " SWEEP-LOW") + _ev(liqSweepBear, " SWEEP-HIGH") + (h2SweepL or h2SweepH ? (h2SweepL ? " H2-SWEEP-LOW " : " H2-SWEEP-HIGH ") + str.tostring(h2SweptLvl + mt5Offset, "#.##") + (h2SweepL and h2SweepH ? " (+HIGH)" : "") + " (MT5)" : "") + (h2Long or h2Short ? " | H2 SETUP " + h2Plan + " (MT5)" : "")
+string _evS = _ev(bosLabelBull, " BOS▲") + _ev(bosLabelBear, " BOS▼") + _ev(chochLabelBull, " CHoCH▲") + _ev(chochLabelBear, " CHoCH▼") + _ev(mssLabelBull, " MSS▲") + _ev(mssLabelBear, " MSS▼") + _ev(liqSweepBull, " SWEEP-LOW") + _ev(liqSweepBear, " SWEEP-HIGH") + (h2Long or h2Short ? " | H2 SETUP " + h2Plan + " (MT5)" : "")
 if _evS != "" and not perfMode
     _al(_evS + " | info, not a DECISION")
 if barstate.isconfirmed and not perfMode and useRiskLimits and riskLock and not riskLock[1]
