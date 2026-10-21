@@ -22,6 +22,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import fix_v68 as F68  # noqa: E402
 import fix_v71 as F71  # noqa: E402
+import fix_v83 as F83  # noqa: E402
 
 LIMIT = 100256
 M = "artefacts/XAUUSD_Quantum_5_0_Master.pine"
@@ -36,8 +37,8 @@ def pad(n):
 
 def build():
     v66 = subprocess.run(["git", "show", "a5fc12ce:" + M], capture_output=True, text=True, check=True).stdout
-    v69 = F68.transform(v66, inline_one_call=False)
-    assert v69 == open(M, encoding="utf-8").read(), "the Master is not the v69 file"
+    v69 = F83.master(F68.transform(v66, inline_one_call=False))   # v85: the Master on the chart (= v69 + the F-A71 label text)
+    assert v69 == open(M, encoding="utf-8").read(), "the Master is not the v83 file"
     V = open("artefacts/XAUUSD_Quantum_5_5_Visuals.pine", encoding="utf-8").read()
     fence = V[V.index("// GD-BEGIN"):V.index("// GD-END") + len("// GD-END")]
 
