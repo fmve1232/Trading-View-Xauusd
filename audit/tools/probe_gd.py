@@ -30,9 +30,9 @@ OUT = "audit/probes"
 PAD_LINES = 600
 
 
-def pad(n):
+def pad(n, lines=None):
     return ([f"// PROBE filler {n}: meaningless arithmetic so the compiler reports a count; identical in every probe",
-             f"f_probePad{n}(float x) =>", "    float p = x"] + ["    p := p * 0.5 + 1.0"] * PAD_LINES + ["    p"])
+             f"f_probePad{n}(float x) =>", "    float p = x"] + ["    p := p * 0.5 + 1.0"] * (lines or PAD_LINES) + ["    p"])
 
 
 def build():
@@ -42,13 +42,13 @@ def build():
     V = open("artefacts/XAUUSD_Quantum_5_5_Visuals.pine", encoding="utf-8").read()
     fence = V[V.index("// GD-BEGIN"):V.index("// GD-END") + len("// GD-END")]
 
-    def with_pads(text, pads):
+    def with_pads(text, pads, lines=None):
         L = text.split("\n")
         L[0:0] = []
         i = next(k for k, l in enumerate(L) if l.startswith("indicator("))
         L[i] = L[i].replace('indicator("XAUUSD Quantum 5.0"', 'indicator("PROBE - not for trading"')
         a = L.index("// H2-BEGIN")
-        body = sum((pad(n) for n in pads), [])
+        body = sum((pad(n, lines) for n in pads), [])
         use = ["plot(" + " + ".join(f"f_probePad{n}(close)" for n in pads) + ', "probe", display=display.none)']
         L[a:a] = body + use
         return "\n".join(L)
@@ -89,12 +89,24 @@ def build():
         assert "f_gdG" not in out and "brJ" not in out
         return out
 
-    P = {"P1": with_pads(v69, [1]), "P2": with_pads(v69, [1, 2]), "P3": with_pads(drivers(v69), [1]),
+    # v85: P1 / P2 showed that an IDENTICAL second filler costs ~0 (108,612 vs 108,623): TradingView keeps one copy of
+    # an identical function body. So the Master's size is measured with ONE filler of 300 / 600 (P1) / 900 lines
+    # instead: per-line cost = slope, linearity checked, Master = P1 - 600 x slope - the filler's fixed part.
+    P = {"PB300": with_pads(v69, [1], 300), "PC900": with_pads(v69, [1], 900), "P1": with_pads(v69, [1]), "P2": with_pads(v69, [1, 2]), "P3": with_pads(drivers(v69), [1]),
          "P4": with_pads(drivers(v69, corr=False), [1]), "P5": with_pads(queues(v69), [1])}
     os.makedirs(OUT, exist_ok=True)
     for k, t in P.items():
         open(f"{OUT}/{k}.pine", "w", encoding="utf-8").write(t)
     return v69, P
+
+
+def solve_lines(b300, a600, c900):
+    s1, s2 = (a600 - b300) / 300.0, (c900 - a600) / 300.0
+    print(f"per filler line: {s1:.3f} (300->600)  {s2:.3f} (600->900)  {'linear' if abs(s1 - s2) <= 0.5 else 'NOT linear: the per-line model does not hold'}")
+    slope = (c900 - b300) / 600.0
+    fixed = a600 - 600 * slope
+    print(f"Master + filler's fixed part (call, plot, header) = {fixed:,.0f}; the fixed part is a few dozen tokens, so the Master is"
+          f" about {fixed - 40:,.0f} .. {fixed:,.0f}; headroom under {LIMIT:,}: about {LIMIT - fixed:,.0f} .. {LIMIT - fixed + 40:,.0f}")
 
 
 def solve(a, b, c, d, e):
@@ -113,6 +125,9 @@ def solve(a, b, c, d, e):
 if __name__ == "__main__":
     if len(sys.argv) == 6:
         solve(*map(int, sys.argv[1:]))
+        sys.exit(0)
+    if len(sys.argv) == 5 and sys.argv[1] == "--lines":
+        solve_lines(*map(int, sys.argv[2:]))
         sys.exit(0)
     v69, P = build()
     import difflib

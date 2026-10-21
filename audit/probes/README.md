@@ -20,3 +20,13 @@ from the error, then delete the probe script. Solve with:
 
 `probe_gd.py` rebuilds the probes from the v66 commit through `fix_v68` (= the v69 Master). It checks that each probe
 is that file plus insertions only: the indicator title, and for P3 / P4 the MACRO cell line.
+
+## v85 finding and the line probes
+
+- P1 (Master + one 600-line filler) = **108,612**; P2 (+ an identical second filler) = **108,623**.
+- The identical second function body cost only its call (~11 tokens): TradingView keeps ONE copy of an identical function
+  body. So P2 − P1 is not the filler's cost, and the Master's size cannot be solved from P1 / P2.
+- PB300 / PC900 put a single filler of 300 / 900 lines into the same Master. The slope gives the cost per line (and
+  checks it is linear); the Master = P1 − 600 × slope − the filler's small fixed part:
+
+      python3 audit/tools/probe_gd.py --lines <PB300> 108612 <PC900>
