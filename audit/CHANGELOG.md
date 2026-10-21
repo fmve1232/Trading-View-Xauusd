@@ -2956,3 +2956,20 @@ Compile NOT RUN on v85. The Master has the same tokens as the compiled v72; the 
 - Visuals v84 compiled: the bottom ticker renders above the plan strip (`▼ DOWN | under POC | ↓5.5✗ ↑14.3✓ | ▼▼ |
   HIGH 4127.050 | SELL ○`).
 - Visuals v85 differs from v84 only by the H2 swing-sweep alert. **Confirmed compiled (operator's screenshot, 2026-10-21)**, alongside the Master (v83 file), Diagnostics and Brief (v83).
+
+---
+
+# v85 measurement — the Master's real size (probes, 2026-10-21; no artefact changed)
+
+| Probe | Count |
+|---|---|
+| P1 (Master + 600-line filler) | 108,612 |
+| P2 (+ an identical second filler) | 108,623 (+11: an identical function body is counted once) |
+| PB300 (Master + 300-line filler) | 104,412 |
+
+- 14.0 tokens per filler line, so **the Master is about 100,170 .. 100,212, with 45 .. 85 tokens of headroom**.
+- v84 (+~40 lexical tokens of alert text) therefore cost ~120-160, about 3.5 compiled tokens per lexical token for that
+  string-heavy line.
+- A repeated-sequence scan of the Master finds no identical-output saving of useful size. The only long repeats are
+  the per-symbol `request.security` expressions, which each run in their own context and cannot be shared, and the
+  input declarations. Earlier passes (v59-v69) took the rest.

@@ -17,6 +17,10 @@ Both are estimates. Gates (each chart script and arm), v69:
     model said ~99,600. The model misses ~4,400-4,900 tokens there and the cause is NOT identified (v70's record type was
     blamed first; v71 had none and came out higher). So the model is NOT trusted for that block: a Master containing
     `// GD-BEGIN` FAILS here, and both reports are listed in KNOWN_OVER (the model's miss is shown, not hidden).
+  * MEASURED (v85 probes, 2026-10-21): the Master on the chart (v83 file) + one 300-line filler = 104,412, + 600 lines =
+    108,612 -> 14.0 tokens per filler line -> the Master itself is about 100,170 .. 100,212 (the filler's fixed part is a
+    few dozen tokens): 45 .. 85 tokens of headroom. A second IDENTICAL function body cost ~11 (its call only): TradingView
+    keeps one copy of an identical body, so "every call expands its body" is not the whole story (F-A72 notes).
 The real compiler is the judge; every report is added below.
 Usage: python3 audit/tools/compile_est.py [files]   (default: every artefact)"""
 import glob
