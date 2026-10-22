@@ -70,3 +70,14 @@ def test_minute_limit_waits_and_day_limit_stops_cleanly(tmp_path):
     assert rec["stop"] == "daily credit limit (resumes next run)" and rec["error"] is None and rec["rows"] == 2 * history.PAGE
     rec = history.backfill(str(tmp_path), "XAU/USD", "1h", "K", "2010-01-01", fetch=feed, sleep_s=0, now=NOW, log=lambda *_: None)
     assert rec["stop"] == "the feed has no older bars" and rec["rows"] == len(ALL)        # the next run resumes
+
+
+def test_404_before_the_first_bar_is_the_end_of_the_feed(tmp_path):
+    from quantum.data import sources
+
+    def feed404(symbol, interval, apikey, end=None, start=None):
+        if end is not None and end < FEED_START:
+            raise sources.FetchError("https://api.twelvedata.com/time_series -> HTTP 404")
+        return feed(symbol, interval, apikey, end=end, start=start)
+    rec = history.backfill(str(tmp_path), "XAU/USD", "1h", "K", "2010-01-01", fetch=feed404, sleep_s=0, now=NOW, log=lambda *_: None)
+    assert rec["stop"] == "the feed has no older bars" and rec["error"] is None and rec["first"] == FEED_START.isoformat()

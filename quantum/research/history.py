@@ -91,6 +91,9 @@ def backfill(store_dir: str, symbol: str, interval: str, apikey: str, start: str
             break
         except Exception as e:  # noqa: BLE001 - recorded in the log (key redacted), then the run stops
             calls += 1
+            if "HTTP 404" in str(e) and have is not None and len(have):
+                stop = "the feed has no older bars"                # Twelve Data answers 404 before its first bar
+                break
             err, stop = sources.redact(f"{type(e).__name__}: {e}")[:300], "error"
             break
         calls += 1
