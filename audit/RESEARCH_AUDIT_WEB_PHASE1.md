@@ -128,14 +128,14 @@ presence.
 
 ## 6. Proposed architecture (maps to existing modules)
 
-1. **Data integrity** — `data/` + `reference.py` cross-checks (exists). *Add:* Dukascopy history loader with bid/ask.
+1. **Data integrity** — `data/` + `reference.py` cross-checks (exists). *Add:* a multi-year history loader (Twelve Data, Amendment 11).
 2. **Regime** — `features.py` regime (exists). *Add:* daily trend state (12-month and 50/200-day) as a separate layer.
 3. **Directional bias** — engine scores + HTF + macro (exists). *Change proposal:* the daily layer gates direction.
 4. **Setup detection** — engine triggers, H2/H3 sweeps (exist), each a separate registered hypothesis.
 5. **Entry confirmation** — closed bar beyond trigger (exists).
 6. **Trade validation** — *new:* triple-barrier labels (TP before SL within a time limit) and an out-of-sample
    calibrated probability, only if it beats the base rate (Brier) on unseen data.
-7. **Cost and execution** — `backtest.py` (exists). *Add:* Dukascopy's recorded spread, cost ×2 stress, 1-bar delay.
+7. **Cost and execution** — `backtest.py` (exists). *Add:* cost ×2 stress and a 1-bar entry delay.
 8. **Risk** — Kelly/haircut display (exists). *Add:* fixed-fraction policy, daily loss stop, kill switch (§9).
 9. **Decision and reporting** — site (exists), with NO TRADE as the default state.
 
@@ -143,7 +143,7 @@ presence.
 
 | Need | Source | Status |
 |---|---|---|
-| Spot XAUUSD 1-minute bid/ask, ≥ 10 years | Dukascopy datafeed (`.bi5`), already read by `audit/tools/xcheck_dukascopy.py` | **Gap; fetch in GitHub Actions** (sandbox blocks it). |
+| Spot XAU/USD intraday, ≥ 10 years | **Twelve Data** (the live feed), paged back to 2010 by `quantum/research/history.py` into the `research-data` branch | **Being fetched** (Amendment 11). *Correction:* this audit first proposed Dukascopy; its feed refuses GitHub's cloud addresses and its terms restrict redistribution (noted in `audit/tools/xcheck_dukascopy.py`), so it is not used. |
 | Daily spot 2008→ | store | Have. |
 | GC futures 1h 2024→, daily 2016→ | store | Have (basis vs spot to be measured). |
 | DXY, US10Y, real yield, breakeven, 2Y | Yahoo / FRED | Have (daily FRED; 1h Yahoo short). |
@@ -181,7 +181,7 @@ not "never seen by anyone".
 | P | Step | Acceptance test | Restarts a forward test? |
 |---|---|---|---|
 | 1 | Relabel "P(win)" as a score everywhere; add H4's verdict and a "do not trade" note to the playbook | Site text; tests | No (display) |
-| 2 | Dukascopy history loader (GitHub Actions) into `market-data`, with bid/ask spread | ≥ 10 y of 1-min bars; gaps reported; spot vs store cross-check within 0.1% | No |
+| 2 | History loader (Twelve Data, GitHub Actions) into `research-data` | Bars back to 2010 or the feed's first bar; gaps and row counts logged | No |
 | 3 | Research harness `quantum/research/`: triple-barrier labels, purged walk-forward, Wilson / t / DSR / PBO / Reality Check | Unit tests on synthetic data with known answers (zero-edge series must show PBO ≈ 0.5 and DSR insignificant) | No (outside the engine key) |
 | 4 | Baseline: run the existing engine and arms on 2010–2019 development data | Report per arm, with costs and Wilson CIs | No |
 | 5 | Register hypotheses A–G one by one (amendments), test on development, then validation | Protocol §8 | No (new arms) |
@@ -197,13 +197,13 @@ not "never seen by anyone".
 | `quantum/engine.py`, `features.py`, `config.py` | **Preserve** (frozen; changes only by amendment) | Freeze keys unchanged by Phase 2 |
 | `quantum/arm_h2…h5.py` | Preserve | Unchanged hashes |
 | `site/app.js`, `report.py` | Change (display): P(win) → "score"; H4 verdict banner | Integrity tests; render check |
-| `quantum/data/dukascopy.py` | **Add**: `.bi5` decode (logic from `audit/tools/xcheck_dukascopy.py`), bid/ask 1-min → OHLC + spread, month files in the store | Decode test on a fixed sample day; spread ≥ 0; no duplicate timestamps |
-| `.github/workflows/history.yml` | **Add**: one-off and monthly backfill job | Run log; row counts per month |
+| `quantum/research/history.py` | **Add** (done 22 Oct): Twelve Data paging backwards to 2010 / the feed's first bar, then forwards; store format on `research-data` | Simulated-feed tests: reaches the first bar, respects the floor, resumes, no duplicates |
+| `.github/workflows/research-history.yml` | **Add** (done 22 Oct): backfill on demand and monthly | Run summary with the log |
 | `quantum/research/labels.py` | **Add**: triple-barrier labelling with costs | Hand-computed cases |
 | `quantum/research/cv.py` | **Add**: purged, embargoed walk-forward folds | No index overlap between train and test (+ embargo) |
 | `quantum/research/stats.py` | **Add**: Wilson, t-CI, DSR, PBO (CSCV), White RC bootstrap | Known-answer tests (noise → PBO ≈ 0.5) |
 | `quantum/research/run.py` | **Add**: registered-hypothesis runner writing reports to `audit/research/` | Reproducible from a commit and a data hash |
 | `audit/PREREGISTRATION.md` | Amendment 11: the sealed split (§7) and the protocol (§8), written before any data is fetched | Committed before step 2 |
 
-**Decision needed from the operator before Phase 3:** approve Amendment 11 (split and protocol), the Dukascopy backfill
-in GitHub Actions, and the display changes in roadmap step 1.
+**Decision needed from the operator before Phase 3:** approve Amendment 11 (split and protocol), the history backfill
+in GitHub Actions, and the display changes in roadmap step 1. **Approved 22 Oct; done** (Amendment 11 committed first).

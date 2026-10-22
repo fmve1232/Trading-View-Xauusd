@@ -845,12 +845,16 @@ function playbook(D, price) {
   return { sell: live(pb.sell), buy: live(pb.buy), primary, a: pb.atr, stopD: pb.stop_dist, lowSession: d.session && d.session.quality < 30 };
 }
 // H4's record in one line: the forward record decides (15m, Amendment 8); in-sample is history only
+// H4's live record is conclusively negative (Amendment 8: N >= 50 and the mean-R 95% interval wholly below 0)
+const h4Losing = (D) => { const fw = (D.h4 && D.h4.forward) || {}; return fw.n >= 50 && isNum(fw.t_stat) && fw.t_stat <= -2; };
 function h4rec(D) {
   const H = D.h4; if (!H || H.error) return "These triggers are tracked as a test (arm H4).";
   const fw = H.forward || {}, is = H.in_sample || {};
   const full = `Arm H4 (Amendment 8). Forward: ${fw.n ? `${fw.n} closed, win ${f(fw.win_rate, 0)}%, mean ${fs(fw.avg_r, 2)} R, profit factor ${f(fw.profit_factor, 2)}` : "no closed trades yet"}` +
     (is.n ? `. Past data: ${is.n} trades, win ${f(is.win_rate, 0)}%, mean ${fs(is.avg_r, 2)} R, profit factor ${f(is.profit_factor, 2)}` : "") + ". Judged on 15m after 50 forward trades.";
   const neg = (fw.n >= 50 ? fw.avg_r : is.avg_r) < 0;
+  if (fw.n >= 50 && isNum(fw.t_stat) && fw.t_stat <= -2)
+    return `<span title="${esc(full)}"><b class="bear">Verdict: losing.</b> Live record ${fw.n} trades, ${f(fw.win_rate, 0)}% won, average ${fs(fw.avg_r, 2)} R; the whole 95% range is below zero.</span> <b class="warn">Do not trade these triggers; read them only as nearby levels.</b>`;
   const rec = fw.n ? `Live record: ${fw.n} trades, ${f(fw.win_rate, 0)}% won.` : "Live record: tracking started, no closed trades yet.";
   return `<span title="${esc(full)}">${rec}${is.n ? ` In past data these triggers won ${f(is.win_rate, 0)}% of ${is.n} times.` : ""}</span>` +
     (neg ? ' <b class="warn">On average they have lost money: treat them as levels to watch, not as signals.</b>' : "");
@@ -902,11 +906,11 @@ function renderBrief() {
   const fails = gs ? gs[gsd] : mm ? (mm[2] || "").split(/\s+/).filter(Boolean).map((x) => (x.startsWith("HTF") ? "HTF" : x)) : [];
   const need = fails.map((k) => (GATES.find((g) => g[0] === k) || [k, k])[1].replace(" (London / New York)", "")).join(" · ");
   const pb0 = !sig ? playbook(D, price) : null;
-  const doNow = sig ? `${dec} now` : dec === "RISK LOCK" ? "Stop · risk lock" : pb0 && (pb0.sell || pb0.buy) ? "Wait for a trigger" : dec === "WAIT" ? "Stay flat · wait" : "No trade";
+  const doNow = sig ? `${dec} now` : dec === "RISK LOCK" ? "Stop · risk lock" : pb0 && (pb0.sell || pb0.buy) && !h4Losing(D) ? "Wait for a trigger" : dec === "WAIT" ? "Stay flat · wait" : "No trade";
   const warn = (fr && fr.behind >= 2 ? `Data ${fr.behind} bars old: do not act. ` : "") + (ev ? `High-impact USD event near (${esc(ev.title || ev.event || "release")}). ` : "") + (marketClosed(new Date()) ? "Market closed. " : "");
   const t5 = tile(sig ? (dec === "BUY" ? "bull act" : "bear act") : "warn act", sig ? (dec === "BUY" ? "up" : "dn") : "hand", "What to do now", esc(doNow),
     (warn ? `<b class="warn">${warn}</b><br>` : "") + (sig ? `Entry ${px(p.entry)} · stop ${px(p.sl)} · TQ ${d.trade_quality}` :
-      (pb0 && (pb0.buy || pb0.sell) ? `Act only on a ${esc(M.tf)} close beyond a playbook trigger.<br>` : "") +
+      (pb0 && (pb0.buy || pb0.sell) ? (h4Losing(D) ? `The playbook's triggers have a losing live record: treat them as levels, not entries.<br>` : `Act only on a ${esc(M.tf)} close beyond a playbook trigger.<br>`) : "") +
       (dec === "NO TRADE" ? `All 7 gates met, but the setup is vetoed: ${esc(vetoes(d) || "veto")}.` :
         dec === "RISK LOCK" ? `Risk lock: no new trades${d.risk && d.risk.lock_str ? ` (${esc(d.risk.lock_str)})` : ""}.` :
         /^RANGE/.test(log) ? "The model sees a range: no side has an edge." : need ? `For a ${gs ? gsd : mm && mm[1] === "▲" ? "long" : "short"}, the model still needs: ${esc(need.toLowerCase())}` : esc(whyPlain(d.blk_why))) +
@@ -1032,15 +1036,15 @@ function renderSide() {
   $("#p-state").className = "pill " + (fitted && !d.cal_drift ? "" : "warn");
   $("#p-state").title = "A calibration curve fitted on the development history. It is not validated out of sample, and on that history the scores did not separate winners from losers (F-A34). Only the forward holdout can show whether these probabilities hold.";
   $("#prob").innerHTML = kv([
-    ["P(long resolves up)", isNum(d.p_long) ? pct(d.p_long * 100) : "—"],
-    ["P(short resolves down)", isNum(d.p_short) ? pct(d.p_short * 100) : "—"],
+    ["Long score (0–100)", isNum(d.p_long) ? f(d.p_long * 100, 0) : "—"],
+    ["Short score (0–100)", isNum(d.p_short) ? f(d.p_short * 100, 0) : "—"],
     ["Calibration gate", d.cal_gate_ready ? `live · min P ${pct(M.config.cal_gate_min_p * 100)}` : "inactive (needs a fit and ROLL N≥10)"],
     ["Analog EV / match", `${a.match > 0 ? fs(a.ev, 2) + " R" : "—"} · A${a.match}${a.match < 30 ? " LOW" : ""}`],
     ["Win rate (ROLL)", `${pctN(a.oos_wr, a.oos_n)} · n${a.oos_n}`],   // no ±: a rolling slice is not a holdout (F-037 / F-A14)
     ["IS vs ROLL", `${pctN(a.is_wr, a.is_n)} / ${pctN(a.oos_wr, a.oos_n)}${a.is_n >= 10 && a.oos_n > 0 && a.is_wr - a.oos_wr > 15 ? ' <span class="warn">!FIT</span>' : ""}`],
     ["Calibration grade", `${esc(a.cal_grade)} ${a.cal_grade_pct}/100 ${esc(a.cal_detail || "")}`],
     ["Check on this timeframe's trades", calCheck(D)],
-  ]) + `<p class="note">ROLL is a rolling trailing slice, <b>not</b> a holdout (F-037). The only out-of-sample evidence is the frozen forward holdout in the Backtest tab.</p>`;
+  ]) + `<p class="note"><b>These are scores, not win probabilities.</b> The research audit (22 Oct) found that trades with higher scores did not win more often (e.g. 1h: a score near 84 won 0 of 2, near 65 won 2 of 6). ROLL is a rolling trailing slice, <b>not</b> a holdout (F-037). The only out-of-sample evidence is the frozen forward record in the Backtest tab.</p>`;
 
   const tq = d.trade_quality;
   $("#tq-grade").textContent = `${d.tq_grade} · floor ${d.eff_tq_min}`;
