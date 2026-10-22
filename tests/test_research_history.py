@@ -42,3 +42,31 @@ def test_respects_the_floor_and_resumes(tmp_path):
 def test_max_calls_bounds_one_run(tmp_path):
     rec = history.backfill(str(tmp_path), "XAU/USD", "1h", "K", "2010-01-01", fetch=feed, sleep_s=0, now=NOW, max_calls=2, log=lambda *_: None)
     assert rec["calls"] == 2 and rec["stop"] == "max calls"
+
+
+def test_an_error_is_logged_with_the_key_redacted(tmp_path):
+    def bad(symbol, interval, apikey, end=None, start=None):
+        raise RuntimeError("https://api.twelvedata.com/time_series?apikey=SECRET -> plan limit")
+    try:
+        history.backfill(str(tmp_path), "XAU/USD", "1h", "SECRET", "2010-01-01", fetch=bad, sleep_s=0, now=NOW, log=lambda *_: None)
+        raise AssertionError("expected an error")
+    except Exception as e:  # noqa: BLE001
+        assert "SECRET" not in str(e)
+    rec = json.loads(open(tmp_path / "_history_log.jsonl").read().splitlines()[-1])
+    assert rec["stop"] == "error" and "plan limit" in rec["error"] and "SECRET" not in rec["error"]
+
+
+def test_minute_limit_waits_and_day_limit_stops_cleanly(tmp_path):
+    n = {"k": 0}
+
+    def flaky(symbol, interval, apikey, end=None, start=None):
+        n["k"] += 1
+        if n["k"] == 2:
+            raise history.MinuteLimit("run out of api credits for the current minute")
+        if n["k"] == 4:
+            raise history.DayLimit("run out of api credits for the day")
+        return feed(symbol, interval, apikey, end=end, start=start)
+    rec = history.backfill(str(tmp_path), "XAU/USD", "1h", "K", "2010-01-01", fetch=flaky, sleep_s=0, now=NOW, log=lambda *_: None)
+    assert rec["stop"] == "daily credit limit (resumes next run)" and rec["error"] is None and rec["rows"] == 2 * history.PAGE
+    rec = history.backfill(str(tmp_path), "XAU/USD", "1h", "K", "2010-01-01", fetch=feed, sleep_s=0, now=NOW, log=lambda *_: None)
+    assert rec["stop"] == "the feed has no older bars" and rec["rows"] == len(ALL)        # the next run resumes
