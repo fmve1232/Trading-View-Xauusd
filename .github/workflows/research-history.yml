@@ -11,7 +11,7 @@ on:
         default: "1h,15min"
       max_calls:
         description: "Maximum requests per interval (free plan: 800 a day)"
-        default: "300"
+        default: "150"
   schedule:
     - cron: "41 7 2 * *"          # the 2nd of each month, 07:41 UTC
 
@@ -44,7 +44,7 @@ jobs:
       - name: Backfill
         env:
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
-        run: python -m quantum.research.history --store rd --intervals "${{ github.event.inputs.intervals || '1h,15min' }}" --max-calls "${{ github.event.inputs.max_calls || '300' }}"
+        run: python -m quantum.research.history --store rd --intervals "${{ github.event.inputs.intervals || '1h,15min' }}" --max-calls "${{ github.event.inputs.max_calls || '150' }}"
       - name: Summary
         if: always()
         run: |

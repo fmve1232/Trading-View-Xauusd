@@ -24,6 +24,14 @@ PAGE = 5000            # Twelve Data's maximum outputsize
 NO_DATA = ("no data", "not found", "no values")
 
 
+class MinuteLimit(Exception):
+    """The plan's per-minute credits are spent (the site's pipeline shares the key): wait and retry."""
+
+
+class DayLimit(Exception):
+    """The plan's daily credits are spent: stop; the next run resumes from the oldest stored bar."""
+
+
 def series_name(symbol: str, interval: str) -> str:
     return "TD_" + symbol.replace("/", "_") + "_" + interval
 
@@ -40,6 +48,10 @@ def page(symbol: str, interval: str, apikey: str, end: pd.Timestamp | None = Non
         msg = str(j.get("message", j.get("status", ""))).lower()
         if any(k in msg for k in NO_DATA):
             return None
+        if "credits" in msg and "minute" in msg:
+            raise MinuteLimit(msg[:120])
+        if "credits" in msg and ("day" in msg or "daily" in msg):
+            raise DayLimit(msg[:120])
         raise sources.FetchError(sources.redact(f"twelvedata {symbol} {interval}: {j.get('message', j.get('status'))}"))
     vals = j.get("values") or []
     if not vals:
@@ -53,17 +65,36 @@ def page(symbol: str, interval: str, apikey: str, end: pd.Timestamp | None = Non
 
 
 def backfill(store_dir: str, symbol: str, interval: str, apikey: str, start: str = "2010-01-01", fetch=page,
-             sleep_s: float = 8.0, max_calls: int = 300, now: datetime | None = None, log=print) -> dict:
+             sleep_s: float = 10.0, max_calls: int = 300, now: datetime | None = None, log=print) -> dict:
     name, step, floor = series_name(symbol, interval), STEP[interval], pd.Timestamp(start, tz="UTC")
     have = store.load(store_dir, name)
     calls, added, stop = 0, 0, "max calls"
     end = (have.index.min() - step) if have is not None and len(have) else pd.Timestamp(now or datetime.now(timezone.utc))
+    err, waits = None, 0
     while calls < max_calls:                                       # backwards to the floor or the feed's first bar
         if end < floor:
             stop = "reached the start date"
             break
-        df = fetch(symbol, interval, apikey, end=end)
+        try:
+            df = fetch(symbol, interval, apikey, end=end)
+        except MinuteLimit:
+            calls += 1
+            waits += 1
+            if waits > 6:
+                err, stop = "per-minute credit limit persisted", "error"
+                break
+            time.sleep(65 if sleep_s else 0)
+            continue
+        except DayLimit:
+            calls += 1
+            stop = "daily credit limit (resumes next run)"
+            break
+        except Exception as e:  # noqa: BLE001 - recorded in the log (key redacted), then the run stops
+            calls += 1
+            err, stop = sources.redact(f"{type(e).__name__}: {e}")[:300], "error"
+            break
         calls += 1
+        waits = 0
         if df is None or df.empty:
             stop = "the feed has no older bars"
             break
@@ -77,9 +108,14 @@ def backfill(store_dir: str, symbol: str, interval: str, apikey: str, start: str
             break
         end = new_end
         log(f"{name}: {len(have)} bars, oldest {have.index.min()}")
-        time.sleep(sleep_s)                                        # the free plan allows 8 requests a minute
-    if have is not None and len(have) and calls < max_calls:     # forwards to now
-        df = fetch(symbol, interval, apikey, start=have.index.max() + step)
+        time.sleep(sleep_s)                                        # free plan: 8 a minute, shared with the site's pipeline
+    if err is None and have is not None and len(have) and calls < max_calls:     # forwards to now
+        try:
+            df = fetch(symbol, interval, apikey, start=have.index.max() + step)
+        except (MinuteLimit, DayLimit):
+            df = None                                              # the next run adds the newest bars
+        except Exception as e:  # noqa: BLE001
+            df, err = None, sources.redact(f"{type(e).__name__}: {e}")[:300]
         calls += 1
         if df is not None and len(df):
             have = store.merge(have, df)
@@ -87,11 +123,14 @@ def backfill(store_dir: str, symbol: str, interval: str, apikey: str, start: str
             store.save(store_dir, name, have)
     rec = {"utc": datetime.now(timezone.utc).isoformat(timespec="seconds"), "series": name, "calls": calls, "added": added,
            "rows": 0 if have is None else int(len(have)), "first": None if have is None or not len(have) else have.index.min().isoformat(),
-           "last": None if have is None or not len(have) else have.index.max().isoformat(), "stop": stop}
+           "last": None if have is None or not len(have) else have.index.max().isoformat(), "stop": stop, "error": err,
+           "end_requested": end.isoformat() if stop == "error" else None}
     os.makedirs(store_dir, exist_ok=True)
     with open(os.path.join(store_dir, "_history_log.jsonl"), "a") as f:
         f.write(json.dumps(rec) + "\n")
     log(json.dumps(rec))
+    if err:
+        raise sources.FetchError(err)
     return rec
 
 
