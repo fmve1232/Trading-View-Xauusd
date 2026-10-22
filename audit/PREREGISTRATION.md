@@ -616,3 +616,10 @@ history" and is not tested without a new amendment; the boundaries above do not 
 6. The win rate is always reported with its Wilson 95% interval and never decides alone.
 7. A hypothesis that passes the holdout becomes a new live arm with its own freeze key; only its live record is
    evidence on the site.
+
+**Amendment 11 — data record** (facts only, nothing decided here). Workflow runs `39698853623` and `39699734825`
+(2026-10-22) stored on `research-data`: TD_XAU_USD_1h 42,835 bars and TD_XAU_USD_15min 170,863 bars, both from
+**2020-01-24 02:00 UTC** to the present. Requests for earlier bars return HTTP 404 for both intervals: that is the first
+intraday bar the feed serves. Under this amendment's rule the development period (earliest bar – 2019-12-31) is empty, so
+**1h and 15min are "insufficient history"**; no hypothesis is tested on them without a new amendment, and the boundaries
+above do not move. No hypothesis has been run on this data.
