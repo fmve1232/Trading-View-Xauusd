@@ -264,15 +264,15 @@ report(exec_ok and bad7 == 0 and n7 > 0 and static7,
 # ---- 8 (v81): the bottom ticker -- six tiles reading the glance's values; the only bottom-centre table while on; the
 # lift row see-through; the panel drops its glance section while the ticker is on
 tk = "\n".join(l for l in L if l.strip().startswith("f_tk(") and "=>" not in l)
-tk_ok = (tk.count("f_tk(") == 6 and all(x in tk for x in ("h2TrendUp", "h2S1", "h2S4", "h2SD", "ema200", "h2Val", "h2Poc",
+tk_ok = (tk.count("f_tk(") == 8 and all(x in tk for x in ("h2TrendUp", "h2S1", "h2S4", "h2SD", "ema200", "h2Val", "h2Poc",
          "h2Vah", "glMoveA", "glMoveB", "_tNet", "f_tmC(_tNet)", "pvLastLvl", "pvLastSweep", "h2SigState", "h2SigCard + h2SigStat",
          "the Master's BIAS / SIGNAL"))
          and "f_glNear(true, close)" in V and "f_glNear(false, close)" in V)
 bc = re.findall(r"table\.new\([^\n]*position\.bottom_center", V)
 place_ok = (len(bc) == 2 and '(tkOn ? position.bottom_right : position.bottom_center)' in V
-            and "var table tkT = table.new(position.bottom_center, 6, 3, border_color" in V and "bgcolor = color.new(#0F141B" not in
+            and "var table tkT = table.new(position.bottom_center, 8, 4, border_color" in V and "bgcolor = color.new(#0F141B" not in
             re.search(r"var table tkT = table\.new\(.*", V).group(0)
-            and 'table.cell(tkT, c, 2, "", height = tkLift, bgcolor = color(na))' in V
+            and 'table.cell(tkT, c, 3, "", height = tkLift, bgcolor = color(na))' in V
             and "glShow and not tkOn or showCandle" in V and "    if glShow and not tkOn\n" in V)
 report(tk_ok and place_ok, "ticker: 6 tiles read the glance's values (trend vote, value, room, macro, sweep, H2); bias / odds -> Master; "
        "the only bottom-centre table while on; lift row see-through; no duplicate glance in the panel")
@@ -288,6 +288,8 @@ for l in L:
     st = l.strip()
     if st.startswith("f_tk(") and "=>" not in st:
         a_ = args(st, "f_tk")
+        if not a_[0].isdigit():
+            continue                 # v86 tiles 6 / 7 (column _c): executed with missing data by v86_check.py
         texts += [("tile " + a_[0], a_[k]) for k in (1, 3, 4)]
     for name, key in (("_h2Row", '"TREND"'), ("_tmRow", '"TREND"')):
         if st.startswith(name + "(") and "=>" not in st and args(st, name)[1] == key:

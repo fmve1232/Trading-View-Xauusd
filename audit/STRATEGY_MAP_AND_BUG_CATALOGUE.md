@@ -50,3 +50,19 @@ Operator: "list all possible strategies used in XAUUSD and all possible bugs, th
 | Rendering rules | layout, visual order | — (not testable here) | screenshot only |
 
 Run `python3 audit/tools/bug_scan.py` (add `--all` for every hit). Each hit is a question; the triage is above.
+
+## 3. v86 additions: new screen hits, triaged (Visuals)
+
+`bug_scan.py` on Visuals v86 vs v85: R4 0 → 3, A1 10 → 11, D1 10 → 13; every other class unchanged. Each new hit:
+
+| Class | Line (code) | Verdict |
+|---|---|---|
+| R4 | `if array.get(nwT, i) + nwAfter * 60000 >= timenow`, `nwNowIn := timenow >= ...`, `nwMs := _tk - timenow` | **Intended.** The real clock drives the last-bar NEWS countdown and "in the window" text only. No value on any historical bar reads it, and nothing decides on it. |
+| A1 | `alert("XAUUSD NEWS WINDOW: ..." , alert.freq_once_per_bar)` | **Intended.** It fires at the open of the first bar that touches a release window, so it arrives before the release on intraday charts. The condition is time only (the coded calendar), never price, so it cannot fire falsely intrabar. Exactly one alert per event: `v86_check.py` 5, 91,335 bars on 5m-1D. |
+| D1 | `/ d` in `f_wil` (×2) | **Safe.** `d = 1 + z²/n ≥ 1` inside `if n > 0`. |
+| D1 | `commissionL / math.max(pointValue, 1.0)` | **Safe.** It is guarded by `math.max`. The line is the Master's own, copied; the screen matches its regex. |
+
+**Two real defects were found by executing the new texts before release, and fixed (`v86_check.py` 8):**
+- On the first bars, before ATR(14) exists, COST printed "(NaN)" and RISK printed "stop $NaN". Both now print "—".
+- `f_dur(na)` would have printed "NaN". It now prints "—".
+

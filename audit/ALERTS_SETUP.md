@@ -20,6 +20,9 @@ value, and it never fires intrabar on a signal that disappears by the close. Pri
 - ✕ pivot sweeps.
 - The 4H / PDH / PDL **touches**: these fire intrabar, the moment price touches, by design.
 - The H2 BUY / SELL signals.
+- **News windows (v86)**: `XAUUSD NEWS WINDOW: CPI 11-10 08:30 New York (13:30 UTC), window -30/+30 min.` One alert per
+  NFP / CPI / FOMC release, on the first bar that touches its window, at that bar's open (so it arrives before the
+  release on intraday charts). Official dates to 2027-12-10; switch: "Alert when a news window starts".
 
 ## Setup (do this AFTER pasting the new Master)
 

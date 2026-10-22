@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5882 | 384065 | `dad15e8919900fb7c85697362f530acd9d6aa2f93cc7159b6ebcf5d5bd40c862` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5882 | 384063 | `f01ee4bd6a9d546192fc54b49dc761ae48f0a6011de007a5d7aaf623504f1ad8` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5419 | 345044 | `dc076fde70ad1525cb4b7a18f60d48498e326850c1adcf9b7c04c9c95708c5ab` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5419 | 345109 | `31596bd703c2b20a3594df8dd5d9bd25158f61114090fdc2a875519790600974` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 346028 | `9d406afa1bcf91719cec01b6739a4b9a37efbfc7281ad5651e3d9d1c144dbf12` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
-| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 395 | 29185 | `4221d7031bcc842a714935bcc9036a960d9c032f3e1b03e005dc78e667077ad6` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1672 | 123627 | `d052ab583d44d7a0fd4bcf409b1778da4ce6160fb188ba05250876dcc9c46161` |
+| `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 401 | 29668 | `2007716791180f4e6e43ea1cde135cf9673b4f45d87bc33cdf3379b12fff1354` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 1881 | 144024 | `38695b0f71de5481f7e7723915198aeb1d1c960677a1f1347480dd0b6a6dd5e2` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 362135 | `c08a42235c41e20529700f3bf5a01c738b27a7382f723d84db69f9656d8c75ce` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5609 | 358083 | `87ad3fba1c94e935f83032d97db5b8c65a64e7c55fa723df56f0350b418c979c` |
 
-> **BUILD v85 — this prompt pins the current build.** The originally audited build
+> **BUILD v86 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -131,6 +131,7 @@ scope, and no other build of these scripts is in scope.
 > **v83: F-A71** — the news window's label said UTC but it runs in exchange (New York) time; label + tooltip corrected in every engine copy (logic unchanged). `bug_scan.py` + the strategy map and bug catalogue.
 > **v84:** alerts: H2's swing sweeps (with the swept level, MT5) join the Master's single alert() channel (signals, DECISION changes, CHoCH / BOS / MSS, pool sweeps); Visuals' ✕ pivot sweeps get an optional alert. `audit/ALERTS_SETUP.md`.
 > **v85: F-A72** — the v84 Master failed at 100,332 tokens; the Master is the v83 file again and the H2 swing-sweep alert is in Visuals; `compile_est.py` caps the Master at the v72 estimate.
+> **v86: F-A73 / F-A74 / F-A75** — the Master's SIGNAL cell prints scores, not % (one text line); Visuals gains CHECKS · RISK (dated NFP / CPI / FOMC calendar + alert, cost vs ATR, churn, untested daily regime, position size, typed daily cap, Wilson ranges, the website's record banner); the engine's guessed news window is recorded, not changed; EdgeCases asserts at bar 0. `v86_check.py`; `audit/RESEARCH_AUDIT_PHASE1.md`.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v85   (sweep alerts here)            ║
+// ║  BUILD STAMP — this file last CHANGED in v86   (checks & risk)                ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -670,6 +670,34 @@ if barstate.isconfirmed and not na(volume)
     else if inNY
         volNyEWMA := volNyEWMA > 0 ? 0.99 * volNyEWMA + 0.01 * volume : volume
 float sessVolBase = inAsian ? volAsianEWMA : inLondon ? volLondonEWMA : inNY ? volNyEWMA : 0.0
+// v86: 95% ranges for the session history percentages (the CHECKS & RISK section, the H2 card and the panel)
+// Wilson 95% interval for k successes in n (0-1); [na, na] if n = 0
+f_wil(float k, int n) =>
+    float lo = na
+    float hi = na
+    if n > 0 and not na(k)
+        float z = 1.959964
+        float p = k / n
+        float d = 1.0 + z * z / n
+        float c = (p + z * z / (2.0 * n)) / d
+        float h = z * math.sqrt(math.max(p * (1.0 - p) / n + z * z / (4.0 * n * n), 0.0)) / d
+        lo := math.max(0.0, c - h)
+        hi := math.min(1.0, c + h)
+    [lo, hi]
+// " (lo–hi) nN" for a percentage measured on n cases, "" if undefined
+f_ci(float pct, int n) =>
+    string out = ""
+    if not na(pct) and n > 0
+        [lo, hi] = f_wil(math.round(pct * n / 100.0), n)
+        out := " (" + str.tostring(lo * 100.0, "#") + "–" + str.tostring(hi * 100.0, "#") + ") n" + str.tostring(n)
+    out
+// ---- session history sample size: the SESSIntel block's own count (sessCnt), rebuilt outside the byte-locked block
+// from its outputs: a session closes when curSessId changes on a confirmed bar, the old one was 0-2 and had a range
+var int[] ckSessN = array.from(0, 0, 0)
+if barstate.isconfirmed and not na(curSessId[1]) and curSessId != curSessId[1] and curSessId[1] >= 0 and curSessId[1] <= 2 and not na(sesHi[1])
+    array.set(ckSessN, curSessId[1], array.get(ckSessN, curSessId[1]) + 1)
+int ckN = curSessId >= 0 and curSessId <= 2 ? array.get(ckSessN, curSessId) : 0
+
 
 // ═══════════════════ SUPPORT & RESISTANCE ═══════════════════
 // Confirmed swing pivots, clustered by ATR proximity so repeated tests of the same
@@ -1326,7 +1354,7 @@ if vSep and h2Show and not h2Docked and barstate.islast
     if _full
         string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
         _h2Row(7, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _h2t)
-        _h2Row(8, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _h2t)
+        _h2Row(8, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _h2t)
         _h2Row(9, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _h2t)
     _h2Row(_full ? 10 : 7, "NOTE", "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
 
@@ -1414,11 +1442,155 @@ if vSep and barstate.islast and gdPos != "Hidden" and not gdDocked
     f_gdRow(4, "BREAKEVEN", brBd, brBh)
     f_gdRow(5, "US 2Y", br2d, br2h)
 
+// ═══════════════════ CHECKS & RISK (v86) — display only ═══════════════════
+// The Phase 1 research audit's display items (audit/RESEARCH_AUDIT_PHASE1.md §4, §9, §10). DISPLAY ONLY: no gate, no
+// signal and no engine threshold changes; the DECISION stays the Master's. Every constant here is a stated convention
+// fixed before it was shown on a chart (Wilson / Student-t 95%, 4 x cost, 2 flips in 20 bars, the -2R cap); none was
+// chosen from results on this price history (AUDIT_PROMPT.md §9).
+grpCk = "CHECKS & RISK (v86, display only)"
+ckPanel = input.bool(true, "Checks & risk section in the panel", group = grpCk, tooltip = "Score note, news calendar, cost, churn, daily regime, position size, today's loss cap, session history with 95% ranges, the website's forward record.")
+// News calendar: official release times, New York (BLS Employment Situation and CPI 08:30; FOMC statement 14:00 on the
+// second meeting day). Dates from the BLS and Federal Reserve schedules as published on 2026-10-22; FOMC dates are
+// tentative until the meeting before. The Master's own news block takes one recurring session, not dates, so the
+// dated calendar lives here.
+nwShow = input.bool(true, "News calendar: NFP / CPI / FOMC (official dates)", group = grpCk, tooltip = "08:30 New York for NFP and CPI, 14:00 New York for the FOMC statement. Dates as published by the BLS and the Federal Reserve on 2026-10-22 (FOMC dates tentative until the meeting before). The list ends 2027-12-10: update Visuals before then.")
+nwBefore = input.int(30, "News window: minutes before", minval = 0, maxval = 240, group = grpCk)
+nwAfter = input.int(30, "News window: minutes after", minval = 0, maxval = 240, group = grpCk)
+nwShade = input.bool(true, "Shade the news windows", group = grpCk)
+alertOnNews = input.bool(true, "Alert when a news window starts", group = grpCk, tooltip = "Needs an alert on Visuals (Any alert() function call). Fires once, on the first bar that touches the window (at that bar's open).")
+// The Master's cost model, with its inputs (same defaults; set them as in the Master)
+spreadCost = input.float(0.3, "Spread Cost (points), as in the Master", minval=0.0, maxval=5.0, step=0.1, group=grpCk)
+slippagePts = input.float(0.2, "Slippage (points), as in the Master", minval=0.0, maxval=2.0, step=0.1, group=grpCk)
+commissionL = input.float(7.0, "Commission per Lot (USD, round turn), as in the Master", minval=0.0, maxval=50.0, step=0.5, group=grpCk)
+pointValue = input.float(100, "Value per Point per Lot (USD), as in the Master", minval=1, group=grpCk)
+rkEquity = input.float(10000.0, "Account equity ($)", minval = 100.0, maxval = 100000000.0, step = 100.0, group = grpCk)
+rkPct = input.float(0.5, "Risk per trade (% of equity)", minval = 0.05, maxval = 5.0, step = 0.05, group = grpCk, tooltip = "0.25-0.5% while no arm has shown an edge (Phase 1 report §9).")
+rkStop = input.float(0.0, "Stop distance ($ per oz; 0 = 1 ATR of this chart)", minval = 0.0, maxval = 500.0, step = 0.1, group = grpCk, tooltip = "Type the distance from your entry to your stop, e.g. from the Master's plan strip.")
+rkToday = input.float(0.0, "Today's realised result (R, typed in)", minval = -20.0, maxval = 20.0, step = 0.1, group = grpCk, tooltip = "An indicator cannot see your MT5 trades: type today's closed result in R.")
+rkCap = input.float(-2.0, "Daily loss cap (R)", minval = -10.0, maxval = -0.5, step = 0.5, group = grpCk)
+rgShow = input.bool(true, "Daily regime tile (untested)", group = grpCk, tooltip = "12-month return and the 200-day average (trend), 20-day change of the real yield and the dollar (macro). Shown as context: an UNTESTED hypothesis (Phase 1 report §6, R1 / R2), never a signal.")
+rgDxySym = input.symbol("TVC:DXY", "Dollar index, daily (blank = off)", group = grpCk)
+lgShow = input.bool(true, "Banner: the website's forward record", group = grpCk, tooltip = "Typed in from the website's forward ledger (Pine cannot read it). The verdict uses the pre-registered rule: N >= 50, 95% t-interval of mean R above 0 and PF >= 1.2.")
+lgArm = input.string("H4 · 15m (deciding)", "Record: arm / timeframe", group = grpCk)
+lgAsof = input.string("2026-10-21 23:04 UTC", "Record: as of", group = grpCk)
+lgN = input.int(65, "Record: closed trades (N)", minval = 0, maxval = 100000, group = grpCk)
+lgW = input.int(22, "Record: wins (R > 0)", minval = 0, maxval = 100000, group = grpCk)
+lgMean = input.float(-0.2268, "Record: mean R", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)
+lgSd = input.float(0.6796, "Record: standard deviation of R", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)
+lgPF = input.float(0.4292, "Record: profit factor", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)
+lgNote = input.string("the Brief's H4 playbook: not for live money", "Record: note", group = grpCk)
+
+// Student-t 97.5% quantile, Cornish-Fisher series in 1/df (Abramowitz & Stegun 26.7.5): within 2e-4 for df >= 10
+f_tq(int df) =>
+    float z = 1.959964
+    float v = math.max(df, 1)
+    z + (math.pow(z, 3) + z) / (4.0 * v) + (5.0 * math.pow(z, 5) + 16.0 * math.pow(z, 3) + 3.0 * z) / (96.0 * v * v) + (3.0 * math.pow(z, 7) + 19.0 * math.pow(z, 5) + 17.0 * math.pow(z, 3) - 15.0 * z) / (384.0 * v * v * v)
+// a duration in ms as "2d 3h" / "3h 05m" / "12m"; "—" if undefined
+f_dur(float ms) =>
+    float m = math.max(ms, 0.0) / 60000.0
+    na(m) ? "—" : m >= 1440 ? str.tostring(math.floor(m / 1440)) + "d " + str.tostring(math.floor(m % 1440 / 60)) + "h" : m >= 60 ? str.tostring(math.floor(m / 60)) + "h " + (m % 60 < 10 ? "0" : "") + str.tostring(math.floor(m % 60)) + "m" : str.tostring(math.floor(m)) + "m"
+
+// ---- news calendar: yyyymmddhhmm, New York time, in date order
+var int[] nwCode = array.from(202610281400, 202611060830, 202611100830, 202612040830, 202612091400, 202612100830, 202701080830, 202701130830, 202701271400, 202702050830, 202702110830, 202703050830, 202703100830, 202703171400, 202704020830, 202704130830, 202704281400, 202705070830, 202705120830, 202706040830, 202706091400, 202706100830, 202707020830, 202707140830, 202707281400, 202708060830, 202708110830, 202709030830, 202709140830, 202709151400, 202710080830, 202710140830, 202710271400, 202711050830, 202711100830, 202712030830, 202712081400, 202712100830)
+var string[] nwName = array.from("FOMC", "NFP", "CPI", "NFP", "FOMC", "CPI", "NFP", "CPI", "FOMC", "NFP", "CPI", "NFP", "CPI", "FOMC", "NFP", "CPI", "FOMC", "NFP", "CPI", "NFP", "FOMC", "CPI", "NFP", "CPI", "FOMC", "NFP", "CPI", "NFP", "CPI", "FOMC", "NFP", "CPI", "FOMC", "NFP", "CPI", "NFP", "FOMC", "CPI")
+var int[] nwT = array.new_int()
+if barstate.isfirst
+    for c in nwCode
+        array.push(nwT, timestamp("America/New_York", int(c / 100000000), int(c / 1000000) % 100, int(c / 10000) % 100, int(c / 100) % 100, c % 100))
+// nwI: the first event whose window has not ended before this bar opened; nwBarIn: this bar touches its window
+var int nwI = 0
+bool nwBarIn = false
+if nwShow
+    while nwI < array.size(nwT)
+        if array.get(nwT, nwI) + nwAfter * 60000 >= time
+            break
+        nwI += 1
+    if nwI < array.size(nwT)
+        int _t = array.get(nwT, nwI)
+        nwBarIn := time <= _t + nwAfter * 60000 and nz(time_close, time) > _t - nwBefore * 60000
+bgcolor(nwShade and nwBarIn ? color.new(#FF9800, 85) : na, title = "News windows (v86)")
+// one alert per event: the first bar touching a window, or the next event's window on the very next bar (daily charts)
+if alertOnNews and nwBarIn and (not nwBarIn[1] or nwI != nwI[1])
+    alert("XAUUSD NEWS WINDOW: " + array.get(nwName, nwI) + " " + str.format_time(array.get(nwT, nwI), "MM-dd HH:mm", "America/New_York") + " New York (" + str.format_time(array.get(nwT, nwI), "HH:mm", "UTC") + " UTC), window -" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min. Display only: the DECISION is the Master's.", alert.freq_once_per_bar)
+
+// ---- cost: the Master's model, copied (its killzone tiers, _sessSpread and the round-trip cost; v86 checker
+// executes both side by side over every hour and DST state)
+int ckLo = euIsDST ? 7 : 8
+bool ckKZ = (hU >= ckLo + 1 and hU < ckLo + 4) or (hU >= nyOpen and hU < nyOpen + 3) or (hU >= londonClose - 1 and hU < londonClose) or (hU >= ckLo + 3 and hU < ckLo + 4)
+float ckSpread = ckKZ ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : math.max(0.50, spreadCost)
+float ckCost = (ckSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)
+float ckCostPct = atr14 > 0 ? ckCost / atr14 * 100.0 : na
+int ckCostLv = na(ckCostPct) ? 0 : ckCostPct > 25.0 ? 2 : ckCostPct > 15.0 ? 1 : 0
+
+// ---- churn: direction changes of the structure breaks (the ~BOS / ~CHoCH detector above) in the last 20 bars, and
+// Kaufman's efficiency ratio (net move / path length over 20 bars; low = choppy)
+var int ckDir = 0
+bool ckFlip = false
+if barstate.isconfirmed and (brokeUp or brokeDown)
+    int _nd = brokeDown ? -1 : 1
+    ckFlip := ckDir != 0 and _nd != ckDir
+    ckDir := _nd
+int ckFlips = int(math.sum(ckFlip ? 1 : 0, 20))
+float _ckPath = math.sum(math.abs(close - close[1]), 20)
+float ckER = _ckPath > 0 ? math.abs(close - close[20]) / _ckPath : na
+bool ckChurn = ckFlips >= 2
+
+// ---- daily regime (untested): last COMPLETED month / day, so nothing repaints
+[rgM1, rgM13] = request.security(syminfo.tickerid, "M", [close[1], close[13]], lookahead = barmerge.lookahead_on)
+[rgC1, rgSma1] = request.security(syminfo.tickerid, "D", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)
+[rgRy1, rgRy21] = request.security(brRySym != "" ? brRySym : syminfo.tickerid, "D", [close[1], close[21]], lookahead = barmerge.lookahead_on, ignore_invalid_symbol = true)
+[rgDx1, rgDx21] = request.security(rgDxySym != "" ? rgDxySym : syminfo.tickerid, "D", [close[1], close[21]], lookahead = barmerge.lookahead_on, ignore_invalid_symbol = true)
+float rgRet12 = rgM1 > 0 and rgM13 > 0 ? (rgM1 / rgM13 - 1.0) * 100.0 : na
+bool rgUp = not na(rgRet12) and not na(rgSma1) and rgRet12 > 0 and rgC1 > rgSma1
+bool rgDn = not na(rgRet12) and not na(rgSma1) and rgRet12 < 0 and rgC1 < rgSma1
+float rgRyD = brRySym != "" and not na(rgRy1) and not na(rgRy21) ? rgRy1 - rgRy21 : na
+float rgDxD = rgDxySym != "" and not na(rgDx1) and not na(rgDx21) ? rgDx1 - rgDx21 : na
+int rgMac = na(rgRyD) or na(rgDxD) ? 0 : rgRyD < 0 and rgDxD < 0 ? 1 : rgRyD > 0 and rgDxD > 0 ? -1 : 0
+string rgTxt = rgUp ? "▲ LONG" : rgDn ? "▼ SHORT" : "◆ FLAT"
+string rgMacTxt = na(rgRyD) or na(rgDxD) ? "macro: no data" : rgMac == 1 ? "macro supports gold" : rgMac == -1 ? "macro against gold" : "macro mixed"
+
+// ---- position size and the daily cap (typed-in result)
+float rkStopD = rkStop > 0 ? rkStop : atr14
+float rkRisk = rkEquity * rkPct / 100.0
+float rkPerLot = (rkStopD + ckCost) * pointValue
+float rkLots = rkPerLot > 0 ? math.floor(rkRisk / rkPerLot * 100.0) / 100.0 : na
+bool rkLocked = rkToday <= rkCap
+
+// ---- the website's forward record (typed in) and its verdict under the pre-registered rule
+float lgSe = lgN > 1 ? lgSd / math.sqrt(lgN) : na
+float lgT = lgN > 1 ? f_tq(lgN - 1) : na
+float lgLo = lgMean - lgT * lgSe
+float lgHi = lgMean + lgT * lgSe
+[lgWlo, lgWhi] = f_wil(math.min(lgW, lgN), lgN)
+string lgVerdict = lgN < 50 ? "UNDECIDED · N < 50" : na(lgLo) ? "—" : lgLo > 0 and lgPF >= 1.2 ? "EDGE SHOWN" : lgLo > 0 ? "NO EDGE SHOWN · PF < 1.2" : lgHi < 0 ? "NO EDGE · interval below 0" : "NO EDGE SHOWN · interval spans 0"
+int lgLv = lgVerdict == "EDGE SHOWN" ? 1 : lgVerdict == "NO EDGE · interval below 0" ? -1 : 0
+string lgTxt = lgArm + " · website ledger, " + lgAsof + "\nN " + str.tostring(lgN) + " · win " + (lgN > 0 ? str.tostring(math.min(lgW, lgN) * 100.0 / lgN, "#") + "% (" + str.tostring(lgWlo * 100.0, "#") + "–" + str.tostring(lgWhi * 100.0, "#") + ")" : "—") + " · mean " + (na(lgLo) ? "—" : str.tostring(lgMean, "#.##") + "R (" + str.tostring(lgLo, "#.##") + " … " + str.tostring(lgHi, "#.##") + ")") + " · PF " + str.tostring(lgPF, "#.##")
+
+// ---- at the last bar: the current or next event on the real clock (timenow), for the panel and the ticker
+int nwK = -1
+bool nwNowIn = false
+float nwMs = na
+string nwKName = ""
+string nwNext = nwShow ? "calendar ended: update Visuals" : "calendar off"
+if nwShow and barstate.islast and nwI < array.size(nwT)
+    for i = nwI to array.size(nwT) - 1
+        if array.get(nwT, i) + nwAfter * 60000 >= timenow
+            nwK := i
+            break
+    if nwK >= 0
+        int _tk = array.get(nwT, nwK)
+        nwNowIn := timenow >= _tk - nwBefore * 60000
+        nwMs := _tk - timenow
+        nwKName := array.get(nwName, nwK)
+        nwNext := nwKName + " " + str.format_time(_tk, "MM-dd HH:mm", "America/New_York") + " NY (" + str.format_time(_tk, "HH:mm", "UTC") + " UTC)"
+int nwLv = nwNowIn ? 2 : not na(nwMs) and nwMs <= 4 * 3600000 ? 1 : 0
+
 // ═══════════════════ TERMINAL PANEL (v73) — one panel, one style ═══════════════════
 // The three cards' values in one docked panel: MARKET (the candle panel), H2 SWEEP → VALUE (the H2 card's rows,
 // same expressions) and GOLD DRIVERS (the drivers panel's rows, same glyphs and colours). Grey = labels, white =
 // values, colour only for direction (teal supports gold up / the bar closed up, red down). Display only.
-var table tblV = table.new(vPos == "Middle Left" ? position.middle_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.bottom_left, 2, 50, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
+// v86: 64 rows (the CHECKS · RISK section adds up to 10).
+var table tblV = table.new(vPos == "Middle Left" ? position.middle_left : vPos == "Top Left" ? position.top_left : vPos == "Middle Right" ? position.middle_right : position.bottom_left, 2, 64, bgcolor = color.new(#0B0F14, 4), frame_color = color.new(#2A3340, 0), frame_width = 1, border_color = color.new(#18202A, 0), border_width = 1)
 color _tmK = color.new(#7D8FA3, 0)
 color _tmV = color.new(#E6EDF3, 0)
 color _tmUp = color.new(#26A69A, 0)
@@ -1464,9 +1636,9 @@ _tmHead(int r, string k, string v, color bg) =>
     table.cell(tblV, 0, r, k, text_color = color.white, bgcolor = bg, text_size = h2Sz, text_halign = text.align_left)
     table.cell(tblV, 1, r, v, text_color = color.new(#AEBBC9, 0), bgcolor = bg, text_size = h2Sz, text_halign = text.align_right)
 if not vSep and barstate.islast
-    table.clear(tblV, 0, 0, 1, 49)
+    table.clear(tblV, 0, 0, 1, 63)
 // v75: drawn only while it has a section (everything docked under the Master + candle panel off = no empty frame)
-if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel)
+if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel or ckPanel)
     bool _cmp = vDetail == "Compact"
     int r = 0
     _tmHead(r, "XAUUSD · " + timeframe.period, "VISUALS · " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC", color.new(#1F3A5F, 0))
@@ -1494,9 +1666,9 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "6 ROOM", "up $" + (na(_upR) ? "—" : str.tostring(_upR, "#.##")) + (na(_upR) ? "" : _upR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_up2P) ? "" : " (then " + _up2N + " +" + str.tostring(_up2P - close, "#.##") + ")")) + "\ndown $" + (na(_dnR) ? "—" : str.tostring(_dnR, "#.##")) + (na(_dnR) ? "" : _dnR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_dn2P) ? "" : " (then " + _dn2N + " −" + str.tostring(close - _dn2P, "#.##") + ")")) + " · plan: the Master's plan strip", _tmV)
             r += 1
-            _tmRow(r, "7 HISTORY", "this session: manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + " · continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nlast H2 signal: " + (h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY " : "SELL ") + (h2SigOut == "" ? "open" : h2SigOut) + (h2Stale ? " · stale" : " · live")), _tmV)
+            _tmRow(r, "7 HISTORY", "this session: manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + " · continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nlast H2 signal: " + (h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY " : "SELL ") + (h2SigOut == "" ? "open" : h2SigOut) + (h2Stale ? " · stale" : " · live")), _tmV)
             r += 1
-            _tmRow(r, "8 ODDS", "the Master's SIGNAL cell: L / S / R % (calibrated next-1R)", _tmK)
+            _tmRow(r, "8 ODDS", "the Master's SIGNAL cell: L / S / R scores, not win odds (Diagnostics: RELIABILITY)", _tmK)
         else
             string _mk = "✗<$" + str.tostring(glMoveA, "#")
             r += 1
@@ -1512,11 +1684,11 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "SWEPT", pvLastSweep, str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
             r += 1
-            _tmRow(r, "HISTORY", "manip " + f_gBar(sessManipProb, 5) + (na(sessManipProb) ? "" : " " + str.tostring(int(sessManipProb)) + "%") + "  cont " + f_gBar(sessContProb, 5) + (na(sessContProb) ? "" : " " + str.tostring(int(sessContProb)) + "%"), _tmV)
+            _tmRow(r, "HISTORY", "manip " + f_gBar(sessManipProb, 5) + (na(sessManipProb) ? "" : " " + str.tostring(int(sessManipProb)) + "%") + "  cont " + f_gBar(sessContProb, 5) + (na(sessContProb) ? "" : " " + str.tostring(int(sessContProb)) + "%") + (ckN > 0 ? "  n" + str.tostring(ckN) : ""), _tmV)
             r += 1
             _tmRow(r, "H2", h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " · ○ stale" : " · ● live") + (h2SigOut != "" ? " · " + h2SigOut : ""), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
             r += 1
-            _tmRow(r, "BIAS · ODDS", "→ the Master's BIAS / SIGNAL cells", _tmK)
+            _tmRow(r, "BIAS · ODDS", "→ the Master's BIAS / SIGNAL cells (scores, not odds)", _tmK)
     if showCandle
         float _rng = high - low
         bool _up = close >= open
@@ -1551,7 +1723,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _tmV)
             r += 1
-            _tmRow(r, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%") + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%") + " (n>=5)\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _tmV)
+            _tmRow(r, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _tmV)
             r += 1
             _tmRow(r, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _tmV)
     if gdPos != "Hidden" and not gdDocked
@@ -1586,6 +1758,31 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
         _tmRow(r, "TODAY", f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
         r += 1
         _tmRow(r, "SWEEPS", "pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+    if ckPanel
+        color _amb = color.new(#FFB74D, 0)
+        r += 1
+        _tmHead(r, "CHECKS · RISK", "display only · v86", _tmSec)
+        r += 1
+        _tmRow(r, "SCORE", "the Master's L / S / R and mP are SCORES, not win odds" + (_cmp ? "" : "\nDiagnostics RELIABILITY (Oct 2026): top band 52% predicted, 26% seen"), _amb)
+        r += 1
+        _tmRow(r, "NEWS", (nwNowIn ? "IN THE WINDOW · " : "next ") + nwNext + (na(nwMs) or nwNowIn ? "" : " · in " + f_dur(nwMs)) + (_cmp ? "" : "\nwindow −" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min · official BLS / Fed dates"), nwLv == 2 ? _tmDn : nwLv == 1 ? _amb : _tmV)
+        r += 1
+        _tmRow(r, "COST", str.tostring(ckCost, "#.##") + " pts round trip = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (" + (na(atr14) ? "—" : str.tostring(atr14, "#.##")) + ")" + (_cmp ? "" : "\nTP1 should be ≥ 4 × cost = $" + str.tostring(4.0 * ckCost, "#.##") + " · above 25% the cost eats the edge"), ckCostLv == 2 ? _tmDn : ckCostLv == 1 ? _amb : _tmV)
+        if not _cmp
+            r += 1
+            _tmRow(r, "CHURN", "structure flips " + str.tostring(ckFlips) + " in 20 bars · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\n" + (ckChurn ? "CHURN: signals tend to flip within a few bars" : "no churn (2+ flips = churn; efficiency < 0.25 = choppy)"), ckChurn ? _amb : _tmV)
+            r += 1
+            _tmRow(r, "DAILY", rgTxt + " · 12M " + (na(rgRet12) ? "—" : (rgRet12 >= 0 ? "+" : "") + str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above SMA200" : "below SMA200") + "\nreal yld 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " · " + rgMacTxt + " · UNTESTED", rgUp ? _tmUp : rgDn ? _tmDn : _tmV)
+        r += 1
+        _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : " (1 ATR)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)"), _tmV)
+        r += 1
+        _tmRow(r, "TODAY", rkLocked ? "STOP FOR THE DAY · " + str.tostring(rkToday, "#.##") + "R reached the " + str.tostring(rkCap, "#.#") + "R cap" : str.tostring(rkToday, "#.##") + "R so far · " + str.tostring(rkToday - rkCap, "#.##") + "R left before the " + str.tostring(rkCap, "#.#") + "R cap (typed in)", rkLocked ? _tmDn : _tmV)
+        if not _cmp
+            r += 1
+            _tmRow(r, "SESSIONS", "this session: manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "\ncont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + " · 95% ranges (Wilson)", _tmV)
+        if lgShow
+            r += 1
+            _tmRow(r, "RECORD", lgTxt + "\n→ " + lgVerdict + (lgNote != "" ? " · " + lgNote : ""), lgLv == -1 ? _tmDn : lgLv == 1 ? _tmUp : _amb)
     r += 1
     table.cell(tblV, 0, r, "display only · the DECISION is the Master's · H2 record: the website", text_color = color.new(#5D6B7A, 0), text_size = size.tiny, text_halign = text.align_left)
     table.merge_cells(tblV, 0, r, 1, r)
@@ -1648,12 +1845,14 @@ if h2Docked and h2Show and barstate.islast
 // (its BIAS / SIGNAL cells; the TREND tile's tooltip says so). Row 2 is a transparent spacer that lifts the strip above
 // the Master's plan strip; it has no background (the tiles carry their own), so it stays see-through. Bottom centre is
 // this script's only bottom-centre table while the ticker is on.
-var table tkT = table.new(position.bottom_center, 6, 3, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)
+// v86: row 0 is the forward-record banner (merged across the tiles), rows 1-2 the tiles, row 3 the spacer; tile 6 the
+// daily regime (untested) and tile 7 the checks (news, cost, churn, daily cap).
+var table tkT = table.new(position.bottom_center, 8, 4, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)
 f_tk(int c, string v, color vc, string lbl, string tip) =>
-    table.cell(tkT, c, 0, v, text_color = vc, bgcolor = color.new(#0F141B, 0), text_size = tkSize == "Large" ? size.large : tkSize == "Small" ? size.small : size.normal, tooltip = tip)
-    table.cell(tkT, c, 1, lbl, text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#0F141B, 0), text_size = size.tiny, tooltip = tip)
+    table.cell(tkT, c, 1, v, text_color = vc, bgcolor = color.new(#0F141B, 0), text_size = tkSize == "Large" ? size.large : tkSize == "Small" ? size.small : size.normal, tooltip = tip)
+    table.cell(tkT, c, 2, lbl, text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#0F141B, 0), text_size = size.tiny, tooltip = tip)
 if barstate.islast
-    table.clear(tkT, 0, 0, 5, 2)
+    table.clear(tkT, 0, 0, 7, 3)
 if tkOn and barstate.islast
     [_tUpP, _tUpN] = f_glNear(true, close)
     [_tDnP, _tDnN] = f_glNear(false, close)
@@ -1662,11 +1861,21 @@ if tkOn and barstate.islast
     float _tNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
     string _ok = "✓"
     string _no = "✗"
-    f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and odds: the Master's BIAS / SIGNAL cells.")
+    f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and scores: the Master's BIAS / SIGNAL cells (scores, not calibrated odds).")
     f_tk(1, na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
     f_tk(2, "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
     f_tk(3, f_tmG(_tNet), f_tmC(_tNet), "macro · " + (_tNet > 0 ? "supports gold" : _tNet < 0 ? "against gold" : "no lean"), "USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
     f_tk(4, na(pvLastLvl) ? "none yet" : (pvLastUp ? "HIGH " : "LOW ") + str.tostring(pvLastLvl, format.mintick), na(pvLastLvl) ? _tmV : pvLastUp ? _tmDn : _tmUp, "last sweep" + (na(pvLastTime) ? "" : " · " + str.tostring((time - pvLastTime) / 3600000.0, "#.#") + " h ago"), "Pivot sweep (the ✕ markers): " + pvLastSweep + "\nH2 sweep: " + str.replace_all(h2LastSweep, "\n", "  "))
     f_tk(5, h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " ○" : " ●"), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV, "H2 · " + (h2SigDir == 0 ? "no signal" : (h2Stale ? "stale" : "live") + (h2SigOut != "" ? " · " + h2SigOut : "")), h2SigCard + h2SigStat)
-    for c = 0 to 5
-        table.cell(tkT, c, 2, "", height = tkLift, bgcolor = color(na))
+    int _c = 6
+    if rgShow
+        f_tk(_c, rgTxt + (rgMac == 1 ? " ✓" : rgMac == -1 ? " ✗" : ""), rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (✓ supports / ✗ against)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
+        _c += 1
+    int _ckLv = math.max(nwLv, ckCostLv, rkLocked ? 2 : 0, ckChurn ? 1 : 0)
+    string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "")
+    f_tk(_c, _ckTx == "" ? "OK ✓" : str.substring(_ckTx, 0, str.length(_ckTx) - 3), _ckLv == 2 ? _tmDn : _ckLv == 1 ? color.new(#FFB74D, 0) : _tmUp, "checks · next " + nwNext, "NEWS " + (nwNowIn ? "in the window: " : "next: ") + nwNext + (na(nwMs) or nwNowIn ? "" : " in " + f_dur(nwMs)) + "\nCOST " + str.tostring(ckCost, "#.##") + " pts = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (red > 25%, amber > 15%)\nCHURN " + str.tostring(ckFlips) + " structure flips in 20 bars (2+ = churn) · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\nTODAY " + str.tostring(rkToday, "#.##") + "R of the " + str.tostring(rkCap, "#.#") + "R cap\nScores in the Master are not win odds.")
+    if lgShow
+        table.cell(tkT, 0, 0, "● " + lgVerdict + " — " + lgTxt + (lgNote != "" ? " · " + lgNote : ""), text_color = color.white, bgcolor = lgLv == -1 ? color.new(#B71C1C, 15) : lgLv == 1 ? color.new(#1B5E20, 15) : color.new(#6D4C00, 15), text_size = size.tiny, tooltip = "Typed in from the website's forward ledger (Visuals settings, CHECKS & RISK). Rule: N >= 50, 95% t-interval of mean R above 0, PF >= 1.2.")
+        table.merge_cells(tkT, 0, 0, _c, 0)
+    for c = 0 to 7
+        table.cell(tkT, c, 3, "", height = tkLift, bgcolor = color(na))

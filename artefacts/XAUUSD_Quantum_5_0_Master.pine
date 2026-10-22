@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v83   (news window: NY time)         ║
+// ║  BUILD STAMP — this file last CHANGED in v86   (SIGNAL cell: scores)          ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5605,7 +5605,7 @@ f_dashRender() =>
         tcb(0, 1, _priceStr + " " + _chgStr, _chgCol, color(na), _prSize, _w0)
         tcb(1, 1, _dirStrength, _biasCol, color(na), _prSize, _w1) // R5.1: wires _biasCol (WARN amber when mixed)
         color _fDomCol = fBullScore >= fBearScore and fBullScore >= fRngScore ? cBloomBull : fBearScore >= fBullScore and fBearScore >= fRngScore ? cBloomBear : cBloomNeut
-        string _probDisp = _confDirLabel + "\nL " + _si(na(fBullScore) ? 50 : fBullScore) + "% S " + _si(na(fBearScore) ? 50 : fBearScore) + "% R " + _si(na(fRngScore) ? 0 : fRngScore) + "%"
+        string _probDisp = _confDirLabel + "\nscore L " + _si(na(fBullScore) ? 50 : fBullScore) + " S " + _si(na(fBearScore) ? 50 : fBearScore) + " R " + _si(na(fRngScore) ? 0 : fRngScore)
         tcb(2, 1, _probDisp, _fDomCol, color(na), _prSize, _w2)
         tcb(3, 1, _bosStr + " " + _chochStr + " " + _mssStr, _structActiveCol, color(na), _prSize, _w3)
         tcb(4, 1, not na(_nearAbove) or not na(_nearBelow) ? _nearAboveStr + "/" + _nearBelowStr : "LIQ —", cBloomNeut, color(na), _prSize, _w4)

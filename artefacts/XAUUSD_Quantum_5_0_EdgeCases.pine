@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v54   (citations = code anchors)     ║
+// ║  BUILD STAMP — this file last CHANGED in v86   (runs once at bar 0)           ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -47,6 +47,12 @@ indicator("XAUUSD Quantum — Edge Case Harness", overlay = false)
 
 
 // ---------- assertion plumbing ------------------------------------------------
+// v86: the assertions run ONCE, on the first bar (barstate.isfirst), and the table is drawn on the last bar. They were
+// all inside `if barstate.islastconfirmedhistory`; on 2026-10-21 the chart showed "Runtime error: Unknown error" with
+// no line, which cannot be reproduced here. Every case is a pure function of constants (no price, volume or time), so
+// running them at bar 0 gives the same results, ties them to no market-state or history condition, and draws the table
+// whether the market is open or closed. The assertions themselves are unchanged. If the error persists on the chart,
+// remove the harness: it is a run-once diagnostic, not part of the decision path.
 var string[] tName  = array.new_string(0)
 var string[] tGot   = array.new_string(0)
 var string[] tWant  = array.new_string(0)
@@ -81,7 +87,7 @@ b(bool _v) => _v ? "true" : "false"
 regimeCat(float _raw) =>
     _raw >= 70 ? 0 : _raw >= 40 ? 1 : 2     // 0 strong, 1 moderate, 2 weak
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("A1  raw 39.49 -> category", i(regimeCat(39.49)), "2", "STAT")
     chk("A2  raw 39.50 -> category (was 1, now 2)", i(regimeCat(39.50)), "2", "STAT")
     chk("A3  raw 39.51 -> category (was 1, now 2)", i(regimeCat(39.51)), "2", "STAT")
@@ -108,7 +114,7 @@ if barstate.islastconfirmedhistory
 race(float _lo, float _hi, float _ent, float _R) =>
     _lo <= _ent - _R ? -1 : _hi >= _ent + _R ? 1 : 0
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("B1  TP only  -> win",              i(race(2000.0, 2020.0, 2000.0, 10.0)), "1",  "DESIGN")
     chk("B2  SL only  -> loss",             i(race(1985.0, 2005.0, 2000.0, 10.0)), "-1", "DESIGN")
     chk("B3  BOTH in one candle -> LOSS",   i(race(1985.0, 2020.0, 2000.0, 10.0)), "-1", "DESIGN")
@@ -133,7 +139,7 @@ calBinCount(int _oc) => 1                       // total always increments
 calBinWin(int _oc)   => _oc == 1 ? 1 : 0        // only oc==1 counts as success
 costCharged(int _oc, float _cost) => _cost  // v7+: every outcome pays the round trip
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("C1  timeout enters bin TOTAL",        i(calBinCount(0)), "1", "STAT")
     chk("C2  timeout is NOT a bin WIN",        i(calBinWin(0)),   "0", "STAT")
     chk("C3  timeout charged FULL cost (v7+)", f(costCharged(0, 0.77)), "0.77", "STAT")
@@ -148,7 +154,7 @@ if barstate.islastconfirmedhistory
 // =============================================================================
 bayesRate(int _w, int _t) => _t > 0 ? (_w + 1) / (_t + 2) : 0.5
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("D1  t=0 -> neutral 0.5",              f(bayesRate(0, 0)),   "0.5",    "NUM")
     chk("D2  0 wins of 30 is NOT 0%",          f(bayesRate(0, 30)),  "0.0313", "STAT")
     chk("D3  30 wins of 30 is NOT 100%",       f(bayesRate(30, 30)), "0.9688", "STAT")
@@ -161,7 +167,7 @@ if barstate.islastconfirmedhistory
 // =============================================================================
 bucketQualifies(int _n) => _n >= 30
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("E1  N=29 rejected", b(bucketQualifies(29)), "false", "PRES")
     chk("E2  N=30 accepted", b(bucketQualifies(30)), "true",  "PRES")
     chk("E3  N=31 accepted", b(bucketQualifies(31)), "true",  "PRES")
@@ -180,7 +186,7 @@ slopeProj(float _k, float _vr) => _vr > 1e-6 ? math.min(math.max(_k, 0.0), 0.25)
 icpt(float _my, float _mx, float _k) => math.min(math.max(_my - _k * _mx, -5.0), 5.0)
 fitUpdated(int _bins) => _bins >= 3
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("F1  slope 0.001 kept (no 0.02 floor)",  f(slopeProj(0.001, 1.0)), "0.001", "NUM")
     chk("F2  slope 0.90  -> capped 0.25",        f(slopeProj(0.90, 1.0)),  "0.25",  "NUM")
     chk("F3  slope 0.10  -> untouched",          f(slopeProj(0.10, 1.0)),  "0.1",   "NUM")
@@ -201,7 +207,7 @@ if barstate.islastconfirmedhistory
 probClamp(float _p) => math.min(math.max(_p, 0.05), 0.95)
 sigmoid(float _score, float _k, float _b) => 1.0 / (1.0 + math.exp(-((_score - 50.0) * _k + _b)))
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("G1  score 50 -> 0.5 exactly",       f(sigmoid(50.0, 0.1, 0.0)), "0.5", "NUM")
     chk("G2  score 100 clamped to 0.95",     f(probClamp(sigmoid(100.0, 0.25, 0.0))), "0.95", "STAT")
     chk("G3  score 0   clamped to 0.05",     f(probClamp(sigmoid(0.0, 0.25, 0.0))),   "0.05", "STAT")
@@ -218,7 +224,7 @@ if barstate.islastconfirmedhistory
 macroRegime(int _base, int _oiConv, bool _macroDir) =>
     math.max(0, math.min(100, _base + (_oiConv != 0 and _macroDir ? 10 : _oiConv != 0 ? 5 : 0)))
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("H1  base100 +10 saturates to 100",   i(macroRegime(100, 1, true)),  "100", "NUM")
     chk("H2  base100 no OI also 100",         i(macroRegime(100, 0, true)),  "100", "NUM")
     chk("H3  SATURATION: V2 == V1 at base100", b(macroRegime(100, 1, true) == macroRegime(100, 0, true)), "true", "NUM")
@@ -234,7 +240,7 @@ if barstate.islastconfirmedhistory
 // =============================================================================
 safeDiv(float _a, float _b) => _b == 0 ? 0.0 : _a / _b
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     float _nan = float(na)
     chk("I1  na + 1 stays na",              f(_nan + 1.0), "na", "NUM")
     chk("I2  na > 0 is FALSE not na",       b(_nan > 0.0), "false", "NUM")
@@ -262,7 +268,7 @@ if barstate.islastconfirmedhistory
 // =============================================================================
 macroNeed(bool _gcValid) => int(math.ceil((6 + (_gcValid ? 1 : 0)) / 2.0))
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("J1  GC off -> pool 6 need 3", i(macroNeed(false)), "3", "STAT")
     chk("J2  GC on  -> pool 7 need 4", i(macroNeed(true)),  "4", "STAT")
     chk("J3  all 6 bull votes clears gate",  b(6 >= macroNeed(false)), "true", "STAT")
@@ -293,7 +299,7 @@ condP(float _pDir, float _pOpp) => _pDir + _pOpp > 0 ? _pDir / (_pDir + _pOpp) :
 regClamp(float _p, float _adj) => math.min(math.max(0.5 + (_p - 0.5) * _adj, 0.05), 0.95)
 bearSlope(float _k) => math.min(math.max(_k, -0.25), 0.0)
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("K1  TP bar 2, SL bar 5 -> win",      i(raceOut(5, 2)),       "1", "DESIGN")
     chk("K2  SL bar 2, TP bar 5 -> loss",     i(raceOut(2, 5)),       "2", "DESIGN")
     chk("K3  same bar -> LOSS (stop first)",  i(raceOut(3, 3)),       "2", "DESIGN")
@@ -332,7 +338,7 @@ cfInv(float _x, float _s, float _k) =>
         _w := _w - (_q - _x) / math.max(_dq, 0.1)
     _w
 
-if barstate.islastconfirmedhistory
+if barstate.isfirst
     chk("L1  Kelly p.35 q.30 b1 = 0.0769",      f(kellyTri(0.35, 0.30, 1.0)), "0.0769", "STAT")
     chk("L2  old 1-p form said no bet",         b((0.35 * 1.0 - 0.65) / 1.0 < 0.0), "true", "STAT")
     chk("L3  CF inverse is identity at S=K=0",  f(cfInv(1.7, 0.0, 0.0)), "1.7", "NUM")
@@ -362,7 +368,7 @@ var table tT = table.new(position.top_left, 5, 100, border_width = 1)
 // text size is selectable (size.tiny was unreadable in the operator's screenshots).
 harnessText = input.string("Small", "Table text size", options=["Tiny", "Small", "Normal"])
 _hts() => harnessText == "Tiny" ? size.tiny : harnessText == "Normal" ? size.normal : size.small
-if barstate.islastconfirmedhistory
+if barstate.islast
     int _n = array.size(tName)
     int _fail = 0
     // v28: the header also names the FIRST failing assertion with its GOT / WANT. On the

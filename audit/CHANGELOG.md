@@ -2979,3 +2979,58 @@ Compile NOT RUN on v85. The Master has the same tokens as the compiled v72; the 
   would require moving a Master display element out.
 - The operator chose no Master change. Master + Visuals stay as built (v85); the Brief is swapped in for GATES / DO NOW
   when wanted.
+
+---
+
+# v86 — checks & risk (Phase 1 research audit, display items; operator: "build v86 with all 9 improvements", 2026-10-22)
+
+All display only: no gate, signal, engine threshold or engine input changes, and the DECISION is still the Master's.
+Every constant is a stated convention (Wilson / Student-t 95%, 4 × cost, 2 flips in 20 bars, −2R cap), not a value
+chosen from results (AUDIT_PROMPT §9). Changed files: **Master** (one text line + stamp), **Visuals**, **EdgeCases**.
+Unchanged: Brief, Diagnostics, the four arms.
+
+| # | Improvement | Where | How it is verified |
+|---|---|---|---|
+| 1 | The Master's SIGNAL cell reads `score L 52 S 30 R 18` (was `L 52% S 30% R 18%`). Visuals' texts say "scores, not odds". Panel row SCORE. (F-A73) | Master (`fix_v86.py`), Visuals | `v86_check.py` 9 executes both texts (same numbers, no %); `refactor_check.py` derivation = fix_v86(fix_v83(fix_v68(v66))) |
+| 2 | Dated calendar: 38 official NFP / CPI / FOMC releases to 2027-12-10 (BLS and Fed schedules as published 2026-10-22; FOMC tentative until the meeting before). Window ±30 min (inputs), orange shading, NEWS row with countdown, and an alert once per event at the bar's open. The Master's guessed engine window is left unchanged (F-A74). | Visuals | `v86_check.py` 4: decoding vs the official list, weekday / time rules, DST-correct UTC. 5: window == brute force, one alert per event, 91,335 bars, 5m-1D |
+| 3 | COST: the Master's own cost model (session spread tiers + 2 × slippage + commission / $ per point) as a % of 1 ATR. Amber > 15%, red > 25% (TP1 should be ≥ 4 × cost). | Visuals (Master's 4 cost inputs copied, same defaults) | `v86_check.py` 3: Visuals' lines == the Master's, both executed, every hour × DST state; `inputs_check.py` 2 holds the inputs equal |
+| 4 | CHURN: direction changes of the ~BOS / ~CHoCH structure breaks in 20 bars (2+ = churn), plus Kaufman's efficiency ratio | Visuals | `v86_check.py` 8 (texts); a convention, not tuned |
+| 5 | 95% Wilson ranges and n on every session-history percentage (H2 card, panel, glance), and on the forward record's win rate | Visuals | `v86_check.py` 1 (vs an independent Wilson; 22/65 → 23.5–46.0%). 6: v86's counter == the byte-locked SESSIntel block's own n, executed bar by bar (36,900 bars) |
+| 6 | DAILY regime tile, labelled UNTESTED: 12-month return (last completed month) and price vs the 200-day average; 20-day change of the real yield (DFII10) and DXY | Visuals (ticker tile 6, panel) | `v86_check.py` 7 (4,000 cases); all requests are `[1]` + `lookahead_on` (bug_scan R1 0) |
+| 7 | RISK: lots = floor(equity × risk% ÷ ((stop + cost) × $/pt), 0.01). The stop is typed in, or 1 ATR. TODAY: typed-in R against a −2R cap → "STOP FOR THE DAY". | Visuals | `v86_check.py` 7: never above the intended risk, 4,000 cases |
+| 8 | Forward-record banner above the ticker: the website ledger typed in (defaults H4 15m, 2026-10-21: N 65, 22 wins, mean −0.2268, sd 0.6796, PF 0.4292), with the verdict under the pre-registered rule → **NO EDGE · interval below 0**, CI −0.395 … −0.058 | Visuals | `v86_check.py` 7: verdict vs the rule with the exact t (1,484 cases); the defaults == the ledger file recomputed |
+| 9 | EdgeCases: the 99 assertions run once at bar 0, and the table is drawn on the last bar (was `barstate.islastconfirmedhistory`). Assertions unchanged. (F-A75) | EdgeCases | `v86_check.py` 10 (pure functions of constants); `edgecase_cites.py` PASS |
+
+**Found before release by executing the new texts with missing data (`v86_check.py` 8), and fixed:**
+- COST printed "(NaN)" and RISK printed "stop $NaN" before ATR exists.
+- `f_dur(na)` would have printed "NaN".
+
+**Robustness fixes:**
+- No array read depends on short-circuit or lazy evaluation. The calendar pointer loop breaks explicitly, and the
+  event name is read inside an `if`.
+- Minutes are zero-padded explicitly, not through a "00" format.
+
+**On the chart (expected changes):**
+- **Ticker:**
+  - an orange or red banner above it (the forward record);
+  - two more tiles: `◆ FLAT ✓` (daily regime) and `OK ✓` / `CPI 3h 05m` / `NEWS` / `COST 27%` / `CHURN` / `STOP DAY`.
+- **Bottom-left panel:** ends with a **CHECKS · RISK** section (9 rows Standard, 6 Compact; off with "Checks & risk
+  section in the panel").
+- **Master SIGNAL cell:** `score L … S … R …`.
+- **Orange shading** on news windows, from the 2026-10-28 FOMC on.
+- **New settings group:** CHECKS & RISK. Type in your equity, risk %, stop and today's R. Set the cost inputs as in the
+  Master.
+
+**Checks:**
+- precheck, undeclared, order and deadcode: 0, on all nine files.
+- pinelimits: 0 issues.
+- PASS: diag_parity, regime, decision, expectancy, value_map, edgecase_cites, moved, refactor, inputs, macro, panel,
+  h2_age, h2_parity, h2_trace, formula_trace, brief_trace and v86_check (10/10).
+- `compile_est`:
+  - Master 99,535 / 99,000 (v83 file: 99,542 / 99,005, so 7 fewer).
+  - Visuals 56,745 / 69,087 (about 31-43% under the limit).
+- `tf_check`: see the build record.
+- bug_scan: the new hits are triaged in STRATEGY_MAP_AND_BUG_CATALOGUE.md §3.
+
+**Compile NOT RUN on v86.** The Master has fewer tokens than the compiled v83 file. Visuals is far under the limit.
+The compiler is the judge.

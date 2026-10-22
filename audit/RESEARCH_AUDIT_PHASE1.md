@@ -319,7 +319,7 @@ verdict. That is a risk-management statement, not a change to any rule.
 | # | Step | Where | Needs your approval? | Effort |
 |---|---|---|---|---|
 | 1 | Record the H4 reading under its pre-registered rule; mark H4 FAILED / continue as the rule says | Website (record) | **Yes**: default branch | S |
-| 2 | Add the Chart "P(win)" caveat: label it "score", not probability, until calibrated (display text only) | This branch (Visuals has room; Master about 45-85 tokens) | Yes (display change) | S |
+| 2 | Add the Chart "P(win)" caveat: label it "score", not probability, until calibrated (display text only). **Done in v86** (F-A73), with the other display items of §4 and §9: news calendar (F-A74), cost, churn, daily regime, risk box, forward-record banner | This branch (Visuals has room; Master about 45-85 tokens) | Approved 2026-10-22 | S |
 | 3 | Data acquisition: long XAU intraday + FRED DFII10 / broad USD + event surprises (licences checked) | Website data store | **Yes** | M |
 | 4 | Research tooling: trial register, purged k-fold + embargo, CSCV / PBO, DSR, SPA, Wilson/bootstrap CIs | Website `quantum/research/` (new module, outside the frozen engine) | **Yes** | M |
 | 5 | Pre-register R1/R2 (daily) as Amendment 11 **before** running them; then run CSCV on the daily history | Website | **Yes** | M |
