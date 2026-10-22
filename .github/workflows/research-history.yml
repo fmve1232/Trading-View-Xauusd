@@ -1,0 +1,62 @@
+# Research history (audit/PREREGISTRATION.md Amendment 11): spot XAU/USD 1h and 15min bars from Twelve Data, paged
+# back to 2010 or the feed's first bar, kept on the `research-data` branch. The engine and the site never read it.
+# The first run backfills; the monthly run adds new bars. The API key stays a secret and is never logged.
+name: research-history
+
+on:
+  workflow_dispatch:
+    inputs:
+      intervals:
+        description: "Intervals (comma-separated)"
+        default: "1h,15min"
+      max_calls:
+        description: "Maximum requests per interval (free plan: 800 a day)"
+        default: "300"
+  schedule:
+    - cron: "41 7 2 * *"          # the 2nd of each month, 07:41 UTC
+
+permissions:
+  contents: write                 # push the research-data branch
+
+concurrency:
+  group: research-history
+  cancel-in-progress: false
+
+jobs:
+  history:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Load the research-data branch
+        run: |
+          URL="https://github.com/${{ github.repository }}.git"
+          set +e; git ls-remote --exit-code --heads "$URL" research-data >/dev/null; rc=$?; set -e
+          if [ $rc -eq 0 ]; then git clone -q --depth 1 --branch research-data --single-branch "$URL" rd
+          elif [ $rc -eq 2 ]; then echo "research-data does not exist yet: starting it"; mkdir -p rd
+          else echo "::error::cannot reach the research-data branch (rc=$rc)"; exit 1; fi
+      - name: Backfill
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+        run: python -m quantum.research.history --store rd --intervals "${{ github.event.inputs.intervals || '1h,15min' }}" --max-calls "${{ github.event.inputs.max_calls || '300' }}"
+      - name: Summary
+        if: always()
+        run: |
+          { echo "### Research history"; echo '```'; tail -n 10 rd/_history_log.jsonl 2>/dev/null || echo "no log"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save the research-data branch (one orphan commit)
+        if: always()
+        run: |
+          cd rd
+          if [ ! -d .git ]; then git init -q -b research-data; fi
+          git config user.name "quantum-research"
+          git config user.email "quantum-research@users.noreply.github.com"
+          git checkout -q --orphan snapshot
+          git add -A
+          git commit -q -m "research data $(date -u +%FT%TZ)" || exit 0
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot:research-data

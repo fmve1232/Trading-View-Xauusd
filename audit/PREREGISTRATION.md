@@ -576,3 +576,43 @@ reported, not used to decide**: a trade that reaches TP1 and is then stopped at 
 so the win rate depends on the exit design, and only the mean R and PF say whether money is made. **Multiplicity:** H5 is a
 seventh hypothesis on the same market and period; it is a subset of the treatment arm's signals and borrows no evidence
 from it.
+
+## Amendment 11 (2026-10-22, operator decision; written before any historical data below was downloaded): research data split and validation protocol
+
+**Why.** The research audit (`audit/RESEARCH_AUDIT_WEB_PHASE1.md`) found no out-of-sample intraday history in the store
+and no measured edge in the live arms. New hypotheses need a sealed history. This amendment fixes the split, the data
+source and the test protocol **before** the data exists here, so no boundary can be chosen by looking at results. It
+changes nothing in the engine, the §7 arms or H2–H5.
+
+**Data source.** Spot XAU/USD from **Twelve Data**, the feed the live engine already uses (no basis to a different
+feed), intervals **1h** and **15min**, fetched backwards from the present to 2010-01-01 or the earliest bar the feed
+serves, whichever is later. Stored on the branch `research-data` in the store format (`<series>/<YYYY-MM>.csv`), never
+read by the engine or the site. (Dukascopy was the plan in the audit; it refuses GitHub's cloud addresses and its terms
+restrict redistribution, so it is not used.) Every download is logged with its row counts and first / last bar.
+
+**Split (calendar, fixed now):**
+
+| Period | Dates (UTC) | Use |
+|---|---|---|
+| Development | earliest bar – 2019-12-31 | rules may be explored and parameters chosen, with walk-forward and purging |
+| Validation | 2020-01-01 – 2022-12-31 | one evaluation per registered variant; no re-tuning on it |
+| Sealed holdout | 2023-01-01 – 2025-12-31 | opened **once** per hypothesis that passed validation; its result is final |
+| Live | from each hypothesis's registration | the forward ledger, as for every arm |
+
+If the feed serves less than 3 years of development data for a timeframe, that timeframe is reported as "insufficient
+history" and is not tested without a new amendment; the boundaries above do not move.
+
+**Protocol (applies to every hypothesis tested on this data):**
+1. The hypothesis (rules, timeframe, exits, costs, decision rule) is registered as an amendment before it is run on
+   validation data.
+2. Outcomes use a triple barrier: TP, SL and a time limit fixed in the registration; a win is TP before SL within the
+   limit, after costs (the `backtest.py` cost model; plus a stress run at 2× costs and a 1-bar entry delay).
+3. Development uses walk-forward folds with purging and an embargo of at least the time limit.
+4. The number of variants tried on development is recorded. Selection among variants reports the Probability of
+   Backtest Overfitting (CSCV) and the Deflated Sharpe Ratio.
+5. **Pass on validation and on the holdout**: mean R > 0 with a t-statistic > 3.0 when chosen among several variants
+   (> 2.0 for a single pre-registered rule), profit factor ≥ 1.2, and positive mean R under the stress run. White's
+   Reality Check against "no trade" is reported.
+6. The win rate is always reported with its Wilson 95% interval and never decides alone.
+7. A hypothesis that passes the holdout becomes a new live arm with its own freeze key; only its live record is
+   evidence on the site.
