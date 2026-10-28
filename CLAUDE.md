@@ -24,8 +24,9 @@ plus any other artefact that changed, and post the build record in chat.**
   Visuals computes; BIAS and ODDS name the Master's cells, never a second engine number; `panel_check.py` 7 executes
   the nearest-level search and the ROOM marks). Since v80 its default style is text GAUGES (`f_gBar` score bars, `f_gPos`
   sliders; executed vs references in `panel_check.py` 7); the v79 sentences stay as "Glance style = Text (v79)". Since v81 the glance is a BOTTOM TICKER by default (six tiles at
-  bottom centre, lifted above the Master's plan strip; `panel_check.py` 8), and Visuals' drawings are trimmed by default
-  (BB, FVG / OB boxes, session shading, footprint OFF; every switch kept; `showFVG` / `showOB` there only DRAW, the
+  bottom centre, lifted above the Master's plan strip; `panel_check.py` 8), and Visuals' drawings were trimmed by default
+  (BB, FVG / OB boxes, session shading, footprint OFF; every switch kept; since v87 FVG / OB, session shading, pivots and
+  PMH/PML are ON again, BB / VWAP W-M / footprint stay OFF; `showFVG` / `showOB` there only DRAW, the
   Master's same-named inputs are the engine's and stay ON, recorded in `inputs_check.py` KNOWN). `panel_check.py` 9 EXECUTES
   every ticker tile and H2 TREND text with missing (na) inputs: no "NaN" may reach the screen (F-A70). Since v86 the panel
   ends with a CHECKS · RISK section and the ticker has two more tiles (daily regime, checks) and a forward-record

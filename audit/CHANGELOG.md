@@ -3034,3 +3034,38 @@ Unchanged: Brief, Diagnostics, the four arms.
 
 **Compile NOT RUN on v86.** The Master has fewer tokens than the compiled v83 file. Visuals is far under the limit.
 The compiler is the judge.
+
+---
+
+# v87 — Visuals drawings back on (operator: "all required options should be ticked", 2026-10-28)
+
+Only **Visuals** changed. Five display defaults are ON again: **FVG boxes, order blocks, session shading, swing pivots
+and PMH/PML**. These are the zones, sessions and levels the Master's engine and the docks already use, so the chart now
+draws what the numbers refer to.
+
+**Kept OFF, on purpose:**
+
+| Switch | Why |
+|---|---|
+| Bollinger Bands, VWAP weekly / monthly | No rule or panel reads them; clutter only. |
+| Footprint engine | Lower-timeframe requests; an approximation (tick volume); slow on long charts. |
+| 4H open / close lines | Clutter. |
+| 4H forming-candle lines | They **repaint**. |
+| Adaptive ATR (Visuals) | It must match the Master, where it is OFF. |
+
+**Master, Brief, Diagnostics and the arms are not changed**, which keeps their frozen pre-registered defaults:
+- The decision-changing options stay OFF: news suppression, drawdown breaker, RSI-divergence filter, COT, adaptive ATR.
+- Debug and performance modes stay OFF. Performance mode would suppress the alerts.
+- Invert-yield stays OFF. It is only for ZN1! futures; ON would reverse the yield logic for gold.
+- Choosing these "for best results" on this history would be tuning (AUDIT_PROMPT §9, CLAUDE.md).
+
+**Alerts:** every alert switch in every file was already ON (Master, Visuals ×5, Brief). Nothing to change.
+
+**Checks:**
+- precheck, undeclared, order, deadcode and pinelimits: 0 issues.
+- All PASS: diag_parity, regime, decision, expectancy, value_map, edgecase_cites, moved, refactor, inputs, macro,
+  compile_est, panel, h2_age, h2_parity, h2_trace, formula_trace, v86_check, brief_trace.
+- bug_scan: unchanged from v86.
+- tf_check: see the build record.
+
+**Compile NOT RUN.** Defaults only; the token count is unchanged.

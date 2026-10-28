@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v86   (checks & risk)                ║
+// ║  BUILD STAMP — this file last CHANGED in v87   (drawings back on)             ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -51,7 +51,7 @@ ema100Len    = input.int(100, "EMA mid length",    minval = 5, group = grpT)
 ema200Len    = input.int(200, "EMA slow length",   minval = 10, group = grpT)
 showVwap     = input.bool(true,  "VWAP (daily anchor)",     group = grpT)
 showVwapWM   = input.bool(false, "VWAP weekly + monthly",   group = grpT)
-// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
+// v81: OFF by default to cut chart clutter (operator); kept OFF in v87 (not read by any rule; see CHANGELOG v87). Drawing only.
 showBB       = input.bool(false, "Bollinger Bands (20, 2)", group = grpT)
 
 grpTag = "Labels"
@@ -62,7 +62,7 @@ showPriceLine = input.bool(true, "Live price line + tag",   group = grpTag)
 
 grpL = "Key Levels"
 showLevels   = input.bool(true,  "PDH/PDL · PWH/PWL",       group = grpL)
-showMonthly  = input.bool(false, "PMH/PML (monthly)",       group = grpL)
+showMonthly  = input.bool(true,  "PMH/PML (monthly)",       group = grpL)
 showCurDay   = input.bool(true,  "CDH/CDL (current day)",   group = grpL, tooltip = "Current NY-session day high/low — the Master uses these as live take-profit candidates.")
 
 grpSR = "Support / Resistance"
@@ -81,17 +81,17 @@ grpS = "Structure"
 // scored a structure break. The "~" prefix on every label says so on the chart itself.
 showStruct   = input.bool(true,  "BOS / CHoCH labels (~ = approximation, NOT the engine's signal)", group = grpS, tooltip = "Drawn by a simplified structure detector, not the Master's engine. Use them for chart reading; never treat a ~BOS or ~CHoCH as confirmation that the engine registered one.")
 pivotLen     = input.int(5,      "Pivot length", minval = 2, maxval = 20, group = grpS)
-showPivots   = input.bool(false, "Mark swing pivots",       group = grpS)
+showPivots   = input.bool(true,  "Mark swing pivots",       group = grpS)
 structKeep   = input.int(25,     "BOS/CHoCH markers kept", minval = 5, maxval = 100, group = grpS, tooltip = "Older structure markers are deleted. Without a cap they accumulate until TradingView's 500-object limit silently drops the oldest drawings.")
 showSweep    = input.bool(true,  "Liquidity sweep markers", group = grpS)
 
 grpZ = "Zones"
-// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
-showFVG      = input.bool(false, "Fair Value Gaps",         group = grpZ)
+// v81: OFF to cut clutter; v87: ON again (operator: "all required options ticked", 2026-10-28). Drawing only, the engine is the Master's.
+showFVG      = input.bool(true,  "Fair Value Gaps",         group = grpZ)
 fvgMaxBars   = input.int(60,     "FVG max age (bars)", minval = 5, group = grpZ)
 fvgMinATR    = input.float(0.3,  "FVG min size (ATR)", minval = 0.05, step = 0.05, group = grpZ)
-// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
-showOB       = input.bool(false, "Order Blocks",            group = grpZ)
+// v81: OFF to cut clutter; v87: ON again (operator: "all required options ticked", 2026-10-28). Drawing only, the engine is the Master's.
+showOB       = input.bool(true,  "Order Blocks",            group = grpZ)
 obDispATR    = input.float(2.5,  "OB displacement (xATR)", minval = 1.5, maxval = 5.0, step = 0.1, group = grpZ, tooltip = "F-A08: was 1.0 while the Master's dispMult is 2.5, so this chart drew order blocks on candles the engine does not treat as displacement at all. Now matched to the Master default. Keep the two equal or the boxes will not be the ones the engine scored.")
 // F-A08 PARITY INPUTS. Mirrors of the Master's ADX and Adaptive-ATR controls, needed
 // because the displacement threshold below is measured in adaptiveATR units, not raw ATR.
@@ -168,11 +168,11 @@ bool dkOn = gdDocked or lqDocked or h2Docked
 bool lqInPanel = lqDock == "In the panel" or lqDock == "Under the Master's LIQUIDITY" and dashMode == "Mobile"
 
 grpSess = "Sessions (UTC)"
-// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
-showSess     = input.bool(false, "Session shading",         group = grpSess)
+// v81: OFF to cut clutter; v87: ON again (operator: "all required options ticked", 2026-10-28). Drawing only, the engine is the Master's.
+showSess     = input.bool(true,  "Session shading",         group = grpSess)
 
 grpF = "Footprint (approximation)"
-// v81: OFF by default to cut chart clutter (operator); one switch brings it back. Drawing only, the engine is the Master's.
+// v81: OFF by default to cut chart clutter (operator); kept OFF in v87 (not read by any rule; see CHANGELOG v87). Drawing only.
 showFP       = input.bool(false, "Enable footprint engine", group = grpF)
 fpTf         = input.timeframe("1", "Intrabar timeframe",   group = grpF, tooltip = "Must be LOWER than the chart timeframe. 1 minute on a 5M chart gives 5 intrabars per candle.")
 fpBars       = input.int(25,     "Bars to render", minval = 5, maxval = 60, group = grpF)
