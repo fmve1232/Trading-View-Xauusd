@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v87   (drawings back on)             ║
+// ║  BUILD STAMP — this file last CHANGED in v88   (MACRO = the Master's)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -62,7 +62,7 @@ showPriceLine = input.bool(true, "Live price line + tag",   group = grpTag)
 
 grpL = "Key Levels"
 showLevels   = input.bool(true,  "PDH/PDL · PWH/PWL",       group = grpL)
-showMonthly  = input.bool(true,  "PMH/PML (monthly)",       group = grpL)
+showMonthly  = input.bool(false, "PMH/PML (monthly)",       group = grpL)
 showCurDay   = input.bool(true,  "CDH/CDL (current day)",   group = grpL, tooltip = "Current NY-session day high/low — the Master uses these as live take-profit candidates.")
 
 grpSR = "Support / Resistance"
@@ -79,19 +79,21 @@ grpS = "Structure"
 // and bar-spacing filters, and an 8-bar structWindow -- and it also detects MSS, which
 // this script cannot produce at all. A marker here is therefore NOT evidence the engine
 // scored a structure break. The "~" prefix on every label says so on the chart itself.
-showStruct   = input.bool(true,  "BOS / CHoCH labels (~ = approximation, NOT the engine's signal)", group = grpS, tooltip = "Drawn by a simplified structure detector, not the Master's engine. Use them for chart reading; never treat a ~BOS or ~CHoCH as confirmation that the engine registered one.")
+// v88: OFF by default (operator: "too much noisy"; these approximate labels can disagree with the Master's STRUCTURE
+// cell, the engine's own BOS / CHoCH / MSS). The CHURN check reads brokeUp / brokeDown, computed with the switch off too.
+showStruct   = input.bool(false, "BOS / CHoCH labels (~ = approximation, NOT the engine's signal)", group = grpS, tooltip = "Drawn by a simplified structure detector, not the Master's engine. Use them for chart reading; never treat a ~BOS or ~CHoCH as confirmation that the engine registered one.")
 pivotLen     = input.int(5,      "Pivot length", minval = 2, maxval = 20, group = grpS)
-showPivots   = input.bool(true,  "Mark swing pivots",       group = grpS)
+showPivots   = input.bool(false, "Mark swing pivots",       group = grpS)
 structKeep   = input.int(25,     "BOS/CHoCH markers kept", minval = 5, maxval = 100, group = grpS, tooltip = "Older structure markers are deleted. Without a cap they accumulate until TradingView's 500-object limit silently drops the oldest drawings.")
 showSweep    = input.bool(true,  "Liquidity sweep markers", group = grpS)
 
 grpZ = "Zones"
-// v81: OFF to cut clutter; v87: ON again (operator: "all required options ticked", 2026-10-28). Drawing only, the engine is the Master's.
-showFVG      = input.bool(true,  "Fair Value Gaps",         group = grpZ)
+// v81: OFF to cut clutter; v87 ON; v88 OFF again (operator: "too much noisy", 2026-10-29). Drawing only, the engine is the Master's.
+showFVG      = input.bool(false, "Fair Value Gaps",         group = grpZ)
 fvgMaxBars   = input.int(60,     "FVG max age (bars)", minval = 5, group = grpZ)
 fvgMinATR    = input.float(0.3,  "FVG min size (ATR)", minval = 0.05, step = 0.05, group = grpZ)
-// v81: OFF to cut clutter; v87: ON again (operator: "all required options ticked", 2026-10-28). Drawing only, the engine is the Master's.
-showOB       = input.bool(true,  "Order Blocks",            group = grpZ)
+// v81: OFF to cut clutter; v87 ON; v88 OFF again (operator: "too much noisy", 2026-10-29). Drawing only, the engine is the Master's.
+showOB       = input.bool(false, "Order Blocks",            group = grpZ)
 obDispATR    = input.float(2.5,  "OB displacement (xATR)", minval = 1.5, maxval = 5.0, step = 0.1, group = grpZ, tooltip = "F-A08: was 1.0 while the Master's dispMult is 2.5, so this chart drew order blocks on candles the engine does not treat as displacement at all. Now matched to the Master default. Keep the two equal or the boxes will not be the ones the engine scored.")
 // F-A08 PARITY INPUTS. Mirrors of the Master's ADX and Adaptive-ATR controls, needed
 // because the displacement threshold below is measured in adaptiveATR units, not raw ATR.
@@ -168,8 +170,8 @@ bool dkOn = gdDocked or lqDocked or h2Docked
 bool lqInPanel = lqDock == "In the panel" or lqDock == "Under the Master's LIQUIDITY" and dashMode == "Mobile"
 
 grpSess = "Sessions (UTC)"
-// v81: OFF to cut clutter; v87: ON again (operator: "all required options ticked", 2026-10-28). Drawing only, the engine is the Master's.
-showSess     = input.bool(true,  "Session shading",         group = grpSess)
+// v81: OFF to cut clutter; v87 ON; v88 OFF again (operator: "too much noisy", 2026-10-29). Drawing only, the engine is the Master's.
+showSess     = input.bool(false, "Session shading",         group = grpSess)
 
 grpF = "Footprint (approximation)"
 // v81: OFF by default to cut chart clutter (operator); kept OFF in v87 (not read by any rule; see CHANGELOG v87). Drawing only.
@@ -1374,6 +1376,183 @@ float _gM = request.security(syminfo.tickerid, macroTF, close[1], barmerge.gaps_
 float goldRetM = not na(_gM[1]) ? safeDiv(_gM, _gM[1]) - 1 : na
 int _wM = math.min(corrMedLen * _kM, 4500)
 bool _fM = corrMedLen * _kM <= 4500
+// MX-BEGIN (v88) the Master's MACRO verdict, COPIED: every line between MX-BEGIN and MX-END is a line of the Master,
+// verbatim and in the Master's order (v88_check.py), and together with the engine lines above (safeDiv, macroTF,
+// corrMedLen, chartTFSeconds, _kM, _gM, goldRetM, _wM, _fM, already the Master's) they are every statement the Master's
+// macroIntelScore / macroIntelLabel depend on. Inputs keep the Master's names and defaults (inputs_check.py). So the
+// MACRO Visuals shows is the Master's MACRO cell, never a second opinion. Display only: nothing here votes or gates.
+grpCore = "CORE"
+rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, group=grpCore)
+grpV17 = "V17 PREDICTIVE ENHANCEMENTS"
+dxyRocLen = input.int(10, "DXY Momentum ROC Length (bars)", minval=5, maxval=30, group=grpV17)
+znRocLen = input.int(10, "ZN1 Rate Pressure ROC Length", minval=5, maxval=20, group=grpV17)
+yieldSymbol = input.symbol("TVC:US10Y", "Yield Symbol (use TVC:US10Y for yield, ZN1! for futures price)", group=grpV17)
+invertYield = input.bool(false, "Invert Yield Logic (enable for ZN1! futures price)", group=grpV17)
+dxySymbol = input.symbol("TVC:DXY", "DXY Symbol", group=grpV17)
+silverSymbol = input.symbol("OANDA:XAGUSD", "Silver Symbol", group=grpV17)
+eurusdSymbol = input.symbol("OANDA:EURUSD", "EURUSD Symbol", group=grpV17)
+spxSymbol = input.symbol("SP:SPX", "S&P 500 Symbol", group=grpV17)
+tipsSymbol = input.symbol("TVC:US10Y", "TIPS/Real-Yield Symbol (blank=off)", group=grpV17, tooltip="Q5.5: default changed from the unprefixed US10YTIPS (which errored on many feeds) to TVC:US10Y. v65: while it equals the Yield Symbol (the default) the TIPS layer is OFF, because it would count the 10Y twice. FRED:DFII10 (the real yield) is DAILY: the Brief shows it as daily context; here it would be correlated on 1H bars. Leave it equal to the Yield Symbol unless you have an intraday real-yield feed. ignore_invalid_symbol protects the math regardless.")
+grpV19c = "V19 CORRELATION"
+corrShortLen = input.int(30, "Corr Short Window", minval=10, maxval=50, group=grpV19c)
+corrLongLen = input.int(120, "Corr Long Window", minval=60, maxval=200, group=grpV19c)
+float _rawGoldRet = safeDiv(close, nz(close[1], close)) - 1
+float _retClampW = math.min(math.max(nz(ta.stdev(_rawGoldRet, 100)[1], 0.0) * 6.0, 0.002), 0.05)
+goldRet = math.min(math.max(_rawGoldRet, -_retClampW), _retClampW)
+[_rawDXY, _rawDXYFast, _rawDXYSlow, _rawDXYRoc, _rawDXYRSI] = request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen), ta.rsi(close[1], rsiLen)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+[_rawYield, _rawYieldFast, _rawYieldSlow, _rawYieldRoc] = request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+[_rawSilver, _rawSilverEMA, _silverRSI] = request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
+[_rawEURUSD, _rawEURFast, _rawEURSlow, _rawEURRoc] = request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
+[_rawSPX, _rawSPXFast, _rawSPXSlow] = request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_off, ignore_invalid_symbol=true)
+[_rawTIPS, _rawTIPSFast, _rawTIPSSlow] = request.security(tipsSymbol != "" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)
+var float cachedDXY = na
+var float cachedYield = na
+var float cachedSilver = na
+var float cachedEURUSD = na
+var float cachedSPX = na
+var float cachedTIPS = na
+var int dxyStaleCount = 0
+var int yieldStaleCount = 0
+var int silverStaleCount = 0
+var int eurusdStaleCount = 0
+var int spxStaleCount = 0
+var int tipsStaleCount = 0
+if not na(_rawDXY)
+    cachedDXY := _rawDXY
+    dxyStaleCount := 0
+else
+    dxyStaleCount := dxyStaleCount + 1
+if not na(_rawYield)
+    cachedYield := _rawYield
+    yieldStaleCount := 0
+else
+    yieldStaleCount := yieldStaleCount + 1
+if not na(_rawSilver)
+    cachedSilver := _rawSilver
+    silverStaleCount := 0
+else
+    silverStaleCount := silverStaleCount + 1
+if not na(_rawEURUSD)
+    cachedEURUSD := _rawEURUSD
+    eurusdStaleCount := 0
+else
+    eurusdStaleCount := eurusdStaleCount + 1
+if not na(_rawSPX)
+    cachedSPX := _rawSPX
+    spxStaleCount := 0
+else
+    spxStaleCount := spxStaleCount + 1
+if not na(_rawTIPS)
+    cachedTIPS := _rawTIPS
+    tipsStaleCount := 0
+else
+    tipsStaleCount := tipsStaleCount + 1
+int MACRO_STALE_MAX = 2
+dxyClose = cachedDXY
+yieldClose = cachedYield
+silverClose = cachedSilver
+eurusdClose = cachedEURUSD
+spxClose = cachedSPX
+tipsClose = cachedTIPS
+dxyValid = not na(dxyClose) and not na(_rawDXYFast) and not na(_rawDXYSlow) and dxyStaleCount < MACRO_STALE_MAX
+yieldValid = not na(yieldClose) and not na(_rawYieldFast) and not na(_rawYieldSlow) and yieldStaleCount < MACRO_STALE_MAX
+silverValid = not na(silverClose) and not na(_rawSilverEMA) and silverStaleCount < MACRO_STALE_MAX
+eurusdValid = not na(eurusdClose) and not na(_rawEURFast) and not na(_rawEURSlow) and eurusdStaleCount < MACRO_STALE_MAX
+spxValid = not na(spxClose) and not na(_rawSPXFast) and not na(_rawSPXSlow) and spxStaleCount < MACRO_STALE_MAX
+bool _tipsOn = tipsSymbol != yieldSymbol
+tipsValid = _tipsOn and not na(tipsClose) and not na(_rawTIPSFast) and not na(_rawTIPSSlow) and tipsStaleCount < MACRO_STALE_MAX
+dxyEMAFast = _rawDXYFast
+dxyEMASlow = _rawDXYSlow
+yieldEMAFast = _rawYieldFast
+yieldEMASlow = _rawYieldSlow
+eurusdEMAFast = _rawEURFast
+eurusdEMASlow = _rawEURSlow
+spxEMAFast = _rawSPXFast
+spxEMASlow = _rawSPXSlow
+tipsEMAFast = _rawTIPSFast
+tipsEMASlow = _rawTIPSSlow
+silverEMA = _rawSilverEMA
+dxyBull = dxyValid and dxyClose > dxyEMAFast and dxyEMAFast > dxyEMASlow
+dxyBear = dxyValid and dxyClose < dxyEMAFast and dxyEMAFast < dxyEMASlow
+_yieldUp = yieldValid and yieldClose > yieldEMAFast and yieldEMAFast > yieldEMASlow
+_yieldDown = yieldValid and yieldClose < yieldEMAFast and yieldEMAFast < yieldEMASlow
+yieldRising = invertYield ? _yieldDown : _yieldUp
+yieldFalling = invertYield ? _yieldUp : _yieldDown
+eurusdBull = eurusdValid and eurusdClose > eurusdEMAFast and eurusdEMAFast > eurusdEMASlow
+eurusdBear = eurusdValid and eurusdClose < eurusdEMAFast and eurusdEMAFast < eurusdEMASlow
+spxBull = spxValid and spxClose > spxEMAFast and spxEMAFast > spxEMASlow
+spxBear = spxValid and spxClose < spxEMAFast and spxEMAFast < spxEMASlow
+tipsRising = tipsValid and tipsClose > tipsEMAFast and tipsEMAFast > tipsEMASlow
+tipsFalling = tipsValid and tipsClose < tipsEMAFast and tipsEMAFast < tipsEMASlow
+dxyROC = dxyValid ? nz(_rawDXYRoc, 0.0) : 0.0
+dxyMomBull = dxyROC > 0.15
+dxyMomBear = dxyROC < -0.15
+znROC = yieldValid ? nz(_rawYieldRoc, 0.0) : 0.0
+eurusdROC = eurusdValid ? nz(_rawEURRoc, 0.0) : 0.0
+ratePressure = znROC
+ratePressureUp = ratePressure > 0.1
+ratePressureDown = ratePressure < -0.1
+silverRet = silverValid and not na(silverClose[1]) ? safeDiv(silverClose, silverClose[1]) - 1 : na
+dxyRet = dxyValid and not na(dxyClose[1]) ? safeDiv(dxyClose, dxyClose[1]) - 1 : na
+yieldRet = yieldValid and not na(yieldClose[1]) ? safeDiv(yieldClose, yieldClose[1]) - 1 : na
+eurRet = eurusdValid and not na(eurusdClose[1]) ? safeDiv(eurusdClose, eurusdClose[1]) - 1 : na
+spxRet = spxValid and not na(spxClose[1]) ? safeDiv(spxClose, spxClose[1]) - 1 : na
+tipsRet = tipsValid and not na(tipsClose[1]) ? safeDiv(tipsClose, tipsClose[1]) - 1 : na
+float goldRetL = goldRet[1]
+int _wS = math.min(corrShortLen * _kM, 4500)
+int _wL = math.min(corrLongLen * _kM, 4500)
+bool _fS = corrShortLen * _kM <= 4500
+bool _fL = corrLongLen * _kM <= 4500
+f_cc3(float g, float r, bool v, int a, int b, int c, bool fa, bool fb, bool fc) =>
+    float x = ta.correlation(g, r, a)
+    float y = ta.correlation(g, r, b)
+    float z = ta.correlation(g, r, c)
+    [v and fa ? x : na, v and fb ? y : na, v and fc ? z : na]
+[corrGoldDXY_30, corrGoldDXY_60, corrGoldDXY_120] = f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)
+[corrGoldYld_30, corrGoldYld_60, corrGoldYld_120] = f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)
+[corrGoldSlv_30, corrGoldSlv_60, corrGoldSlv_120] = f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)
+[corrGoldSPX_30, corrGoldSPX_60, corrGoldSPX_120] = f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)
+[corrGoldEUR_30, corrGoldEUR_60, corrGoldEUR_120] = f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)
+[corrGoldTIPS_30, corrGoldTIPS_60, corrGoldTIPS_120] = f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)
+avgCorrDXY = (nz(corrGoldDXY_30) + nz(corrGoldDXY_60) + nz(corrGoldDXY_120)) / 3.0
+avgCorrYld = (nz(corrGoldYld_30) + nz(corrGoldYld_60) + nz(corrGoldYld_120)) / 3.0
+avgCorrSlv = (nz(corrGoldSlv_30) + nz(corrGoldSlv_60) + nz(corrGoldSlv_120)) / 3.0
+avgCorrSPX = (nz(corrGoldSPX_30) + nz(corrGoldSPX_60) + nz(corrGoldSPX_120)) / 3.0
+avgCorrEUR = (nz(corrGoldEUR_30) + nz(corrGoldEUR_60) + nz(corrGoldEUR_120)) / 3.0
+avgCorrTIPS = (nz(corrGoldTIPS_30) + nz(corrGoldTIPS_60) + nz(corrGoldTIPS_120)) / 3.0
+_wDXYr = math.min(math.abs(avgCorrDXY) * 100, 30)
+_wYldr = math.min(math.abs(avgCorrYld) * 100, 30)
+_wSlvr = math.min(math.abs(avgCorrSlv) * 100, 25)
+_wSPXr = spxValid ? math.min(math.abs(avgCorrSPX) * 100, 15) : 0.0 // R5.1: adaptive by |corr| like the other assets (wires avgCorrSPX)
+_wEURr = eurusdValid and not dxyValid ? math.min(math.abs(avgCorrEUR) * 100, 30) : 0.0
+_wTIPSr = math.min(math.abs(avgCorrTIPS) * 100, 25)
+_wTot = _wDXYr + _wYldr + _wSlvr + _wSPXr + _wEURr + _wTIPSr
+wDXY = _wTot > 0 ? _wDXYr / _wTot * 100 : 30.0
+wYld = _wTot > 0 ? _wYldr / _wTot * 100 : 25.0
+wSlv = _wTot > 0 ? _wSlvr / _wTot * 100 : 20.0
+wSPX = _wTot > 0 ? _wSPXr / _wTot * 100 : 15.0
+wEUR = _wTot > 0 ? _wEURr / _wTot * 100 : 20.0
+wTIPS = _wTot > 0 ? _wTIPSr / _wTot * 100 : 10.0
+msDXY = dxyValid ? (dxyBear ? wDXY : dxyBull ? -wDXY : 0.0) : 0.0
+msYld = yieldValid ? (yieldFalling ? wYld : yieldRising ? -wYld : 0.0) : 0.0
+msSPX = spxValid ? (spxBull ? wSPX : spxBear ? -wSPX : 0.0) : 0.0
+msEUR = eurusdValid and not dxyValid ? (eurusdBull ? wEUR : eurusdBear ? -wEUR : 0.0) : 0.0
+msSlv = silverValid ? (silverClose > silverEMA ? wSlv : silverClose < silverEMA ? -wSlv : 0.0) : 0.0
+msTIPS = tipsValid ? (tipsFalling ? wTIPS : tipsRising ? -wTIPS : 0.0) : 0.0
+msMom = dxyValid ? (dxyMomBear ? 10.0 : dxyMomBull ? -10.0 : 0.0) : 0.0
+msRate = (yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 0.0) + (eurusdValid and not dxyValid ? (eurusdROC > 0.15 ? 5.0 : eurusdROC < -0.15 ? -5.0 : 0.0) : 0.0)
+macroStrengthScore = int(math.max(math.min(msDXY + msYld + msSPX + msEUR + msSlv + msTIPS + msMom + msRate, 100), -100))
+macroIntelScore = macroStrengthScore
+macroIntelValid = dxyValid or yieldValid or spxValid or eurusdValid or silverValid
+string macroIntelLabel = macroIntelValid ? (macroIntelScore >= 40 ? "BULL" : macroIntelScore <= -40 ? "BEAR" : macroIntelScore >= 15 ? "BULL-ISH" : macroIntelScore <= -15 ? "BEAR-ISH" : "MIXED") : "N/A"
+// MX-END
+// The Master's MACRO cell text (its _macroVerdict expression, verbatim) and, for the tooltips, each component's
+// contribution to the score (ms*: + supports gold, - weighs on it; the score is their sum, clamped to +-100).
+string mxVerdict = "Macro " + (macroIntelLabel == "BULL" ? "BULL" : macroIntelLabel == "BEAR" ? "BEAR" : macroIntelLabel == "BULL-ISH" ? "bull-ish" : macroIntelLabel == "BEAR-ISH" ? "bear-ish" : macroIntelLabel == "N/A" ? "—" : "MIX") + " " + str.tostring(macroIntelScore)
+int mxDir = macroIntelLabel == "BULL" or macroIntelLabel == "BULL-ISH" ? 1 : macroIntelLabel == "BEAR" or macroIntelLabel == "BEAR-ISH" ? -1 : 0
+string mxGlyph = macroIntelLabel == "BULL" ? "▲▲" : macroIntelLabel == "BULL-ISH" ? "▲" : macroIntelLabel == "BEAR" ? "▼▼" : macroIntelLabel == "BEAR-ISH" ? "▼" : macroIntelLabel == "N/A" ? "—" : "≈"
+f_mxC(string n, bool v, float pts) => n + (not v ? " no data" : pts > 0 ? " ▲+" + str.tostring(pts, "#") : pts < 0 ? " ▼" + str.tostring(pts, "#") : " ≈0")
+string mxWhy = "MACRO = the Master's MACRO cell (same code): " + mxVerdict + "\n" + f_mxC("DXY", dxyValid, msDXY + msMom) + " · " + f_mxC("10Y", yieldValid, msYld + msRate) + " · " + f_mxC("SPX", spxValid, msSPX) + " · " + f_mxC("silver", silverValid, msSlv) + "\n" + f_mxC("TIPS", tipsValid, msTIPS) + " · " + f_mxC("EURUSD (only without DXY)", eurusdValid and not dxyValid, msEUR) + " · DXY RSI " + (na(_rawDXYRSI) ? "—" : str.tostring(_rawDXYRSI, "#")) + " · silver RSI " + (na(_silverRSI) ? "—" : str.tostring(_silverRSI, "#"))
 // GD-BEGIN gold drivers: byte-identical in the Brief and Visuals (v66, macro_check.py E). Display only: no vote,
 // no weight, no gate. It reads goldRetM / _wM / _fM / macroTF / y2Symbol / safeDiv, which each file defines as the
 // engine does (Visuals copies those lines from the Master; macro_check.py E and inputs_check.py hold them equal).
@@ -1547,7 +1726,7 @@ float rgRyD = brRySym != "" and not na(rgRy1) and not na(rgRy21) ? rgRy1 - rgRy2
 float rgDxD = rgDxySym != "" and not na(rgDx1) and not na(rgDx21) ? rgDx1 - rgDx21 : na
 int rgMac = na(rgRyD) or na(rgDxD) ? 0 : rgRyD < 0 and rgDxD < 0 ? 1 : rgRyD > 0 and rgDxD > 0 ? -1 : 0
 string rgTxt = rgUp ? "▲ LONG" : rgDn ? "▼ SHORT" : "◆ FLAT"
-string rgMacTxt = na(rgRyD) or na(rgDxD) ? "macro: no data" : rgMac == 1 ? "macro supports gold" : rgMac == -1 ? "macro against gold" : "macro mixed"
+string rgMacTxt = na(rgRyD) or na(rgDxD) ? "20d macro: no data" : rgMac == 1 ? "20d macro supports gold" : rgMac == -1 ? "20d macro against gold" : "20d macro mixed"
 
 // ---- position size and the daily cap (typed-in result)
 float rkStopD = rkStop > 0 ? rkStop : atr14
@@ -1662,7 +1841,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "4 LIQUIDITY", "last swept: " + pvLastSweep + "\nnext above: " + (na(_upP) ? "none tagged" : _upN + " " + str.tostring(_upP, format.mintick) + " (+" + str.tostring(_upR, "#.##") + ")") + " · below: " + (na(_dnP) ? "none tagged" : _dnN + " " + str.tostring(_dnP, format.mintick) + " (−" + str.tostring(_dnR, "#.##") + ")"), _tmV)
             r += 1
-            _tmRow(r, "5 MACRO", "gold drivers net " + f_tmG(_gNet) + (_gNet > 0 ? " · lean supports gold" : _gNet < 0 ? " · lean against gold" : " · no lean") + " (display only)", f_tmC(_gNet))
+            _tmRow(r, "5 MACRO", "the Master's MACRO: " + mxVerdict + " · other drivers (context) net " + f_tmG(_gNet), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
             r += 1
             _tmRow(r, "6 ROOM", "up $" + (na(_upR) ? "—" : str.tostring(_upR, "#.##")) + (na(_upR) ? "" : _upR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_up2P) ? "" : " (then " + _up2N + " +" + str.tostring(_up2P - close, "#.##") + ")")) + "\ndown $" + (na(_dnR) ? "—" : str.tostring(_dnR, "#.##")) + (na(_dnR) ? "" : _dnR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_dn2P) ? "" : " (then " + _dn2N + " −" + str.tostring(close - _dn2P, "#.##") + ")")) + " · plan: the Master's plan strip", _tmV)
             r += 1
@@ -1680,7 +1859,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "ROOM", (na(_dnP) ? "—" : _dnN + " −" + str.tostring(_dnR, "#.#")) + " " + f_gPos(_dnP, close, _upP, 11) + " " + (na(_upP) ? "—" : "+" + str.tostring(_upR, "#.#") + " " + _upN) + "\n↓ " + (na(_dnR) ? "—" : _dnR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk) + "    ↑ " + (na(_upR) ? "—" : _upR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk), _tmV)
             r += 1
-            _tmRow(r, "MACRO", f_tmG(_gNet) + "  JPY" + f_tmG(brJd) + " OIL" + f_tmG(brOd) + " RY" + f_tmG(brRd) + " BE" + f_tmG(brBd) + " 2Y" + f_tmG(br2d), f_tmC(_gNet))
+            _tmRow(r, "MACRO", mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)) + " = Master · other: JPY" + f_tmG(brJd) + " OIL" + f_tmG(brOd) + " RY" + f_tmG(brRd) + " BE" + f_tmG(brBd) + " 2Y" + f_tmG(br2d) + " (net " + f_tmG(_gNet) + ")", (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
             r += 1
             _tmRow(r, "SWEPT", pvLastSweep, str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
             r += 1
@@ -1728,12 +1907,15 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             _tmRow(r, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _tmV)
     if gdPos != "Hidden" and not gdDocked
         r += 1
-        _tmHead(r, "GOLD DRIVERS", "▲ supports gold up · ▼ down", _tmSec)
+        r += 1
+        _tmRow(r, "MACRO", mxVerdict + " (= the Master's MACRO cell)", (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
+        _tmHead(r + 1, "OTHER DRIVERS", "context · not in the MACRO score", _tmSec)
+        r += 1
         if _cmp
             float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
             r += 1
-            table.cell(tblV, 0, r, "MACRO", text_color = _tmK, text_size = h2Sz, text_halign = text.align_left)
-            table.cell(tblV, 1, r, "JPY" + f_tmG(brJd) + "  OIL" + f_tmG(brOd) + "  RY" + f_tmG(brRd) + "  BE" + f_tmG(brBd) + "  2Y" + f_tmG(br2d), text_color = f_tmC(_net), text_size = h2Sz, text_halign = text.align_left, tooltip = "USDJPY: " + brJh + "\nOIL: " + brOh + "\nREAL YLD: " + brRh + "\nBREAKEVEN: " + brBh + "\nUS 2Y: " + br2h)
+            table.cell(tblV, 0, r, "OTHER", text_color = _tmK, text_size = h2Sz, text_halign = text.align_left)
+            table.cell(tblV, 1, r, "JPY" + f_tmG(brJd) + "  OIL" + f_tmG(brOd) + "  RY" + f_tmG(brRd) + "  BE" + f_tmG(brBd) + "  2Y" + f_tmG(br2d), text_color = _tmV, text_size = h2Sz, text_halign = text.align_left, tooltip = "Net of the five: " + f_tmG(_net) + " (context only; the MACRO verdict is the row above)\nUSDJPY: " + brJh + "\nOIL: " + brOh + "\nREAL YLD: " + brRh + "\nBREAKEVEN: " + brBh + "\nUS 2Y: " + br2h)
         else
             r += 1
             _tmRow(r, "USDJPY " + f_tmG(brJd), brJh, f_tmC(brJd))
@@ -1812,7 +1994,7 @@ if (gdDocked or lqDocked or h2Docked and h2Show) and barstate.islast
     f_dock(dkT, 0, gdGap)
 if gdDocked and barstate.islast
     float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
-    table.cell(dkT, 6, 1, "GOLD DRIVERS " + f_tmG(_net), text_color = f_tmC(_net), bgcolor = _dbg, text_size = _dsz, width = int(11 * _dw), text_halign = text.align_left, tooltip = "Display only: no vote, weight or gate. Green = supports gold up, red = down.")
+    table.cell(dkT, 6, 1, "OTHER DRIVERS · context", text_color = color.new(#AEBBC9, 0), bgcolor = _dbg, text_size = _dsz, width = int(11 * _dw), text_halign = text.align_left, tooltip = "Not in the Master's MACRO score: the MACRO verdict is the Master's MACRO cell above (Visuals' ticker shows the same). Net of these five: " + f_tmG(_net) + ". Each arrow: green = supports gold up, red = down. Display only.")
     f_dkCell(dkT, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, f_tmC(brJd))
     f_dkCell(dkT, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, f_tmC(brOd))
     f_dkCell(dkT, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, f_tmC(brRd))
@@ -1864,12 +2046,12 @@ if tkOn and barstate.islast
     f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and scores: the Master's BIAS / SIGNAL cells (scores, not calibrated odds).")
     f_tk(1, na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
     f_tk(2, "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
-    f_tk(3, f_tmG(_tNet), f_tmC(_tNet), "macro · " + (_tNet > 0 ? "supports gold" : _tNet < 0 ? "against gold" : "no lean"), "USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
+    f_tk(3, mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV), "macro · = Master", mxWhy + "\nOther drivers (context, not in the score), net " + f_tmG(_tNet) + ": USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
     f_tk(4, na(pvLastLvl) ? "none yet" : (pvLastUp ? "HIGH " : "LOW ") + str.tostring(pvLastLvl, format.mintick), na(pvLastLvl) ? _tmV : pvLastUp ? _tmDn : _tmUp, "last sweep" + (na(pvLastTime) ? "" : " · " + str.tostring((time - pvLastTime) / 3600000.0, "#.#") + " h ago"), "Pivot sweep (the ✕ markers): " + pvLastSweep + "\nH2 sweep: " + str.replace_all(h2LastSweep, "\n", "  "))
     f_tk(5, h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " ○" : " ●"), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV, "H2 · " + (h2SigDir == 0 ? "no signal" : (h2Stale ? "stale" : "live") + (h2SigOut != "" ? " · " + h2SigOut : "")), h2SigCard + h2SigStat)
     int _c = 6
     if rgShow
-        f_tk(_c, rgTxt + (rgMac == 1 ? " ✓" : rgMac == -1 ? " ✗" : ""), rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (✓ supports / ✗ against)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
+        f_tk(_c, rgTxt, rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (a 20-day daily reading, not the Master's MACRO)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
         _c += 1
     int _ckLv = math.max(nwLv, ckCostLv, rkLocked ? 2 : 0, ckChurn ? 1 : 0)
     string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "")

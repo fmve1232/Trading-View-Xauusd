@@ -3069,3 +3069,44 @@ draws what the numbers refer to.
 - tf_check: see the build record.
 
 **Compile NOT RUN.** Defaults only; the token count is unchanged.
+
+---
+
+# v88 — one MACRO, less noise (operator, 2026-10-29: "too much noisy … Visuals & Master show different directions")
+
+Only **Visuals** changed. The Master, Brief, Diagnostics and the arms are untouched.
+
+**One macro verdict (F-A76).**
+- **Before:** Visuals showed its own "macro" arrow, the net of five other instruments, and the v86 regime tile added a
+  third reading. Either could disagree with the Master's MACRO cell.
+- **Now Visuals computes the Master's MACRO with the Master's own code.**
+  - The `MX-BEGIN … MX-END` block holds 164 lines copied verbatim; with 9 engine lines Visuals already had, that is
+    every statement `macroIntelScore` / `macroIntelLabel` depend on.
+  - It shows that verdict on the ticker's macro tile (`▲▲ 100`, label "macro · = Master"), a new panel row
+    `MACRO  Macro BULL 100 (= the Master's MACRO cell)`, and the glance MACRO rows.
+  - The tooltip lists each component's contribution, e.g. `DXY ▲+30 · 10Y ▼-25 · SPX ▲+15 · silver ▲+20 · TIPS ≈0`.
+- The five extra drivers stay, labelled **OTHER DRIVERS · context**, with their net arrow only in tooltips. The
+  regime tile shows the trend only; the panel's DAILY row says "20d macro …".
+- Cost: Visuals has 6 more request sites (25 of 40) and is about 25–38% under the token limit.
+
+**Less noise.**
+- The five v87 drawings are OFF again: FVG, order blocks, session shading, pivots, PMH/PML.
+- Visuals' approximate `~BOS / ~CHoCH` labels are OFF by default too. They could disagree with the Master's
+  STRUCTURE cell; the CHURN check still runs with them off.
+- Every switch is kept.
+
+**On the operator's screenshot (v85 Visuals):**
+- The footprint "+0.3k / −0.2k" labels and the Bollinger envelope are OFF by default. They show because the chart's
+  saved settings have them on.
+- After pasting v88: Visuals settings → **Defaults → Reset settings**, then re-enter any personal values and use
+  **Save as default**.
+
+**Checks:**
+- precheck, undeclared, order, deadcode and pinelimits: 0 issues.
+- All PASS: diag_parity, regime, decision, expectancy, value_map, edgecase_cites, moved, refactor, inputs, macro,
+  compile_est, panel, h2_age, h2_parity, h2_trace, formula_trace, v86_check, v88_check (new, mutation-tested),
+  brief_trace.
+- bug_scan: unchanged (the new requests are `[1]` + `lookahead_on`, R1 0).
+- tf_check: see the build record.
+
+**Compile NOT RUN.**

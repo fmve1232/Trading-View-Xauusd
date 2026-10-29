@@ -191,7 +191,7 @@ if exec_ok:
             n7 += 1
             bad7 += not ((gp is None and want[0] is None) or (gp is not None and want[0] is not None and abs(gp - want[0]) < 1e-9 and got[1] == want[1]))
 gl = "\n".join(l for l in blk if "_tmRow(r, \"" in l and re.search(r'_tmRow\(r, "\d ', l))
-static7 = all(x in gl for x in ('"1 TREND", h2Trend', '"3 HEADING", h2Next', 'pvLastSweep', '_upN', '_dnN', '"5 MACRO"', 'f_tmC(_gNet)',
+static7 = all(x in gl for x in ('"1 TREND", h2Trend', '"3 HEADING", h2Next', 'pvLastSweep', '_upN', '_dnN', '"5 MACRO"', 'mxVerdict', 'f_tmG(_gNet)',
                                 'glMoveA', 'glMoveB', 'sessManipProb', 'sessContProb', 'h2SigOut', "the Master's BIAS + DECISION",
                                 "the Master's SIGNAL cell")) and gl.count('_tmRow(r, "') == 8
 # the ROOM row, executed: ✓ $B when the room reaches the target, ✓ $A when it reaches the minimum, else ✗ (+ the next level)
@@ -254,7 +254,7 @@ for _ in range(4000):
         print("      gauge mismatch", lo, x, hi, n_, repr(got), repr(want))
 gsec = "\n".join(blk[next(i for i, l in enumerate(blk) if '_tmHead(r, "AT A GLANCE · "' in l):next(i for i, l in enumerate(blk) if '"BIAS · ODDS"' in l) + 1])
 gauge_ok = all(x in gsec for x in ("f_gBar(h2S1, 5)", "f_gBar(h2S4, 5)", "f_gBar(h2SD, 5)", "f_gPos(h2Val, close, h2Vah, 11)",
-                                   "f_gPos(_dnP, close, _upP, 11)", "glMoveA", "glMoveB", "f_tmG(_gNet)", "pvLastSweep",
+                                   "f_gPos(_dnP, close, _upP, 11)", "glMoveA", "glMoveB", "mxGlyph", "f_tmG(_gNet)", "pvLastSweep",
                                    "f_gBar(sessManipProb, 5)", "f_gBar(sessContProb, 5)", "h2SigState", "the Master's BIAS / SIGNAL"))
 report(bg == 0 and gauge_ok, f"glance gauges: f_gBar / f_gPos executed vs reference ({ng} cases, mismatches {bg}); the gauge rows read "
        "the same values as the text rows")
@@ -265,7 +265,7 @@ report(exec_ok and bad7 == 0 and n7 > 0 and static7,
 # lift row see-through; the panel drops its glance section while the ticker is on
 tk = "\n".join(l for l in L if l.strip().startswith("f_tk(") and "=>" not in l)
 tk_ok = (tk.count("f_tk(") == 8 and all(x in tk for x in ("h2TrendUp", "h2S1", "h2S4", "h2SD", "ema200", "h2Val", "h2Poc",
-         "h2Vah", "glMoveA", "glMoveB", "_tNet", "f_tmC(_tNet)", "pvLastLvl", "pvLastSweep", "h2SigState", "h2SigCard + h2SigStat",
+         "h2Vah", "glMoveA", "glMoveB", "_tNet", "mxGlyph", "pvLastLvl", "pvLastSweep", "h2SigState", "h2SigCard + h2SigStat",
          "the Master's BIAS / SIGNAL"))
          and "f_glNear(true, close)" in V and "f_glNear(false, close)" in V)
 bc = re.findall(r"table\.new\([^\n]*position\.bottom_center", V)
@@ -303,7 +303,7 @@ for _ in range(1500):
                h2S4=na_(rng.uniform(0, 100)), h2SD=na_(rng.uniform(0, 100)), ema200=na_(4130.0), h2Poc=na_(4121.0),
                h2Val=na_(4116.6), h2Vah=na_(4134.2), h2Next="in value", h2Trend="DOWN", _tUpR=na_(13.3), _tDnR=na_(0.3),
                _tUpP=na_(4138.4), _tDnP=na_(4124.7), _tUpN="CDH", _tDnN="CDL", glMoveA=10.0, glMoveB=20.0,
-               _tNet=na_(-2.0), brJd=na_(0.0), brOd=na_(-2.0), brRd=na_(0.0), brBd=na_(0.0), br2d=na_(-1.0),
+               _tNet=na_(-2.0), mxGlyph=rng.choice(["▲▲", "▲", "≈", "▼", "▼▼", "—"]), mxDir=float(rng.choice([1, 0, -1])), macroIntelLabel=rng.choice(["BULL", "MIXED", "N/A"]), macroIntelScore=float(rng.randint(-100, 100)), mxWhy="MACRO = the Master's MACRO cell (same code): Macro BULL 45", brJd=na_(0.0), brOd=na_(-2.0), brRd=na_(0.0), brBd=na_(0.0), br2d=na_(-1.0),
                pvLastLvl=na_(4127.05), pvLastUp=rng.random() < .5, pvLastTime=na_(0.0), time=7200000.0 * rng.random(),
                pvLastSweep="HIGH 4127.050  10-20 22:30 UTC", h2LastSweep="HIGH 4127.02\n10-20 11:45 UTC",
                h2SigDir=rng.choice([0, 1, -1]), h2Stale=rng.random() < .5, h2SigOut=rng.choice(["", "stopped"]),
