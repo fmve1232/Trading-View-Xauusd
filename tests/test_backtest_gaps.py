@@ -106,6 +106,12 @@ def test_08_open_exactly_at_the_stop_counts_as_a_gap_at_the_same_price():
     assert t["exit_reason"] == "SL_GAP" and t["exit"] == 95.0
 
 
+def test_08b_short_open_exactly_at_the_stop_counts_as_a_gap():
+    """Added by the 2026-11-01 verification: mutation M08 (short boundary '>' instead of '>=') survived without it."""
+    t = _one([E, (105, 106, 104, 105.5)], sell=[0], sl=105, tp1=95, tp2=90)
+    assert t["exit_reason"] == "SL_GAP" and t["exit"] == 105.0
+
+
 def test_09_nan_open_falls_back_to_the_existing_rule():
     t = _one([E, (math.nan, 96, 94, 95.5)], buy=[0])
     assert t["exit_reason"] == "SL" and t["exit"] == 95.0

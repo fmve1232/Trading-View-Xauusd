@@ -985,3 +985,13 @@ Every arm keeps its previous key in its own manifest's `history`.
 - The 798 web.6 trades in the last web.6 snapshot (`a9bc97a1`) are all in `holdout/archive/`; none were lost.
 - No web.6 trade remains in a live ledger.
 - The web.6 summary is `audit/FORWARD_WEB6_FINAL.md`.
+
+**Amendment 14 — correction note (2026-11-01; facts only; the approved text above is not edited, and nothing is
+decided here).** §6.2 calls H4 "the only arm that trades through gaps". It is not. The amendment's impact study
+measured only the treatment and H4. The per-arm re-run in `audit/GAP_SENSITIVITY_2026-11-01.md` found one gap exit
+each for:
+
+- **H3 on 1h:** mean R −0.373 → −0.385;
+- **H5 on 15m:** mean R −0.489 → −0.497.
+
+No other arm, and no conclusion, changes. See `audit/WEB7_VERIFICATION_2026-11-01.md` §4.

@@ -30,6 +30,21 @@ No forward test restarts.
 > remaining real difference (spread by session) and the check that no calculation counts a cost twice. The B-02
 > figures in §6.3 are replaced by an exact re-simulation (`audit/AMENDMENT_14_GAP_STOP_PROPOSAL.md`).
 
+## Audit status as of 2026-11-01 (engine web.7, key `5e4630924d663fc5:60bb01794d03c9ac`)
+
+| Category | Status | Evidence | What it does **not** show |
+|---|---|---|---|
+| **Software functionality** | **Verified** for what was tested | 204 tests pass; the web.7 fill rule matches Amendment 14 line by line; mutation test 13 / 15 killed (2 equivalent); 0 ledger problems in 1,179 archived trades (`audit/WEB7_VERIFICATION_2026-11-01.md`) | that untested paths are correct; parity with TradingView (not the system of record) |
+| **Mathematical calculations** | **Verified** | 14 independent re-derivations (§3); hand-worked trade paths; cost formula charged once at every site (§6.4); JS / Python sizing parity | that the model's *inputs* (scores, analog statistics) carry information |
+| **Historical backtest performance** | **Measured, in-sample, not evidence of edge** | treatment / challenger / H2 / H5 / H6 small and insignificant (t < 1.3); H4 negative on every timeframe; robust to every execution scenario tried (`audit/GAP_SENSITIVITY_2026-11-01.md`) | out-of-sample performance; the windows overlap the data the parameters were chosen on |
+| **Recorded forward performance** | **web.6 final:** H4 negative (5m t −4.75; 15m deciding TF −0.09 R, interval includes 0); all other arms n ≤ 14, inconclusive. **web.7:** 0 trades so far | `audit/FORWARD_WEB6_FINAL.md`, `audit/STATISTICAL_VALIDATION_2026-11-01.md` §1 | any positive edge. No arm has met a pre-registered EDGE SHOWN; only H4 can reach its N by 2027-03-31 (§3.3 there) |
+| **Probability calibration** | **Not calibrated** (in-sample Brier skill negative on 5m / 15m / 1h, AUC 0.38–0.52); **not assessable** on the forward record (no ledger has ≥ 10 trades carrying P) | §7; Amendment 12 | that any displayed P, EV or score is a probability |
+| **Broker and account assumptions** | **Unverified** | $7 per lot round turn (frozen), session spread 0.30 / 0.50, slippage 0.20 per side, 100 oz contract; FundingPips / FundedNext profiles from published pages only | the operator's real commission, spread, slippage and contract. Evidence list: `audit/COST_PROFILES.md` §4 |
+
+**The scorecard in §13 is not re-scored upward.** B-02 is fixed and the tests are stronger. But the two areas that
+hold the rating down, strategy performance and calibration, have no new supporting evidence. **No proven trading
+edge, and no 10 / 10.**
+
 ---
 
 ## 1. System inventory
