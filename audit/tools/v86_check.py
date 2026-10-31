@@ -512,11 +512,15 @@ for _ in range(2000):
     o = P.evaluate(old_e, P.Env(funcs=env.funcs, **st))
     nw = P.evaluate(new_e, P.Env(funcs=env.funcs, **st))
     bad9 += re.findall(r"\d+", o) != re.findall(r"\d+", nw) or "%" in nw or "score" not in nw or "NaN" in nw
-prev = subprocess.run(["git", "show", "HEAD:" + MP], capture_output=True, text=True).stdout.split("\n")
-diff = [i for i, (x, y) in enumerate(zip(prev, ML, strict=True)) if x != y] if len(prev) == len(ML) else ["length"]
-only = len(diff) == 2 and "BUILD STAMP" in ML[diff[0]] and ML[diff[1]].strip() == F86.NEW if prev != ML else True
+# v91: anchored to the v86 build itself (its commit vs its parent, the v85 file), not to HEAD, so a later Master build
+# (v91, B-01 / B-02: fix_v91, checked by refactor_check and v91_check) does not read as a change to the v86 edit; the
+# current Master must still carry the v86 line.
+prev = subprocess.run(["git", "show", "8feb2166b:" + MP], capture_output=True, text=True, check=True).stdout.split("\n")
+v86 = subprocess.run(["git", "show", "8773406ff:" + MP], capture_output=True, text=True, check=True).stdout.split("\n")
+diff = [i for i, (x, y) in enumerate(zip(prev, v86, strict=True)) if x != y] if len(prev) == len(v86) else ["length"]
+only = len(diff) == 2 and "BUILD STAMP" in v86[diff[0]] and v86[diff[1]].strip() == F86.NEW and any(l.strip() == F86.NEW for l in ML)
 report(bad9 == 0 and only, f"9 Master SIGNAL cell: v83 and v86 text executed, 2000 cases: same numbers, no '%', 'score' shown, "
-       f"mismatches {bad9}; vs the last commit only the stamp and that line differ ({len(diff) if prev != ML else 0} lines)")
+       f"mismatches {bad9}; the v86 build (8773406ff) vs v85 changed only the stamp and that line ({len(diff)} lines); the current Master still carries it")
 
 # ---- 10 EdgeCases
 E = open(EP, encoding="utf-8").read()

@@ -39,7 +39,7 @@ presentational, not arithmetic.
 | Execution and risk | **Fair** | Costs are consistent between the model and the strategy files and are not double counted. But the Master's lot size omits cost (B-01, risk 8–24% over the ceiling), two lot sizes appear on the chart (B-02), and there is no news-time cost or default news block (B-03). |
 | Pine engineering | **Good statically; compile unverified** | 0 static issues, 0 dead values (with the companion rule), 26 checkers. **TradingView compile of v86–v90: NOT RUN.** The Master has under ~80 tokens of headroom. |
 | Dashboard | **Accurate but easy to over-read** | Values trace to their engines (Visuals' MACRO is the Master's, verbatim). Many prominent items cannot change a BUY / SELL (B-14). |
-| Checkers | **Strong but not a proof** | Executed-Pine checkers are genuine. Several "passes" are frozen-text tripwires. `bug_scan` never fails (C-02). Seeded defects: **8 / 18 caught by a behavioural test**, 8 tripwire-only, 1 incidental, 1 missed (see Mutation results). |
+| Checkers | **Strong but not a proof** | Executed-Pine checkers are genuine. Several "passes" are frozen-text tripwires. `bug_scan` never fails (C-02). Seeded defects: **9 / 18 caught by a behavioural test** (one only by `tf_check`), 7 tripwire-only, 1 incidental, 1 missed (see Mutation results). C-02, B-01 and B-02 fixed in v91. |
 
 **Production readiness:**
 
@@ -332,8 +332,8 @@ None of these are implemented. Each needs a pre-registered amendment on the webs
 
 | Phase | Item | Priority | Depends on | Complexity | Expected benefit |
 |---|---|---|---|---|---|
-| **1: Critical maths / logic** | B-01: lots include cost (Master) | High | token measurement (Master < 80 free) | Low code, high token risk | Realised risk ≤ stated risk |
-| 1 | B-02: one account default (Master `accountSize` = 25,000, no token cost); Visuals states which stop it uses | High | operator OK | Very low | One lot size on the chart |
+| **1: Critical maths / logic** | B-01: lots include cost (Master). **DONE v91 (F-A79)** | High | token measurement (Master < 80 free) | Low code, high token risk | Realised risk ≤ stated risk |
+| 1 | B-02: one account default (Master `accountSize` = 25,000, no token cost); Visuals states which stop it uses. **DONE v91 (F-A80)** | High | operator OK | Very low | One lot size on the chart |
 | 1 | B-09: risk lock evaluated on every bar, not only the last 120 | Medium | token measurement | Medium | The lock survives reloads on 5m / 1m |
 | **2: Engine / strategy** | B-03 (engine part): dated calendar → `newsWindow` incl. FOMC | Medium | **website amendment** (engine is frozen, A7) | Medium | Correct ABNORMAL regime on release days |
 | 2 | B-08: drop or fix the dead `rangeResidual` term | Low | website amendment; never tuned | Low | Clarity (the numbers stay the same unless redefined) |
@@ -345,7 +345,7 @@ None of these are implemented. Each needs a pre-registered amendment on the webs
 | **5: Dashboard / performance** | B-14 / R8: decision vs context markers | Medium | Visuals only | Low | Less over-reading |
 | 5 | B-11 / B-12 / B-13: label wording (VWAP band, "HV" relative to 50 bars, live sweep) | Low | — | Low | Accuracy of wording |
 | 5 | B-07: rename `tpDist` (identical-output check) | Low | `refactor_check` | Low | Fewer future errors |
-| **6: Validation / release** | C-02: `bug_scan` exits 1 above a triaged allowlist | High (process) | — | Very low | Repaint defects cannot pass silently |
+| **6: Validation / release** | C-02: `bug_scan` exits 1 above a triaged allowlist. **DONE v91 (F-A81)** | High (process) | — | Very low | Repaint defects cannot pass silently |
 | 6 | Add tests E1–E10 (Report 11) | Medium | — | Medium | Edge-case coverage |
 | 6 | **Compile v86–v90 in TradingView**; EdgeCases chart run; broker specification | **Blocking** | operator | — | Turns "unverified" into verified |
 
@@ -410,7 +410,7 @@ separately.
 | m02 | Kelly loss term with the wrong sign | formula_trace | — | refactor, edgecase_cites, v86 §9 | **Caught** |
 | m03 | Lots rounded to NEAREST (risk can exceed the ceiling) | — | — | refactor, v86 §9 | **Tripwire-only** |
 | m04 | Outcome race one bar short | pine_web_parity | — | refactor, v86 §9 | **Caught** |
-| m05 | US DST starts on the 1st Sunday of March | — (tf_check: see below) | — | refactor, v86 §9 | **Tripwire-only in the suite** |
+| m05 | US DST starts on the 1st Sunday of March | **tf_check** (Visuals' session shading ≠ engine on 160 of 98,136 1H bars; ~25 min) | — | refactor, v86 §9 | **Caught by tf_check** (not by the fast suite) |
 | m06 | Session floor 30 → 20 (Master only) | diag_parity, decision_check | — | refactor, v86 §9 | **Caught** |
 | m07 | Abnormal size haircut 0.5 → 0.6 (Master only) | regime_check | — | refactor, v86 §9 | **Caught** |
 | m08 | Dashboard: L and S scores swapped in the SIGNAL cell | — | — | refactor, v86 §9 | **Tripwire-only** |
@@ -422,15 +422,15 @@ separately.
 | m14 | Visuals cost row drops the commission | v86_check (executed cost §) | deadcode | — | **Caught** |
 | m15 | Scorecard PF rule 1.2 → 1.0 in all three twins | — | — | refactor | **Tripwire-only** |
 | m16 | H2 sweep `close >= level` in all three H2 copies | — | — | refactor, v86 §9 | **Tripwire-only** |
-| m17 | CDH / CDL never reset at the NY day boundary | — (tf_check: see below) | — | refactor, v86 §9 | **Tripwire-only in the suite** |
+| m17 | CDH / CDL never reset at the NY day boundary | — (tf_check also passes it) | — | refactor, v86 §9 | **Tripwire-only** |
 | m18 | Kelly Wilson z 1.96 → 1.645 | formula_trace | — | refactor, v86 §9 | **Caught** |
 
-**Summary: 8 / 18 caught by a behavioural test**, including 2 only through `bug_scan`'s printed counts. The rest:
+**Summary: 9 / 18 caught by a behavioural test** (8 by the fast suite, m05 only by the 25-minute `tf_check`), including 2 only through `bug_scan`'s printed counts. **Since v91 `bug_scan` exits 1 on both of those (F-A81).** The rest:
 
 | Outcome | Count | Mutants |
 |---|---:|---|
 | Incidental (`deadcode` only) | 1 | m09 |
-| Tripwire-only | 8 | m03, m05, m08, m13, m15, m16, m17, and m01 / m10 if `bug_scan`'s counts are not read |
+| Tripwire-only | 7 | m03, m08, m13, m15, m16, m17 (and m01 / m10 before v91, if `bug_scan`'s counts were not read) |
 | Missed entirely | 1 | m12 |
 
 **What this means:**
@@ -448,10 +448,10 @@ separately.
 2. Parity checkers catch **drift** (m06). By construction they cannot catch a defect copied into every copy (m13,
    m16).
 3. Proposed additions (Phase 6 of the roadmap):
-   - an executed sizing test (m03);
+   - an executed sizing test (m03): **added in v91** (`v91_check.py` 1–2 assert the ceiling and would fail on nearest-rounding);
    - an executed level test for PDH / PDL / PWH / CDH against a reference on real bars (m09, m17);
    - a dashboard-cell wiring test, like `panel_check`, for the Master (m08);
    - an executed scorecard-rule test (m15);
    - an H2 sweep boundary case in `h2_trace` (m16);
    - a plot-colour assertion for the operator's requirements (m12);
-   - `bug_scan` as a gate (C-02).
+   - `bug_scan` as a gate (C-02): **done in v91**.

@@ -154,3 +154,33 @@ for p, hits in report.items():
     for k, v in hits.items():
         for i, msg in v[: (12 if "--all" not in sys.argv else 999)]:
             print(f"   {k} L{i}: {msg}")
+
+# ---- GATE (v91, C-02 of the independent v90 audit): R1 / A1 / R4 are defect classes, not just questions. A hit FAILS
+# unless its code line (comments and leading space stripped; matched by its start, so line numbers may move) is in
+# ALLOW, each entry triaged in audit/STRATEGY_MAP_AND_BUG_CATALOGUE.md §2-3. The other classes stay screens (D1 has ~80
+# guarded divisions the regex cannot prove; P1 / S1 / T1 are triaged there too). Before v91 the tool always exited 0,
+# so a seeded look-ahead (`close` in a daily lookahead_on request) printed "R1 1" and still "passed".
+ALLOW = {
+    "XAUUSD_Quantum_5_5_Visuals.pine": {
+        "A1": ['alert("XAUUSD touched 4H HIGH ', 'alert("XAUUSD touched 4H LOW ', 'alert("XAUUSD touched PDH ',
+               'alert("XAUUSD touched PDL ', 'alertcondition(_t4hH, "4H High Touch"', 'alertcondition(_t4hL, "4H Low Touch"',
+               'alertcondition(_t1dH, "PDH Touch"', 'alertcondition(_t1dL, "PDL Touch"',      # level TOUCH alerts: intrabar by design
+               'alertcondition(h2Long, "H2 BUY"', 'alertcondition(h2Short, "H2 SELL"',         # h2Long / h2Short include barstate.isconfirmed
+               'alert("XAUUSD NEWS WINDOW: '],                                                    # fires at the window's first bar, before the release
+        "R4": ["if array.get(nwT, i) + nwAfter * 60000 >= timenow", "nwNowIn := timenow >= _tk - nwBefore * 60000",
+               "nwMs := _tk - timenow"],                                                          # last-bar NEWS countdown only
+    },
+}
+bad = []
+for p, hits in report.items():
+    src = open(p, encoding="utf-8").read().split("\n")
+    allow = ALLOW.get(p.split("/")[-1], {})
+    for k in ("R1", "A1", "R4"):
+        for i, msg in hits[k]:
+            code = src[i - 1].split("//")[0].strip()
+            if not any(code.startswith(a) for a in allow.get(k, [])):
+                bad.append(f"{p.split('/')[-1]} {k} L{i}: {code[:110]}")
+used = sum(len(v) for a in ALLOW.values() for v in a.values())
+print(f"{'PASS' if not bad else 'FAIL'}  GATE R1 look-ahead / A1 intrabar alert / R4 timenow: {len(bad)} untriaged hit(s) "
+      f"({used} triaged in ALLOW)" + "".join("\n      " + b for b in bad))
+sys.exit(1 if bad else 0)

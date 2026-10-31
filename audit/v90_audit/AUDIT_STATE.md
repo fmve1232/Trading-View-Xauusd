@@ -240,7 +240,7 @@ Read from each tool's code and docstring, then confirmed by the mutation run bel
 the baseline) and runs 26 checkers. Each kill is classified as either **semantic** (a checker tested the behaviour) or
 **tripwire-only** (a frozen-text anchor noticed the edit).
 
-Results: **8 / 18 caught by a behavioural test** (2 of them only through `bug_scan`'s printed counts), 1 incidental, 8 tripwire-only, 1 missed (EMA20 colour). Full table: `AUDIT_REPORT_v90.md`, "Mutation results".
+Results: **9 / 18 caught by a behavioural test** (2 of them only through `bug_scan`'s printed counts, gated since v91; m05 only by `tf_check`), 1 incidental, 7 tripwire-only, 1 missed (EMA20 colour). Full table: `AUDIT_REPORT_v90.md`, "Mutation results".
 
 ## S4: engines and dependency map
 
@@ -412,6 +412,8 @@ Some of these are covered elsewhere: regime_check (ATR floor), panel_check 9 / v
 - Broker spread / commission / contract size / MT5 offset (B-03, B-04).
 - An export of `mP` history, to measure F-A78 on the Pine engine itself.
 
-## Next: operator review of the roadmap (Report 13). Nothing is implemented without approval.
+## v91 (operator approved B-01, B-02, C-02 on 2026-10-31)
+
+Applied as F-A79 / F-A80 / F-A81; see CHANGELOG v91 and `v91_check.py`. Everything else in Report 13 still needs approval.
 
 Continue from here. Do not modify the baseline.

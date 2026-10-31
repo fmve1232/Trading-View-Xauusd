@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v86   (SIGNAL cell: scores)          ║
+// ║  BUILD STAMP — this file last CHANGED in v91   (lots include cost; 25k)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -346,7 +346,7 @@ showDowTracker = input.bool(true, "Show Day-of-Week Bias Tracker", group=grpLayo
 
 grpRisk = "RISK MANAGEMENT"
 riskPercent = input.float(1.0, "Risk % per Trade", minval=0.1, maxval=2.0, step=0.1, group=grpRisk, tooltip="Capped at 2%: 5-loss streak at 2% = -10% drawdown; at 5% = -25%. Prop firm 8-12% drawdown limits require 2% max per trade under normal conditions.")
-accountSize = input.float(10000, "Account Size (USD)", minval=100, group=grpRisk)
+accountSize = input.float(25000, "Account Size (USD)", minval=100, group=grpRisk)
 pointValue = input.float(100, "Value per Point per Lot (USD)", minval=1, group=grpRisk)
 // Transaction cost model — affects backtest metrics, NOT signal generation
 useDDBreaker = input.bool(false, "Max Drawdown Signal Breaker", group=grpRisk, tooltip="When enabled, blocks new signals if historical max drawdown (oMaxDD, previous bar) exceeds the threshold below.")
@@ -2482,7 +2482,8 @@ float eqlReachScore = bearPoolTotal > 1.0 ? math.round(liqScoreEQL / bearPoolTot
 
 // Cost-to-target ratio (display only — does not gate signals)
 // R5-F15: spread is a round-trip cost paid once; only slippage occurs on both sides.
-float _liveCostATR = adaptiveATR > 0 ? ((spreadCost + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)) / adaptiveATR : 0.0
+// v91 (B-01): the SESSION spread tier, as the plan's own cost (_cR); the lots below are sized on stop + this cost.
+float _liveCostATR = adaptiveATR > 0 ? ((_sessSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)) / adaptiveATR : 0.0
 // R5-F21: empty session string guarded.
 bool inNewsWindow = useNewsSuppress and newsSession != "" and not na(time(timeframe.period, newsSession))
 // R5-F4: persistent DD mirror — declared before the signal gate, updated after the
@@ -5389,8 +5390,10 @@ f_dashData2() =>
     float _kellyPct = array.get(gDashF, 4)
     // v46 (F-A52): the regime size haircut (regSizeMult) is applied HERE, so the $ risk and the lots
     // match the Risk % the dashboard shows (it applied the haircut to the % only).
-    float _riskUSD = accountSize * math.max(_kellyPct, 0.0) * regSizeMult / 100.0
-    float _rawLots = tpDist > 0 and pointValue > 0 ? _riskUSD / (tpDist * pointValue) : 0.0
+    float _riskUSD = accountSize * _kellyPct * regSizeMult / 100.0
+    // v91 (B-01): a stop-out costs the stop distance PLUS the round-trip cost, so the lots are sized on both and the
+    // loss at the stop stays within the stated risk (was 8-24% over it). tpDist is the STOP distance |entry - SL|.
+    float _rawLots = tpDist > 0 ? _riskUSD / ((tpDist + _liveCostATR * adaptiveATR) * pointValue) : 0.0
     // CHANGE ID: F-002 (frozen forensic audit). DISPLAY/ADVISORY PATH ONLY — the scorer
     // twins trade a fixed 1-unit qty and never read _lots, so no backtest number moves.
     // OLD: math.round(_rawLots / 0.01) * 0.01 rounds to NEAREST, so realised risk could
@@ -5407,7 +5410,7 @@ f_dashData2() =>
     // compared — that conflation is exactly the historical 100x error (P0-CAL-004).
     float _lotsFloored = math.floor(_rawLots / 0.01) * 0.01
     bool _lotsBelowMin = _rawLots > 0.0 and _lotsFloored < 0.01
-    float _lots = math.min(math.max(_lotsFloored, 0.0), 100.0)
+    float _lots = math.min(_lotsFloored, 100.0)
     // Structure
     string _bosStr = bosLabelBull ? "BOS▲" : bosLabelBear ? "BOS▼" : "BOS—"
     color _bosCol = bosLabelBull ? cBloomBull : bosLabelBear ? cBloomBear : cBloomNeut

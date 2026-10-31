@@ -165,7 +165,13 @@ for f, c in FROZEN.items():
             chg.append(f"{f}: {v} added since the freeze (default {show(now[f][v]['default'])}, line {now[f][v]['line']})")
         elif show(old[v]["default"]) != show(now[f][v]["default"]):
             chg.append(f"{f}: {v} default {show(old[v]['default'])} -> {show(now[f][v]['default'])}")
-real = [c for c in chg if "default" in c and "->" in c or "removed" in c]
+# Operator-approved DISPLAY-ONLY default changes (PREREGISTRATION.md §2 allows display-only changes to the Master).
+# Each must be outside the DECISION slice, which v91_check.py §4 executes; nothing else is exempt.
+APPROVED = {"Master: accountSize default 10000 -> 25000":
+            "v91, B-02 of the independent v90 audit (operator, 2026-10-31: 'Go ahead with B-01, B-02 and C-02'; account "
+            "default 25k, as Visuals since v89). Feeds only the lot display; not in the DECISION slice (v91_check 4)."}
+chg = [c + (f"\n          APPROVED: {APPROVED[c]}" if c in APPROVED else "") for c in chg]
+real = [c for c in chg if ("default" in c and "->" in c or "removed" in c) and "APPROVED:" not in c]
 print(f"{'PASS' if not real else 'FAIL'}  3 frozen: every input default in the five pre-registered files equals the "
       f"frozen build's ({', '.join(f'{f}@{c}' for f, c in FROZEN.items())})"
       + "".join("\n      " + x for x in chg))

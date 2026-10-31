@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v90   (score row: measured)          ║
+// ║  BUILD STAMP — this file last CHANGED in v91   (RISK row: which stop)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1980,7 +1980,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "DAILY", rgTxt + " · 12M " + (na(rgRet12) ? "—" : (rgRet12 >= 0 ? "+" : "") + str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above SMA200" : "below SMA200") + "\nreal yld 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " · " + rgMacTxt + " · UNTESTED", rgUp ? _tmUp : rgDn ? _tmDn : _tmV)
         r += 1
-        _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : " (1 ATR)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)"), _tmV)
+        _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : " (1 ATR, not the Master's plan SL: type it in)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)"), _tmV)
         r += 1
         _tmRow(r, "TODAY", rkLocked ? "STOP FOR THE DAY · " + str.tostring(rkToday, "#.##") + "R reached the " + str.tostring(rkCap, "#.#") + "R cap" : str.tostring(rkToday, "#.##") + "R so far · " + str.tostring(rkToday - rkCap, "#.##") + "R left before the " + str.tostring(rkCap, "#.#") + "R cap (typed in)", rkLocked ? _tmDn : _tmV)
         if not _cmp

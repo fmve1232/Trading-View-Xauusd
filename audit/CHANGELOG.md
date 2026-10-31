@@ -3238,3 +3238,31 @@ inference: Pine runtime values are not measured (BLOCKED).
 `tf_check`. `ledger_stats.py` lists the `h6` arm, which has N = 0 so far.
 
 No artefact changed. The hashes are those of v90.
+
+# v91 — position size includes cost, one account default, bug_scan is a gate (2026-10-31)
+
+Operator: "Go ahead with B-01, B-02 and C-02" (independent v90 audit, `audit/v90_audit/AUDIT_REPORT_v90.md`).
+Display only: no value the DECISION reads changes (`v90_slice.py`), so no signal, gate or veto moves.
+
+**Changed:**
+- **Master (F-A79, B-01):** lots = risk$ / ((stop + round-trip cost) × $ per point). A stop-out now loses at most the
+  stated risk; before, it lost 8–24% more on 3–10 point stops. The cost is the plan's own: `_liveCostATR` now uses the
+  session spread tier `_sessSpread`, so the dashboard's cost-to-target % shows the cost the plan charges.
+- **Master (F-A80, B-02):** `accountSize` default $10,000 → $25,000, the same as Visuals' risk box. This is an
+  operator-approved, display-only default, recorded in `inputs_check.py` APPROVED.
+- **Token budget:** paid for by removing three guards the inputs' bounds make redundant (`pointValue > 0`,
+  `math.max(_kellyPct, 0.0)`, `math.max(_lotsFloored, 0.0)`). The Master's model estimate went from 99,535 to
+  **99,510**, below every build that compiled.
+- **Visuals:** the RISK row says "(1 ATR, not the Master's plan SL: type it in)" when no stop is typed.
+- **bug_scan.py (F-A81, C-02):** it is now a gate. An R1 / A1 / R4 hit outside the triaged ALLOW list exits 1.
+- **Tools:**
+  - `fix_v91.py` (the transform) and `v91_check.py` (executed checks);
+  - `refactor_check` chain + fix_v91;
+  - `v86_check` §9 is anchored to the v86 commit rather than HEAD;
+  - `inputs_check` APPROVED list;
+  - `value_map` regenerated.
+
+**Unchanged:** Brief, Diagnostics, EdgeCases, the four strategy files.
+
+**Not run:** the TradingView compile. The model estimate is lower than v90's, but the compiler is the judge.
+
