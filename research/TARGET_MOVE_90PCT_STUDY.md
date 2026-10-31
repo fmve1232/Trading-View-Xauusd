@@ -72,3 +72,46 @@ against the trade, for example 90% at +$10 before −$10. That would be an extra
 - **Honest expectation, from everything measured so far** (H4, B1's 100 trials, this study): **no tested approach
   moves the odds above a coin flip.** A 90% rate at a tradeable room is not supported by any evidence, and the site
   will not claim it.
+
+
+## 5. The operator's own trade: SL $500 / TP $1,000 at 0.5 lot
+
+**Conversion.** 0.5 lot = 50 oz, so $1 of price = $50:
+
+- **SL $500** = a **−$10** price move.
+- **TP $1,000** = a **+$20** price move.
+
+The event is: **+$20 before −$10.** No trade was left open after one day.
+
+**What a coin flip would get.** 10 ÷ 30 = **33%**. Costs are about $0.8 per oz, i.e. about **$40 per trade** at
+0.5 lot, so break-even is **≈ 36%**.
+
+**Expected money per trade** at that win rate p: p × $1,000 − (1 − p) × $500 − $40.
+
+| Source | Measured | Reached TP before SL | Random entries, same direction mix | Money per trade at that rate (0.5 lot) |
+|---|---|---|---|---|
+| Recorded forward trades (real time) | 600 | **29%** (25–33) | 34% | -108 |
+| H4 playbook 15m | 961 | **31%** (28–34) | 33% | -76 |
+| H4 playbook 5m | 2719 | **31%** (30–33) | 33% | -68 |
+| Engine BUY / SELL 5m | 191 | **42%** (35–49) | 39% | +88 |
+| Engine BUY / SELL 15m | 19 | **21%** (9–43) | 39% | -224 |
+| Challenger 5m | 190 | **43%** (36–50) | 39% | +107 |
+| H3 5m | 70 | **34%** (24–46) | 39% | -26 |
+| H5 5m | 87 | **36%** (26–46) | 39% | -6 |
+| H6 5m | 191 | **42%** (35–49) | 39% | +88 |
+| Random entries, long | 3882 | **27%** (26–29) | 27% | -134 |
+| Random entries, short | 3882 | **39%** (38–41) | 39% | +46 |
+
+**Reading:**
+
+- **No source beats random entries.** The recorded forward trades (29%) and the H4 playbook (31%) are *below* both
+  random and break-even.
+- **The 5m engine signal (42%, 35–49) is above break-even, but not above random entries in the same direction.**
+  It was almost all shorts in a falling market, where random shorts already scored 39%. Its range contains the
+  random rate, so this is the market's trend in this period, not skill.
+- **For this trade a 90% rate would mean +$20 before −$10 nine times in ten, where a coin gets 33%.** Nothing
+  measured is anywhere near that. A win rate of **≥ 45%** with this 2 : 1 geometry would already be clearly
+  profitable (≈ +$135 per trade at 0.5 lot), and even that has not been shown.
+
+**If 500 / 1000 means MT5 points** (1 point = $0.01, so SL −$5 / TP +$10): coin-flip 33%; recorded forward trades
+30%; H4 31%; engine 5m 37% against 37% random. The same conclusion.
