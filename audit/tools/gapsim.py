@@ -5,7 +5,7 @@ mode "both":    "stop", and a TP limit that the bar OPENS beyond fills at the op
 import math
 from quantum.backtest import _close
 
-def simulate(res, cfg, mode="current", spread_override=None):
+def simulate(res, cfg, mode="current", spread_override=None, flip=True):
     F, R = res.F, res.rows
     o, h, l, c = F["o"], F["h"], F["l"], F["c"]
     idx = F["index"]; spread = F["sess_spread"] if spread_override is None else spread_override
@@ -38,6 +38,8 @@ def simulate(res, cfg, mode="current", spread_override=None):
         sig = 1 if eb[i] == 1 else -1 if es[i] == 1 else 0
         if sig != 0:
             if pos is not None and ((sig == 1) != pos["long"]):
+                if not flip:          # diagnostic only: ignore opposite signals while a position is open
+                    continue
                 _close(pos, c[i], i, idx, "FLIP", trades); pos = None
             if pos is None:
                 sl, tp1, tp2 = R["plan_sl"][i], R["plan_tp1"][i], R["plan_tp2"][i]
