@@ -3300,3 +3300,43 @@ code shared with the website and the twins.
 
 **Not run:** the TradingView compile.
 
+# v93 — BRACKET tracker in Visuals (2026-10-31)
+
+Operator: "I use to set trade where my SL is 500 @ lot size 0.5 and my TP is 1000 … build the Visuals tracker. I mean
+$500 / $1000 in money". Display only: nothing feeds a signal, nothing was fitted.
+
+**Changed (Visuals only):** a BRACKET row in CHECKS · RISK. For every H2 signal on the loaded chart (Visuals' own signal,
+the website's arm H3 rule) the tracker starts a race at the signal bar's close and, from the next bar, records whether
+the operator's TP or SL is touched first. A bar touching both counts as the SL.
+
+The row shows:
+- the TP-first rate with its 95% (Wilson) range;
+- the break-even rate including the round-trip cost (the COST row's cost when the race resolves, news multiplier
+  included);
+- the chance level SL / (SL + TP);
+- the net $ at the lot;
+- the open races and the risk as a % of equity.
+
+The row turns green only when the 95% lower bound clears break-even, and red only when the upper bound is below it.
+
+**Inputs:**
+- unit (Money $ / MT5 points);
+- SL 500, TP 1000;
+- lot 0.5;
+- MT5 point size 0.01.
+
+$500 / $1000 at 0.5 lot is $10 / $20 of price.
+
+**Why H2, not the Master's BUY / SELL:** Visuals cannot read the Master (separate scripts; a link was declined on
+2026-10-21).
+
+**Checks:**
+- `v93_check.py`: units; the block vs an independent reference on 300 random paths; the block on the website's real XAU
+  5m bars with the forward record's 14 H3 signals (TP first 8 / 14, net +$4,461); no NaN; colour rule; derivation;
+- `v86_check` §8 executes the row with missing data (counts 11 rows / 18 texts);
+- `v92_check` §5 is anchored to the v92 commit.
+
+**Unchanged:** Master, Brief, Diagnostics, EdgeCases, the four strategy files.
+
+**Not run:** the TradingView compile.
+

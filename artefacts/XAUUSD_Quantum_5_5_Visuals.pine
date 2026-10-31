@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v92   (news-time cost)               ║
+// ║  BUILD STAMP — this file last CHANGED in v93   (bracket tracker)              ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1748,6 +1748,48 @@ float rkPerLot = (rkStopD + ckCost) * pointValue
 float rkLots = rkPerLot > 0 ? math.floor(rkRisk / rkPerLot * 100.0) / 100.0 : na
 bool rkLocked = rkToday <= rkCap
 
+// ---- v93 BRACKET TRACKER (operator, 2026-10-31): the operator's fixed SL / TP scored on every H2 signal (= the
+// website's arm H3 rule) from the signal bar's close; from the next bar, TP or SL first (both on one bar = SL).
+trkShow = input.bool(true, "Bracket tracker: score H2 signals with my SL / TP", group = grpCk, tooltip = "v93: for every H2 signal on the loaded chart, did your TP or your SL come first, from the signal bar's close? Shows the TP-first rate with its 95% range, the break-even rate (cost included) and the net $ at your lot size. H2 is Visuals' own signal (the website's arm H3); Visuals cannot read the Master's BUY / SELL. Display only.")
+trkUnit = input.string("Money ($)", "Bracket unit", options = ["Money ($)", "MT5 points"], group = grpCk)
+trkSL = input.float(500.0, "Bracket SL (in the unit above)", minval = 0.01, maxval = 10000000.0, group = grpCk)
+trkTP = input.float(1000.0, "Bracket TP (in the unit above)", minval = 0.01, maxval = 10000000.0, group = grpCk)
+trkLot = input.float(0.5, "Bracket lot size", minval = 0.01, maxval = 100.0, step = 0.01, group = grpCk)
+trkPt = input.float(0.01, "MT5 point size (price per point; 0.01 for a 2-digit XAUUSD quote)", minval = 0.0001, maxval = 1.0, step = 0.0001, group = grpCk)
+float trkSLd = trkUnit == "MT5 points" ? trkSL * trkPt : trkSL / (trkLot * pointValue)
+float trkTPd = trkUnit == "MT5 points" ? trkTP * trkPt : trkTP / (trkLot * pointValue)
+var float[] trkE = array.new_float()
+var int[] trkDir = array.new_int()
+var int trkW = 0
+var int trkL = 0
+var float trkNet = 0.0
+if trkShow and barstate.isconfirmed
+    int _tn = array.size(trkE)
+    if _tn > 0
+        for _ti = _tn - 1 to 0
+            float _te = array.get(trkE, _ti)
+            int _td = array.get(trkDir, _ti)
+            bool _tsl = _td > 0 ? low <= _te - trkSLd : high >= _te + trkSLd
+            bool _ttp = _td > 0 ? high >= _te + trkTPd : low <= _te - trkTPd
+            if _tsl or _ttp
+                if _tsl
+                    trkL += 1
+                    trkNet -= (trkSLd + ckCost) * trkLot * pointValue
+                else
+                    trkW += 1
+                    trkNet += (trkTPd - ckCost) * trkLot * pointValue
+                array.remove(trkE, _ti)
+                array.remove(trkDir, _ti)
+    if (h2Long or h2Short) and array.size(trkE) < 200
+        array.push(trkE, close)
+        array.push(trkDir, h2Long ? 1 : -1)
+int trkN = trkW + trkL
+float trkBE = (trkSLd + ckCost) / (trkSLd + trkTPd)
+[trkLo, trkHi] = f_wil(trkW, trkN)
+float trkEqPct = trkSLd * trkLot * pointValue / rkEquity * 100.0
+int trkLv = trkN < 1 ? 0 : trkLo > trkBE ? 1 : trkHi < trkBE ? -1 : 0
+string trkTxt = "H2 signals · SL " + (trkUnit == "MT5 points" ? str.tostring(trkSL, "#") + " pts" : "$" + str.tostring(trkSL, "#")) + " / TP " + (trkUnit == "MT5 points" ? str.tostring(trkTP, "#") + " pts" : "$" + str.tostring(trkTP, "#")) + " at " + str.tostring(trkLot, "#.##") + " lot = $" + str.tostring(trkSLd, "#.##") + " / $" + str.tostring(trkTPd, "#.##") + " price · risk " + str.tostring(trkEqPct, "#.#") + "% of equity\n" + (trkN < 1 ? "no closed H2 signal on this chart yet" : "TP first " + str.tostring(trkW) + "/" + str.tostring(trkN) + " = " + str.tostring(trkW * 100.0 / trkN, "#") + "% (95% " + str.tostring(trkLo * 100.0, "#") + "–" + str.tostring(trkHi * 100.0, "#") + ") · break-even " + str.tostring(trkBE * 100.0, "#") + "% · chance " + str.tostring(trkSLd / (trkSLd + trkTPd) * 100.0, "#") + "%") + "\nnet $" + str.tostring(trkNet, "#") + " · open " + str.tostring(array.size(trkE)) + " · this chart's history only, not the Master's BUY / SELL"
+
 // ---- the website's forward record (typed in) and its verdict under the pre-registered rule
 float lgSe = lgN > 1 ? lgSd / math.sqrt(lgN) : na
 float lgT = lgN > 1 ? f_tq(lgN - 1) : na
@@ -1983,6 +2025,9 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             _tmRow(r, "DAILY", rgTxt + " · 12M " + (na(rgRet12) ? "—" : (rgRet12 >= 0 ? "+" : "") + str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above SMA200" : "below SMA200") + "\nreal yld 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " · " + rgMacTxt + " · UNTESTED", rgUp ? _tmUp : rgDn ? _tmDn : _tmV)
         r += 1
         _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : " (1 ATR, not the Master's plan SL: type it in)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)"), _tmV)
+        if trkShow
+            r += 1
+            _tmRow(r, "BRACKET", trkTxt, trkLv == 1 ? _tmUp : trkLv == -1 ? _tmDn : _amb)
         r += 1
         _tmRow(r, "TODAY", rkLocked ? "STOP FOR THE DAY · " + str.tostring(rkToday, "#.##") + "R reached the " + str.tostring(rkCap, "#.#") + "R cap" : str.tostring(rkToday, "#.##") + "R so far · " + str.tostring(rkToday - rkCap, "#.##") + "R left before the " + str.tostring(rkCap, "#.#") + "R cap (typed in)", rkLocked ? _tmDn : _tmV)
         if not _cmp

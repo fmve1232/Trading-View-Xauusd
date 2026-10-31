@@ -462,7 +462,10 @@ n1 = next(i for i in range(n0, len(L)) if L[i].startswith("int nwLv = "))
 NW = [l for l in L[n0:n1 + 1] if l.strip()]
 DER = ([line(p) for p in ("float ckCostPct = ", "int ckCostLv = ", "bool ckChurn = ")] + rk + rg + lg + [line("string lgTxt = ")]
        + lg2 + [line(p) for p in ("string tfNote = ", "string lgLine = ", "string lg2Line = ")]
-       + [l.strip() for l in L if l.strip().startswith("int _ckLv = ") or l.strip().startswith("string _ckTx = ")])
+       + [l.strip() for l in L if l.strip().startswith("int _ckLv = ") or l.strip().startswith("string _ckTx = ")]
+       # v93: the BRACKET row's derived values (the tracker's counters are primitives below, some zero)
+       + [line(p) for p in ("float trkSLd = ", "float trkTPd = ", "int trkN = ", "float trkBE = ", "[trkLo, trkHi] = ",
+                            "float trkEqPct = ", "int trkLv = ", "string trkTxt = ")])
 nan8, err8, n8 = [], set(), 0
 for _ in range(1500):
     na_ = lambda x: P.NA if rng.random() < 0.25 else x
@@ -479,7 +482,11 @@ for _ in range(1500):
               lgW=float(rng.choice([0, 22, 70])), lgMean=-0.2268, lgSd=rng.choice([0.0, 0.6796]), lgPF=0.4292,
               lgNote=rng.choice(["", "note"]), lg2Show=rng.random() < .8, lg2Arm="H3 · 1H (deciding)", lg2N=float(rng.choice([0, 1, 3, 60])),
               lg2W=float(rng.choice([0, 1, 40])), lg2Mean=-0.1642, lg2Sd=rng.choice([0.0, 1.6215]), lg2PF=0.7762,
-              lg2Note=rng.choice(["", "note"]), **{"timeframe.period": rng.choice(["5", "15", "60", "D"])})
+              lg2Note=rng.choice(["", "note"]), **{"timeframe.period": rng.choice(["5", "15", "60", "D"])},
+              trkShow=True, trkUnit=rng.choice(["Money ($)", "MT5 points"]), trkSL=rng.choice([500.0, 0.01, 2000.0]),
+              trkTP=rng.choice([1000.0, 0.01, 3000.0]), trkLot=rng.choice([0.5, 0.01, 2.0]), trkPt=rng.choice([0.01, 0.001]),
+              trkW=float(rng.choice([0, 1, 12])), trkL=float(rng.choice([0, 3, 20])), trkNet=rng.uniform(-5e3, 5e3),
+              trkE=[2000.0] * rng.choice([0, 1, 4]))
     e8 = P.Env(funcs=env.funcs, **st)
     P.BUILTINS["str.format_time"] = lambda t_, f_, z_: "10-28 14:00"
     try:
@@ -495,7 +502,7 @@ for _ in range(1500):
                 nan8.append((who, str(out)[:60]))
         except Exception as ex:          # noqa: BLE001
             err8.add((who, str(ex)[:60]))
-report(not nan8 and not err8 and len(rows8) == 10 and len(texts) == 17,
+report(not nan8 and not err8 and len(rows8) == 11 and len(texts) == 18,   # v93: + the BRACKET row
        f"8 new texts (panel CHECKS rows {len(rows8)}, tiles 6 / 7, banner) executed with missing data, every derived value from "
        f"the Pine's own lines: {len(texts)} texts, {n8} evaluations, {len(nan8)} showed NaN, {len(err8)} could not be evaluated"
        + (f" -- e.g. {nan8[:2]} {sorted(err8)[:2]}" if nan8 or err8 else ""))

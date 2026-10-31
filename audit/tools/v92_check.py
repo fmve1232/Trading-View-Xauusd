@@ -117,7 +117,9 @@ report(nana == 0 and bad4 == 0, f"4 identical rewrites: the _liveCostATR line re
 
 # ---- 5
 v91v = subprocess.run(["git", "show", f"{V91}:{V}"], capture_output=True, text=True, check=True).stdout
-report(F92.master(v91m) == "\n".join(ML) and F92.visuals(v91v) == "\n".join(VL),
-       "5 Master == fix_v92.master(v91), Visuals == fix_v92.visuals(v91), byte for byte")
+v92m = subprocess.run(["git", "show", f"8453d1373:{M}"], capture_output=True, text=True, check=True).stdout   # the v92 build
+v92v = subprocess.run(["git", "show", f"8453d1373:{V}"], capture_output=True, text=True, check=True).stdout
+report(F92.master(v91m) == v92m and F92.visuals(v91v) == v92v,
+       "5 the v92 build (8453d1373): Master == fix_v92.master(v91), Visuals == fix_v92.visuals(v91), byte for byte (later: refactor_check / v93_check)")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- Pine text executed in Python; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)
