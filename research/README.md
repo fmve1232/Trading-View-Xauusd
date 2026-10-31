@@ -35,6 +35,7 @@ changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` 
 | `09_BACKTEST_AND_VALIDATION_FRAMEWORK.md` | done (specification) |
 | `14_IMPLEMENTATION_ROADMAP.md` | done; prioritised table and approval gates |
 | `15_ACCEPTANCE_TESTS.md` | done |
+| `TARGET_MOVE_90PCT_STUDY.md` | done (executed): "90% of trades move $10–20 my way": every decision source = a random entry; 90% only with ~$90 room (coin-flip arithmetic) |
 | `B1_DEVELOPMENT_RESULTS.md` | **Phase B1 done** (development data only): 100 trials, 0 with positive net expectancy; nothing registered for validation |
 
 ## Reproduce
