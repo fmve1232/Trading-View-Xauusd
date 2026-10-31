@@ -146,7 +146,7 @@ filtering of H4 on this window can be trusted, because every filter would be sel
 replacement must be researched on the Amendment 13 development data and validated as set out in
 `09_BACKTEST_AND_VALIDATION_FRAMEWORK.md`.
 
-## 7. Defects found in the presentation (display; proposed, not changed)
+## 7. Defects found in the presentation (display; **applied 2026-11-01** after the operator's approval: `report.previous_record`, `h4.entry_overshoot`, `site/app.js` `h4rec` / `rrEntry`)
 
 1. **"These triggers won 35% of 986 times"** — they are 986 *trades* from 1,628 triggers, and "won" means final net R > 0. Proposed text: "In past data (in-sample) 986 trades from these triggers: 35% ended positive; average −0.11 R per trade after costs."
 2. **The reward:risk tile shows 2.1:1 measured from the trigger.** The trade's own reward:risk from the expected entry is lower (median 1.26). Proposed: show both, or the entry-based figure.
