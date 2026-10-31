@@ -37,7 +37,9 @@ plus any other artefact that changed, and post the build record in chat.**
   (every statement macroIntelScore / Label depend on), and the ticker tile, panel row and glance show its verdict; the
   five GD drivers are labelled OTHER DRIVERS · context (no headline net arrow). Any engine change to the Master's macro
   lines must be copied into the MX block (`v88_check.py` fails otherwise). v88 also turned the v87 drawings and
-  Visuals' approximate ~BOS / ~CHoCH labels OFF (operator: "too much noisy").
+  Visuals' approximate ~BOS / ~CHoCH labels OFF (operator: "too much noisy"). Since v89 the record banner has two lines (H4 15m and H3 1H, each
+  arm's DECIDING record, typed from the ledger; `v86_check.py` 7 recomputes the defaults from the ledger files) and names 15m
+  the decision timeframe; refresh the record defaults from the ledger when they are re-sent.
 - **Repo set** (kept unchanged, never deleted, sent only when it changes): `Strategy.pine`, `Strategy_OLDGATES.pine`,
   `Strategy_CHALLENGER.pine`, `Strategy_H2.pine` (display-only arms under A7), `EdgeCases.pine` (run-once).
 - The build record still lists **all nine** files with their hashes, so any copy on the chart can be checked.

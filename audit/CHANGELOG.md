@@ -3110,3 +3110,37 @@ Only **Visuals** changed. The Master, Brief, Diagnostics and the arms are untouc
 - tf_check: see the build record.
 
 **Compile NOT RUN.**
+
+---
+
+# v89 — records refreshed, H3 line, 15m as the decision timeframe, account defaults (operator: "A, B and C", 2026-10-31)
+
+Only **Visuals** changed. Display only; no engine, gate or threshold change.
+
+**A — record refreshed** to the website ledger as of 2026-10-31 00:58 UTC.
+- H4 15m (deciding): N 171, 66 wins, mean −0.0920R, sd 0.8006, PF 0.7502.
+- The banner now reads **NO EDGE SHOWN · interval spans 0** (−0.21 … +0.03). It was "interval below 0" at N 65.
+- The note carries the 5m report: N 511, mean −0.18R, interval below 0.
+
+**B — second line: H3, the rule behind Visuals' H2 card**, on its deciding 1H record (Amendment 7).
+- 1H: N 3, 1 win, mean −0.16R → **UNDECIDED · N < 50**.
+- The note carries the 5m report: N 14, mean +0.55R (−0.43 … +1.54), which is not enough trades yet.
+- The lines are the record-1 lines renamed `lg → lg2`; `v86_check.py` 7 checks the rename and executes both.
+- New panel row RECORD 2; switch "Banner: a second record".
+
+**C — decision timeframe.** The banner and the RECORD row say:
+- "chart 15m = the decision timeframe" on 15m;
+- "5m chart: timing only, decide on 15m" on 5m;
+- "decide on 15m · <tf> chart = context" otherwise.
+
+**Account defaults (operator):** equity $25,000, risk 1% per trade. The tooltip keeps the Phase 1 report's
+0.25–0.5% suggestion while no arm has shown an edge.
+
+**Checks:**
+- precheck, undeclared, order, deadcode and pinelimits: 0 issues.
+- All 20 PASS. `v86_check.py` 7 now recomputes BOTH records' defaults from the ledger files: equal. 8 executes the 10
+  panel rows + tiles + the two-line banner with missing data: 0 NaN.
+- compile_est: Visuals 63,031 / 77,138, i.e. 23–37% under the limit.
+- tf_check: see the build record.
+
+**Compile NOT RUN.**

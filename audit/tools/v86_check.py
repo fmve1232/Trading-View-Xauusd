@@ -78,6 +78,7 @@ P.BUILTINS.setdefault("str.replace_all", lambda s_, a_, b_: s_.replace(a_, b_))
 P.BUILTINS.setdefault("str.substring", lambda s_, a_, b_=None: s_[int(a_):] if b_ is None else s_[int(a_):int(b_)])
 P.BUILTINS.setdefault("str.length", lambda s_: float(len(s_)))
 P.BUILTINS.setdefault("str.startswith", lambda s_, p_: s_.startswith(p_))
+P.BUILTINS.setdefault("str.pos", lambda s_, p_: float(s_.find(p_)) if p_ in s_ else P.NA)
 P.BUILTINS.setdefault("array.set", lambda a_, i_, x_: a_.__setitem__(int(i_), x_))
 
 
@@ -373,31 +374,50 @@ for _ in range(1500):
             continue
     n7v += 1
     bad7v += e7["lgVerdict"] != want
-e7 = P.Env(funcs=env.funcs, lgN=65.0, lgW=22.0, lgMean=-0.2268, lgSd=0.6796, lgPF=0.4292)
-P.run(lg, e7)
-defaults = (int(re.search(r'lgN = input\.int\((\d+),', V).group(1)), int(re.search(r'lgW = input\.int\((\d+),', V).group(1)),
-            float(re.search(r'lgMean = input\.float\(([-\d.]+),', V).group(1)), float(re.search(r'lgSd = input\.float\(([-\d.]+),', V).group(1)),
-            float(re.search(r'lgPF = input\.float\(([-\d.]+),', V).group(1)))
-ledger = "NOT RUN (forward-ledger branch not reachable)"
-try:
-    rows = json.loads(subprocess.run(["git", "show", "origin/forward-ledger:holdout/15m_h4.json"], capture_output=True, text=True,
-                                     check=True).stdout)
-    r_ = [t["r"] for t in rows if isinstance(t, dict) and not t.get("open") and t["recorded_utc"] <= "2026-10-21T23:04:44.5"]
-    mu = sum(r_) / len(r_)
-    sdv = math.sqrt(sum((x - mu) ** 2 for x in r_) / (len(r_) - 1))
-    pfv = sum(x for x in r_ if x > 0) / -sum(x for x in r_ if x < 0)
-    led_ok = (len(r_), sum(x > 0 for x in r_)) == defaults[:2] and abs(mu - defaults[2]) < 5e-5 and abs(sdv - defaults[3]) < 5e-5 \
-        and abs(pfv - defaults[4]) < 5e-5
-    ledger = f"defaults == the ledger file (N {len(r_)}, wins {sum(x > 0 for x in r_)}, mean {mu:.4f}, sd {sdv:.4f}, PF {pfv:.4f}): {led_ok}"
-except (subprocess.CalledProcessError, KeyError, ZeroDivisionError, json.JSONDecodeError):
-    led_ok = True
-ex_lo, ex_hi = -0.2268 - tq_exact(64) * 0.6796 / math.sqrt(65), -0.2268 + tq_exact(64) * 0.6796 / math.sqrt(65)
-report(bad7 == 0 and bad7r == 0 and bad7v == 0 and e7["lgVerdict"] == "NO EDGE · interval below 0" and led_ok
-       and abs(e7["lgLo"] - ex_lo) < 1e-4 and abs(e7["lgHi"] - ex_hi) < 1e-4,
+# v89: the defaults of BOTH records == the ledger files recomputed (as of the ledger update 2026-10-31 00:58 UTC), each
+# default verdict == the pre-registered rule with the exact t, and the record-2 lines == the record-1 lines renamed
+LEDGER_ASOF = "2026-10-31T00:58:10"
+
+
+def dflt(pfx):
+    g = lambda k, t: t(re.search(pfx + k + r' = input\.(?:int|float)\(([-\d.]+),', V).group(1))
+    return g("N", int), g("W", int), g("Mean", float), g("Sd", float), g("PF", float)
+
+
+def lg_names(l, to):
+    for n in sorted(("lgSe", "lgT", "lgLo", "lgHi", "lgWlo", "lgWhi", "lgVerdict", "lgLv", "lgTxt", "lgN", "lgW", "lgMean", "lgSd",
+                     "lgPF", "lgArm"), key=len, reverse=True):
+        l = re.sub(r"\b" + n + r"\b", to + n[2:], l)
+    return l
+
+
+lg1 = [l for l in L[L.index(next(x for x in L if x.startswith("float lgSe = "))):] ][:8]
+lg2 = [l for l in L[L.index(next(x for x in L if x.startswith("float lg2Se = "))):] ][:8]
+rename_ok = [lg_names(l, "lg2") for l in lg1] == lg2 and lg1[-1].startswith("string lgTxt = ")
+led_ok, ledger, dv = True, [], {}
+for pfx, f in (("lg", "15m_h4"), ("lg2", "1h_h3")):
+    d_ = dflt(pfx)
+    e7 = P.Env(funcs=env.funcs, **{pfx + "N": float(d_[0]), pfx + "W": float(d_[1]), pfx + "Mean": d_[2], pfx + "Sd": d_[3],
+                                   pfx + "PF": d_[4]})
+    P.run(lg if pfx == "lg" else [lg_names(l, "lg2") for l in lg], e7)
+    dv[pfx] = (e7[pfx + "Verdict"], verdict(d_[0], d_[2], d_[3], d_[4]) if d_[0] > 1 else "UNDECIDED · N < 50")
+    try:
+        rows = json.loads(subprocess.run(["git", "show", f"origin/forward-ledger:holdout/{f}.json"], capture_output=True, text=True,
+                                         check=True).stdout)
+        r_ = [t["r"] for t in rows if isinstance(t, dict) and not t.get("open") and t["recorded_utc"] <= LEDGER_ASOF]
+        mu = sum(r_) / len(r_)
+        sdv = math.sqrt(sum((x - mu) ** 2 for x in r_) / (len(r_) - 1))
+        pfv = sum(x for x in r_ if x > 0) / -sum(x for x in r_ if x < 0)
+        ok_ = (len(r_), sum(x > 0 for x in r_)) == d_[:2] and abs(mu - d_[2]) < 5e-5 and abs(sdv - d_[3]) < 5e-5 and abs(pfv - d_[4]) < 5e-5
+        led_ok &= ok_
+        ledger.append(f"{f} defaults == ledger (N {len(r_)}, wins {sum(x > 0 for x in r_)}, mean {mu:.4f}, sd {sdv:.4f}, PF {pfv:.4f}): {ok_}")
+    except (subprocess.CalledProcessError, KeyError, ZeroDivisionError, json.JSONDecodeError):
+        ledger.append(f"{f}: NOT RUN (forward-ledger branch not reachable)")
+report(bad7 == 0 and bad7r == 0 and bad7v == 0 and led_ok and rename_ok and all(a_ == b_ for a_, b_ in dv.values()),
        f"7 regime (4000 cases, mismatches {bad7}); lots = floor(risk / ((stop + cost) x $/pt) to 0.01), never above the risk, "
        f"cap lock (4000, mismatches {bad7r}); verdict vs the pre-registered rule with the exact t ({n7v} cases, mismatches "
-       f"{bad7v}); default record -> {e7['lgVerdict']}, CI {e7['lgLo']:.3f} … {e7['lgHi']:.3f} (exact {ex_lo:.3f} … {ex_hi:.3f}); "
-       f"{ledger}")
+       f"{bad7v}); default records -> {dv['lg'][0]} / {dv['lg2'][0]} (rule: {dv['lg'][1]} / {dv['lg2'][1]}); record 2 lines == "
+       f"record 1 renamed: {rename_ok}; " + "; ".join(ledger))
 
 # ---- 8 every new text with missing data. The derived values come from the Pine's own lines run on random primitive
 # inputs (some na), so a state the script cannot reach is never tested and every reachable one can be.
@@ -441,6 +461,7 @@ n0 = L.index("int nwK = -1")
 n1 = next(i for i in range(n0, len(L)) if L[i].startswith("int nwLv = "))
 NW = [l for l in L[n0:n1 + 1] if l.strip()]
 DER = ([line(p) for p in ("float ckCostPct = ", "int ckCostLv = ", "bool ckChurn = ")] + rk + rg + lg + [line("string lgTxt = ")]
+       + lg2 + [line(p) for p in ("string tfNote = ", "string lgLine = ", "string lg2Line = ")]
        + [l.strip() for l in L if l.strip().startswith("int _ckLv = ") or l.strip().startswith("string _ckTx = ")])
 nan8, err8, n8 = [], set(), 0
 for _ in range(1500):
@@ -456,7 +477,9 @@ for _ in range(1500):
               rgDxySym=rng.choice(["TVC:DXY", ""]), sessManipProb=na_(34.0), sessContProb=na_(51.0), ckN=float(rng.choice([0, 42])),
               lgShow=True, lgArm="H4 · 15m (deciding)", lgAsof="2026-10-21 23:04 UTC", lgN=float(rng.choice([0, 1, 30, 65])),
               lgW=float(rng.choice([0, 22, 70])), lgMean=-0.2268, lgSd=rng.choice([0.0, 0.6796]), lgPF=0.4292,
-              lgNote=rng.choice(["", "note"]))
+              lgNote=rng.choice(["", "note"]), lg2Show=rng.random() < .8, lg2Arm="H3 · 1H (deciding)", lg2N=float(rng.choice([0, 1, 3, 60])),
+              lg2W=float(rng.choice([0, 1, 40])), lg2Mean=-0.1642, lg2Sd=rng.choice([0.0, 1.6215]), lg2PF=0.7762,
+              lg2Note=rng.choice(["", "note"]), **{"timeframe.period": rng.choice(["5", "15", "60", "D"])})
     e8 = P.Env(funcs=env.funcs, **st)
     P.BUILTINS["str.format_time"] = lambda t_, f_, z_: "10-28 14:00"
     try:
@@ -472,7 +495,7 @@ for _ in range(1500):
                 nan8.append((who, str(out)[:60]))
         except Exception as ex:          # noqa: BLE001
             err8.add((who, str(ex)[:60]))
-report(not nan8 and not err8 and len(rows8) == 9 and len(texts) == 16,
+report(not nan8 and not err8 and len(rows8) == 10 and len(texts) == 17,
        f"8 new texts (panel CHECKS rows {len(rows8)}, tiles 6 / 7, banner) executed with missing data, every derived value from "
        f"the Pine's own lines: {len(texts)} texts, {n8} evaluations, {len(nan8)} showed NaN, {len(err8)} could not be evaluated"
        + (f" -- e.g. {nan8[:2]} {sorted(err8)[:2]}" if nan8 or err8 else ""))

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v88   (MACRO = the Master's)         ║
+// ║  BUILD STAMP — this file last CHANGED in v89   (records refreshed)            ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1642,22 +1642,33 @@ spreadCost = input.float(0.3, "Spread Cost (points), as in the Master", minval=0
 slippagePts = input.float(0.2, "Slippage (points), as in the Master", minval=0.0, maxval=2.0, step=0.1, group=grpCk)
 commissionL = input.float(7.0, "Commission per Lot (USD, round turn), as in the Master", minval=0.0, maxval=50.0, step=0.5, group=grpCk)
 pointValue = input.float(100, "Value per Point per Lot (USD), as in the Master", minval=1, group=grpCk)
-rkEquity = input.float(10000.0, "Account equity ($)", minval = 100.0, maxval = 100000000.0, step = 100.0, group = grpCk)
-rkPct = input.float(0.5, "Risk per trade (% of equity)", minval = 0.05, maxval = 5.0, step = 0.05, group = grpCk, tooltip = "0.25-0.5% while no arm has shown an edge (Phase 1 report §9).")
+rkEquity = input.float(25000.0, "Account equity ($)", minval = 100.0, maxval = 100000000.0, step = 100.0, group = grpCk)
+rkPct = input.float(1.0, "Risk per trade (% of equity)", minval = 0.05, maxval = 5.0, step = 0.05, group = grpCk, tooltip = "Default 1% (operator, 2026-10-31). The Phase 1 report §9 suggests 0.25-0.5% while no arm has shown an edge.")
 rkStop = input.float(0.0, "Stop distance ($ per oz; 0 = 1 ATR of this chart)", minval = 0.0, maxval = 500.0, step = 0.1, group = grpCk, tooltip = "Type the distance from your entry to your stop, e.g. from the Master's plan strip.")
 rkToday = input.float(0.0, "Today's realised result (R, typed in)", minval = -20.0, maxval = 20.0, step = 0.1, group = grpCk, tooltip = "An indicator cannot see your MT5 trades: type today's closed result in R.")
 rkCap = input.float(-2.0, "Daily loss cap (R)", minval = -10.0, maxval = -0.5, step = 0.5, group = grpCk)
 rgShow = input.bool(true, "Daily regime tile (untested)", group = grpCk, tooltip = "12-month return and the 200-day average (trend), 20-day change of the real yield and the dollar (macro). Shown as context: an UNTESTED hypothesis (Phase 1 report §6, R1 / R2), never a signal.")
 rgDxySym = input.symbol("TVC:DXY", "Dollar index, daily (blank = off)", group = grpCk)
 lgShow = input.bool(true, "Banner: the website's forward record", group = grpCk, tooltip = "Typed in from the website's forward ledger (Pine cannot read it). The verdict uses the pre-registered rule: N >= 50, 95% t-interval of mean R above 0 and PF >= 1.2.")
+// v89: refreshed from the website's forward ledger as of 2026-10-31 00:58 UTC (v86_check.py 7 recomputes the defaults
+// from the ledger file), and a second line for arm H3, the rule behind Visuals' H2 card. Each arm is shown on its
+// DECIDING record (H4: 15m, Amendment 8 / 9; H3: 1H, Amendment 7); other timeframes are reported in the note.
 lgArm = input.string("H4 · 15m (deciding)", "Record: arm / timeframe", group = grpCk)
-lgAsof = input.string("2026-10-21 23:04 UTC", "Record: as of", group = grpCk)
-lgN = input.int(65, "Record: closed trades (N)", minval = 0, maxval = 100000, group = grpCk)
-lgW = input.int(22, "Record: wins (R > 0)", minval = 0, maxval = 100000, group = grpCk)
-lgMean = input.float(-0.2268, "Record: mean R", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)
-lgSd = input.float(0.6796, "Record: standard deviation of R", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)
-lgPF = input.float(0.4292, "Record: profit factor", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)
-lgNote = input.string("the Brief's H4 playbook: not for live money", "Record: note", group = grpCk)
+lgAsof = input.string("2026-10-31 00:58 UTC", "Record: as of", group = grpCk)
+lgN = input.int(171, "Record: closed trades (N)", minval = 0, maxval = 100000, group = grpCk)
+lgW = input.int(66, "Record: wins (R > 0)", minval = 0, maxval = 100000, group = grpCk)
+lgMean = input.float(-0.0920, "Record: mean R", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)
+lgSd = input.float(0.8006, "Record: standard deviation of R", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)
+lgPF = input.float(0.7502, "Record: profit factor", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)
+lgNote = input.string("5m: N 511, mean -0.18R, interval below 0 · the Brief's H4 playbook: not for live money", "Record: note", group = grpCk)
+lg2Show = input.bool(true, "Banner: a second record (H3 = the H2 card's rule)", group = grpCk)
+lg2Arm = input.string("H3 · 1H (deciding) = the H2 card's rule", "Record 2: arm / timeframe", group = grpCk)
+lg2N = input.int(3, "Record 2: closed trades (N)", minval = 0, maxval = 100000, group = grpCk)
+lg2W = input.int(1, "Record 2: wins (R > 0)", minval = 0, maxval = 100000, group = grpCk)
+lg2Mean = input.float(-0.1642, "Record 2: mean R", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)
+lg2Sd = input.float(1.6215, "Record 2: standard deviation of R", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)
+lg2PF = input.float(0.7762, "Record 2: profit factor", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)
+lg2Note = input.string("5m reported: N 14, mean +0.55R (-0.43 … +1.54): not enough trades yet", "Record 2: note", group = grpCk)
 
 // Student-t 97.5% quantile, Cornish-Fisher series in 1/df (Abramowitz & Stegun 26.7.5): within 2e-4 for df >= 10
 f_tq(int df) =>
@@ -1744,6 +1755,19 @@ float lgHi = lgMean + lgT * lgSe
 string lgVerdict = lgN < 50 ? "UNDECIDED · N < 50" : na(lgLo) ? "—" : lgLo > 0 and lgPF >= 1.2 ? "EDGE SHOWN" : lgLo > 0 ? "NO EDGE SHOWN · PF < 1.2" : lgHi < 0 ? "NO EDGE · interval below 0" : "NO EDGE SHOWN · interval spans 0"
 int lgLv = lgVerdict == "EDGE SHOWN" ? 1 : lgVerdict == "NO EDGE · interval below 0" ? -1 : 0
 string lgTxt = lgArm + " · website ledger, " + lgAsof + "\nN " + str.tostring(lgN) + " · win " + (lgN > 0 ? str.tostring(math.min(lgW, lgN) * 100.0 / lgN, "#") + "% (" + str.tostring(lgWlo * 100.0, "#") + "–" + str.tostring(lgWhi * 100.0, "#") + ")" : "—") + " · mean " + (na(lgLo) ? "—" : str.tostring(lgMean, "#.##") + "R (" + str.tostring(lgLo, "#.##") + " … " + str.tostring(lgHi, "#.##") + ")") + " · PF " + str.tostring(lgPF, "#.##")
+// v89: the second record, the same lines with lg -> lg2 (v86_check.py 7 checks the rename and executes both)
+float lg2Se = lg2N > 1 ? lg2Sd / math.sqrt(lg2N) : na
+float lg2T = lg2N > 1 ? f_tq(lg2N - 1) : na
+float lg2Lo = lg2Mean - lg2T * lg2Se
+float lg2Hi = lg2Mean + lg2T * lg2Se
+[lg2Wlo, lg2Whi] = f_wil(math.min(lg2W, lg2N), lg2N)
+string lg2Verdict = lg2N < 50 ? "UNDECIDED · N < 50" : na(lg2Lo) ? "—" : lg2Lo > 0 and lg2PF >= 1.2 ? "EDGE SHOWN" : lg2Lo > 0 ? "NO EDGE SHOWN · PF < 1.2" : lg2Hi < 0 ? "NO EDGE · interval below 0" : "NO EDGE SHOWN · interval spans 0"
+int lg2Lv = lg2Verdict == "EDGE SHOWN" ? 1 : lg2Verdict == "NO EDGE · interval below 0" ? -1 : 0
+string lg2Txt = lg2Arm + " · website ledger, " + lgAsof + "\nN " + str.tostring(lg2N) + " · win " + (lg2N > 0 ? str.tostring(math.min(lg2W, lg2N) * 100.0 / lg2N, "#") + "% (" + str.tostring(lg2Wlo * 100.0, "#") + "–" + str.tostring(lg2Whi * 100.0, "#") + ")" : "—") + " · mean " + (na(lg2Lo) ? "—" : str.tostring(lg2Mean, "#.##") + "R (" + str.tostring(lg2Lo, "#.##") + " … " + str.tostring(lg2Hi, "#.##") + ")") + " · PF " + str.tostring(lg2PF, "#.##")
+// v89 (C): the registered decision timeframe is 15m (PREREG A2.4); 5m is for timing only
+string tfNote = timeframe.period == "15" ? "chart 15m = the decision timeframe" : timeframe.period == "5" ? "5m chart: timing only, decide on 15m" : "decide on 15m · " + timeframe.period + " chart = context"
+string lgLine = lgArm + ": " + lgVerdict + " · " + str.replace_all(str.substring(lgTxt, str.pos(lgTxt, "\n") + 1), "\n", " ")
+string lg2Line = lg2Arm + ": " + lg2Verdict + " · " + str.replace_all(str.substring(lg2Txt, str.pos(lg2Txt, "\n") + 1), "\n", " ")
 
 // ---- at the last bar: the current or next event on the real clock (timenow), for the panel and the ticker
 int nwK = -1
@@ -1964,7 +1988,10 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             _tmRow(r, "SESSIONS", "this session: manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "\ncont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + " · 95% ranges (Wilson)", _tmV)
         if lgShow
             r += 1
-            _tmRow(r, "RECORD", lgTxt + "\n→ " + lgVerdict + (lgNote != "" ? " · " + lgNote : ""), lgLv == -1 ? _tmDn : lgLv == 1 ? _tmUp : _amb)
+            _tmRow(r, "RECORD", lgTxt + "\n→ " + lgVerdict + (lgNote != "" ? " · " + lgNote : "") + "\n" + tfNote, lgLv == -1 ? _tmDn : lgLv == 1 ? _tmUp : _amb)
+        if lg2Show
+            r += 1
+            _tmRow(r, "RECORD 2", lg2Txt + "\n→ " + lg2Verdict + (lg2Note != "" ? " · " + lg2Note : ""), lg2Lv == -1 ? _tmDn : lg2Lv == 1 ? _tmUp : _amb)
     r += 1
     table.cell(tblV, 0, r, "display only · the DECISION is the Master's · H2 record: the website", text_color = color.new(#5D6B7A, 0), text_size = size.tiny, text_halign = text.align_left)
     table.merge_cells(tblV, 0, r, 1, r)
@@ -2057,7 +2084,7 @@ if tkOn and barstate.islast
     string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "")
     f_tk(_c, _ckTx == "" ? "OK ✓" : str.substring(_ckTx, 0, str.length(_ckTx) - 3), _ckLv == 2 ? _tmDn : _ckLv == 1 ? color.new(#FFB74D, 0) : _tmUp, "checks · next " + nwNext, "NEWS " + (nwNowIn ? "in the window: " : "next: ") + nwNext + (na(nwMs) or nwNowIn ? "" : " in " + f_dur(nwMs)) + "\nCOST " + str.tostring(ckCost, "#.##") + " pts = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (red > 25%, amber > 15%)\nCHURN " + str.tostring(ckFlips) + " structure flips in 20 bars (2+ = churn) · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\nTODAY " + str.tostring(rkToday, "#.##") + "R of the " + str.tostring(rkCap, "#.#") + "R cap\nScores in the Master are not win odds.")
     if lgShow
-        table.cell(tkT, 0, 0, "● " + lgVerdict + " — " + lgTxt + (lgNote != "" ? " · " + lgNote : ""), text_color = color.white, bgcolor = lgLv == -1 ? color.new(#B71C1C, 15) : lgLv == 1 ? color.new(#1B5E20, 15) : color.new(#6D4C00, 15), text_size = size.tiny, tooltip = "Typed in from the website's forward ledger (Visuals settings, CHECKS & RISK). Rule: N >= 50, 95% t-interval of mean R above 0, PF >= 1.2.")
+        table.cell(tkT, 0, 0, "● " + lgLine + " · " + tfNote + (lg2Show ? "\n● " + lg2Line + (lg2Note != "" ? " · " + lg2Note : "") : ""), text_color = color.white, bgcolor = lgLv == -1 ? color.new(#B71C1C, 15) : lgLv == 1 ? color.new(#1B5E20, 15) : color.new(#6D4C00, 15), text_size = size.tiny, tooltip = "Typed in from the website's forward ledger as of " + lgAsof + " (Visuals settings, CHECKS & RISK). Rule: N >= 50, 95% t-interval of mean R above 0, PF >= 1.2.\n" + lgArm + " note: " + lgNote)
         table.merge_cells(tkT, 0, 0, _c, 0)
     for c = 0 to 7
         table.cell(tkT, c, 3, "", height = tkLift, bgcolor = color(na))
