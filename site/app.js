@@ -841,7 +841,7 @@ const lvl = (k) => (LEVEL[k] ? LEVEL[k][0] + (LEVEL[k][1] ? ` (${LEVEL[k][1]})` 
 const REGIME = { ABNORMAL: "unusually volatile", COMPRESS: "quiet, compressing", EXPANSION: "expanding", "STRONG TR": "strong trend", "WEAK TR": "weak trend", RANGE: "ranging" };
 const STRUCT = { BOS: "break of structure", CHoCH: "change of character", MSS: "structure shift" };
 const BIAS = { BULL: "bullish", BEAR: "bearish", "BULL-ISH": "slightly bullish", "BEAR-ISH": "slightly bearish", RANGE: "ranging", NEUTRAL: "neutral" };
-const EXIT = { SL: "stopped out", BE: "closed at break-even after TP1", TP2: "reached TP2", FLIP: "closed by an opposite signal", OPEN: "still open" };
+const EXIT = { SL: "stopped out", SL_GAP: "stopped out at the open (price gapped through the stop)", BE: "closed at break-even after TP1", BE_GAP: "closed at the open below break-even (price gapped)", TP2: "reached TP2", FLIP: "closed by an opposite signal", OPEN: "still open" };
 function whyPlain(w) {                              // the engine's short WAIT reason, in words
   if (!w) return "";
   let m;

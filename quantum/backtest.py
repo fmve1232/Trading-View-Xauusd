@@ -6,8 +6,14 @@ EXECUTION MODEL (stated, conservative, the same for both arms):
     (the engine's own labelling convention; TradingView instead guesses the intrabar path).
   * 50% off at TP1, the rest at TP2; after TP1 the stop moves to entry from the next bar.
   * An opposite executed signal closes the position at that close and reverses (Pine: flip).
+  * GAPS (Amendment 14, web.7): a level the bar OPENS beyond was crossed at the open, the bar's first price.
+    Targets: TP2 at or beyond the open fills everything left at the open (TP1's half too, if not yet done);
+    otherwise TP1 at or beyond the open fills half at the open. Then the stop: at or beyond the open, the rest
+    fills at the open (SL_GAP / BE_GAP); otherwise the bar runs as before (stop first, then TP1 / TP2 intrabar).
+    The open is a lower bound on a real gap fill (no tick data). A NaN open falls back to the intrabar rule.
   * Round-trip cost per ounce = session spread + 2 x slippage + commission/lot / 100 oz,
-    the engine's own cost model (the same one planExpectancy charges).
+    the engine's own cost model (the same one planExpectancy charges). Charged once per trade; a gap
+    fill moves only the exit price.
 P&L is reported in price points (= USD per ounce) and in R (multiples of the initial stop).
 
 Nothing here chooses a parameter. Walk-forward folds MEASURE stability over time; they do
@@ -22,7 +28,7 @@ import numpy as np
 
 def simulate(res, cfg, start: int = 0) -> list[dict]:
     F, R = res.F, res.rows
-    h, l, c = F["h"], F["l"], F["c"]
+    o, h, l, c = F["o"], F["h"], F["l"], F["c"]
     idx = F["index"]
     spread = F["sess_spread"]
     eb, es = R["exec_buy"], R["exec_sell"]
@@ -33,8 +39,30 @@ def simulate(res, cfg, start: int = 0) -> list[dict]:
         # 1) manage an open position on this bar's range (its orders were placed at an earlier close)
         if pos is not None and i > pos["entry_i"]:
             lg = pos["long"]
-            if (l[i] <= pos["sl"]) if lg else (h[i] >= pos["sl"]):          # stop first on any tie
-                _close(pos, pos["sl"], i, idx, "BE" if pos["tp1_done"] else "SL", trades)
+            oi = o[i]
+            gap_ok = not math.isnan(oi)
+            beyond = (lambda lvl: oi >= lvl) if lg else (lambda lvl: oi <= lvl)        # past a target at the open
+            through = (lambda lvl: oi <= lvl) if lg else (lambda lvl: oi >= lvl)       # past the stop at the open
+            stop_lbl = "BE" if pos["sl"] == pos["entry"] and pos["tp1_done"] else "SL"
+            # A) targets the bar opened beyond fill at the open (a limit fills at its price or better)
+            if gap_ok and beyond(pos["tp2"]):
+                if not pos["tp1_done"]:
+                    pos["legs"].append((0.5, oi))
+                    pos["qty"] -= 0.5
+                    pos["tp1_done"] = True
+                _close(pos, oi, i, idx, "TP2", trades)
+                pos = None
+            elif gap_ok and not pos["tp1_done"] and beyond(pos["tp1"]):
+                pos["legs"].append((0.5, oi))
+                pos["qty"] -= 0.5
+                pos["tp1_done"] = True
+        if pos is not None and i > pos["entry_i"]:
+            # B) the stop: opened through it -> fill at the open; else the intrabar rule (stop first on any tie)
+            if gap_ok and through(pos["sl"]):
+                _close(pos, oi, i, idx, stop_lbl + "_GAP", trades)
+                pos = None
+            elif (l[i] <= pos["sl"]) if lg else (h[i] >= pos["sl"]):
+                _close(pos, pos["sl"], i, idx, stop_lbl, trades)
                 pos = None
             else:
                 if not pos["tp1_done"] and ((h[i] >= pos["tp1"]) if lg else (l[i] <= pos["tp1"])):

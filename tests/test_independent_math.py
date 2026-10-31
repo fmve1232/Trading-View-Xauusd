@@ -260,7 +260,8 @@ def test_simulate_by_hand_stop_first_partial_and_breakeven():
     c = np.array([100.0, 101.0, 102.5, 100.5, 99.0])
     h = np.array([100.0, 101.5, 103.0, 101.0, 100.1])
     lo = np.array([100.0, 100.5, 101.5, 99.9, 98.5])
-    F = dict(c=c, h=h, l=lo, o=c, index=idx, sess_spread=np.full(5, 0.3), session_label=["NY"] * 5, mkt_regime=["X"] * 5)
+    o = np.array([100.0, 100.0, 101.0, 102.5, 100.5])               # each bar opens at the previous close (no gaps)
+    F = dict(c=c, h=h, l=lo, o=o, index=idx, sess_spread=np.full(5, 0.3), session_label=["NY"] * 5, mkt_regime=["X"] * 5)
     R = dict(exec_buy=[1, 0, 0, 0, 0], exec_sell=[0] * 5, plan_sl=[98.0] + [math.nan] * 4, plan_tp1=[102.0] + [math.nan] * 4,
              plan_tp2=[106.0] + [math.nan] * 4, tq=[0] * 5, cal_p_long=[0.6] * 5, cal_p_short=[0.4] * 5, plan_ev=[0.1] * 5)
 
