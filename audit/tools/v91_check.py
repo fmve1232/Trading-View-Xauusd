@@ -97,6 +97,7 @@ disp = not any(v in ns["seen"] for v in ("accountSize", "_riskUSD", "_rawLots", 
 report(am and rv and float(am.group(1)) == float(rv.group(1)) == 25000.0 and disp,
        f"4 one account default: Master accountSize {am.group(1) if am else '?'} == Visuals rkEquity {rv.group(1) if rv else '?'}; "
        f"accountSize / _riskUSD / _rawLots / _lots / _liveCostATR outside the DECISION slice: {disp}")
-report(F91.master(old) == now, "5 Master == fix_v91.master(v90 Master @ ff9536959), byte for byte")
+v91c = subprocess.run(["git", "show", f"1888cd6bd:{M}"], capture_output=True, text=True, check=True).stdout   # the v91 build
+report(F91.master(old) == v91c, "5 the v91 Master (1888cd6bd) == fix_v91.master(v90 Master @ ff9536959), byte for byte (later builds: refactor_check chain)")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- Pine text executed in Python; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

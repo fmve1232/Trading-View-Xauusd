@@ -416,4 +416,8 @@ Some of these are covered elsewhere: regime_check (ATR floor), panel_check 9 / v
 
 Applied as F-A79 / F-A80 / F-A81; see CHANGELOG v91 and `v91_check.py`. Everything else in Report 13 still needs approval.
 
+## v92 (operator approved B-03, B-09 on 2026-10-31)
+
+Applied as F-A82 (B-09) and F-A83 (B-03 display part); see CHANGELOG v92 and `v92_check.py`. The engine part of B-03 needs a website amendment. The other Report 13 items still need approval.
+
 Continue from here. Do not modify the baseline.

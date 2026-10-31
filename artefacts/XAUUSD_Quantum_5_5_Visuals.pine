@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v91   (RISK row: which stop)         ║
+// ║  BUILD STAMP — this file last CHANGED in v92   (news-time cost)               ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1636,6 +1636,7 @@ nwShow = input.bool(true, "News calendar: NFP / CPI / FOMC (official dates)", gr
 nwBefore = input.int(30, "News window: minutes before", minval = 0, maxval = 240, group = grpCk)
 nwAfter = input.int(30, "News window: minutes after", minval = 0, maxval = 240, group = grpCk)
 nwShade = input.bool(true, "Shade the news windows", group = grpCk)
+nwCostMult = input.float(3.0, "News window: cost multiplier (spread + slippage)", minval = 1.0, maxval = 10.0, step = 0.5, group = grpCk, tooltip = "v92 (B-03): inside an NFP / CPI / FOMC window the COST and RISK rows charge spread + slippage x this (commission is per lot and does not widen). Default 3: the low end of the 3-5x design, not fitted to any result; set it from your broker's news-time spreads. Display only: the Master's engine does not re-cost or block news.")
 alertOnNews = input.bool(true, "Alert when a news window starts", group = grpCk, tooltip = "Needs an alert on Visuals (Any alert() function call). Fires once, on the first bar that touches the window (at that bar's open).")
 // The Master's cost model, with its inputs (same defaults; set them as in the Master)
 spreadCost = input.float(0.3, "Spread Cost (points), as in the Master", minval=0.0, maxval=5.0, step=0.1, group=grpCk)
@@ -1708,7 +1709,8 @@ if alertOnNews and nwBarIn and (not nwBarIn[1] or nwI != nwI[1])
 int ckLo = euIsDST ? 7 : 8
 bool ckKZ = (hU >= ckLo + 1 and hU < ckLo + 4) or (hU >= nyOpen and hU < nyOpen + 3) or (hU >= londonClose - 1 and hU < londonClose) or (hU >= ckLo + 3 and hU < ckLo + 4)
 float ckSpread = ckKZ ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : math.max(0.50, spreadCost)
-float ckCost = (ckSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)
+// v92 (B-03): spread + slippage widen in a dated news window (nwBarIn); commission does not.
+float ckCost = (ckSpread + 2.0 * slippagePts) * (nwBarIn ? nwCostMult : 1.0) + commissionL / math.max(pointValue, 1.0)
 float ckCostPct = atr14 > 0 ? ckCost / atr14 * 100.0 : na
 int ckCostLv = na(ckCostPct) ? 0 : ckCostPct > 25.0 ? 2 : ckCostPct > 15.0 ? 1 : 0
 
@@ -1971,9 +1973,9 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
         r += 1
         _tmRow(r, "SCORE", "the Master's L / S / R and mP are SCORES, not win odds" + (_cmp ? "" : "\nmP measured out of sample (audit, Oct 2026): AUC 0.48-0.53,\nno better than chance; trust the levels, not the %"), _amb)
         r += 1
-        _tmRow(r, "NEWS", (nwNowIn ? "IN THE WINDOW · " : "next ") + nwNext + (na(nwMs) or nwNowIn ? "" : " · in " + f_dur(nwMs)) + (_cmp ? "" : "\nwindow −" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min · official BLS / Fed dates"), nwLv == 2 ? _tmDn : nwLv == 1 ? _amb : _tmV)
+        _tmRow(r, "NEWS", (nwNowIn ? "IN THE WINDOW · " : "next ") + nwNext + (na(nwMs) or nwNowIn ? "" : " · in " + f_dur(nwMs)) + (_cmp ? "" : "\nwindow −" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min · official BLS / Fed dates · the Master's engine neither blocks nor re-costs news"), nwLv == 2 ? _tmDn : nwLv == 1 ? _amb : _tmV)
         r += 1
-        _tmRow(r, "COST", str.tostring(ckCost, "#.##") + " pts round trip = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (" + (na(atr14) ? "—" : str.tostring(atr14, "#.##")) + ")" + (_cmp ? "" : "\nTP1 should be ≥ 4 × cost = $" + str.tostring(4.0 * ckCost, "#.##") + " · above 25% the cost eats the edge"), ckCostLv == 2 ? _tmDn : ckCostLv == 1 ? _amb : _tmV)
+        _tmRow(r, "COST", str.tostring(ckCost, "#.##") + " pts round trip" + (nwBarIn and nwCostMult > 1.0 ? " (NEWS ×" + str.tostring(nwCostMult, "#.#") + ")" : "") + " = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (" + (na(atr14) ? "—" : str.tostring(atr14, "#.##")) + ")" + (_cmp ? "" : "\nTP1 should be ≥ 4 × cost = $" + str.tostring(4.0 * ckCost, "#.##") + " · above 25% the cost eats the edge"), ckCostLv == 2 ? _tmDn : ckCostLv == 1 ? _amb : _tmV)
         if not _cmp
             r += 1
             _tmRow(r, "CHURN", "structure flips " + str.tostring(ckFlips) + " in 20 bars · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\n" + (ckChurn ? "CHURN: signals tend to flip within a few bars" : "no churn (2+ flips = churn; efficiency < 0.25 = choppy)"), ckChurn ? _amb : _tmV)

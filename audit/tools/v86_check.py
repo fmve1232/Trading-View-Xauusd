@@ -151,7 +151,7 @@ for hh in range(24):
                             londonOpen=7.0)
                 em = P.Env(hourUTC=float(hh), **base)
                 P.run(["int londonOpen = 7"] + m_ses + m_kz + [m_spread, m_cost], em)
-                ev = P.Env(hU=float(hh), **base)
+                ev = P.Env(hU=float(hh), nwBarIn=False, nwCostMult=3.0, **base)   # v92: outside a news window (inside: v92_check 3)
                 P.run(["int londonOpen  = 7"] + v_ses + v_lines, ev)
                 n3 += 1
                 bad3 += bool(em["inKillzone"]) != bool(ev["ckKZ"]) or abs(em["_sessSpread"] - ev["ckSpread"]) > 1e-12 \
@@ -159,7 +159,7 @@ for hh in range(24):
 lv = rhs("int ckCostLv")
 lv_ok = all(P.evaluate(lv, P.Env(ckCostPct=x)) == w for x, w in ((P.NA, 0), (10.0, 0), (15.0, 0), (15.01, 1), (25.0, 1), (25.01, 2)))
 report(bad3 == 0 and lv_ok, f"3 cost: Visuals' ckKZ / ckSpread / ckCost == the Master's inKillzone / _sessSpread / round-trip "
-       f"cost, both executed: {n3} cases (24 h x EU / US DST x 4 input sets), mismatches {bad3}; levels >15% / >25%")
+       f"cost outside a news window (inside: x the v92 multiplier, v92_check 3), both executed: {n3} cases (24 h x EU / US DST x 4 input sets), mismatches {bad3}; levels >15% / >25%")
 
 # ---- 4 calendar: the official list (BLS Employment Situation + CPI schedules, Federal Reserve FOMC 2026 / 2027
 # calendars, as published on 2026-10-22). Statement days only (2nd day of each FOMC meeting).
@@ -471,7 +471,7 @@ for _ in range(1500):
               nwI=float(rng.choice([0, 5, 37, 38])), timenow=rng.uniform(e4["nwT"][0] - 9e8, e4["nwT"][-1] + 9e8),
               **{"barstate.islast": True},
               ckCost=rng.uniform(0.3, 1.2), atr14=na_(rng.uniform(0.5, 20)), ckFlips=float(rng.choice([0, 1, 2, 5])),
-              ckER=na_(rng.uniform(0, 1)), rkStop=rng.choice([0.0, 4.0]), rkEquity=1e4, rkPct=0.5, pointValue=100.0,
+              ckER=na_(rng.uniform(0, 1)), nwBarIn=rng.random() < .3, nwCostMult=rng.choice([1.0, 3.0, 5.0]), rkStop=rng.choice([0.0, 4.0]), rkEquity=1e4, rkPct=0.5, pointValue=100.0,
               rkToday=rng.uniform(-3, 2), rkCap=-2.0, rgM1=na_(2600.0), rgM13=na_(2300.0), rgSma1=na_(2500.0), rgC1=na_(2600.0),
               rgRy1=na_(1.8), rgRy21=na_(1.9), rgDx1=na_(99.0), rgDx21=na_(100.0), brRySym=rng.choice(["FRED:DFII10", ""]),
               rgDxySym=rng.choice(["TVC:DXY", ""]), sessManipProb=na_(34.0), sessContProb=na_(51.0), ckN=float(rng.choice([0, 42])),

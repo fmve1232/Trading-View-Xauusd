@@ -3266,3 +3266,37 @@ Display only: no value the DECISION reads changes (`v90_slice.py`), so no signal
 
 **Not run:** the TradingView compile. The model estimate is lower than v90's, but the compiler is the judge.
 
+# v92 — risk lock survives a reload; news-time cost in Visuals (2026-10-31)
+
+Operator: "Go ahead with B-03 and B-09" (independent v90 audit). The DECISION shown on the live bar is unchanged.
+
+**Changed:**
+- **Master (F-A82, B-09):** the twins' `backtestAllBars` input and `recentBars` line, byte-identical, default ON.
+  The entry gate runs on every bar, so the risk lock counts every signal of the NY day after a reload. Before, on
+  5m / 1m it forgot signals older than 120 bars and a same-day lock could lift. OFF restores the old behaviour.
+  Nothing historical is drawn by the Master, so nothing new appears on the chart.
+- **Token budget:** paid for by two identical-output rewrites in the RISK cell:
+  - `not na(_liveCostATR)` was always true;
+  - `math.abs(tpSL - tpEntry)` is `tpDist`.
+
+  The model estimate went from 99,510 to **99,503** (pessimistic 98,983 → 98,998, below the compiled 99,004).
+- **Visuals (F-A83, B-03, display part):**
+  - new input "News window: cost multiplier (spread + slippage)", default 3;
+  - inside a dated NFP / CPI / FOMC window, COST and RISK charge spread + slippage × it (commission unchanged);
+  - the COST row says "(NEWS ×3)", and the lots shrink;
+  - the NEWS row states that the engine neither blocks nor re-costs news.
+- **Tools:**
+  - `fix_v92.py` and `v92_check.py` (executed, with positive controls);
+  - `refactor_check` chain + fix_v92;
+  - `v91_check` §5 is anchored to the v91 commit;
+  - `v86_check` §3 / §8 take the news inputs;
+  - `value_map` regenerated.
+
+**Not done (needs a website amendment, A7):** the engine's news handling (F-A74 / F-A83 engine part). That means the
+dated calendar in `newsWindow`, an FOMC window, and a news block by default. Each changes signals in frozen engine
+code shared with the website and the twins.
+
+**Unchanged:** Brief, Diagnostics, EdgeCases, the four strategy files.
+
+**Not run:** the TradingView compile.
+

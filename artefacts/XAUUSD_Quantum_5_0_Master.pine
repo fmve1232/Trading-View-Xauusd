@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v91   (lots include cost; 25k)       ║
+// ║  BUILD STAMP — this file last CHANGED in v92   (risk lock: every bar)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -560,7 +560,10 @@ float bbDev = ta.stdev(close, 20) * 2.0
 rsiVal = ta.rsi(close, rsiLen)
 volSma20 = ta.sma(volume, 20)
 highVolume = not na(volume) and volume > volSma20
-recentBars = bar_index > last_bar_index - recentBarsLen
+// v92 (B-09): the twins' switch, byte-identical. ON: the gate runs on every bar, so the risk lock counts every signal
+// of the NY day after a reload (it forgot those older than 120 bars on 5m / 1m). Nothing historical is drawn here.
+backtestAllBars = input.bool(true, "Backtest all bars (ignore Signal Lookback Bars)", group=grpCore, tooltip="ON for backtests: the entry gate is evaluated on every historical bar. OFF reproduces the live indicator's behaviour, where signals are shown only in the last 'Signal Lookback Bars'.")
+recentBars = backtestAllBars or bar_index > last_bar_index - recentBarsLen
 // Winsorized gold return: clamp extreme gaps (±5%) to prevent Z-score distortion after gap opens
 float _rawGoldRet = safeDiv(close, nz(close[1], close)) - 1
 // Q5.0-S6: TF-scaled winsorization (±6 sigma, prev-bar window; ±5% hard outer bound).
@@ -5614,9 +5617,9 @@ f_dashRender() =>
         tcb(4, 1, not na(_nearAbove) or not na(_nearBelow) ? _nearAboveStr + "/" + _nearBelowStr : "LIQ —", cBloomNeut, color(na), _prSize, _w4)
         tcb(5, 1, "V " + _vwapStr, C_TEXT, color(na), _prSize, _w5)
         tcb(6, 1, "Corr " + _dxyStr + " " + _yldStr + " " + tipsC, _dxyYldCol, color.new(_macroBg, 85), _prSize, _w6)
-        float _costToTargetPct = tpDist > 0 and not na(_liveCostATR) ? _liveCostATR * adaptiveATR / tpDist * 100.0 : 0.0
+        float _costToTargetPct = tpDist > 0 ? _liveCostATR * adaptiveATR / tpDist * 100.0 : 0.0
         _kellyPct := _kellyPct * regSizeMult // R6.0: size guidance haircut in high-vol/abnormal regimes
-        string _riskPrimary = "RRg " + (not na(tpRR2) ? "1:" + str.tostring(tpRR2, "#.#") : "—") + " SL " + (not na(tpSL) and not na(tpEntry) ? str.tostring(math.abs(tpSL - tpEntry) / adaptiveATR, "#.#") + " ATR" : "—") + "\nRisk " + str.tostring(_kellyPct, "0.0#") + "% $" + _si(_riskUSD) + " " + (_lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L") + " Cst " + str.tostring(_costToTargetPct, "#.#") + "%"
+        string _riskPrimary = "RRg " + (not na(tpRR2) ? "1:" + str.tostring(tpRR2, "#.#") : "—") + " SL " + (not na(tpSL) and not na(tpEntry) ? str.tostring(tpDist / adaptiveATR, "#.#") + " ATR" : "—") + "\nRisk " + str.tostring(_kellyPct, "0.0#") + "% $" + _si(_riskUSD) + " " + (_lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L") + " Cst " + str.tostring(_costToTargetPct, "#.#") + "%"
         tcb(7, 1, _riskPrimary, _volCol, color(na), _prSize, _w7) // R5.1: tinted by volatility percentile (wires _volCol)
         // RED-2C-FIX: _dirLabel here is still the LIVE per-tick decision (unchanged,
         // via gDashS[6]). Template selection now branches on _confDirLabel (global,

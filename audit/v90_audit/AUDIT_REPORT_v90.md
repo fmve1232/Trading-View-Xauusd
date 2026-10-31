@@ -334,13 +334,13 @@ None of these are implemented. Each needs a pre-registered amendment on the webs
 |---|---|---|---|---|---|
 | **1: Critical maths / logic** | B-01: lots include cost (Master). **DONE v91 (F-A79)** | High | token measurement (Master < 80 free) | Low code, high token risk | Realised risk ≤ stated risk |
 | 1 | B-02: one account default (Master `accountSize` = 25,000, no token cost); Visuals states which stop it uses. **DONE v91 (F-A80)** | High | operator OK | Very low | One lot size on the chart |
-| 1 | B-09: risk lock evaluated on every bar, not only the last 120 | Medium | token measurement | Medium | The lock survives reloads on 5m / 1m |
+| 1 | B-09: risk lock evaluated on every bar, not only the last 120. **DONE v92 (F-A82)** | Medium | token measurement | Medium | The lock survives reloads on 5m / 1m |
 | **2: Engine / strategy** | B-03 (engine part): dated calendar → `newsWindow` incl. FOMC | Medium | **website amendment** (engine is frozen, A7) | Medium | Correct ABNORMAL regime on release days |
 | 2 | B-08: drop or fix the dead `rangeResidual` term | Low | website amendment; never tuned | Low | Clarity (the numbers stay the same unless redefined) |
 | 2 | B-05 session definitions | Low | operator decision plus amendment | Low | Labels match convention |
 | **3: Statistics / probability** | R1: re-calibration or veto removal, judged on A13; H6 record | High | website (A12 / A13) | Medium | Stops a no-skill score gating trades |
 | 3 | B-06: scorecard in R | Medium | twins identical (hunk counts) | Low | Display matches the registered rule |
-| **4: Execution / risk** | R2 / B-03 (display part): news cost multiplier in Visuals' COST / RISK rows | Medium | broker spreads (operator) | Low | Honest cost at release minutes |
+| **4: Execution / risk** | R2 / B-03 (display part): news cost multiplier in Visuals' COST / RISK rows. **DONE v92 (F-A83)**; engine part still needs a website amendment | Medium | broker spreads (operator) | Low | Honest cost at release minutes |
 | 4 | B-04: spread tiers as broker-sourced values | Low | broker data | Low | Session costs become real |
 | **5: Dashboard / performance** | B-14 / R8: decision vs context markers | Medium | Visuals only | Low | Less over-reading |
 | 5 | B-11 / B-12 / B-13: label wording (VWAP band, "HV" relative to 50 bars, live sweep) | Low | — | Low | Accuracy of wording |
