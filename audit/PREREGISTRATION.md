@@ -955,3 +955,33 @@ main account, once your MT5 evidence is in, so that the forward test restarts on
    indicative, not a restatement of the ledger.
 4. The impact figures are in-sample, on 2–8 months of data: small samples, one market regime.
 5. The broker commission and spread are not yet verified from MT5 evidence (`audit/COST_PROFILES.md`).
+
+**Amendment 14 start record (2026-10-31 UTC).** Deployed by merge `3e32d4ba44940893bfbdd3ad42bda49ebfc90cc5` (PR #52), run
+`quantum-site` #2280 (Actions run 41224028153). The run recorded the following on `forward-ledger` @ `5f72626c81ee11bf91e5cf9ebbf000f1a8a14de8`:
+
+| Item | Value |
+|---|---|
+| Main key | `5e4630924d663fc5:60bb01794d03c9ac` |
+| Engine | Q7.2-web.7 |
+| Freeze (start) | **2026-10-31 17:23:01.937700 UTC** |
+| Status | RESET |
+
+The web.6 key `5e4630924d663fc5:6f3964ad97813cc9` (2026-10-17 21:26:18 → 2026-10-31 17:23:01) is in `history`.
+
+Arm keys, each started at the same time:
+
+| Arm | Key suffix | Note |
+|---|---|---|
+| H2 | `19433c9889d94f09` | the "stop first" label line changed |
+| H3 | `0eb650f81d99803e` | |
+| H4 | `090418672c210848` | |
+| H5 | `40d438ea0c144199` | |
+| H6 | `7c4ac023578836c6` | |
+
+Every arm keeps its previous key in its own manifest's `history`.
+
+**Archive check:**
+
+- The 798 web.6 trades in the last web.6 snapshot (`a9bc97a1`) are all in `holdout/archive/`; none were lost.
+- No web.6 trade remains in a live ledger.
+- The web.6 summary is `audit/FORWARD_WEB6_FINAL.md`.
