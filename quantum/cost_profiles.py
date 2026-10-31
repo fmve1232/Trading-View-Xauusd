@@ -86,12 +86,15 @@ def commission_per_lot(profile: dict, price: float, conservative: bool = True) -
     return per * _sides(c["basis"], conservative)
 
 
-def round_trip_cost_per_oz(profile: dict, price: float, engine_spread: float, conservative: bool = True) -> float:
-    """Spread + 2 x slippage + commission / 100 oz: the engine's own formula, with this profile's inputs.
-    Spread and slippage are counted once each (spread is a round-trip quantity; slippage is per side)."""
+def round_trip_cost_per_oz(profile: dict, price: float, engine_spread: float, conservative: bool = True,
+                           news_mult: float = 1.0) -> float:
+    """(Spread + 2 x slippage) x news_mult + commission / 100 oz: the engine's own formula, with this profile's inputs.
+    Spread and slippage are counted once each (spread is a round-trip quantity; slippage is per side). Inside a dated
+    news window the site passes news_mult (3, Pine Visuals v92 B-03); commission is per lot and does not widen."""
     s = profile["spread"]
     spread = engine_spread if s["mode"] == "engine" else float(s["value"])
-    return spread + 2.0 * float(profile["slippage"]) + commission_per_lot(profile, price, conservative) / CONTRACT_OZ
+    m = news_mult if news_mult and news_mult >= 1.0 else 1.0
+    return (spread + 2.0 * float(profile["slippage"])) * m + commission_per_lot(profile, price, conservative) / CONTRACT_OZ
 
 
 def export() -> list[dict]:

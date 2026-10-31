@@ -58,3 +58,12 @@ changed it:
 |---|---|---|
 | v74, v75 | Visuals docks the gold drivers, the H2 card and liquidity / sweeps under the Master's columns | TradingView table layout; the site shows the same values in its own cards |
 | v76 | H2 card: the last signal's age, outcome and LIVE / STALE | **ported** to the H2 and H3 cards (`report.signal_status`, display only) |
+| v77–v81, v87 | dock rows, MARKET AT A GLANCE, gauges, bottom ticker, drawing defaults | TradingView layout; the site has its own layout for the same information |
+| v82 (F-A70) | no NaN in the trend scores | **already equal**: missing values print "—" |
+| v83 (F-A71) | news-suppression input labelled UTC, runs in New York time | not applicable: the site has no such input (off by default); its engine news window is the shared date guess (F-A74) |
+| v84 / v85 | alerts on every sweep, CHoCH and signal; H2 sweep with the swept level | BOS / CHoCH / MSS / sweep alerts **already existed** (v49); **ported**: the swept pool and price in the alert (`report.swept_levels`) |
+| v86 | CHECKS & RISK: dated news calendar, cost vs ATR, churn, daily loss cap, Wilson ranges on session history | **ported** (Risk & sizing card "Checks"; session card ranges; news alert) |
+| v88 (F-A76) | one macro verdict | **already equal** |
+| v89 / v91 | 25,000 account default; lots include the round-trip cost | **ported** (sizing default); the cost was on the site first (D-13) |
+| v90 (F-A77, F-A78) | Brief follows the H4 verdict; P measured without skill | the site's own rule and relabel (Amendment 12) |
+| v92 (F-A82, F-A83) | risk lock counts every bar after a reload; news-time cost ×3 | the site has always counted every bar (`backtest_all_bars`); **ported**: news-time cost in sizing |
