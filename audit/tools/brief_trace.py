@@ -300,22 +300,65 @@ for _ in range(N_GATE):
 report("gold arrows: Brief grid glyph == Master _arrowStr (DXY lines, both executed)", bad, f"Brief L{fal}, Master L{a + 1}, {N_GATE} states incl. flat, weak |r|, na r, no data")
 report("gold arrows: colour == direction for gold (green ▲ / red ▼ / grey ≈ / dim —); flat never ▼", spec, f"{N_GATE} states")
 
-# ---- 7. v54 DO NOW == the site's doNow line (Node), driven by the engine DECISION, every state (F-A55)
+# ---- 7. v54 DO NOW == the site's doNow line (Node), driven by the engine DECISION, every state (F-A55); v90 (F-A77):
+# with the site's h4Losing (its own line, run in Node on a D.h4.forward built like backtest.metrics: t_stat = mean /
+# (sd / sqrt n), null when sd = 0 or n < 2) against the Brief's per-timeframe record lines, records above / below
+# N = 50 and t = -2, every timeframe the Brief types a record for, and one it does not
 dl = js[js.index('const doNow = '):]
 dl = dl[:dl.index(';') + 1]
+hl = js[js.index('const h4Losing = '):]
+hl = hl[:hl.index('\n')]     # the whole one-line definition (its body has ';' inside)
 DECS = ['RISK LOCK', 'NO TRADE', 'BUY', 'SELL', 'WARMUP', 'WAIT']
-cases = [(d, s_, b_) for d in DECS for s_ in (True, False) for b_ in (True, False)]
-nodejs2 = ("const out = []; for (const [dec, s, b] of " + json.dumps(cases) + ") { const sig = dec === 'BUY' || dec === 'SELL';"
-           " const pb0 = !sig ? {sell: s ? {} : null, buy: b ? {} : null} : null; " + dl + " out.push(doNow); } console.log(JSON.stringify(out));")
+RECS = [(0, 0.0, 0.0), (49, -0.5, 0.6), (50, -0.5, 0.6), (50, -0.17, 0.6), (511, -0.1789, 0.8513), (171, -0.092, 0.8006),
+        (60, 0.3, 0.7), (60, -0.2, 0.0), (1, -1.0, 0.5)]
+TFS = ['5', '15', '60', '240', 'D']
+
+
+def tstat(n_, m_, s_):
+    return m_ / (s_ / math.sqrt(n_)) if s_ > 0 and n_ > 1 else None
+
+
+cases = [(d, s_, b_, n_, m_, sd_) for d in DECS for s_ in (True, False) for b_ in (True, False) for (n_, m_, sd_) in RECS]
+nodejs2 = ("const isNum = (x) => typeof x === 'number' && isFinite(x); " + hl + " const out = []; for (const [dec, s, b, n, t] of "
+           + json.dumps([(d, s_, b_, n_, tstat(n_, m_, sd_)) for d, s_, b_, n_, m_, sd_ in cases]) + ") { const D = {h4: {forward: {n: n, t_stat: t}}};"
+           " const sig = dec === 'BUY' || dec === 'SELL'; const pb0 = !sig ? {sell: s ? {} : null, buy: b ? {} : null} : null; "
+           + dl + " out.push(doNow); } console.log(JSON.stringify(out));")
 site = json.loads(subprocess.run(['node', '-e', nodejs2], capture_output=True, text=True, check=True).stdout)
 DN, dnl = block(r'^    bool sig = _confDirLabel', r'^    string doNow = ')
 DN = [l for l in DN if l.startswith(('bool sig', 'string doNow'))]
-bad = 0
-for (d, s_, b_), want in zip(cases, site):
-    e = P.Env(_confDirLabel=d, pbOK=s_ or b_)
-    P.run(DN, e)
-    bad += e['doNow'] != want
-report("DO NOW == site doNow (engine DECISION x playbook sides)", bad, f"L{dnl}, {len(cases)} states (Node)")
+RL = [l for l in SRC if l.startswith(('string brTf = ', 'int brH4N = ', 'float brH4M = ', 'float brH4S = ', 'float brH4T = ', 'bool h4Losing = '))]
+bad = nst = 0
+for tf in TFS:
+    for (d, s_, b_, n_, m_, sd_), want in zip(cases, site):
+        e = P.Env(_confDirLabel=d, pbOK=s_ or b_, **{"timeframe.period": tf})
+        for k in ('5', '15', '60', '240'):     # the record typed for THIS timeframe; the others hold a different record
+            on = k == tf
+            e.update({f"brH4N{k}": float(n_ if on else 999), f"brH4M{k}": m_ if on else 1.0, f"brH4S{k}": sd_ if on else 0.5})
+        P.run(RL + DN, e)
+        exp = want if tf != 'D' else site[cases.index((d, s_, b_, 0, 0.0, 0.0))]     # no record typed for D: never losing
+        bad += e['doNow'] != exp
+        nst += 1
+report("DO NOW == site doNow with its h4Losing (engine DECISION x playbook sides x live H4 record x timeframe)", bad,
+       f"L{dnl}, {nst} states (Node)")
+# the Brief's typed record defaults == the ledger files recomputed (as of the ledger update they name)
+led_bad, led_note = 0, []
+for k, f in (('5', '5m_h4'), ('15', '15m_h4'), ('60', '1h_h4'), ('240', '4h_h4')):
+    dN = int(re.search(rf'brH4N{k} = input\.int\((\d+),', "\n".join(SRC)).group(1))
+    dM = float(re.search(rf'brH4M{k} = input\.float\(([-\d.]+),', "\n".join(SRC)).group(1))
+    dS = float(re.search(rf'brH4S{k} = input\.float\(([-\d.]+),', "\n".join(SRC)).group(1))
+    try:
+        rows = json.loads(subprocess.run(['git', 'show', f'origin/forward-ledger:holdout/{f}.json'], capture_output=True, text=True,
+                                         check=True).stdout)
+    except subprocess.CalledProcessError:
+        led_note.append(f"{f} NOT RUN (ledger not reachable)")
+        continue
+    r_ = [t['r'] for t in rows if isinstance(t, dict) and not t.get('open') and t['recorded_utc'] <= '2026-10-31T00:58:10']
+    mu = sum(r_) / len(r_)
+    sdv = math.sqrt(sum((x - mu) ** 2 for x in r_) / (len(r_) - 1))
+    ok = len(r_) == dN and abs(mu - dM) < 5e-5 and abs(sdv - dS) < 5e-5
+    led_bad += not ok
+    led_note.append(f"{f} N {len(r_)} mean {mu:.4f} sd {sdv:.4f} t {tstat(len(r_), mu, sdv):.2f}")
+report("H4 live-record defaults == the ledger files recomputed", led_bad, "; ".join(led_note))
 
 print(f"RESULT: {'PASS' if fails == 0 else 'FAIL'} -- Pine text executed in Python against the website's code "
       "(arm_h4.py in Python, app.js in Node); TradingView runtime NOT exercised")

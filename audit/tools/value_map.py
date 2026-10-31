@@ -86,7 +86,7 @@ BROWS = [
     ("11 Brief", "GATES n/7", "g", r"bool\[\] g = array\.from",
      "the seven conditions of shouldBuy / shouldSell on the bias side", "brief_trace.py (7/7 <=> engine signal)"),
     ("11 Brief", "DO NOW", "doNow", r"string doNow = sig",
-     "the engine DECISION (_confDirLabel, the Master's line, diag_parity.py): BUY/SELL now > risk lock > wait for a playbook trigger > stay flat > no trade",
+     "the engine DECISION (_confDirLabel, the Master's line, diag_parity.py): BUY/SELL now > risk lock > wait for a playbook trigger (not when this timeframe's live H4 record is losing: N >= 50, t <= -2, the site's h4Losing, v90) > stay flat > no trade",
      "brief_trace.py (vs the site's doNow, Node); diag_parity.py (22 DECISION/gate/veto lines Master == twin)"),
     ("11 Brief", "ENGINE / DATA rows (moved from the Master's cross-check line, v57)", "_xT.._xQ, tradeQuality, confidenceScore, gcState ...", r"f_brC\(brT, 10, \"ENGINE\"",
      "T/S/L/M arrows, Q veto state, TQ / C scores, value-area position, structure, risk lock, VIX, climax; GC / OI / COT / 2s10s and the feed status codes",

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v89   (records refreshed)            ║
+// ║  BUILD STAMP — this file last CHANGED in v90   (score row: measured)          ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1969,7 +1969,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
         r += 1
         _tmHead(r, "CHECKS · RISK", "display only · v86", _tmSec)
         r += 1
-        _tmRow(r, "SCORE", "the Master's L / S / R and mP are SCORES, not win odds" + (_cmp ? "" : "\nDiagnostics RELIABILITY (Oct 2026): top band 52% predicted, 26% seen"), _amb)
+        _tmRow(r, "SCORE", "the Master's L / S / R and mP are SCORES, not win odds" + (_cmp ? "" : "\nmP measured out of sample (audit, Oct 2026): AUC 0.48-0.53,\nno better than chance; trust the levels, not the %"), _amb)
         r += 1
         _tmRow(r, "NEWS", (nwNowIn ? "IN THE WINDOW · " : "next ") + nwNext + (na(nwMs) or nwNowIn ? "" : " · in " + f_dur(nwMs)) + (_cmp ? "" : "\nwindow −" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min · official BLS / Fed dates"), nwLv == 2 ? _tmDn : nwLv == 1 ? _amb : _tmV)
         r += 1

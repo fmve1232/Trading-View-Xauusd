@@ -16,6 +16,30 @@ brAlert = input.bool(true, "Alert when a playbook trigger fires (info, not a DEC
 brGPos = input.string("Bottom Left", "Gold-arrow grid position", options=["Bottom Left", "Bottom Right", "Middle Right", "Top Left", "Hidden"], group=grpBrief) // v61: default off the panel's column
 brLayout = input.string("Full", "Panel layout", options=["Full", "Compact (phone)"], group=grpBrief, tooltip="Compact: TREND, DO NOW, the playbook and the gates only, for a phone-width chart. Full adds heading, last sweep, target, playbook note, engine cross-check and data feeds.")
 bool brCompact = brLayout == "Compact (phone)"
+// v90 (F-A77): the website's H4 verdict (site/app.js h4Losing, 2026-10-22). Each timeframe is judged on ITS OWN live H4
+// record: with N >= 50 and t = mean R / (sd / sqrt N) <= -2 (backtest.metrics t_stat), the site's DO NOW no longer says
+// "Wait for a trigger" and the playbook triggers are levels, not entries. Pine cannot read the ledger, so the records
+// are typed in per timeframe (defaults: the ledger as of 2026-10-31 00:58 UTC; brief_trace.py 7 runs the site's own
+// h4Losing / doNow lines in Node against these lines, and recomputes the defaults from the ledger files).
+brH4Asof = input.string("2026-10-31 00:58 UTC", "H4 live record: as of", group=grpBrief)
+brH4N5 = input.int(511, "H4 5m: N", minval=0, maxval=100000, group=grpBrief, inline="h45")
+brH4M5 = input.float(-0.1789, "mean R", minval=-10.0, maxval=10.0, step=0.0001, group=grpBrief, inline="h45")
+brH4S5 = input.float(0.8513, "sd R", minval=0.0, maxval=20.0, step=0.0001, group=grpBrief, inline="h45")
+brH4N15 = input.int(171, "H4 15m: N", minval=0, maxval=100000, group=grpBrief, inline="h415")
+brH4M15 = input.float(-0.0920, "mean R", minval=-10.0, maxval=10.0, step=0.0001, group=grpBrief, inline="h415")
+brH4S15 = input.float(0.8006, "sd R", minval=0.0, maxval=20.0, step=0.0001, group=grpBrief, inline="h415")
+brH4N60 = input.int(49, "H4 1h: N", minval=0, maxval=100000, group=grpBrief, inline="h460")
+brH4M60 = input.float(-0.1867, "mean R", minval=-10.0, maxval=10.0, step=0.0001, group=grpBrief, inline="h460")
+brH4S60 = input.float(0.6343, "sd R", minval=0.0, maxval=20.0, step=0.0001, group=grpBrief, inline="h460")
+brH4N240 = input.int(12, "H4 4h: N", minval=0, maxval=100000, group=grpBrief, inline="h4240")
+brH4M240 = input.float(-0.1070, "mean R", minval=-10.0, maxval=10.0, step=0.0001, group=grpBrief, inline="h4240")
+brH4S240 = input.float(0.8853, "sd R", minval=0.0, maxval=20.0, step=0.0001, group=grpBrief, inline="h4240")
+string brTf = timeframe.period
+int brH4N = brTf == "5" ? brH4N5 : brTf == "15" ? brH4N15 : brTf == "60" ? brH4N60 : brTf == "240" ? brH4N240 : 0
+float brH4M = brTf == "5" ? brH4M5 : brTf == "15" ? brH4M15 : brTf == "60" ? brH4M60 : brTf == "240" ? brH4M240 : na
+float brH4S = brTf == "5" ? brH4S5 : brTf == "15" ? brH4S15 : brTf == "60" ? brH4S60 : brTf == "240" ? brH4S240 : na
+float brH4T = brH4N > 1 and brH4S > 0 ? brH4M / (brH4S / math.sqrt(brH4N)) : na
+bool h4Losing = brH4N >= 50 and not na(brH4T) and brH4T <= -2
 f_brSt(int c) => c == 0 ? "OK" : c == 1 ? "NA" : c == 2 ? "STALE" : "BAD"
 brSz = brTxt == "Tiny" ? size.tiny : brTxt == "Normal" ? size.normal : size.small
 
@@ -214,14 +238,15 @@ if barstate.islast
         gp += ok ? 1 : 0
         gl += (k == 4 ? "\n" : k > 0 ? " " : "\n") + (ok ? "✓" : "✗") + array.get(gn, k)
         need += ok ? "" : (need == "" ? "" : " + ") + array.get(gn, k)
-    // site/app.js doNow, same order: signal > risk lock > playbook > WAIT > no trade (brief_trace.py runs both)
-    string doNow = sig ? _confDirLabel + " now" : _confDirLabel == "RISK LOCK" ? "Stop · risk lock" : pbOK ? "Wait for a trigger" : _confDirLabel == "WAIT" ? "Stay flat · wait" : "No trade"
-    f_brC(brT, 5, "DO NOW", doNow + (sig ? "\nenter with the Master's MT5 plan" : " · DECISION " + _confDirLabel) + (sig or not pbOK ? "" : "\n" + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : "\n") + (na(bT) ? "" : "buy above " + f_brP(bT)) + "\n(on a " + timeframe.period + " close)") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : need == "" ? "\nall 7 gates pass, blocked by\n" + (_confDirLabel == "RISK LOCK" ? "the risk lock" : _confDirLabel == "WARMUP" ? "the statistics warm-up" : "the TQ floor / negative EV / calibration veto") : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session\n(the engine trades London / NY)" : ""), sig ? (_confDirLabel == "BUY" ? cU : cD) : cW)
+    // site/app.js doNow, same order: signal > risk lock > playbook (unless its live record is losing, v90) > WAIT > no trade
+    // (brief_trace.py runs both)
+    string doNow = sig ? _confDirLabel + " now" : _confDirLabel == "RISK LOCK" ? "Stop · risk lock" : pbOK and not h4Losing ? "Wait for a trigger" : _confDirLabel == "WAIT" ? "Stay flat · wait" : "No trade"
+    f_brC(brT, 5, "DO NOW", doNow + (sig ? "\nenter with the Master's MT5 plan" : " · DECISION " + _confDirLabel) + (sig or not pbOK ? "" : "\n" + (h4Losing ? "levels only (losing H4 record):\n" : "") + (na(sT) ? "" : "sell below " + f_brP(sT)) + (na(sT) or na(bT) ? "" : "\n") + (na(bT) ? "" : "buy above " + f_brP(bT)) + "\n(on a " + timeframe.period + " close)") + (sig ? "" : rangeDominant ? "\nengine: ranging, no side has an edge" : need == "" ? "\nall 7 gates pass, blocked by\n" + (_confDirLabel == "RISK LOCK" ? "the risk lock" : _confDirLabel == "WARMUP" ? "the statistics warm-up" : "the TQ floor / negative EV / calibration veto") : "\nengine waits for: " + need) + (sessionQuality < 30 ? "\n" + sess + " session\n(the engine trades London / NY)" : ""), sig ? (_confDirLabel == "BUY" ? cU : cD) : cW)
     f_brC(brT, 6, "▼ SELL" + (prim < 0 ? " (lean)" : ""), sig or na(sT) ? "—" : "close < " + f_brP(sT) + " " + sN + (px < sT ? " · price through it: fires if this bar closes here" : " · away " + f_brD(sT - px)) + "\nstop " + f_brP(sS) + " · R:R 1:" + str.tostring(sR, "0.0") + "\nTP1 " + s1n + " " + f_brP(s1) + (s2 != s1 ? "\nTP2 " + s2n + " " + f_brP(s2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cD)
     f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "close > " + f_brP(bT) + " " + bN + (px > bT ? " · price through it: fires if this bar closes here" : " · away " + f_brD(bT - px)) + "\nstop " + f_brP(bS) + " · R:R 1:" + str.tostring(bR, "0.0") + "\nTP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? "\nTP2 " + b2n + " " + f_brP(b2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cU)
     f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
     if not brCompact
-        f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\narm H4's record is on the website\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
+        f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\nH4 live " + brTf + ": " + (brH4N > 0 ? "N " + str.tostring(brH4N) + (na(brH4T) ? "" : " t " + str.tostring(brH4T, "#.##")) : "no record typed in") + (h4Losing ? " LOSING:\nlevels, not entries" : "") + " (" + brH4Asof + ")\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
     // v57: the engine cross-check and data feeds, MOVED here from the Master (token room for its phone card);
     // same engine (diag_parity.py), so the same values the Master's cross-check line showed; the schema text is the
     // Master's v56 `schemaLine` wording exactly (the twin's own migState words it differently). moved_check.py holds it.

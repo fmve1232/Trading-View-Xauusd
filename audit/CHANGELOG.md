@@ -3144,3 +3144,41 @@ Only **Visuals** changed. Display only; no engine, gate or threshold change.
 - tf_check: see the build record.
 
 **Compile NOT RUN.**
+
+---
+
+# v90 — institutional audit (operator's 17-phase mandate, 2026-10-31)
+
+**Report:** `audit/INSTITUTIONAL_AUDIT_v90.md`. Score 6.3 / 10: functional with material limitations. Not ready for
+probability-driven decisions.
+
+**Changed:**
+- **Brief** (F-A77, fixed): the website's per-timeframe H4 verdict (`h4Losing`), with the records typed in. DO NOW
+  and PLAYBOOK follow the site; on 5m today they say "levels only (losing H4 record)".
+- **Visuals:** the SCORE row states the measured result (F-A78). This is text only.
+
+**Unchanged:** the Master, Diagnostics and the arms.
+
+**New tools:**
+- `ledger_stats.py`: forward-ledger statistics with Wilson / exact-t / bootstrap intervals, PF, drawdown and the
+  pre-cost mean. Unit-tested.
+- `engine_dump.py`: runs the website engine read-only on a copy of its store.
+- `engine_calibration.py`: scores the engine's probability against an independently labelled event, with block
+  bootstrap. Validated on synthetic forecasts.
+
+**Extended:**
+- `brief_trace.py` 7: the site's `h4Losing` in Node, 1,080 states; the ledger defaults are recomputed.
+- `value_map.py`: the DO NOW rule text.
+
+**New findings:**
+- F-A77: the Brief drifted from the website (fixed).
+- **F-A78: the engine probability has no skill** (AUC 0.48–0.53, negative Brier skill; open, website).
+
+**Not opened:** the A11 sealed research data.
+
+**Checks:**
+- 30 tool runs, 0 FAIL (VALUE_TRACEABILITY regenerated: line numbers + the DO NOW rule).
+- compile_est: Brief 98,797 / 99,404, i.e. 0.85–1.5% under the limit.
+- tf_check: see the build record.
+
+**Compile NOT RUN on v90.**
