@@ -39,7 +39,7 @@ presentational, not arithmetic.
 | Execution and risk | **Fair** | Costs are consistent between the model and the strategy files and are not double counted. But the Master's lot size omits cost (B-01, risk 8–24% over the ceiling), two lot sizes appear on the chart (B-02), and there is no news-time cost or default news block (B-03). |
 | Pine engineering | **Good statically; compile unverified** | 0 static issues, 0 dead values (with the companion rule), 26 checkers. **TradingView compile of v86–v90: NOT RUN.** The Master has under ~80 tokens of headroom. |
 | Dashboard | **Accurate but easy to over-read** | Values trace to their engines (Visuals' MACRO is the Master's, verbatim). Many prominent items cannot change a BUY / SELL (B-14). |
-| Checkers | **Strong but not a proof** | Executed-Pine checkers are genuine. Several "passes" are frozen-text tripwires. `bug_scan` never fails (C-02). Mutation results: Report 10. |
+| Checkers | **Strong but not a proof** | Executed-Pine checkers are genuine. Several "passes" are frozen-text tripwires. `bug_scan` never fails (C-02). Seeded defects: **8 / 18 caught by a behavioural test**, 8 tripwire-only, 1 incidental, 1 missed (see Mutation results). |
 
 **Production readiness:**
 
@@ -391,4 +391,67 @@ python3 audit/tools/ledger_stats.py                  # Report 5 / 6 evidence
 
 ## Mutation results
 
-(filled in from `v90_mutation.py` when the run completes)
+`v90_mutation.py`, 2026-10-31. Each defect was seeded alone into a scratch copy of the repository; the baseline was
+not touched (its hash was re-checked before and after). Twenty-six checkers ran on each copy; `tf_check` is listed
+separately.
+
+**How each result is classified:**
+
+| Class | Meaning |
+|---|---|
+| **Semantic** | A checker tested the behaviour. |
+| **Structural (incidental)** | Only `deadcode` noticed, because the mutation left a value unread. |
+| **Tripwire-only** | Only a frozen-text check noticed the edit. It would pass after a legitimate refresh. |
+| **Missed** | Nothing failed. |
+
+| # | Seeded defect | Semantic | Structural (incidental) | Tripwire | Verdict |
+|---|---|---|---|---|---|
+| m01 | Daily request `close` without `[1]` under `lookahead_on` (repaint) | bug_scan R1 count *(exit 0: only if the count is read, C-02)* | — | refactor_check, v86 §9 | **Caught only by reading the screen** |
+| m02 | Kelly loss term with the wrong sign | formula_trace | — | refactor, edgecase_cites, v86 §9 | **Caught** |
+| m03 | Lots rounded to NEAREST (risk can exceed the ceiling) | — | — | refactor, v86 §9 | **Tripwire-only** |
+| m04 | Outcome race one bar short | pine_web_parity | — | refactor, v86 §9 | **Caught** |
+| m05 | US DST starts on the 1st Sunday of March | — (tf_check: see below) | — | refactor, v86 §9 | **Tripwire-only in the suite** |
+| m06 | Session floor 30 → 20 (Master only) | diag_parity, decision_check | — | refactor, v86 §9 | **Caught** |
+| m07 | Abnormal size haircut 0.5 → 0.6 (Master only) | regime_check | — | refactor, v86 §9 | **Caught** |
+| m08 | Dashboard: L and S scores swapped in the SIGNAL cell | — | — | refactor, v86 §9 | **Tripwire-only** |
+| m09 | PDH pool reads the previous day's LOW | — | deadcode (`prevNyDailyHigh` became unread) | refactor, v86 §9 | **Incidental only** |
+| m10 | BUY `alertcondition` without `barstate.isconfirmed` | bug_scan A1 count *(exit 0, C-02)* | — | refactor, v86 §9 | **Caught only by reading the screen** |
+| m11 | Plan expectancy without the cost term | formula_trace | deadcode | refactor, edgecase_cites, v86 §9 | **Caught** |
+| m12 | Visuals EMA20 no longer white | — | — | — | **MISSED** |
+| m13 | Abnormal-ATR multiple 2.5 → 2.0 in **every** engine copy consistently | — | — | refactor, v86 §9 | **Tripwire-only** |
+| m14 | Visuals cost row drops the commission | v86_check (executed cost §) | deadcode | — | **Caught** |
+| m15 | Scorecard PF rule 1.2 → 1.0 in all three twins | — | — | refactor | **Tripwire-only** |
+| m16 | H2 sweep `close >= level` in all three H2 copies | — | — | refactor, v86 §9 | **Tripwire-only** |
+| m17 | CDH / CDL never reset at the NY day boundary | — (tf_check: see below) | — | refactor, v86 §9 | **Tripwire-only in the suite** |
+| m18 | Kelly Wilson z 1.96 → 1.645 | formula_trace | — | refactor, v86 §9 | **Caught** |
+
+**Summary: 8 / 18 caught by a behavioural test**, including 2 only through `bug_scan`'s printed counts. The rest:
+
+| Outcome | Count | Mutants |
+|---|---:|---|
+| Incidental (`deadcode` only) | 1 | m09 |
+| Tripwire-only | 8 | m03, m05, m08, m13, m15, m16, m17, and m01 / m10 if `bug_scan`'s counts are not read |
+| Missed entirely | 1 | m12 |
+
+**What this means:**
+
+1. The suite reliably blocks **unreviewed** edits: the tripwires fire on any change. Once a legitimate change
+   refreshes them, **about half of the realistic defect classes have no behavioural test**:
+   - lot rounding;
+   - DST rule (outside `tf_check`);
+   - dashboard cell wiring;
+   - PDH / CDH level definitions;
+   - an engine constant changed consistently in every copy;
+   - the scorecard decision rule;
+   - the H2 sweep comparison;
+   - colours.
+2. Parity checkers catch **drift** (m06). By construction they cannot catch a defect copied into every copy (m13,
+   m16).
+3. Proposed additions (Phase 6 of the roadmap):
+   - an executed sizing test (m03);
+   - an executed level test for PDH / PDL / PWH / CDH against a reference on real bars (m09, m17);
+   - a dashboard-cell wiring test, like `panel_check`, for the Master (m08);
+   - an executed scorecard-rule test (m15);
+   - an H2 sweep boundary case in `h2_trace` (m16);
+   - a plot-colour assertion for the operator's requirements (m12);
+   - `bug_scan` as a gate (C-02).

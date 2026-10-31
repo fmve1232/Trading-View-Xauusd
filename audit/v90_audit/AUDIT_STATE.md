@@ -22,12 +22,12 @@
 |---|---|---|---|
 | S1 | File verification, structural inventory, architecture | 1 (part), 10 (part) | **DONE** |
 | S2 | Targeted independent verification: cost, news, levels, sessions, MTF, sizing, Kelly, calibration, alerts, scorecard | 3, 6, 8, 9 (part) | **DONE** |
-| S3 | Machine variable register (all 9 files) plus validation of every checker's assumptions | 2, 16 | **DONE except the mutation table** (run in progress) |
+| S3 | Machine variable register (all 9 files) plus validation of every checker's assumptions | 2, 16 | **DONE** |
 | S4 | Engine-by-engine audit plus dependency map (raw data → DECISION → dashboard) | 4, 7 | **DONE** (lexical slice; per-engine detail in S8 report) |
 | S5 | Indicator and structure formulas (ATR, EMA, VWAP, BB, pivots, BOS / CHoCH / MSS, EQH / EQL, FVG, OB, sweeps) | 3 | **DONE** |
 | S6 | Strategy comparison (Treatment, OLDGATES, CHALLENGER, H2) against ledger evidence | 5 | **DONE** |
 | S7 | Macro and intermarket; edge cases and stress | 9, 11 | **PARTIAL** (stress tests to design in S8) |
-| S8 | Research-based improvements (cited), remediation roadmap, executive summary | 12, 13, 1 | Open |
+| S8 | Research-based improvements (cited), remediation roadmap, executive summary | 12, 13, 1 | **DONE**: `AUDIT_REPORT_v90.md` |
 
 ## S1: file verification and inventory (DONE)
 
@@ -240,7 +240,7 @@ Read from each tool's code and docstring, then confirmed by the mutation run bel
 the baseline) and runs 26 checkers. Each kill is classified as either **semantic** (a checker tested the behaviour) or
 **tripwire-only** (a frozen-text anchor noticed the edit).
 
-Results: see the table inserted below when the run completes (`MUTATION_RESULTS`).
+Results: **8 / 18 caught by a behavioural test** (2 of them only through `bug_scan`'s printed counts), 1 incidental, 8 tripwire-only, 1 missed (EMA20 colour). Full table: `AUDIT_REPORT_v90.md`, "Mutation results".
 
 ## S4: engines and dependency map
 
@@ -412,6 +412,6 @@ Some of these are covered elsewhere: regime_check (ATR floor), panel_check 9 / v
 - Broker spread / commission / contract size / MT5 offset (B-03, B-04).
 - An export of `mP` history, to measure F-A78 on the Pine engine itself.
 
-## Next: insert the mutation table, then S8 (research, Reports 1–13, roadmap)
+## Next: operator review of the roadmap (Report 13). Nothing is implemented without approval.
 
 Continue from here. Do not modify the baseline.
