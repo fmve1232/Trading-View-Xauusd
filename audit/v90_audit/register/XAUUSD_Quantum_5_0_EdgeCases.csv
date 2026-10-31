@@ -1,0 +1,39 @@
+symbol,line,kind,reads,writes,declared_in_other_files,definition
+tName,56,var,4,0,0,array.new_string(0)
+tGot,57,var,3,0,0,array.new_string(0)
+tWant,58,var,3,0,0,array.new_string(0)
+tPass,59,var,3,0,0,array.new_bool(0)
+tClass,60,var,2,0,0,array.new_string(0)
+chk,62,function,99,0,0,
+f,69,function,40,0,0,"na(_v) ? ""na"" : str.tostring(_v, ""#.####"")"
+i,70,function,30,0,0,"na(_v) ? ""na"" : str.tostring(_v)"
+b,71,function,29,0,0,"_v ? ""true"" : ""false"""
+regimeCat,87,function,8,0,0,
+race,114,function,6,0,0,
+calBinCount,138,function,1,0,0,1                       // total always increments
+calBinWin,139,function,2,0,0,_oc == 1 ? 1 : 0        // only oc==1 counts as success
+costCharged,140,function,3,0,0,_cost  // v7+: every outcome pays the round trip
+bayesRate,155,function,7,0,6,_t > 0 ? (_w + 1) / (_t + 2) : 0.5
+bucketQualifies,168,function,3,0,0,_n >= 30
+slopeProj,185,function,5,0,0,"_vr > 1e-6 ? math.min(math.max(_k, 0.0), 0.25) : 0.0"
+icpt,186,function,4,0,0,"math.min(math.max(_my - _k * _mx, -5.0), 5.0)"
+fitUpdated,187,function,2,0,0,_bins >= 3
+probClamp,207,function,4,0,0,"math.min(math.max(_p, 0.05), 0.95)"
+sigmoid,208,function,7,0,0,1.0 / (1.0 + math.exp(-((_score - 50.0) * _k + _b)))
+macroRegime,224,function,9,0,6,
+safeDiv,241,function,3,0,7,_b == 0 ? 0.0 : _a / _b
+macroNeed,269,function,6,0,0,int(math.ceil((6 + (_gcValid ? 1 : 0)) / 2.0))
+raceOut,286,function,6,0,0,_tStop < 9999 and _tStop <= _tTp ? 2 : _tTp < 9999 ? 1 : 0
+raceEnc,287,function,2,0,0,_a + 3 * _b + 9 * _c + 27 * _d + 81 * _e + 243 * _f
+raceDigit,288,function,2,0,0,
+gridInterp,295,function,5,0,0,
+raceEV,297,function,2,0,0,_pw * _rr - _pl + _tmo - _cost
+condP,298,function,2,0,0,_pDir + _pOpp > 0 ? _pDir / (_pDir + _pOpp) : na
+regClamp,299,function,1,0,0,"math.min(math.max(0.5 + (_p - 0.5) * _adj, 0.05), 0.95)"
+bearSlope,300,function,2,0,0,"math.min(math.max(_k, -0.25), 0.0)"
+kellyTri,329,function,1,0,0,(_p * _b - _q) / (_b * (_p + _q))
+cfFwd,330,function,1,0,0,_w + (_w * _w - 1.0) * _s / 6.0 + (_w * _w * _w - 3.0 * _w) * _k / 24.0 - (2.0 * _w * _w * _w - 5.0 * _w) * _s * _s / 36
+cfInv,331,function,3,0,0,
+tT,366,var,10,0,0,"table.new(position.top_left, 5, 100, border_width = 1)"
+harnessText,369,input,2,0,0,"input.string(""Small"", ""Table text size"", options=[""Tiny"", ""Small"", ""Normal""])"
+_hts,370,function,10,0,0,"harnessText == ""Tiny"" ? size.tiny : harnessText == ""Normal"" ? size.normal : size.small"

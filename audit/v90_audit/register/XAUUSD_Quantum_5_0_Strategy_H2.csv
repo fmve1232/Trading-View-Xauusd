@@ -1,0 +1,58 @@
+symbol,line,kind,reads,writes,declared_in_other_files,definition
+h2HtfScore,87,function,3,0,1,na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 
+h2C1,94,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2A1,94,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2B1,94,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2D1,94,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2C4,95,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2A4,95,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2B4,95,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2D4,95,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2CD,96,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2AD,96,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2BD,96,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2DD,96,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2S1,97,value,2,0,2,"h2HtfScore(h2C1, h2A1, h2B1, h2D1)"
+h2S4,98,value,2,0,2,"h2HtfScore(h2C4, h2A4, h2B4, h2D4)"
+h2SD,99,value,2,0,2,"h2HtfScore(h2CD, h2AD, h2BD, h2DD)"
+h2UpN,121,value,1,0,2,(h2S1 >= 60 ? 1 : 0) + (h2S4 >= 60 ? 1 : 0) + (h2SD >= 60 ? 1 : 0)
+h2DnN,122,value,1,0,2,(h2S1 <= 40 ? 1 : 0) + (h2S4 <= 40 ? 1 : 0) + (h2SD <= 40 ? 1 : 0)
+h2TrendUp,123,value,1,0,2,h2UpN >= 2
+h2TrendDn,124,value,1,0,2,h2DnN >= 2
+h2PH,126,value,2,0,2,"ta.pivothigh(high, 5, 5)"
+h2PL,127,value,2,0,2,"ta.pivotlow(low, 5, 5)"
+h2SwH,128,var,6,2,2,na
+h2SwL,129,var,6,2,2,na
+h2SweepL,130,value,3,0,2,barstate.isconfirmed and not na(h2SwL) and low < h2SwL and close > h2SwL
+h2SweepH,131,value,3,0,2,barstate.isconfirmed and not na(h2SwH) and high > h2SwH and close < h2SwH
+h2SweptLvl,132,value,0,0,2,h2SweepL ? h2SwL : h2SweepH ? h2SwH : na
+h2VHi,142,value,2,0,2,"ta.highest(high, 100)"
+h2VLo,143,value,6,0,2,"ta.lowest(low, 100)"
+h2Poc,144,var,6,1,2,na
+h2Vah,145,var,1,1,2,na
+h2Val,146,var,1,1,2,na
+h2Atr,178,value,6,0,2,ta.atr(14)
+h2RL,179,value,4,0,2,h2SweepL ? close - (low - 0.15 * h2Atr) : na
+h2RS,180,value,4,0,2,h2SweepH ? (high + 0.15 * h2Atr) - close : na
+h2Long,181,value,5,0,2,h2SweepL and h2TrendUp and not na(h2Poc) and close <= h2Poc and h2RL >= 0.5 * h2Atr and h2RL <= 5.0 * h2Atr
+h2Short,182,value,5,0,2,h2SweepH and h2TrendDn and not na(h2Poc) and close >= h2Poc and h2RS >= 0.5 * h2Atr and h2RS <= 5.0 * h2Atr
+h2R,183,value,6,0,2,h2Long ? h2RL : h2Short ? h2RS : na
+h2Sl,184,value,2,0,2,h2Long ? close - h2RL : h2Short ? close + h2RS : na
+h2Tp1,185,value,2,0,2,"h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na"
+h2Tp2,186,value,2,0,2,"h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h2Val, close - 2.0 * h2R) : na"
+_costModelValid,189,value,3,0,3,"syminfo.pointvalue == 1.0 and syminfo.currency == ""USD"""
+_mtWarn,190,var,1,1,3,na
+abTestQty,195,value,2,0,3,1.0
+execBuyS,201,value,1,0,3,h2Long and _costModelValid
+execSellS,202,value,1,0,3,h2Short and _costModelValid
+stEntry,203,var,2,2,3,na
+stSL,204,var,10,4,3,na
+stTP1,205,var,6,2,3,na
+stTP2,206,var,4,2,3,na
+stBE,207,var,2,4,3,false
+fwdStart,305,input,4,0,3,"input.time(1791244800000, ""Card start (display only: the record is the website, A7)"", group=""FORWARD TEST"")"
+fwdShow,306,input,1,0,3,"input.bool(true, ""Show forward-test scorecard"", group=""FORWARD TEST"")"
+fwdPos,307,input,3,0,3,"input.string(""Bottom Right"", ""Scorecard position"", options=[""Bottom Right"", ""Bottom Left"", ""Top Right"", ""Top Left""], gro"
+fwdBar0,308,var,3,0,3,time
+fwdTbl,309,var,4,0,3,"table.new(fwdPos == ""Bottom Left"" ? position.bottom_left : fwdPos == ""Top Right"" ? position.top_right : fwdPos == ""Top L"
+_fwRow,310,function,9,0,3,

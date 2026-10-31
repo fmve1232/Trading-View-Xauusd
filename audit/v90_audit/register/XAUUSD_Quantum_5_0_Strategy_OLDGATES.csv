@@ -1,0 +1,1184 @@
+symbol,line,kind,reads,writes,declared_in_other_files,definition
+QVERSION,84,value,0,0,5,"""Q7.2"""
+safeDiv,340,function,14,0,7,not na(a) and not na(b) and math.abs(b) > 1e-10 ? a / b : 0.0
+bayesRate,344,function,12,0,6,t > 0 ? (w + 1) / (t + 2) : 0.5
+cBloomBull,353,value,3,0,5,"color.new(#00C853, 0)"
+cBloomBear,354,value,3,0,5,"color.new(#FF5252, 0)"
+cBloomWarn,355,value,1,0,5,"color.new(#FFC107, 0)"
+cBloomNeut,356,value,1,0,5,"color.new(#9E9E9E, 0)"
+C_TEXT,358,value,1,0,5,color.white
+grpModules,361,value,9,0,5,"""MODULES"""
+perfMode,362,input,4,0,5,"input.bool(false, ""Institutional Performance Mode"", group=grpModules)"
+showFVG,363,input,2,0,6,"input.bool(true, ""Fair Value Gaps (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). FVG detection feeds t"
+showOB,364,input,4,0,6,"input.bool(true, ""Order Blocks (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Order-block detection fe"
+showSMT,365,input,1,0,5,"input.bool(true, ""SMT Divergence (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Gold/silver SMT diverg"
+showClimax,366,input,2,0,5,"input.bool(true, ""Volume Climax (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Volume climax feeds the"
+showAdaptiveATR,367,input,1,0,5,"input.bool(false, ""Adaptive ATR Regime"", group=grpModules)"
+showDisplacement,368,input,2,0,5,"input.bool(true, ""Displacement Candles (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Displacement is "
+showForecastCone,369,input,2,0,4,"input.bool(false, ""Forecast Cone"", group=grpModules)"
+forecastBars,370,input,1,0,5,"input.int(10, ""Forecast Projection"", minval=5, maxval=30, group=""V17 PREDICTIVE ENHANCEMENTS"")"
+forecastZ,371,input,2,0,4,"input.float(2.0, ""Forecast Band (Z multiple of ATR)"", minval=1.0, maxval=3.0, step=0.1, group=""V17 PREDICTIVE ENHANCEMEN"
+showStatsEngine,372,input,17,0,5,"input.bool(true, ""Statistical Engines"", group=grpModules)"
+grpLayout,374,value,5,0,5,"""LAYOUT"""
+dashMode,375,input,0,0,6,"input.string(""Auto"", ""Dash Mode"", options=[""Auto"", ""Desktop"", ""Tablet"", ""MobileLand"", ""MobilePort""], group=grpLayout)"
+mobileOverride,376,input,0,0,5,"input.bool(false, ""☰ Mobile Layout"", group=grpLayout, tooltip=""Force mobile-optimized dashboard for phones/tablets"")"
+textSize,377,input,0,0,6,"input.string(""Auto"", ""Text Size"", options=[""Auto"", ""Small"", ""Medium"", ""Large""], group=grpLayout)"
+density,378,input,0,0,6,"input.string(""Standard"", ""Density"", options=[""Compact"", ""Standard"", ""Spacious""], group=grpLayout)"
+debugMode,379,input,0,0,4,"input.bool(false, ""Debug Mode (Show All Scores)"", group=grpLayout)"
+grpRisk,381,value,12,0,5,"""RISK MANAGEMENT"""
+riskPercent,382,input,5,0,5,"input.float(1.0, ""Risk % per Trade"", minval=0.1, maxval=2.0, step=0.1, group=grpRisk, tooltip=""Capped at 2%: 5-loss stre"
+pointValue,383,input,2,0,6,"input.float(100, ""Value per Point per Lot (USD)"", minval=1, group=grpRisk)"
+useDDBreaker,385,input,1,0,5,"input.bool(false, ""Max Drawdown Signal Breaker"", group=grpRisk, tooltip=""When enabled, blocks new signals if historical "
+maxDdPct,386,input,1,0,5,"input.float(12.0, ""Max DD % Before Signal Block"", minval=5.0, maxval=40.0, step=1.0, group=grpRisk)"
+useCalGate,390,input,1,0,5,"input.bool(true, ""Gate entries on calibrated probability"", group=grpRisk, tooltip=""Vetoes an entry when the CALIBRATED p"
+calGateMinP,391,input,2,0,5,"input.float(0.50, ""  Min calibrated P in trade direction"", minval=0.0, maxval=0.95, step=0.01, group=grpRisk, tooltip=""0"
+spreadCost,392,input,4,0,6,"input.float(0.3, ""Spread Cost (points)"", minval=0.0, maxval=5.0, step=0.1, group=grpRisk, tooltip=""XAUUSD typical spread"
+slippagePts,393,input,2,0,6,"input.float(0.2, ""Slippage (points)"", minval=0.0, maxval=2.0, step=0.1, group=grpRisk, tooltip=""1-tick slippage ~0.1pts,"
+commissionL,400,input,2,0,6,"input.float(7.0, ""Commission per Lot (USD, round turn) [BROKER CONFIG]"", minval=0.0, maxval=50.0, step=0.5, group=grpRis"
+grpClean,402,value,2,0,4,"""CHART CLEANUP"""
+cleanInstitutional,403,input,1,0,4,"input.bool(false, ""Clean Institutional Appearance"", group=grpClean)"
+professionalMode,404,input,1,0,4,"input.bool(false, ""Professional Execution Mode"", group=grpClean)"
+holdoutRatio,405,input,2,0,5,"input.float(0.20, ""Holdout Ratio (OOS validation)"", minval=0.0, maxval=0.5, step=0.05, group=grpRisk)"
+useNewsSuppress,406,input,1,0,5,"input.bool(false, ""Suppress Signals on News Events"", group=grpRisk, tooltip=""Blocks signals during FOMC/NFP windows"")"
+newsSession,407,input,2,0,5,"input.session("""", ""News Event Window (New York time)"", group=grpRisk, tooltip=""Session during which signals are suppress"
+grpCore,409,value,23,0,6,"""CORE"""
+ema20Len,410,input,1,0,6,"input.int(20, ""EMA20"", minval=1, group=grpCore)"
+ema100Len,411,input,1,0,6,"input.int(100, ""EMA100"", minval=1, group=grpCore)"
+ema200Len,412,input,1,0,6,"input.int(200, ""EMA200"", minval=1, group=grpCore)"
+atrLen,413,input,1,0,5,"input.int(14, ""ATR Base"", minval=1, group=grpCore)"
+adxLen,414,input,2,0,5,"input.int(14, ""ADX"", minval=1, group=grpCore)"
+adxThreshold,415,input,18,0,5,"input.int(25, ""ADX Threshold"", minval=10, maxval=50, group=grpCore)"
+rsiLen,416,input,3,0,6,"input.int(14, ""RSI Length"", minval=2, maxval=50, group=grpCore)"
+internalPivotLen,417,input,4,0,5,"input.int(2, ""Internal Pivot Len (fast)"", minval=1, maxval=5, group=grpCore)"
+swingPivotLen,418,input,4,0,5,"input.int(5, ""Swing Pivot Len (major)"", minval=3, maxval=10, group=grpCore)"
+recentBarsLen,419,input,1,0,5,"input.int(120, ""Signal Lookback Bars"", minval=50, maxval=500, group=grpCore)"
+structWindow,420,input,2,0,5,"input.int(8, ""Structure signal validity (bars)"", minval=1, maxval=40, group=grpCore, tooltip=""Q5.8: how long a BOS/CHoCH"
+trendThreshold,425,input,2,0,5,"input.int(60, ""Trend Score Threshold"", minval=51, maxval=90, step=5, group=grpCore)"
+volClimaxPerc,426,input,2,0,5,"input.int(95, ""Volume Climax Percentile"", minval=90, maxval=99, step=1, group=grpCore)"
+eqAtrMult,427,input,1,0,5,"input.float(0.25, ""EQ Tolerance (ATR mult)"", minval=0.05, maxval=1.0, step=0.05, group=grpCore)"
+volLookback,428,input,2,0,5,"input.int(50, ""Volume Climax Lookback"", minval=20, maxval=100, group=grpCore)"
+fvgMaxBars,429,input,1,0,6,"input.int(30, ""FVG Max Bars"", minval=10, maxval=100, group=grpCore)"
+obMaxBars,430,input,6,0,5,"input.int(20, ""OB Max Bars"", minval=10, maxval=50, group=grpCore)"
+liqProxMult,431,input,1,0,5,"input.float(1.5, ""Liq Proximity (ATR)"", minval=0.5, maxval=4.0, step=0.1, group=grpCore)"
+rnGrid,442,input,8,0,5,"input.float(50.0, ""Round-Number Grid (points)"", minval=1.0, maxval=100.0, step=1.0, group=grpCore, tooltip=""Spacing of r"
+minMatchQ,443,input,1,0,5,"input.int(0, ""Min Analog Match Quality (0=auto)"", minval=0, maxval=90, group=grpCore, tooltip=""Q5.2: hard floor on STATE"
+grpRK,444,value,5,0,5,"""RISK LIMITS"""
+useRiskLimits,445,input,5,0,5,"input.bool(true, ""Enable account-state risk limits"", group=grpRK, tooltip=""Q5.6: virtual-R self-tracking. The indicator "
+maxDailyLossR,446,input,2,0,5,"input.float(3.0, ""Daily loss limit (R, 0=off)"", minval=0.0, maxval=20.0, step=0.5, group=grpRK)"
+maxTradesDay,447,input,2,0,5,"input.int(4, ""Max signals per day (0=off)"", minval=0, maxval=50, group=grpRK)"
+maxConsecLoss,448,input,2,0,5,"input.int(3, ""Consecutive-loss halt (0=off)"", minval=0, maxval=20, group=grpRK)"
+lockoutBars,449,input,3,0,5,"input.int(0, ""Cooldown bars (0=until next session day)"", minval=0, maxval=500, group=grpRK)"
+tqMinScore,450,input,2,0,5,"input.int(55, ""Min Trade Quality (0=off)"", minval=0, maxval=90, group=grpCore, tooltip=""R6.0: BUY/SELL signals below thi"
+grpV11,452,value,2,0,5,"""V11 INTELLIGENCE"""
+dispMult,453,input,2,0,5,"input.float(2.5, ""Displacement Multiplier"", minval=1.5, maxval=5.0, step=0.1, group=grpV11)"
+macroTF,454,input,6,0,6,"input.timeframe(""60"", ""Macro Correlation Timeframe"", group=grpV11)"
+grpV17,456,value,18,0,6,"""V17 PREDICTIVE ENHANCEMENTS"""
+dxyRocLen,457,input,2,0,6,"input.int(10, ""DXY Momentum ROC Length (bars)"", minval=5, maxval=30, group=grpV17)"
+useRsiDivFilter,458,input,2,0,5,"input.bool(false, ""RSI Divergence Filter"", group=grpV17)"
+znRocLen,459,input,1,0,6,"input.int(10, ""ZN1 Rate Pressure ROC Length"", minval=5, maxval=20, group=grpV17)"
+yieldSymbol,460,input,2,0,6,"input.symbol(""TVC:US10Y"", ""Yield Symbol (use TVC:US10Y for yield, ZN1! for futures price)"", group=grpV17)"
+invertYield,461,input,3,0,6,"input.bool(false, ""Invert Yield Logic (enable for ZN1! futures price)"", group=grpV17)"
+dxySymbol,462,input,1,0,6,"input.symbol(""TVC:DXY"", ""DXY Symbol"", group=grpV17)"
+silverSymbol,463,input,1,0,6,"input.symbol(""OANDA:XAGUSD"", ""Silver Symbol"", group=grpV17)"
+gcSymbol,481,input,3,0,5,"input.symbol(""COMEX:GC1!"", ""COMEX Gold Futures (blank=off)"", group=grpV17, tooltip=""Centralised gold futures used for CO"
+gcMinTfSec,482,input,1,0,5,"input.int(900, ""  Min chart TF for GC (seconds)"", minval=300, maxval=14400, step=300, group=grpV17, tooltip=""Below this "
+gcVolMult,483,input,1,0,5,"input.float(1.2, ""  Volume-expansion threshold"", minval=1.0, maxval=3.0, step=0.1, group=grpV17)"
+oiSymbol,499,input,4,0,5,"input.symbol(""COMEX:GC1!_OI"", ""Open Interest symbol (blank=off)"", group=grpV17, tooltip=""TradingView OI ticker format is"
+cotEnable,515,input,4,0,5,"input.bool(false, ""CFTC COT positioning (weekly)"", group=grpV17, tooltip=""Managed-money net positioning as a percentile "
+cotLen,516,input,1,0,5,"input.int(52, ""  Percentile lookback (weeks)"", minval=13, maxval=260, group=grpV17)"
+cotExtreme,517,input,2,0,5,"input.int(85, ""  Crowding percentile"", minval=60, maxval=99, group=grpV17, tooltip=""Above this (or below 100-this) posit"
+y2Symbol,526,input,3,0,6,"input.symbol(""TVC:US02Y"", ""US 2Y Yield (blank=off)"", group=grpV17, tooltip=""With US10Y this gives the 2y10y curve spread"
+eurusdSymbol,527,input,1,0,6,"input.symbol(""OANDA:EURUSD"", ""EURUSD Symbol"", group=grpV17)"
+spxSymbol,528,input,1,0,6,"input.symbol(""SP:SPX"", ""S&P 500 Symbol"", group=grpV17)"
+tipsSymbol,529,input,3,0,6,"input.symbol(""TVC:US10Y"", ""TIPS/Real-Yield Symbol (blank=off)"", group=grpV17, tooltip=""Q5.5: default changed from the un"
+grpV19c,531,value,3,0,6,"""V19 CORRELATION"""
+corrShortLen,532,input,6,0,6,"input.int(30, ""Corr Short Window"", minval=10, maxval=50, group=grpV19c)"
+corrMedLen,533,input,6,0,6,"input.int(60, ""Corr Medium Window"", minval=30, maxval=100, group=grpV19c)"
+corrLongLen,534,input,6,0,6,"input.int(120, ""Corr Long Window"", minval=60, maxval=200, group=grpV19c)"
+grpHist,536,value,9,0,5,"""HISTORICAL ANALOG"""
+histWAdx,537,input,1,0,5,"input.int(30, ""ADX Similarity Weight (%)"", minval=5, maxval=50, step=5, group=grpHist)"
+histWAtr,538,input,1,0,5,"input.int(25, ""ATR Similarity Weight (%)"", minval=5, maxval=50, step=5, group=grpHist)"
+histWHtf,539,input,1,0,5,"input.int(25, ""HTF Similarity Weight (%)"", minval=5, maxval=50, step=5, group=grpHist)"
+histWStr,540,input,1,0,5,"input.int(5, ""Struct Similarity Weight (%)"", minval=0, maxval=20, step=5, group=grpHist)"
+histWLiq,541,input,1,0,5,"input.int(5, ""Liq Similarity Weight (%)"", minval=0, maxval=20, step=5, group=grpHist)"
+histWMr,542,input,1,0,5,"input.int(5, ""MR Similarity Weight (%)"", minval=0, maxval=20, step=5, group=grpHist)"
+histWCor,543,input,1,0,5,"input.int(5, ""Corr Similarity Weight (%)"", minval=0, maxval=20, step=5, group=grpHist)"
+histWSess,544,input,1,0,5,"input.int(5, ""Session Similarity Weight (%)"", minval=0, maxval=20, step=5, group=grpHist)"
+histWReg,545,input,1,0,5,"input.int(5, ""Regime Similarity Weight (%)"", minval=0, maxval=20, step=5, group=grpHist)"
+ema20,548,value,10,0,6,"ta.ema(close, ema20Len)"
+ema100,549,value,6,0,6,"ta.ema(close, ema100Len)"
+ema200,550,value,5,0,6,"ta.ema(close, ema200Len)"
+atr,551,value,5,0,5,ta.atr(atrLen)
+diplus,552,tuple,7,0,5,"ta.dmi(adxLen, adxLen)"
+diminus,552,tuple,7,0,5,"ta.dmi(adxLen, adxLen)"
+adxVal,552,tuple,35,0,5,"ta.dmi(adxLen, adxLen)"
+adxGate,555,var,5,1,5,false
+vwapVal,557,value,17,0,5,ta.vwap(hlc3)
+vixSymbol,562,input,2,0,5,"input.symbol(""TVC:VIX"", ""VIX Symbol (blank=off)"", group=grpCore)"
+vixD,563,value,2,0,5,"vixSymbol != """" ? request.security(vixSymbol, ""D"", close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_sy"
+wVwapVal,566,value,4,0,5,"ta.vwap(hlc3, timeframe.change(""1W""))"
+mVwapVal,567,value,2,0,5,"ta.vwap(hlc3, timeframe.change(""1M""))"
+vwapSd,570,value,2,0,5,"ta.stdev(close - vwapVal, 20)"
+vwapUpper2,571,value,1,0,5,vwapVal + vwapSd * 2.0
+vwapLower2,572,value,1,0,5,vwapVal - vwapSd * 2.0
+vwapSlope,574,value,7,0,4,"vwapVal - nz(vwapVal[10], vwapVal)"
+vwapAccel,575,value,4,0,4,"vwapSlope - nz(vwapSlope[5], vwapSlope)"
+vwapRejectBull,577,value,1,0,5,low <= vwapLower2 and close > vwapVal
+bbBasis,579,value,2,0,6,"ta.sma(close, 20)"
+bbDev,580,value,1,0,6,"ta.stdev(close, 20) * 2.0"
+rsiVal,581,value,7,0,5,"ta.rsi(close, rsiLen)"
+volSma20,582,value,8,0,6,"ta.sma(volume, 20)"
+highVolume,583,value,2,0,5,not na(volume) and volume > volSma20
+backtestAllBars,588,input,1,0,4,"input.bool(true, ""Backtest all bars (ignore Signal Lookback Bars)"", group=grpCore, tooltip=""ON for backtests: the entry "
+recentBars,589,value,8,0,5,backtestAllBars or bar_index > last_bar_index - recentBarsLen
+_rawGoldRet,591,value,2,0,6,"safeDiv(close, nz(close[1], close)) - 1"
+_retClampW,593,value,2,0,6,"math.min(math.max(nz(ta.stdev(_rawGoldRet, 100)[1], 0.0) * 6.0, 0.002), 0.05)"
+goldRet,594,value,7,0,6,"math.min(math.max(_rawGoldRet, -_retClampW), _retClampW)"
+htf5mClose,606,tuple,1,0,5,"request.security(syminfo.tickerid, ""5"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+htf5mEma20,606,tuple,1,0,5,"request.security(syminfo.tickerid, ""5"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+htf5mEma100M,606,tuple,1,0,5,"request.security(syminfo.tickerid, ""5"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+htf5mEma200,606,tuple,1,0,5,"request.security(syminfo.tickerid, ""5"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+htf15mClose,607,tuple,1,0,5,"request.security(syminfo.tickerid, ""15"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf15mEma20,607,tuple,1,0,5,"request.security(syminfo.tickerid, ""15"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf15mEma100M,607,tuple,1,0,5,"request.security(syminfo.tickerid, ""15"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf15mEma200,607,tuple,1,0,5,"request.security(syminfo.tickerid, ""15"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf1hClose,608,tuple,1,0,5,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf1hEma20,608,tuple,1,0,5,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf1hEma100M,608,tuple,1,0,5,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf1hEma200,608,tuple,1,0,5,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+htf4hClose,609,tuple,1,0,5,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+htf4hEma20,609,tuple,1,0,5,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+htf4hEma100M,609,tuple,1,0,5,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+htf4hEma200,609,tuple,1,0,5,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+htf1dClose,610,tuple,1,0,5,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+htf1dEma20,610,tuple,1,0,5,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+htf1dEma100M,610,tuple,1,0,5,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+htf1dEma200,610,tuple,1,0,5,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+msInDay,615,value,6,0,6,86400000
+_nyMsOfDay,633,value,1,0,6,"hour(time, ""America/New_York"") * 3600000 + minute(time, ""America/New_York"") * 60000"
+_nyOffsetMs,634,value,1,0,6,_nyMsOfDay - int(time % msInDay)
+nyCloseDayMs,635,value,4,0,6,((17 * 3600000 - _nyOffsetMs) % msInDay + msInDay) % msInDay
+nyDailyHigh,636,var,3,3,6,na
+nyDailyLow,637,var,2,3,6,na
+prevNyDailyHigh,638,var,1,1,6,na
+prevNyDailyLow,639,var,1,1,6,na
+nyWeeklyHigh,640,var,2,3,6,na
+nyWeeklyLow,641,var,2,3,6,na
+prevNyWeeklyHigh,642,var,1,1,6,na
+prevNyWeeklyLow,643,var,1,1,6,na
+crossedNYDay,644,value,5,2,6,false
+_tfDayPlus,686,value,1,0,6,timeframe.in_seconds() >= 86400
+crossedNYWeek,687,value,1,0,6,"_tfDayPlus ? timeframe.change(""1W"") : (crossedNYDay and dayofweek(nz(time[1], time), ""UTC"") == dayofweek.friday)"
+chartTFSeconds,724,value,14,0,6,timeframe.in_seconds()
+htf5mAvailable,731,value,3,0,5,chartTFSeconds < 300
+htf15mAvailable,732,value,3,0,5,chartTFSeconds < 900
+htf1hAvailable,733,value,3,0,5,chartTFSeconds < 3600
+htf4hAvailable,734,value,3,0,5,chartTFSeconds < 14400
+htf1dAvailable,735,value,2,0,5,chartTFSeconds < 86400
+htfTrendScore,737,function,5,0,5,
+htf5mScore,747,value,3,0,5,"htf5mAvailable ? htfTrendScore(htf5mClose, htf5mEma20, htf5mEma100M, htf5mEma200) : 50"
+htf15mScore,748,value,3,0,5,"htf15mAvailable ? htfTrendScore(htf15mClose, htf15mEma20, htf15mEma100M, htf15mEma200) : 50"
+htf1hScore,749,value,3,0,5,"htf1hAvailable ? htfTrendScore(htf1hClose, htf1hEma20, htf1hEma100M, htf1hEma200) : 50"
+htf4hScore,750,value,4,0,5,"htf4hAvailable ? htfTrendScore(htf4hClose, htf4hEma20, htf4hEma100M, htf4hEma200) : 50"
+htf1dScore,751,value,2,0,5,"htf1dAvailable ? htfTrendScore(htf1dClose, htf1dEma20, htf1dEma100M, htf1dEma200) : 50"
+htf5mBull,752,value,3,0,5,htf5mScore >= 60
+htf5mBear,753,value,3,0,5,htf5mScore <= 40
+htf15mBull,754,value,5,0,5,htf15mScore >= 60
+htf15mBear,755,value,5,0,5,htf15mScore <= 40
+htf1hBull,756,value,4,0,5,htf1hScore >= 60
+htf1hBear,757,value,4,0,5,htf1hScore <= 40
+htf4hBull,758,value,4,0,5,htf4hScore >= 60
+htf4hBear,759,value,4,0,5,htf4hScore <= 40
+htf1dBull,760,value,2,0,5,htf1dScore >= 60
+htf1dBear,761,value,2,0,5,htf1dScore <= 40
+htfAlignmentLong,763,value,6,0,5,(htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0) + (htf1dBull ? 1 : 0)
+htfAlignmentShort,764,value,6,0,5,(htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0) + (htf1dBear ? 1 : 0)
+htfBullScoreGate,765,value,13,0,5,htfAlignmentLong >= 2
+htfBearScoreGate,766,value,13,0,5,htfAlignmentShort >= 2
+htfFullLong,767,value,1,0,5,(htf5mBull ? 1 : 0) + (htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0) + (htf1dBull ? 1 : 0)
+htfFullShort,768,value,1,0,5,(htf5mBear ? 1 : 0) + (htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0) + (htf1dBear ? 1 : 0)
+atrTrending,774,value,1,0,5,ta.atr(7)
+atrRanging,775,value,1,0,5,ta.atr(21)
+regimeStrength,778,value,7,0,5,"math.min(math.max((adxVal - (adxThreshold - 5)) / 10.0, 0.0), 1.0)"
+_rawAdaptiveATR,779,value,1,0,5,showAdaptiveATR ? (atrRanging * (1.0 - regimeStrength) + atrTrending * regimeStrength) : atr
+adaptiveATR,780,value,82,0,5,"math.max(nz(_rawAdaptiveATR, ta.tr), close * 0.0001)"
+atrPercentile,781,value,21,0,5,"ta.percentrank(adaptiveATR, 50)"
+_varShort,786,value,1,0,5,"ta.variance(goldRet, 10)"
+_varLong,787,value,2,0,5,"ta.variance(goldRet, 50)"
+retMean100,791,value,2,0,5,"ta.sma(goldRet[1], 100)"
+retStd100,792,value,2,0,5,"ta.stdev(goldRet[1], 100)"
+retZScoreRaw,793,value,5,0,5,retStd100 > 0.0 ? (goldRet - retMean100) / retStd100 : 0.0
+f_regimeEngine,794,function,1,0,5,
+regAbnormal,833,tuple,16,0,5,f_regimeEngine()
+regCompression,833,tuple,11,0,5,f_regimeEngine()
+regExpansion,833,tuple,14,0,5,f_regimeEngine()
+regStrongTrend,833,tuple,13,0,5,f_regimeEngine()
+regWeakTrend,833,tuple,8,0,5,f_regimeEngine()
+volTag,833,tuple,2,0,5,f_regimeEngine()
+mktRegime,833,tuple,3,0,5,f_regimeEngine()
+regSLMult,833,tuple,5,1,5,f_regimeEngine()
+regBOSMult,833,tuple,3,0,5,f_regimeEngine()
+regLiqMult,833,tuple,3,0,5,f_regimeEngine()
+regSizeMult,833,tuple,2,0,5,f_regimeEngine()
+regConfCap,833,tuple,3,0,5,f_regimeEngine()
+effForecastBars,833,tuple,2,0,5,f_regimeEngine()
+_r100,836,value,9,0,5,goldRet[1]
+_m2,837,value,3,0,5,"ta.sma(_r100 * _r100, 100) * 100.0"
+_m3,838,value,2,0,5,"ta.sma(_r100 * _r100 * _r100, 100) * 100.0"
+_m4,839,value,1,0,5,"ta.sma(_r100 * _r100 * _r100 * _r100, 100) * 100.0"
+_n,840,value,6,0,5,100.0 // must match ta.sma() lookback length above
+_mu,841,value,13,0,5,retMean100
+_v,842,value,3,0,5,"math.max(_m2 / _n - _mu * _mu, 0.000001)"
+_sd,843,value,3,0,5,math.sqrt(_v)
+_cfValid,844,value,3,0,5,bar_index > 100
+retSkew,845,value,4,0,5,_cfValid ? (_m3 / _n - 3.0 * _mu * _m2 / _n + 2.0 * _mu * _mu * _mu) / (_sd * _sd * _sd) : 0.0
+retKurt,846,value,4,0,5,_cfValid ? (_m4 / _n - 4.0 * _mu * _m3 / _n + 6.0 * _mu * _mu * _m2 / _n - 3.0 * _mu * _mu * _mu * _mu) / (_v * _v) - 3.
+retSkewC,848,value,12,0,5,"math.min(math.max(retSkew, -1.0), 1.0)"
+_cfK,859,value,4,0,5,"math.min(math.max(retKurt, -1.0), 3.0)"
+retZScore,860,value,1,1,5,retZScoreRaw
+_cfA2,865,value,2,0,5,_cfK / 8.0 - retSkewC * retSkewC / 6.0
+_cfMono,866,value,1,0,5,_cfA2 > 0 and (retSkewC / 3.0) * (retSkewC / 3.0) - 4.0 * _cfA2 * (1.0 - _cfK / 8.0 + 5.0 * retSkewC * retSkewC / 36.0) 
+distVwapATR,878,value,2,0,5,adaptiveATR > 0 ? (close - vwapVal) / adaptiveATR : 0.0
+distEma20ATR,880,value,1,0,5,adaptiveATR > 0 ? (close - ema20) / adaptiveATR : 0.0
+distEma100ATR,881,value,1,0,5,adaptiveATR > 0 ? (close - ema100) / adaptiveATR : 0.0
+distEma200ATR,882,value,1,0,5,adaptiveATR > 0 ? (close - ema200) / adaptiveATR : 0.0
+mrComposite,883,value,9,0,5,math.min(math.max((distVwapATR * 30.0) + (distEma20ATR * 25.0) + (distEma100ATR * 25.0) + (distEma200ATR * 20.0) + (retZ
+regimeTrending,886,value,1,0,5,adxVal > adxThreshold
+regimeRanging,887,value,2,0,5,adxVal <= adxThreshold and adxVal > 15
+regimeDead,888,value,1,0,5,adxVal <= 15
+hourUTC,893,value,14,0,5,"hour(time, ""UTC"")"
+_dom,894,value,7,0,6,"dayofmonth(time, ""UTC"")"
+_mon,895,value,12,0,6,"month(time, ""UTC"")"
+_yr,896,value,4,0,6,"year(time, ""UTC"")"
+_dow,897,value,17,0,6,"dayofweek(time, ""UTC"")"
+_thisSunDom,899,value,2,0,6,_dom - ((_dow - 1 + 7) % 7)
+_firstSunDom,900,value,4,1,6,_thisSunDom - 7 * int((_thisSunDom - 1) / 7)
+usDstStartDom,904,var,1,2,6,8
+usDstEndDom,905,var,1,2,6,1
+_lastUsDstYr,906,var,1,1,6,0
+usIsDST,915,value,2,0,6,(_mon > 3 and _mon < 11) or (_mon == 3 and _dom >= usDstStartDom) or (_mon == 11 and _dom < usDstEndDom)
+euDstStartDom,918,var,1,2,6,25
+euDstEndDom,919,var,1,2,6,25
+_lastEuDstYr,920,var,1,1,6,0
+euIsDST,932,value,2,0,6,(_mon > 3 and _mon < 10) or (_mon == 3 and _dom >= euDstStartDom) or (_mon == 10 and _dom < euDstEndDom)
+londonOpen,936,value,2,0,6,7
+londonClose,937,value,3,0,6,euIsDST ? 16 : 17
+nyOpen,938,value,3,0,6,usIsDST ? 14 : 15
+inAsian,939,value,6,0,6,hourUTC >= 0 and hourUTC < londonOpen
+inLondon,940,value,9,0,6,hourUTC >= londonOpen and hourUTC < londonClose
+inNY,941,value,8,0,6,hourUTC >= nyOpen and hourUTC < (usIsDST ? 20 : 21)
+effLondonOpen,944,value,4,0,5,euIsDST ? 7 : 8
+inLondonKZ,945,value,4,0,5,hourUTC >= effLondonOpen + 1 and hourUTC < effLondonOpen + 4
+inLondonFixKZ,946,value,2,0,5,hourUTC >= effLondonOpen + 3 and hourUTC < effLondonOpen + 4
+inNYKZ,947,value,3,0,5,hourUTC >= nyOpen and hourUTC < nyOpen + 3
+inLondonCloseKZ,948,value,1,0,5,hourUTC >= londonClose - 1 and hourUTC < londonClose
+inKillzone,949,value,5,0,5,inLondonKZ or inNYKZ or inLondonCloseKZ or inLondonFixKZ
+sessionQuality,951,value,17,6,5,0
+f_sessionIntel,959,function,1,0,5,
+sessId,1006,tuple,7,0,5,f_sessionIntel()
+curSessId,1006,tuple,23,1,5,f_sessionIntel()
+sesHi,1006,tuple,11,2,5,f_sessionIntel()
+sesLo,1006,tuple,8,2,5,f_sessionIntel()
+sesOpenPx,1006,tuple,9,1,5,f_sessionIntel()
+prevSesHi,1006,tuple,8,1,5,f_sessionIntel()
+prevSesLo,1006,tuple,8,1,5,f_sessionIntel()
+sesManip,1006,tuple,5,2,5,f_sessionIntel()
+sessExpansionPct,1006,tuple,2,0,5,f_sessionIntel()
+sessManipProb,1006,tuple,2,0,5,f_sessionIntel()
+sessContProb,1006,tuple,2,0,5,f_sessionIntel()
+sessionConfMult,1012,value,1,4,5,1.0
+_sessSpread,1033,value,2,0,5,"inKillzone ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : ma"
+_rawDXY,1037,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYFast,1037,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYSlow,1037,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYRoc,1037,tuple,1,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYRSI,1037,tuple,0,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawYield,1038,tuple,4,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawYieldFast,1038,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawYieldSlow,1038,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawYieldRoc,1038,tuple,1,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawSilver,1039,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
+_rawSilverEMA,1039,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
+_silverRSI,1039,tuple,5,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
+_rawEURUSD,1040,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawEURFast,1040,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawEURSlow,1040,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawEURRoc,1040,tuple,1,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawSPX,1041,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
+_rawSPXFast,1041,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
+_rawSPXSlow,1041,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
+_rawTIPS,1044,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
+_rawTIPSFast,1044,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
+_rawTIPSSlow,1044,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
+cachedDXY,1046,var,1,1,6,na
+cachedYield,1047,var,1,1,6,na
+cachedSilver,1048,var,1,1,6,na
+cachedEURUSD,1049,var,1,1,6,na
+cachedSPX,1050,var,1,1,6,na
+cachedTIPS,1051,var,1,1,6,na
+dxyStaleCount,1052,var,2,2,6,0
+yieldStaleCount,1053,var,2,2,6,0
+silverStaleCount,1054,var,2,2,6,0
+eurusdStaleCount,1055,var,2,2,6,0
+spxStaleCount,1056,var,2,2,6,0
+tipsStaleCount,1057,var,2,2,6,0
+MACRO_STALE_MAX,1088,value,6,0,6,2
+dxyClose,1089,value,6,0,6,cachedDXY
+yieldClose,1090,value,6,0,6,cachedYield
+silverClose,1091,value,8,0,6,cachedSilver
+eurusdClose,1092,value,6,0,6,cachedEURUSD
+spxClose,1093,value,6,0,6,cachedSPX
+tipsClose,1094,value,6,0,6,cachedTIPS
+dxyValid,1095,value,15,0,6,not na(dxyClose) and not na(_rawDXYFast) and not na(_rawDXYSlow) and dxyStaleCount < MACRO_STALE_MAX
+yieldValid,1096,value,10,0,6,not na(yieldClose) and not na(_rawYieldFast) and not na(_rawYieldSlow) and yieldStaleCount < MACRO_STALE_MAX
+silverValid,1097,value,9,0,6,not na(silverClose) and not na(_rawSilverEMA) and silverStaleCount < MACRO_STALE_MAX
+eurusdValid,1098,value,11,0,6,not na(eurusdClose) and not na(_rawEURFast) and not na(_rawEURSlow) and eurusdStaleCount < MACRO_STALE_MAX
+spxValid,1099,value,9,0,6,not na(spxClose) and not na(_rawSPXFast) and not na(_rawSPXSlow) and spxStaleCount < MACRO_STALE_MAX
+_tipsOn,1101,value,3,0,6,tipsSymbol != yieldSymbol
+tipsValid,1102,value,8,0,6,_tipsOn and not na(tipsClose) and not na(_rawTIPSFast) and not na(_rawTIPSSlow) and tipsStaleCount < MACRO_STALE_MAX
+dxyEMAFast,1104,value,4,0,6,_rawDXYFast
+dxyEMASlow,1105,value,2,0,6,_rawDXYSlow
+yieldEMAFast,1106,value,4,0,6,_rawYieldFast
+yieldEMASlow,1107,value,2,0,6,_rawYieldSlow
+eurusdEMAFast,1108,value,4,0,6,_rawEURFast
+eurusdEMASlow,1109,value,2,0,6,_rawEURSlow
+spxEMAFast,1110,value,4,0,6,_rawSPXFast
+spxEMASlow,1111,value,2,0,6,_rawSPXSlow
+tipsEMAFast,1112,value,4,0,6,_rawTIPSFast
+tipsEMASlow,1113,value,2,0,6,_rawTIPSSlow
+silverEMA,1114,value,4,0,6,_rawSilverEMA
+dxyBull,1115,value,2,0,6,dxyValid and dxyClose > dxyEMAFast and dxyEMAFast > dxyEMASlow
+dxyBear,1116,value,2,0,6,dxyValid and dxyClose < dxyEMAFast and dxyEMAFast < dxyEMASlow
+_yieldUp,1117,value,2,0,6,yieldValid and yieldClose > yieldEMAFast and yieldEMAFast > yieldEMASlow
+_yieldDown,1118,value,2,0,6,yieldValid and yieldClose < yieldEMAFast and yieldEMAFast < yieldEMASlow
+yieldRising,1119,value,2,0,6,invertYield ? _yieldDown : _yieldUp
+yieldFalling,1120,value,2,0,6,invertYield ? _yieldUp : _yieldDown
+eurusdBull,1121,value,2,0,6,eurusdValid and eurusdClose > eurusdEMAFast and eurusdEMAFast > eurusdEMASlow
+eurusdBear,1122,value,2,0,6,eurusdValid and eurusdClose < eurusdEMAFast and eurusdEMAFast < eurusdEMASlow
+spxBull,1123,value,2,0,6,spxValid and spxClose > spxEMAFast and spxEMAFast > spxEMASlow
+spxBear,1124,value,2,0,6,spxValid and spxClose < spxEMAFast and spxEMAFast < spxEMASlow
+tipsRising,1125,value,2,0,6,tipsValid and tipsClose > tipsEMAFast and tipsEMAFast > tipsEMASlow
+tipsFalling,1126,value,2,0,6,tipsValid and tipsClose < tipsEMAFast and tipsEMAFast < tipsEMASlow
+silverBull,1127,value,1,0,5,silverValid and silverClose > silverEMA
+silverBear,1128,value,1,0,5,silverValid and silverClose < silverEMA
+_y2,1132,value,2,0,5,"y2Symbol != """" ? request.security(y2Symbol, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_"
+y2Valid,1133,value,4,0,5,"y2Symbol != """" and not na(_y2) and not na(_rawYield)"
+curve2s10s,1135,value,4,0,5,y2Valid ? _rawYield - _y2 : na
+curveSteepening,1136,value,1,0,5,y2Valid and not na(curve2s10s[1]) and curve2s10s > curve2s10s[1]
+curveState,1137,value,0,0,5,"not y2Valid ? """" : ""  2s10s"" + str.tostring(curve2s10s, ""#.##"") + (curveSteepening ? ""^"" : ""v"")"
+_cotL,1152,value,1,0,5,"cotEnable ? ""COT:088691_F_L_ALL_NC_L"" : syminfo.tickerid"
+_cotS,1153,value,1,0,5,"cotEnable ? ""COT:088691_F_L_ALL_NC_S"" : syminfo.tickerid"
+_cotNetRaw,1154,value,2,0,5,"cotEnable ? request.security(_cotL, ""W"", close[1], barmerge.gaps_off, barmerge.lookahead_on, ignore_invalid_symbol=true)"
+cotValid,1155,value,6,0,5,cotEnable and not na(_cotNetRaw)
+_cotPctRaw,1160,value,1,0,5,"ta.percentrank(_cotNetRaw, cotLen)"
+cotPct,1161,value,3,0,5,cotValid ? _cotPctRaw : na
+cotCrowdedLong,1162,value,2,0,5,cotValid and cotPct >= cotExtreme
+cotCrowdedShort,1163,value,2,0,5,cotValid and cotPct <= (100 - cotExtreme)
+cotRegime,1166,value,3,0,5,not cotValid ? 0 : cotCrowdedLong ? -1 : cotCrowdedShort ? 1 : 0
+cotState,1167,value,0,0,5,"not cotValid ? """" : ""  COT"" + str.tostring(int(nz(cotPct, 50))) + (cotCrowdedLong ? ""!LONG-CROWD"" : cotCrowdedShort ? ""!"
+_oiNow,1170,tuple,3,0,5,"request.security(oiSymbol != """" ? oiSymbol : syminfo.tickerid, ""D"", [close[1], close[2]], barmerge.gaps_off, barmerge.lo"
+_oiPrev,1170,tuple,5,0,5,"request.security(oiSymbol != """" ? oiSymbol : syminfo.tickerid, ""D"", [close[1], close[2]], barmerge.gaps_off, barmerge.lo"
+oiValid,1171,value,7,0,5,"oiSymbol != """" and not na(_oiNow) and not na(_oiPrev) and _oiPrev > 0"
+oiChgPct,1172,value,1,0,5,oiValid ? (_oiNow - _oiPrev) / _oiPrev * 100.0 : na
+oiRising,1173,value,5,0,5,oiValid and oiChgPct > 0.0
+_dC1,1175,value,3,0,5,"request.security(syminfo.tickerid, ""D"", close[1], barmerge.gaps_off, barmerge.lookahead_on)"
+_dC2,1176,value,3,0,5,"request.security(syminfo.tickerid, ""D"", close[2], barmerge.gaps_off, barmerge.lookahead_on)"
+_dUp,1177,value,5,0,5,not na(_dC1) and not na(_dC2) and _dC1 > _dC2
+oiConviction,1179,value,4,0,5,not oiValid or na(_dC1) or na(_dC2) ? 0 : (_dUp and oiRising) ? 1 : (not _dUp and oiRising) ? -1 : 0
+oiState,1180,value,0,0,5,"not oiValid ? ""OI —"" : (_dUp and oiRising) ? ""OI NEW-LONG"" : (not _dUp and oiRising) ? ""OI NEW-SHORT"" : (_dUp and not oi"
+gcEnabled,1186,value,3,0,5,"gcSymbol != """" and chartTFSeconds >= gcMinTfSec"
+_gcC,1191,tuple,5,0,5,"request.security(gcSymbol != """" ? gcSymbol : syminfo.tickerid, timeframe.period, [close[1], ta.ema(close[1], 20), volume"
+_gcEma,1191,tuple,3,0,5,"request.security(gcSymbol != """" ? gcSymbol : syminfo.tickerid, timeframe.period, [close[1], ta.ema(close[1], 20), volume"
+_gcVol,1191,tuple,3,0,5,"request.security(gcSymbol != """" ? gcSymbol : syminfo.tickerid, timeframe.period, [close[1], ta.ema(close[1], 20), volume"
+_gcVolAvg,1191,tuple,3,0,5,"request.security(gcSymbol != """" ? gcSymbol : syminfo.tickerid, timeframe.period, [close[1], ta.ema(close[1], 20), volume"
+_gcT,1191,tuple,2,0,5,"request.security(gcSymbol != """" ? gcSymbol : syminfo.tickerid, timeframe.period, [close[1], ta.ema(close[1], 20), volume"
+gcResolved,1216,value,5,0,5,not na(_gcC) and not na(_gcEma) and not na(_gcVol)
+gcFinite,1217,value,4,0,5,gcResolved and _gcC > 0 and _gcVol >= 0
+gcFresh,1218,value,3,0,5,gcResolved and not na(_gcT) and (time - _gcT) <= (chartTFSeconds * 3 * 1000)
+gcPlausible,1219,value,2,0,5,gcFinite and not na(close) and close > 0 and math.abs(_gcC - close) / close <= 0.05
+gcValid,1220,value,9,0,5,gcEnabled and gcResolved and gcFinite and gcFresh and gcPlausible
+gcFailWhy,1222,value,2,0,5,"not gcEnabled ? """" : not gcResolved ? ""!UNRESOLVED"" : not gcFinite ? ""!BADPRICE"" : not gcFresh ? ""!STALE"" : not gcPlausi"
+GC_STATUS,1226,value,1,0,5,gcValid ? 0 : not gcEnabled ? 1 : not gcResolved ? 1 : not gcFinite ? 3 : not gcFresh ? 2 : 3
+OI_STATUS,1227,value,1,0,5,"oiValid ? 0 : oiSymbol == """" ? 1 : (na(_oiNow) or na(_oiPrev)) ? 1 : 3"
+US2Y_STATUS,1228,value,1,0,5,y2Valid ? 0 : 1
+COT_STATUS,1229,value,1,0,5,cotValid ? 0 : 1
+gcBull,1232,value,2,0,5,gcValid and _gcC > _gcEma
+gcBear,1233,value,1,0,5,gcValid and _gcC < _gcEma
+gcVolExp,1235,value,2,0,5,gcValid and not na(_gcVolAvg) and _gcVolAvg > 0 and _gcVol > _gcVolAvg * gcVolMult
+_spotBull,1238,value,3,0,5,"close[1] > ta.ema(close[1], 20)"
+gcConfirmsBull,1239,value,5,0,5,gcValid and gcBull and _spotBull
+gcConfirmsBear,1240,value,5,0,5,gcValid and gcBear and not _spotBull
+gcDiverges,1241,value,1,0,5,gcValid and (gcBull != _spotBull)
+gcStrongBull,1243,value,1,0,5,gcConfirmsBull and gcVolExp
+gcStrongBear,1244,value,1,0,5,gcConfirmsBear and gcVolExp
+gcState,1245,value,0,0,5,"gcFailWhy != """" ? ""GC"" + gcFailWhy : not gcValid ? ""GC —"" : gcDiverges ? ""GC DIV"" : gcStrongBull ? ""GC ++"" : gcStrongBea"
+macroBullVotes,1249,value,3,0,5,(gcConfirmsBull ? 1 : 0) + ((dxyValid ? dxyBear : eurusdBull) ? 1 : 0) + (yieldFalling ? 1 : 0) + (spxBull ? 1 : 0) + (s
+macroBearVotes,1250,value,3,0,5,(gcConfirmsBear ? 1 : 0) + ((dxyValid ? dxyBull : eurusdBear) ? 1 : 0) + (yieldRising ? 1 : 0) + (spxBear ? 1 : 0) + (si
+_macroPool,1270,value,1,0,5,4 + (_tipsOn ? 1 : 0) + (gcValid ? 1 : 0)
+_macroNeed,1271,value,2,0,5,int(math.ceil(_macroPool / 2.0))
+macroBull,1272,value,8,0,5,macroBullVotes >= _macroNeed
+macroBear,1273,value,8,0,5,macroBearVotes >= _macroNeed
+dxyROC,1274,value,2,0,6,"dxyValid ? nz(_rawDXYRoc, 0.0) : 0.0"
+dxyMomBull,1275,value,1,0,6,dxyROC > 0.15
+dxyMomBear,1276,value,1,0,6,dxyROC < -0.15
+znROC,1277,value,1,0,6,"yieldValid ? nz(_rawYieldRoc, 0.0) : 0.0"
+eurusdROC,1278,value,2,0,6,"eurusdValid ? nz(_rawEURRoc, 0.0) : 0.0"
+ratePressure,1282,value,2,0,6,znROC
+ratePressureUp,1283,value,1,0,6,ratePressure > 0.1
+ratePressureDown,1284,value,1,0,6,ratePressure < -0.1
+goldBarDir,1285,value,2,0,5,close > close[1] ? 1 : close < close[1] ? -1 : 0
+silverRet,1289,value,1,0,6,"silverValid and not na(silverClose[1]) ? safeDiv(silverClose, silverClose[1]) - 1 : na"
+dxyRet,1290,value,1,0,6,"dxyValid and not na(dxyClose[1]) ? safeDiv(dxyClose, dxyClose[1]) - 1 : na"
+yieldRet,1291,value,1,0,6,"yieldValid and not na(yieldClose[1]) ? safeDiv(yieldClose, yieldClose[1]) - 1 : na"
+eurRet,1292,value,1,0,6,"eurusdValid and not na(eurusdClose[1]) ? safeDiv(eurusdClose, eurusdClose[1]) - 1 : na"
+spxRet,1293,value,1,0,6,"spxValid and not na(spxClose[1]) ? safeDiv(spxClose, spxClose[1]) - 1 : na"
+tipsRet,1294,value,1,0,6,"tipsValid and not na(tipsClose[1]) ? safeDiv(tipsClose, tipsClose[1]) - 1 : na"
+goldRetL,1304,value,3,0,6,goldRet[1]
+_kM,1305,value,6,0,6,"math.max(1, int(timeframe.in_seconds(macroTF) / chartTFSeconds))"
+_gM,1306,value,3,0,6,"request.security(syminfo.tickerid, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_on)"
+goldRetM,1307,value,3,0,6,"not na(_gM[1]) ? safeDiv(_gM, _gM[1]) - 1 : na"
+_wS,1308,value,3,0,6,"math.min(corrShortLen * _kM, 4500)"
+_wM,1309,value,3,0,6,"math.min(corrMedLen * _kM, 4500)"
+_wL,1310,value,3,0,6,"math.min(corrLongLen * _kM, 4500)"
+_fS,1311,value,3,0,6,corrShortLen * _kM <= 4500
+_fM,1312,value,3,0,6,corrMedLen * _kM <= 4500
+_fL,1313,value,3,0,6,corrLongLen * _kM <= 4500
+f_cc3,1316,function,6,0,6,
+corrGoldDXY_30,1321,tuple,3,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldDXY_60,1321,tuple,2,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldDXY_120,1321,tuple,3,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldYld_30,1322,tuple,3,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldYld_60,1322,tuple,2,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldYld_120,1322,tuple,3,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldSlv_30,1323,tuple,3,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSlv_60,1323,tuple,2,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSlv_120,1323,tuple,3,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSPX_30,1324,tuple,3,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSPX_60,1324,tuple,2,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSPX_120,1324,tuple,3,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldEUR_30,1325,tuple,3,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldEUR_60,1325,tuple,2,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldEUR_120,1325,tuple,3,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldTIPS_30,1326,tuple,3,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldTIPS_60,1326,tuple,2,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldTIPS_120,1326,tuple,3,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+avgCorrDXY,1327,value,1,0,6,(nz(corrGoldDXY_30) + nz(corrGoldDXY_60) + nz(corrGoldDXY_120)) / 3.0
+avgCorrYld,1328,value,1,0,6,(nz(corrGoldYld_30) + nz(corrGoldYld_60) + nz(corrGoldYld_120)) / 3.0
+avgCorrSlv,1329,value,1,0,6,(nz(corrGoldSlv_30) + nz(corrGoldSlv_60) + nz(corrGoldSlv_120)) / 3.0
+avgCorrSPX,1330,value,1,0,6,(nz(corrGoldSPX_30) + nz(corrGoldSPX_60) + nz(corrGoldSPX_120)) / 3.0
+avgCorrEUR,1331,value,1,0,6,(nz(corrGoldEUR_30) + nz(corrGoldEUR_60) + nz(corrGoldEUR_120)) / 3.0
+avgCorrTIPS,1332,value,3,0,6,(nz(corrGoldTIPS_30) + nz(corrGoldTIPS_60) + nz(corrGoldTIPS_120)) / 3.0
+stabDXY,1333,value,1,0,5,math.abs(nz(corrGoldDXY_30) - nz(corrGoldDXY_120))
+stabYld,1334,value,1,0,5,math.abs(nz(corrGoldYld_30) - nz(corrGoldYld_120))
+stabSlv,1335,value,1,0,5,math.abs(nz(corrGoldSlv_30) - nz(corrGoldSlv_120))
+stabSPX,1336,value,1,0,5,math.abs(nz(corrGoldSPX_30) - nz(corrGoldSPX_120))
+stabEUR,1337,value,1,0,5,math.abs(nz(corrGoldEUR_30) - nz(corrGoldEUR_120))
+stabTIPS,1338,value,1,0,5,math.abs(nz(corrGoldTIPS_30) - nz(corrGoldTIPS_120))
+_numValid,1341,value,18,6,5,0.0
+avgStability,1348,value,1,0,5,_numValid > 0 ? (stabDXY + stabYld + stabSlv + stabSPX + stabEUR + stabTIPS) / _numValid : 0.0
+tInv,1352,function,3,0,5,
+_pUpper,1379,value,3,0,5,1.0 - (0.05 / 18.0) / 2.0 // two-tailed → upper quantile at 1-α'/2
+_df30,1380,value,2,0,5,"math.max(corrShortLen - 2, 1)"
+_df60,1381,value,2,0,5,"math.max(corrMedLen - 2, 1)"
+_df120,1382,value,2,0,5,"math.max(corrLongLen - 2, 1)"
+_t30,1383,value,3,0,5,"tInv(_pUpper, _df30)"
+_t60,1384,value,3,0,5,"tInv(_pUpper, _df60)"
+_t120,1385,value,3,0,5,"tInv(_pUpper, _df120)"
+_corrSig30,1386,value,6,0,5,_t30 / math.sqrt(_df30 + _t30 * _t30)
+_corrSig60,1387,value,6,0,5,_t60 / math.sqrt(_df60 + _t60 * _t60)
+_corrSig120,1388,value,6,0,5,_t120 / math.sqrt(_df120 + _t120 * _t120)
+corrWinScore,1391,function,3,0,5,
+corrHealthMW,1396,function,6,0,5,
+corrHealthDXY,1399,value,1,0,5,"dxyValid ? corrHealthMW(nz(corrGoldDXY_30), nz(corrGoldDXY_60), nz(corrGoldDXY_120), _corrSig30, _corrSig60, _corrSig120"
+corrHealthYld,1400,value,1,0,5,"yieldValid ? corrHealthMW(nz(corrGoldYld_30), nz(corrGoldYld_60), nz(corrGoldYld_120), _corrSig30, _corrSig60, _corrSig1"
+corrHealthSlv,1401,value,1,0,5,"silverValid ? corrHealthMW(nz(corrGoldSlv_30), nz(corrGoldSlv_60), nz(corrGoldSlv_120), _corrSig30, _corrSig60, _corrSig"
+corrHealthSPX,1402,value,1,0,5,"spxValid ? corrHealthMW(nz(corrGoldSPX_30), nz(corrGoldSPX_60), nz(corrGoldSPX_120), _corrSig30, _corrSig60, _corrSig120"
+corrHealthEUR,1403,value,1,0,5,"eurusdValid ? corrHealthMW(nz(corrGoldEUR_30), nz(corrGoldEUR_60), nz(corrGoldEUR_120), _corrSig30, _corrSig60, _corrSig"
+corrHealthTIPS,1404,value,1,0,5,"tipsValid ? corrHealthMW(nz(corrGoldTIPS_30), nz(corrGoldTIPS_60), nz(corrGoldTIPS_120), _corrSig30, _corrSig60, _corrSi"
+avgCorrHealth,1405,value,11,0,5,_numValid > 0 ? (corrHealthDXY + corrHealthYld + corrHealthSlv + corrHealthSPX + corrHealthEUR + corrHealthTIPS) / _numV
+_wDXYr,1407,value,2,0,6,"math.min(math.abs(avgCorrDXY) * 100, 30)"
+_wYldr,1408,value,2,0,6,"math.min(math.abs(avgCorrYld) * 100, 30)"
+_wSlvr,1409,value,2,0,6,"math.min(math.abs(avgCorrSlv) * 100, 25)"
+_wSPXr,1410,value,2,0,6,"spxValid ? math.min(math.abs(avgCorrSPX) * 100, 15) : 0.0 // R5.1: adaptive by |corr| like the other assets (wires avgCo"
+_wEURr,1412,value,2,0,6,"eurusdValid and not dxyValid ? math.min(math.abs(avgCorrEUR) * 100, 30) : 0.0"
+_wTIPSr,1413,value,2,0,6,"math.min(math.abs(avgCorrTIPS) * 100, 25)"
+_wTot,1414,value,12,0,6,_wDXYr + _wYldr + _wSlvr + _wSPXr + _wEURr + _wTIPSr
+wDXY,1415,value,2,0,6,_wTot > 0 ? _wDXYr / _wTot * 100 : 30.0
+wYld,1416,value,2,0,6,_wTot > 0 ? _wYldr / _wTot * 100 : 25.0
+wSlv,1417,value,2,0,6,_wTot > 0 ? _wSlvr / _wTot * 100 : 20.0
+wSPX,1418,value,2,0,6,_wTot > 0 ? _wSPXr / _wTot * 100 : 15.0
+wEUR,1419,value,2,0,6,_wTot > 0 ? _wEURr / _wTot * 100 : 20.0
+wTIPS,1420,value,2,0,6,_wTot > 0 ? _wTIPSr / _wTot * 100 : 10.0
+msDXY,1421,value,1,0,6,dxyValid ? (dxyBear ? wDXY : dxyBull ? -wDXY : 0.0) : 0.0
+msYld,1422,value,1,0,6,yieldValid ? (yieldFalling ? wYld : yieldRising ? -wYld : 0.0) : 0.0
+msSPX,1423,value,1,0,6,spxValid ? (spxBull ? wSPX : spxBear ? -wSPX : 0.0) : 0.0
+msEUR,1426,value,1,0,6,eurusdValid and not dxyValid ? (eurusdBull ? wEUR : eurusdBear ? -wEUR : 0.0) : 0.0
+msSlv,1427,value,1,0,6,silverValid ? (silverClose > silverEMA ? wSlv : silverClose < silverEMA ? -wSlv : 0.0) : 0.0
+msTIPS,1428,value,1,0,6,tipsValid ? (tipsFalling ? wTIPS : tipsRising ? -wTIPS : 0.0) : 0.0
+msMom,1429,value,1,0,6,dxyValid ? (dxyMomBear ? 10.0 : dxyMomBull ? -10.0 : 0.0) : 0.0
+msRate,1432,value,1,0,6,(yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 0.0) + (eurusdValid and not dxyValid ? (eurusdROC
+macroStrengthScore,1433,value,15,0,6,"int(math.max(math.min(msDXY + msYld + msSPX + msEUR + msSlv + msTIPS + msMom + msRate, 100), -100))"
+_macroStDev,1435,value,1,0,5,"nz(ta.stdev(macroStrengthScore, 20), 50.0)"
+macroStrengthConf,1436,value,1,0,5,int(math.round((_numValid / (5.0 + (_tipsOn ? 1 : 0))) * 30.0 + avgCorrHealth * 0.50 + (1.0 - math.min(_macroStDev / 100
+bullTrendScore,1440,value,4,6,5,0
+bearTrendScore,1454,value,4,6,5,0
+bullTrend,1461,value,15,0,5,bullTrendScore >= trendThreshold
+bearTrend,1462,value,15,0,5,bearTrendScore >= trendThreshold
+pivotHigh,1465,value,14,0,5,"ta.pivothigh(high, internalPivotLen, internalPivotLen)"
+pivotLow,1466,value,14,0,5,"ta.pivotlow(low, internalPivotLen, internalPivotLen)"
+activeResistance,1467,var,8,2,5,na
+activeSupport,1468,var,8,2,5,na
+lastBrokenRes,1469,var,1,2,5,na
+lastBrokenSup,1470,var,1,2,5,na
+bosResistanceSnap,1471,value,5,0,5,activeResistance
+bosSupportSnap,1472,value,5,0,5,activeSupport
+swingPivotHigh,1481,value,2,0,5,"ta.pivothigh(high, swingPivotLen, swingPivotLen)"
+swingPivotLow,1482,value,2,0,5,"ta.pivotlow(low, swingPivotLen, swingPivotLen)"
+swingActiveResistance,1483,var,7,2,5,na
+swingActiveSupport,1484,var,7,2,5,na
+swingLastBrokenRes,1485,var,1,2,5,na
+swingLastBrokenSup,1486,var,1,2,5,na
+swingBosResSnap,1487,value,5,0,5,swingActiveResistance
+swingBosSupSnap,1488,value,5,0,5,swingActiveSupport
+bodySize,1499,value,9,0,5,math.abs(close - open)
+candleRange,1500,value,4,0,5,high - low
+bodyPct,1501,value,6,0,5,candleRange > 0 ? bodySize / candleRange * 100.0 : 0.0
+breakBuffer,1502,value,4,0,5,adaptiveATR * 0.15
+strongBody,1503,value,4,0,5,adaptiveATR * 0.30
+strongVol,1504,value,4,0,5,not na(volume) and volume > volSma20 * 1.20 * regBOSMult // R6.0: BOS volume requirement scales with volatility regime
+intBullBOS,1505,value,1,0,5,not na(bosResistanceSnap) and close > bosResistanceSnap and close[1] <= bosResistanceSnap[1] and bosResistanceSnap != la
+intBearBOS,1506,value,1,0,5,not na(bosSupportSnap) and close < bosSupportSnap and close[1] >= bosSupportSnap[1] and bosSupportSnap != lastBrokenSup 
+swingBullBOS,1507,value,1,0,5,not na(swingBosResSnap) and close > swingBosResSnap and close[1] <= swingBosResSnap[1] and swingBosResSnap != swingLastB
+swingBearBOS,1508,value,1,0,5,not na(swingBosSupSnap) and close < swingBosSupSnap and close[1] >= swingBosSupSnap[1] and swingBosSupSnap != swingLastB
+bullBOS,1509,value,9,0,5,intBullBOS or swingBullBOS
+bearBOS,1510,value,9,0,5,intBearBOS or swingBearBOS
+seqHigh1,1527,var,6,1,5,na
+seqHigh2,1528,var,8,1,5,na
+seqHigh3,1529,var,3,1,5,na
+seqLow1,1530,var,6,1,5,na
+seqLow2,1531,var,8,1,5,na
+seqLow3,1532,var,3,1,5,na
+seqLastBar,1533,var,1,1,5,-999
+seqValid,1544,value,6,0,5,not na(seqHigh1) and not na(seqHigh2) and not na(seqHigh3) and not na(seqLow1) and not na(seqLow2) and not na(seqLow3)
+hl,1545,value,2,0,5,seqValid and seqLow1 > seqLow2
+lh,1546,value,2,0,5,seqValid and seqHigh1 < seqHigh2
+barSpaceOk,1547,value,4,0,5,(bar_index - seqLastBar) >= 3
+pivotAtrDist,1548,value,4,0,5,not na(adaptiveATR) ? adaptiveATR * 0.5 : na
+atrDistOkBull,1549,value,2,0,5,hl and not na(seqLow1) and not na(seqLow2) and not na(pivotAtrDist) and math.abs(seqLow1 - seqLow2) >= pivotAtrDist
+atrDistOkBear,1550,value,2,0,5,lh and not na(seqHigh1) and not na(seqHigh2) and not na(pivotAtrDist) and math.abs(seqHigh1 - seqHigh2) >= pivotAtrDist
+priorBullSeq,1551,value,1,0,5,seqValid and seqHigh2 > seqHigh3 and seqLow2 > seqLow3
+priorBearSeq,1552,value,1,0,5,seqValid and seqHigh2 < seqHigh3 and seqLow2 < seqLow3
+chochLabelBull,1553,value,3,0,5,priorBearSeq and hl and barSpaceOk and atrDistOkBull
+chochLabelBear,1554,value,3,0,5,priorBullSeq and lh and barSpaceOk and atrDistOkBear
+mssLabelBull,1555,value,2,0,5,chochLabelBull and (seqValid and seqHigh1 > seqHigh2) and barSpaceOk and atrDistOkBull
+mssLabelBear,1556,value,2,0,5,chochLabelBear and (seqValid and seqLow1 < seqLow2) and barSpaceOk and atrDistOkBear
+chochEventBull,1558,value,1,0,5,chochLabelBull and not chochLabelBull[1]
+chochEventBear,1559,value,1,0,5,chochLabelBear and not chochLabelBear[1]
+mssEventBull,1560,value,1,0,5,mssLabelBull and not mssLabelBull[1]
+mssEventBear,1561,value,1,0,5,mssLabelBear and not mssLabelBear[1]
+chochBullScore,1562,var,5,1,5,0.0
+chochBearScore,1563,var,5,1,5,0.0
+mssBullScore,1564,var,2,1,5,0.0
+mssBearScore,1565,var,2,1,5,0.0
+chochActiveBull,1570,value,3,0,5,chochBullScore > 7.5
+chochActiveBear,1571,value,3,0,5,chochBearScore > 7.5
+mssActiveBull,1572,value,5,0,5,mssBullScore > 7.5
+mssActiveBear,1573,value,5,0,5,mssBearScore > 7.5
+_dispEnter,1579,value,2,0,5,adaptiveATR * dispMult
+_dispHold,1580,value,2,0,5,adaptiveATR * (dispMult * 0.6)
+_dispRawUp,1581,value,2,0,5,showDisplacement and bodySize > _dispEnter and close > open and close > high[1] and candleRange > 0 and bodyPct > 70 and
+_dispRawDown,1582,value,2,0,5,showDisplacement and bodySize > _dispEnter and close < open and close < low[1] and candleRange > 0 and bodyPct > 70 and 
+displacementUpActive,1583,var,1,2,5,false
+displacementDownActive,1584,var,1,2,5,false
+displacementUp,1593,value,9,0,5,_dispRawUp or displacementUpActive
+displacementDown,1594,value,9,0,5,_dispRawDown or displacementDownActive
+bullStructBar,1608,var,3,2,5,na
+bullStructInval,1609,var,2,1,5,na
+bullStructType,1610,var,2,1,5,""""""
+bearStructBar,1611,var,3,2,5,na
+bearStructInval,1612,var,2,1,5,na
+bearStructType,1613,var,2,1,5,""""""
+_bullStructTrig,1614,value,1,0,5,bullBOS or (mssActiveBull and not mssActiveBull[1]) or (chochActiveBull and not chochActiveBull[1])
+_bearStructTrig,1615,value,1,0,5,bearBOS or (mssActiveBear and not mssActiveBear[1]) or (chochActiveBear and not chochActiveBear[1])
+bullStructActive,1629,value,3,0,5,not na(bullStructBar) and bar_index - bullStructBar <= structWindow
+bearStructActive,1630,value,3,0,5,not na(bearStructBar) and bar_index - bearStructBar <= structWindow
+bullStructAge,1631,value,1,0,5,bullStructActive ? bar_index - bullStructBar : -1
+bearStructAge,1632,value,1,0,5,bearStructActive ? bar_index - bearStructBar : -1
+pivotRsiHigh,1636,var,4,1,5,na
+pivotPriceHigh,1637,var,4,1,5,na
+pivotRsiLow,1638,var,4,1,5,na
+pivotPriceLow,1639,var,4,1,5,na
+bullRsiDiv,1646,value,4,0,5,useRsiDivFilter and not na(pivotPriceLow) and not na(pivotRsiLow) and not na(pivotRsiLow[1]) and not na(pivotPriceLow[1]
+bearRsiDiv,1647,value,4,0,5,useRsiDivFilter and not na(pivotPriceHigh) and not na(pivotRsiHigh) and not na(pivotRsiHigh[1]) and not na(pivotPriceHig
+eqTolerance,1650,value,2,0,5,adaptiveATR * eqAtrMult
+swingHigh1,1651,var,4,1,5,na
+swingHigh2,1652,var,3,1,5,na
+swingLow1,1653,var,4,1,5,na
+swingLow2,1654,var,3,1,5,na
+equalHighs,1661,value,1,0,5,not na(swingHigh1) and not na(swingHigh2) and math.abs(swingHigh1 - swingHigh2) <= eqTolerance
+equalLows,1662,value,1,0,5,not na(swingLow1) and not na(swingLow2) and math.abs(swingLow1 - swingLow2) <= eqTolerance
+volByHour,1668,var,3,0,5,"array.new_float(24, 0.0)"
+volHourCount,1669,var,3,0,5,"array.new_int(24, 0)"
+currHour,1670,value,6,0,5,"hour(time, ""UTC"")"
+relVol,1678,value,3,0,5,"volume / math.max(array.get(volByHour, currHour), 1.0)"
+prRelVol,1679,value,1,0,5,"ta.percentrank(relVol, volLookback)"
+prRawVol,1680,value,1,0,5,"ta.percentrank(volume, volLookback)"
+volPercentile,1681,value,4,0,5,"array.get(volHourCount, currHour) >= 20 ? prRelVol : prRawVol"
+climaxUp,1682,value,2,0,5,showClimax and recentBars and volPercentile >= volClimaxPerc and close > open
+climaxDown,1683,value,2,0,5,showClimax and recentBars and volPercentile >= volClimaxPerc and close < open
+fvgDetected,1686,value,2,0,5,showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0] - high[2] > adaptiveATR * 0.3) or (low[2] > high[0] a
+fvgHighUpper,1687,var,2,1,5,na
+fvgLowLower,1688,var,2,1,5,na
+fvgBarIndex,1689,var,2,1,5,-1
+fvgVolPctAtDetect,1690,var,0,1,4,na
+fvgActive,1691,var,14,3,5,false
+fvgWasBullish,1692,var,6,1,5,false
+fvgMitigated,1713,value,3,0,5,fvgActive and bar_index > fvgBarIndex and ((fvgWasBullish and low < fvgHighUpper) or (not fvgWasBullish and high > fvgLo
+obBullLow,1718,var,4,2,5,na
+obBullHigh,1719,var,5,2,5,na
+obBearLow,1720,var,5,2,5,na
+obBearHigh,1721,var,4,2,5,na
+obBullBar,1722,var,1,2,5,-1
+obBearBar,1723,var,1,2,5,-1
+obBullActive,1724,var,12,4,5,false
+obBearActive,1725,var,12,4,5,false
+obBullMitigated,1726,var,1,3,5,false
+obBearMitigated,1727,var,1,3,5,false
+obBullMitPct,1728,var,1,3,5,0.0
+obBearMitPct,1729,var,1,3,5,0.0
+obBullHighA,1731,var,8,0,5,array.new_float()
+obBullLowA,1732,var,5,0,5,array.new_float()
+obBearHighA,1733,var,8,0,5,array.new_float()
+obBearLowA,1734,var,5,0,5,array.new_float()
+obBullBarA,1735,var,6,0,5,array.new_int()
+obBearBarA,1736,var,6,0,5,array.new_int()
+obBullMitA,1737,var,6,0,5,array.new_bool()
+obBearMitA,1738,var,6,0,5,array.new_bool()
+obMaxQueue,1739,value,2,0,5,5
+dispOnsetUp,1741,value,1,0,5,displacementUp and not displacementUp[1]
+dispOnsetDown,1742,value,1,0,5,displacementDown and not displacementDown[1]
+failedBullDisp,1766,value,1,0,5,showOB and not obBearActive and displacementUp[1] and not displacementUp and close < open[1] and close < (high[1] + low[
+failedBearDisp,1779,value,1,0,5,showOB and not obBullActive and displacementDown[1] and not displacementDown and close > open[1] and close > (high[1] + 
+_obBullSz,1824,value,2,0,5,array.size(obBullHighA)
+_obBearSz,1834,value,2,0,5,array.size(obBearHighA)
+_obBullSz2,1845,value,2,0,5,array.size(obBullHighA)
+_obBearSz2,1855,value,2,0,5,array.size(obBearHighA)
+srResLevels,1866,var,0,0,5,array.new_float()
+srResStrengths,1867,var,0,0,5,array.new_float()
+srSupLevels,1868,var,0,0,5,array.new_float()
+srSupStrengths,1869,var,0,0,5,array.new_float()
+goldRSI,1871,value,1,0,5,rsiVal
+smtDataValid,1872,value,2,0,5,showSMT and silverValid and not na(goldRSI) and not na(_silverRSI)
+goldRsiAtLastLow,1873,var,3,1,5,na
+silverRsiAtLastLow,1874,var,1,1,5,na
+goldRsiAtLastHigh,1875,var,3,1,5,na
+silverRsiAtLastHigh,1876,var,1,1,5,na
+smtBullRaw,1884,value,1,0,5,smtDataValid and not na(pivotLow) and not na(pivotLow[1]) and pivotLow < pivotLow[1] and goldRsiAtLastLow > goldRsiAtLas
+smtBearRaw,1886,value,1,0,5,smtDataValid and not na(pivotHigh) and not na(pivotHigh[1]) and pivotHigh > pivotHigh[1] and goldRsiAtLastHigh < goldRsi
+smtBullPair,1887,value,1,0,5,smtBullRaw and (goldBarDir[1] < 0 or rsiVal[1] > _silverRSI[1])
+smtBearPair,1888,value,1,0,5,smtBearRaw and (goldBarDir[1] > 0 or rsiVal[1] < _silverRSI[1])
+regimeScore,1892,value,1,0,5,"int(math.min(math.round((adxVal / 100.0) * (atrPercentile > 70 ? 1.2 : 1.0) * 100.0), 100))"
+volRegime,1893,value,2,0,5,atrPercentile > 70 ? 100 : atrPercentile > 40 ? 60 : 30
+structureRegime,1894,value,4,0,5,(htfAlignmentLong >= 2 or htfAlignmentShort >= 2) ? 100 : (htfAlignmentLong >= 1 or htfAlignmentShort >= 1) ? 60 : 30
+_macroRegimeBase,1903,value,1,0,5,(macroBull or macroBear) ? 100 : (macroBullVotes >= 2 or macroBearVotes >= 2) ? 60 : 30
+macroRegime,1904,value,1,0,6,"math.max(0, math.min(100, _macroRegimeBase + (oiConviction != 0 and (macroBull or macroBear) ? 10 : oiConviction != 0 ? "
+sessionRegime,1905,value,4,0,5,sessionQuality >= 60 ? 100 : sessionQuality >= 30 ? 60 : 30
+regimeCompositeRaw,1909,value,5,0,5,(regimeScore * 0.30) + (volRegime * 0.15) + (structureRegime * 0.20) + (macroRegime * 0.20) + (sessionRegime * 0.15)
+regimeComposite,1910,value,2,0,5,int(math.round(regimeCompositeRaw))
+strongTrend,1912,value,6,0,5,regimeCompositeRaw >= 70
+moderateTrend,1913,value,1,0,5,regimeCompositeRaw >= 40 and regimeCompositeRaw < 70
+weakTrend,1914,value,5,0,5,regimeCompositeRaw < 40
+volDelta,1917,value,1,0,5,close > open ? volume : close < open ? -volume : 0.0
+volDelta50,1918,value,2,0,5,"math.sum(volDelta, 50)"
+vpLookback,1938,value,3,0,5,100
+vpBuckets,1939,value,8,0,5,40
+vpVolumes,1940,var,7,0,5,"array.new_float(40, 0.0)"
+vpPrices,1941,var,4,0,5,"array.new_float(40, 0.0)"
+vpocPrice,1942,var,2,1,5,na
+vahPrice,1943,var,4,1,5,na
+valPrice,1944,var,4,1,5,na
+vaRatio,1945,var,0,1,5,0.0
+vaPos,1946,var,0,1,5,"""—"""
+vpHigh,1947,value,2,0,5,"ta.highest(high, vpLookback)"
+vpLow,1948,value,4,0,5,"ta.lowest(low, vpLookback)"
+vpRefresh,1949,var,1,1,5,0
+cvd,2001,var,3,1,5,0.0
+_barDir,2003,value,1,0,5,close > open ? 1.0 : close < open ? -1.0 : close > close[1] ? 0.5 : close < close[1] ? -0.5 : 0.0
+barDelta,2004,value,1,0,5,_barDir * volume
+cvdEma20,2006,value,1,0,5,"ta.ema(cvd, 20)"
+cvdEma100,2007,value,1,0,5,"ta.ema(cvd, 100)"
+cvdBull,2008,value,0,0,5,cvdEma20 > cvdEma100
+monthlyH,2011,tuple,1,0,5,"request.security(syminfo.tickerid, ""M"", [high[1], low[1]], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_on)"
+monthlyL,2011,tuple,1,0,5,"request.security(syminfo.tickerid, ""M"", [high[1], low[1]], gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_on)"
+poolPdH,2012,var,20,1,5,na
+poolPdL,2013,var,22,1,5,na
+poolPwH,2014,var,9,1,5,na
+poolPwL,2015,var,9,1,5,na
+poolPmH,2016,var,9,1,5,na
+poolPmL,2017,var,9,1,5,na
+poolEqH,2018,var,6,1,5,na
+poolEqL,2019,var,6,1,5,na
+_tfAboveD,2027,value,2,0,6,chartTFSeconds > 86400
+_tfAboveW,2034,value,2,0,6,chartTFSeconds > 604800
+ranPdH,2042,value,2,0,5,not na(poolPdH) and close > poolPdH
+ranPdL,2043,value,2,0,5,not na(poolPdL) and close < poolPdL
+ranPwH,2044,value,2,0,5,not na(poolPwH) and close > poolPwH
+ranPwL,2045,value,2,0,5,not na(poolPwL) and close < poolPwL
+ranPmH,2046,value,1,0,5,not na(poolPmH) and close > poolPmH
+ranPmL,2047,value,1,0,5,not na(poolPmL) and close < poolPmL
+ranEqH,2048,value,1,0,5,not na(poolEqH) and close > poolEqH
+ranEqL,2049,value,1,0,5,not na(poolEqL) and close < poolEqL
+liqAvail,2053,value,3,0,5,(not na(poolPdH) ? 1 : 0) + (not na(poolPdL) ? 1 : 0) + (not na(poolPwH) ? 1 : 0) + (not na(poolPwL) ? 1 : 0) + (not na(
+liqHealthScore,2058,value,1,2,5,0
+cdh,2063,var,3,2,6,na
+cdl,2064,var,3,2,6,na
+structPersistEntryHigh,2092,var,4,4,5,na
+structPersistEntryLow,2093,var,3,2,5,na
+structPersistIsBull,2094,var,3,2,5,false
+structPersistBars,2095,var,4,6,5,0
+structScore,2096,var,12,2,5,0.0
+structPersistPeak,2097,var,2,4,5,na
+structPersistTrough,2098,var,2,4,5,na
+liqPWtPDH,2154,value,1,0,5,1.50
+liqPWtPDL,2155,value,1,0,5,1.50
+liqPWtPWH,2156,value,1,0,5,1.25
+liqPWtPWL,2157,value,1,0,5,1.25
+liqPWtPMH,2158,value,1,0,5,1.10
+liqPWtPML,2159,value,1,0,5,1.10
+liqPWtEQH,2160,value,1,0,5,1.00
+liqPWtEQL,2161,value,1,0,5,1.00
+liqDistPDH,2162,value,3,0,5,not na(poolPdH) ? math.abs(close - poolPdH) : 1e10
+liqDistPDL,2163,value,3,0,5,not na(poolPdL) ? math.abs(close - poolPdL) : 1e10
+liqDistPWH,2164,value,3,0,5,not na(poolPwH) ? math.abs(close - poolPwH) : 1e10
+liqDistPWL,2165,value,3,0,5,not na(poolPwL) ? math.abs(close - poolPwL) : 1e10
+liqDistPMH,2166,value,3,0,5,not na(poolPmH) ? math.abs(close - poolPmH) : 1e10
+liqDistPML,2167,value,3,0,5,not na(poolPmL) ? math.abs(close - poolPmL) : 1e10
+liqDistEQH,2168,value,3,0,5,not na(poolEqH) ? math.abs(close - poolEqH) : 1e10
+liqDistEQL,2169,value,3,0,5,not na(poolEqL) ? math.abs(close - poolEqL) : 1e10
+effLiqProx,2170,value,9,0,5,"liqProxMult * regLiqMult // R6.0: proximity window widens in high vol, tightens in low vol"
+liqDistScore,2171,function,8,0,5,"atrM > 0 ? math.max(100.0 - safeDiv(dist, atrM) * safeDiv(100.0, effLiqProx), 0.0) : 0.0"
+liqDS_PDH,2172,value,2,0,5,"liqDistPDH < adaptiveATR * effLiqProx ? liqDistScore(liqDistPDH, adaptiveATR) : 0.0"
+liqDS_PDL,2173,value,2,0,5,"liqDistPDL < adaptiveATR * effLiqProx ? liqDistScore(liqDistPDL, adaptiveATR) : 0.0"
+liqDS_PWH,2174,value,2,0,5,"liqDistPWH < adaptiveATR * effLiqProx ? liqDistScore(liqDistPWH, adaptiveATR) : 0.0"
+liqDS_PWL,2175,value,2,0,5,"liqDistPWL < adaptiveATR * effLiqProx ? liqDistScore(liqDistPWL, adaptiveATR) : 0.0"
+liqDS_PMH,2176,value,2,0,5,"liqDistPMH < adaptiveATR * effLiqProx ? liqDistScore(liqDistPMH, adaptiveATR) : 0.0"
+liqDS_PML,2177,value,2,0,5,"liqDistPML < adaptiveATR * effLiqProx ? liqDistScore(liqDistPML, adaptiveATR) : 0.0"
+liqDS_EQH,2178,value,2,0,5,"liqDistEQH < adaptiveATR * effLiqProx ? liqDistScore(liqDistEQH, adaptiveATR) : 0.0"
+liqDS_EQL,2179,value,2,0,5,"liqDistEQL < adaptiveATR * effLiqProx ? liqDistScore(liqDistEQL, adaptiveATR) : 0.0"
+liqHTFMatch,2181,function,8,0,5,(poolIsBull and htfBullScoreGate) ? 1.3 : (poolIsBull and htfAlignmentLong >= 1) ? 1.15 : (poolIsBull and htfBearScoreGa
+liqSessionWt,2183,value,8,0,5,inKillzone ? 1.3 : (inLondon or inNY) ? 1.15 : 0.8
+liqTrendWt,2185,function,8,0,5,(poolIsBull and bullTrend) ? 1.2 : (not poolIsBull and bearTrend) ? 1.2 : (poolIsBull and bearTrend) ? 0.7 : (not poolIs
+liqScorePDH,2186,value,7,0,5,liqDS_PDH > 0 ? liqPWtPDH * liqDS_PDH * liqHTFMatch(true) * liqSessionWt * liqTrendWt(true) : 0.0
+liqScorePDL,2187,value,7,0,5,liqDS_PDL > 0 ? liqPWtPDL * liqDS_PDL * liqHTFMatch(false) * liqSessionWt * liqTrendWt(false) : 0.0
+liqScorePWH,2188,value,7,0,5,liqDS_PWH > 0 ? liqPWtPWH * liqDS_PWH * liqHTFMatch(true) * liqSessionWt * liqTrendWt(true) : 0.0
+liqScorePWL,2189,value,7,0,5,liqDS_PWL > 0 ? liqPWtPWL * liqDS_PWL * liqHTFMatch(false) * liqSessionWt * liqTrendWt(false) : 0.0
+liqScorePMH,2190,value,7,0,5,liqDS_PMH > 0 ? liqPWtPMH * liqDS_PMH * liqHTFMatch(true) * liqSessionWt * liqTrendWt(true) : 0.0
+liqScorePML,2191,value,7,0,5,liqDS_PML > 0 ? liqPWtPML * liqDS_PML * liqHTFMatch(false) * liqSessionWt * liqTrendWt(false) : 0.0
+liqScoreEQH,2192,value,7,0,5,liqDS_EQH > 0 ? liqPWtEQH * liqDS_EQH * liqHTFMatch(true) * liqSessionWt * liqTrendWt(true) : 0.0
+liqScoreEQL,2193,value,6,0,5,liqDS_EQL > 0 ? liqPWtEQL * liqDS_EQL * liqHTFMatch(false) * liqSessionWt * liqTrendWt(false) : 0.0
+liqDestLabel,2195,value,12,8,5,"""—"""
+liqDestScore,2196,value,1,8,5,0
+liqDestDist,2197,value,2,8,5,1e10
+liqDestScoreSecondary,2198,value,0,8,5,0
+_liqAll,2206,value,3,0,5,"array.from(liqScorePDH, liqScorePDL, liqScorePWH, liqScorePWL, liqScorePMH, liqScorePML, liqScoreEQH, liqScoreEQL)"
+liqMaxScore,2208,value,11,0,5,"array.get(_liqAll, 0)"
+liqSecondScore,2209,value,9,0,5,"array.get(_liqAll, 1)"
+liqReachScore,2265,value,1,1,5,50.0
+liqSweepBear,2278,value,6,0,5,(not na(poolPdH) and high >= poolPdH and close < poolPdH) or (not na(poolPwH) and high >= poolPwH and close < poolPwH) o
+liqSweepBull,2279,value,8,0,5,(not na(poolPdL) and low <= poolPdL and close > poolPdL) or (not na(poolPwL) and low <= poolPwL and close > poolPwL) or 
+mtfVotesBull,2282,value,1,4,5,0
+mtfVotesBear,2287,value,1,4,5,0
+macroVotesBull,2292,value,1,0,5,macroBullVotes
+macroVotesBear,2293,value,1,0,5,macroBearVotes
+mtfConfluenceBull,2294,value,1,0,5,mtfVotesBull + macroVotesBull
+mtfConfluenceBear,2295,value,1,0,5,mtfVotesBear + macroVotesBear
+mtfAvail,2302,value,2,0,5,(htf5mAvailable ? 1 : 0) + (htf15mAvailable ? 1 : 0) + (htf1hAvailable ? 1 : 0) + (htf4hAvailable ? 1 : 0)
+mtfConfluenceScore,2303,value,4,0,5,int(math.round((mtfConfluenceBull - mtfConfluenceBear) / (mtfAvail + 6.0) * 100.0))
+mtfConfluenceMag,2304,value,4,0,5,math.abs(mtfConfluenceScore)
+mtfAgreementHigh,2305,value,1,0,5,mtfConfluenceMag >= 60
+mtfAgreementMed,2306,value,1,0,5,mtfConfluenceMag >= 30 and mtfConfluenceMag < 60
+mtfAgreementLow,2307,value,2,0,5,mtfConfluenceMag < 30
+macroIntelConf,2310,value,3,0,5,macroStrengthConf
+macroIntelValid,2311,value,1,0,6,dxyValid or yieldValid or spxValid or eurusdValid or silverValid
+biasStructBull,2315,value,1,0,5,bullTrend ? 30 : chochBullScore
+biasStructBear,2316,value,1,0,5,bearTrend ? 30 : chochBearScore
+biasLiqBull,2317,value,1,0,5,(bullBOS or displacementUp) ? 20 : chochBullScore * (10.0 / 15.0)
+biasLiqBear,2318,value,1,0,5,(bearBOS or displacementDown) ? 20 : chochBearScore * (10.0 / 15.0)
+biasMacroBull,2319,value,1,0,5,macroBull ? 25 : 0
+biasMacroBear,2320,value,1,0,5,macroBear ? 25 : 0
+biasHTFBull,2321,value,1,0,5,htfBullScoreGate ? 25 : (htfAlignmentLong >= 1 ? 10 : 0)
+biasHTFBear,2322,value,1,0,5,htfBearScoreGate ? 25 : (htfAlignmentShort >= 1 ? 10 : 0)
+biasMomBull,2323,value,1,0,5,bullRsiDiv ? 15 : 0
+biasMomBear,2324,value,1,0,5,bearRsiDiv ? 15 : 0
+biasSessBull,2327,value,1,0,5,sessionQuality >= 50 ? 15 : sessionQuality >= 30 ? 8 : 3
+biasSessBear,2328,value,1,0,5,sessionQuality >= 50 ? 15 : sessionQuality >= 30 ? 8 : 3
+bullBiasScore,2329,value,3,0,5,biasStructBull + biasLiqBull + biasMacroBull + biasHTFBull + biasMomBull + biasSessBull
+bearBiasScore,2330,value,3,0,5,biasStructBear + biasLiqBear + biasMacroBear + biasHTFBear + biasMomBear + biasSessBear
+rangeBiasScore,2331,value,3,0,5,(regimeRanging ? 40 : 0) + (regimeDead ? 50 : 0) + (mtfAgreementLow ? 30 : 0) + (not macroBull and not macroBear and mac
+biasRegimeCall,2333,value,1,0,5,"rangeBiasScore >= bullBiasScore and rangeBiasScore >= bearBiasScore ? ""RANGE"" : bullBiasScore >= bearBiasScore ? ""BULL"" "
+rangeDominant,2334,value,1,0,5,"biasRegimeCall == ""RANGE"""
+confStruct,2337,value,1,0,5,structureRegime >= 80 ? 100 : structureRegime >= 50 ? 60 : structureRegime >= 20 ? 30 : 10
+htfFullAvail,2339,value,1,0,5,"math.max(mtfAvail + (htf1dAvailable ? 1 : 0), 1)"
+confMTF,2340,value,1,0,5,"int(math.round(math.max(htfFullLong, htfFullShort) * 100.0 / htfFullAvail))"
+confLiquidity,2341,value,1,4,5,0
+confMacro,2346,value,1,0,5,macroIntelConf >= 60 ? 100 : macroIntelConf >= 30 ? 60 : macroIntelConf >= 10 ? 30 : 10
+confSession,2347,value,1,0,5,sessionRegime >= 80 ? 100 : sessionRegime >= 50 ? 60 : sessionRegime >= 20 ? 30 : 10
+_regSumStrong,2351,value,1,0,5,(strongTrend[1] ? 1 : 0) + (strongTrend[2] ? 1 : 0) + (strongTrend[3] ? 1 : 0) + (strongTrend[4] ? 1 : 0) + (strongTrend
+_regSumWeak,2352,value,1,0,5,(weakTrend[1] ? 1 : 0) + (weakTrend[2] ? 1 : 0) + (weakTrend[3] ? 1 : 0) + (weakTrend[4] ? 1 : 0) + (weakTrend[5] ? 1 : 
+_useWindowedStrong,2353,value,4,0,5,_regSumStrong >= 3.0
+_useWindowedWeak,2354,value,4,0,5,_regSumWeak >= 3.0
+cwStruct,2355,value,2,0,5,_useWindowedStrong ? 25 : _useWindowedWeak ? 15 : 20
+cwMtf,2356,value,2,0,5,_useWindowedStrong ? 30 : _useWindowedWeak ? 10 : 20
+cwLiq,2357,value,2,0,5,20.0
+cwMacro,2358,value,2,0,5,_useWindowedStrong ? 15 : _useWindowedWeak ? 25 : 20
+cwSess,2359,value,2,0,5,_useWindowedStrong ? 10 : _useWindowedWeak ? 30 : 20
+cwTotal,2360,value,1,0,5,cwStruct + cwMtf + cwLiq + cwMacro + cwSess
+confidenceScore,2361,value,12,4,5,int(math.round((confStruct * cwStruct + confMTF * cwMtf + confLiquidity * cwLiq + confMacro * cwMacro + confSession * cw
+_bullSignals,2367,value,2,0,5,(bullBOS ? 1 : 0) + (displacementUp ? 1 : 0) + (mssActiveBull ? 1 : 0) + (chochActiveBull ? 1 : 0) + (smtBullPair ? 1 : 
+_bearSignals,2368,value,2,0,5,(bearBOS ? 1 : 0) + (displacementDown ? 1 : 0) + (mssActiveBear ? 1 : 0) + (chochActiveBear ? 1 : 0) + (smtBearPair ? 1 
+_maxAgree,2369,value,1,0,5,"math.max(_bullSignals, _bearSignals)"
+_pipelineConflict,2370,value,1,0,5,_bullSignals > 0 and _bearSignals > 0
+_lowAgreement,2371,value,1,0,5,_maxAgree < 2
+confLabel,2379,value,0,0,5,"confidenceScore >= 85 ? ""EXTREME"" : confidenceScore >= 65 ? ""HIGH"" : confidenceScore >= 40 ? ""MEDIUM"" : ""LOW"""
+_confThresh,2382,value,1,0,5,"math.max(bullTrendScore, bearTrendScore) >= 70 ? 45.0 : 60.0"
+regimeConfHigh,2383,value,6,0,5,confidenceScore >= _confThresh
+evTrendBull,2386,value,1,0,5,bullTrendScore
+evTrendBear,2387,value,1,0,5,bearTrendScore
+evStructBull,2388,value,1,0,5,"na(structScore) ? 50.0 : chochBullScore > 0 ? math.max(structScore, 55.0) : structScore"
+evStructBear,2389,value,1,0,5,"na(structScore) ? 50.0 : chochBearScore > 0 ? math.max(100.0 - structScore, 55.0) : 100.0 - structScore"
+evFlowBull,2390,value,1,0,5,"diplus > diminus ? safeDiv(diplus, diplus + diminus) * 100.0 : 30.0"
+evFlowBear,2391,value,1,0,5,"diminus > diplus ? safeDiv(diminus, diplus + diminus) * 100.0 : 30.0"
+evMacroBull,2392,value,1,0,5,macroStrengthScore > 0 ? macroStrengthScore : 0.0
+evMacroBear,2393,value,1,0,5,macroStrengthScore < 0 ? math.abs(macroStrengthScore) : 0.0
+_liqUpPull,2398,value,2,0,5,liqScorePDH + liqScorePWH + liqScorePMH + liqScoreEQH
+_liqDnPull,2399,value,2,0,5,liqScorePDL + liqScorePWL + liqScorePML + liqScoreEQL
+_liqPullTot,2400,value,4,0,5,_liqUpPull + _liqDnPull
+evLiqBull,2401,value,5,0,5,_liqPullTot > 0 ? 30.0 + 30.0 * (_liqUpPull / _liqPullTot) : 45.0
+evLiqBear,2402,value,5,0,5,_liqPullTot > 0 ? 30.0 + 30.0 * (_liqDnPull / _liqPullTot) : 45.0
+evSessionBull,2411,value,1,0,5,sessionQuality * 0.65
+evSessionBear,2412,value,1,0,5,sessionQuality * 0.65
+evCorrBull,2418,value,1,0,5,avgCorrHealth >= 40 ? avgCorrHealth : 30.0
+evCorrBear,2419,value,1,0,5,avgCorrHealth >= 40 ? avgCorrHealth : 30.0
+evMrBull,2420,value,1,0,5,"(mrComposite <= -30 ? math.min(math.abs(mrComposite), 100) : 10.0)"
+evMrBear,2421,value,1,0,5,"(mrComposite >= 30 ? math.min(math.abs(mrComposite), 100) : 10.0)"
+wBaseTrend,2423,value,1,0,5,0.20
+wBaseStruct,2424,value,1,0,5,0.18
+wBaseFlow,2425,value,1,0,5,0.15
+wBaseMacro,2426,value,1,0,5,0.15
+wBaseLiq,2427,value,1,0,5,0.12
+wBaseSession,2428,value,1,0,5,0.10
+wBaseCorr,2429,value,1,0,5,0.05
+wBaseMR,2430,value,1,0,5,0.05
+kMod,2431,value,5,0,5,(regimeStrength - 0.5) * 2.0 // -1 (range) to +1 (trend)
+wTrend,2432,value,2,0,5,wBaseTrend + kMod * 0.10
+wStruct,2433,value,2,0,5,wBaseStruct - kMod * 0.04
+wFlow,2434,value,2,0,5,wBaseFlow
+wMacro,2435,value,2,0,5,wBaseMacro
+wLiq,2436,value,2,0,5,wBaseLiq
+wSession,2437,value,2,0,5,wBaseSession - kMod * 0.03
+wCorr,2438,value,2,0,5,wBaseCorr + kMod * 0.02
+wMR,2439,value,2,0,5,wBaseMR - kMod * 0.05
+rawBullScore,2440,value,4,0,5,evTrendBull * wTrend + evStructBull * wStruct + evFlowBull * wFlow + evMacroBull * wMacro + evLiqBull * wLiq + evSession
+rawBearScore,2441,value,3,0,5,evTrendBear * wTrend + evStructBear * wStruct + evFlowBear * wFlow + evMacroBear * wMacro + evLiqBear * wLiq + evSession
+rangeEvidence,2443,value,6,6,5,0.0
+insideBar,2445,value,1,0,5,high <= high[1] and low >= low[1]
+atrSma,2447,value,2,0,5,"ta.sma(adaptiveATR, 20)"
+atrRatio,2448,value,2,0,5,atrSma > 0.0 ? adaptiveATR / atrSma : 1.0
+emaSpread,2450,value,2,0,5,adaptiveATR > 0 ? math.abs(ema20 - ema100) / adaptiveATR : 0.0
+regimeRangeBase,2457,value,1,0,5,regimeTrending ? 10.0 : regimeRanging ? 30.0 : 45.0
+totalRawScore,2459,value,4,0,5,rawBullScore + rawBearScore
+rawBull,2460,value,3,0,5,totalRawScore > 0 ? rawBullScore / totalRawScore * 100.0 : 50.0
+rawBear,2461,value,3,0,5,totalRawScore > 0 ? rawBearScore / totalRawScore * 100.0 : 50.0
+rangeResidual,2462,value,1,0,5,100.0 - rawBull - rawBear
+rangeBlended,2463,value,1,0,5,(rangeResidual * 0.70) + (rangeEvidence * 0.20) + (regimeRangeBase * 0.10)
+rTotal,2464,value,3,0,5,rawBull + rawBear + rangeBlended
+bullScore,2465,value,34,8,5,0.0
+bearScore,2466,value,16,8,5,0.0
+rangeScore,2467,value,9,8,5,0.0
+wiPdhCont,2501,value,0,1,4,na
+wiPdlCont,2502,value,0,1,4,na
+wiVwapHold,2503,value,0,1,4,na
+wiVwapFail,2504,value,0,1,4,na
+vwapDist,2520,value,1,0,4,math.abs(distVwapATR)
+totalR,2542,value,2,0,5,rawBullScore + rawBearScore
+pdhReachScore,2543,value,2,2,5,totalR > 0 ? math.round(rawBullScore / totalR * 100.0) : 50.0
+pdlReachScore,2544,value,1,2,5,100.0 - pdhReachScore
+inNewsWindow,2556,value,3,0,5,"useNewsSuppress and newsSession != """" and not na(time(timeframe.period, newsSession))"
+_ddForBreaker,2560,var,1,1,5,0.0
+_ddBreach,2561,value,3,0,5,useDDBreaker and _ddForBreaker >= maxDdPct
+buyPreFilters,2578,value,1,0,5,bullTrend and htfBullScoreGate and macroBull and regimeConfHigh and bullRsiDiv and recentBars and sessionQuality >= 30 a
+sellPreFilters,2579,value,1,0,5,bearTrend and htfBearScoreGate and macroBear and regimeConfHigh and bearRsiDiv and recentBars and sessionQuality >= 30 a
+shouldBuy,2581,value,14,0,5,buyPreFilters and (bullBOS or displacementUp)
+shouldSell,2583,value,13,0,5,sellPreFilters and (bearBOS or displacementDown)
+_buyFilterLog,2586,value,15,7,5,""""""
+_sellFilterLog,2587,value,15,7,5,""""""
+_buyPass,2595,value,2,0,5,(bullTrend ? 1 : 0) + (htfBullScoreGate ? 1 : 0) + (macroBull ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bullRsiDiv ? 1 : 0)
+_buyLog,2596,value,1,0,5,"""▲"" + str.tostring(_buyPass) + ""/7"" + (_buyPass < 7 ? "" [✗"" + _buyFilterLog + ""]"" : """")"
+_sellPass,2604,value,2,0,5,(bearTrend ? 1 : 0) + (htfBearScoreGate ? 1 : 0) + (macroBear ? 1 : 0) + (regimeConfHigh ? 1 : 0) + (bearRsiDiv ? 1 : 0)
+_sellLog,2605,value,1,0,5,"""▼"" + str.tostring(_sellPass) + ""/7"" + (_sellPass < 7 ? "" [✗"" + _sellFilterLog + ""]"" : """")"
+_trigLog,2606,value,2,0,5,"(bullBOS or displacementUp or bearBOS or displacementDown) ? """" : "" NO-TRIG"""
+_newsLog,2607,value,2,0,5,"inNewsWindow ? "" NEWS-BLK"" : """""
+_ddLog,2608,value,2,0,5,"_ddBreach ? "" DD-BREACH"" : """""
+_conflictLog,2609,value,2,0,5,"_pipelineConflict ? "" CONFLICT"" : """""
+decisionLog,2610,value,0,0,5,"rangeDominant ? ""RANGE "" + str.tostring(int(rangeBiasScore)) + ""/130 [no dir. edge]"" : bullBiasScore >= bearBiasScore ? "
+gHitProb,2614,var,14,0,5,"array.new<float>(8, na)"
+gHitN,2618,var,1,0,5,"array.new<float>(1, na)"
+f_gridInterp,2626,function,4,0,5,
+f_hitInterp,2628,function,4,0,5,
+gRaceProb,2636,var,12,0,5,"array.new<float>(18, na)"
+gRaceN,2637,var,2,0,5,"array.new<float>(1, na)"
+gOosBearWr,2640,var,3,0,5,"array.new<float>(1, na)"
+tfSec,2652,value,4,0,5,chartTFSeconds
+HIST_MAX,2653,value,34,0,5,tfSec <= 60 ? 1200 : tfSec <= 300 ? 2000 : tfSec <= 900 ? 3000 : 4500
+OUTCOME_N,2658,value,34,0,5,"math.max(3, int(3600.0 / tfSec))"
+f_tradePlan,2660,function,1,0,5,
+calQ20,2889,var,4,1,5,20.0
+calQ40,2890,var,4,1,5,40.0
+calQ60,2891,var,4,1,5,60.0
+calQ80,2892,var,4,1,5,80.0
+_regTot,2894,var,5,0,5,"array.from(0, 0, 0)"
+_regWin,2895,var,5,0,5,"array.from(0, 0, 0)"
+hBi,2896,var,5,0,5,"array.new_int(HIST_MAX, -1)"
+hZone,2899,var,2,0,5,"array.new<float>(HIST_MAX, 0.5)"
+hAdx,2904,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hAtr,2905,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hHtf,2906,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hStr,2907,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hLiq,2908,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hMr,2909,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hCor,2910,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hOut,2911,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hRet,2912,var,3,0,5,"array.new_float(HIST_MAX, 0.0)"
+hRUnit,2917,var,2,0,5,"array.new_float(HIST_MAX, 0.0)"
+hPred,2918,var,4,0,5,"array.new_float(HIST_MAX, 50.0)"
+hRace,2922,var,3,0,5,"array.new_int(HIST_MAX, -1)"
+hTerm,2925,var,2,0,5,"array.new_float(HIST_MAX, 0.0)"
+h1st,2926,var,2,0,5,"array.new_int(HIST_MAX, 0)"
+hBEv,2927,var,3,0,5,"array.new_int(HIST_MAX, 0)"
+hBCont,2928,var,4,0,5,"array.new_float(HIST_MAX, 0.0)"
+hCalBin,2929,var,3,0,5,"array.new_float(HIST_MAX, -1.0)"
+SCHEMA_BUILD,2952,value,2,0,5,5
+REGIME_FEATURE_VERSION,2953,value,7,0,5,((gcConfirmsBull or gcConfirmsBear) or (oiValid and oiConviction != 0)) ? 2 : 1
+barDataStatus,2954,value,3,0,4,((gcConfirmsBull or gcConfirmsBear) ? 1 : 0) + ((oiValid and oiConviction != 0) ? 2 : 0) + (US2Y_STATUS == 0 ? 4 : 0) + 
+hSchemaVer,2955,var,2,0,5,"array.new_int(HIST_MAX, 1)"
+hDataStatus,2956,var,1,0,4,"array.new_int(HIST_MAX, 0)"
+migV2Count,2957,var,3,2,5,0
+hRegime,2958,var,3,0,5,"array.new_int(HIST_MAX, 0)"
+hSess,2959,var,2,0,5,"array.new_float(HIST_MAX, 0.5)"
+hW,2960,var,23,1,5,0
+hN,2961,var,21,1,5,0
+rPrev,2962,var,4,1,5,-1
+rTCnt,2963,var,3,1,5,0
+rRCnt,2964,var,3,1,5,0
+rDCnt,2965,var,3,1,5,0
+rTR,2966,var,1,1,5,0
+rTD,2967,var,1,1,5,0
+rRT,2968,var,1,1,5,0
+rRD,2969,var,1,1,5,0
+rDT,2970,var,1,1,5,0
+rDR,2971,var,1,1,5,0
+_calDriftFast,2973,var,2,1,5,50.0
+_calDriftSlow,2974,var,2,1,5,50.0
+tblA,2976,var,2,0,5,na
+tblPlan,2977,var,1,0,5,na
+rCurr,2980,value,15,0,5,strongTrend ? 0 : moderateTrend ? 1 : 2
+highOutcome,3002,value,3,0,5,"ta.highest(high, OUTCOME_N)"
+lowOutcome,3003,value,3,0,5,"ta.lowest(low, OUTCOME_N)"
+migStartTime,3156,var,1,1,5,na
+migPct,3162,value,2,0,5,"hN > 0 ? math.min(migV2Count * 100.0 / math.min(hN, HIST_MAX), 100.0) : 0.0"
+migState,3163,value,0,0,5,"REGIME_FEATURE_VERSION == 1 ? """" : migPct >= 99.5 ? ""  SCHEMA_V2"" : ""  MIXED_SCHEMA "" + str.tostring(int(migPct)) + ""%"""
+oBull,3164,value,1,1,5,50.0
+oBear,3165,value,2,1,5,50.0
+oRange,3166,value,2,1,5,0.0
+oMatch,3167,value,6,1,5,0
+oPdh1stPct,3168,value,0,1,5,na
+oPdl1stPct,3169,value,0,1,5,na
+oCalGrade,3170,value,4,1,5,0
+oCalDetail,3171,value,0,1,5,""""""
+oRegPer,3172,value,2,1,5,50.0
+oBosCont,3173,value,0,1,5,50.0
+gCalFit,3176,var,7,0,5,"array.from(float(na), float(na))"
+gCalFitBear,3178,var,5,0,5,"array.from(float(na), float(na))"
+oWr,3179,value,2,1,5,50.0
+oAvgW,3180,value,2,1,5,0.5
+oAvgL,3181,value,3,1,5,1.0
+oBosFail,3182,value,0,1,5,50.0
+oMaxAdverseATR,3183,value,0,1,5,na
+oMaxDD,3184,value,5,1,5,0.0
+oOosN,3185,value,3,1,5,0
+oOosWr,3186,value,7,1,5,50.0
+oAvgWOos,3187,value,2,1,5,0.5
+oAvgLOos,3188,value,2,1,5,1.0
+runStatsEngines,3192,function,1,0,5,
+__b,4315,tuple,1,0,5,runStatsEngines()
+__be,4315,tuple,1,0,5,runStatsEngines()
+__r,4315,tuple,1,0,5,runStatsEngines()
+__m,4315,tuple,1,0,5,runStatsEngines()
+__p1,4315,tuple,1,0,5,runStatsEngines()
+__p2,4315,tuple,1,0,5,runStatsEngines()
+__ev,4315,tuple,1,0,5,runStatsEngines()
+__el,4315,tuple,2,0,5,runStatsEngines()
+__wr,4315,tuple,1,0,5,runStatsEngines()
+__aw,4315,tuple,1,0,5,runStatsEngines()
+__al,4315,tuple,1,0,5,runStatsEngines()
+__cp,4315,tuple,1,0,5,runStatsEngines()
+__cg,4315,tuple,2,0,5,runStatsEngines()
+__cb,4315,tuple,2,0,5,runStatsEngines()
+__cd,4315,tuple,1,0,5,runStatsEngines()
+__bc,4315,tuple,1,0,5,runStatsEngines()
+__bf,4315,tuple,1,0,5,runStatsEngines()
+__rp,4315,tuple,1,0,5,runStatsEngines()
+__fs,4315,tuple,1,0,5,runStatsEngines()
+__fh,4315,tuple,1,0,5,runStatsEngines()
+__fl,4315,tuple,1,0,5,runStatsEngines()
+__fm,4315,tuple,1,0,5,runStatsEngines()
+__fc,4315,tuple,1,0,5,runStatsEngines()
+__pf,4315,tuple,2,0,5,runStatsEngines()
+__ma,4315,tuple,1,0,5,runStatsEngines()
+__md,4315,tuple,1,0,5,runStatsEngines()
+__ow,4315,tuple,2,0,5,runStatsEngines()
+__on,4315,tuple,1,0,5,runStatsEngines()
+__iw,4315,tuple,2,0,5,runStatsEngines()
+__in,4315,tuple,2,0,5,runStatsEngines()
+__awo,4315,tuple,1,0,5,runStatsEngines()
+__alo,4315,tuple,1,0,5,runStatsEngines()
+_qcec,4318,var,2,1,5,-1
+oOosNeff,4360,value,12,0,5,"int(oOosN / math.max(OUTCOME_N, 1))"
+calDrift,4370,value,1,0,5,showStatsEngine and oOosNeff >= 10 and _calDriftFast < _calDriftSlow - 10
+useRawScores,4371,value,2,0,5,calDrift
+normalizeScores,4375,function,1,0,5,
+fBullScore,4426,value,11,4,5,50.0
+fBearScore,4427,value,8,5,5,50.0
+fRngScore,4428,value,6,5,5,0.0
+fAdj,4429,value,6,2,5,0.0
+momBars,4441,value,1,3,5,0
+momUp,4444,value,1,0,5,close > close[1]
+momDn,4445,value,1,0,5,close < close[1]
+momScore,4453,value,1,0,5,math.abs(momBars) * 10.0 + (adxVal > 25 ? 15.0 : adxVal > 20 ? 8.0 : 0.0)
+fMult,4460,value,1,0,5,"showStatsEngine ? math.min(oMatch / 300.0, 1.0) * (0.20 + 0.10 * math.min(oOosN / OUTCOME_N / 30.0, 1.0)) : 0.10"
+fSig,4461,value,1,0,5,bullTrend ? 1.0 : bearTrend ? -1.0 : 0.0
+fEvBase,4462,value,1,3,5,0.0
+fEvWeight,4463,value,2,3,5,0.0
+nb2_,4494,tuple,1,0,5,"normalizeScores(bullScore, bearScore, rangeScore, 1.0)"
+nbe2_,4494,tuple,1,0,5,"normalizeScores(bullScore, bearScore, rangeScore, 1.0)"
+nr2_,4494,tuple,1,0,5,"normalizeScores(bullScore, bearScore, rangeScore, 1.0)"
+tpIsLong,4503,tuple,32,0,5,f_tradePlan()
+tpEntry,4503,tuple,17,0,5,f_tradePlan()
+tpSL,4503,tuple,11,3,5,f_tradePlan()
+tpDist,4503,tuple,19,0,5,f_tradePlan()
+tp1,4503,tuple,15,2,5,f_tradePlan()
+tp2,4503,tuple,15,2,5,f_tradePlan()
+tp3,4503,tuple,9,2,5,f_tradePlan()
+tpRR1,4503,tuple,7,0,5,f_tradePlan()
+tpRR2,4503,tuple,3,0,5,f_tradePlan()
+tpRR3,4503,tuple,3,0,5,f_tradePlan()
+tpDirStr,4503,tuple,2,0,5,f_tradePlan()
+tpCol,4503,tuple,2,0,5,f_tradePlan()
+tpEntryStr,4503,tuple,2,0,5,f_tradePlan()
+tpSLStr,4503,tuple,2,0,5,f_tradePlan()
+tp1Str,4503,tuple,2,0,5,f_tradePlan()
+tp2Str,4503,tuple,2,0,5,f_tradePlan()
+tp3Str,4503,tuple,2,0,5,f_tradePlan()
+tpRRStr,4503,tuple,2,0,5,f_tradePlan()
+pTP1,4503,tuple,4,1,5,f_tradePlan()
+pTP2,4503,tuple,3,1,5,f_tradePlan()
+pTP3,4503,tuple,3,1,5,f_tradePlan()
+pSLhit,4503,tuple,3,1,5,f_tradePlan()
+planExpectancy,4503,tuple,9,1,5,f_tradePlan()
+planReason,4503,tuple,2,0,5,f_tradePlan()
+_calibratedProb,4522,value,11,4,5,bullScore / 100.0
+_calibratedProbBear,4524,value,7,2,5,na
+calProbStr,4525,value,0,1,5,""""""
+f_tqEngine,4602,function,1,0,5,
+tradeQuality,4671,tuple,7,0,5,f_tqEngine()
+tqBasis,4671,tuple,3,0,5,f_tqEngine()
+f_auctionIntel,4672,function,1,0,4,
+aucState,4736,tuple,15,0,4,f_auctionIntel()
+aucProb,4736,tuple,3,0,4,f_auctionIntel()
+aucCycle,4736,tuple,3,0,4,f_auctionIntel()
+discStr,4736,tuple,3,0,4,f_auctionIntel()
+acceptScore,4736,tuple,12,0,4,f_auctionIntel()
+acceptGrade,4736,tuple,3,0,4,f_auctionIntel()
+valueMigStr,4736,tuple,3,0,4,f_auctionIntel()
+openType,4736,tuple,4,1,4,f_auctionIntel()
+lastSweepQ,4736,tuple,8,1,4,f_auctionIntel()
+lastSweepGrade,4736,tuple,3,1,4,f_auctionIntel()
+effTqMin,4740,value,1,0,5,tqMinScore == 0 ? 0 : math.min(math.max(tqMinScore + (regAbnormal ? 15 : regCompression ? 10 : regStrongTrend or regExpa
+_cotDamp,4747,value,1,0,5,cotRegime == 0 ? 0 : (cotRegime == -1 and shouldBuy) or (cotRegime == 1 and shouldSell) ? 5 : 0
+_calBoth,4795,value,2,0,5,not na(_calibratedProb) and not na(_calibratedProbBear) and _calibratedProb + _calibratedProbBear > 0
+_calPLong,4796,value,2,0,5,_calBoth ? _calibratedProb / (_calibratedProb + _calibratedProbBear) : _calibratedProb
+_calPShort,4797,value,2,0,5,_calBoth ? _calibratedProbBear / (_calibratedProb + _calibratedProbBear) : na(_calibratedProb) ? na : 1.0 - _calibratedP
+_calGateReady,4798,value,1,0,5,"useCalGate and not na(array.get(gCalFit, 0)) and oOosNeff >= 10 and not na(_calibratedProb)"
+_calVeto,4799,value,2,0,5,_calGateReady and ((shouldBuy and _calPLong < calGateMinP) or (shouldSell and _calPShort < calGateMinP))
+effTqMinCot,4800,value,2,0,5,"math.min(effTqMin + _cotDamp, 95)"
+tqVeto,4801,value,9,1,5,(effTqMinCot > 0 and tradeQuality < effTqMinCot) or (not na(planExpectancy) and planExpectancy < 0.0) or _calVeto
+rkEntry,4808,var,4,2,5,na
+rkSL,4809,var,3,1,5,na
+rkTP,4810,var,3,1,5,na
+rkLong,4811,var,2,1,5,false
+rkDayR,4812,var,3,2,5,0.0
+rkDayN,4813,var,3,2,5,0
+rkConsec,4814,var,4,3,5,0
+riskLock,4815,var,8,3,5,false
+rkLockBar,4816,var,1,1,5,0
+rkLossHit,4834,value,2,0,5,maxDailyLossR > 0 and rkDayR <= -maxDailyLossR
+rkCapHit,4835,value,2,0,5,maxTradesDay > 0 and rkDayN >= maxTradesDay
+rkStreakHit,4836,value,1,0,5,maxConsecLoss > 0 and rkConsec >= maxConsecLoss
+riskLockStr,4849,value,3,0,5,"not useRiskLimits ? """" : riskLock ? (rkLossHit ? ""LOCK:DAYLOSS"" : rkCapHit ? ""LOCK:MAXTRADES"" : ""LOCK:LOSSSTREAK"") : ""R"""
+_statsWarm,4897,value,2,0,5,not showStatsEngine or (hN > OUTCOME_N * 2 and oOosNeff >= 10)
+_histFloor,4899,value,2,0,5,OUTCOME_N * 3 + 50
+_histGate,4900,value,1,0,5,"hN > 0 ? """" : ""  HIST-GATE["" + (perfMode ? ""PERF-MODE-ON!"" : ""perf:ok"") + "" "" + (showStatsEngine ? ""stats:ok"" : ""STATS-E"
+_confDirLabel,4901,var,7,1,5,"""WAIT"""
+aucBias,4927,value,1,0,4,"shouldBuy and not tqVeto ? (aucState == ""REJ-LO"" ? ""LONG-REV"" : ""LONG-CONT"") : shouldSell and not tqVeto ? (aucState == "
+structStr,4928,value,1,0,5,"bullStructActive ? ""▲"" + bullStructType + "" "" + str.tostring(bullStructAge) + ""b"" : bearStructActive ? ""▼"" + bearStructT"
+_xT,4936,value,1,0,5,"bullTrend ? ""T▲"" : bearTrend ? ""T▼"" : ""T="""
+_xS,4937,value,1,0,5,"bullStructActive ? ""S▲"" + bullStructType : bearStructActive ? ""S▼"" + bearStructType : ""S="""
+_xL,4938,value,1,0,5,"evLiqBull > evLiqBear + 3 ? ""L▲"" : evLiqBear > evLiqBull + 3 ? ""L▼"" : ""L="""
+_xM,4939,value,1,0,5,"mtfConfluenceScore > 20 ? ""M▲"" : mtfConfluenceScore < -20 ? ""M▼"" : ""M="""
+_xQ,4940,value,1,0,5,"riskLock ? ""R✗"" : _calVeto ? ""P✗"" : tqVeto ? ""Q✗"" : ""R✓"""
+crossCheck,4941,value,1,0,5,"_xT + "" "" + _xS + "" "" + _xL + "" "" + _xM + "" "" + _xQ + "" TQ"" + str.tostring(tradeQuality) + ""/100"" + tqBasis + "" C"" + str"
+auctionStr,4942,value,0,0,4,"crossCheck + ""\n{"" + structStr + ""} "" + (riskLockStr != """" ? ""["" + riskLockStr + ""] "" : """") + ""»"" + aucBias + "" "" + aucS"
+tipsMag,4946,value,0,0,5,"tipsValid ? (math.abs(avgCorrTIPS) > 0.5 ? ""Strong"" : math.abs(avgCorrTIPS) > 0.25 ? ""Moderate"" : ""Weak"") : ""—"""
+wrCIStr,4952,value,0,1,4,""""""
+_dowBull,4977,var,6,0,5,"array.new<float>(7, 0.0)"
+_dowBear,4978,var,6,0,5,"array.new<float>(7, 0.0)"
+_dowDecay,4979,var,6,0,5,0.995
+_isDowBull,4980,value,1,0,5,bullTrend and macroBull
+_isDowBear,4981,value,1,0,5,bearTrend and macroBear
+vdK,4992,value,0,0,5,volDelta50 / 1000.0
+tc,4998,function,0,0,4,"table.cell(tblA, col, row, txt, text_color=tcol, text_size=ts, width=w)"
+tcb,4999,function,0,0,5,"table.cell(tblA, col, row, txt, text_color=tcol, bgcolor=bg, text_size=ts, width=w)"
+tcp,5000,function,0,0,5,"table.cell(tblPlan, col, row, txt, bgcolor=bg, text_color=C_TEXT, text_size=ts, width=w)"
+gBreach,5002,var,7,0,4,"array.from(false, false)"
+gDashS,5020,var,11,0,5,"array.new_string(25, """")"
+gDashC,5021,var,3,0,5,"array.new_color(12, color.gray)"
+gDashF,5022,var,6,0,5,"array.new_float(10, 0.0)"
+f_dashData1,5023,function,0,0,5,
+bullOBLowLine,5180,var,0,0,4,na
+bullOBHighLine,5181,var,0,0,4,na
+bearOBLowLine,5182,var,0,0,4,na
+bearOBHighLine,5183,var,0,0,4,na
+bullOBLabel,5184,var,0,0,4,na
+bearOBLabel,5185,var,0,0,4,na
+fvgActiveCount,5192,var,3,3,4,0
+fvgShowQuality,5201,value,0,0,4,fvgActiveCount <= 3 or not showFVG
+fvgUpperLineObj,5203,var,0,0,4,na
+fvgLowerLineObj,5204,var,0,0,4,na
+fvgLabel,5205,var,0,0,4,na
+_costModelValid,5230,value,3,0,3,"syminfo.pointvalue == 1.0 and syminfo.currency == ""USD"""
+_mtWarn,5231,var,1,1,3,na
+abTestQty,5236,value,2,0,3,1.0
+execBuyS,5242,value,1,0,3,shouldBuy and not tqVeto and barstate.isconfirmed and _costModelValid
+execSellS,5243,value,1,0,3,shouldSell and not tqVeto and barstate.isconfirmed and _costModelValid
+stEntry,5244,var,2,2,3,na
+stSL,5245,var,10,4,3,na
+stTP1,5246,var,6,2,3,na
+stTP2,5247,var,4,2,3,na
+stBE,5248,var,2,4,3,false
+fwdStart,5346,input,4,0,3,"input.time(1791331200000, ""Card start (display only: the record is the website, A7)"", group=""FORWARD TEST"")"
+fwdShow,5347,input,1,0,3,"input.bool(true, ""Show forward-test scorecard"", group=""FORWARD TEST"")"
+fwdPos,5348,input,3,0,3,"input.string(""Bottom Right"", ""Scorecard position"", options=[""Bottom Right"", ""Bottom Left"", ""Top Right"", ""Top Left""], gro"
+fwdBar0,5349,var,3,0,3,time
+fwdTbl,5350,var,4,0,3,"table.new(fwdPos == ""Bottom Left"" ? position.bottom_left : fwdPos == ""Top Right"" ? position.top_right : fwdPos == ""Top L"
+_fwI,5352,function,7,0,2,"na(x) ? ""—"" : str.tostring(int(x))"
+_fwRow,5353,function,10,0,3,
