@@ -1,6 +1,6 @@
 # Amendment 14 (PROPOSED) — realistic stop and target fills when a bar opens beyond them
 
-**Status: PROPOSED, NOT APPROVED. Nothing in this document has been implemented.**
+**Status: APPROVED by the operator on 2026-11-01 ("Apprive it and Merge it"); recorded as Amendment 14 in `audit/PREREGISTRATION.md`. The text below is the version that was reviewed.**
 
 - The engine and the forward test are unchanged until the operator approves this text in writing.
 - The current main freeze key is `5e4630924d663fc5:6f3964ad97813cc9`, engine Q7.2-web.6, started 2026-10-17 21:26:18

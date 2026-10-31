@@ -1,7 +1,7 @@
 """Amendment 14 impact study: run the engine on a market-data store copy (offline) and compare fill rules.
 Usage (repo root):  TWELVEDATA_API_KEY=offline PYTHONPATH=. python audit/tools/gap_impact.py <store copy> 5m,15m,1h out.json
 The key only selects the Twelve Data XAU/USD series in the store; no request is made (network calls are disabled)."""
-import sys, os, math, json, numpy as np
+import sys, os, json, numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from types import SimpleNamespace
 from quantum.data import market as mk, sources as _src
@@ -28,14 +28,16 @@ for tf in tfs:
     for name, r in (("treatment", res), ("h4", h4)):
         prod = backtest.simulate(r, DEFAULT)
         cur = gapsim.simulate(r, DEFAULT, "current")
-        same = [(t["entry_i"], t["exit_i"], t["pts"]) for t in prod] == [(t["entry_i"], t["exit_i"], t["pts"]) for t in cur]
+        same = [(t["entry_i"], t["exit_i"], t["pts"]) for t in prod] == [(t["entry_i"], t["exit_i"], t["pts"]) for t in cur]   # web.6 engine: True; web.7: False where gaps
         pine = gapsim.simulate(r, DEFAULT, "current", spread_override=np.full(n, 0.30))
         g1 = gapsim.simulate(r, DEFAULT, "stop"); g2 = gapsim.simulate(r, DEFAULT, "both")
         fw = lambda T: [t for t in T if t["entry_time"] >= FSTART]
         gaps = [t for t in g1 if t["exit_reason"].endswith("_GAP")]
         changed = sum(1 for a, b in zip(cur, g1) if (a["entry_i"], a["exit_i"], a["pts"]) != (b["entry_i"], b["exit_i"], b["pts"]))
         worst = sorted(((round(t["r"], 3), t["exit_time"][:16]) for t in gaps))[:3]
+        k3 = lambda T: [(t["entry_i"], t["exit_i"], t["pts"]) for t in T]
         row = dict(bars=n, start=str(F["index"][0]), end=str(F["index"][-1]), reproduces_production=same,
+                   production_equals_proposed=k3(prod) == k3(g2), production=st(prod),
                    current=st(cur), pine_fixed_spread=st(pine), gap_stop=st(g1), gap_stop_and_limit=st(g2),
                    fwd_current=st(fw(cur)), fwd_gap_stop=st(fw(g1)), fwd_gap_both=st(fw(g2)),
                    gap_exits=len(gaps), trades_changed=changed, worst_gap_r=worst,

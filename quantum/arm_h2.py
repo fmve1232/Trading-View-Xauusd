@@ -168,6 +168,6 @@ def next_move_stats(trades: list[dict]) -> dict:
         return {"n": 0}
     r = np.array([t["r"] for t in closed])
     tp1 = np.array([bool(t["tp1_hit"]) for t in closed])
-    stop_first = np.array([t["exit_reason"] == "SL" for t in closed])
+    stop_first = np.array([t["exit_reason"] in ("SL", "SL_GAP") for t in closed])   # Amendment 14 label
     return {"n": len(closed), "tp1_first_pct": float(tp1.mean() * 100), "stop_first_pct": float(stop_first.mean() * 100),
             "mean_r": float(r.mean()), "median_r": float(np.median(r)), "avg_bars": float(np.mean([t["bars"] for t in closed]))}

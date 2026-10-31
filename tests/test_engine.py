@@ -242,7 +242,8 @@ def test_bt_stop_first_on_same_bar():
 def test_bt_partial_then_breakeven():
     t = _bt([100] * 5, [100, 100, 106, 101, 101], [100, 100, 99, 99.5, 99], [100, 100, 104, 100, 100], 1, 95, 105, 120)
     tr = t[0]
-    assert tr["tp1_hit"] and tr["exit_reason"] == "BE"
+    # the bar opens exactly at the breakeven stop: Amendment 14 labels it BE_GAP, at the same price
+    assert tr["tp1_hit"] and tr["exit_reason"] in ("BE", "BE_GAP")
     assert abs(tr["gross_pts"] - 2.5) < 1e-9         # 50% x 5 points, rest flat at entry
     assert abs(tr["pts"] - (2.5 - tr["cost_pts"])) < 1e-9
 

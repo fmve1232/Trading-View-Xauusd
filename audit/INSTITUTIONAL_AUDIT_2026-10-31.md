@@ -210,7 +210,7 @@ model is 0.20 per oz cheaper there.
   - H4 understates losses by 0.84 R (15m, 12 gap exits), 2.26 R (5m, 8) and 3.80 R (1h, 13) over the stored window.
   - The treatment had no gap exits.
   - The proposed fix is an engine change, so it needs an amendment: `audit/AMENDMENT_14_GAP_STOP_PROPOSAL.md`
-    (PROPOSED, not approved).
+    (approved 2026-11-01 and implemented as engine web.7; see the B-02 row of §11).
 - ~~B-01~~ **withdrawn** (see the correction at the top).
 
 ### 6.4 Transaction costs: one model, charged once (verified 2026-11-01)
@@ -329,7 +329,7 @@ when the edge is negative; the current 1h payload shows raw −16% → 0 lots, w
 | C-01 | **Critical** | strategy | No arm has positive out-of-sample expectancy. H4 loses (t −4.75, n 511). A 90% win rate has no support. | Disclosed on the site. Not fixable by code; needs research under Amendment 13. |
 | P-01 | **High** | probability | P, EV and touch rates have negative Brier skill and AUC ≈ 0.5 (0.38 on 1h). | Display caveats done. Recalibration = research (Amendment 13). |
 | R-01 | **High** | risk | Lot size ignored round-trip costs; real loss at the stop was up to 1.14× the chosen risk. | **Fixed** (D-13, tests). |
-| B-02 | Medium | backtest | Stops fill at the stop price on gaps (understates H4 losses by 0.8–3.8 R over the stored window; exact re-simulation 2026-11-01). | Amendment 14 PROPOSED (`audit/AMENDMENT_14_GAP_STOP_PROPOSAL.md`), not approved. Needs an engine amendment. |
+| B-02 | Medium | backtest | Stops fill at the stop price on gaps (understates H4 losses by 0.8–3.8 R over the stored window; exact re-simulation 2026-11-01). | **Fixed in web.7** (Amendment 14, approved 2026-11-01; forward tests restarted; web.6 record in `audit/FORWARD_WEB6_FINAL.md`). |
 | ~~B-01~~ | — | backtest | **Withdrawn 2026-11-01**: both lines charge $7 per lot round turn; Pine's 0.385 is the whole round-trip cost per side. | Withdrawn. The remaining spread difference is in §6.4. |
 | D-R1 | Medium | data | Research history held 3,117 (1h) / 12,242 (15m) market-shut quote bars, 2025–26. | **Fixed** (`research.history.load`, test). |
 | B-03 | Medium | robustness | The treatment's in-sample mean does not survive a 1-bar delay (1h, 5m). | Informational. Any future hypothesis must pass a delay test. |
