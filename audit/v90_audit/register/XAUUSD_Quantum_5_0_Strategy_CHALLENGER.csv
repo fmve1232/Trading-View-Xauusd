@@ -129,7 +129,7 @@ bbDev,582,value,1,0,6,"ta.stdev(close, 20) * 2.0"
 rsiVal,583,value,7,0,5,"ta.rsi(close, rsiLen)"
 volSma20,584,value,8,0,6,"ta.sma(volume, 20)"
 highVolume,585,value,2,0,5,not na(volume) and volume > volSma20
-backtestAllBars,590,input,1,0,4,"input.bool(true, ""Backtest all bars (ignore Signal Lookback Bars)"", group=grpCore, tooltip=""ON for backtests: the entry "
+backtestAllBars,590,input,1,0,5,"input.bool(true, ""Backtest all bars (ignore Signal Lookback Bars)"", group=grpCore, tooltip=""ON for backtests: the entry "
 recentBars,591,value,8,0,5,backtestAllBars or bar_index > last_bar_index - recentBarsLen
 _rawGoldRet,593,value,2,0,6,"safeDiv(close, nz(close[1], close)) - 1"
 _retClampW,595,value,2,0,6,"math.min(math.max(nz(ta.stdev(_rawGoldRet, 100)[1], 0.0) * 6.0, 0.002), 0.05)"

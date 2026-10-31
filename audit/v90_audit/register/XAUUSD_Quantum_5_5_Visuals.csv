@@ -218,7 +218,7 @@ volAsianEWMA,664,var,3,1,0,0.0
 volLondonEWMA,665,var,3,1,0,0.0
 volNyEWMA,666,var,3,1,0,0.0
 sessVolBase,674,value,4,0,0,inAsian ? volAsianEWMA : inLondon ? volLondonEWMA : inNY ? volNyEWMA : 0.0
-f_wil,677,function,3,0,0,
+f_wil,677,function,4,0,0,
 f_ci,690,function,8,0,0,
 ckSessN,698,var,3,0,0,"array.from(0, 0, 0)"
 ckN,701,value,10,0,0,"curSessId >= 0 and curSessId <= 2 ? array.get(ckSessN, curSessId) : 0"
@@ -311,8 +311,8 @@ h2Val,1221,var,14,1,2,na
 h2Atr,1253,value,6,0,2,ta.atr(14)
 h2RL,1254,value,4,0,2,h2SweepL ? close - (low - 0.15 * h2Atr) : na
 h2RS,1255,value,4,0,2,h2SweepH ? (high + 0.15 * h2Atr) - close : na
-h2Long,1256,value,11,0,2,h2SweepL and h2TrendUp and not na(h2Poc) and close <= h2Poc and h2RL >= 0.5 * h2Atr and h2RL <= 5.0 * h2Atr
-h2Short,1257,value,8,0,2,h2SweepH and h2TrendDn and not na(h2Poc) and close >= h2Poc and h2RS >= 0.5 * h2Atr and h2RS <= 5.0 * h2Atr
+h2Long,1256,value,13,0,2,h2SweepL and h2TrendUp and not na(h2Poc) and close <= h2Poc and h2RL >= 0.5 * h2Atr and h2RL <= 5.0 * h2Atr
+h2Short,1257,value,9,0,2,h2SweepH and h2TrendDn and not na(h2Poc) and close >= h2Poc and h2RS >= 0.5 * h2Atr and h2RS <= 5.0 * h2Atr
 h2R,1258,value,4,0,2,h2Long ? h2RL : h2Short ? h2RS : na
 h2Sl,1259,value,3,0,2,h2Long ? close - h2RL : h2Short ? close + h2RS : na
 h2Tp1,1260,value,3,0,2,"h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na"
@@ -575,129 +575,150 @@ br2d,1607,value,12,0,1,"br2v ? f_brS(br2n, br2u) : na"
 br2h,1608,value,4,0,1,"(br2v ? str.tostring(br2c, ""#.##"") + ""% "" : """") + f_brMv(br2v, br2u, br2n) + "" · Fed path"""
 gdT,1610,var,4,0,0,"table.new(gdPos == ""Bottom Center"" ? (tkOn ? position.bottom_right : position.bottom_center) : gdPos == ""Bottom Left"" ? "
 f_gdRow,1611,function,5,0,0,
-grpCk,1629,value,34,0,0,"""CHECKS & RISK (v86, display only)"""
+grpCk,1629,value,41,0,0,"""CHECKS & RISK (v86, display only)"""
 ckPanel,1630,input,2,0,0,"input.bool(true, ""Checks & risk section in the panel"", group = grpCk, tooltip = ""Score note, news calendar, cost, churn,"
 nwShow,1635,input,3,0,0,"input.bool(true, ""News calendar: NFP / CPI / FOMC (official dates)"", group = grpCk, tooltip = ""08:30 New York for NFP an"
 nwBefore,1636,input,4,0,0,"input.int(30, ""News window: minutes before"", minval = 0, maxval = 240, group = grpCk)"
 nwAfter,1637,input,5,0,0,"input.int(30, ""News window: minutes after"", minval = 0, maxval = 240, group = grpCk)"
 nwShade,1638,input,1,0,0,"input.bool(true, ""Shade the news windows"", group = grpCk)"
-alertOnNews,1639,input,1,0,0,"input.bool(true, ""Alert when a news window starts"", group = grpCk, tooltip = ""Needs an alert on Visuals (Any alert() fun"
-spreadCost,1641,input,4,0,6,"input.float(0.3, ""Spread Cost (points), as in the Master"", minval=0.0, maxval=5.0, step=0.1, group=grpCk)"
-slippagePts,1642,input,1,0,6,"input.float(0.2, ""Slippage (points), as in the Master"", minval=0.0, maxval=2.0, step=0.1, group=grpCk)"
-commissionL,1643,input,1,0,6,"input.float(7.0, ""Commission per Lot (USD, round turn), as in the Master"", minval=0.0, maxval=50.0, step=0.5, group=grpC"
-pointValue,1644,input,3,0,6,"input.float(100, ""Value per Point per Lot (USD), as in the Master"", minval=1, group=grpCk)"
-rkEquity,1645,input,2,0,0,"input.float(25000.0, ""Account equity ($)"", minval = 100.0, maxval = 100000000.0, step = 100.0, group = grpCk)"
-rkPct,1646,input,2,0,0,"input.float(1.0, ""Risk per trade (% of equity)"", minval = 0.05, maxval = 5.0, step = 0.05, group = grpCk, tooltip = ""Def"
-rkStop,1647,input,3,0,0,"input.float(0.0, ""Stop distance ($ per oz; 0 = 1 ATR of this chart)"", minval = 0.0, maxval = 500.0, step = 0.1, group = "
-rkToday,1648,input,5,0,0,"input.float(0.0, ""Today's realised result (R, typed in)"", minval = -20.0, maxval = 20.0, step = 0.1, group = grpCk, tool"
-rkCap,1649,input,5,0,0,"input.float(-2.0, ""Daily loss cap (R)"", minval = -10.0, maxval = -0.5, step = 0.5, group = grpCk)"
-rgShow,1650,input,1,0,0,"input.bool(true, ""Daily regime tile (untested)"", group = grpCk, tooltip = ""12-month return and the 200-day average (tren"
-rgDxySym,1651,input,3,0,0,"input.symbol(""TVC:DXY"", ""Dollar index, daily (blank = off)"", group = grpCk)"
-lgShow,1652,input,2,0,0,"input.bool(true, ""Banner: the website's forward record"", group = grpCk, tooltip = ""Typed in from the website's forward l"
-lgArm,1656,input,3,0,0,"input.string(""H4 · 15m (deciding)"", ""Record: arm / timeframe"", group = grpCk)"
-lgAsof,1657,input,3,0,0,"input.string(""2026-10-31 00:58 UTC"", ""Record: as of"", group = grpCk)"
-lgN,1658,input,11,0,0,"input.int(171, ""Record: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
-lgW,1659,input,2,0,0,"input.int(66, ""Record: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
-lgMean,1660,input,3,0,0,"input.float(-0.0920, ""Record: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
-lgSd,1661,input,1,0,0,"input.float(0.8006, ""Record: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
-lgPF,1662,input,2,0,0,"input.float(0.7502, ""Record: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
-lgNote,1663,input,3,0,0,"input.string(""5m: N 511, mean -0.18R, interval below 0 · the Brief's H4 playbook: not for live money"", ""Record: note"", g"
-lg2Show,1664,input,2,0,0,"input.bool(true, ""Banner: a second record (H3 = the H2 card's rule)"", group = grpCk)"
-lg2Arm,1665,input,2,0,0,"input.string(""H3 · 1H (deciding) = the H2 card's rule"", ""Record 2: arm / timeframe"", group = grpCk)"
-lg2N,1666,input,11,0,0,"input.int(3, ""Record 2: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
-lg2W,1667,input,2,0,0,"input.int(1, ""Record 2: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
-lg2Mean,1668,input,3,0,0,"input.float(-0.1642, ""Record 2: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
-lg2Sd,1669,input,1,0,0,"input.float(1.6215, ""Record 2: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
-lg2PF,1670,input,2,0,0,"input.float(0.7762, ""Record 2: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
-lg2Note,1671,input,4,0,0,"input.string(""5m reported: N 14, mean +0.55R (-0.43 … +1.54): not enough trades yet"", ""Record 2: note"", group = grpCk)"
-f_tq,1674,function,2,0,0,
-f_dur,1679,function,3,0,0,
-nwCode,1684,var,1,0,0,"array.from(202610281400, 202611060830, 202611100830, 202612040830, 202612091400, 202612100830, 202701080830, 20270113083"
-nwName,1685,var,2,0,0,"array.from(""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""FOMC"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", "
-nwT,1686,var,11,0,0,array.new_int()
-nwI,1691,var,11,1,0,0
-nwBarIn,1692,value,3,1,0,false
-ckLo,1708,value,4,0,0,euIsDST ? 7 : 8
-ckKZ,1709,value,1,0,0,(hU >= ckLo + 1 and hU < ckLo + 4) or (hU >= nyOpen and hU < nyOpen + 3) or (hU >= londonClose - 1 and hU < londonClose)
-ckSpread,1710,value,1,0,0,"ckKZ ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : math.max"
-ckCost,1711,value,6,0,0,"(ckSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)"
-ckCostPct,1712,value,8,0,0,atr14 > 0 ? ckCost / atr14 * 100.0 : na
-ckCostLv,1713,value,4,0,0,na(ckCostPct) ? 0 : ckCostPct > 25.0 ? 2 : ckCostPct > 15.0 ? 1 : 0
-ckDir,1717,var,2,1,0,0
-ckFlip,1718,value,1,1,0,false
-ckFlips,1723,value,3,0,0,"int(math.sum(ckFlip ? 1 : 0, 20))"
-_ckPath,1724,value,2,0,0,"math.sum(math.abs(close - close[1]), 20)"
-ckER,1725,value,4,0,0,_ckPath > 0 ? math.abs(close - close[20]) / _ckPath : na
-ckChurn,1726,value,4,0,0,ckFlips >= 2
-rgM1,1729,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
-rgM13,1729,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
-rgC1,1730,tuple,6,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
-rgSma1,1730,tuple,8,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
-rgRy1,1731,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
-rgRy21,1731,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
-rgDx1,1732,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
-rgDx21,1732,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
-rgRet12,1733,value,9,0,0,rgM1 > 0 and rgM13 > 0 ? (rgM1 / rgM13 - 1.0) * 100.0 : na
-rgUp,1734,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 > 0 and rgC1 > rgSma1
-rgDn,1735,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 < 0 and rgC1 < rgSma1
-rgRyD,1736,value,8,0,0,"brRySym != """" and not na(rgRy1) and not na(rgRy21) ? rgRy1 - rgRy21 : na"
-rgDxD,1737,value,8,0,0,"rgDxySym != """" and not na(rgDx1) and not na(rgDx21) ? rgDx1 - rgDx21 : na"
-rgMac,1738,value,2,0,0,na(rgRyD) or na(rgDxD) ? 0 : rgRyD < 0 and rgDxD < 0 ? 1 : rgRyD > 0 and rgDxD > 0 ? -1 : 0
-rgTxt,1739,value,2,0,0,"rgUp ? ""▲ LONG"" : rgDn ? ""▼ SHORT"" : ""◆ FLAT"""
-rgMacTxt,1740,value,2,0,0,"na(rgRyD) or na(rgDxD) ? ""20d macro: no data"" : rgMac == 1 ? ""20d macro supports gold"" : rgMac == -1 ? ""20d macro agains"
-rkStopD,1743,value,3,0,0,rkStop > 0 ? rkStop : atr14
-rkRisk,1744,value,2,0,0,rkEquity * rkPct / 100.0
-rkPerLot,1745,value,2,0,0,(rkStopD + ckCost) * pointValue
-rkLots,1746,value,3,0,0,rkPerLot > 0 ? math.floor(rkRisk / rkPerLot * 100.0) / 100.0 : na
-rkLocked,1747,value,4,0,0,rkToday <= rkCap
-lgSe,1750,value,2,0,0,lgN > 1 ? lgSd / math.sqrt(lgN) : na
-lgT,1751,value,2,0,0,lgN > 1 ? f_tq(lgN - 1) : na
-lgLo,1752,value,5,0,0,lgMean - lgT * lgSe
-lgHi,1753,value,2,0,0,lgMean + lgT * lgSe
-lgWlo,1754,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
-lgWhi,1754,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
-lgVerdict,1755,value,4,0,0,"lgN < 50 ? ""UNDECIDED · N < 50"" : na(lgLo) ? ""—"" : lgLo > 0 and lgPF >= 1.2 ? ""EDGE SHOWN"" : lgLo > 0 ? ""NO EDGE SHOWN ·"
-lgLv,1756,value,4,0,0,"lgVerdict == ""EDGE SHOWN"" ? 1 : lgVerdict == ""NO EDGE · interval below 0"" ? -1 : 0"
-lgTxt,1757,value,3,0,0,"lgArm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lgN) + "" · win "" + (lgN > 0 ? str.tostring(math.min(lgW, "
-lg2Se,1759,value,2,0,0,lg2N > 1 ? lg2Sd / math.sqrt(lg2N) : na
-lg2T,1760,value,2,0,0,lg2N > 1 ? f_tq(lg2N - 1) : na
-lg2Lo,1761,value,5,0,0,lg2Mean - lg2T * lg2Se
-lg2Hi,1762,value,2,0,0,lg2Mean + lg2T * lg2Se
-lg2Wlo,1763,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
-lg2Whi,1763,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
-lg2Verdict,1764,value,4,0,0,"lg2N < 50 ? ""UNDECIDED · N < 50"" : na(lg2Lo) ? ""—"" : lg2Lo > 0 and lg2PF >= 1.2 ? ""EDGE SHOWN"" : lg2Lo > 0 ? ""NO EDGE SH"
-lg2Lv,1765,value,2,0,0,"lg2Verdict == ""EDGE SHOWN"" ? 1 : lg2Verdict == ""NO EDGE · interval below 0"" ? -1 : 0"
-lg2Txt,1766,value,3,0,0,"lg2Arm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lg2N) + "" · win "" + (lg2N > 0 ? str.tostring(math.min(lg"
-tfNote,1768,value,2,0,0,"timeframe.period == ""15"" ? ""chart 15m = the decision timeframe"" : timeframe.period == ""5"" ? ""5m chart: timing only, deci"
-lgLine,1769,value,1,0,0,"lgArm + "": "" + lgVerdict + "" · "" + str.replace_all(str.substring(lgTxt, str.pos(lgTxt, ""\n"") + 1), ""\n"", "" "")"
-lg2Line,1770,value,1,0,0,"lg2Arm + "": "" + lg2Verdict + "" · "" + str.replace_all(str.substring(lg2Txt, str.pos(lg2Txt, ""\n"") + 1), ""\n"", "" "")"
-nwK,1773,value,3,1,0,-1
-nwNowIn,1774,value,5,1,0,false
-nwMs,1775,value,7,1,0,na
-nwKName,1776,value,2,1,0,""""""
-nwNext,1777,value,3,1,0,"nwShow ? ""calendar ended: update Visuals"" : ""calendar off"""
-nwLv,1789,value,5,0,0,nwNowIn ? 2 : not na(nwMs) and nwMs <= 4 * 3600000 ? 1 : 0
-tblV,1796,var,9,0,0,"table.new(vPos == ""Middle Left"" ? position.middle_left : vPos == ""Top Left"" ? position.top_left : vPos == ""Middle Right"""
-_tmK,1797,value,5,0,0,"color.new(#7D8FA3, 0)"
-_tmV,1798,value,61,0,0,"color.new(#E6EDF3, 0)"
-_tmUp,1799,value,30,0,0,"color.new(#26A69A, 0)"
-_tmDn,1800,value,33,0,0,"color.new(#EF5350, 0)"
-_tmSec,1801,value,7,0,0,"color.new(#16202B, 0)"
-_tmS,1802,value,4,0,0,"color.new(#787B86, 0)"
-f_lv,1804,function,16,0,0,"na(p) ? n + "" —"" : n + "" "" + str.tostring(p, format.mintick) + ""  ("" + (p >= close ? ""+"" : """") + str.tostring(p - close,"
-f_glNear,1806,function,6,0,0,
-f_gBar,1816,function,5,0,0,
-f_gPos,1825,function,2,0,0,
-f_tmG,1833,function,30,0,0,"na(d) ? ""—"" : d >= 2 ? ""▲▲"" : d > 0 ? ""▲"" : d <= -2 ? ""▼▼"" : d < 0 ? ""▼"" : ""≈"""
-f_tmC,1834,function,10,0,0,"na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)"
-_tmRow,1835,function,49,0,0,
-_tmHead,1838,function,8,0,0,
-_dkW,2005,value,2,0,0,"array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)"
-_dw,2006,value,3,0,0,"density == ""Compact"" ? 0.8 : density == ""Spacious"" ? 1.25 : 1.0"
-_dsz,2007,value,2,0,0,"textSize == ""Large"" or textSize == ""Medium"" ? ""small"" : ""tiny"""
-_dbg,2008,value,2,0,0,"color.new(#0d0d1a, 40)"
-f_dock,2009,function,1,0,0,
-f_dkCell,2012,function,20,0,0,
-dkT,2017,var,23,0,0,"table.new(dashMode == ""Tablet"" ? position.top_left : position.top_right, 9, 10, border_width = 0, frame_width = 0)"
-tkT,2059,var,6,0,0,"table.new(position.bottom_center, 8, 4, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)"
-f_tk,2060,function,8,0,0,
+nwCostMult,1639,input,3,0,0,"input.float(3.0, ""News window: cost multiplier (spread + slippage)"", minval = 1.0, maxval = 10.0, step = 0.5, group = gr"
+alertOnNews,1640,input,1,0,0,"input.bool(true, ""Alert when a news window starts"", group = grpCk, tooltip = ""Needs an alert on Visuals (Any alert() fun"
+spreadCost,1642,input,4,0,6,"input.float(0.3, ""Spread Cost (points), as in the Master"", minval=0.0, maxval=5.0, step=0.1, group=grpCk)"
+slippagePts,1643,input,1,0,6,"input.float(0.2, ""Slippage (points), as in the Master"", minval=0.0, maxval=2.0, step=0.1, group=grpCk)"
+commissionL,1644,input,1,0,6,"input.float(7.0, ""Commission per Lot (USD, round turn), as in the Master"", minval=0.0, maxval=50.0, step=0.5, group=grpC"
+pointValue,1645,input,8,0,6,"input.float(100, ""Value per Point per Lot (USD), as in the Master"", minval=1, group=grpCk)"
+rkEquity,1646,input,3,0,0,"input.float(25000.0, ""Account equity ($)"", minval = 100.0, maxval = 100000000.0, step = 100.0, group = grpCk)"
+rkPct,1647,input,2,0,0,"input.float(1.0, ""Risk per trade (% of equity)"", minval = 0.05, maxval = 5.0, step = 0.05, group = grpCk, tooltip = ""Def"
+rkStop,1648,input,3,0,0,"input.float(0.0, ""Stop distance ($ per oz; 0 = 1 ATR of this chart)"", minval = 0.0, maxval = 500.0, step = 0.1, group = "
+rkToday,1649,input,5,0,0,"input.float(0.0, ""Today's realised result (R, typed in)"", minval = -20.0, maxval = 20.0, step = 0.1, group = grpCk, tool"
+rkCap,1650,input,5,0,0,"input.float(-2.0, ""Daily loss cap (R)"", minval = -10.0, maxval = -0.5, step = 0.5, group = grpCk)"
+rgShow,1651,input,1,0,0,"input.bool(true, ""Daily regime tile (untested)"", group = grpCk, tooltip = ""12-month return and the 200-day average (tren"
+rgDxySym,1652,input,3,0,0,"input.symbol(""TVC:DXY"", ""Dollar index, daily (blank = off)"", group = grpCk)"
+lgShow,1653,input,2,0,0,"input.bool(true, ""Banner: the website's forward record"", group = grpCk, tooltip = ""Typed in from the website's forward l"
+lgArm,1657,input,3,0,0,"input.string(""H4 · 15m (deciding)"", ""Record: arm / timeframe"", group = grpCk)"
+lgAsof,1658,input,3,0,0,"input.string(""2026-10-31 00:58 UTC"", ""Record: as of"", group = grpCk)"
+lgN,1659,input,11,0,0,"input.int(171, ""Record: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
+lgW,1660,input,2,0,0,"input.int(66, ""Record: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
+lgMean,1661,input,3,0,0,"input.float(-0.0920, ""Record: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
+lgSd,1662,input,1,0,0,"input.float(0.8006, ""Record: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
+lgPF,1663,input,2,0,0,"input.float(0.7502, ""Record: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
+lgNote,1664,input,3,0,0,"input.string(""5m: N 511, mean -0.18R, interval below 0 · the Brief's H4 playbook: not for live money"", ""Record: note"", g"
+lg2Show,1665,input,2,0,0,"input.bool(true, ""Banner: a second record (H3 = the H2 card's rule)"", group = grpCk)"
+lg2Arm,1666,input,2,0,0,"input.string(""H3 · 1H (deciding) = the H2 card's rule"", ""Record 2: arm / timeframe"", group = grpCk)"
+lg2N,1667,input,11,0,0,"input.int(3, ""Record 2: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
+lg2W,1668,input,2,0,0,"input.int(1, ""Record 2: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
+lg2Mean,1669,input,3,0,0,"input.float(-0.1642, ""Record 2: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
+lg2Sd,1670,input,1,0,0,"input.float(1.6215, ""Record 2: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
+lg2PF,1671,input,2,0,0,"input.float(0.7762, ""Record 2: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
+lg2Note,1672,input,4,0,0,"input.string(""5m reported: N 14, mean +0.55R (-0.43 … +1.54): not enough trades yet"", ""Record 2: note"", group = grpCk)"
+f_tq,1675,function,2,0,0,
+f_dur,1680,function,3,0,0,
+nwCode,1685,var,1,0,0,"array.from(202610281400, 202611060830, 202611100830, 202612040830, 202612091400, 202612100830, 202701080830, 20270113083"
+nwName,1686,var,2,0,0,"array.from(""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""FOMC"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", "
+nwT,1687,var,11,0,0,array.new_int()
+nwI,1692,var,11,1,0,0
+nwBarIn,1693,value,5,1,0,false
+ckLo,1709,value,4,0,0,euIsDST ? 7 : 8
+ckKZ,1710,value,1,0,0,(hU >= ckLo + 1 and hU < ckLo + 4) or (hU >= nyOpen and hU < nyOpen + 3) or (hU >= londonClose - 1 and hU < londonClose)
+ckSpread,1711,value,1,0,0,"ckKZ ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : math.max"
+ckCost,1713,value,9,0,0,"(ckSpread + 2.0 * slippagePts) * (nwBarIn ? nwCostMult : 1.0) + commissionL / math.max(pointValue, 1.0)"
+ckCostPct,1714,value,8,0,0,atr14 > 0 ? ckCost / atr14 * 100.0 : na
+ckCostLv,1715,value,4,0,0,na(ckCostPct) ? 0 : ckCostPct > 25.0 ? 2 : ckCostPct > 15.0 ? 1 : 0
+ckDir,1719,var,2,1,0,0
+ckFlip,1720,value,1,1,0,false
+ckFlips,1725,value,3,0,0,"int(math.sum(ckFlip ? 1 : 0, 20))"
+_ckPath,1726,value,2,0,0,"math.sum(math.abs(close - close[1]), 20)"
+ckER,1727,value,4,0,0,_ckPath > 0 ? math.abs(close - close[20]) / _ckPath : na
+ckChurn,1728,value,4,0,0,ckFlips >= 2
+rgM1,1731,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
+rgM13,1731,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
+rgC1,1732,tuple,6,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
+rgSma1,1732,tuple,8,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
+rgRy1,1733,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
+rgRy21,1733,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
+rgDx1,1734,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
+rgDx21,1734,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
+rgRet12,1735,value,9,0,0,rgM1 > 0 and rgM13 > 0 ? (rgM1 / rgM13 - 1.0) * 100.0 : na
+rgUp,1736,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 > 0 and rgC1 > rgSma1
+rgDn,1737,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 < 0 and rgC1 < rgSma1
+rgRyD,1738,value,8,0,0,"brRySym != """" and not na(rgRy1) and not na(rgRy21) ? rgRy1 - rgRy21 : na"
+rgDxD,1739,value,8,0,0,"rgDxySym != """" and not na(rgDx1) and not na(rgDx21) ? rgDx1 - rgDx21 : na"
+rgMac,1740,value,2,0,0,na(rgRyD) or na(rgDxD) ? 0 : rgRyD < 0 and rgDxD < 0 ? 1 : rgRyD > 0 and rgDxD > 0 ? -1 : 0
+rgTxt,1741,value,2,0,0,"rgUp ? ""▲ LONG"" : rgDn ? ""▼ SHORT"" : ""◆ FLAT"""
+rgMacTxt,1742,value,2,0,0,"na(rgRyD) or na(rgDxD) ? ""20d macro: no data"" : rgMac == 1 ? ""20d macro supports gold"" : rgMac == -1 ? ""20d macro agains"
+rkStopD,1745,value,3,0,0,rkStop > 0 ? rkStop : atr14
+rkRisk,1746,value,2,0,0,rkEquity * rkPct / 100.0
+rkPerLot,1747,value,2,0,0,(rkStopD + ckCost) * pointValue
+rkLots,1748,value,3,0,0,rkPerLot > 0 ? math.floor(rkRisk / rkPerLot * 100.0) / 100.0 : na
+rkLocked,1749,value,4,0,0,rkToday <= rkCap
+trkShow,1753,input,2,0,0,"input.bool(true, ""Bracket tracker: score H2 signals with my SL / TP"", group = grpCk, tooltip = ""v93: for every H2 signal"
+trkUnit,1754,input,4,0,0,"input.string(""Money ($)"", ""Bracket unit"", options = [""Money ($)"", ""MT5 points""], group = grpCk)"
+trkSL,1755,input,4,0,0,"input.float(500.0, ""Bracket SL (in the unit above)"", minval = 0.01, maxval = 10000000.0, group = grpCk)"
+trkTP,1756,input,4,0,0,"input.float(1000.0, ""Bracket TP (in the unit above)"", minval = 0.01, maxval = 10000000.0, group = grpCk)"
+trkLot,1757,input,6,0,0,"input.float(0.5, ""Bracket lot size"", minval = 0.01, maxval = 100.0, step = 0.01, group = grpCk)"
+trkPt,1758,input,2,0,0,"input.float(0.01, ""MT5 point size (price per point; 0.01 for a 2-digit XAUUSD quote)"", minval = 0.0001, maxval = 1.0, st"
+trkSLd,1759,value,9,0,0,"trkUnit == ""MT5 points"" ? trkSL * trkPt : trkSL / (trkLot * pointValue)"
+trkTPd,1760,value,6,0,0,"trkUnit == ""MT5 points"" ? trkTP * trkPt : trkTP / (trkLot * pointValue)"
+trkE,1761,var,6,0,0,array.new_float()
+trkDir,1762,var,3,0,0,array.new_int()
+trkW,1763,var,4,1,0,0
+trkL,1764,var,1,1,0,0
+trkNet,1765,var,1,2,0,0.0
+trkN,1786,value,5,0,0,trkW + trkL
+trkBE,1787,value,3,0,0,(trkSLd + ckCost) / (trkSLd + trkTPd)
+trkLo,1788,tuple,2,0,0,"f_wil(trkW, trkN)"
+trkHi,1788,tuple,2,0,0,"f_wil(trkW, trkN)"
+trkEqPct,1789,value,1,0,0,trkSLd * trkLot * pointValue / rkEquity * 100.0
+trkLv,1790,value,2,0,0,trkN < 1 ? 0 : trkLo > trkBE ? 1 : trkHi < trkBE ? -1 : 0
+trkTxt,1791,value,1,0,0,"""H2 signals · SL "" + (trkUnit == ""MT5 points"" ? str.tostring(trkSL, ""#"") + "" pts"" : ""$"" + str.tostring(trkSL, ""#"")) + "" "
+lgSe,1794,value,2,0,0,lgN > 1 ? lgSd / math.sqrt(lgN) : na
+lgT,1795,value,2,0,0,lgN > 1 ? f_tq(lgN - 1) : na
+lgLo,1796,value,5,0,0,lgMean - lgT * lgSe
+lgHi,1797,value,2,0,0,lgMean + lgT * lgSe
+lgWlo,1798,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
+lgWhi,1798,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
+lgVerdict,1799,value,4,0,0,"lgN < 50 ? ""UNDECIDED · N < 50"" : na(lgLo) ? ""—"" : lgLo > 0 and lgPF >= 1.2 ? ""EDGE SHOWN"" : lgLo > 0 ? ""NO EDGE SHOWN ·"
+lgLv,1800,value,4,0,0,"lgVerdict == ""EDGE SHOWN"" ? 1 : lgVerdict == ""NO EDGE · interval below 0"" ? -1 : 0"
+lgTxt,1801,value,3,0,0,"lgArm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lgN) + "" · win "" + (lgN > 0 ? str.tostring(math.min(lgW, "
+lg2Se,1803,value,2,0,0,lg2N > 1 ? lg2Sd / math.sqrt(lg2N) : na
+lg2T,1804,value,2,0,0,lg2N > 1 ? f_tq(lg2N - 1) : na
+lg2Lo,1805,value,5,0,0,lg2Mean - lg2T * lg2Se
+lg2Hi,1806,value,2,0,0,lg2Mean + lg2T * lg2Se
+lg2Wlo,1807,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
+lg2Whi,1807,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
+lg2Verdict,1808,value,4,0,0,"lg2N < 50 ? ""UNDECIDED · N < 50"" : na(lg2Lo) ? ""—"" : lg2Lo > 0 and lg2PF >= 1.2 ? ""EDGE SHOWN"" : lg2Lo > 0 ? ""NO EDGE SH"
+lg2Lv,1809,value,2,0,0,"lg2Verdict == ""EDGE SHOWN"" ? 1 : lg2Verdict == ""NO EDGE · interval below 0"" ? -1 : 0"
+lg2Txt,1810,value,3,0,0,"lg2Arm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lg2N) + "" · win "" + (lg2N > 0 ? str.tostring(math.min(lg"
+tfNote,1812,value,2,0,0,"timeframe.period == ""15"" ? ""chart 15m = the decision timeframe"" : timeframe.period == ""5"" ? ""5m chart: timing only, deci"
+lgLine,1813,value,1,0,0,"lgArm + "": "" + lgVerdict + "" · "" + str.replace_all(str.substring(lgTxt, str.pos(lgTxt, ""\n"") + 1), ""\n"", "" "")"
+lg2Line,1814,value,1,0,0,"lg2Arm + "": "" + lg2Verdict + "" · "" + str.replace_all(str.substring(lg2Txt, str.pos(lg2Txt, ""\n"") + 1), ""\n"", "" "")"
+nwK,1817,value,3,1,0,-1
+nwNowIn,1818,value,5,1,0,false
+nwMs,1819,value,7,1,0,na
+nwKName,1820,value,2,1,0,""""""
+nwNext,1821,value,3,1,0,"nwShow ? ""calendar ended: update Visuals"" : ""calendar off"""
+nwLv,1833,value,5,0,0,nwNowIn ? 2 : not na(nwMs) and nwMs <= 4 * 3600000 ? 1 : 0
+tblV,1840,var,9,0,0,"table.new(vPos == ""Middle Left"" ? position.middle_left : vPos == ""Top Left"" ? position.top_left : vPos == ""Middle Right"""
+_tmK,1841,value,5,0,0,"color.new(#7D8FA3, 0)"
+_tmV,1842,value,61,0,0,"color.new(#E6EDF3, 0)"
+_tmUp,1843,value,31,0,0,"color.new(#26A69A, 0)"
+_tmDn,1844,value,34,0,0,"color.new(#EF5350, 0)"
+_tmSec,1845,value,7,0,0,"color.new(#16202B, 0)"
+_tmS,1846,value,4,0,0,"color.new(#787B86, 0)"
+f_lv,1848,function,16,0,0,"na(p) ? n + "" —"" : n + "" "" + str.tostring(p, format.mintick) + ""  ("" + (p >= close ? ""+"" : """") + str.tostring(p - close,"
+f_glNear,1850,function,6,0,0,
+f_gBar,1860,function,5,0,0,
+f_gPos,1869,function,2,0,0,
+f_tmG,1877,function,30,0,0,"na(d) ? ""—"" : d >= 2 ? ""▲▲"" : d > 0 ? ""▲"" : d <= -2 ? ""▼▼"" : d < 0 ? ""▼"" : ""≈"""
+f_tmC,1878,function,10,0,0,"na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)"
+_tmRow,1879,function,50,0,0,
+_tmHead,1882,function,8,0,0,
+_dkW,2052,value,2,0,0,"array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)"
+_dw,2053,value,3,0,0,"density == ""Compact"" ? 0.8 : density == ""Spacious"" ? 1.25 : 1.0"
+_dsz,2054,value,2,0,0,"textSize == ""Large"" or textSize == ""Medium"" ? ""small"" : ""tiny"""
+_dbg,2055,value,2,0,0,"color.new(#0d0d1a, 40)"
+f_dock,2056,function,1,0,0,
+f_dkCell,2059,function,20,0,0,
+dkT,2064,var,23,0,0,"table.new(dashMode == ""Tablet"" ? position.top_left : position.top_right, 9, 10, border_width = 0, frame_width = 0)"
+tkT,2106,var,6,0,0,"table.new(position.bottom_center, 8, 4, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)"
+f_tk,2107,function,8,0,0,
