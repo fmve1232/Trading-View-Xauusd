@@ -10,7 +10,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, cost_profiles, holdout, ta
+from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, cost_profiles, holdout, news_calendar, ta
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -97,6 +97,58 @@ def kelly(last: dict, cfg, N: int, reg_mult: float = 1.0, cost_pts: float = 0.0)
     floored = math.floor(raw_lots / 0.01 + 1e-9) * 0.01
     return {"kelly_pct": k, "detail": detail, "reg_size_mult": reg_mult, "risk_usd": risk_usd, "lots": min(max(floored, 0.0), 100.0),
             "below_min": raw_lots > 0 and floored < 0.01, "raw_lots": raw_lots, "cost_pts": cost, "risk_per_lot": per_lot}
+
+
+CHURN_BARS, CHURN_FLIPS = 20, 2          # Pine Visuals v86: 2+ structure flips in 20 bars = churn
+
+
+def session_counts(cal) -> np.ndarray:
+    """Per bar: how many sessions of the bar's own kind (0 Asia, 1 London, 2 New York) had CLOSED by that bar.
+    This is the engine's `sess_cnt`, rebuilt from its outputs (a session closes when the session id changes and the old
+    one was 0-2), as Pine Visuals does (`ckSessN`). The engine divides its manipulation / continuation counts by it."""
+    a, lo, ny = (cal[k].to_numpy(bool) for k in ("in_asian", "in_london", "in_ny"))
+    sid = np.where(a, 0, np.where(lo, 1, np.where(ny, 2, 3)))
+    cnt = [0, 0, 0]
+    out = np.zeros(len(sid), dtype=int)
+    for i in range(len(sid)):
+        if i > 0 and sid[i] != sid[i - 1] and sid[i - 1] <= 2:
+            cnt[sid[i - 1]] += 1
+        out[i] = cnt[sid[i]] if sid[i] <= 2 else 0
+    return out
+
+
+def churn(events: list[dict], c: np.ndarray, n_bars: int = CHURN_BARS) -> dict:
+    """Pine Visuals v86 CHURN: direction changes between consecutive structure breaks (the engine's BOS / CHoCH / MSS,
+    one direction per bar, bearish first as in Pine) on the last `n_bars` bars, and Kaufman's efficiency ratio."""
+    n = len(c)
+    by_bar = {}
+    for e in events:
+        if e["type"] in ("BOS", "CHoCH", "MSS") and e.get("dir") in (1, -1):
+            by_bar[e["i"]] = -1 if (e["dir"] == -1 or by_bar.get(e["i"]) == -1) else 1
+    d, flips = 0, 0
+    for i in sorted(by_bar):
+        if d != 0 and by_bar[i] != d and i >= n - n_bars:
+            flips += 1
+        d = by_bar[i]
+    er = None
+    if n > n_bars:
+        path = float(np.nansum(np.abs(np.diff(c[n - n_bars - 1:]))))
+        er = abs(float(c[-1] - c[n - n_bars - 1])) / path if path > 0 else None
+    return {"flips": flips, "bars": n_bars, "churn": flips >= CHURN_FLIPS, "efficiency": er}
+
+
+def swept_levels(R: dict, F: dict, i: int, d: int) -> list[dict]:
+    """The pools a SWEEP event at bar i took (the engine's own test: wick through, close back), named for the alert."""
+    lo, hi, c = F["l"][i], F["h"][i], F["c"][i]
+    pools = (("PDL", R["pdl"][i]), ("PWL", R["pwl"][i]), ("PML", F["pm_low"][i])) if d == 1 else \
+            (("PDH", R["pdh"][i]), ("PWH", R["pwh"][i]), ("PMH", F["pm_high"][i]))
+    out = []
+    for nm, p in pools:
+        if p is None or _isnan(p):
+            continue
+        if (d == 1 and lo <= p and c > p) or (d == -1 and hi >= p and c < p):
+            out.append({"name": nm, "px": _f(p)})
+    return out
 
 
 GATE_ORDER = ("Trend", "HTF", "Recent", "Sess", "News", "DD", "Trig")
@@ -422,6 +474,12 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
     rt_cost = float(F["sess_spread"][-1]) + 2.0 * cfg.slippage_pts + cfg.commission_l / max(cfg.point_value, 1.0)
     ks = kelly(L, cfg, N, float(F["reg_size_mult"][-1]), rt_cost)
     ks["spread_pts"] = float(F["sess_spread"][-1])     # the engine's session spread, for the per-account profiles
+    atr14 = float(F["atr"][-1])
+    sn = session_counts(F["cal"])
+    checks = {   # Pine Visuals v86 / v92 CHECKS (display only; thresholds are Pine's stated conventions, not fitted)
+        "cost_pts": rt_cost, "atr": atr14, "cost_pct_atr": rt_cost / atr14 * 100.0 if atr14 > 0 else None,
+        "cost_amber_pct": 15.0, "cost_red_pct": 25.0, "churn": churn(res.events, np.asarray(F["c"], float)),
+        "sess_n": int(sn[-1]), "daily_cap_r": -2.0}
     i = n - 1
 
     chart = {
@@ -453,6 +511,8 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
             m["why"] = e["why"]
         if e["type"] == "TRACK_EXIT":
             m["r"] = _f(e["r"])
+        if e["type"] == "SWEEP":
+            m["lvl"] = swept_levels(R, F, e["i"], e.get("dir", 0))     # display: which pool was swept (Pine v84)
         markers.append(m)
     zones = []
     open_z = {}
@@ -596,7 +656,7 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "data_status": [st.to_dict() for st in market.status.values()],
         "holdout": {k: man.get(k) for k in ("freeze_key", "config_hash", "engine_code_hash", "engine_version", "freeze_utc", "status", "history")},
         "chart": chart, "markers": markers, "zones": zones, "sr": sr_scanner(F), "decisions": decisions, "cone": cone,
-        "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks,
+        "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks, "checks": checks,
                       "gate_sides": gate_sides(L, F, n - 1), "gold_arrows": gold_arrows(L, F, n - 1, market.tf_sec)},
         "analog": {**A, "scan": L["analog_scan"], "hit_prob": L["hit_prob"], "hit_n": L["hit_n"],
                    "race_prob": L["race_prob"], "race_n": L["race_n"], "reliability": rel, "base_rate": _f(cr[15], 1),
@@ -609,5 +669,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "h5": h5,
         "h6": h6,
         "cost_profiles": cost_profiles.export(),   # display-only sizing profiles (audit/COST_PROFILES.md)
+        "news": news_calendar.export(),            # dated NFP / CPI / FOMC (display; Pine Visuals v86 / v92)
     }
     return _clean(payload)

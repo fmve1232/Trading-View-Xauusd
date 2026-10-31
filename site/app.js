@@ -16,6 +16,8 @@ const S = {
   account: store.get("account", null),
   costProfile: store.get("cost_profile", "engine"),
   costCustom: store.get("cost_custom", null),
+  todayR: store.get("today_r", null),
+  capR: store.get("cap_r", null),
   tab: store.get("tab", "overview"),
   btArm: "treatment",
   toggles: store.get("toggles", { ema: true, vwap: true, bb: false, levels: true, zones: true, sr: false, signals: true, structure: true, sweeps: false, plan: true, cone: true, vp: false, h2: true }),
@@ -1074,14 +1076,17 @@ function renderSide() {
       ["Confidence", `${d.confidence}/100 ${esc(d.conf_label)}`], ["Structure", esc(structStr(d.struct))], ["Auction", `${esc(d.auction.state)} ${d.auction.prob}% ${esc(d.auction.cycle)}`]]);
 
   const k = d.kelly;
-  const acct = S.account || M.config.account_size;
+  const acct = S.account || ACCT_DEFAULT;      // Pine v89 / v91 default; the engine's config (10,000) is frozen and unchanged
   // loss at the stop = distance + round-trip cost (D-13), with the viewer's account cost profile (display only:
   // the engine and the forward test keep the frozen model). Older payloads have no profiles / risk_per_lot.
   const profs = D.cost_profiles || [], custom = S.costCustom;
   let prof = profs.find((x) => x.id === S.costProfile) || profs[0] || null;
   if (prof && prof.id === "custom" && custom) prof = { ...prof, commission: { ...prof.commission, ...custom.commission }, spread: { ...prof.spread, ...custom.spread }, slippage: isNum(custom.slippage) ? custom.slippage : prof.slippage };
   const refPx = isNum(p.entry) ? p.entry : d.close;
-  const costOz = prof && window.QCosts && isNum(k.spread_pts) ? QCosts.costPerOz(prof, refPx, k.spread_pts) : k.cost_pts;
+  // Pine v92 (B-03): inside a dated NFP / CPI / FOMC window, spread + slippage x news.cost_mult (now, live clock)
+  const NW = window.QCosts && D.news ? QCosts.newsState(D.news, Date.now() / 1000) : { in_window: null, next: null };
+  const newsMult = NW.in_window ? D.news.cost_mult : 1;
+  const costOz = prof && window.QCosts && isNum(k.spread_pts) ? QCosts.costPerOz(prof, refPx, k.spread_pts, true, newsMult) : k.cost_pts;
   const commLot = prof && window.QCosts ? QCosts.commissionPerLot(prof, refPx) : NaN;
   const perLot = isNum(costOz) && p.dist > 0 ? (p.dist + costOz) * M.config.point_value
     : isNum(k.risk_per_lot) && k.risk_per_lot > 0 ? k.risk_per_lot : p.dist * M.config.point_value;
@@ -1100,9 +1105,11 @@ function renderSide() {
     ["Cost profile", profSel],
     ...(customRow ? [["Custom costs", customRow]] : []),
     ["Commission (round trip, 1 lot)", prof && isNum(commLot) ? `$${f(commLot, 2)} <span class="dim">${esc(BASIS[prof.commission.basis] || prof.commission.basis)} · <b class="${prof.status === "FROZEN" ? "" : "warn"}">${esc(prof.status)}</b></span>` : "—"],
-    ["Loss at stop per lot", sig && perLot > 0 ? `$${f(perLot, 0)} <span class="dim">stop ${f(p.dist, 2)} + costs ${isNum(costOz) ? f(costOz, 2) : "—"} per oz × 100 oz</span>` : "—"],
-  ]) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot) and includes spread, slippage and commission for the selected account, so the loss at the stop stays within the risk %. <b>UNVERIFIED</b> rates are the firm's published figures, not yet confirmed from your MT5 history; the forward test always uses the frozen engine costs.${prof && prof.note ? " " + esc(prof.note) : ""} The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
+    ["Loss at stop per lot", sig && perLot > 0 ? `$${f(perLot, 0)} <span class="dim">stop ${f(p.dist, 2)} + costs ${isNum(costOz) ? f(costOz, 2) : "—"} per oz × 100 oz${newsMult > 1 ? ` (spread + slippage ×${newsMult}: news window)` : ""}</span>` : "—"],
+  ]) + checksHtml(D, NW, costOz) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot) and includes spread, slippage and commission for the selected account, so the loss at the stop stays within the risk %. <b>UNVERIFIED</b> rates are the firm's published figures, not yet confirmed from your MT5 history; the forward test always uses the frozen engine costs.${prof && prof.note ? " " + esc(prof.note) : ""} The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
   $("#acct").onchange = (e) => { S.account = Number(e.target.value) || null; store.set("account", S.account); renderSide(); };
+  const capIn = (q, key) => { const el = $(q); if (el) el.onchange = (e) => { const v = Number(e.target.value); S[key] = isNum(v) ? v : null; store.set(key === "todayR" ? "today_r" : "cap_r", S[key]); renderSide(); }; };
+  capIn("#today-r", "todayR"); capIn("#cap-r", "capR");
   const cp = $("#cost-prof"); if (cp) cp.onchange = (e) => { S.costProfile = e.target.value; store.set("cost_profile", S.costProfile); renderSide(); };
   if ($("#cc-rate")) {
     const save = () => {
@@ -1113,6 +1120,40 @@ function renderSide() {
     };
     ["#cc-type", "#cc-rate", "#cc-basis", "#cc-spread", "#cc-slip"].forEach((q) => { $(q).onchange = save; });
   }
+}
+/* Pine Visuals v86 / v92 CHECKS (display only; the DECISION is the engine's). Thresholds are Pine's stated
+   conventions, fixed before they were shown on a chart: cost > 15% / 25% of 1 ATR, 2+ structure flips in 20 bars,
+   a -2R daily cap. "Today" is typed in: the site cannot see the broker account. */
+const ACCT_DEFAULT = 25000;
+const dur = (s) => { const m = Math.max(s, 0) / 60; return m >= 1440 ? `${Math.floor(m / 1440)}d ${Math.floor((m % 1440) / 60)}h` : m >= 60 ? `${Math.floor(m / 60)}h ${String(Math.floor(m % 60)).padStart(2, "0")}m` : `${Math.floor(m)}m`; };
+function newsTxt(news, NW) {
+  if (!news) return "—";
+  const at = (e) => `${esc(e.name)} ${esc(e.ny.slice(5))} New York (${new Date(e.t * 1000).toISOString().slice(11, 16)} UTC)`;
+  if (NW.in_window) return `<b class="bear">IN WINDOW: ${at(NW.in_window)}</b> <span class="dim">±${news.before_min}/${news.after_min} min · costs ×${news.cost_mult}</span>`;
+  if (!NW.next) return `<span class="warn">calendar ended ${esc(news.valid_until)}: update it</span>`;
+  const left = NW.next.t - Date.now() / 1000;
+  return `next ${at(NW.next)} <span class="${left < 6 * 3600 ? "warn" : "dim"}">in ${dur(left)}</span>`;
+}
+function checksHtml(D, NW, costOz) {
+  const c = D.dashboard.checks; if (!c) return "";
+  const pctA = isNum(costOz) && c.atr > 0 ? (costOz / c.atr) * 100 : c.cost_pct_atr;
+  const cLv = !isNum(pctA) ? "" : pctA > c.cost_red_pct ? "bear" : pctA > c.cost_amber_pct ? "warn" : "bull";
+  const ch = c.churn || {};
+  const today = isNum(S.todayR) ? S.todayR : 0, cap = isNum(S.capR) ? S.capR : c.daily_cap_r;
+  const stop = today <= cap;
+  const inp = (id, v) => `<input id="${id}" type="number" step="0.1" value="${v}" style="width:58px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:1px 4px;font:12px var(--mono)">`;
+  return `<div class="sub" style="margin:10px 0 4px;font-weight:700">Checks</div>` + kv([
+    ["News (NFP · CPI · FOMC)", newsTxt(D.news, NW)],
+    ["Cost vs 1 ATR", isNum(pctA) ? `<span class="${cLv}">${f(pctA, 0)}%</span> <span class="dim">${f(costOz, 2)} of ${f(c.atr, 2)} pts · amber > ${c.cost_amber_pct}%, red > ${c.cost_red_pct}%</span>` : "—"],
+    ["Churn (last 20 bars)", `<span class="${ch.churn ? "warn" : "bull"}">${ch.churn ? "CHURN" : "no churn"}</span> <span class="dim">${ch.flips} structure flips · efficiency ${isNum(ch.efficiency) ? f(ch.efficiency, 2) : "—"} (2+ flips = churn; < 0.25 = choppy)</span>`],
+    ["Today vs daily cap (R)", `${inp("today-r", today)} of ${inp("cap-r", cap)} ${stop ? '<b class="bear">STOP DAY</b>' : '<span class="bull">within cap</span>'}`],
+  ]);
+}
+// Wilson 95% ranges on the session history (Pine v86): n = sessions of this kind closed so far (report.session_counts)
+function sessCI(se, d) {
+  const n = d.checks && d.checks.sess_n; if (!(n > 0) || !window.QCosts) return "";
+  const r = (pc) => { if (!isNum(pc)) return "—"; const [lo, hi] = QCosts.wilson(Math.round((pc * n) / 100), n); return `${f(lo * 100, 0)}–${f(hi * 100, 0)}`; };
+  return ` <span class="dim">95%: ${r(se.manip_prob)} / ${r(se.cont_prob)} · n${n}</span>`;
 }
 function structStr(st) {
   if (st.bull_act) return `▲${st.bull_type} ${st.bull_age}b`;
@@ -1500,7 +1541,7 @@ function renderOverview() {
       ["ATR percentile", pct(reg.atr_pct)], ["SL multiple", f(reg.sl_mult, 2) + " × ATR"], ["Confidence cap", reg.conf_cap],
       ["Persistence", `T${reg.transitions.T} R${reg.transitions.R} D${reg.transitions.D}`]])),
     card("Session", kv([["Session", `${esc(se.label)} · quality ${se.quality}/100`], ["Spread model", f(se.spread, 2) + " pts"], ["Range vs avg", pct(se.exp_pct)],
-      ["Manipulation / continuation", `${pct(se.manip_prob)} / ${pct(se.cont_prob)}`], ["Opening type", esc(se.open_type || "—")], ["Conf. multiplier", f(se.conf_mult, 2)]])),
+      ["Manipulation / continuation", `${pct(se.manip_prob)} / ${pct(se.cont_prob)}${sessCI(se, d)}`], ["Opening type", esc(se.open_type || "—")], ["Conf. multiplier", f(se.conf_mult, 2)]])),
     card("Multi-timeframe", kv([["Agreement", `${esc(mtf.tier)} (${mtf.conf_score})`], ["Align long / short", `${mtf.align_long} / ${mtf.align_short}`],
       ...Object.entries(mtf.scores).filter(([k]) => ({ 5: 300, 15: 900, 60: 3600, 240: 14400, D: 86400 }[k] || 0) > M.tf_sec)
         .map(([k, v]) => [`HTF ${k === "60" ? "1h" : k === "240" ? "4h" : k === "D" ? "1D" : k + "m"}`, `<span class="${v >= 60 ? "bull" : v <= 40 ? "bear" : ""}" title="0-100: price vs EMA200 (40) + EMA20 vs EMA100 (40) + price vs EMA20 (20)">${f(v, 0)}</span>`])])),

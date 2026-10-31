@@ -61,6 +61,8 @@ def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> lis
     by_t: dict = {}
     for m in payload["markers"]:
         tag = _TAG.get((m["type"], m.get("dir")))
+        if tag and m["type"] == "SWEEP" and m.get("lvl"):       # name the swept pool and its price (Pine v84)
+            tag += " " + " ".join(f"{x['name']} {_fmt(x['px'], off)}" for x in m["lvl"])
         if tag and (since_t is None or m["t"] > since_t) and tag not in by_t.setdefault(m["t"], []):
             by_t[m["t"]].append(tag)
     for arm in ("h2", "h3", "h4", "h5", "h6"):
@@ -69,6 +71,21 @@ def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> lis
                 by_t.setdefault(g["t"], []).append(f"{arm.upper()} {'BUY' if g['dir'] == 'LONG' else 'SELL'} entry {_fmt(g['entry'], off)} "
                                                    f"SL {_fmt(g['sl'], off)} TP1 {_fmt(g['tp1'], off)} TP2 {_fmt(g['tp2'], off)}")
     return [f"XAUUSD {tf} {' '.join(v)} | info, not a DECISION" for _, v in sorted(by_t.items())]
+
+
+def news_lines(news: dict | None, now_t: int, last_alerted: int | None) -> tuple[list[str], int | None]:
+    """One alert per dated NFP / CPI / FOMC window, sent on the first run inside it (Pine Visuals v86 alertOnNews).
+    Display only: the engine neither blocks nor re-costs news. Returns the lines and the event time now alerted."""
+    if not news or os.environ.get("ALERT_NEWS", "1").strip() == "0":
+        return [], last_alerted
+    b, a = news["before_min"] * 60, news["after_min"] * 60
+    for e in news["events"]:
+        if e["t"] - b <= now_t <= e["t"] + a and (last_alerted is None or e["t"] > last_alerted):
+            from datetime import datetime, timezone
+            utc = datetime.fromtimestamp(e["t"], timezone.utc).strftime("%H:%M")
+            return [f"XAUUSD NEWS WINDOW: {e['name']} {e['ny'][5:]} New York ({utc} UTC), window -{news['before_min']}/+{news['after_min']} min. "
+                    f"Spreads widen and stops can be skipped. Display only: the DECISION is the engine's."], e["t"]
+    return [], last_alerted
 
 
 def send(lines: list[str]) -> list[str]:
@@ -119,6 +136,13 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str]) -> dict:
         lines = messages(p, since)
         report[tf] = {"lines": lines, "sent": send(lines)}
         state[tf] = last_t
+    first = next((payloads[tf] for tf in tfs if payloads.get(tf) and not payloads[tf]["meta"]["synthetic"]), None)
+    if first is not None:                                  # news is per release, not per timeframe: once per event
+        from datetime import datetime
+        now_t = int(datetime.fromisoformat(first["meta"]["generated_utc"]).timestamp())
+        lines, state["news"] = news_lines(first.get("news"), now_t, state.get("news"))
+        if lines:
+            report["news"] = {"lines": lines, "sent": send(lines)}
     if path:
         with open(path, "w") as f:
             json.dump(state, f)
