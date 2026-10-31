@@ -40,7 +40,7 @@ _src._get = _off
 from quantum import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, engine  # noqa: E402
 from quantum.config import DEFAULT  # noqa: E402
 
-A = (10.0, 15.0, 20.0)
+A = (2.0, 5.0, 10.0, 15.0, 20.0)
 B = (5.0, 10.0, 15.0, 20.0, 30.0, 50.0, 90.0)
 HZ = {"1d": 288, "3d": 864}
 TF_SEC = {"5m": 300, "15m": 900}

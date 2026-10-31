@@ -115,3 +115,50 @@ The event is: **+$20 before −$10.** No trade was left open after one day.
 
 **If 500 / 1000 means MT5 points** (1 point = $0.01, so SL −$5 / TP +$10): coin-flip 33%; recorded forward trades
 30%; H4 31%; engine 5m 37% against 37% random. The same conclusion.
+
+
+## 6. The operator's stated trade (2026-11-01): SL $500 / TP $100 at 0.5 lot
+
+**Conversion.** 0.5 lot = 50 oz, so $1 of price = $50:
+
+- **SL $500** = a **−$10** price move.
+- **TP $100** = a **+$2** price move.
+
+The event is: **+$2 before −$10**, a 1 : 5 reward:risk.
+
+**Note:** a $10–20 move in the trade's direction is far more than this TP needs. At 0.5 lot, $10–20 of price is
+$500–1,000 of profit.
+
+**Benchmarks:**
+
+- A coin flip wins **83.3%** (10 ÷ 12).
+- Costs are about $0.8 per oz, i.e. **$40 per trade** at 0.5 lot: **40% of every winning trade**.
+- Money per trade at win rate p: p × $100 − (1 − p) × $500 − $40. It is positive only when p > 540 ÷ 600 =
+  **90.0%**.
+
+**So for this trade, 90% is not a high-quality target: it is break-even.**
+
+| Source | Measured | Reached TP before SL (1 day) | Random entries, same direction mix | Money per trade at that rate (0.5 lot) |
+|---|---|---|---|---|
+| Recorded forward trades (real time) | 600 | **80.2%** (76.8–83.2) | 82.8% | -59 |
+| H4 playbook 15m | 961 | **80.0%** (77.4–82.4) | 82.8% | -60 |
+| H4 playbook 5m | 2719 | **80.6%** (79.1–82.0) | 82.7% | -57 |
+| Engine BUY / SELL 5m | 191 | **84.8%** (79.0–89.2) | 85.2% | -31 |
+| Engine BUY / SELL 15m | 19 | **68.4%** (46.0–84.6) | 85.5% | -129 |
+| Challenger 5m | 190 | **85.3%** (79.5–89.6) | 85.3% | -28 |
+| H3 5m | 70 | **78.6%** (67.6–86.6) | 85.2% | -69 |
+| H5 5m | 87 | **81.6%** (72.2–88.4) | 85.3% | -50 |
+| H6 5m | 191 | **84.8%** (79.0–89.2) | 85.2% | -31 |
+| Random entries, long | 3882 | **79.7%** (78.4–80.9) | 79.7% | -62 |
+| Random entries, short | 3882 | **85.5%** (84.4–86.6) | 85.5% | -27 |
+
+**Reading:**
+
+- **Every source sits at or below random entries,** at 68–85%.
+- **Every source loses money with this geometry.** Your recorded forward trades won 80% of the time, the kind of
+  rate that feels successful, and still lost about **$59 per trade**: each loss wipes out five wins, and costs take
+  $40 of each $100 win.
+- **Even random shorts in this falling market (85.5%) lost $27 per trade.**
+- **To make money with SL $500 / TP $100 at 0.5 lot, a signal must win more than 90% of the time before costs are
+  even covered.** Nothing measured does. A claimed rate also needs 184+ trades to establish a 95% lower bound of
+  85%; to rule out the 90% break-even it needs far more.
