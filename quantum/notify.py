@@ -63,7 +63,7 @@ def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> lis
         tag = _TAG.get((m["type"], m.get("dir")))
         if tag and (since_t is None or m["t"] > since_t) and tag not in by_t.setdefault(m["t"], []):
             by_t[m["t"]].append(tag)
-    for arm in ("h2", "h3", "h4", "h5"):
+    for arm in ("h2", "h3", "h4", "h5", "h6"):
         for g in (payload.get(arm) or {}).get("signals") or []:
             if since_t is None or g["t"] > since_t:
                 by_t.setdefault(g["t"], []).append(f"{arm.upper()} {'BUY' if g['dir'] == 'LONG' else 'SELL'} entry {_fmt(g['entry'], off)} "

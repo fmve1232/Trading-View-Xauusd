@@ -10,7 +10,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, arm_h4, arm_h5, backtest, holdout, ta
+from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, holdout, ta
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -357,6 +357,26 @@ def h5_section(market, res, cfg, man, now, store_dir, idx) -> dict:
             "forward_trades": post[-100:], "in_sample_trades": pre[-30:], "signals_per_bar": len(sig) / n if n else None}
 
 
+def h6_section(market, res, cfg, man, now, store_dir, idx) -> dict:
+    """Arm H6 "No score veto" (Amendment 12): the engine's own signal without the calibration (score) veto."""
+    trades, ev = arm_h6.simulate(res, cfg)
+    key = arm_h6.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
+    man6, pre, post = _arm_record("h6", key, market, trades, cfg, now, store_dir)
+    n = len(idx)
+    sig = [i for i in range(n) if ev["exec_buy"][i] or ev["exec_sell"][i]]
+
+    def plan(i):
+        return {"t": int(pd.Timestamp(idx[i]).timestamp()), "dir": "LONG" if ev["exec_buy"][i] else "SHORT", "entry": _f(res.F["c"][i]),
+                "sl": _f(ev["plan_sl"][i]), "tp1": _f(ev["plan_tp1"][i]), "tp2": _f(ev["plan_tp2"][i]),
+                "score_vetoed": bool(ev["score_vetoed"][i])}
+    return {"freeze": man6, "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None,
+            "last_signal": plan(sig[-1]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
+            "open": [t for t in trades if t.get("open")],
+            "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
+            "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None,
+            "score_vetoed_share": (sum(ev["score_vetoed"][i] for i in sig) / len(sig)) if sig else None}
+
+
 def h2_section(market, res, cfg, man, now, store_dir, idx) -> dict:
     trades, ev = arm_h2.simulate(res, cfg)
     key = arm_h2.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
@@ -540,6 +560,10 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         h5 = h5_section(market, res, cfg, man, now, store_dir, idx)
     except Exception as e:  # noqa: BLE001 - H5 must never break the page
         h5 = {"error": f"{type(e).__name__}: {e}"[:200]}
+    try:   # arm H6 "No score veto" (Amendment 12): its own freeze key and ledger
+        h6 = h6_section(market, res, cfg, man, now, store_dir, idx)
+    except Exception as e:  # noqa: BLE001 - H6 must never break the page
+        h6 = {"error": f"{type(e).__name__}: {e}"[:200]}
     # arm H3 "Sweep-to-Value" (the Pine line's H2 rule, Amendment 7): its own freeze key and ledger
     try:
         h3 = h3_section(market, res, cfg, man, now, store_dir, idx)
@@ -576,5 +600,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "h3": h3,
         "h4": h4,
         "h5": h5,
+        "h6": h6,
     }
     return _clean(payload)

@@ -623,3 +623,78 @@ history" and is not tested without a new amendment; the boundaries above do not 
 intraday bar the feed serves. Under this amendment's rule the development period (earliest bar – 2019-12-31) is empty, so
 **1h and 15min are "insufficient history"**; no hypothesis is tested on them without a new amendment, and the boundaries
 above do not move. No hypothesis has been run on this data.
+
+## Amendment 12 (2026-10-31, operator decision "New arm H6 + relabel"; written before H6 was run on any price history): arm H6 "No score veto"
+
+**Why.** The engine's calibrated long / short score (`cal_p_long` / `cal_p_short`; the Pine engines' calibrated P) gates
+signals through the calibration veto (`cal_veto`: score < `cal_gate_min_p` = 0.50 once calibration is live). It was
+measured against the event it is defined on: the race from the close, unit R = `aatr` × `reg_sl_mult` (nz 1.5), +1R
+before −1R within the outcome horizon N (15m: 4 bars, 1h: 3), a bar touching both counting as a loss (the engine's own
+`label_outcome` convention), labelled independently of the engine's own bookkeeping. The engine was run read-only on
+a copy of the market-data store (`audit/tools/engine_dump.py`, `audit/tools/engine_calibration.py`; the scorer is
+validated on synthetic perfect and constant forecasts). Results:
+- **15m** (2026-08-05 → 2026-10-30, 3,043 resolved races): AUC 0.484 (block bootstrap 0.453–0.511); Brier 0.2637 vs
+  0.2496 for a constant base rate (skill −0.056). The same before the forward start (AUC 0.499) and after (0.464).
+- **1h** (2026-03-02 → 2026-10-30, 1,661 races): AUC 0.515 (0.483–0.548); skill −0.042.
+- Reliability is flat: on 15m, quintile mean scores of 0.30 / 0.44 / 0.50 / 0.54 / 0.62 were followed by 0.50 / 0.51 /
+  0.49 / 0.43 / 0.48.
+
+The score does not rank outcomes, so the veto may remove trades at random. This is a measurement of the frozen engine;
+**nothing in the engine, `config.py`, the §7 arms or H2–H5 changes**, and no forward record restarts.
+
+**1. Display (outside the freeze key, no restart).** The site no longer presents the score as a probability:
+- the veto reads "score below minimum (a score without measured skill, Amendment 12)";
+- the score card's note and the method page state the measurement;
+- the calibration table's column reads "Score at entry".
+
+**2. Arm H6 "No score veto": the treatment engine's own signal without the calibration veto.** The rule at the close
+of bar i, using only values the frozen engine publishes per bar:
+- **LONG** if `should_buy[i]` (the seven entry gates) and none of `tq_floor_veto[i]`, `ev_veto[i]`, or (when
+  `use_risk_limits`) `risk_lock[i]`. **SHORT** is the mirror with `should_sell[i]`.
+- This is the engine's own `exec_buy` / `exec_sell` line without `cal_veto[i]`.
+- The risk lock is the engine's, tracked on the treatment arm's own signals; it is not re-run on H6's trades.
+- **Plan:** the engine's entry (close), `plan_sl`, `plan_tp1`, `plan_tp2` for that bar.
+- **Execution and costs:** `backtest.simulate`, as every other arm. Each H6 signal the treatment arm did not take is
+  marked `score_vetoed`.
+
+**Freeze:** key = the §7 engine key + SHA-256 of `quantum/arm_h6.py`; ledger `holdout/<tf>_h6.json`; starts at the first
+pipeline run after this amendment is merged. Earlier trades are in-sample only and are labelled so.
+
+**Decision:** the **1H** record decides, as for the treatment arm and H5; other timeframes are reported. After
+**N ≥ 50** closed trades, H6 shows an edge only if the 95% t-interval of mean R is above 0 and PF ≥ 1.2. Decide by
+2027-03-31, otherwise NOT SHOWN. The win rate is reported, not used to decide.
+
+**Reading against the treatment arm (reported, not decided):**
+- H6's signals are a superset of the treatment arm's.
+- If the veto is uninformative, H6's mean R matches the treatment arm's, with more trades.
+- If H6 is worse on the score-vetoed trades (`score_vetoed`), the veto carried information the AUC missed.
+
+**Multiplicity:** H6 is an eighth hypothesis on the same market and period. It is reported on its own terms and
+borrows no evidence from the treatment arm.
+
+## Amendment 13 (2026-10-31, operator decision "3y / 1.5y / 1.5y"; written before any research data was opened): research split re-registered
+
+**Why.** Amendment 11 fixed the split 2010–2019 / 2020–2022 / 2023–2025 before the download. The feed serves intraday
+XAU/USD only from **2020-01-24 02:00 UTC**, so its development period is empty and 1h / 15min are "insufficient history"
+(A11 data record). Since then, **no hypothesis has been run on the research data and no statistic has been computed
+from it**:
+- the 2026-10-31 institutional audit (Pine line) deliberately did not open it;
+- the A11 workflow logs record only row counts and first / last bars.
+
+The boundaries below are therefore chosen blind, by the calendar.
+
+**Split (replaces the A11 table; every other A11 rule is unchanged, including its ≥ 3-year minimum):**
+
+| Period | Dates (UTC) | Length | Use |
+|---|---|---|---|
+| Development | 2020-01-24 02:00 – 2023-01-24 01:59 | 3.0 years | rules may be explored and parameters chosen, with walk-forward and purging |
+| Validation | 2023-01-24 02:00 – 2024-06-30 23:59 | ~1.4 years | one evaluation per registered variant; no re-tuning on it |
+| Sealed holdout | 2024-07-01 00:00 – 2025-12-31 23:59 | 1.5 years | opened **once** per hypothesis that passed validation; its result is final |
+| Live | from each hypothesis's registration | — | the forward ledger, as for every arm |
+
+The development period runs exactly three years from the first bar, so A11's minimum is met without being changed.
+The operator's choice was "Development 2020 – 2022"; 2020-01-24 – 2022-12-31 is 2.94 years, so the boundary is set at
+the third anniversary of the first bar rather than lowering the minimum. The protocol of A11 (registration before
+validation, triple barrier, purged walk-forward folds, variant count, CSCV / PBO, Deflated Sharpe, pass thresholds,
+stress run, White's Reality Check, Wilson-reported win rates, a new live arm only after the holdout) applies unchanged.
+**Nothing has been tested yet**: the first hypothesis still needs its own registration under these rules.

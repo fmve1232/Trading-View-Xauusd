@@ -694,6 +694,23 @@ function renderH5() {
     `<div class="why"><b>Live record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${rec(fw)}.<br><span class="dim">Past data (${esc(D.meta.tf)}): ${rec(is)}.</span></div>` +
     `<div class="why note-h5"><b>Read this before trading.</b> H5 takes a trade only when all five agree, so it is rare: a few per month at most, often none. No rule wins every trade, and a 90% win rate is not promised. It is judged on its 1-hour live record after 30 trades: average R above 0 and profit factor at least 1.2. Risk only what a stop-out can cost you.</div>`;
 }
+/* ---------- arm H6 "No score veto" (Amendment 12; quantum/arm_h6.py): the engine's own signal without the calibration (score) veto ---------- */
+function renderH6() {
+  const D = S.data, el = $("#h6"), st = $("#h6-state"); if (!el || !D) return;
+  const H = D.h6;
+  if (!H || H.error) { el.innerHTML = `<span class="muted">${H ? "H6 error: " + esc(H.error) : "Appears after the next pipeline run."}</span>`; st.textContent = "—"; return; }
+  const now = H.signal_now, last = H.last_signal, p = now || last;
+  st.textContent = now ? `${now.dir === "LONG" ? "BUY" : "SELL"} NOW` : "NO TRADE"; st.className = "pill " + (now ? (now.dir === "LONG" ? "bull" : "bear") : "");
+  const vt = (x) => x && x.score_vetoed ? ' · <span class="warn">the main model vetoed this one on its score</span>' : "";
+  const plan = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · stop ${px(p.sl)} · target 1 ${px(p.tp1)} · target 2 ${px(p.tp2)}${vt(p)}</div>` : `<div class="why dim">No H6 signal on this timeframe in the chart's history yet.</div>`;
+  const fw = H.forward || {}, is = H.in_sample || {}, fr = H.freeze || {};
+  const rec = (m) => m.n ? `${m.n} trades · ${f(m.win_rate, 0)}% won · average ${fs(m.avg_r, 2)} R · profit factor ${f(m.profit_factor, 2)}` : "no closed trades yet";
+  el.innerHTML = `<div class="why">The model's own BUY / SELL after all its checks <b>except one</b>: the long / short score veto. ` +
+    `That score did not rank outcomes when it was measured (Amendment 12), so H6 tests whether the veto helps.` +
+    (isNum(H.score_vetoed_share) ? ` <span class="dim">${f(H.score_vetoed_share * 100, 0)}% of H6's signals in this history were vetoed by the score.</span>` : "") + `</div>` + plan +
+    `<div class="why"><b>Live record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${rec(fw)}.<br><span class="dim">Past data (${esc(D.meta.tf)}): ${rec(is)}.</span></div>` +
+    `<div class="why note-h5"><b>Read this before trading.</b> H6 is a test, not a recommendation. It is judged on its 1-hour live record after 50 trades: average R above 0 (95% interval) and profit factor at least 1.2, by 2027-03-31.</div>`;
+}
 function renderH2() {
   const D = S.data, el = $("#h2"), st = $("#h2-state"); if (!el || !D) return;
   const H = D.h2;
@@ -859,7 +876,7 @@ function h4rec(D) {
   return `<span title="${esc(full)}">${rec}${is.n ? ` In past data these triggers won ${f(is.win_rate, 0)}% of ${is.n} times.` : ""}</span>` +
     (neg ? ' <b class="warn">On average they have lost money: treat them as levels to watch, not as signals.</b>' : "");
 }
-const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "P below minimum" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
+const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "score below minimum (a score without measured skill, Amendment 12)" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
 function pbLine(x, tf, primary) {
   if (!x) return "";
   const s = x.dir < 0, through = isNum(x.dist) && (s ? x.dist > 0 : x.dist < 0);   // live price already beyond the trigger
@@ -1034,7 +1051,7 @@ function renderSide() {
   const fitted = d.cal_fit && isNum(d.cal_fit[0]);
   $("#p-state").textContent = fitted ? (d.cal_drift ? "DRIFT → raw" : "fitted in-sample") : "unfitted";
   $("#p-state").className = "pill " + (fitted && !d.cal_drift ? "" : "warn");
-  $("#p-state").title = "A calibration curve fitted on the development history. It is not validated out of sample, and on that history the scores did not separate winners from losers (F-A34). Only the forward holdout can show whether these probabilities hold.";
+  $("#p-state").title = "A calibration curve fitted on the development history. It is not validated out of sample, and on that history the scores did not separate winners from losers (F-A34). Measured against the event it is defined on (Amendment 12), the score did not rank outcomes (AUC about 0.5) and scored worse than a constant base rate: read it as a score, not a probability.";
   $("#prob").innerHTML = kv([
     ["Long score (0–100)", isNum(d.p_long) ? f(d.p_long * 100, 0) : "—"],
     ["Short score (0–100)", isNum(d.p_short) ? f(d.p_short * 100, 0) : "—"],
@@ -1563,7 +1580,7 @@ function renderBacktest() {
   const wf = (tr.walk_forward || []).map((w, k) => `<tr><td>F${k + 1} ${w.from.slice(0, 10)}</td><td>${w.n}</td><td>${w.n ? pct(w.win_rate, 0) : "—"}</td><td>${w.n ? fs(w.expectancy_r, 3) : "—"}</td><td>${w.n ? f(w.profit_factor, 2) : "—"}</td></tr>`).join("");
   const mc = tr.monte_carlo && tr.monte_carlo.runs ? kv([["Runs × trades", `${tr.monte_carlo.runs} × ${tr.monte_carlo.trades}`], ["Final equity p5 / p50 / p95", `${fs(tr.monte_carlo.final_equity_pct.p5, 1)} / ${fs(tr.monte_carlo.final_equity_pct.p50, 1)} / ${fs(tr.monte_carlo.final_equity_pct.p95, 1)}%`],
     ["Max DD p5 / p50 / p95", `${f(tr.monte_carlo.max_dd_pct.p5, 1)} / ${f(tr.monte_carlo.max_dd_pct.p50, 1)} / ${f(tr.monte_carlo.max_dd_pct.p95, 1)}%`], ["P(loss)", pct(tr.monte_carlo.prob_loss, 1)]]) + `<p class="note">${esc(tr.monte_carlo.note)}</p>` : "<p class='muted'>Needs ≥ 5 closed trades.</p>";
-  const cal = tr.calibration && tr.calibration.bins ? `<table class="t"><tr><th>P at entry</th><th>n</th><th>Predicted</th><th>TP1 hit</th></tr>${tr.calibration.bins.map((b) => `<tr><td>${f(b.lo, 1)}–${f(b.hi, 1)}</td><td>${b.n}</td><td>${f(b.pred, 0)}%</td><td>${f(b.obs, 0)}%</td></tr>`).join("")}</table>${kv([["Brier", f(tr.calibration.brier, 3)], ["Base rate", pct(tr.calibration.base_rate, 0)]])}` : `<p class="muted">Needs ≥ 10 trades with a calibrated P (n=${tr.calibration ? tr.calibration.n : 0}).</p>`;
+  const cal = tr.calibration && tr.calibration.bins ? `<table class="t"><tr><th>Score at entry</th><th>n</th><th>Predicted</th><th>TP1 hit</th></tr>${tr.calibration.bins.map((b) => `<tr><td>${f(b.lo, 1)}–${f(b.hi, 1)}</td><td>${b.n}</td><td>${f(b.pred, 0)}%</td><td>${f(b.obs, 0)}%</td></tr>`).join("")}</table>${kv([["Brier", f(tr.calibration.brier, 3)], ["Base rate", pct(tr.calibration.base_rate, 0)]])}` : `<p class="muted">Needs ≥ 10 trades with a calibrated P (n=${tr.calibration ? tr.calibration.n : 0}).</p>`;
   const brk = (o) => `<table class="t"><tr><th></th><th>n</th><th>Win</th><th>E[R]</th></tr>${Object.entries(o || {}).map(([k, m]) => `<tr><td>${esc(k)}</td><td>${m.n}</td><td>${m.n ? pct(m.win_rate, 0) : "—"}</td><td>${m.n ? fs(m.expectancy_r, 2) : "—"}</td></tr>`).join("")}</table>`;
   const arm = S.btArm === "control" ? ct : S.btArm === "challenger" ? ch : tr;
   const trades = (arm.trades || []).slice().reverse().map((x) => `<tr><td>${tfmt(Date.parse(x.entry_time) / 1000)}</td><td class="${x.dir === "LONG" ? "bull" : "bear"}">${x.dir}</td><td>${f(x.entry)}</td><td>${f(x.sl)}</td><td>${f(x.tp1)}</td><td>${f(x.exit)}</td><td>${esc(x.exit_reason)}</td><td class="${x.r >= 0 ? "bull" : "bear"}">${fs(x.r, 2)}</td><td>${fs(x.pts, 2)}</td><td>${x.tq}</td><td>${isNum(x.p) ? f(x.p * 100, 0) : "—"}</td><td>${x.bars}</td></tr>`).join("");
@@ -1651,7 +1668,7 @@ function renderStrip() {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderBrief); safe(renderH5); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
