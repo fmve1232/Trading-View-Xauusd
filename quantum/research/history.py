@@ -137,6 +137,19 @@ def backfill(store_dir: str, symbol: str, interval: str, apikey: str, start: str
     return rec
 
 
+
+def load(store_dir: str, symbol: str = "XAU/USD", interval: str = "1h") -> pd.DataFrame | None:
+    """Research series as the engine would see it: market-shut bars removed (audit 2026-10-31, D-R1).
+
+    The stored history is raw. From 2025 Twelve Data prints its XAU/USD quote 24/7, so the raw 1h series holds
+    ~3,100 bars inside the weekend / daily closure (893 in 2025, 2,200 in 2026; none in 2021-2024). Every
+    research run must read through here, or the sealed 2024-07..2025-12 holdout would mix two feed formats.
+    """
+    df = store.load(store_dir, series_name(symbol, interval))
+    if df is None or len(df) == 0:
+        return df
+    return sources.trading_week_only(sources.drop_offgrid(df), daily=interval in ("1day", "1d"))
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--store", required=True)

@@ -1043,7 +1043,7 @@ function renderSide() {
     ${kv([["R multiples", `1:${f(p.rr1, 1)} / 1:${f(p.rr2, 1)} / 1:${f(p.rr3, 1)}`],
       ["Race EV (TP1 vs SL)", isNum(p.ev) ? `<span class="${p.ev >= 0 ? "bull" : "bear"}">${fs(p.ev, 2)} R</span> <span class="dim">n${f(p.race_n, 0)}</span>` : "—"],
       [`Touch within ${p.horizon_bars} bars`, touch]])}
-    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the expectancy. Plan direction follows the signal.</p>
+    <p class="note">Touch rates are marginal excursion frequencies over ${p.horizon_bars} bars, not a TP-before-SL race; the race EV is the model's in-sample expectancy estimate. <b>Neither is a calibrated probability:</b> on the forward record higher model estimates have not won more often (audit 31 Oct; Backtest tab). Plan direction follows the signal.</p>
     <button class="icon-btn copy" id="copy-plan" style="margin-top:8px;width:100%">Copy plan for MT5</button>`;
   $("#copy-plan").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(planTxt); $("#copy-plan").textContent = "Copied"; setTimeout(() => ($("#copy-plan").textContent = "Copy plan for MT5"), 1500); };
   }
@@ -1073,7 +1073,9 @@ function renderSide() {
 
   const k = d.kelly;
   const acct = S.account || M.config.account_size;
-  const lots = sig && p.dist > 0 ? Math.floor((acct * Math.max(k.kelly_pct, 0) / 100 / (p.dist * M.config.point_value)) / 0.01) * 0.01 : 0;
+  // loss at the stop = distance + round-trip cost (D-13); older payloads have no risk_per_lot
+  const perLot = isNum(k.risk_per_lot) && k.risk_per_lot > 0 ? k.risk_per_lot : p.dist * M.config.point_value;
+  const lots = sig && p.dist > 0 ? Math.floor((acct * Math.max(k.kelly_pct, 0) / 100 / perLot) / 0.01 + 1e-9) * 0.01 : 0;
   $("#risk-state").textContent = d.risk.lock ? "LOCKED" : "open";
   $("#risk-state").className = "pill " + (d.risk.lock ? "bear" : "bull");
   $("#risk").innerHTML = kv([
@@ -1082,7 +1084,8 @@ function renderSide() {
     ["Kelly (half, Wilson LB)", sig ? `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span>` : '<span class="dim">no signal: nothing to size</span>'],
     ["Account", `<input id="acct" type="number" value="${acct}" style="width:90px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"> USD`],
     ["Lots (100 oz)", lots >= 0.01 ? f(lots, 2) : (k.kelly_pct > 0 ? "below 0.01 minimum" : "0 (no edge sized)")],
-  ]) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot). The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
+    ["Loss at stop per lot", sig && perLot > 0 ? `$${f(perLot, 0)} <span class="dim">stop ${f(p.dist, 2)} + costs ${isNum(k.cost_pts) ? f(k.cost_pts, 2) : "—"} per oz × 100 oz</span>` : "—"],
+  ]) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot) and includes spread, slippage and commission, so the loss at the stop stays within the risk %. The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
   $("#acct").onchange = (e) => { S.account = Number(e.target.value) || null; store.set("account", S.account); renderSide(); };
 }
 function structStr(st) {

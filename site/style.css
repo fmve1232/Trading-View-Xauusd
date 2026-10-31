@@ -25,7 +25,7 @@
   --arm3: #b98cff;
   --ob: #a1887f;
   --fvg: #ff9800;
-  --ov-ema20: #9aa4b3;          /* neutral: the fast average hugs price */
+  --ov-ema20: #ffffff;          /* white, as Pine Visuals cFast (#FFFFFF); light theme keeps a dark neutral */
   --ov-ema100: #3987e5;
   --ov-ema200: #c98500;
   --ov-vwap: #d55181;
