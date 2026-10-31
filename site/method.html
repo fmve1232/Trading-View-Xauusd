@@ -52,7 +52,7 @@ The page itself makes no decisions. It shows what the engine concluded, and how 
 <ul>
   <li><b>TQ</b> — trade quality, 0–100, direction-conditioned; entries below the regime-adjusted floor are vetoed.</li>
   <li><b>Race EV</b> — expected R of the TP1-versus-stop race from analog first-touch statistics, net of costs; a negative value vetoes entries.</li>
-  <li><b>Long / short score</b> — the output of a Platt fit for a bull / bear resolution, normalised across the two fits (the engine calls it P and uses it as a veto once calibration is live). It is not validated as a probability: on the record so far higher scores did not win more often.</li>
+  <li><b>Long / short score</b> — the output of a Platt fit for a bull / bear resolution, normalised across the two fits (the engine calls it P and uses it as a veto once calibration is live). It is not a probability: measured against the event it is defined on (+1R before −1R within the outcome horizon), it did not rank outcomes (AUC about 0.5, 15m and 1h, before and after the forward start) and scored worse than a constant base rate (Amendment 12). Arm H6 tests the engine without the veto that uses it.</li>
   <li><b>ROLL</b> — the trailing 20% of the analog buffer. A diagnostic, not a holdout.</li>
   <li><b>Holdout</b> — trades entered after the configuration freeze. The only unbiased evidence.</li>
 </ul>
