@@ -103,6 +103,7 @@ python3 audit/tools/bug_scan.py         # bug classes: look-ahead, repaint, aler
 python3 audit/tools/v86_check.py        # v86 checks & risk, calendar, Master SIGNAL text, EdgeCases timing, executed (~40 s)
 python3 audit/tools/v88_check.py        # Visuals' MACRO == the Master's: MX block verbatim + complete, executed from both files
 python3 audit/tools/ledger_stats.py     # forward-ledger statistics (system of record), intervals, PF, drawdown, pre-cost mean (v90)
+python3 audit/tools/pine_web_parity.py  # Pine probability blocks + outcome race == the website's engine, executed, with positive controls
 sha256sum -c audit/MANIFEST.sha256
 ```
 

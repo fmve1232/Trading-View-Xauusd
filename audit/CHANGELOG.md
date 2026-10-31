@@ -3216,3 +3216,25 @@ record continues.
 **Not run:** the browser render of the H6 card. No Pine artefact changed, so this branch has no new chart set.
 
 **PR #49 merged (2026-10-31 14:52 UTC).** The site relabel is live; arm H6's forward record starts at the next pipeline run. No Pine change is needed: `brief_trace.py` passes against the merged site code.
+
+# Pine audit addendum after PR #49 (no Pine change, 2026-10-31)
+
+Operator: "Have you audit Pine files?" See `audit/PINE_AUDIT_v90.md`.
+
+**New tool: `pine_web_parity.py`.** It executes the Master's `normalizeScores`, `f_gridInterp` and outcome race loop
+against the website's own functions, imported read-only from the default branch @ `6fca44dcf`.
+
+| Check | Result |
+|---|---|
+| Score normalisation | 20,000 cases, 0 mismatches |
+| Grid interpolation | 20,000 cases, 0 mismatches |
+| Outcome race | 71,398 races, 0 mismatches |
+| Positive control (tie order flipped) | detected, 331 mismatches |
+
+**Meaning:** F-A78 applies to the Pine `mP` because it is the same event with the same fit pipeline. This is an
+inference: Pine runtime values are not measured (BLOCKED).
+
+**Full suite re-run against the merged site:** 0 static issues; every executed checker exits 0, including
+`tf_check`. `ledger_stats.py` lists the `h6` arm, which has N = 0 so far.
+
+No artefact changed. The hashes are those of v90.

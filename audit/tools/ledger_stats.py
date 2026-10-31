@@ -202,7 +202,7 @@ def fmt(o):
 
 
 if __name__ == "__main__":
-    arms = ["h4", "h3", "h5", "h2", "treatment", "control", "challenger"]
+    arms = ["h4", "h3", "h5", "h6", "h2", "treatment", "control", "challenger"]
     if "--arms" in sys.argv:
         arms = sys.argv[sys.argv.index("--arms") + 1].split(",")
     rng = random.Random(20261031)
