@@ -18,3 +18,9 @@ def test_relay_worker_logic():
 def test_scheduler_worker_logic():
     r = subprocess.run(["node", "--test", os.path.join(HERE, "scheduler.test.mjs")], capture_output=True, text=True, timeout=120)
     assert r.returncode == 0, r.stdout[-3000:] + r.stderr[-2000:]
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_site_cost_profiles_match_python():
+    r = subprocess.run(["node", "--test", os.path.join(HERE, "costs.test.mjs")], capture_output=True, text=True, timeout=120)
+    assert r.returncode == 0, r.stdout[-3000:] + r.stderr[-2000:]
