@@ -21,6 +21,15 @@ All freeze keys are unchanged by this change (verified):
 
 No forward test restarts.
 
+> **Correction, 2026-11-01.** The first version of this report listed a defect **B-01** ("commission 0.07/oz on the
+> website against 0.385/oz in the Pine twins"). That finding was **wrong** and is withdrawn. Pine's 0.385 is not a
+> commission: it is the whole round-trip cost per ounce **per side** (commission 0.035 + spread 0.15 + slippage 0.20),
+> because TradingView's `strategy()` counts ounces and has no spread input (`XAUUSD_Quantum_5_0_Strategy.pine`
+> lines 52–69). Both lines charge the same $7 per lot round turn. The stress-table column built on that misreading
+> double-counted spread and slippage; it is replaced in §6.2 by the like-for-like Pine cost model. §6.4 gives the
+> remaining real difference (spread by session) and the check that no calculation counts a cost twice. The B-02
+> figures in §6.3 are replaced by an exact re-simulation (`audit/AMENDMENT_14_GAP_STOP_PROPOSAL.md`).
+
 ---
 
 ## 1. System inventory
@@ -37,7 +46,7 @@ No forward test restarts.
 | `features.py` (582) | indicators, macro, MTF | Market | F-A64 / F-A65 macro, HTF scores | `F` dict | ta | test_macro_factors | — |
 | `analog.py` (421) | analog / race / touch statistics | features | scan, Bayes rates | hit_prob, race_prob, oos_wr | — | test_engine | P-01 (calibration) |
 | `engine.py` (1737) | scores, gates, vetoes, plan | F | bar-by-bar engine | rows, events, last | all above | test_engine (392 lines) | P-01 |
-| `backtest.py` (177) | arm simulation | rows | stop first, 50% at TP1, breakeven, flip, costs | trades, metrics | numpy | **hand-worked path (new)** | B-01, B-02 |
+| `backtest.py` (177) | arm simulation | rows | stop first, 50% at TP1, breakeven, flip, costs | trades, metrics | numpy | **hand-worked path (new)** | B-02 |
 | `config.py` (126) | frozen defaults | — | — | hash | — | test_integrity | L-04 |
 | `holdout.py` (150) | freeze keys, ledgers | code + config | SHA-256 | manifests | — | test_h2..h6 | — |
 | `arm_h2..h6.py` (78–173) | pre-registered arms | engine output | own rules | exec_buy / exec_sell | backtest | test_h2..h6 | C-01 (H4 loses) |
@@ -169,14 +178,19 @@ Ledgers on `forward-ledger` @ b8148d0a9, closed trades only.
 
 ### 6.2 Cost and delay stress (in-sample, the whole stored window, executed)
 
-| TF / arm | Base mean R (t) | 2× costs | Pine commission 0.385/oz | Zero cost | 1-bar entry delay |
+| TF / arm | Base mean R (t) | 2× costs | Pine cost model (fixed 0.30 spread) | Zero cost | 1-bar entry delay |
 |---|---|---|---|---|---|
-| 5m treatment (n 37) | +0.19 (0.66) | +0.08 | +0.15 | +0.30 | **−1.31** (entries past the stop) |
-| 15m treatment (n 12) | +0.59 (1.21) | +0.54 | +0.57 | +0.64 | +0.34 |
-| 1h treatment (n 30) | +0.05 (0.18) | +0.02 | +0.04 | +0.09 | **−0.15** |
-| 5m H4 (n 1731) | −0.18 (−8.4) | −0.32 | −0.23 | −0.04 | −0.23 |
-| 15m H4 (n 986) | −0.11 (−4.0) | −0.18 | −0.13 | −0.04 | −0.04 |
-| 1h H4 (n 729) | −0.04 (−1.3) | −0.07 | −0.05 | −0.01 | −0.05 |
+| 5m treatment (n 37) | +0.19 (0.66) | +0.08 | +0.19 (identical) | +0.30 | **−1.31** (entries past the stop) |
+| 15m treatment (n 12) | +0.59 (1.21) | +0.54 | +0.59 (identical) | +0.64 | +0.34 |
+| 1h treatment (n 30) | +0.05 (0.18) | +0.02 | +0.05 (identical) | +0.09 | **−0.15** |
+| 5m H4 (n 1731) | −0.18 (−8.4) | −0.32 | −0.16 | −0.04 | −0.23 |
+| 15m H4 (n 986) | −0.11 (−4.0) | −0.18 | −0.10 | −0.04 | −0.04 |
+| 1h H4 (n 729) | −0.04 (−1.3) | −0.07 | −0.04 | −0.01 | −0.05 |
+
+The "Pine cost model" column (corrected 2026-11-01) charges every trade Pine's fixed round trip: spread 0.30 +
+slippage 0.40 + commission 0.07 = 0.77 per oz. The treatment's trades are all in session, where the website also
+charges 0.30, so the results are identical. H4 also trades off session, where the website charges 0.50, so the Pine
+model is 0.20 per oz cheaper there.
 
 - No in-sample result is significant (|t| < 2) except H4's losses.
 - The treatment's small positive mean does not survive a one-bar delay on 1h or 5m.
@@ -191,13 +205,41 @@ Ledgers on `forward-ledger` @ b8148d0a9, closed trades only.
   - exits from the next bar;
   - stop first on a two-way bar (conservative);
   - costs charged on every trade.
-- **B-02:** a stop is filled at the stop price even when the bar *opened* beyond it, as on weekend or news gaps. This
-  understates losses by 1.7 R (15m H4, 12 gaps), 2.8 R (5m H4) and 4.4 R (1h H4) over the window. The treatment had no
-  such gaps. The fix (fill at min(open, stop)) is an engine change, so it needs an amendment.
-- **B-01:** the website charges commission $7 per lot round-turn (0.07/oz, `commission_l`). The Pine strategy twins
-  charge 0.385/oz. This difference was **not documented**; it is recorded here. Measured effect: −0.01 to −0.05 R per
-  trade. Exness Raw Spread charges up to $3.50 per lot per side, which supports 0.07/oz, but the operator should
-  confirm their own account's commission.
+- **B-02:** a stop is filled at the stop price even when the bar *opened* beyond it, as on weekend or news gaps.
+  Exact re-simulation (corrected 2026-11-01), with a stop filled at the open when the bar opens beyond it:
+  - H4 understates losses by 0.84 R (15m, 12 gap exits), 2.26 R (5m, 8) and 3.80 R (1h, 13) over the stored window.
+  - The treatment had no gap exits.
+  - The proposed fix is an engine change, so it needs an amendment: `audit/AMENDMENT_14_GAP_STOP_PROPOSAL.md`
+    (PROPOSED, not approved).
+- ~~B-01~~ **withdrawn** (see the correction at the top).
+
+### 6.4 Transaction costs: one model, charged once (verified 2026-11-01)
+
+| Where | Formula | Charged |
+|---|---|---|
+| `backtest.py:60` (every arm's trades and ledgers) | session spread + 2 × slippage + commission / 100 | once per trade, at entry, in points per oz |
+| `engine.py:1700` (plan race EV) | same, divided by the stop distance | once, in R |
+| `analog.py:165` (analog outcomes) | same, divided by the analog's risk unit | once per analog outcome, in R |
+| `report.py:422` (lot sizing, D-13) | same, added to the stop distance | once, in $ per lot |
+| Pine Strategy twins | `commission_value` 0.385 per oz per side, `slippage` 0 | twice (entry and exit) = 0.77 per oz |
+
+**The spread is a round-trip quantity, charged once; slippage is per side, charged twice; commission is per lot
+round turn, divided by 100 oz.**
+
+- Prices are taken as they are; no bid or ask adjustment is applied to any fill. So no cost is added on top of a fill
+  price.
+- Nothing else charges a cost: the arm modules call `backtest.simulate`; the site and the alerts only display.
+- The R unit is the stop distance without cost, the same in every place.
+
+**The one real difference is the session spread.**
+
+- The website charges `max(floor, spread_cost 0.30)`. The floors are 0.18 (kill zone), 0.22 (New York), 0.30
+  (London) and 0.50 (off session).
+- So it charges **0.30 in every session and 0.50 off session**.
+- Pine's `strategy()` takes one constant: 0.30 everywhere. Pine documents this as its "known residual".
+- Off-session trades on the website therefore cost 0.20 per oz more.
+
+The earlier text "0.18–0.50" described the floors, not the charge.
 
 ---
 
@@ -287,8 +329,8 @@ when the edge is negative; the current 1h payload shows raw −16% → 0 lots, w
 | C-01 | **Critical** | strategy | No arm has positive out-of-sample expectancy. H4 loses (t −4.75, n 511). A 90% win rate has no support. | Disclosed on the site. Not fixable by code; needs research under Amendment 13. |
 | P-01 | **High** | probability | P, EV and touch rates have negative Brier skill and AUC ≈ 0.5 (0.38 on 1h). | Display caveats done. Recalibration = research (Amendment 13). |
 | R-01 | **High** | risk | Lot size ignored round-trip costs; real loss at the stop was up to 1.14× the chosen risk. | **Fixed** (D-13, tests). |
-| B-02 | Medium | backtest | Stops fill at the stop price on gaps (understates losses by 1.7–4.4 R per window for H4). | Registered. Needs an engine amendment. |
-| B-01 | Medium | backtest | Commission 0.07/oz on the web against 0.385/oz in the Pine twins; undocumented. | Documented here, impact measured. Confirm the broker commission. |
+| B-02 | Medium | backtest | Stops fill at the stop price on gaps (understates H4 losses by 0.8–3.8 R over the stored window; exact re-simulation 2026-11-01). | Amendment 14 PROPOSED (`audit/AMENDMENT_14_GAP_STOP_PROPOSAL.md`), not approved. Needs an engine amendment. |
+| ~~B-01~~ | — | backtest | **Withdrawn 2026-11-01**: both lines charge $7 per lot round turn; Pine's 0.385 is the whole round-trip cost per side. | Withdrawn. The remaining spread difference is in §6.4. |
 | D-R1 | Medium | data | Research history held 3,117 (1h) / 12,242 (15m) market-shut quote bars, 2025–26. | **Fixed** (`research.history.load`, test). |
 | B-03 | Medium | robustness | The treatment's in-sample mean does not survive a 1-bar delay (1h, 5m). | Informational. Any future hypothesis must pass a delay test. |
 | DB-01 | Low | dashboard | EMA20 grey, not white as in Pine. | **Fixed**. |
@@ -350,4 +392,4 @@ capital**, because no strategy has shown out-of-sample edge (C-01) and the proba
    - open the sealed 2024-07 → 2025-12 holdout once.
 3. Write an amendment that fixes B-02 (gap fills) together with the next unavoidable engine change, so that the
    forward tests restart only once.
-4. Confirm the broker's commission and contract specification (B-01, §8).
+4. Confirm the broker commission and contract specification from MT5 evidence, per account (`audit/COST_PROFILES.md`).

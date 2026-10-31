@@ -14,6 +14,8 @@ const S = {
   mt5: store.get("mt5", 0),
   tz: store.get("tz", "local"),
   account: store.get("account", null),
+  costProfile: store.get("cost_profile", "engine"),
+  costCustom: store.get("cost_custom", null),
   tab: store.get("tab", "overview"),
   btArm: "treatment",
   toggles: store.get("toggles", { ema: true, vwap: true, bb: false, levels: true, zones: true, sr: false, signals: true, structure: true, sweeps: false, plan: true, cone: true, vp: false, h2: true }),
@@ -1073,8 +1075,19 @@ function renderSide() {
 
   const k = d.kelly;
   const acct = S.account || M.config.account_size;
-  // loss at the stop = distance + round-trip cost (D-13); older payloads have no risk_per_lot
-  const perLot = isNum(k.risk_per_lot) && k.risk_per_lot > 0 ? k.risk_per_lot : p.dist * M.config.point_value;
+  // loss at the stop = distance + round-trip cost (D-13), with the viewer's account cost profile (display only:
+  // the engine and the forward test keep the frozen model). Older payloads have no profiles / risk_per_lot.
+  const profs = D.cost_profiles || [], custom = S.costCustom;
+  let prof = profs.find((x) => x.id === S.costProfile) || profs[0] || null;
+  if (prof && prof.id === "custom" && custom) prof = { ...prof, commission: { ...prof.commission, ...custom.commission }, spread: { ...prof.spread, ...custom.spread }, slippage: isNum(custom.slippage) ? custom.slippage : prof.slippage };
+  const refPx = isNum(p.entry) ? p.entry : d.close;
+  const costOz = prof && window.QCosts && isNum(k.spread_pts) ? QCosts.costPerOz(prof, refPx, k.spread_pts) : k.cost_pts;
+  const commLot = prof && window.QCosts ? QCosts.commissionPerLot(prof, refPx) : NaN;
+  const perLot = isNum(costOz) && p.dist > 0 ? (p.dist + costOz) * M.config.point_value
+    : isNum(k.risk_per_lot) && k.risk_per_lot > 0 ? k.risk_per_lot : p.dist * M.config.point_value;
+  const BASIS = { per_side: "per side (charged twice)", round_turn: "round turn", open_only: "on opening only", unconfirmed: "basis not published: sized as per side (higher)" };
+  const profSel = profs.length ? `<select id="cost-prof" style="width:100%;max-width:260px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)">${profs.map((x) => `<option value="${esc(x.id)}"${prof && x.id === prof.id ? " selected" : ""}>${esc(x.firm)} · ${esc(x.account)}</option>`).join("")}</select>` : "—";
+  const customRow = prof && prof.id === "custom" ? `<span class="dim">type</span> <select id="cc-type"><option value="fixed"${prof.commission.type === "fixed" ? " selected" : ""}>$ / lot</option><option value="pct"${prof.commission.type === "pct" ? " selected" : ""}>% notional</option></select> <input id="cc-rate" type="number" step="0.0001" value="${prof.commission.rate}" style="width:70px"> <select id="cc-basis">${["round_turn", "per_side", "open_only"].map((b) => `<option value="${b}"${prof.commission.basis === b ? " selected" : ""}>${b.replace("_", " ")}</option>`).join("")}</select> <span class="dim">spread</span> <input id="cc-spread" type="number" step="0.01" placeholder="engine" value="${prof.spread.mode === "fixed" ? prof.spread.value : ""}" style="width:60px"> <span class="dim">slip/side</span> <input id="cc-slip" type="number" step="0.01" value="${prof.slippage}" style="width:55px">` : "";
   const lots = sig && p.dist > 0 ? Math.floor((acct * Math.max(k.kelly_pct, 0) / 100 / perLot) / 0.01 + 1e-9) * 0.01 : 0;
   $("#risk-state").textContent = d.risk.lock ? "LOCKED" : "open";
   $("#risk-state").className = "pill " + (d.risk.lock ? "bear" : "bull");
@@ -1084,9 +1097,22 @@ function renderSide() {
     ["Kelly (half, Wilson LB)", sig ? `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span>` : '<span class="dim">no signal: nothing to size</span>'],
     ["Account", `<input id="acct" type="number" value="${acct}" style="width:90px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"> USD`],
     ["Lots (100 oz)", lots >= 0.01 ? f(lots, 2) : (k.kelly_pct > 0 ? "below 0.01 minimum" : "0 (no edge sized)")],
-    ["Loss at stop per lot", sig && perLot > 0 ? `$${f(perLot, 0)} <span class="dim">stop ${f(p.dist, 2)} + costs ${isNum(k.cost_pts) ? f(k.cost_pts, 2) : "—"} per oz × 100 oz</span>` : "—"],
-  ]) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot) and includes spread, slippage and commission, so the loss at the stop stays within the risk %. The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
+    ["Cost profile", profSel],
+    ...(customRow ? [["Custom costs", customRow]] : []),
+    ["Commission (round trip, 1 lot)", prof && isNum(commLot) ? `$${f(commLot, 2)} <span class="dim">${esc(BASIS[prof.commission.basis] || prof.commission.basis)} · <b class="${prof.status === "FROZEN" ? "" : "warn"}">${esc(prof.status)}</b></span>` : "—"],
+    ["Loss at stop per lot", sig && perLot > 0 ? `$${f(perLot, 0)} <span class="dim">stop ${f(p.dist, 2)} + costs ${isNum(costOz) ? f(costOz, 2) : "—"} per oz × 100 oz</span>` : "—"],
+  ]) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot) and includes spread, slippage and commission for the selected account, so the loss at the stop stays within the risk %. <b>UNVERIFIED</b> rates are the firm's published figures, not yet confirmed from your MT5 history; the forward test always uses the frozen engine costs.${prof && prof.note ? " " + esc(prof.note) : ""} The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
   $("#acct").onchange = (e) => { S.account = Number(e.target.value) || null; store.set("account", S.account); renderSide(); };
+  const cp = $("#cost-prof"); if (cp) cp.onchange = (e) => { S.costProfile = e.target.value; store.set("cost_profile", S.costProfile); renderSide(); };
+  if ($("#cc-rate")) {
+    const save = () => {
+      const sp = $("#cc-spread").value;
+      S.costCustom = { commission: { type: $("#cc-type").value, rate: Number($("#cc-rate").value) || 0, basis: $("#cc-basis").value },
+        spread: sp === "" ? { mode: "engine", value: null } : { mode: "fixed", value: Number(sp) }, slippage: Number($("#cc-slip").value) || 0 };
+      store.set("cost_custom", S.costCustom); renderSide();
+    };
+    ["#cc-type", "#cc-rate", "#cc-basis", "#cc-spread", "#cc-slip"].forEach((q) => { $(q).onchange = save; });
+  }
 }
 function structStr(st) {
   if (st.bull_act) return `▲${st.bull_type} ${st.bull_age}b`;

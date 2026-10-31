@@ -144,9 +144,11 @@ main { padding: 12px 16px 40px; max-width: 1680px; margin: 0 auto; }
 .decision.notrade, .decision.risk { background: linear-gradient(180deg, color-mix(in srgb, var(--warn) 12%, var(--card)), var(--card)); }
 .bar3 { display: flex; height: 8px; border-radius: 5px; overflow: hidden; background: var(--bg-2); }
 .bar3 span { display: block; height: 100%; }
-.kv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 13px; }
+.kv { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; font-size: 13px; }
 .kv > div:nth-child(odd) { color: var(--muted); }
 .kv > div:nth-child(even) { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+#risk .kv > div:nth-child(even) { overflow-wrap: anywhere; }
+#risk select, #risk input { max-width: 100%; }
 .plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .plan-grid .cell { background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; }
 .plan-grid .cell .k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }

@@ -10,7 +10,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, holdout, ta
+from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, cost_profiles, holdout, ta
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -421,6 +421,7 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
     L["ret_kurt"] = float(F["ret_kurt"][-1])
     rt_cost = float(F["sess_spread"][-1]) + 2.0 * cfg.slippage_pts + cfg.commission_l / max(cfg.point_value, 1.0)
     ks = kelly(L, cfg, N, float(F["reg_size_mult"][-1]), rt_cost)
+    ks["spread_pts"] = float(F["sess_spread"][-1])     # the engine's session spread, for the per-account profiles
     i = n - 1
 
     chart = {
@@ -607,5 +608,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "h4": h4,
         "h5": h5,
         "h6": h6,
+        "cost_profiles": cost_profiles.export(),   # display-only sizing profiles (audit/COST_PROFILES.md)
     }
     return _clean(payload)
