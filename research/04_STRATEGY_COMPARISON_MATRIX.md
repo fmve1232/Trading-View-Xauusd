@@ -23,16 +23,16 @@
 
 ## B. The research brief's library (Part 4): status
 
-All are **NOT TESTED**. Every row is tested first on development data against a baseline.
+Rows marked TESTED were run on development data only (Phase B1, 2026-11-01); everything else is **NOT TESTED**.
 
 | # | Strategy | Literature | Baseline it must beat | First test | Decision |
 |---|---|---|---|---|---|
-| 1 | MTF trend continuation | R3–R5 | sign-of-return momentum | TSMOM at 1h / 4h horizons | NOT TESTED |
+| 1 | Time-series momentum (TSMOM) | R3–R5 | always long / short | TSMOM 24h / 72h / 240h on 1h and 15m; 5d / 20d / 60d on 4h | **TESTED (development): REJECT** at these definitions. Gross −0.02…+0.07 R; 4h best = the always-long baseline; 0 of 36 net-positive (`B1_DEVELOPMENT_RESULTS.md`) |
 | 2 | EMA20/100/200 alignment | practitioner | as 1 | ablation over 1 | NOT TESTED |
 | 3 | VWAP trend continuation | practitioner | as 1 | | NOT TESTED |
 | 4 | ADX-confirmed trend | practitioner | as 1 | | NOT TESTED |
-| 5 | Donchian breakout | R6 (rule family) | random-entry, same holding | Reality Check across lookbacks | NOT TESTED |
-| 6–9 | London / NY / Asian / opening-range breakouts | R14 (intraday pattern) | unconditional continuation rate | continuation probability after a defined break | NOT TESTED |
+| 5 | Donchian breakout | R6 (rule family) | always long / short | N 20 / 55 on 15m, 1h, 4h | **TESTED (development): REJECT.** Gross −0.08…+0.02 R; Reality Check p ≥ 0.996 |
+| 6–9 | Session-range breakouts | R14 (intraday pattern) | unconditional continuation rate | Asia range → London; London range → NY, on 15m and 1h | **TESTED (development): REJECT** (Asia → London, London → NY: directionless, 47–50% of 1R trades won). Opening-range breakout NOT TESTED |
 | 10–11 | ATR-expansion / squeeze breakout | R13 | as 6 | | NOT TESTED |
 | 12 | Breakout and retest | practitioner | as 6 | | NOT TESTED |
 | 13–16 | Liquidity sweep / equal H/L / PDH-PDL / PWH-PWL rejection | SMC (no peer review) | matched random level | TP-before-SL at fixed R | NOT TESTED (H4's level-break variant: directionless) |
@@ -42,7 +42,7 @@ All are **NOT TESTED**. Every row is tested first on development data against a 
 | 23 | RSI divergence | folklore | — | | NOT TESTED |
 | 24 | MACD momentum | folklore | as 1 | | NOT TESTED |
 | 25 | Failed-breakout reversal | practitioner | as 13 | | NOT TESTED |
-| 26 | Volatility-regime strategy | R13, R19 | unscaled version | | NOT TESTED |
+| 26 | Volatility-regime conditioning | R13, R19 | unconditioned TSMOM | TSMOM 72h by ATR-percentile tercile | **TESTED (development): REJECT.** Less negative in high vol only because cost is a smaller share of R; gross ≈ 0 |
 | 27 | Macro-event strategy | event studies | no-event days | needs a verified historical calendar | NOT TESTED |
 | 28 | Cross-asset confirmation | R21, R22 | technical-only | point-in-time rolling relations | NOT TESTED |
 | 29 | Market-profile acceptance / rejection | practitioner | as 13 | | NOT TESTED |

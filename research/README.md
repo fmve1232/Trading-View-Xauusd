@@ -2,7 +2,7 @@
 
 This folder answers the operator's "Deep quantitative research, strategy optimization & 90% accuracy" brief.
 
-**Phase A** (audit and research design) is complete and awaits review. Nothing in production strategy logic was
+**Phase A** (audit and research design) is complete and was reviewed (PR #56). **Phase B0** (research harness, `quantum/research/harness.py`, tested) and **Phase B1** (published-evidence families on development data) are done. Nothing in production strategy logic was
 changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` and the forward test are untouched.
 
 ## Headline
@@ -35,6 +35,7 @@ changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` 
 | `09_BACKTEST_AND_VALIDATION_FRAMEWORK.md` | done (specification) |
 | `14_IMPLEMENTATION_ROADMAP.md` | done; prioritised table and approval gates |
 | `15_ACCEPTANCE_TESTS.md` | done |
+| `B1_DEVELOPMENT_RESULTS.md` | **Phase B1 done** (development data only): 100 trials, 0 with positive net expectancy; nothing registered for validation |
 
 ## Reproduce
 
