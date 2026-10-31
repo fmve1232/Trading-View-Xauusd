@@ -1,7 +1,13 @@
 {
   "arm": "h5",
-  "freeze_key": "5e4630924d663fc5:6f3964ad97813cc9:40d438ea0c144199",
-  "freeze_utc": "2026-10-20T23:30:52.335977+00:00",
-  "status": "STARTED",
-  "history": []
+  "freeze_key": "5e4630924d663fc5:60bb01794d03c9ac:40d438ea0c144199",
+  "freeze_utc": "2026-10-31T17:23:01.937700+00:00",
+  "status": "RESET",
+  "history": [
+    {
+      "freeze_key": "5e4630924d663fc5:6f3964ad97813cc9:40d438ea0c144199",
+      "freeze_utc": "2026-10-20T23:30:52.335977+00:00",
+      "ended_utc": "2026-10-31T17:23:01.937700+00:00"
+    }
+  ]
 }
