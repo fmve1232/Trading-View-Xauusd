@@ -3214,3 +3214,5 @@ record continues.
 **Tests (website):** pytest 158 passed; node 11 passed; the synthetic pipeline builds the `h6` section.
 
 **Not run:** the browser render of the H6 card. No Pine artefact changed, so this branch has no new chart set.
+
+**PR #49 merged (2026-10-31 14:52 UTC).** The site relabel is live; arm H6's forward record starts at the next pipeline run. No Pine change is needed: `brief_trace.py` passes against the merged site code.

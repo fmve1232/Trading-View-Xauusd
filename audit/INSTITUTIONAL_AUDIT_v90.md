@@ -355,7 +355,7 @@ This session:
 
 ## 12. Outstanding work, by value
 
-**Update (2026-10-31):** items 1 and 2 are in **website PR #49**, awaiting the operator's merge (Amendment 12: score relabelled + arm H6; Amendment 13: split re-registered). Nothing changes on the site until it is merged.
+**Update (2026-10-31):** items 1 and 2 are in **website PR #49, merged 2026-10-31** (Amendment 12: score relabelled + arm H6; Amendment 13: split re-registered). H6's record starts at the next pipeline run.
 
 1. **Website (needs the operator, A7): address F-A78.**
    - **Option A (simplest):** register an amendment that stops using `cal_p` as a veto and as "P" on the site.
