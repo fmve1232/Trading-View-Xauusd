@@ -46,7 +46,7 @@ def _clean(o):
     return o
 
 
-def kelly(last: dict, cfg, N: int, reg_mult: float = 1.0) -> dict:
+def kelly(last: dict, cfg, N: int, reg_mult: float = 1.0, cost_pts: float = 0.0) -> dict:
     """Dashboard Kelly sizing (v16 form: binary Kelly on P conditional on resolution, Wilson
     95% lower bound at effective N, half-Kelly, tail and drawdown haircuts), then the regime size
     haircut `regSizeMult` (0.5 abnormal, 0.75 at ATR percentile >= 80; Pine v32 L5500 on the risk %,
@@ -88,10 +88,15 @@ def kelly(last: dict, cfg, N: int, reg_mult: float = 1.0) -> dict:
         detail += f" × regime {reg_mult:g}"
     risk_usd = cfg.account_size * max(k, 0.0) / 100.0
     dist = last["plan"]["dist"]
-    raw_lots = risk_usd / (dist * cfg.point_value) if dist > 0 and cfg.point_value > 0 else 0.0
-    floored = math.floor(raw_lots / 0.01) * 0.01
+    # D-13 (audit 2026-10-31, R-01): the loss at the stop is the stop distance PLUS the round-trip cost (session
+    # spread + 2 x slippage + commission per oz, the engine's own cost model). Sizing on the distance alone lost
+    # more than the chosen risk % (median cost / stop 0.14 on 5m). Pine sizes on the distance only.
+    cost = cost_pts if cost_pts == cost_pts and cost_pts > 0 else 0.0
+    per_lot = (dist + cost) * cfg.point_value if dist > 0 else 0.0
+    raw_lots = risk_usd / per_lot if per_lot > 0 and cfg.point_value > 0 else 0.0
+    floored = math.floor(raw_lots / 0.01 + 1e-9) * 0.01
     return {"kelly_pct": k, "detail": detail, "reg_size_mult": reg_mult, "risk_usd": risk_usd, "lots": min(max(floored, 0.0), 100.0),
-            "below_min": raw_lots > 0 and floored < 0.01, "raw_lots": raw_lots}
+            "below_min": raw_lots > 0 and floored < 0.01, "raw_lots": raw_lots, "cost_pts": cost, "risk_per_lot": per_lot}
 
 
 GATE_ORDER = ("Trend", "HTF", "Recent", "Sess", "News", "DD", "Trig")
@@ -414,7 +419,8 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
     N = res.outcome_n
     L["ret_skew"] = float(F["ret_skew"][-1])
     L["ret_kurt"] = float(F["ret_kurt"][-1])
-    ks = kelly(L, cfg, N, float(F["reg_size_mult"][-1]))
+    rt_cost = float(F["sess_spread"][-1]) + 2.0 * cfg.slippage_pts + cfg.commission_l / max(cfg.point_value, 1.0)
+    ks = kelly(L, cfg, N, float(F["reg_size_mult"][-1]), rt_cost)
     i = n - 1
 
     chart = {

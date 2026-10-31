@@ -81,3 +81,15 @@ def test_404_before_the_first_bar_is_the_end_of_the_feed(tmp_path):
         return feed(symbol, interval, apikey, end=end, start=start)
     rec = history.backfill(str(tmp_path), "XAU/USD", "1h", "K", "2010-01-01", fetch=feed404, sleep_s=0, now=NOW, log=lambda *_: None)
     assert rec["stop"] == "the feed has no older bars" and rec["error"] is None and rec["first"] == FEED_START.isoformat()
+
+
+def test_load_drops_market_shut_bars(tmp_path):
+    """D-R1: the research loader removes the 24/7 quote bars printed while spot gold is shut."""
+    from quantum.data import store
+    idx = pd.date_range("2025-03-07 20:00", "2025-03-09 23:00", freq="1h", tz="UTC")   # Fri 20:00 .. Sun 23:00 UTC
+    df = pd.DataFrame({"open": 1.0, "high": 1.1, "low": 0.9, "close": 1.0, "volume": 0.0}, index=idx)
+    store.save(str(tmp_path), history.series_name("XAU/USD", "1h"), df)
+    got = history.load(str(tmp_path), "XAU/USD", "1h")
+    assert 0 < len(got) < len(df)
+    assert not (got.index.dayofweek == 5).any()                       # no Saturday bars
+    assert got.index.min() == idx[0] and got.index.max() == idx[-1]    # Friday before the close and Sunday after the open kept
