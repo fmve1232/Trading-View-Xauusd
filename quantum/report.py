@@ -2,7 +2,9 @@
 made here that the engine did not already make."""
 from __future__ import annotations
 
+import json
 import math
+import os
 import re
 from datetime import datetime, timezone
 
@@ -373,6 +375,24 @@ def h3_section(market, res, cfg, man, now, store_dir, idx) -> dict:
             "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None}
 
 
+def previous_record(store_dir, tf: str, arm: str, man_arm: dict, man_main: dict, cfg) -> dict | None:
+    """The arm's forward record under the PREVIOUS freeze key, read from holdout/archive (display only; research/03 §7).
+    Shown beside the current record after a restart, never pooled with it."""
+    hist = (man_arm or {}).get("history") or []
+    if not store_dir or not hist or not hist[-1].get("freeze_key"):
+        return None
+    prev = hist[-1]
+    path = os.path.join(store_dir, "holdout", "archive", f"{tf}_{arm}.json")
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        led = [t for t in json.load(f) if isinstance(t, dict) and t.get("freeze_key") == prev["freeze_key"] and not t.get("open")]
+    eng = prev["freeze_key"].rsplit(":", 1)[0]
+    ver = next((h.get("engine_version") for h in (man_main or {}).get("history") or [] if h.get("freeze_key") == eng), None)
+    m = backtest.metrics(led, cfg.risk_percent)
+    return {"freeze_key": prev["freeze_key"], "engine_version": ver, "from": prev.get("freeze_utc"), "to": prev.get("ended_utc"), **m}
+
+
 def h4_section(market, res, cfg, man, now, store_dir, idx) -> dict:
     """Arm H4 "Playbook" (Amendment 8): the site's playbook for the next bar, and its measured record."""
     trades, ev = arm_h4.simulate(res, cfg)
@@ -385,11 +405,18 @@ def h4_section(market, res, cfg, man, now, store_dir, idx) -> dict:
         return {"t": int(pd.Timestamp(idx[i]).timestamp()), "dir": "LONG" if ev["exec_buy"][i] else "SHORT", "entry": _f(res.F["c"][i]),
                 "sl": _f(ev["plan_sl"][i]), "tp1": _f(ev["plan_tp1"][i]), "tp2": _f(ev["plan_tp2"][i]),
                 "trigger": _f(ev["trigger"][i]), "tname": ev["tname"][i]}
+    c = res.F["c"]
+    ov = [abs(c[i] - ev["trigger"][i]) / abs(ev["trigger"][i] - ev["plan_sl"][i]) for i in sig
+          if math.isfinite(ev["trigger"][i]) and math.isfinite(ev["plan_sl"][i]) and ev["trigger"][i] != ev["plan_sl"][i]]
     return {"playbook": arm_h4.playbook(res, n - 1), "freeze": man4,
             "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None, "last_signal": plan(sig[-1]) if sig else None,
             "signals": [plan(i) for i in sig[-200:]], "open": [t for t in trades if t.get("open")],
             "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
-            "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None}
+            "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None,
+            # display (research/03 §7): how far past the trigger the entry close lands, in stop distances, on this
+            # chart's own past triggers; the site turns the trigger-based reward:risk into an entry-based one
+            "entry_overshoot": {"median": float(np.median(ov)) if ov else None, "n": len(ov)},
+            "previous": previous_record(store_dir, market.tf, "h4", man4, man, cfg)}
 
 
 def h5_section(market, res, cfg, man, now, store_dir, idx) -> dict:

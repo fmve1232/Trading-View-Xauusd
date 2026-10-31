@@ -867,26 +867,44 @@ function playbook(D, price) {
 }
 // H4's record in one line: the forward record decides (15m, Amendment 8); in-sample is history only
 // H4's live record is conclusively negative (Amendment 8: N >= 50 and the mean-R 95% interval wholly below 0)
-const h4Losing = (D) => { const fw = (D.h4 && D.h4.forward) || {}; return fw.n >= 50 && isNum(fw.t_stat) && fw.t_stat <= -2; };
+// research/03 §7: the archived record of the previous engine counts too (shown separately, never pooled)
+const losingRec = (r) => r && r.n >= 50 && isNum(r.t_stat) && r.t_stat <= -2;
+const h4Losing = (D) => { const H = D.h4 || {}; return losingRec(H.forward) || losingRec(H.previous); };
 function h4rec(D) {
   const H = D.h4; if (!H || H.error) return "These triggers are tracked as a test (arm H4).";
-  const fw = H.forward || {}, is = H.in_sample || {};
-  const full = `Arm H4 (Amendment 8). Forward: ${fw.n ? `${fw.n} closed, win ${f(fw.win_rate, 0)}%, mean ${fs(fw.avg_r, 2)} R, profit factor ${f(fw.profit_factor, 2)}` : "no closed trades yet"}` +
-    (is.n ? `. Past data: ${is.n} trades, win ${f(is.win_rate, 0)}%, mean ${fs(is.avg_r, 2)} R, profit factor ${f(is.profit_factor, 2)}` : "") + ". Judged on 15m after 50 forward trades.";
-  const neg = (fw.n >= 50 ? fw.avg_r : is.avg_r) < 0;
-  if (fw.n >= 50 && isNum(fw.t_stat) && fw.t_stat <= -2)
-    return `<span title="${esc(full)}"><b class="bear">Verdict: losing.</b> Live record ${fw.n} trades, ${f(fw.win_rate, 0)}% won, average ${fs(fw.avg_r, 2)} R; the whole 95% range is below zero.</span> <b class="warn">Do not trade these triggers; read them only as nearby levels.</b>`;
-  const rec = fw.n ? `Live record: ${fw.n} trades, ${f(fw.win_rate, 0)}% won.` : "Live record: tracking started, no closed trades yet.";
-  return `<span title="${esc(full)}">${rec}${is.n ? ` In past data these triggers won ${f(is.win_rate, 0)}% of ${is.n} times.` : ""}</span>` +
+  const fw = H.forward || {}, is = H.in_sample || {}, pv = H.previous;
+  const pvName = pv ? `previous engine${pv.engine_version ? " " + esc(pv.engine_version.replace("Q7.2-", "")) : ""}, archived` : "";
+  const full = `Arm H4 (Amendment 8). Forward (current engine): ${fw.n ? `${fw.n} closed, win ${f(fw.win_rate, 0)}%, mean ${fs(fw.avg_r, 2)} R, profit factor ${f(fw.profit_factor, 2)}` : "no closed trades yet"}` +
+    (pv && pv.n ? `. Forward (${pvName}, ${String(pv.from || "").slice(0, 10)} to ${String(pv.to || "").slice(0, 10)}): ${pv.n} closed, win ${f(pv.win_rate, 0)}%, mean ${fs(pv.avg_r, 2)} R, t ${f(pv.t_stat, 2)}, profit factor ${f(pv.profit_factor, 2)}` : "") +
+    (is.n ? `. In-sample (this chart's stored history, re-simulated): ${is.n} trades, ${f(is.win_rate, 0)}% ended positive, mean ${fs(is.avg_r, 2)} R after costs, profit factor ${f(is.profit_factor, 2)}` : "") +
+    ". A trade 'ends positive' when its final net R, after the TP1 half and costs, is above zero. Judged on 15m after 50 forward trades. Research: research/03.";
+  const neg = (fw.n >= 50 ? fw.avg_r : pv && pv.n >= 50 ? pv.avg_r : is.avg_r) < 0;
+  const lose = losingRec(fw) ? { r: fw, w: "Live record" } : losingRec(pv) ? { r: pv, w: `Forward record (${pvName})` } : null;
+  if (lose)
+    return `<span title="${esc(full)}"><b class="bear">Verdict: losing.</b> ${lose.w}: ${lose.r.n} trades, ${f(lose.r.win_rate, 0)}% ended positive, average ${fs(lose.r.avg_r, 2)} R after costs; the whole 95% range is below zero.</span> <b class="warn">Do not trade these triggers; read them only as nearby levels.</b>`;
+  const rec = fw.n ? `Live record: ${fw.n} trades, ${f(fw.win_rate, 0)}% ended positive.` : "Live record (current engine): tracking started, no closed trades yet.";
+  const prevTxt = pv && pv.n ? ` Before the restart (${pvName}): ${pv.n} trades, ${f(pv.win_rate, 0)}% ended positive, ${fs(pv.avg_r, 2)} R per trade.` : "";
+  return `<span title="${esc(full)}">${rec}${prevTxt}${is.n ? ` In past data (in-sample): ${is.n} trades from these triggers, ${f(is.win_rate, 0)}% ended positive, ${fs(is.avg_r, 2)} R per trade after costs.` : ""}</span>` +
     (neg ? ' <b class="warn">On average they have lost money: treat them as levels to watch, not as signals.</b>' : "");
 }
 const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "score below minimum (a score without measured skill, Amendment 12)" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
-function pbLine(x, tf, primary) {
+// Reward:risk from the expected ENTRY (research/03 §2): the trade enters at the close beyond the trigger, so the stop
+// is farther and the target nearer than from the trigger. Live price when it is already through; otherwise the trigger
+// plus the median overshoot of this chart's past triggers (h4.entry_overshoot, in stop distances).
+function rrEntry(x, ov, through, price) {
+  const D = Math.abs(x.trigger - x.stop); if (!(D > 0) || !isNum(x.tp1)) return null;
+  if (through && isNum(price)) { const r = Math.abs(price - x.stop); return r > 0 && (x.tp1 - price) * x.dir > 0 ? { v: Math.abs(x.tp1 - price) / r, how: "from the live price" } : null; }
+  if (!isNum(ov)) return null;
+  const v = (Math.abs(x.tp1 - x.trigger) / D - ov) / (1 + ov);
+  return { v, how: `from a typical entry (the close lands a median ${f(ov, 2)} stop distances past the trigger)` };
+}
+function pbLine(x, tf, primary, ov) {
   if (!x) return "";
   const s = x.dir < 0, through = isNum(x.dist) && (s ? x.dist > 0 : x.dist < 0);   // live price already beyond the trigger
+  const re = rrEntry(x, ov, through, isNum(x.dist) ? x.trigger - x.dist : null);
   return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(lvl(x.tname))}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
     `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span title="${esc(lvl(x.tp1n))}"><i>Target 1 · ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
-    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span><i>Reward:risk</i><b>${f(x.rr, 1)} : 1</b></span><span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
+    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span title="Measured from the trigger level"><i>Reward:risk at trigger</i><b>${f(x.rr, 1)} : 1</b></span>${re ? `<span title="${esc(re.how)}"><i>From entry</i><b class="${re.v < 1 ? "warn" : ""}">${f(re.v, 1)} : 1</b></span>` : ""}<span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
     (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") + `</div>`;
 }
 function renderBrief() {
@@ -942,7 +960,7 @@ function renderBrief() {
   const pb = !sig ? playbook(D, price) : null;
   const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
   const t6 = !sig ? `<div class="bt plan pbk"><div class="bk">${IC.plan}Playbook <span class="hyp">if-then plan · not triggered</span></div>
-    ${pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : '<div class="bv">—</div>'}
+    ${pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir, D.h4 && D.h4.entry_overshoot ? D.h4.entry_overshoot.median : null)).join("") : '<div class="bv">—</div>'}
     <div class="bs">Model decision: <b>${esc(dec)}</b>. ${h4rec(D)}${pb && pb.lowSession ? ' <b class="warn">Thin trading hours now.</b>' : ""}</div></div>`
     : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
     <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
@@ -1032,7 +1050,7 @@ function renderSide() {
     const lp = livePrice(), pb = playbook(D, isNum(lp) ? lp : d.close);
     const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
     $("#plan").innerHTML = `<div class="noplan"><b>No model signal right now</b> (decision: ${esc(dec)}). If-then plan from the current levels:</div>` +
-      (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir)).join("") : "") +
+      (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir, D.h4 && D.h4.entry_overshoot ? D.h4.entry_overshoot.median : null)).join("") : "") +
       `<p class="note">Act only when a ${esc(M.tf)} candle closes beyond the trigger. The stop sits ${pb ? f(pb.stopD, 2) : "—"} beyond it (the model's volatility-based stop); targets are the next liquidity levels at least one stop distance further. ${h4rec(D)}</p>`;
   } else {
   $("#plan").innerHTML = `
