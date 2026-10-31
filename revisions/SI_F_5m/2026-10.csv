@@ -116127,3 +116127,4 @@ bar_open,run_utc,old_open,old_high,old_low,old_close,new_open,new_high,new_low,n
 2026-10-30 18:40:00+00:00,2026-10-30T20:35:03Z,49.000000,49.040001,48.990002,49.005001,48.994999,49.040001,48.990002,49.005001,changed
 2026-10-30 18:40:00+00:00,2026-10-30T20:50:48Z,1014 closed bars revised (series re-based); not listed
 2026-10-30 20:30:00+00:00,2026-10-31T00:58:03Z,1017 closed bars revised (series re-based); not listed
+2026-10-30 20:55:00+00:00,2026-10-31T14:55:50Z,1018 closed bars revised (series re-based); not listed
