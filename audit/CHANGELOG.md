@@ -3182,3 +3182,35 @@ probability-driven decisions.
 - tf_check: see the build record.
 
 **Compile NOT RUN on v90.**
+
+---
+
+# Website PR #49 (no Pine change): Amendments 12 and 13 (operator: "Go for 1 & 2", 2026-10-31)
+
+The operator's choices were:
+- "New arm H6 + relabel";
+- "3y / 1.5y / 1.5y";
+- "Branch + pull request".
+
+Work happened on the branch `claude/website-a12-h6-a13-split`, made from the website's default branch. The PR targets
+that branch, and nothing changes on the site until it is merged.
+
+**Amendment 12 — the engine's long / short score has no skill (F-A78).**
+- The site relabels it, in display text only.
+- New arm **H6** = the engine's own signal without the calibration veto. It has its own freeze key, is judged on 1H
+  after 50 trades, and its tests were mutation-tested.
+
+**Amendment 13 — research split re-registered blind.**
+
+| Period | Dates (UTC) |
+|---|---|
+| Development | 2020-01-24 – 2023-01-24, exactly 3 years, so A11's minimum is unchanged |
+| Validation | – 2024-06-30 |
+| Holdout | 2024-07-01 – 2025-12-31 |
+
+**Unchanged:** the engine freeze key (`5e4630924d663fc5:6f3964ad97813cc9`, checked before and after). Every forward
+record continues.
+
+**Tests (website):** pytest 158 passed; node 11 passed; the synthetic pipeline builds the `h6` section.
+
+**Not run:** the browser render of the H6 card. No Pine artefact changed, so this branch has no new chart set.
