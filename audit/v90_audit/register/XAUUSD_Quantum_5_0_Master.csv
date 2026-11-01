@@ -22,7 +22,7 @@ showOB,314,input,4,0,6,"input.bool(true, ""Order Blocks (engine)"", group=grpMod
 showSMT,315,input,1,0,5,"input.bool(true, ""SMT Divergence (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Gold/silver SMT diverg"
 showClimax,316,input,2,0,5,"input.bool(true, ""Volume Climax (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Volume climax: shown as"
 showAdaptiveATR,317,input,1,0,6,"input.bool(false, ""Adaptive ATR Regime"", group=grpModules)"
-showDisplacement,318,input,2,0,5,"input.bool(true, ""Displacement Candles (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Displacement is "
+showDisplacement,318,input,2,0,6,"input.bool(true, ""Displacement Candles (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Displacement is "
 forecastBars,319,input,1,0,5,"input.int(10, ""Forecast Projection"", minval=5, maxval=30, group=""V17 PREDICTIVE ENHANCEMENTS"")"
 showStatsEngine,320,input,17,0,5,"input.bool(true, ""Statistical Engines"", group=grpModules)"
 grpLayout,322,value,8,0,5,"""LAYOUT"""
@@ -70,7 +70,7 @@ volClimaxPerc,390,input,2,0,5,"input.int(95, ""Volume Climax Percentile"", minva
 eqAtrMult,391,input,1,0,5,"input.float(0.25, ""EQ Tolerance (ATR mult)"", minval=0.05, maxval=1.0, step=0.05, group=grpCore)"
 volLookback,392,input,2,0,5,"input.int(50, ""Volume Climax Lookback"", minval=20, maxval=100, group=grpCore)"
 fvgMaxBars,393,input,1,0,6,"input.int(30, ""FVG Max Bars"", minval=10, maxval=100, group=grpCore)"
-obMaxBars,394,input,6,0,5,"input.int(20, ""OB Max Bars"", minval=10, maxval=50, group=grpCore)"
+obMaxBars,394,input,6,0,6,"input.int(20, ""OB Max Bars"", minval=10, maxval=50, group=grpCore)"
 mt5Offset,408,input,15,0,0,"input.float(0.0, ""MT5 Price Offset (MT5 - TradingView)"", minval=-50.0, maxval=50.0, step=0.01, group=grpCore, tooltip=""F"
 _al,411,function,6,0,0,"alert(""XAUUSD "" + timeframe.period + m, alert.freq_once_per_bar_close)"
 liqProxMult,412,input,1,0,5,"input.float(1.5, ""Liq Proximity (ATR)"", minval=0.5, maxval=4.0, step=0.1, group=grpCore)"
@@ -83,8 +83,8 @@ maxTradesDay,428,input,2,0,5,"input.int(4, ""Max signals per day (0=off)"", minv
 maxConsecLoss,429,input,2,0,5,"input.int(3, ""Consecutive-loss halt (0=off)"", minval=0, maxval=20, group=grpRK)"
 lockoutBars,430,input,3,0,5,"input.int(0, ""Cooldown bars (0=until next session day)"", minval=0, maxval=500, group=grpRK)"
 tqMinScore,431,input,2,0,5,"input.int(55, ""Min Trade Quality (0=off)"", minval=0, maxval=90, group=grpCore, tooltip=""R6.0: BUY/SELL signals below thi"
-grpV11,433,value,2,0,5,"""V11 INTELLIGENCE"""
-dispMult,434,input,2,0,5,"input.float(2.5, ""Displacement Multiplier"", minval=1.5, maxval=5.0, step=0.1, group=grpV11)"
+grpV11,433,value,2,0,6,"""V11 INTELLIGENCE"""
+dispMult,434,input,2,0,6,"input.float(2.5, ""Displacement Multiplier"", minval=1.5, maxval=5.0, step=0.1, group=grpV11)"
 macroTF,435,input,6,0,6,"input.timeframe(""60"", ""Macro Correlation Timeframe"", group=grpV11)"
 grpV17,437,value,18,0,6,"""V17 PREDICTIVE ENHANCEMENTS"""
 dxyRocLen,438,input,2,0,6,"input.int(10, ""DXY Momentum ROC Length (bars)"", minval=5, maxval=30, group=grpV17)"
@@ -547,9 +547,9 @@ swingLastBrokenRes,1440,var,2,2,6,na
 swingLastBrokenSup,1441,var,2,2,6,na
 swingBosResSnap,1442,value,9,0,6,swingActiveResistance
 swingBosSupSnap,1443,value,9,0,6,swingActiveSupport
-bodySize,1454,value,9,0,5,math.abs(close - open)
-candleRange,1455,value,4,0,5,high - low
-bodyPct,1456,value,6,0,5,candleRange > 0 ? bodySize / candleRange * 100.0 : 0.0
+bodySize,1454,value,9,0,6,math.abs(close - open)
+candleRange,1455,value,4,0,6,high - low
+bodyPct,1456,value,6,0,6,candleRange > 0 ? bodySize / candleRange * 100.0 : 0.0
 breakBuffer,1457,value,4,0,5,adaptiveATR * 0.15
 strongBody,1458,value,4,0,5,adaptiveATR * 0.30
 strongVol,1459,value,4,0,5,not na(volume) and volume > volSma20 * 1.20 * regBOSMult // R6.0: BOS volume requirement scales with volatility regime
@@ -597,14 +597,14 @@ chochActiveBull,1531,value,3,0,5,chochBullScore > 7.5
 chochActiveBear,1532,value,3,0,5,chochBearScore > 7.5
 mssActiveBull,1533,value,5,0,5,mssBullScore > 7.5
 mssActiveBear,1534,value,5,0,5,mssBearScore > 7.5
-_dispEnter,1540,value,2,0,5,adaptiveATR * dispMult
-_dispHold,1541,value,2,0,5,adaptiveATR * (dispMult * 0.6)
-_dispRawUp,1542,value,2,0,5,showDisplacement and bodySize > _dispEnter and close > open and close > high[1] and candleRange > 0 and bodyPct > 70 and
-_dispRawDown,1543,value,2,0,5,showDisplacement and bodySize > _dispEnter and close < open and close < low[1] and candleRange > 0 and bodyPct > 70 and 
-displacementUpActive,1544,var,1,2,5,false
-displacementDownActive,1545,var,1,2,5,false
-displacementUp,1554,value,10,0,5,_dispRawUp or displacementUpActive
-displacementDown,1555,value,10,0,5,_dispRawDown or displacementDownActive
+_dispEnter,1540,value,2,0,6,adaptiveATR * dispMult
+_dispHold,1541,value,2,0,6,adaptiveATR * (dispMult * 0.6)
+_dispRawUp,1542,value,2,0,6,showDisplacement and bodySize > _dispEnter and close > open and close > high[1] and candleRange > 0 and bodyPct > 70 and
+_dispRawDown,1543,value,2,0,6,showDisplacement and bodySize > _dispEnter and close < open and close < low[1] and candleRange > 0 and bodyPct > 70 and 
+displacementUpActive,1544,var,1,2,6,false
+displacementDownActive,1545,var,1,2,6,false
+displacementUp,1554,value,10,0,6,_dispRawUp or displacementUpActive
+displacementDown,1555,value,10,0,6,_dispRawDown or displacementDownActive
 bullStructBar,1569,var,3,2,5,na
 bullStructInval,1570,var,2,1,5,na
 bullStructType,1571,var,2,1,5,""""""
@@ -648,31 +648,31 @@ fvgWasBullish,1652,var,7,1,5,false
 fvgMitigated,1672,value,1,0,5,fvgActive and bar_index > fvgBarIndex and ((fvgWasBullish and low < fvgHighUpper) or (not fvgWasBullish and high > fvgLo
 fvgUpperLine,1675,value,3,0,0,fvgActive ? fvgHighUpper : na
 fvgLowerLine,1676,value,3,0,0,fvgActive ? fvgLowLower : na
-obBullLow,1679,var,4,2,5,na
-obBullHigh,1680,var,5,2,5,na
-obBearLow,1681,var,5,2,5,na
-obBearHigh,1682,var,4,2,5,na
-obBullBar,1683,var,1,2,5,-1
-obBearBar,1684,var,1,2,5,-1
-obBullActive,1685,var,12,4,5,false
-obBearActive,1686,var,12,4,5,false
-obBullMitigated,1687,var,1,3,5,false
-obBearMitigated,1688,var,1,3,5,false
-obBullMitPct,1689,var,1,3,5,0.0
-obBearMitPct,1690,var,1,3,5,0.0
-obBullHighA,1692,var,8,0,5,array.new_float()
-obBullLowA,1693,var,5,0,5,array.new_float()
-obBearHighA,1694,var,8,0,5,array.new_float()
-obBearLowA,1695,var,5,0,5,array.new_float()
-obBullBarA,1696,var,6,0,5,array.new_int()
-obBearBarA,1697,var,6,0,5,array.new_int()
-obBullMitA,1698,var,6,0,5,array.new_bool()
-obBearMitA,1699,var,6,0,5,array.new_bool()
+obBullLow,1679,var,4,2,6,na
+obBullHigh,1680,var,5,2,6,na
+obBearLow,1681,var,5,2,6,na
+obBearHigh,1682,var,4,2,6,na
+obBullBar,1683,var,1,2,6,-1
+obBearBar,1684,var,1,2,6,-1
+obBullActive,1685,var,12,4,6,false
+obBearActive,1686,var,12,4,6,false
+obBullMitigated,1687,var,1,3,6,false
+obBearMitigated,1688,var,1,3,6,false
+obBullMitPct,1689,var,1,3,6,0.0
+obBearMitPct,1690,var,1,3,6,0.0
+obBullHighA,1692,var,8,0,6,array.new_float()
+obBullLowA,1693,var,5,0,6,array.new_float()
+obBearHighA,1694,var,8,0,6,array.new_float()
+obBearLowA,1695,var,5,0,6,array.new_float()
+obBullBarA,1696,var,6,0,6,array.new_int()
+obBearBarA,1697,var,6,0,6,array.new_int()
+obBullMitA,1698,var,6,0,6,array.new_bool()
+obBearMitA,1699,var,6,0,6,array.new_bool()
 obMaxQueue,1700,value,2,0,5,5
-dispOnsetUp,1702,value,1,0,5,displacementUp and not displacementUp[1]
-dispOnsetDown,1703,value,1,0,5,displacementDown and not displacementDown[1]
-failedBullDisp,1727,value,1,0,5,showOB and not obBearActive and displacementUp[1] and not displacementUp and close < open[1] and close < (high[1] + low[
-failedBearDisp,1740,value,1,0,5,showOB and not obBullActive and displacementDown[1] and not displacementDown and close > open[1] and close > (high[1] + 
+dispOnsetUp,1702,value,1,0,6,displacementUp and not displacementUp[1]
+dispOnsetDown,1703,value,1,0,6,displacementDown and not displacementDown[1]
+failedBullDisp,1727,value,1,0,6,showOB and not obBearActive and displacementUp[1] and not displacementUp and close < open[1] and close < (high[1] + low[
+failedBearDisp,1740,value,1,0,6,showOB and not obBullActive and displacementDown[1] and not displacementDown and close > open[1] and close > (high[1] + 
 _obBullSz,1785,value,2,0,5,array.size(obBullHighA)
 _obBearSz,1795,value,2,0,5,array.size(obBearHighA)
 _obBullSz2,1806,value,2,0,5,array.size(obBullHighA)

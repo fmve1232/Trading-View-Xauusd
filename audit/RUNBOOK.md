@@ -110,6 +110,10 @@ nothing on the chart. TradingView needs you to connect them by hand.
 Left at `close` (the default), Visuals works exactly as v93 did: the tracker scores H2 signals and the stop is 1 ATR.
 Re-adding Visuals, or removing and re-adding the Master, resets the two sources, so repeat step 2 after that.
 
+**Why it cannot be connected by default:** a Pine source input can only default to a built-in series of the chart
+(`close`, `open`, …). Nothing in Pine can point it at another indicator's plot. So the pick is a one-time step per chart.
+Until you make it, the ticker's CHECKS tile says **"LINK the Master"** (v96).
+
 ## Step 2a — Market Brief companion (v52)
 
 `XAUUSD_Quantum_5_0_Brief.pine` shows the website's Market Brief on the chart. It runs the Treatment

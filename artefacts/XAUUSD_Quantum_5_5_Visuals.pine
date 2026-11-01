@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v95   (engine structure, SX)         ║
+// ║  BUILD STAMP — this file last CHANGED in v96   (engine order blocks)          ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -94,9 +94,8 @@ showFVG      = input.bool(false, "Fair Value Gaps",         group = grpZ)
 fvgMaxBars   = input.int(30,     "FVG max age (bars), as the Master's", minval = 10, maxval = 100, group = grpZ)
 // v81: OFF to cut clutter; v87 ON; v88 OFF again (operator: "too much noisy", 2026-10-29). Drawing only, the engine is the Master's.
 showOB       = input.bool(false, "Order Blocks",            group = grpZ)
-obDispATR    = input.float(2.5,  "OB displacement (xATR)", minval = 1.5, maxval = 5.0, step = 0.1, group = grpZ, tooltip = "F-A08: was 1.0 while the Master's dispMult is 2.5, so this chart drew order blocks on candles the engine does not treat as displacement at all. Now matched to the Master default. Keep the two equal or the boxes will not be the ones the engine scored.")
 // v95: the F-A08 parity inputs (ADX length / threshold, Adaptive ATR) are the engine's own now (SX block).
-obKeep       = input.int(4,      "Order Blocks kept", minval = 1, maxval = 10, group = grpZ)
+obKeep       = input.int(5,      "Order Blocks shown per side (the engine keeps 5)", minval = 1, maxval = 5, group = grpZ)
 obShowLabel = input.bool(true, "Label OB / FVG zones", group="Zones", tooltip="Zone identity labels, relocated here from the Master when it exceeded the Pine token limit.")
 
 // ===== SUPPORT / RESISTANCE — MIGRATED FROM THE MASTER =====================
@@ -227,16 +226,20 @@ float atr14 = ta.atr(14)
 // final bar and RVOL was computed against a window that had barely accumulated. Hoisted
 // here so both consumers read one consistent series.
 // SX-BEGIN (v95) the Master's structure + FVG engine, COPIED: every line between SX-BEGIN and SX-END is a Master line,
-// in the Master's order (sx_check.py); the backward slice of bosLabel* / chochLabel* / mssLabel* /
-// fvgDetected. Edit the Master, then re-copy. One exception: the engine switch showFVG is Visuals' draw switch.
+// in the Master's order (sx_check.py); the backward slice of bosLabel* / chochLabel* / mssLabel* / the OB lifecycle (v96) /
+// fvgDetected. Edit the Master, then re-copy. Exceptions: the engine switches showFVG / showOB are Visuals' draw switches.
 grpModules = "MODULES"
 showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
+showDisplacement = input.bool(true, "Displacement Candles (engine)", group=grpModules, tooltip="ENGINE INPUT (F-A30, v21). Displacement is half of the entry trigger and the onset condition for order blocks; it was gated OFF. Same definition as Visuals (body > 2.5 x ATR, body > 70% of range, volume > 1.3 x SMA20).")
 grpCore = "CORE"
 atrLen = input.int(14, "ATR Base", minval=1, group=grpCore)
 adxLen = input.int(14, "ADX", minval=1, group=grpCore)
 adxThreshold = input.int(25, "ADX Threshold", minval=10, maxval=50, group=grpCore)
 internalPivotLen = input.int(2, "Internal Pivot Len (fast)", minval=1, maxval=5, group=grpCore)
 swingPivotLen = input.int(5, "Swing Pivot Len (major)", minval=3, maxval=10, group=grpCore)
+obMaxBars = input.int(20, "OB Max Bars", minval=10, maxval=50, group=grpCore)
+grpV11 = "V11 INTELLIGENCE"
+dispMult = input.float(2.5, "Displacement Multiplier", minval=1.5, maxval=5.0, step=0.1, group=grpV11)
 atr = ta.atr(atrLen)
 [diplus, diminus, adxVal] = ta.dmi(adxLen, adxLen)
 volSma20 = ta.sma(volume, 20)
@@ -277,6 +280,9 @@ if not na(swingPivotLow)
     if not na(swingActiveSupport)
         swingLastBrokenSup := swingActiveSupport
     swingActiveSupport := swingPivotLow
+bodySize = math.abs(close - open)
+candleRange = high - low
+bodyPct = candleRange > 0 ? bodySize / candleRange * 100.0 : 0.0
 intBosLabelBull = not na(bosResistanceSnap) and close > bosResistanceSnap and close[1] <= bosResistanceSnap[1] and bosResistanceSnap != lastBrokenRes
 intBosLabelBear = not na(bosSupportSnap) and close < bosSupportSnap and close[1] >= bosSupportSnap[1] and bosSupportSnap != lastBrokenSup
 swingBosLabelBull = not na(swingBosResSnap) and close > swingBosResSnap and close[1] <= swingBosResSnap[1] and swingBosResSnap != swingLastBrokenRes
@@ -325,7 +331,109 @@ chochLabelBull = priorBearSeq and hl and barSpaceOk and atrDistOkBull
 chochLabelBear = priorBullSeq and lh and barSpaceOk and atrDistOkBear
 mssLabelBull = chochLabelBull and (seqValid and seqHigh1 > seqHigh2) and barSpaceOk and atrDistOkBull
 mssLabelBear = chochLabelBear and (seqValid and seqLow1 < seqLow2) and barSpaceOk and atrDistOkBear
+float _dispEnter = adaptiveATR * dispMult
+float _dispHold = adaptiveATR * (dispMult * 0.6)
+bool _dispRawUp = showDisplacement and bodySize > _dispEnter and close > open and close > high[1] and candleRange > 0 and bodyPct > 70 and not na(volume) and volume > volSma20 * 1.30
+bool _dispRawDown = showDisplacement and bodySize > _dispEnter and close < open and close < low[1] and candleRange > 0 and bodyPct > 70 and not na(volume) and volume > volSma20 * 1.30
+var bool displacementUpActive = false
+var bool displacementDownActive = false
+if _dispRawUp
+    displacementUpActive := true
+else if bodySize <= _dispHold
+    displacementUpActive := false
+if _dispRawDown
+    displacementDownActive := true
+else if bodySize <= _dispHold
+    displacementDownActive := false
+displacementUp = _dispRawUp or displacementUpActive
+displacementDown = _dispRawDown or displacementDownActive
 fvgDetected = showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0] - high[2] > adaptiveATR * 0.3) or (low[2] > high[0] and low[2] - high[0] > adaptiveATR * 0.3))
+var float obBullLow = na
+var float obBullHigh = na
+var float obBearLow = na
+var float obBearHigh = na
+var int obBullBar = -1
+var int obBearBar = -1
+var bool obBullActive = false
+var bool obBearActive = false
+var bool obBullMitigated = false
+var bool obBearMitigated = false
+var float obBullMitPct = 0.0
+var float obBearMitPct = 0.0
+var float[] obBullHighA = array.new_float()
+var float[] obBullLowA = array.new_float()
+var float[] obBearHighA = array.new_float()
+var float[] obBearLowA = array.new_float()
+var int[] obBullBarA = array.new_int()
+var int[] obBearBarA = array.new_int()
+var bool[] obBullMitA = array.new_bool()
+var bool[] obBearMitA = array.new_bool()
+bool dispOnsetUp = displacementUp and not displacementUp[1]
+bool dispOnsetDown = displacementDown and not displacementDown[1]
+if showOB and dispOnsetDown and not obBearActive
+    obBearHigh := high[1]
+    obBearLow := low[1]
+    obBearBar := bar_index
+    obBearActive := true
+    obBearMitigated := false
+    obBearMitPct := 0.0
+    array.unshift(obBearHighA, high[1])
+    array.unshift(obBearLowA, low[1])
+    array.unshift(obBearBarA, bar_index)
+    array.unshift(obBearMitA, false)
+if showOB and dispOnsetUp and not obBullActive
+    obBullHigh := high[1]
+    obBullLow := low[1]
+    obBullBar := bar_index
+    obBullActive := true
+    obBullMitigated := false
+    obBullMitPct := 0.0
+    array.unshift(obBullHighA, high[1])
+    array.unshift(obBullLowA, low[1])
+    array.unshift(obBullBarA, bar_index)
+    array.unshift(obBullMitA, false)
+bool failedBullDisp = showOB and not obBearActive and displacementUp[1] and not displacementUp and close < open[1] and close < (high[1] + low[1]) / 2
+if failedBullDisp
+    obBearHigh := high[1]
+    obBearLow := low[1]
+    obBearBar := bar_index
+    obBearActive := true
+    obBearMitigated := false
+    obBearMitPct := 0.0
+    array.unshift(obBearHighA, high[1])
+    array.unshift(obBearLowA, low[1])
+    array.unshift(obBearBarA, bar_index)
+    array.unshift(obBearMitA, false)
+bool failedBearDisp = showOB and not obBullActive and displacementDown[1] and not displacementDown and close > open[1] and close > (high[1] + low[1]) / 2
+if failedBearDisp
+    obBullHigh := high[1]
+    obBullLow := low[1]
+    obBullBar := bar_index
+    obBullActive := true
+    obBullMitigated := false
+    obBullMitPct := 0.0
+    array.unshift(obBullHighA, high[1])
+    array.unshift(obBullLowA, low[1])
+    array.unshift(obBullBarA, bar_index)
+    array.unshift(obBullMitA, false)
+obBullActive := obBullActive and bar_index - obBullBar <= obMaxBars
+obBearActive := obBearActive and bar_index - obBearBar <= obMaxBars
+if obBullActive and close < obBullLow - adaptiveATR * 0.3
+    obBullActive := false
+if obBearActive and close > obBearHigh + adaptiveATR * 0.3
+    obBearActive := false
+if obBullActive and not obBullMitigated
+    float obRange = obBullHigh - obBullLow
+    if obRange > 0 and close <= obBullHigh and close >= obBullLow
+        obBullMitPct := math.min(100.0, (obBullHigh - close) / obRange * 100.0)
+        if obBullMitPct >= 50.0
+            obBullMitigated := true
+if obBearActive and not obBearMitigated
+    float obRange = obBearHigh - obBearLow
+    if obRange > 0 and close <= obBearHigh and close >= obBearLow
+        obBearMitPct := math.min(100.0, (close - obBearLow) / obRange * 100.0)
+        if obBearMitPct >= 50.0
+            obBearMitigated := true
 // SX-END
 
 // ═══════ F-A08 — MASTER DISPLACEMENT ENGINE, PORTED ═══════
@@ -349,28 +457,7 @@ fvgDetected = showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0]
 // Pine requires every element be named. Only adxVal is needed here (the Master does use
 // its diplus/diminus, in bullTrendScore -- this file has no trend score to feed).
 // v67 (operator: nothing is dead, wire it): DI+ / DI- are now shown with ADX in the candle info panel.
-float _bodySzV  = math.abs(close - open)
-float _cRangeV  = high - low
-float _bodyPctV = _cRangeV > 0 ? _bodySzV / _cRangeV * 100.0 : 0.0
-bool  _volOkV   = not na(volume) and not na(volSma20) and volume > volSma20 * 1.30
-float _dispEnterV = adaptiveATR * obDispATR
-float _dispHoldV  = adaptiveATR * (obDispATR * 0.6)
-bool _dispRawUpV   = _bodySzV > _dispEnterV and close > open and close > high[1] and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
-bool _dispRawDownV = _bodySzV > _dispEnterV and close < open and close < low[1]  and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
-var bool dispUpActiveV = false
-var bool dispDnActiveV = false
-if _dispRawUpV
-    dispUpActiveV := true
-else if _bodySzV <= _dispHoldV
-    dispUpActiveV := false
-if _dispRawDownV
-    dispDnActiveV := true
-else if _bodySzV <= _dispHoldV
-    dispDnActiveV := false
-bool displacementUpV   = _dispRawUpV or dispUpActiveV
-bool displacementDownV = _dispRawDownV or dispDnActiveV
-bool dispOnsetUpV   = displacementUpV and not displacementUpV[1]
-bool dispOnsetDownV = displacementDownV and not displacementDownV[1]
+// v96: displacement is the engine's (dispMult, SX block); the V copy and its input are merged into it.
 
 // ═══════════════════ TREND OVERLAYS (match Master: 20/100/200) ═══════════════════
 float ema20  = ta.ema(close, ema20Len)
@@ -618,30 +705,34 @@ if fvgDetected and bar_index > 3   // v95: the engine's detector (SX block)
 //     (obBullHigh := high[1] on dispOnsetUp), so this filter was suppressing boxes the
 //     engine does record.
 // RETENTION still differs from the Master by design -- see the note on the engine above.
+// v96: the boxes ARE the engine's order blocks (SX block): rebuilt on the last bar from its queue, newest first, up to
+// obKeep per side; faded + "½" once 50% mitigated; bold while it is the engine's ACTIVE block of its side.
 var box[] obBoxes = array.new<box>()
-if showOB and barstate.isconfirmed and bar_index > 3
-    if dispOnsetUpV
-        color _oc = zoneFlatCol ? cOB : cBull
-        box ob = box.new(bar_index - 1, high[1], bar_index + 40, low[1], border_color = color.new(_oc, 72), border_width = 1, bgcolor = color.new(_oc, boxFade))
-        array.push(obBoxes, ob)
-        // OB/FVG zone LABELS relocated here from the Master (which was over the Pine token
-        // limit). The Master already drew these zones as boundary lines + a label while this
-        // file drew them as filled boxes, so every zone was rendered twice in two styles.
-        // Rendering is now consolidated here: the box carries the zone, this label carries
-        // its identity, and the Master keeps the detection that feeds the decision engine.
-        if obShowLabel
-            array.push(obLbls, label.new(bar_index - 1, high[1], "OB▲", xloc.bar_index, yloc.price, color.new(color.black, 100), label.style_label_down, _oc, size.tiny))
-    if dispOnsetDownV
-        color _oc2 = zoneFlatCol ? cOB : cBear
-        box ob2 = box.new(bar_index - 1, high[1], bar_index + 40, low[1], border_color = color.new(_oc2, 72), border_width = 1, bgcolor = color.new(_oc2, boxFade))
-        array.push(obBoxes, ob2)
-        if obShowLabel
-            array.push(obLbls, label.new(bar_index - 1, low[1], "OB▼", xloc.bar_index, yloc.price, color.new(color.black, 100), label.style_label_up, _oc2, size.tiny))
-    while array.size(obBoxes) > obKeep * 2
-        box old = array.shift(obBoxes)
-        box.delete(old)
-    while array.size(obLbls) > obKeep * 3
-        label.delete(array.shift(obLbls))
+var label[] obZoneLbls = array.new<label>()
+f_obDraw(float[] hA, float[] lA, int[] bA, bool[] mA, bool bull, bool act, float actHi) =>
+    int _n = math.min(array.size(hA), obKeep)
+    if _n > 0
+        for _k = 0 to _n - 1
+            float _h = array.get(hA, _k)
+            float _l = array.get(lA, _k)
+            int _b = array.get(bA, _k)
+            bool _mit = array.get(mA, _k)
+            bool _on = act and _k == 0 and _h == actHi
+            color _oc = zoneFlatCol ? cOB : bull ? cBull : cBear
+            array.push(obBoxes, box.new(_b - 1, _h, _b + obMaxBars, _l, border_color = color.new(_oc, _mit ? 88 : 60), border_width = _on ? 2 : 1, bgcolor = color.new(_oc, _mit ? math.min(boxFade + 4, 100) : boxFade)))
+            if obShowLabel
+                array.push(obZoneLbls, label.new(_b - 1, bull ? _h : _l, (bull ? "OB▲" : "OB▼") + (_mit ? " ½" : ""), xloc.bar_index, yloc.price, color.new(color.black, 100), bull ? label.style_label_down : label.style_label_up, _oc, size.tiny))
+    true
+if showOB and barstate.islast
+    while array.size(obBoxes) > 0
+        box.delete(array.pop(obBoxes))
+    while array.size(obZoneLbls) > 0
+        label.delete(array.pop(obZoneLbls))
+    f_obDraw(obBullHighA, obBullLowA, obBullBarA, obBullMitA, true, obBullActive, obBullHigh)
+    f_obDraw(obBearHighA, obBearLowA, obBearBarA, obBearMitA, false, obBearActive, obBearHigh)
+// the FVG zone labels' cap (it lived in the old OB block)
+while array.size(obLbls) > obKeep * 3
+    label.delete(array.shift(obLbls))
 
 // ═══════════════════ SESSION SHADING — DST-AWARE (matches the Master) ═══════════════════
 // AUDIT FIX: this block used FIXED UTC hours (London 7-16, NY 12-21) while the Master
@@ -2231,7 +2322,7 @@ if tkOn and barstate.islast
         f_tk(_c, rgTxt, rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (a 20-day daily reading, not the Master's MACRO)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
         _c += 1
     int _ckLv = math.max(nwLv, ckCostLv, rkLocked ? 2 : 0, ckChurn ? 1 : 0)
-    string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "")
+    string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "") + (lkOn ? "" : "LINK the Master · ")
     f_tk(_c, _ckTx == "" ? "OK ✓" : str.substring(_ckTx, 0, str.length(_ckTx) - 3), _ckLv == 2 ? _tmDn : _ckLv == 1 ? color.new(#FFB74D, 0) : _tmUp, "checks · next " + nwNext, "NEWS " + (nwNowIn ? "in the window: " : "next: ") + nwNext + (na(nwMs) or nwNowIn ? "" : " in " + f_dur(nwMs)) + "\nCOST " + str.tostring(ckCost, "#.##") + " pts = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (red > 25%, amber > 15%)\nCHURN " + str.tostring(ckFlips) + " structure flips in 20 bars (2+ = churn) · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\nTODAY " + str.tostring(rkToday, "#.##") + "R of the " + str.tostring(rkCap, "#.#") + "R cap\nScores in the Master are not win odds.")
     if lgShow
         table.cell(tkT, 0, 0, "● " + lgLine + " · " + tfNote + (lg2Show ? "\n● " + lg2Line + (lg2Note != "" ? " · " + lg2Note : "") : ""), text_color = color.white, bgcolor = lgLv == -1 ? color.new(#B71C1C, 15) : lgLv == 1 ? color.new(#1B5E20, 15) : color.new(#6D4C00, 15), text_size = size.tiny, tooltip = "Typed in from the website's forward ledger as of " + lgAsof + " (Visuals settings, CHECKS & RISK). Rule: N >= 50, 95% t-interval of mean R above 0, PF >= 1.2.\n" + lgArm + " note: " + lgNote)

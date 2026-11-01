@@ -3418,3 +3418,45 @@ engine's own ADX / adaptive-ATR / pivot inputs.
 
 **Not run:** the TradingView compile.
 
+# v96 — Visuals' order blocks are the engine's (2026-11-01)
+
+Operator: "Go ahead with order-block retention alignment". Visuals only; display only.
+
+**SX block, re-sliced to 206 Master lines (verbatim):** it now also holds the engine's order-block lifecycle:
+- one active block per side, invalidated on a close 0.3 adaptive ATR beyond it;
+- 50% mitigation;
+- reversal blocks from failed displacement;
+- the 5-deep queue with mitigation flags;
+- `obMaxBars` expiry.
+
+It also holds the engine's displacement detector (`dispMult`, the 2.5× / 1.5× latch, the onset edge). The engine
+switch `showOB` is not copied; Visuals' draw switch stands in, as for `showFVG`.
+
+**Drawing:**
+- the boxes are rebuilt on the last bar from the engine's queue, newest first, up to `obKeep`;
+- `obKeep` defaults to 5, the engine's queue size, and its maximum is 5;
+- each box runs from the OB candle to its engine expiry;
+- faded and marked "½" when 50% mitigated;
+- bold for the engine's active block;
+- the old boxes the engine has retired are no longer drawn.
+
+**Merged duplicates:** Visuals' V displacement copy and "OB displacement (xATR)" (now the engine's
+`dispMult` / `obMaxBars` / `showDisplacement` inputs).
+
+**Link default (operator: "connect it … by default"):** this is not possible. A Pine source input can only default to
+a built-in series. The ticker's CHECKS tile now says "LINK the Master" while it is unconnected (RUNBOOK Step 1a).
+
+**Checks:**
+- `sx_check.py`: verbatim, complete (2 stated exceptions), wired, CHURN executed, OB drawing selection executed, and
+  the derivations v95 / v96;
+- full suite PASS;
+- Visuals' model estimate is 67,843 (−32%).
+
+**What changes on the chart:**
+- by default, only the ticker hint;
+- with "Order Blocks" switched on: up to 5 engine blocks per side, matching the Master's zones;
+- in Settings: "OB displacement (xATR)" is gone; the engine's Displacement Multiplier / OB Max Bars / Displacement
+  Candles inputs appear.
+
+**Not run:** the TradingView compile.
+
