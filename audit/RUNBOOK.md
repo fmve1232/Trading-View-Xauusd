@@ -95,6 +95,21 @@ establish that the Master is wired to those expressions — that is a separate, 
 - A layout preview of the phone card is in `audit/mobile_card_preview_v59.png` (sample values, not live).
 - Visuals: H2 card layout = **Compact (phone)**; H2 card text size = Normal if it reads too small.
 
+## Step 1a — Connect the Master → Visuals link (v94, once per chart)
+
+Visuals reads the Master's DECISION and plan through two hidden series. They appear only in the Data Window and draw
+nothing on the chart. TradingView needs you to connect them by hand.
+
+1. Add the Master first, then Visuals, to the same chart.
+2. Open **Visuals → Settings → Inputs → CHECKS & RISK** and set:
+   - **Master link: LINK decision x stop** → choose `XAUUSD Quantum … Master: LINK decision x stop`;
+   - **Master link: LINK lots** → choose `… Master: LINK lots`.
+3. Click OK. The BRACKET row now starts with **"Master BUY / SELL"**, not "H2 signals …". While a DECISION is live, the
+   RISK row says "(the Master's plan SL)" and shows "the Master's plan: N lot".
+
+Left at `close` (the default), Visuals works exactly as v93 did: the tracker scores H2 signals and the stop is 1 ATR.
+Re-adding Visuals, or removing and re-adding the Master, resets the two sources, so repeat step 2 after that.
+
 ## Step 2a — Market Brief companion (v52)
 
 `XAUUSD_Quantum_5_0_Brief.pine` shows the website's Market Brief on the chart. It runs the Treatment

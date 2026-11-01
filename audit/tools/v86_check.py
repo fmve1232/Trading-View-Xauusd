@@ -306,10 +306,11 @@ bad7r = 0
 for _ in range(4000):
     st = dict(rkStop=rng.choice([0.0, rng.uniform(0.5, 30)]), atr14=rng.uniform(0.5, 25), rkEquity=rng.choice([100.0, 5000.0, 1e4, 2.5e5]),
               rkPct=rng.choice([0.05, 0.25, 0.5, 1.0, 5.0]), ckCost=rng.uniform(0.3, 1.2), pointValue=rng.choice([1.0, 100.0]),
-              rkToday=rng.uniform(-4, 3), rkCap=rng.choice([-0.5, -2.0, -3.0]))
+              rkToday=rng.uniform(-4, 3), rkCap=rng.choice([-0.5, -2.0, -3.0]),
+              lkSLp=rng.choice([P.NA, P.NA, rng.uniform(1990, 2010)]), close=2000.0)   # v94: the Master's plan stop via the link
     e7 = P.Env(**st)
     P.run(rk, e7)
-    stop = st["rkStop"] if st["rkStop"] > 0 else st["atr14"]
+    stop = st["rkStop"] if st["rkStop"] > 0 else abs(st["close"] - st["lkSLp"]) if not P.isna(st["lkSLp"]) else st["atr14"]
     risk = st["rkEquity"] * st["rkPct"] / 100
     lots = math.floor(risk / ((stop + st["ckCost"]) * st["pointValue"]) * 100) / 100
     loss_at_stop = lots * (stop + st["ckCost"]) * st["pointValue"]
@@ -486,7 +487,9 @@ for _ in range(1500):
               trkShow=True, trkUnit=rng.choice(["Money ($)", "MT5 points"]), trkSL=rng.choice([500.0, 0.01, 2000.0]),
               trkTP=rng.choice([1000.0, 0.01, 3000.0]), trkLot=rng.choice([0.5, 0.01, 2.0]), trkPt=rng.choice([0.01, 0.001]),
               trkW=float(rng.choice([0, 1, 12])), trkL=float(rng.choice([0, 3, 20])), trkNet=rng.uniform(-5e3, 5e3),
-              trkE=[2000.0] * rng.choice([0, 1, 4]))
+              trkE=[2000.0] * rng.choice([0, 1, 4]),
+              lkOn=rng.random() < .5, lkSLp=rng.choice([P.NA, 1995.0]), lkLotsOn=rng.random() < .5, lkLots=rng.choice([-1.0, 0.0, 0.37]),
+              close=2000.0)
     e8 = P.Env(funcs=env.funcs, **st)
     P.BUILTINS["str.format_time"] = lambda t_, f_, z_: "10-28 14:00"
     try:

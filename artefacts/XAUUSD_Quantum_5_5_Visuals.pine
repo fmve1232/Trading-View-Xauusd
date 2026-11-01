@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v93   (bracket tracker)              ║
+// ║  BUILD STAMP — this file last CHANGED in v94   (LINK from the Master)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -1742,7 +1742,8 @@ string rgTxt = rgUp ? "▲ LONG" : rgDn ? "▼ SHORT" : "◆ FLAT"
 string rgMacTxt = na(rgRyD) or na(rgDxD) ? "20d macro: no data" : rgMac == 1 ? "20d macro supports gold" : rgMac == -1 ? "20d macro against gold" : "20d macro mixed"
 
 // ---- position size and the daily cap (typed-in result)
-float rkStopD = rkStop > 0 ? rkStop : atr14
+// v94: with the link and a live DECISION, the default stop is the Master's plan stop (it was 1 ATR)
+float rkStopD = rkStop > 0 ? rkStop : not na(lkSLp) ? math.abs(close - lkSLp) : atr14
 float rkRisk = rkEquity * rkPct / 100.0
 float rkPerLot = (rkStopD + ckCost) * pointValue
 float rkLots = rkPerLot > 0 ? math.floor(rkRisk / rkPerLot * 100.0) / 100.0 : na
@@ -1756,6 +1757,19 @@ trkSL = input.float(500.0, "Bracket SL (in the unit above)", minval = 0.01, maxv
 trkTP = input.float(1000.0, "Bracket TP (in the unit above)", minval = 0.01, maxval = 10000000.0, group = grpCk)
 trkLot = input.float(0.5, "Bracket lot size", minval = 0.01, maxval = 100.0, step = 0.01, group = grpCk)
 trkPt = input.float(0.01, "MT5 point size (price per point; 0.01 for a 2-digit XAUUSD quote)", minval = 0.0001, maxval = 1.0, step = 0.0001, group = grpCk)
+// v94 LINK: the Master's two series (pick them once per chart). Unlinked, a source is `close` (> 0 on every bar); the
+// Master's decision series is 0 on every WAIT bar, so a 0 proves the link.
+lkDec = input.source(close, "Master link: LINK decision x stop", group = grpCk, tooltip = "v94: pick the Master's 'LINK decision x stop' here (and 'LINK lots' below) so Visuals scores the Master's own BUY / SELL and shows its plan lots and stop. Left at 'close', Visuals works as before (the tracker scores H2 signals).")
+lkLots = input.source(close, "Master link: LINK lots", group = grpCk)
+var bool lkOn = false
+if not lkOn and lkDec == 0
+    lkOn := true
+int lkD = lkOn and not na(lkDec) ? (lkDec > 0 ? 1 : lkDec < 0 ? -1 : 0) : 0
+float lkSLp = lkD != 0 ? math.abs(lkDec) : na
+bool lkTrig = barstate.isconfirmed and lkD != 0 and lkD != nz(lkD[1])
+bool lkLotsOn = lkOn and not na(lkLots) and lkLots != close
+bool trkLongSig = lkOn ? lkTrig and lkD > 0 : h2Long
+bool trkShortSig = lkOn ? lkTrig and lkD < 0 : h2Short
 float trkSLd = trkUnit == "MT5 points" ? trkSL * trkPt : trkSL / (trkLot * pointValue)
 float trkTPd = trkUnit == "MT5 points" ? trkTP * trkPt : trkTP / (trkLot * pointValue)
 var float[] trkE = array.new_float()
@@ -1780,15 +1794,15 @@ if trkShow and barstate.isconfirmed
                     trkNet += (trkTPd - ckCost) * trkLot * pointValue
                 array.remove(trkE, _ti)
                 array.remove(trkDir, _ti)
-    if (h2Long or h2Short) and array.size(trkE) < 200
+    if (trkLongSig or trkShortSig) and array.size(trkE) < 200
         array.push(trkE, close)
-        array.push(trkDir, h2Long ? 1 : -1)
+        array.push(trkDir, trkLongSig ? 1 : -1)
 int trkN = trkW + trkL
 float trkBE = (trkSLd + ckCost) / (trkSLd + trkTPd)
 [trkLo, trkHi] = f_wil(trkW, trkN)
 float trkEqPct = trkSLd * trkLot * pointValue / rkEquity * 100.0
 int trkLv = trkN < 1 ? 0 : trkLo > trkBE ? 1 : trkHi < trkBE ? -1 : 0
-string trkTxt = "H2 signals · SL " + (trkUnit == "MT5 points" ? str.tostring(trkSL, "#") + " pts" : "$" + str.tostring(trkSL, "#")) + " / TP " + (trkUnit == "MT5 points" ? str.tostring(trkTP, "#") + " pts" : "$" + str.tostring(trkTP, "#")) + " at " + str.tostring(trkLot, "#.##") + " lot = $" + str.tostring(trkSLd, "#.##") + " / $" + str.tostring(trkTPd, "#.##") + " price · risk " + str.tostring(trkEqPct, "#.#") + "% of equity\n" + (trkN < 1 ? "no closed H2 signal on this chart yet" : "TP first " + str.tostring(trkW) + "/" + str.tostring(trkN) + " = " + str.tostring(trkW * 100.0 / trkN, "#") + "% (95% " + str.tostring(trkLo * 100.0, "#") + "–" + str.tostring(trkHi * 100.0, "#") + ") · break-even " + str.tostring(trkBE * 100.0, "#") + "% · chance " + str.tostring(trkSLd / (trkSLd + trkTPd) * 100.0, "#") + "%") + "\nnet $" + str.tostring(trkNet, "#") + " · open " + str.tostring(array.size(trkE)) + " · this chart's history only, not the Master's BUY / SELL"
+string trkTxt = (lkOn ? "Master BUY / SELL" : "H2 signals (link the Master to score its BUY / SELL)") + " · SL " + (trkUnit == "MT5 points" ? str.tostring(trkSL, "#") + " pts" : "$" + str.tostring(trkSL, "#")) + " / TP " + (trkUnit == "MT5 points" ? str.tostring(trkTP, "#") + " pts" : "$" + str.tostring(trkTP, "#")) + " at " + str.tostring(trkLot, "#.##") + " lot = $" + str.tostring(trkSLd, "#.##") + " / $" + str.tostring(trkTPd, "#.##") + " price · risk " + str.tostring(trkEqPct, "#.#") + "% of equity\n" + (trkN < 1 ? "no closed H2 signal on this chart yet" : "TP first " + str.tostring(trkW) + "/" + str.tostring(trkN) + " = " + str.tostring(trkW * 100.0 / trkN, "#") + "% (95% " + str.tostring(trkLo * 100.0, "#") + "–" + str.tostring(trkHi * 100.0, "#") + ") · break-even " + str.tostring(trkBE * 100.0, "#") + "% · chance " + str.tostring(trkSLd / (trkSLd + trkTPd) * 100.0, "#") + "%") + "\nnet $" + str.tostring(trkNet, "#") + " · open " + str.tostring(array.size(trkE)) + " · this chart's history only" + (lkOn ? "" : ", not the Master's BUY / SELL")
 
 // ---- the website's forward record (typed in) and its verdict under the pre-registered rule
 float lgSe = lgN > 1 ? lgSd / math.sqrt(lgN) : na
@@ -2024,7 +2038,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "DAILY", rgTxt + " · 12M " + (na(rgRet12) ? "—" : (rgRet12 >= 0 ? "+" : "") + str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above SMA200" : "below SMA200") + "\nreal yld 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " · " + rgMacTxt + " · UNTESTED", rgUp ? _tmUp : rgDn ? _tmDn : _tmV)
         r += 1
-        _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : " (1 ATR, not the Master's plan SL: type it in)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)"), _tmV)
+        _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : not na(lkSLp) ? " (the Master's plan SL)" : " (1 ATR, not the Master's plan SL: type it in)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)") + (lkLotsOn ? "\nthe Master's plan: " + (lkLots < 0 ? "below 0.01 lot" : str.tostring(lkLots, "#.##") + " lot (half-Kelly, capped at its Risk %)") : ""), _tmV)
         if trkShow
             r += 1
             _tmRow(r, "BRACKET", trkTxt, trkLv == 1 ? _tmUp : trkLv == -1 ? _tmDn : _amb)

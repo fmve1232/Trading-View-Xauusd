@@ -3340,3 +3340,37 @@ $500 / $1000 at 0.5 lot is $10 / $20 of price.
 
 **Not run:** the TradingView compile.
 
+# v94 — the Master → Visuals LINK (2026-11-01)
+
+Operator: "Master & Visuals should be 100% aligned & calibrated in all respects". Asked, the operator chose "Allow the
+link" and "Copy the engine's code" (the second is v95). Display only: no signal, gate or veto changes.
+
+**Master:** two series shown in the Data Window only:
+- `LINK decision x stop`: +plan SL on a confirmed-BUY bar, −plan SL on SELL, 0 otherwise;
+- `LINK lots`: the MT5 plan's lots.
+
+They are paid for by identical-output rewrites in Master-only dashboard code:
+- `color _cn = color(na)` for the 15 inline `color(na)` in `f_dashRender`;
+- `nz(x, 50)` for `na(x) ? 50 : x` twice.
+
+The model estimate went from 99,503 / 98,998 to **99,429 / 98,989**, below v93 on both.
+
+**Visuals:**
+- two source inputs, with the link detected automatically (an unlinked source is `close`);
+- linked, the BRACKET tracker scores each new Master BUY / SELL (the bar the DECISION changes to it);
+- while a DECISION is live, RISK uses the plan stop and shows the Master's plan lots;
+- unlinked, everything is as in v93.
+
+**Setup:** RUNBOOK Step 1a.
+
+**Checks:**
+- `v94_check.py`: the series in all 6 DECISION states, the rewrites, decoding (200 unlinked / 200 linked runs), end to
+  end (300 runs), a positive control (every-bar triggering is detected), and byte-for-byte derivations;
+- `refactor_check` chain + fix_v94;
+- `v86_check` §7 / §8 and `v93_check` updated.
+
+**Not exercised:** TradingView's `input.source` wiring itself (needs the chart).
+
+**Process note:** `fix_v94.py` computes before it writes. A transform that raised once emptied the Master in the working
+copy; it was restored from git and nothing was committed.
+

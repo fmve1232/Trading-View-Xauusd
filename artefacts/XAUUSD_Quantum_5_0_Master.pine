@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v92   (risk lock: every bar)         ║
+// ║  BUILD STAMP — this file last CHANGED in v94   (LINK for Visuals)             ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5504,6 +5504,8 @@ f_dashData2() =>
     array.set(gDashS, 24, _yldStr)
     true
 f_dashRender() =>
+    // v94: one transparent colour for the 15 cells below (the same na colour each used inline; identical value, fewer tokens)
+    color _cn = color(na)
     string _agreeTier = array.get(gDashS, 0)
     int _bearPct = int(array.get(gDashF, 0))
     string _biasBreakdown = array.get(gDashS, 1)
@@ -5587,7 +5589,7 @@ f_dashRender() =>
     string _evDisp = "EV " + evStr
     // v44 (F-A49): resolved analogs only (wins / losses; timeouts are in EV, not in this ratio)
     string _pfDisp = "PFres " + pfStr
-    float _crVal = na(avgCorrHealth) ? 50 : avgCorrHealth
+    float _crVal = nz(avgCorrHealth, 50)
     // Footer data
     int _agreeCount = shouldBuy ? htfFullLong : shouldSell ? htfFullShort : 0
     // v63 (F-A63): agreement over the layers live on this timeframe (htfFullAvail, as confMTF since F-A40), not a
@@ -5606,21 +5608,21 @@ f_dashRender() =>
     if true // Q5.4-CORE: mobile branch removed (token limit); desktop layout serves all modes
         // ROW 0 — COLUMN HEADERS
         for [k, h] in array.from("MARKET", "BIAS", "SIGNAL", "STRUCTURE", "LIQUIDITY", "PRICE", "MACRO", "RISK", "DECISION")
-            tcb(k, 0, h, C_TEXT, color(na), _hdSize, 0)
+            tcb(k, 0, h, C_TEXT, _cn, _hdSize, 0)
         // ROW 1 — PRIMARY METRICS
-        tcb(0, 1, _priceStr + " " + _chgStr, _chgCol, color(na), _prSize, _w0)
-        tcb(1, 1, _dirStrength, _biasCol, color(na), _prSize, _w1) // R5.1: wires _biasCol (WARN amber when mixed)
+        tcb(0, 1, _priceStr + " " + _chgStr, _chgCol, _cn, _prSize, _w0)
+        tcb(1, 1, _dirStrength, _biasCol, _cn, _prSize, _w1) // R5.1: wires _biasCol (WARN amber when mixed)
         color _fDomCol = fBullScore >= fBearScore and fBullScore >= fRngScore ? cBloomBull : fBearScore >= fBullScore and fBearScore >= fRngScore ? cBloomBear : cBloomNeut
         string _probDisp = _confDirLabel + "\nscore L " + _si(na(fBullScore) ? 50 : fBullScore) + " S " + _si(na(fBearScore) ? 50 : fBearScore) + " R " + _si(na(fRngScore) ? 0 : fRngScore)
-        tcb(2, 1, _probDisp, _fDomCol, color(na), _prSize, _w2)
-        tcb(3, 1, _bosStr + " " + _chochStr + " " + _mssStr, _structActiveCol, color(na), _prSize, _w3)
-        tcb(4, 1, not na(_nearAbove) or not na(_nearBelow) ? _nearAboveStr + "/" + _nearBelowStr : "LIQ —", cBloomNeut, color(na), _prSize, _w4)
-        tcb(5, 1, "V " + _vwapStr, C_TEXT, color(na), _prSize, _w5)
+        tcb(2, 1, _probDisp, _fDomCol, _cn, _prSize, _w2)
+        tcb(3, 1, _bosStr + " " + _chochStr + " " + _mssStr, _structActiveCol, _cn, _prSize, _w3)
+        tcb(4, 1, not na(_nearAbove) or not na(_nearBelow) ? _nearAboveStr + "/" + _nearBelowStr : "LIQ —", cBloomNeut, _cn, _prSize, _w4)
+        tcb(5, 1, "V " + _vwapStr, C_TEXT, _cn, _prSize, _w5)
         tcb(6, 1, "Corr " + _dxyStr + " " + _yldStr + " " + tipsC, _dxyYldCol, color.new(_macroBg, 85), _prSize, _w6)
         float _costToTargetPct = tpDist > 0 ? _liveCostATR * adaptiveATR / tpDist * 100.0 : 0.0
         _kellyPct := _kellyPct * regSizeMult // R6.0: size guidance haircut in high-vol/abnormal regimes
         string _riskPrimary = "RRg " + (not na(tpRR2) ? "1:" + str.tostring(tpRR2, "#.#") : "—") + " SL " + (not na(tpSL) and not na(tpEntry) ? str.tostring(tpDist / adaptiveATR, "#.#") + " ATR" : "—") + "\nRisk " + str.tostring(_kellyPct, "0.0#") + "% $" + _si(_riskUSD) + " " + (_lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L") + " Cst " + str.tostring(_costToTargetPct, "#.#") + "%"
-        tcb(7, 1, _riskPrimary, _volCol, color(na), _prSize, _w7) // R5.1: tinted by volatility percentile (wires _volCol)
+        tcb(7, 1, _riskPrimary, _volCol, _cn, _prSize, _w7) // R5.1: tinted by volatility percentile (wires _volCol)
         // RED-2C-FIX: _dirLabel here is still the LIVE per-tick decision (unchanged,
         // via gDashS[6]). Template selection now branches on _confDirLabel (global,
         // read directly — no transfer needed) so the box's wording matches the
@@ -5649,11 +5651,11 @@ f_dashRender() =>
         // v53: text = MTF direction (green up / red down for gold, as its arrows); session quality stays as the tint
         tcb(0, 2, _mktLine + "\n" + xcheckStr, mtfConfluenceScore > 20 ? cBloomBull : mtfConfluenceScore < -20 ? cBloomBear : cBloomNeut, color.new(_sessCol, 88), _seSize, _w0)
         string _biasLine = _biasBreakdown + " " + _agreeTier + " H:" + _htfBias + (_ctLabel != "" ? " " + _ctLabel : "")
-        tcb(1, 2, _biasLine, _biasCol, color(na), _seSize, _w1) // v53: C/S/I arrows take the BIAS colour (was grey)
+        tcb(1, 2, _biasLine, _biasCol, _cn, _seSize, _w1) // v53: C/S/I arrows take the BIAS colour (was grey)
         // v59: the analog structure evidence, calibration grade / Brier, in-sample WR and the per-feature edges -- all
         // computed by the Master's stats engine and previously shown only in Diagnostics (twin engine) -- wired here
         string _evConf = _evDisp + (calProbStr != "" ? " " + calProbStr : "") + "\n" + _confLabel + (na(oPdh1stPct) ? "" : "\nH/L 1st " + str.tostring(oPdh1stPct) + "/" + str.tostring(oPdl1stPct) + " · BOS " + str.tostring(oBosCont, "#") + "/" + str.tostring(oBosFail, "#") + "%\nMAE " + str.tostring(oMaxAdverseATR, "#.#") + " · " + oCalDetail) + (__cg != "N/A" ? "\nCal" + __cg + (not na(__cb) ? "/B" + str.tostring(__cb, "#.##") : "") : "") + (__in >= 10 ? " IS" + _si(__iw) + "% n" + _si(__in) + (__iw - oOosWr > 15 ? " !FIT" : "") : "") + (oMatch >= 30 ? "\nedge S/H/L/M/C " + _si(__fs) + "/" + _si(__fh) + "/" + _si(__fl) + "/" + _si(__fm) + "/" + _si(__fc) : "")
-        tcb(2, 2, _evConf, _evCol, color(na), _seSize, _w2)
+        tcb(2, 2, _evConf, _evCol, _cn, _seSize, _w2)
         tcb(3, 2, _structActive + (_ctLabel != "" ? " " + _ctLabel : ""), cBloomNeut, _structActiveBg, _seSize, _w3)
         // R5.1: per-target reach scores wired — the suffix now shows the reach score of the
         // ACTUAL destination pool (previously it always displayed PDH's number)
@@ -5665,9 +5667,9 @@ f_dashRender() =>
         // Per the standing rule the values were NOT deleted -- they are now consumed.
         // na when no gap is active, so the row simply disappears rather than printing na.
         string _fvgZone = not na(fvgUpperLine) and not na(fvgLowerLine) ? "\nFVG " + str.tostring(math.min(fvgLowerLine, fvgUpperLine), format.mintick) + "-" + str.tostring(math.max(fvgLowerLine, fvgUpperLine), format.mintick) + (fvgWasBullish ? " BULL" : " BEAR") : ""
-        string _liqReachDisp = (liqDestLabel != "—" ? "DRAW " + liqDestLabel + " R" + str.tostring(liqDestScore) + _pdhReachSuffix + "\nRCH " + _si(na(liqReachScore) ? 50 : liqReachScore) + "% " + liqDestConfidence : _liqTargetLbl) + _fvgZone
-        tcb(4, 2, _liqReachDisp, _liqTargetCol, color(na), _seSize, _w4)
-        tcb(5, 2, "E200 " + (not na(ema200) ? str.tostring(ema200, "#.##") : "—") + " " + _updTime, cBloomNeut, color(na), _seSize, _w5)
+        string _liqReachDisp = (liqDestLabel != "—" ? "DRAW " + liqDestLabel + " R" + str.tostring(liqDestScore) + _pdhReachSuffix + "\nRCH " + _si(nz(liqReachScore, 50)) + "% " + liqDestConfidence : _liqTargetLbl) + _fvgZone
+        tcb(4, 2, _liqReachDisp, _liqTargetCol, _cn, _seSize, _w4)
+        tcb(5, 2, "E200 " + (not na(ema200) ? str.tostring(ema200, "#.##") : "—") + " " + _updTime, cBloomNeut, _cn, _seSize, _w5)
         // v50 (F-A53): '+' meant the WEAKER reading (score 15..39) but read as stronger; now bull-ish / bear-ish, with the
         // score (-100..+100: >= 40 BULL, 15..39 bull-ish, -14..14 MIX, -39..-15 bear-ish, <= -40 BEAR).
         string _macroVerdict = "Macro " + (macroIntelLabel == "BULL" ? "BULL" : macroIntelLabel == "BEAR" ? "BEAR" : macroIntelLabel == "BULL-ISH" ? "bull-ish" : macroIntelLabel == "BEAR-ISH" ? "bear-ish" : macroIntelLabel == "N/A" ? "—" : "MIX") + " " + str.tostring(macroIntelScore)
@@ -5676,16 +5678,16 @@ f_dashRender() =>
         // v53: text = gold direction of the arrows (was correlation health); health stays as the tint and CR%
         tcb(6, 2, _macroLine2 + " CR" + _si(_crVal) + "%\n" + _macroRow2, _macro2Col, color.new(_crCol, 88), _seSize, _w6)
         string _riskSec = "WR " + wrStr + " ROLL " + _oosFixed + " " + _pfDisp
-        tcb(7, 2, _riskSec, pfCol, color(na), _seSize, _w7)
+        tcb(7, 2, _riskSec, pfCol, _cn, _seSize, _w7)
         // F-002: decode the -1.0 below-minimum sentinel. "<min" is an honest statement
         // that the trade cannot be placed at this account size; "0.00L" read as a valid
         // instruction to trade nothing, which is a different and misleading claim.
         string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L"
         string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + _si(_riskUSD) + " " + _lotStr : ""
         string _decFoot = _rrStr + _riskDisp + "\n" + decisionLog + "\n" + _agreePct
-        tcb(8, 2, _decFoot, C_TEXT, color(na), _seSize, _w8)
+        tcb(8, 2, _decFoot, C_TEXT, _cn, _seSize, _w8)
         // v57: H2 in its own cell under DECISION (it crowded and clipped the footer)
-        tcb(8, 3, h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, color(na), _seSize, _w8)
+        tcb(8, 3, h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, _cn, _seSize, _w8)
         // v25: hand the composite strings to the Mobile card (slots 25-34), so the phone shows
         // exactly what the desktop cells show, built once.
         array.set(gDashS, 25, _mktLine)
@@ -5886,3 +5888,8 @@ if _evS != "" and not perfMode
     _al(_evS + " | info, not a DECISION")
 if barstate.isconfirmed and not perfMode and useRiskLimits and riskLock and not riskLock[1]
     _al(" RISK LOCK engaged: " + riskLockStr + " -- new entries blocked")
+
+// v94 LINK (operator, 2026-10-31: "Allow the link"): two series for Visuals' source inputs, Data Window only.
+// +plan SL on a confirmed-BUY bar, -plan SL on SELL, 0 otherwise; and the MT5 plan's lots (-1 = below 0.01).
+plot(_confDirLabel == "BUY" ? tpSL : _confDirLabel == "SELL" ? -tpSL : 0, "LINK decision x stop", display = display.data_window)
+plot(array.get(gDashF, 6), "LINK lots", display = display.data_window)

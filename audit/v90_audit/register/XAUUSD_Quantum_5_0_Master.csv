@@ -502,7 +502,7 @@ corrHealthSlv,1356,value,1,0,5,"silverValid ? corrHealthMW(nz(corrGoldSlv_30), n
 corrHealthSPX,1357,value,1,0,5,"spxValid ? corrHealthMW(nz(corrGoldSPX_30), nz(corrGoldSPX_60), nz(corrGoldSPX_120), _corrSig30, _corrSig60, _corrSig120"
 corrHealthEUR,1358,value,1,0,5,"eurusdValid ? corrHealthMW(nz(corrGoldEUR_30), nz(corrGoldEUR_60), nz(corrGoldEUR_120), _corrSig30, _corrSig60, _corrSig"
 corrHealthTIPS,1359,value,1,0,5,"tipsValid ? corrHealthMW(nz(corrGoldTIPS_30), nz(corrGoldTIPS_60), nz(corrGoldTIPS_120), _corrSig30, _corrSig60, _corrSi"
-avgCorrHealth,1360,value,16,0,5,_numValid > 0 ? (corrHealthDXY + corrHealthYld + corrHealthSlv + corrHealthSPX + corrHealthEUR + corrHealthTIPS) / _numV
+avgCorrHealth,1360,value,15,0,5,_numValid > 0 ? (corrHealthDXY + corrHealthYld + corrHealthSlv + corrHealthSPX + corrHealthEUR + corrHealthTIPS) / _numV
 _wDXYr,1362,value,2,0,6,"math.min(math.abs(avgCorrDXY) * 100, 30)"
 _wYldr,1363,value,2,0,6,"math.min(math.abs(avgCorrYld) * 100, 30)"
 _wSlvr,1364,value,2,0,6,"math.min(math.abs(avgCorrSlv) * 100, 25)"
@@ -796,7 +796,7 @@ _liqAll,2171,value,3,0,5,"array.from(liqScorePDH, liqScorePDL, liqScorePWH, liqS
 liqMaxScore,2173,value,11,0,5,"array.get(_liqAll, 0)"
 liqSecondScore,2174,value,9,0,5,"array.get(_liqAll, 1)"
 liqScoreDiff,2227,value,2,0,0,liqDestScore - liqDestScoreSecondary
-liqReachScore,2232,value,4,1,5,50.0
+liqReachScore,2232,value,3,1,5,50.0
 liqSweepBear,2245,value,2,0,5,(not na(poolPdH) and high >= poolPdH and close < poolPdH) or (not na(poolPwH) and high >= poolPwH and close < poolPwH) o
 liqSweepBull,2246,value,2,0,5,(not na(poolPdL) and low <= poolPdL and close > poolPdL) or (not na(poolPwL) and low <= poolPwL and close > poolPwL) or 
 mtfVotesBull,2249,value,1,4,5,0
@@ -1091,7 +1091,7 @@ nbe2_,4538,tuple,1,0,5,"normalizeScores(bullScore, bearScore, rangeScore, 1.0)"
 nr2_,4538,tuple,1,0,5,"normalizeScores(bullScore, bearScore, rangeScore, 1.0)"
 tpIsLong,4547,tuple,35,0,5,f_tradePlan()
 tpEntry,4547,tuple,18,0,5,f_tradePlan()
-tpSL,4547,tuple,10,3,5,f_tradePlan()
+tpSL,4547,tuple,12,3,5,f_tradePlan()
 tpDist,4547,tuple,24,0,5,f_tradePlan()
 tp1,4547,tuple,13,2,5,f_tradePlan()
 tp2,4547,tuple,13,2,5,f_tradePlan()
@@ -1147,7 +1147,7 @@ riskLockStr,4850,value,6,0,5,"not useRiskLimits ? """" : riskLock ? (rkLossHit ?
 _statsWarm,4898,value,3,0,5,not showStatsEngine or (hN > OUTCOME_N * 2 and oOosNeff >= 10)
 _histFloor,4909,value,2,0,5,OUTCOME_N * 3 + 50
 _histGate,4910,value,1,0,5,"hN > 0 ? """" : ""  HIST-GATE["" + (perfMode ? ""PERF-MODE-ON!"" : ""perf:ok"") + "" "" + (showStatsEngine ? ""stats:ok"" : ""STATS-E"
-_confDirLabel,4911,var,31,1,5,"""WAIT"""
+_confDirLabel,4911,var,33,1,5,"""WAIT"""
 structStr,4937,value,3,0,5,"bullStructActive ? ""▲"" + bullStructType + "" "" + str.tostring(bullStructAge) + ""b"" : bearStructActive ? ""▼"" + bearStructT"
 _xT,4945,value,1,0,5,"bullTrend ? ""T▲"" : bearTrend ? ""T▼"" : ""T="""
 _xS,4946,value,1,0,5,"bullStructActive ? ""S▲"" + bullStructType : bearStructActive ? ""S▼"" + bearStructType : ""S="""
@@ -1219,7 +1219,7 @@ tcb,5231,function,20,0,5,
 tcp,5238,function,8,0,5,"table.cell(_dashMobile ? tblBrief : tblPlan, _dashMobile ? 1 : col, _dashMobile ? 9 + col : 0, txt, bgcolor=bg, text_col"
 gDashS,5245,var,74,0,5,"array.new_string(35, """")"
 gDashC,5246,var,24,0,5,"array.new_color(12, color.gray)"
-gDashF,5247,var,22,0,5,"array.new_float(10, 0.0)"
+gDashF,5247,var,23,0,5,"array.new_float(10, 0.0)"
 _sg,5253,function,4,0,0,"(x >= 0 ? ""+"" : """") + str.tostring(x, f)"
 _byDest,5256,function,2,0,0,"liqDestLabel == ""PDH"" ? a : liqDestLabel == ""PDL"" ? b : liqDestLabel == ""PWH"" ? c : liqDestLabel == ""PWL"" ? d : liqDestL"
 _ud,5257,function,5,0,0,"u ? ""▲"" : d ? ""▼"" : ""·"""
@@ -1228,9 +1228,9 @@ _si,5263,function,30,0,0,"na(x) ? ""—"" : str.tostring(int(x))"
 f_dashData1,5264,function,1,0,5,
 f_dashData2,5392,function,1,0,0,
 f_dashRender,5506,function,1,0,0,
-_prevDashMode,5703,var,1,1,0,"""Desktop"""
-modeChanged,5704,var,1,2,0,false
-_bc,5709,function,9,0,0,
-_mt5Plan,5866,value,3,0,0,"""MT5 entry "" + tpEntryStr + "" SL "" + tpSLStr + "" TP1 "" + tp1Str + "" TP2 "" + tp2Str + "" TP3 "" + tp3Str + "" ("" + tpRRStr +"
-_ev,5883,function,8,0,0,"_x and not _x[1] ? _s : """""
-_evS,5884,value,2,0,0,"_ev(bosLabelBull, "" BOS▲"") + _ev(bosLabelBear, "" BOS▼"") + _ev(chochLabelBull, "" CHoCH▲"") + _ev(chochLabelBear, "" CHoCH▼"""
+_prevDashMode,5705,var,1,1,0,"""Desktop"""
+modeChanged,5706,var,1,2,0,false
+_bc,5711,function,9,0,0,
+_mt5Plan,5868,value,3,0,0,"""MT5 entry "" + tpEntryStr + "" SL "" + tpSLStr + "" TP1 "" + tp1Str + "" TP2 "" + tp2Str + "" TP3 "" + tp3Str + "" ("" + tpRRStr +"
+_ev,5885,function,8,0,0,"_x and not _x[1] ? _s : """""
+_evS,5886,value,2,0,0,"_ev(bosLabelBull, "" BOS▲"") + _ev(bosLabelBear, "" BOS▼"") + _ev(chochLabelBull, "" CHoCH▲"") + _ev(chochLabelBear, "" CHoCH▼"""

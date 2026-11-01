@@ -35,7 +35,7 @@ def line(prefix):
 
 
 a = next(i for i, l in enumerate(VL) if l.startswith("if trkShow and barstate.isconfirmed"))
-b = next(i for i in range(a, len(VL)) if VL[i].strip().startswith("array.push(trkDir, h2Long ? 1 : -1)"))
+b = next(i for i in range(a, len(VL)) if VL[i].strip().startswith("array.push(trkDir, trkLongSig ? 1 : -1)"))
 RACE = [l.replace("barstate.isconfirmed", "isConf") for l in VL[a:b + 1] if l.strip() and not l.strip().startswith("//")]
 DIST = [line("float trkSLd = "), line("float trkTPd = ")]
 
@@ -55,7 +55,7 @@ def run_pine(bars, sigs, sld, tpd, lot, costs):
                 trkE=[], trkDir=[], trkW=0.0, trkL=0.0, trkNet=0.0)
     for i, (h, l, c) in enumerate(bars):
         s = sigs.get(i, 0)
-        env.update(high=h, low=l, close=c, h2Long=s > 0, h2Short=s < 0, ckCost=costs[i])
+        env.update(high=h, low=l, close=c, trkLongSig=s > 0, trkShortSig=s < 0, ckCost=costs[i])   # v94: the trigger feed (H2 or the Master link)
         P.run(RACE, env)
     return env
 
@@ -132,7 +132,7 @@ for _ in range(3000):
     st = dict(trkW=float(rng.choice([0, 1, 5, 40])), trkL=float(rng.choice([0, 2, 9, 60])), trkNet=rng.uniform(-9e3, 9e3),
               trkSLd=rng.choice([10.0, 5.0, 0.0001]), trkTPd=rng.choice([20.0, 10.0, 0.0001]), ckCost=rng.choice([0.77, 2.3]),
               trkLot=rng.choice([0.5, 0.01]), pointValue=100.0, rkEquity=rng.choice([25000.0, 100.0]), trkUnit=rng.choice(["Money ($)", "MT5 points"]),
-              trkSL=500.0, trkTP=1000.0, trkE=[1.0] * rng.choice([0, 3]))
+              trkSL=500.0, trkTP=1000.0, trkE=[1.0] * rng.choice([0, 3]), lkOn=rng.random() < .5)
     e4 = P.Env(funcs=env.funcs, **st)
     P.run(DER, e4)
     txt, lv = e4["trkTxt"], e4["trkLv"]
@@ -142,6 +142,7 @@ report(bad4 == 0, f"4 the BRACKET row: 3000 states incl. zero closed signals: no
        f"break-even: mismatches {bad4}")
 import fix_v93 as F93  # noqa: E402
 v92v = subprocess.run(["git", "show", "8453d1373:artefacts/XAUUSD_Quantum_5_5_Visuals.pine"], capture_output=True, text=True, check=True).stdout
-report(F93.visuals(v92v) == "\n".join(VL), "5 Visuals == fix_v93.visuals(v92 Visuals @ 8453d1373), byte for byte")
+v93v = subprocess.run(["git", "show", "ee6085672:artefacts/XAUUSD_Quantum_5_5_Visuals.pine"], capture_output=True, text=True, check=True).stdout
+report(F93.visuals(v92v) == v93v, "5 the v93 build (ee6085672): Visuals == fix_v93.visuals(v92 Visuals @ 8453d1373), byte for byte (later: v94_check)")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- Pine text executed in Python; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)
