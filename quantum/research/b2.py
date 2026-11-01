@@ -2,7 +2,7 @@
 
 Declared 2026-11-01, committed before the first run, and not changed after seeing results.
 
-    python -m quantum.research.b2 <research-data checkout> <out.json> [--registry research/trials.jsonl]
+    python -m quantum.research.b2 <research-data checkout> <out.json> [--registry research/trials.jsonl] [--set b2|b2b]
 
 THE EVENT (operator, 2026-11-01): SL $500 / TP $1,000 at 0.5 lot = -$10 / +$20 of price from the decision price,
 "the market should move $10 to $20 my way without hitting my SL".
@@ -63,6 +63,12 @@ from . import harness as H
 from . import history
 
 TARGETS = {"T20": (20.0, 10.0), "T10": (10.0, 10.0), "T2": (2.0, 10.0)}     # +a before -b, in $ at REF_PRICE
+# B2b (declared 2026-11-01 before its first run, at the operator's request after B2's results): SL $1,000 /
+# TP $1,000 at 0.5 lot = +$20 before -$20 of price. One target only, to keep the family small. Everything else is
+# B2's declaration unchanged: the nine setups, 15min / 1h decision bars, 15-minute paths over 3 trading days, price
+# scaling to $4,000 (unscaled logged as a sensitivity), frozen costs, fills, one position at a time, the
+# direction-matched random baseline and the five-part pass rule (break-even here = (20 + c) / 40, about 52%).
+B2B_TARGETS = {"T20S20": (20.0, 20.0)}
 REF_PRICE = 4000.0
 HORIZON = 288                         # 15-minute bars = 3 trading days
 PATH_SEC = 900
@@ -316,10 +322,10 @@ def _stats(out, pnl, cost, a, b, d) -> dict:
             "gross_r": float((pnl / b).mean()), "t": t}
 
 
-def run(rd: str, outp: str, registry: str) -> dict:
+def run(rd: str, outp: str, registry: str, targets: dict = TARGETS, phase: str = "B2") -> dict:
     m15 = H.partition(history.load(rd, "XAU/USD", "15min"), "development")
     P = Paths(m15)
-    res = {"partition": "development", "from": str(H.DEV[0]), "to": str(H.DEV[1]), "targets": {k: list(v) for k, v in TARGETS.items()},
+    res = {"partition": "development", "set": phase, "from": str(H.DEV[0]), "to": str(H.DEV[1]), "targets": {k: list(v) for k, v in targets.items()},
            "ref_price": REF_PRICE, "horizon_15m_bars": HORIZON, "baseline": {}, "trials": [], "family": {}}
 
     # direction-matched random baseline: every 15-minute close of the partition, long and short, every target
@@ -330,9 +336,9 @@ def run(rd: str, outp: str, registry: str) -> dict:
     sc = pr / REF_PRICE
     for dname, dv in (("long", 1.0), ("short", -1.0)):
         dd = np.full(len(jr), dv)
-        ab = [(a * sc, b * sc) for a, b in TARGETS.values()]
+        ab = [(a * sc, b * sc) for a, b in targets.values()]
         ev = P.evaluate(jr, pr, dd, ab)
-        for (tn, (a, b)), e in zip(TARGETS.items(), ev):
+        for (tn, (a, b)), e in zip(targets.items(), ev):
             st = _stats(e["out"], e["pnl"], cr * sc, a * sc, b * sc, dd)
             res["baseline"][f"{tn} {dname}"] = {k: st[k] for k in ("n", "win_rate", "wilson", "net_r", "break_even")}
             print(f"baseline {tn} {dname:5s} n {st['n']:6d} win {st['win_rate']:.3f} net {st['net_r']:+.3f}R", flush=True)
@@ -351,10 +357,10 @@ def run(rd: str, outp: str, registry: str) -> dict:
             p, d = c[i], sig[i]
             scale = p / REF_PRICE
             cs, cu = cost_bar[i] * scale, cost_bar[i]
-            ab = [(a * scale, b * scale) for a, b in TARGETS.values()] + [(np.full(len(i), a), np.full(len(i), b)) for a, b in TARGETS.values()]
+            ab = [(a * scale, b * scale) for a, b in targets.values()] + [(np.full(len(i), a), np.full(len(i), b)) for a, b in targets.values()]
             ev = P.evaluate(j, p, d, ab)
-            for q, (tn, (a, b)) in enumerate(TARGETS.items()):
-                e, eu = ev[q], ev[q + len(TARGETS)]
+            for q, (tn, (a, b)) in enumerate(targets.items()):
+                e, eu = ev[q], ev[q + len(targets)]
                 keep = one_position(t_close[i], P.t[np.minimum(e["exit"], len(P.t) - 1)] + PATH_SEC)
                 st = _stats(e["out"][keep], e["pnl"][keep], cs[keep], a * scale[keep], b * scale[keep], d[keep])
                 st_all = _stats(e["out"], e["pnl"], cs, a * scale, b * scale, d)
@@ -378,7 +384,7 @@ def run(rd: str, outp: str, registry: str) -> dict:
                                "2_t_above_3": bool(st["n"] and (st["t"] or 0) > 3 and st["net_r"] > 0),
                                "3_beats_random_by_2se": bool(st["n"] and z > 2)}
                 res["trials"].append(rec)
-                H.log_trial(registry, {"phase": "B2", "partition": "development", **rec})
+                H.log_trial(registry, {"phase": phase, "partition": "development", **rec})
                 names.append(tid)
                 dts = pd.to_datetime(t_close[i][keep], unit="s", utc=True).normalize()
                 net_r = (e["pnl"][keep] - cs[keep]) / (b * scale[keep])
@@ -418,8 +424,9 @@ def main(argv=None) -> int:
     ap.add_argument("rd")
     ap.add_argument("out")
     ap.add_argument("--registry", default="research/trials.jsonl")
+    ap.add_argument("--set", default="b2", choices=("b2", "b2b"))
     a = ap.parse_args(argv)
-    r = run(a.rd, a.out, a.registry)
+    r = run(a.rd, a.out, a.registry) if a.set == "b2" else run(a.rd, a.out, a.registry, B2B_TARGETS, "B2b")
     print(json.dumps(r["family"], indent=1, default=float))
     return 0
 
