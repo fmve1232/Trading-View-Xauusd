@@ -94,7 +94,7 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
 - **Limits:** a proxy, not true order flow, on 7.5 weeks of data. It is logged as exploratory (`live-window-2026`)
   and cannot be registered.
 
-## 5. The real study: B5 on CME data (approved 2026-11-01; declared, not yet run)
+## 5. The real study: B5 on CME data (approved 2026-11-01; declared; amended A1 before any data)
 
 **Status.**
 - The operator approved it on 2026-11-01 ("approve B5 order flow study").
@@ -107,6 +107,21 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
   stored, except one exception: a repeat-after-failure copy of the 15-minute sums, AES-encrypted with the secret in
   the repository's private Actions cache.
 
+**Amendment A1 (2026-11-01, before any data).** The operator approved it: "approve B5 trades version and merge".
+
+| Data, Jan 2020 – Jan 2023 (Databento quote) | Price |
+|---|---|
+| `tbbo` (trades + the book at each trade), as first declared | $155.45 |
+| `trades` (each trade with its aggressor side) | $93.27 |
+
+- The `tbbo` quote was above the $100 budget and above the $125 sign-up credit. The operator chose `trades`, which
+  fits inside the credit, so the study costs nothing.
+- The book measures need the book, so they are dropped: OFI, queue imbalance and the spread.
+- The study keeps aggressor imbalance over 1, 5, 15 and 60 minutes and the trade-count z-score.
+- Rules: imbalance over 15 and 60 minutes.
+- Trials: 12 rules + 6 model trials = **18**.
+- The rows below that mention `tbbo`, OFI, queue imbalance or the spread describe the original declaration.
+
 **Deviations from the design below, stated before any data.**
 
 | Design | Declared | Why |
@@ -118,10 +133,12 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
 | Logistic against gradient-boosted trees, calibrated | Both; 6-block purged walk-forward; out-of-fold AUC, Brier, log loss, ECE, MCE, calibration slope / intercept. No recalibration map: a map belongs to validation (`09` §5) | — |
 | Q2: slippage against the next minutes' mid | The next 15 / 60 minutes' spot move by imbalance decile, against the modelled cost | The operator's fills are on spot, which has no exchange mid; descriptive only |
 
-**Trials and the verdict.**
-- 30 rules: 5 features × follow / fade × +$10 / +$15 / +$20, firing at the trailing 90th percentile.
-- 6 model trials: each model trades its top decile, one position at a time.
-- All 36 face B2's five-part rule. A model also needs an out-of-fold AUC of at least 0.55.
+**Trials and the verdict (as amended by A1).**
+- 12 rules: 2 features (imbalance over 15 and 60 minutes) × follow / fade × +$10 / +$15 / +$20, firing at the
+  trailing 90th percentile.
+- 6 model trials: logistic regression and gradient-boosted trees on 5 features. Each trades its top decile, one
+  position at a time.
+- All 18 face B2's five-part rule. A model also needs an out-of-fold AUC of at least 0.55.
 - Q2 (execution) is reported descriptively: the next 15 / 60 minutes' move by imbalance decile.
 
 **Checks before any data.**

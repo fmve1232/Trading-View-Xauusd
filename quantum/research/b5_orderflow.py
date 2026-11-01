@@ -11,18 +11,24 @@ never stored or committed (CME licensing). The one exception is the workflow's r
     python -m quantum.research.b5_orderflow --spot <research-data checkout> --out <results.json> \
            --trials <trials.jsonl> [--max-cost-usd 100] [--quote-only] [--allow-rerun] [--flow-cache <dir>]
 
+AMENDMENT A1 (2026-11-01, before any data; operator: "approve B5 trades version and merge")
+  - Databento quoted $155.45 for schema tbbo over the development window, above the $100 budget and the $125 credit.
+  - Schema "trades" was quoted at $93.27 for the same window. The operator chose it so the study costs nothing.
+  - Trades carry the aggressor side but no book, so ofi15, ofi60, qimb and spread are dropped.
+  - 12 rule trials + 6 model trials = 18 trials.
+  - The text below is the declaration as amended.
 DATA
-  Databento GLBX.MDP3, schema "tbbo": every trade with its aggressor side and the best bid / offer just before it.
+  Databento GLBX.MDP3, schema "trades": every trade with its aggressor side.
   Symbol GC.v.0, the most-traded gold futures contract (Databento continuous symbology, rolled by volume).
   Window: the development partition, 2020-01-24 02:00 -> 2023-01-24 02:00 UTC, fetched in 7-day pieces.
   Each piece is reduced to 15-minute sums at once, and the trades are discarded.
 COST GUARD
   metadata.get_cost for the whole request runs first. Nothing is downloaded when the quote exceeds --max-cost-usd
-  (default $100, inside Databento's $125 new-account credit). --quote-only prints the quote and stops.
+  (default $100, inside Databento's $125 new-account credit). --quote-only prints the quote (and, for information, the
+  other schema's price) and stops.
 DEVIATIONS FROM THE SECTION 5 DESIGN, stated before any data
-  - Schema tbbo instead of trades + mbp-1. tbbo is the same trades, with the book at each trade, at a fraction of
-    mbp-1's size. Cont's OFI is therefore TRADE-SAMPLED: computed between consecutive pre-trade book states rather
-    than over every book update. Multi-level OFI (mbp-10) is not run.
+  - Schema trades only (amendment A1): no top of book, so no OFI, queue imbalance or spread. mbp-1 and mbp-10 are not
+    run. (bar_features still computes the book measures when given a frame that has them; B5 does not use them.)
   - Decisions are every 15-minute bar. Paths are SPOT XAU/USD 15-minute bars (research-data branch; the operator's
     instrument), with B2's horizon, fills, costs and one-position rule, so the results compare with B1-B4.
     GC paths are not used.
@@ -30,20 +36,16 @@ FEATURES per 15-minute bar (UTC open time; built only from trades inside the bar
     imb1, imb5, imb15   (buyer-initiated - seller-initiated volume) / (their sum), over the bar's last 1 / 5 minutes and
                         the whole bar. Databento side "B" = buyer-initiated (lifted the offer), "A" = seller-initiated.
     imb60               the same over the last 4 traded bars
-    ofi15, ofi60        trade-sampled Cont-Kukanov-Stoikov OFI summed over the bar / the last 4 traded bars, divided by
-                        the mean top-of-book depth (bid size + ask size) / 2 over the same trades
-    qimb                queue imbalance before the bar's last trade: (bid size - ask size) / (bid size + ask size)
     ntr_z               log trade count, z-scored over the previous 2,000 traded bars
-    spread              ask - bid before the bar's last trade
   ROLLS: on the UTC day the front contract changes, and the day after, every feature is set missing.
 Q1 DIRECTION (decides)
-  Rules: x in imb15, imb60, ofi15, ofi60 and qimb. A rule fires where |x| is at or above its trailing 90th percentile
+  Rules: x in imb15 and imb60. A rule fires where |x| is at or above its trailing 90th percentile
     (the previous 2,000 traded bars, the current one excluded).
     CONT trades sign(x) (the literature's direction). REV trades -sign(x).
-    5 features x 2 x 3 targets = 30 trials.
+    2 features x 2 x 3 targets = 12 trials.
   Models: logistic regression (L2 = 1, standardized) and gradient-boosted trees (scikit-learn
     HistGradientBoostingClassifier with the GBT settings below).
-    Inputs: the 9 features, with the directional ones multiplied by the trade direction. Long and short decisions are
+    Inputs: the 5 features, with the directional ones multiplied by the trade direction. Long and short decisions are
     stacked at every bar. Label: target before stop.
     Validation: walk-forward over 6 contiguous blocks. Blocks 2-6 are each predicted by a model trained on every
     earlier row whose 288-bar label window ends before the block starts (purged).
@@ -52,7 +54,7 @@ Q1 DIRECTION (decides)
     2 models x 3 targets = 6 trials.
   Out-of-fold report (research/09 section 5): AUC, Brier against the base rate, log loss, ECE and maximum calibration
     error (10 equal-width bins), and the calibration slope and intercept.
-  Family verdict: all 36 trials together face B2's five-part rule:
+  Family verdict: all 18 trials together face B2's five-part rule:
     (1) the Wilson lower bound is above break-even;
     (2) t > 3 with net > 0;
     (3) z > 2 against a random entry with the same long / short mix;
@@ -80,28 +82,29 @@ from .. import ta
 from . import b2, history
 from . import harness as H
 
-DATASET, SCHEMA, SYMBOL, STYPE = "GLBX.MDP3", "tbbo", "GC.v.0", "continuous"
-COLS = ("side", "size", "bid_px_00", "ask_px_00", "bid_sz_00", "ask_sz_00", "instrument_id")
+DATASET, SCHEMA, SYMBOL, STYPE = "GLBX.MDP3", "trades", "GC.v.0", "continuous"          # amendment A1 (was tbbo)
+COLS = ("side", "size", "instrument_id")
+BOOK = ("bid_px_00", "ask_px_00", "bid_sz_00", "ask_sz_00")
 TARGETS = {"T10": (10.0, 10.0), "T15": (15.0, 10.0), "T20": (20.0, 10.0)}
 BAR, BAR_SEC = "15min", 900
 PCT, PCT_BARS, Z_BARS = 0.90, 2000, 2000
-RULE_FEATURES = ("imb15", "imb60", "ofi15", "ofi60", "qimb")
-MODEL_FEATURES = ("imb1", "imb5", "imb15", "imb60", "ofi15", "ofi60", "qimb", "ntr_z", "spread")
-DIRECTIONAL = ("imb1", "imb5", "imb15", "imb60", "ofi15", "ofi60", "qimb")
+RULE_FEATURES = ("imb15", "imb60")
+MODEL_FEATURES = ("imb1", "imb5", "imb15", "imb60", "ntr_z")
+DIRECTIONAL = ("imb1", "imb5", "imb15", "imb60")
 BLOCKS, TOP_Q = 6, 0.90
 L2 = 1.0
 GBT = {"max_iter": 200, "learning_rate": 0.05, "max_leaf_nodes": 15, "min_samples_leaf": 200, "l2_regularization": 1.0,
        "early_stopping": False, "random_state": 7}
 AUC_MIN, Z_MIN, BH_Q, RC_P = 0.55, 2.0, 0.10, 0.05
 MAX_COST_USD, CHUNK_DAYS, RETRIES = 100.0, 7, 3
-QUOTE_ALTERNATIVES = ("trades",)
+QUOTE_ALTERNATIVES = ("tbbo",)
 
 
 # ---------------- features ----------------
 def bar_features(tr: pd.DataFrame) -> pd.DataFrame:
-    """tr: one row per trade, UTC DatetimeIndex (exchange event time), columns COLS. One row per 15-minute bar
-    (open time) that has trades: volume sums by aggressor, trade count, trade-sampled OFI and depth sums, and the
-    book before the bar's last trade."""
+    """tr: one row per trade, UTC DatetimeIndex (exchange event time), columns COLS (+ BOOK when the schema has it).
+    One row per 15-minute bar (open time) that has trades: volume sums by aggressor and the trade count; with BOOK also
+    trade-sampled OFI and depth sums and the book before the bar's last trade (missing otherwise)."""
     cols = ["buy", "sell", "buy5", "sell5", "buy1", "sell1", "n", "ofi", "depth", "qimb", "spread", "inst"]
     if tr is None or tr.empty:
         return pd.DataFrame(columns=cols, dtype=float)
@@ -112,8 +115,10 @@ def bar_features(tr: pd.DataFrame) -> pd.DataFrame:
     side = t["side"].astype(str).to_numpy()
     b_ = np.where(side == "B", sz, 0.0)
     s_ = np.where(side == "A", sz, 0.0)
-    bp, ap = t["bid_px_00"].to_numpy(float), t["ask_px_00"].to_numpy(float)
-    bs, as_ = np.nan_to_num(t["bid_sz_00"].to_numpy(float)), np.nan_to_num(t["ask_sz_00"].to_numpy(float))
+    book = all(c in t.columns for c in BOOK)
+    nan = np.full(len(t), np.nan)
+    bp, ap = (t["bid_px_00"].to_numpy(float), t["ask_px_00"].to_numpy(float)) if book else (nan, nan)
+    bs, as_ = (np.nan_to_num(t["bid_sz_00"].to_numpy(float)), np.nan_to_num(t["ask_sz_00"].to_numpy(float))) if book else (nan, nan)
     # Cont, Kukanov & Stoikov (2014) OFI between consecutive pre-trade book states (first trade of a piece: 0)
     pbp, pap, pbs, pas = np.r_[np.nan, bp[:-1]], np.r_[np.nan, ap[:-1]], np.r_[0.0, bs[:-1]], np.r_[0.0, as_[:-1]]
     e = (np.where(bp >= pbp, bs, 0.0) - np.where(bp <= pbp, pbs, 0.0)
@@ -122,6 +127,8 @@ def bar_features(tr: pd.DataFrame) -> pd.DataFrame:
     g = pd.DataFrame({"buy": b_, "sell": s_, "buy5": np.where(off >= 600, b_, 0.0), "sell5": np.where(off >= 600, s_, 0.0),
                       "buy1": np.where(off >= 840, b_, 0.0), "sell1": np.where(off >= 840, s_, 0.0), "n": 1.0, "ofi": e,
                       "depth": (bs + as_) / 2.0}, index=key).groupby(level=0).sum()
+    if not book:
+        g["ofi"], g["depth"] = np.nan, np.nan
     last = pd.DataFrame({"bs": bs, "as": as_, "bp": bp, "ap": ap, "inst": t["instrument_id"].to_numpy(float)}, index=key)
     last = last[~last.index.duplicated(keep="last")]
     tot = last["bs"] + last["as"]
@@ -289,7 +296,7 @@ def fetch(key: str, start: str, end: str, max_cost: float) -> tuple[pd.DataFrame
             elif df.index.name == "ts_event":
                 idx = pd.to_datetime(df.index, utc=True)
             else:
-                raise RuntimeError("tbbo frame has no ts_event")
+                raise RuntimeError(f"{SCHEMA} frame has no ts_event")
             tr = df[list(COLS)].set_axis(pd.DatetimeIndex(idx), axis=0)
             parts.append(bar_features(tr[(tr.index >= a) & (tr.index < b)]))
             trades += len(df)
