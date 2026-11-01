@@ -35,8 +35,11 @@ def line(prefix):
 
 
 a = next(i for i, l in enumerate(VL) if l.startswith("if trkShow and barstate.isconfirmed"))
-b = next(i for i in range(a, len(VL)) if VL[i].strip().startswith("array.push(trkDir, trkLongSig ? 1 : -1)"))
+# v97: the whole block, up to the statistics; run here with confirmation OFF and TP1 = TP2 = TP3, it must give exactly
+# the v93 single-target counts in its TP3 counters (trkW / trkL / trkNet); v97_check tests the three targets + confirmation
+b = next(i for i in range(a, len(VL)) if VL[i].startswith("int trkN1 = ")) - 1
 RACE = [l.replace("barstate.isconfirmed", "isConf") for l in VL[a:b + 1] if l.strip() and not l.strip().startswith("//")]
+assert RACE[-1].strip().startswith("array.push(trkQb")
 DIST = [line("float trkSLd = "), line("float trkTPd = ")]
 
 # ---- 1
@@ -51,7 +54,7 @@ report(abs(m[0] - 10) < 1e-12 and abs(m[1] - 20) < 1e-12 and abs(pt[0] - 5) < 1e
 
 
 def run_pine(bars, sigs, sld, tpd, lot, costs):
-    env = P.Env(trkShow=True, isConf=True, trkSLd=sld, trkTPd=tpd, trkLot=lot, pointValue=100.0,
+    env = P.Env(trkShow=True, isConf=True, trkSLd=sld, trkTPd=tpd, trkTP1d=tpd, trkTP2d=tpd, trkLot=lot, pointValue=100.0, trkCf=0.0, trkCfD=0.0, trkCfN=24.0, trkH1=[], trkH2=[], trkH3=[], trkQe=[], trkQd=[], trkQb=[], bar_index=0.0, trkW1=0.0, trkL1=0.0, trkNet1=0.0, trkW2=0.0, trkL2=0.0, trkNet2=0.0, 
                 trkE=[], trkDir=[], trkW=0.0, trkL=0.0, trkNet=0.0)
     for i, (h, l, c) in enumerate(bars):
         s = sigs.get(i, 0)
@@ -121,23 +124,30 @@ else:
            f"open {len(e['trkE'])}")
 
 # ---- 4
-DER = [line(p) for p in ("int trkN = ", "float trkBE = ", "[trkLo, trkHi] = ", "float trkEqPct = ", "int trkLv = ", "string trkTxt = ")]
+DER = [line(p) for p in ("int trkN1 = ", "int trkN2 = ", "int trkN = ", "float trkBE1 = ", "float trkBE2 = ", "float trkBE = ", "[trkLo1, trkHi1] = ",
+                        "[trkLo2, trkHi2] = ", "[trkLo, trkHi] = ", "float trkEqPct = ", "int trkLv1 = ", "int trkLv2 = ", "int trkLv = ",
+                        "int trkLvAll = ", "string trkTxt = ")]
 env = P.Env()
 fl = [l for l in VL]
 fa = next(i for i, l in enumerate(fl) if l.startswith("f_wil(float k, int n) =>"))
 fb = next(i for i in range(fa + 1, len(fl)) if fl[i] and not fl[i].startswith(" "))
 P.define([l for l in fl[fa:fb] if l.strip()], env)
+ca = next(i for i, l in enumerate(fl) if l.startswith("f_trkCell("))
+P.define([fl[ca], fl[ca + 1]], env)
 bad4 = 0
 for _ in range(3000):
     st = dict(trkW=float(rng.choice([0, 1, 5, 40])), trkL=float(rng.choice([0, 2, 9, 60])), trkNet=rng.uniform(-9e3, 9e3),
               trkSLd=rng.choice([10.0, 5.0, 0.0001]), trkTPd=rng.choice([20.0, 10.0, 0.0001]), ckCost=rng.choice([0.77, 2.3]),
               trkLot=rng.choice([0.5, 0.01]), pointValue=100.0, rkEquity=rng.choice([25000.0, 100.0]), trkUnit=rng.choice(["Money ($)", "MT5 points"]),
-              trkSL=500.0, trkTP=1000.0, trkE=[1.0] * rng.choice([0, 3]), lkOn=rng.random() < .5)
+              trkSL=500.0, trkTP=1000.0, trkE=[1.0] * rng.choice([0, 3]), lkOn=rng.random() < .5, trkQe=[1.0] * rng.choice([0, 2]),
+              trkW1=float(rng.choice([0, 3])), trkL1=float(rng.choice([0, 4])), trkNet1=rng.uniform(-9e3, 9e3), trkW2=float(rng.choice([0, 2])),
+              trkL2=float(rng.choice([0, 5])), trkNet2=rng.uniform(-9e3, 9e3), trkTP1d=10.0, trkTP2d=15.0, trkCf=rng.choice([0.0, 3.0]),
+              trkCfD=rng.choice([0.0, 3.1]), trkCfMin=120.0)
     e4 = P.Env(funcs=env.funcs, **st)
     P.run(DER, e4)
     txt, lv = e4["trkTxt"], e4["trkLv"]
     want = 0 if e4["trkN"] < 1 else 1 if e4["trkLo"] > e4["trkBE"] else -1 if e4["trkHi"] < e4["trkBE"] else 0
-    bad4 += "NaN" in txt or lv != want
+    bad4 += "NaN" in txt or lv != want or txt.count("\n") != 4
 report(bad4 == 0, f"4 the BRACKET row: 3000 states incl. zero closed signals: no NaN, colour UP / DOWN only when the 95% range clears "
        f"break-even: mismatches {bad4}")
 import fix_v93 as F93  # noqa: E402

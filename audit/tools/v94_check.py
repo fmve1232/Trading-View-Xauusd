@@ -76,17 +76,20 @@ DEC = [l.strip().replace("nz(lkD[1])", "lkDprev").replace("barstate.isconfirmed"
        if l.strip().startswith(("int lkD = ", "float lkSLp = ", "bool lkTrig = ", "bool trkLongSig = ", "bool trkShortSig = "))]
 ON = ["if not lkOn and lkDec == 0", "    lkOn := true"]
 a = next(i for i, l in enumerate(VL) if l.startswith("if trkShow and barstate.isconfirmed"))
-b = next(i for i in range(a, len(VL)) if VL[i].strip().startswith("array.push(trkDir, trkLongSig ? 1 : -1)"))
+# v97: the whole block, up to the statistics; run here with confirmation OFF and TP1 = TP2 = TP3, it must give exactly
+# the v93 single-target counts in its TP3 counters (trkW / trkL / trkNet); v97_check tests the three targets + confirmation
+b = next(i for i in range(a, len(VL)) if VL[i].startswith("int trkN1 = ")) - 1
 RACE = [l.replace("barstate.isconfirmed", "isConf") for l in VL[a:b + 1] if l.strip() and not l.strip().startswith("//")]
+assert RACE[-1].strip().startswith("array.push(trkQb")
 assert len(DEC) == 5 and all(any(x.strip() == l.strip() for l in VL) for x in ON)
 
 
 def visuals_run(series, bars, h2, sld=10.0, tpd=20.0):
-    env = P.Env(lkOn=False, isConf=True, trkShow=True, trkSLd=sld, trkTPd=tpd, trkLot=0.5, pointValue=100.0, ckCost=0.77,
+    env = P.Env(lkOn=False, isConf=True, trkShow=True, trkSLd=sld, trkTPd=tpd, trkTP1d=tpd, trkTP2d=tpd, trkLot=0.5, pointValue=100.0, ckCost=0.77, trkCf=0.0, trkCfD=0.0, trkCfN=24.0, trkH1=[], trkH2=[], trkH3=[], trkQe=[], trkQd=[], trkQb=[], bar_index=0.0, trkW1=0.0, trkL1=0.0, trkNet1=0.0, trkW2=0.0, trkL2=0.0, trkNet2=0.0, 
                 trkE=[], trkDir=[], trkW=0.0, trkL=0.0, trkNet=0.0)
     prev, trig, slp = 0, [], []
     for i, ((h, l, c), v) in enumerate(zip(bars, series)):
-        env.update(lkDec=v, lkDprev=prev, close=c, high=h, low=l, h2Long=h2.get(i, 0) > 0, h2Short=h2.get(i, 0) < 0)
+        env.update(lkDec=v, lkDprev=prev, close=c, high=h, low=l, h2Long=h2.get(i, 0) > 0, h2Short=h2.get(i, 0) < 0, bar_index=float(i))
         P.run(ON + DEC, env)
         P.run(RACE, env)
         prev = int(env["lkD"])

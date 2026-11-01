@@ -465,8 +465,12 @@ DER = ([line(p) for p in ("float ckCostPct = ", "int ckCostLv = ", "bool ckChurn
        + lg2 + [line(p) for p in ("string tfNote = ", "string lgLine = ", "string lg2Line = ")]
        + [l.strip() for l in L if l.strip().startswith("int _ckLv = ") or l.strip().startswith("string _ckTx = ")]
        # v93: the BRACKET row's derived values (the tracker's counters are primitives below, some zero)
-       + [line(p) for p in ("float trkSLd = ", "float trkTPd = ", "int trkN = ", "float trkBE = ", "[trkLo, trkHi] = ",
-                            "float trkEqPct = ", "int trkLv = ", "string trkTxt = ")])
+       + [line(p) for p in ("float trkSLd = ", "float trkTP1d = ", "float trkTP2d = ", "float trkTPd = ", "float trkCfD = ",
+                            "int trkN1 = ", "int trkN2 = ", "int trkN = ", "float trkBE1 = ", "float trkBE2 = ", "float trkBE = ",
+                            "[trkLo1, trkHi1] = ", "[trkLo2, trkHi2] = ", "[trkLo, trkHi] = ", "float trkEqPct = ", "int trkLv1 = ",
+                            "int trkLv2 = ", "int trkLv = ", "int trkLvAll = ", "string trkTxt = ")])
+_ca = next(i for i, l in enumerate(L) if l.startswith("f_trkCell("))
+P.define([L[_ca], L[_ca + 1]], env)   # v97: the BRACKET cells
 nan8, err8, n8 = [], set(), 0
 for _ in range(1500):
     na_ = lambda x: P.NA if rng.random() < 0.25 else x
@@ -488,6 +492,7 @@ for _ in range(1500):
               trkTP=rng.choice([1000.0, 0.01, 3000.0]), trkLot=rng.choice([0.5, 0.01, 2.0]), trkPt=rng.choice([0.01, 0.001]),
               trkW=float(rng.choice([0, 1, 12])), trkL=float(rng.choice([0, 3, 20])), trkNet=rng.uniform(-5e3, 5e3),
               trkE=[2000.0] * rng.choice([0, 1, 4]),
+              trkTP1=rng.choice([500.0, 0.01]), trkTP2=rng.choice([750.0, 0.01]), trkCf=rng.choice([0.0, 3.0]), trkCfMin=120.0, trkQe=[1.0] * rng.choice([0, 2]), trkW1=float(rng.choice([0, 3])), trkL1=float(rng.choice([0, 4])), trkNet1=rng.uniform(-5e3, 5e3), trkW2=float(rng.choice([0, 2])), trkL2=float(rng.choice([0, 5])), trkNet2=rng.uniform(-5e3, 5e3),
               lkOn=rng.random() < .5, lkSLp=rng.choice([P.NA, 1995.0]), lkLotsOn=rng.random() < .5, lkLots=rng.choice([-1.0, 0.0, 0.37]),
               close=2000.0)
     e8 = P.Env(funcs=env.funcs, **st)

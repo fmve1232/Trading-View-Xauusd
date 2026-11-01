@@ -124,7 +124,8 @@ _t = list(F95.TARGETS); _s = set(F95.SKIP)
 F95.TARGETS[:] = [x for x in F95.TARGETS if not x.startswith("ob")]; F95.SKIP.discard('showOB = input.bool(true, "Order Blocks (engine)"')
 d95 = F95.visuals(v94v, "\n".join(M)) == v95v
 F95.TARGETS[:] = _t; F95.SKIP |= _s
-report(d95 and F96.visuals(v95v, "\n".join(M)) == "\n".join(V),
-       "5 derivations, byte for byte: v95 (4e79e9f3f) == fix_v95.visuals(v94); Visuals == fix_v96.visuals(v95)")
+v96v = subprocess.run(["git", "show", "eb8e08269:" + VF], capture_output=True, text=True, check=True).stdout
+report(d95 and F96.visuals(v95v, "\n".join(M)) == v96v,
+       "5 derivations, byte for byte: v95 (4e79e9f3f) == fix_v95.visuals(v94); v96 (eb8e08269) == fix_v96.visuals(v95) (later: v97_check)")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- Pine text read and executed in Python; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

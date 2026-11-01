@@ -3460,3 +3460,37 @@ a built-in series. The ticker's CHECKS tile now says "LINK the Master" while it 
 
 **Not run:** the TradingView compile.
 
+# v97 — BRACKET tracker: one stop, three targets, the website's confirmation entry (2026-11-01)
+
+Operator: "−$10 stop with +$10, +$15 and +$20 profit with success rate more than 90%" → "Both" (the tracker, and a
+pre-registered website arm). Visuals only; display only; nothing fitted.
+
+**Before building, the system of record was read.** The website's Phase B2c (#60) and B3 (#61), merged today, ran
+exactly this request on 3 years of development data. B3 tested trend alignment, confirmation entries and SMC sequences:
+- **210 trials, none near 90%;**
+- the best with 100+ trades: 56.5% / 45.9% / 38.6%, against random 49.5% / 39.7% / 33.5%;
+- **Reality Check p = 1.000, PBO 0.73.**
+
+**Tracker:**
+- **Targets:** TP1 / TP2 / TP3 (defaults $500 / $750 / $1,000 = +$10 / +$15 / +$20 at 0.5 lot) on the −$10 stop.
+- **Scoring:** each target is scored on its own: touched before the stop = success; a bar touching both counts as the
+  stop. The race ends at the stop or after all three.
+- **Shown per target:** rate, Wilson 95% range, break-even (cost included), net $.
+- **Confirmation (B3's declared rule):** a close $3 (scaled to $4,000 gold) in the trade's direction before one
+  against, within 120 minutes; entry at that close; 0 = off.
+- **Colour:** green only when some target's 95% lower bound clears its break-even.
+
+**Checks:**
+- `v97_check.py`: defaults; 250 random paths vs an independent reference (targets in and out of order, confirmation off
+  / on); a positive control (no cancel-on-against is detected 40 / 40); real XAU 5m with Treatment 5m's signals;
+  derivation;
+- `v93_check` / `v94_check` run the new block with confirmation off and equal targets: identical to v93;
+- `v86_check` §8 evaluates the new row with missing data;
+- `sx_check` §5 is anchored to v96.
+
+**Visuals' model estimate:** 70,148 (−30%).
+
+**The website arm is NOT registered here.** The website's own protocol (Amendments 11 / 13) registers a forward arm only
+after it passes on development data, and B3 rejected this family. A forward arm built on 6 forward trades would skip
+that rule. The next step is the operator's decision (see the chat).
+
