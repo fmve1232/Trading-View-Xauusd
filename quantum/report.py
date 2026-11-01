@@ -12,7 +12,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, cost_profiles, holdout, news_calendar, ta, trade_race
+from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, confirm, cost_profiles, holdout, news_calendar, ta, trade_race
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -668,6 +668,11 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         race = trade_race.build(market, res, res_chal, cfg, man, store_dir)
     except Exception as e:  # noqa: BLE001 - the panel must never break the page
         race = {"error": f"{type(e).__name__}: {e}"[:200]}
+    sr = sr_scanner(F)
+    try:   # high-confidence confirmation panel (display only): data quality + nine-layer approval (quantum/confirm.py)
+        hc = confirm.build(market, res, race, checks, sr, now)
+    except Exception as e:  # noqa: BLE001 - the panel must never break the page
+        hc = {"error": f"{type(e).__name__}: {e}"[:200]}
 
     forming = None
     if market.forming is not None:
@@ -687,7 +692,7 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         },
         "data_status": [st.to_dict() for st in market.status.values()],
         "holdout": {k: man.get(k) for k in ("freeze_key", "config_hash", "engine_code_hash", "engine_version", "freeze_utc", "status", "history")},
-        "chart": chart, "markers": markers, "zones": zones, "sr": sr_scanner(F), "decisions": decisions, "cone": cone,
+        "chart": chart, "markers": markers, "zones": zones, "sr": sr, "decisions": decisions, "cone": cone,
         "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks, "checks": checks,
                       "gate_sides": gate_sides(L, F, n - 1), "gold_arrows": gold_arrows(L, F, n - 1, market.tf_sec)},
         "analog": {**A, "scan": L["analog_scan"], "hit_prob": L["hit_prob"], "hit_n": L["hit_n"],
@@ -703,5 +708,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "cost_profiles": cost_profiles.export(),   # display-only sizing profiles (audit/COST_PROFILES.md)
         "news": news_calendar.export(),            # dated NFP / CPI / FOMC (display; Pine Visuals v86 / v92)
         "trade_race": race,                        # "Your trade" panel (quantum/trade_race.py)
+        "hc": hc,                                  # high-confidence confirmation panel (quantum/confirm.py)
     }
     return _clean(payload)

@@ -80,3 +80,68 @@ test("Your trade: cell arithmetic and the direction-matched random baseline", ()
   assert.ok(Number.isNaN(C.matchedRandom(R, { long: 0, short: 0 }, ix, 1000, 500, 50, 40).p));
   assert.ok(Number.isNaN(C.raceCell({ n: 0, win: [[0]], loss: [[0]], mark: [[0]] }, ix, 1, 1, 1, 0).ev));
 });
+
+test("contract maths in the page equal quantum/contract.py (parity)", () => {
+  const py = JSON.parse(execFileSync("python3", ["-c", `
+import json, math
+from quantum import contract as C
+S = dict(C.DEFAULT_SPEC)
+specs = [S, {**S, "contract_size": 50.0, "tick_value": 0.5}, {**S, "account_currency": "EUR", "tick_value": 0.86}, {**S, "tick_value": 2.0},
+         {**S, "pip_size": 0.01}, {**S, "contract_size": 0}, {**S, "volume_step": 0.1, "volume_min": 0.1}]
+out = []
+for sp in specs:
+    v = C.validate(sp)
+    row = {"spec": sp, "ok": v["ok"], "nerr": len(v["errors"]), "nwarn": len(v["warnings"])}
+    if v["ok"]:
+        row.update(m=C.money_per_price(sp, 0.5), p=C.money_to_price(sp, 1000.0, 0.5), pips=C.to_pips(sp, 10.0), pts=C.to_points(sp, 10.0),
+                   lots=C.lots_for_risk(sp, 1000.0, 10.0, 0.97), tm=C.trade_money(sp, 0.5, 15.0, 10.0, 0.97))
+    out.append(row)
+print(json.dumps(out))`], { cwd: new URL("..", import.meta.url).pathname }).toString());
+  assert.equal(py.length, 7);
+  for (const r of py) {
+    const v = C.specValidate(r.spec);
+    assert.equal(v.ok, r.ok, JSON.stringify(r.spec)); assert.equal(v.errors.length, r.nerr); assert.equal(v.warnings.length, r.nwarn);
+    if (!r.ok) continue;
+    const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-9, `${a} vs ${b}`);
+    close(C.moneyPerPrice(r.spec, 0.5), r.m); close(C.moneyToPrice(r.spec, 1000, 0.5), r.p);
+    close(C.toPips(r.spec, 10), r.pips); close(C.toPoints(r.spec, 10), r.pts); close(C.lotsForRisk(r.spec, 1000, 10, 0.97), r.lots);
+    const tm = C.tradeMoney(r.spec, 0.5, 15, 10, 0.97);
+    for (const k of Object.keys(r.tm)) close(tm[k], r.tm[k]);
+  }
+});
+
+test("the page's nine-layer approval equals quantum/confirm.approve on the same inputs (parity)", () => {
+  const py = JSON.parse(execFileSync("python3", ["-c", `
+import json, random
+from quantum import confirm
+rnd = random.Random(11)
+cases = []
+for k in range(400):
+    x = {"data": {"status": rnd.choice(["OK", "OK", "DEGRADED", "UNAVAILABLE"]), "reasons": ["r"] if rnd.random() < 0.5 else []},
+         "market_open": rnd.random() < 0.85, "regime": rnd.choice(["RANGE", "ABNORMAL", "STRONG TR", "WEAK TR"]),
+         "signal": {"dir": rnd.choice([-1, 0, 1, 1]), "bars_since": rnd.choice([0, 0, 0, 1, 3])},
+         "htf": {"4H": rnd.choice([-1, 0, 1, None]), "1H": rnd.choice([-1, 0, 1, None])},
+         "profile": {"tp": rnd.choice([10.0, 15.0, 20.0, 12.5]), "sl": rnd.choice([10.0, 20.0])},
+         "level_ahead": rnd.choice([None, {"name": "PDH", "dist": round(rnd.uniform(0.5, 30), 3)}]),
+         "cost_px": round(rnd.uniform(0.3, 2.5), 3), "atr": round(rnd.uniform(1, 12), 3), "news": {"in_window": rnd.random() < 0.15},
+         "risk_lock": rnd.choice([False, False, True, None]), "model": {"validated": rnd.random() < 0.5}, "target": 0.9,
+         "race": None}
+    if rnd.random() < 0.8:
+        n = rnd.choice([0, 20, 150, 184, 400, 2000]); x["race"] = {"n": n, "win": int(n * rnd.choice([0.3, 0.5, 0.9, 0.93, 0.97])), "random": 0.5}
+    out = confirm.approve(x)
+    cases.append({"x": x, "status": out["status"], "states": [[l["id"], l["state"]] for l in out["layers"]], "be": out["break_even"],
+                  "lo": out["probability"]["lo"] if out["probability"] else None, "nreasons": len(out["reasons"])})
+print(json.dumps(cases))`], { cwd: new URL("..", import.meta.url).pathname }).toString());
+  assert.equal(py.length, 400);
+  const seen = new Set();
+  for (const c of py) {
+    const o = C.hcApprove(c.x);
+    assert.equal(o.status, c.status, JSON.stringify(c.x));
+    assert.deepEqual(o.layers.map((l) => [l.id, l.state]), c.states);
+    assert.ok(Math.abs(o.break_even - c.be) < 1e-12);
+    if (c.lo === null) assert.equal(o.probability, null); else assert.ok(Math.abs(o.probability.lo - c.lo) < 1e-12);
+    assert.equal(o.reasons.length, c.nreasons);
+    seen.add(o.status);
+  }
+  for (const s of ["DATA UNAVAILABLE", "NO TRADE", "WAIT FOR CONFIRMATION", "MODEL NOT VALIDATED", "INSUFFICIENT EVIDENCE"]) assert.ok(seen.has(s), s);
+});

@@ -78,6 +78,7 @@ def race(path: dict, t_close: np.ndarray, price: np.ndarray, d: np.ndarray) -> d
     j, p, d = j[ok], price[ok].astype(float), np.sign(d[ok]).astype(float)
     nt, ns = len(TP_GRID), len(SL_GRID)
     win, loss, mark = np.zeros((nt, ns), np.int64), np.zeros((nt, ns), np.int64), np.zeros((nt, ns))
+    t_tp, t_res = np.zeros((nt, ns), np.int64), np.zeros((nt, ns), np.int64)   # summed bars to TP (wins) / to either
     steps = np.arange(H)
     for s0 in range(0, len(j), CHUNK):
         jj, pp, dd = j[s0:s0 + CHUNK], p[s0:s0 + CHUNK, None], d[s0:s0 + CHUNK, None]
@@ -95,11 +96,15 @@ def race(path: dict, t_close: np.ndarray, price: np.ndarray, d: np.ndarray) -> d
             opened_beyond = od[r, np.minimum(ia, H - 1)] >= a - 1e-9
             for y, ib in enumerate(ib_all):
                 tie = (ia == ib) & (ia < H)
-                win[x, y] += int(np.sum((ia < ib) | (tie & opened_beyond)))
-                loss[x, y] += int(np.sum((ib < ia) | (tie & ~opened_beyond)))
+                w = (ia < ib) | (tie & opened_beyond)
+                lo = (ib < ia) | (tie & ~opened_beyond)
+                win[x, y] += int(np.sum(w))
+                loss[x, y] += int(np.sum(lo))
                 mark[x, y] += float(np.sum(mk[(ia >= H) & (ib >= H)]))
+                t_tp[x, y] += int(np.sum(ia[w] + 1))                 # bars until the TP bar closes
+                t_res[x, y] += int(np.sum(np.minimum(ia, ib)[w | lo] + 1))
     return {"n": len(j), "long": int(np.sum(d > 0)), "short": int(np.sum(d < 0)),
-            "win": win.tolist(), "loss": loss.tolist(), "mark": np.round(mark, 2).tolist()}
+            "win": win.tolist(), "loss": loss.tolist(), "mark": np.round(mark, 2).tolist(), "t_tp": t_tp.tolist(), "t_res": t_res.tolist()}
 
 
 def _signals(ev: dict) -> tuple[np.ndarray, np.ndarray]:

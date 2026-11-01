@@ -149,3 +149,13 @@ def test_payload_on_a_synthetic_market_falls_back_to_chart_bars_and_is_strict_js
                 assert 0 <= s["win"][i][j] + s["loss"][i][j] <= s["n"]
     json.dumps(p, allow_nan=False)
     assert os.path.basename(tr.__file__) == "trade_race.py"
+
+
+def test_time_to_tp_and_to_either_barrier_are_counted_in_bars():
+    # long at 100: +2 reached on bar 0 (1 bar to close), -10 on bar 2 (3 bars); +3 never; neither for +50 / -100
+    P = _path(o=[100, 102, 96, 86], h=[102.5, 102, 96, 87], l=[99.5, 95, 85, 85], c=[102, 96, 86, 86])
+    r = tr.race(P, [T0], [100.0], [1])
+    i2, i3, j10 = TP.index(2.0), TP.index(3.0), SL.index(10.0)
+    assert r["t_tp"][i2][j10] == 1 and r["t_res"][i2][j10] == 1             # TP on the first bar
+    assert r["t_tp"][i3][j10] == 0 and r["t_res"][i3][j10] == 3             # the stop on the third bar
+    assert r["t_res"][TP.index(50.0)][SL.index(100.0)] == 0                  # open paths add nothing
