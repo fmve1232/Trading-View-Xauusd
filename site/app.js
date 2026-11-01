@@ -16,6 +16,8 @@ const S = {
   account: store.get("account", null),
   costProfile: store.get("cost_profile", "engine"),
   costCustom: store.get("cost_custom", null),
+  hcp: store.get("hc_profile", { key: "A", tp: 10, sl: 10, lot: 0.5 }),   // high-confidence panel: profile and lot
+  spec: store.get("contract_spec", null),                                  // the viewer's MT5 symbol specification
   yt: (() => { const v = store.get("your_trade", null); return v && v.sl > 0 && v.tp > 0 && v.lot > 0 ? v : { sl: 500, tp: 1000, lot: 0.5 }; })(),   // the operator's trade (1 Nov 2026): -$10 / +$20 of price
   todayR: store.get("today_r", null),
   capR: store.get("cap_r", null),
@@ -417,7 +419,12 @@ function renderGuard() {
   const planCard = $("#plan") && $("#plan").closest(".card");
   if (planCard) planCard.classList.toggle("outdated", !!old);
 }
-setInterval(() => { if (S.data) { renderGuard(); renderHeader(); } }, 30000);
+setInterval(() => {
+  if (!S.data) return;
+  renderGuard(); renderHeader();
+  const box = $("#hc");                        // never re-render under the viewer's cursor: it would drop what they are typing
+  if (!(box && box.contains(document.activeElement) && document.activeElement.tagName === "INPUT")) { try { renderHC(); } catch (e) { console.error(e); } }
+}, 30000);
 
 /* ---------- header / banners ---------- */
 /* ---------- macro panel: DXY, EUR/USD, JPY/USD, US 10Y, WTI, Bitcoin beside gold (DISPLAY ONLY) ----------
@@ -1139,6 +1146,109 @@ function renderSide() {
     ["#cc-type", "#cc-rate", "#cc-basis", "#cc-spread", "#cc-slip"].forEach((q) => { $(q).onchange = save; });
   }
   try { renderYourTrade(); } catch (e) { console.error(e); }     // it reads the cost profile chosen above
+  try { renderHC(); } catch (e) { console.error(e); }
+}
+/* HIGH-CONFIDENCE CONFIRMATION (display only; quantum/confirm.py + quantum/contract.py, mirrored in costs.js).
+   The payload carries the build-time checks and inputs; the page re-runs the same nine-layer approval with what only
+   the browser knows now: the data's age, a newer closed bar (late entry), the news windows (official list + this
+   week's feed), the chosen cost profile, profile, lot and the viewer's broker specification. */
+const HC_PROFILES = { A: { tp: 10, sl: 10 }, B: { tp: 15, sl: 10 }, C: { tp: 20, sl: 10 } };
+function hcSpec(H) {
+  const def = (H.contract && H.contract.default) || (window.QCosts && QCosts.DEFAULT_SPEC);
+  const sp = S.spec ? { ...def, ...S.spec, status: "ENTERED (from your MT5 specification)" } : { ...def };
+  return { spec: sp, check: QCosts.specValidate(sp) };
+}
+function renderHC() {
+  const el = $("#hc"), st = $("#hc-state"); if (!el) return;
+  const D = S.data, H = D && D.hc;
+  if (!H || H.error || !window.QCosts || !QCosts.hcApprove) { el.innerHTML = `<span class="muted">${H && H.error ? "not available on this run: " + esc(H.error) : "not in this build yet"}</span>`; st.textContent = "—"; st.className = "pill"; return; }
+  const P = S.hcp, prof = P.key === "custom" ? { tp: +P.tp, sl: +P.sl } : HC_PROFILES[P.key] || HC_PROFILES.A;
+  const { spec, check } = hcSpec(H);
+  const d = D.dashboard, k = d.kelly || {}, I = H.inputs, nowS = Date.now() / 1000;
+  const fr = freshness(), closed = marketClosed(new Date());
+  const NW = D.news ? QCosts.newsState(D.news, nowS) : { in_window: null }, feed = nearEvent();
+  const newsMult = NW.in_window ? D.news.cost_mult : 1;
+  const cp = activeProfile(D);
+  const costPx = cp && isNum(k.spread_pts) && check.ok ? QCosts.costPerPrice(cp, d.close, k.spread_pts, true, newsMult, spec) : I.cost_px;
+  // live data layer: the build-time checks, plus the page's own age now
+  const behind = fr ? fr.behind : 0;
+  const dq = { status: I.data.status, reasons: [...(I.data.reasons || [])] };
+  if (!closed && behind >= 2) { dq.status = "UNAVAILABLE"; dq.reasons.push(`page out of date: ${behind} ${D.meta.tf} bars have closed since`); }
+  if (!check.ok) { dq.status = "UNAVAILABLE"; dq.reasons.push("broker specification invalid: " + check.errors.join("; ")); }
+  const dir = I.signal.dir;
+  const ri = D.trade_race && !D.trade_race.error ? QCosts.raceIndex(D.trade_race, prof.tp, prof.sl) : null;
+  let race = null;
+  if (ri) {
+    const src = D.trade_race.sources.find((x) => x.key === "engine" && !x.error);
+    if (src && src.n) {
+      const R = D.trade_race.random, rate = (x) => (x.n ? x.win[ri.i][ri.j] / x.n : NaN);
+      race = { n: src.n, win: src.win[ri.i][ri.j], random: dir > 0 ? rate(R.long) : dir < 0 ? rate(R.short) : (src.long * rate(R.long) + src.short * rate(R.short)) / src.n, sample: "in-sample" };
+      race.t_tp = src.t_tp ? src.t_tp[ri.i][ri.j] : null;
+    }
+  }
+  const lv = H.levels || { above: [], below: [] }, ahead = dir > 0 ? lv.above[0] : dir < 0 ? lv.below[0] : null;
+  const x = { ...I, data: dq, market_open: !closed, profile: prof, level_ahead: ahead || null, cost_px: costPx,
+    news: { in_window: !!NW.in_window || !!feed }, signal: { dir, bars_since: dir ? behind : 0 }, race };
+  const A = QCosts.hcApprove(x);
+  const cls = A.status.startsWith("CONFIRMED") ? "bull" : A.status === "WAIT FOR CONFIRMATION" ? "" : A.status === "MODEL NOT VALIDATED" || A.status === "INSUFFICIENT EVIDENCE" ? "warn" : "bear";
+  st.textContent = A.status; st.className = "pill " + cls;
+  const lot = +P.lot > 0 ? +P.lot : 0.5;
+  const M = check.ok ? QCosts.tradeMoney(spec, lot, prof.tp, prof.sl, costPx) : null;
+  const money = (v) => (isNum(v) ? `${v < 0 ? "−" : ""}${esc(spec.account_currency)} ${Math.abs(v).toFixed(2)}` : "—");
+  const live = LIVE.px !== null && !LIVE.err && Date.now() - LIVE.t < 10 * 60000 && !closed;
+  const px0 = H.price, P2 = (v) => (isNum(v) ? f(v, Math.max(0, Math.min(5, spec.digits | 0))) : "—");
+  const side = (s) => `${s > 0 ? "BUY" : "SELL"} ${P2(px0)} · SL ${P2(px0 - s * prof.sl)} · TP ${P2(px0 + s * prof.tp)}`;
+  const hb = (v) => (v === null || v === undefined ? "—" : v > 0 ? '<span class="bull">bullish</span>' : v < 0 ? '<span class="bear">bearish</span>' : "neutral");
+  const idx = (S.index && S.index.timeframes) || {};
+  const tfb = (tf) => (idx[tf] ? `${esc(idx[tf].bias)} · ${esc(idx[tf].decision)}` : "—");
+  const pr = A.probability, hold = race && race.t_tp && race.win ? (race.t_tp / race.win) * (D.trade_race.bar_sec || 300) / 60 : null;
+  const sel = ["A", "B", "C", "custom"].map((key) => `<button data-hc="${key}" class="${P.key === key ? "active" : ""}" style="margin:0 4px 4px 0;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:${P.key === key ? "var(--accent,#3b82f6)" : "var(--bg-2)"};color:${P.key === key ? "#fff" : "var(--text)"};font:12px var(--mono)">${key === "custom" ? "Custom" : "TP $" + HC_PROFILES[key].tp}</button>`).join("");
+  const inp = (id, v, step, w = 70) => `<input id="${id}" type="number" min="0" step="${step}" value="${v}" style="width:${w}px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)">`;
+  const custom = P.key === "custom" ? ` <span class="dim">TP</span> ${inp("hc-tp", prof.tp, 0.5, 60)} <span class="dim">SL</span> ${inp("hc-sl", prof.sl, 0.5, 60)} <span class="dim">(price)</span>` : "";
+  const icon = { pass: '<span class="bull">✓</span>', fail: '<span class="bear">✗</span>', warn: '<span class="warn">!</span>', info: '<span class="dim">i</span>', wait: '<span class="dim">…</span>', not_validated: '<span class="warn">?</span>', insufficient: '<span class="warn">?</span>' };
+  const layers = A.layers.map((l) => `<tr><td style="width:18px;vertical-align:top">${icon[l.state] || ""}</td><td style="text-align:left;white-space:normal"><b>L${l.id} ${esc(l.name)}</b><div class="dim" style="font-size:11.5px">${esc(l.detail)}</div></td></tr>`).join("");
+  const specRow = `${esc(spec.symbol)} · ${f(spec.contract_size, 2)} per lot · tick ${spec.tick_size} = ${esc(spec.account_currency)} ${spec.tick_value} · pip ${spec.pip_size} <b class="${S.spec ? "" : "warn"}">${esc(spec.status)}</b>${check.ok ? "" : ` <b class="bear">${esc(check.errors.join("; "))}</b>`}${check.warnings.length ? ` <span class="warn">${esc(check.warnings.join("; "))}</span>` : ""}`;
+  el.innerHTML = `<div style="margin-bottom:6px">${sel}${custom}</div>` + kv([
+    ["Confirmation status", `<b class="${cls}">${esc(A.status)}</b>`],
+    ["Current XAUUSD", live ? `${f(LIVE.px, 2)} <span class="dim">live (gold-api, display)</span>` : `${f(d.close, 2)} <span class="dim">last close</span>`],
+    ["Data source", `${esc(D.meta.price_source)} <span class="dim">${esc(I.data.status)}</span>`],
+    ["Data freshness", fr ? `${tfmt(fr.last)} <span class="dim">${closed ? "market closed" : behind ? behind + " bar(s) closed since" : "current"}</span>` : "—"],
+    ["Market regime", `${esc(H.regime)} · ${esc(H.bias)}`],
+    ["Higher-timeframe bias", `4H ${hb(H.htf["4H"])} · 1H ${hb(H.htf["1H"])}`],
+    ["Entry timeframes", `15M ${tfb("15m")} · 5M ${tfb("5m")}`],
+    ["Proposed trade", dir ? `<b class="${dir > 0 ? "bull" : "bear"}">${side(dir)}</b>` : `<span class="dim">no signal · reference from ${P2(px0)}: ${side(1)} | ${side(-1)}</span>`],
+    ["Lot size", `${inp("hc-lot", lot, spec.volume_step || 0.01)} <span class="dim">min ${spec.volume_min}, step ${spec.volume_step}</span>`],
+    ["TP movement", M ? `+${f(prof.tp, 2)} <span class="dim">${f(M.tp_pips, 0)} pips · ${f(M.tp_points, 0)} points</span>` : "—"],
+    ["SL distance", M ? `−${f(prof.sl, 2)} <span class="dim">${f(M.sl_pips, 0)} pips · ${f(M.sl_points, 0)} points</span>` : "—"],
+    ["TP-first probability", `<b class="warn">${H.model.validated ? "validated model" : "MODEL NOT VALIDATED"}</b>${pr ? ` <span class="dim">measured on this chart's engine signals: ${f(pr.p * 100, 1)}% (95% ${f(pr.lo * 100, 0)}–${f(pr.hi * 100, 0)}%, n ${pr.n}, in-sample) · random ${f((pr.random || NaN) * 100, 1)}%${ri && !ri.exact ? ` · read at +${ri.tp} / −${ri.sl}` : ""}</span>` : ' <span class="dim">no measurement</span>'}`],
+    ["Your 90% target", pr ? (pr.lo >= H.target ? '<b class="bull">lower bound ≥ 90%</b>' : `<b class="bear">not met</b> <span class="dim">${pr.n < H.min_evidence_n ? `insufficient evidence (n ${pr.n} &lt; ${H.min_evidence_n}); ` : ""}upper bound ${f(pr.hi * 100, 0)}%</span>`) : "—"],
+    ["Break-even win rate", isNum(A.break_even) ? `${f(A.break_even * 100, 1)}%` : "—"],
+    ["Expected net profit (TP)", M ? `<span class="bull">${money(M.net_tp)}</span> <span class="dim">gross ${money(M.gross_tp)}</span>` : "—"],
+    ["Expected net loss (SL)", M ? `<span class="bear">${money(M.net_sl)}</span> <span class="dim">gross ${money(M.gross_sl)}</span>` : "—"],
+    ["Risk / reward", M ? `${f(M.net_tp / Math.abs(M.net_sl), 2)} : 1 <span class="dim">after costs</span>` : "—"],
+    ["Spread and costs", M ? `${money(M.cost)} round trip <span class="dim">${f(costPx, 2)} per 1.00 · spread ${f(k.spread_pts, 2)} MODELLED (no bid/ask feed)${newsMult > 1 ? " · news ×" + newsMult : ""}</span>` : "—"],
+    ["Volatility", `ATR ${f(d.atr, 2)} <span class="dim">${esc(H.regime)}</span>`],
+    ["News risk", newsTxt(D.news, NW) + (feed ? ` · <b class="bear">${esc(feed.title)}</b>` : "")],
+    ["Expected holding time", isNum(hold) ? `≈ ${f(hold, 0)} min to TP <span class="dim">(average of past wins, in-sample)</span>` : "—"],
+    ["Model status", `<span class="warn">${esc(H.model.note)}</span>`],
+    ["Broker specification", specRow],
+    ["Last update", `${tfmt(Date.parse(H.generated_utc) / 1000)}`],
+  ]) + `<div class="scroll" style="max-height:none"><table class="t"><tr><th></th><th style="text-align:left">Approval layers</th></tr>${layers}</table></div>` +
+    `<p class="note"><b>Invalidated by:</b> price through the SL before you enter; a newer bar closing (the entry becomes late); a high-impact release window; data older than 2 bars; the engine's risk lock. <b>No trade is CONFIRMED until a TP-first model has passed out-of-sample validation</b> (the brief's Step B / C); the measured rate is shown, labelled in-sample, never as a promise. 90% is checked on the lower bound of the 95% range, with at least ${H.min_evidence_n} comparable cases.</p>` +
+    `<details id="hcs-box" style="margin-top:6px"${S.hcSpecOpen ? " open" : ""}><summary class="dim">Broker contract specification (from MT5: Market Watch → XAUUSD → Specification)</summary><div style="display:grid;grid-template-columns:auto auto;gap:4px 8px;margin-top:6px;font-size:12px">` +
+    ["contract_size", "tick_size", "tick_value", "digits", "pip_size", "volume_min", "volume_step"].map((f2) => `<span class="dim">${f2}</span>${inp("hcs-" + f2, spec[f2], "any", 90)}`).join("") +
+    `<span class="dim">account_currency</span><input id="hcs-account_currency" value="${esc(spec.account_currency)}" maxlength="3" style="width:60px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"></div>` +
+    `<div style="margin-top:6px"><button id="hcs-save">Save</button> <button id="hcs-reset">Reset to standard</button></div></details>`;
+  el.querySelectorAll("button[data-hc]").forEach((b) => { b.onclick = () => { const key = b.dataset.hc; S.hcp = { ...S.hcp, key, ...(key === "custom" ? {} : HC_PROFILES[key]) }; store.set("hc_profile", S.hcp); renderHC(); }; });
+  const num = (q, key) => { const e = $(q); if (e) e.onchange = (ev) => { const v = Number(ev.target.value); if (v > 0) { S.hcp = { ...S.hcp, [key]: v }; store.set("hc_profile", S.hcp); } renderHC(); }; };
+  num("#hc-lot", "lot"); num("#hc-tp", "tp"); num("#hc-sl", "sl");
+  const sv = $("#hcs-save"); if (sv) sv.onclick = () => {
+    const o = {}; ["contract_size", "tick_size", "tick_value", "digits", "pip_size", "volume_min", "volume_step"].forEach((f2) => { o[f2] = Number($("#hcs-" + f2).value); });
+    o.account_currency = String($("#hcs-account_currency").value || "").toUpperCase(); o.symbol = spec.symbol;
+    S.spec = o; store.set("contract_spec", o); renderHC();
+  };
+  const rs = $("#hcs-reset"); if (rs) rs.onclick = () => { S.spec = null; store.set("contract_spec", null); renderHC(); };
+  const bx = $("#hcs-box"); if (bx) bx.ontoggle = () => { S.hcSpecOpen = bx.open; };
 }
 /* "Your trade" (display only; quantum/trade_race.py). The operator's own SL / TP in account dollars at a lot: what
    that is in price, what it costs, the win rate it needs, and how often each decision source on this chart actually

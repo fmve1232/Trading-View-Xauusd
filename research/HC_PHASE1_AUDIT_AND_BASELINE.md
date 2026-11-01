@@ -437,3 +437,40 @@ None of these steps is started; each waits for the operator's go-ahead.
    - (b) Change the frozen engine. This restarts web.7 and is not recommended.
 4. **Approval of Step A**, which is display-only. Steps B and C come back to you with their declarations before they run.
 5. **Merge of the pending B3 research branch** (`b4f82240f`), which is not yet merged.
+
+
+---
+
+## 7. Step A delivered (2026-11-01, operator approval)
+
+Display only. No file in `ENGINE_SOURCES`, no arm file and no config value changed: the engine code hash is still
+`60bb01794d03c9ac`. See `docs/PLATFORM.md`, "web.7 + high-confidence panel (Step A)".
+
+| Gap | Status after Step A |
+|---|---|
+| G1 no DATA UNAVAILABLE | **closed** on the panel. The engine record is unchanged by design |
+| G2 missing-bar detector | **closed** (last 20 bars block, older bars degrade) |
+| G4 futures fallback used for decisions | **closed** on the panel: DATA UNAVAILABLE |
+| G5 duplicates / out-of-order untested | **closed** |
+| G10 PCE / jobless claims | **partly closed**: the panel blocks on the weekly feed's high-impact events, which include them. The official dated list still covers only NFP / CPI / FOMC |
+| G11 no validated TP-first model | **open** (Steps B / C). The panel says MODEL NOT VALIDATED and never confirms without one |
+| G12 contract specification | **tooling closed** (spec module, validation, editor on the page). **Data open**: needs the operator's MT5 specification |
+| G3 bid/ask, G6 cadence, G7 EMA50, G8 regime classes | open. G3 needs a feed (OANDA practice token); G7 / G8 would change the frozen engine |
+
+**Required tests after Step A: 25 exist, 4 partial, 1 missing.**
+
+| # | Test | Status |
+|---|---|---|
+| 1–17 | all | exist (`test_confirm.py`, `test_contract.py`, cost and news tests) |
+| 18 | repainting | partial (closed-bar identity tests; the panel reads closed bars only) |
+| 19 | look-ahead | exists |
+| 20 | future-data leakage | partial (partition guard, research import guard) |
+| 21–22 | all | exist |
+| 23 | calibration failure | partial: the gate is tested (nothing confirms without a validated model); the calibration procedure itself is Step B |
+| 24 | model drift | **missing**: there is no model to drift until Step C |
+| 25–29 | all | exist (JS ↔ Python parity tests, risk-state, prices, currency, order) |
+| 30 | repeated signals | partial (ledger and forward-trigger dedupe) |
+
+**Mutation check of the new tests.** Six planted bugs in `confirm.py` were all caught, after one test was added:
+- the original suite missed a bug that used the point estimate instead of the 95% lower bound for the 90% gate;
+- the added case covers it: a 92% point estimate on n = 200, whose lower bound is 87.5%, must be NO TRADE.
