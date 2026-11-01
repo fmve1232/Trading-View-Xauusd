@@ -2,7 +2,7 @@
 
 Declared 2026-11-01, committed before the first run, and not changed after seeing results.
 
-    python -m quantum.research.b2 <research-data checkout> <out.json> [--registry research/trials.jsonl] [--set b2|b2b]
+    python -m quantum.research.b2 <research-data checkout> <out.json> [--registry research/trials.jsonl] [--set b2|b2b|b2c]
 
 THE EVENT (operator, 2026-11-01): SL $500 / TP $1,000 at 0.5 lot = -$10 / +$20 of price from the decision price,
 "the market should move $10 to $20 my way without hitting my SL".
@@ -69,6 +69,12 @@ TARGETS = {"T20": (20.0, 10.0), "T10": (10.0, 10.0), "T2": (2.0, 10.0)}     # +a
 # scaling to $4,000 (unscaled logged as a sensitivity), frozen costs, fills, one position at a time, the
 # direction-matched random baseline and the five-part pass rule (break-even here = (20 + c) / 40, about 52%).
 B2B_TARGETS = {"T20S20": (20.0, 20.0)}
+# B2c (declared 2026-11-01 before its first run, at the operator's request after B2b): "-$10 stop with +$10, +$15 and
+# +$20 profit". +$10 and +$20 before -$10 were already run in B2 (T10, T20) on the same data and code; re-running them
+# would reproduce the same numbers and double-count the trials, so only the new target is run here and the three are
+# reported together. SL $500 / TP $750 at 0.5 lot = +$15 before -$10; break-even (10 + c) / 25, about 43%; random
+# about 40%. Everything else is B2's declaration unchanged.
+B2C_TARGETS = {"T15": (15.0, 10.0)}
 REF_PRICE = 4000.0
 HORIZON = 288                         # 15-minute bars = 3 trading days
 PATH_SEC = 900
@@ -424,9 +430,10 @@ def main(argv=None) -> int:
     ap.add_argument("rd")
     ap.add_argument("out")
     ap.add_argument("--registry", default="research/trials.jsonl")
-    ap.add_argument("--set", default="b2", choices=("b2", "b2b"))
+    ap.add_argument("--set", default="b2", choices=("b2", "b2b", "b2c"))
     a = ap.parse_args(argv)
-    r = run(a.rd, a.out, a.registry) if a.set == "b2" else run(a.rd, a.out, a.registry, B2B_TARGETS, "B2b")
+    sets = {"b2": (TARGETS, "B2"), "b2b": (B2B_TARGETS, "B2b"), "b2c": (B2C_TARGETS, "B2c")}
+    r = run(a.rd, a.out, a.registry, *sets[a.set])
     print(json.dumps(r["family"], indent=1, default=float))
     return 0
 
