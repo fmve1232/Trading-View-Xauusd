@@ -1,0 +1,931 @@
+{
+ "partition": "development",
+ "set": "B2c",
+ "from": "2020-01-24 02:00:00+00:00",
+ "to": "2023-01-24 02:00:00+00:00",
+ "targets": {
+  "T15": [
+   15.0,
+   10.0
+  ]
+ },
+ "ref_price": 4000.0,
+ "horizon_15m_bars": 288,
+ "baseline": {
+  "T15 long": {
+   "n": 69877,
+   "win_rate": 0.40717260328863575,
+   "wilson": [
+    0.40353501069195985,
+    0.41082040161895994
+   ],
+   "net_r": -0.06264195054500425,
+   "break_even": 0.4341624797859096
+  },
+  "T15 short": {
+   "n": 69877,
+   "win_rate": 0.3891552299039741,
+   "wilson": [
+    0.3855464213298371,
+    0.3927762250980098
+   ],
+   "net_r": -0.11789062404105063,
+   "break_even": 0.4341624797859096
+  }
+ },
+ "trials": [
+  {
+   "id": "15min SWEEP_PD T15",
+   "tf": "15min",
+   "setup": "SWEEP_PD",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 670,
+   "n": 659,
+   "long": 311,
+   "short": 348,
+   "wins": 276,
+   "losses": 383,
+   "open": 0,
+   "win_rate": 0.4188163884673748,
+   "wilson": [
+    0.3817251306997376,
+    0.4568486359735357
+   ],
+   "break_even": 0.43459969650986346,
+   "net_r": -0.044822397714446675,
+   "gross_r": 0.041676843560211896,
+   "t": -0.924635378333455,
+   "random_same_mix": 0.3976581177987082,
+   "z_vs_random": 1.1098043397417958,
+   "usd_per_trade_0p5lot": -22.41119885722334,
+   "all_triggers": {
+    "n": 670,
+    "win_rate": 0.41940298507462687,
+    "net_r": -0.04335758131985465
+   },
+   "unscaled_sensitivity": {
+    "n": 499,
+    "win_rate": 0.4248496993987976,
+    "break_even": 0.43442324649298586,
+    "net_r": -0.009072040881763506,
+    "t": -0.1636481745695233
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min SWEEP_PW T15",
+   "tf": "15min",
+   "setup": "SWEEP_PW",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 140,
+   "n": 140,
+   "long": 62,
+   "short": 78,
+   "wins": 53,
+   "losses": 87,
+   "open": 0,
+   "win_rate": 0.37857142857142856,
+   "wilson": [
+    0.30248408826118517,
+    0.4611445604995437
+   ],
+   "break_even": 0.4336571428571429,
+   "net_r": -0.13456277054523746,
+   "gross_r": -0.05041991340238033,
+   "t": -1.2693030391477897,
+   "random_same_mix": 0.3971343524028957,
+   "z_vs_random": -0.4488811867920128,
+   "usd_per_trade_0p5lot": -67.28138527261873,
+   "all_triggers": {
+    "n": 140,
+    "win_rate": 0.37857142857142856,
+    "net_r": -0.13456277054523746
+   },
+   "unscaled_sensitivity": {
+    "n": 136,
+    "win_rate": 0.39705882352941174,
+    "break_even": 0.43362352941176474,
+    "net_r": -0.08051358088235261,
+    "t": -0.7658775014344069
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min SWEEP_EQ T15",
+   "tf": "15min",
+   "setup": "SWEEP_EQ",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 1721,
+   "n": 1163,
+   "long": 583,
+   "short": 580,
+   "wins": 442,
+   "losses": 721,
+   "open": 0,
+   "win_rate": 0.38005159071367156,
+   "wilson": [
+    0.3525926563391054,
+    0.4083003099877083
+   ],
+   "break_even": 0.4335721410146174,
+   "net_r": -0.13744186541532638,
+   "gross_r": -0.05351151287878297,
+   "t": -3.832909998817759,
+   "random_same_mix": 0.39818715482509,
+   "z_vs_random": -1.2634165941975442,
+   "usd_per_trade_0p5lot": -68.7209327076632,
+   "all_triggers": {
+    "n": 1721,
+    "win_rate": 0.3933759442184776,
+    "net_r": -0.10318583229444324
+   },
+   "unscaled_sensitivity": {
+    "n": 598,
+    "win_rate": 0.4013377926421405,
+    "break_even": 0.43375652173913043,
+    "net_r": -0.07040971889632097,
+    "t": -1.3950194181240754
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min BREAK_PD T15",
+   "tf": "15min",
+   "setup": "BREAK_PD",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 685,
+   "n": 670,
+   "long": 360,
+   "short": 310,
+   "wins": 271,
+   "losses": 399,
+   "open": 0,
+   "win_rate": 0.4044776119402985,
+   "wilson": [
+    0.367961572446952,
+    0.4420827661538456
+   ],
+   "break_even": 0.4344895522388061,
+   "net_r": -0.0726974931623204,
+   "gross_r": 0.013526387434694512,
+   "t": -1.5270734493089504,
+   "random_same_mix": 0.39883620664797137,
+   "z_vs_random": 0.298216045111567,
+   "usd_per_trade_0p5lot": -36.3487465811602,
+   "all_triggers": {
+    "n": 685,
+    "win_rate": 0.4043795620437956,
+    "net_r": -0.07317127068431337
+   },
+   "unscaled_sensitivity": {
+    "n": 542,
+    "win_rate": 0.3726937269372694,
+    "break_even": 0.43425387453874537,
+    "net_r": -0.14599998874538747,
+    "t": -2.8032971474659476
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min BOS T15",
+   "tf": "15min",
+   "setup": "BOS",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 2449,
+   "n": 1693,
+   "long": 861,
+   "short": 832,
+   "wins": 661,
+   "losses": 1032,
+   "open": 0,
+   "win_rate": 0.390431187241583,
+   "wilson": [
+    0.3674659925352665,
+    0.41389248497117354
+   ],
+   "break_even": 0.43385729474305956,
+   "net_r": -0.1089451239413425,
+   "gross_r": -0.024301887083693376,
+   "t": -3.6122437006578516,
+   "random_same_mix": 0.3983182295993041,
+   "z_vs_random": -0.6628940700403345,
+   "usd_per_trade_0p5lot": -54.47256197067125,
+   "all_triggers": {
+    "n": 2449,
+    "win_rate": 0.384238464679461,
+    "net_r": -0.1221870614858677
+   },
+   "unscaled_sensitivity": {
+    "n": 857,
+    "win_rate": 0.4002333722287048,
+    "break_even": 0.4339551925320886,
+    "net_r": -0.07919369369894975,
+    "t": -1.8754024322106735
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CHOCH T15",
+   "tf": "15min",
+   "setup": "CHOCH",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 2526,
+   "n": 1776,
+   "long": 872,
+   "short": 904,
+   "wins": 689,
+   "losses": 1087,
+   "open": 0,
+   "win_rate": 0.38795045045045046,
+   "wilson": [
+    0.36555295522278186,
+    0.41083162217089264
+   ],
+   "break_even": 0.4337639639639639,
+   "net_r": -0.10981573269190248,
+   "gross_r": -0.025405822781992587,
+   "t": -3.6786538551217305,
+   "random_same_mix": 0.39800159791716383,
+   "z_vs_random": -0.8653604618127482,
+   "usd_per_trade_0p5lot": -54.90786634595124,
+   "all_triggers": {
+    "n": 2526,
+    "win_rate": 0.39548693586698336,
+    "net_r": -0.09245639454761614
+   },
+   "unscaled_sensitivity": {
+    "n": 823,
+    "win_rate": 0.4046172539489672,
+    "break_even": 0.4338619684082623,
+    "net_r": -0.056540998055893014,
+    "t": -1.3073429980944278
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FVG_RETEST T15",
+   "tf": "15min",
+   "setup": "FVG_RETEST",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 7776,
+   "n": 3314,
+   "long": 1711,
+   "short": 1603,
+   "wins": 1365,
+   "losses": 1949,
+   "open": 0,
+   "win_rate": 0.411888955944478,
+   "wilson": [
+    0.39524354613789975,
+    0.42873839897984206
+   ],
+   "break_even": 0.43320193120096556,
+   "net_r": -0.05224178822884113,
+   "gross_r": 0.030763039773572854,
+   "t": -2.4021032097132253,
+   "random_same_mix": 0.3984575008337134,
+   "z_vs_random": 1.5793382575689467,
+   "usd_per_trade_0p5lot": -26.12089411442057,
+   "all_triggers": {
+    "n": 7776,
+    "win_rate": 0.3991769547325103,
+    "net_r": -0.08932937019825639
+   },
+   "unscaled_sensitivity": {
+    "n": 1185,
+    "win_rate": 0.39409282700421944,
+    "break_even": 0.43289282700421944,
+    "net_r": -0.08976792801687766,
+    "t": -2.5144751464257085
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min OB_RETEST T15",
+   "tf": "15min",
+   "setup": "OB_RETEST",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 3704,
+   "n": 2172,
+   "long": 1100,
+   "short": 1072,
+   "wins": 833,
+   "losses": 1339,
+   "open": 0,
+   "win_rate": 0.3835174953959484,
+   "wilson": [
+    0.36329121364289696,
+    0.4041550780275639
+   ],
+   "break_even": 0.43345561694290974,
+   "net_r": -0.12429711715997521,
+   "gross_r": -0.04065807480270083,
+   "t": -4.720660506790464,
+   "random_same_mix": 0.3982800506788948,
+   "z_vs_random": -1.4054000525689314,
+   "usd_per_trade_0p5lot": -62.1485585799876,
+   "all_triggers": {
+    "n": 3704,
+    "win_rate": 0.3911987041036717,
+    "net_r": -0.1043705404036272
+   },
+   "unscaled_sensitivity": {
+    "n": 914,
+    "win_rate": 0.3993435448577681,
+    "break_even": 0.4336183807439823,
+    "net_r": -0.0744059233041576,
+    "t": -1.8268467263780952
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FAILED_BO T15",
+   "tf": "15min",
+   "setup": "FAILED_BO",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 3515,
+   "n": 2305,
+   "long": 1104,
+   "short": 1201,
+   "wins": 909,
+   "losses": 1396,
+   "open": 0,
+   "win_rate": 0.39436008676789586,
+   "wilson": [
+    0.37460060297218634,
+    0.41447109871322674
+   ],
+   "break_even": 0.433434273318872,
+   "net_r": -0.09987856082881318,
+   "gross_r": -0.016292877531633148,
+   "t": -3.8557750060693725,
+   "random_same_mix": 0.39778480917367753,
+   "z_vs_random": -0.33593935942805964,
+   "usd_per_trade_0p5lot": -49.93928041440659,
+   "all_triggers": {
+    "n": 3515,
+    "win_rate": 0.4011379800853485,
+    "net_r": -0.08300630683527631
+   },
+   "unscaled_sensitivity": {
+    "n": 997,
+    "win_rate": 0.37713139418254765,
+    "break_even": 0.43315105315947827,
+    "net_r": -0.13512382547642923,
+    "t": -3.497026126637097
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h SWEEP_PD T15",
+   "tf": "1h",
+   "setup": "SWEEP_PD",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 630,
+   "n": 619,
+   "long": 296,
+   "short": 323,
+   "wins": 243,
+   "losses": 376,
+   "open": 0,
+   "win_rate": 0.3925686591276252,
+   "wilson": [
+    0.35487549928293777,
+    0.4315870136029493
+   ],
+   "break_even": 0.43453505654281105,
+   "net_r": -0.11179108073507123,
+   "gross_r": -0.02545343937804378,
+   "t": -2.2534386256770578,
+   "random_same_mix": 0.3977709690346039,
+   "z_vs_random": -0.2644503579689469,
+   "usd_per_trade_0p5lot": -55.89554036753561,
+   "all_triggers": {
+    "n": 630,
+    "win_rate": 0.39365079365079364,
+    "net_r": -0.10899314123017316
+   },
+   "unscaled_sensitivity": {
+    "n": 478,
+    "win_rate": 0.40794979079497906,
+    "break_even": 0.4343815899581589,
+    "net_r": -0.044211236192468646,
+    "t": -0.7859587933621109
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h SWEEP_PW T15",
+   "tf": "1h",
+   "setup": "SWEEP_PW",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 136,
+   "n": 136,
+   "long": 61,
+   "short": 75,
+   "wins": 51,
+   "losses": 85,
+   "open": 0,
+   "win_rate": 0.375,
+   "wilson": [
+    0.2981212762617822,
+    0.45874624877697756
+   ],
+   "break_even": 0.43397647058823535,
+   "net_r": -0.14231935128242262,
+   "gross_r": -0.05737817481183442,
+   "t": -1.3241905398429428,
+   "random_same_mix": 0.39723655178974143,
+   "z_vs_random": -0.5299548127134948,
+   "usd_per_trade_0p5lot": -71.15967564121131,
+   "all_triggers": {
+    "n": 136,
+    "win_rate": 0.375,
+    "net_r": -0.14231935128242262
+   },
+   "unscaled_sensitivity": {
+    "n": 132,
+    "win_rate": 0.4166666666666667,
+    "break_even": 0.43395151515151525,
+    "net_r": -0.032243825757575784,
+    "t": -0.300110925689195
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h SWEEP_EQ T15",
+   "tf": "1h",
+   "setup": "SWEEP_EQ",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 449,
+   "n": 415,
+   "long": 206,
+   "short": 209,
+   "wins": 178,
+   "losses": 237,
+   "open": 0,
+   "win_rate": 0.42891566265060244,
+   "wilson": [
+    0.3821652120841484,
+    0.47697003169619295
+   ],
+   "break_even": 0.4331325301204818,
+   "net_r": -0.010757062943039682,
+   "gross_r": 0.07207426235816514,
+   "t": -0.17685155322888887,
+   "random_same_mix": 0.39809879355997485,
+   "z_vs_random": 1.282491585065135,
+   "usd_per_trade_0p5lot": -5.378531471519842,
+   "all_triggers": {
+    "n": 449,
+    "win_rate": 0.42316258351893093,
+    "net_r": -0.02664417705426168
+   },
+   "unscaled_sensitivity": {
+    "n": 300,
+    "win_rate": 0.41333333333333333,
+    "break_even": 0.4332533333333333,
+    "net_r": -0.025061598333333237,
+    "t": -0.3529172211438697
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h BREAK_PD T15",
+   "tf": "1h",
+   "setup": "BREAK_PD",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 615,
+   "n": 601,
+   "long": 331,
+   "short": 270,
+   "wins": 245,
+   "losses": 356,
+   "open": 0,
+   "win_rate": 0.40765391014975044,
+   "wilson": [
+    0.3690743838883006,
+    0.447406450270615
+   ],
+   "break_even": 0.4342742096505825,
+   "net_r": -0.06649635224026201,
+   "gross_r": 0.019189171886193887,
+   "t": -1.3253485679450894,
+   "random_same_mix": 0.3990782758113335,
+   "z_vs_random": 0.42930455323485966,
+   "usd_per_trade_0p5lot": -33.248176120131006,
+   "all_triggers": {
+    "n": 615,
+    "win_rate": 0.4065040650406504,
+    "net_r": -0.0695647279616219
+   },
+   "unscaled_sensitivity": {
+    "n": 494,
+    "win_rate": 0.39878542510121456,
+    "break_even": 0.4340712550607287,
+    "net_r": -0.08155301882591097,
+    "t": -1.4772822532115717
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h BOS T15",
+   "tf": "1h",
+   "setup": "BOS",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 599,
+   "n": 567,
+   "long": 313,
+   "short": 254,
+   "wins": 237,
+   "losses": 330,
+   "open": 0,
+   "win_rate": 0.41798941798941797,
+   "wilson": [
+    0.3780763729641768,
+    0.45900623806015844
+   ],
+   "break_even": 0.43393227513227517,
+   "net_r": -0.040488096320754056,
+   "gross_r": 0.044342591509933756,
+   "t": -0.7804040726517963,
+   "random_same_mix": 0.3991013284390695,
+   "z_vs_random": 0.9184115862073391,
+   "usd_per_trade_0p5lot": -20.24404816037703,
+   "all_triggers": {
+    "n": 599,
+    "win_rate": 0.41903171953255425,
+    "net_r": -0.03806469217674048
+   },
+   "unscaled_sensitivity": {
+    "n": 436,
+    "win_rate": 0.4059633027522936,
+    "break_even": 0.4340110091743118,
+    "net_r": -0.06364447155963296,
+    "t": -1.0834245635999864
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h CHOCH T15",
+   "tf": "1h",
+   "setup": "CHOCH",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 600,
+   "n": 588,
+   "long": 293,
+   "short": 295,
+   "wins": 219,
+   "losses": 369,
+   "open": 0,
+   "win_rate": 0.37244897959183676,
+   "wilson": [
+    0.3343184477257655,
+    0.41223529948293575
+   ],
+   "break_even": 0.43305850340136065,
+   "net_r": -0.15068976613748747,
+   "gross_r": -0.06804350763408609,
+   "t": -3.015646461646663,
+   "random_same_mix": 0.3981332748048344,
+   "z_vs_random": -1.272306984152966,
+   "usd_per_trade_0p5lot": -75.34488306874374,
+   "all_triggers": {
+    "n": 600,
+    "win_rate": 0.37166666666666665,
+    "net_r": -0.15274930414807103
+   },
+   "unscaled_sensitivity": {
+    "n": 439,
+    "win_rate": 0.42369020501138954,
+    "break_even": 0.4331143507972664,
+    "net_r": -0.01430523758542137,
+    "t": -0.24109699760239184
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h FVG_RETEST T15",
+   "tf": "1h",
+   "setup": "FVG_RETEST",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 1776,
+   "n": 1436,
+   "long": 784,
+   "short": 652,
+   "wins": 582,
+   "losses": 854,
+   "open": 0,
+   "win_rate": 0.4052924791086351,
+   "wilson": [
+    0.38018521151340073,
+    0.43090510101910956
+   ],
+   "break_even": 0.4336969359331477,
+   "net_r": -0.06622262157935044,
+   "gross_r": 0.018019718253518623,
+   "t": -2.0207315924042217,
+   "random_same_mix": 0.398992013144625,
+   "z_vs_random": 0.487559549293079,
+   "usd_per_trade_0p5lot": -33.111310789675215,
+   "all_triggers": {
+    "n": 1776,
+    "win_rate": 0.4149774774774775,
+    "net_r": -0.043592294151604996
+   },
+   "unscaled_sensitivity": {
+    "n": 775,
+    "win_rate": 0.41161290322580646,
+    "break_even": 0.43354580645161284,
+    "net_r": -0.03827224864516121,
+    "t": -0.8657885897412678
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h OB_RETEST T15",
+   "tf": "1h",
+   "setup": "OB_RETEST",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 861,
+   "n": 797,
+   "long": 422,
+   "short": 375,
+   "wins": 311,
+   "losses": 486,
+   "open": 0,
+   "win_rate": 0.39021329987452946,
+   "wilson": [
+    0.35695152566550103,
+    0.4245283189913185
+   ],
+   "break_even": 0.4330785445420326,
+   "net_r": -0.10268507232429391,
+   "gross_r": -0.019988710969212356,
+   "t": -2.356270084186603,
+   "random_same_mix": 0.39869516913650516,
+   "z_vs_random": -0.4890495926601076,
+   "usd_per_trade_0p5lot": -51.342536162146956,
+   "all_triggers": {
+    "n": 861,
+    "win_rate": 0.3867595818815331,
+    "net_r": -0.11188838630278239
+   },
+   "unscaled_sensitivity": {
+    "n": 523,
+    "win_rate": 0.39579349904397704,
+    "break_even": 0.43318623326959843,
+    "net_r": -0.07936914894837482,
+    "t": -1.472639589665758
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h FAILED_BO T15",
+   "tf": "1h",
+   "setup": "FAILED_BO",
+   "target": "T15",
+   "a_usd_at_4000": 15.0,
+   "b_usd_at_4000": 10.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 774,
+   "n": 739,
+   "long": 317,
+   "short": 422,
+   "wins": 288,
+   "losses": 451,
+   "open": 0,
+   "win_rate": 0.38971583220568334,
+   "wilson": [
+    0.35521115795433333,
+    0.42536113233561
+   ],
+   "break_even": 0.43315994587280104,
+   "net_r": -0.11656668884821658,
+   "gross_r": -0.033666824166213874,
+   "t": -2.55998698934241,
+   "random_same_mix": 0.39688392728278027,
+   "z_vs_random": -0.39828483388274494,
+   "usd_per_trade_0p5lot": -58.28334442410829,
+   "all_triggers": {
+    "n": 774,
+    "win_rate": 0.3953488372093023,
+    "net_r": -0.10221935795714734
+   },
+   "unscaled_sensitivity": {
+    "n": 555,
+    "win_rate": 0.36576576576576575,
+    "break_even": 0.43307747747747755,
+    "net_r": -0.161006995135135,
+    "t": -3.136317130128919
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  }
+ ],
+ "family": {
+  "trials": 18,
+  "days": 891,
+  "weeks": 157,
+  "reality_check": {
+   "stat": -0.14955569470448501,
+   "p_value": 1.0,
+   "best": 11,
+   "B": 1000,
+   "best_id": "1h SWEEP_EQ T15"
+  },
+  "pbo": {
+   "pbo": 0.11428571428571428,
+   "logit_mean": 0.7291637765262647,
+   "splits": 70,
+   "oos_mean_of_is_best": -0.32180027287084806,
+   "p_oos_loss_of_is_best": 0.9857142857142858
+  },
+  "best_daily_sharpe": {
+   "id": "1h SWEEP_EQ T15",
+   "sharpe_daily": -0.006078711967963691,
+   "sr0": 0.07751776065551852,
+   "dsr": 0.006371567529121491,
+   "trials": 18
+  },
+  "bh_fdr10_passed": [],
+  "passes_all": [],
+  "note": "Screens are one-sided (H1: mean net > 0). The pass flags 1-3 are per trial; 4-5 are family-wide."
+ }
+}
