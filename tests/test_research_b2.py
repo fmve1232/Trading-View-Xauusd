@@ -98,6 +98,8 @@ def test_one_position_waits_for_the_exit():
 
 def test_b2b_declaration_is_one_target_and_b2_is_unchanged():
     assert b2.B2B_TARGETS == {"T20S20": (20.0, 20.0)}
+    assert b2.B2C_TARGETS == {"T15": (15.0, 10.0)}                  # only the target B2 did not run
+    assert not set(b2.B2C_TARGETS.values()) & set(b2.TARGETS.values())
     assert b2.TARGETS == {"T20": (20.0, 10.0), "T10": (10.0, 10.0), "T2": (2.0, 10.0)}
     import inspect
     sig = inspect.signature(b2.run)
