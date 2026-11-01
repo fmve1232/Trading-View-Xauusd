@@ -60,7 +60,7 @@ MUT = {
 SUITE = ["precheck", "undeclared", "order", "deadcode", "pinelimits", "diag_parity", "decision_check", "regime_check",
          "expectancy_check", "formula_trace", "h2_parity", "h2_trace", "h2_age_check", "panel_check", "v88_check",
          "refactor_check", "inputs_check", "bug_scan", "pine_web_parity", "macro_check", "moved_check", "edgecase_cites",
-         "value_map --check", "v86_check", "compile_est", "brief_trace", "v91_check"]
+         "value_map --check", "v86_check", "compile_est", "brief_trace", "v91_check", "v92_check", "v93_check", "v94_check", "sx_check"]
 STATIC = {"precheck", "undeclared", "order", "deadcode", "pinelimits"}
 
 

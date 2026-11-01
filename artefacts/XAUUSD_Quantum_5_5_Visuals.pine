@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v94   (LINK from the Master)         ║
+// ║  BUILD STAMP — this file last CHANGED in v95   (engine structure, SX)         ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -81,7 +81,7 @@ grpS = "Structure"
 // scored a structure break. The "~" prefix on every label says so on the chart itself.
 // v88: OFF by default (operator: "too much noisy"; these approximate labels can disagree with the Master's STRUCTURE
 // cell, the engine's own BOS / CHoCH / MSS). The CHURN check reads brokeUp / brokeDown, computed with the switch off too.
-showStruct   = input.bool(false, "BOS / CHoCH labels (~ = approximation, NOT the engine's signal)", group = grpS, tooltip = "Drawn by a simplified structure detector, not the Master's engine. Use them for chart reading; never treat a ~BOS or ~CHoCH as confirmation that the engine registered one.")
+showStruct   = input.bool(false, "BOS / CHoCH / MSS labels (the engine's)", group = grpS, tooltip = "v95: drawn from the Master's own structure engine, copied verbatim (SX block): the same BOS / CHoCH / MSS as the Master's STRUCTURE cell. OFF by default (v88: too noisy).")
 pivotLen     = input.int(5,      "Pivot length", minval = 2, maxval = 20, group = grpS)
 showPivots   = input.bool(false, "Mark swing pivots",       group = grpS)
 structKeep   = input.int(25,     "BOS/CHoCH markers kept", minval = 5, maxval = 100, group = grpS, tooltip = "Older structure markers are deleted. Without a cap they accumulate until TradingView's 500-object limit silently drops the oldest drawings.")
@@ -90,17 +90,12 @@ showSweep    = input.bool(true,  "Liquidity sweep markers", group = grpS)
 grpZ = "Zones"
 // v81: OFF to cut clutter; v87 ON; v88 OFF again (operator: "too much noisy", 2026-10-29). Drawing only, the engine is the Master's.
 showFVG      = input.bool(false, "Fair Value Gaps",         group = grpZ)
-fvgMaxBars   = input.int(60,     "FVG max age (bars)", minval = 5, group = grpZ)
-fvgMinATR    = input.float(0.3,  "FVG min size (ATR)", minval = 0.05, step = 0.05, group = grpZ)
+// v95: the Master's FVG Max Bars (default and bounds); the minimum size is the engine's (0.3 x adaptive ATR, in fvgDetected)
+fvgMaxBars   = input.int(30,     "FVG max age (bars), as the Master's", minval = 10, maxval = 100, group = grpZ)
 // v81: OFF to cut clutter; v87 ON; v88 OFF again (operator: "too much noisy", 2026-10-29). Drawing only, the engine is the Master's.
 showOB       = input.bool(false, "Order Blocks",            group = grpZ)
 obDispATR    = input.float(2.5,  "OB displacement (xATR)", minval = 1.5, maxval = 5.0, step = 0.1, group = grpZ, tooltip = "F-A08: was 1.0 while the Master's dispMult is 2.5, so this chart drew order blocks on candles the engine does not treat as displacement at all. Now matched to the Master default. Keep the two equal or the boxes will not be the ones the engine scored.")
-// F-A08 PARITY INPUTS. Mirrors of the Master's ADX and Adaptive-ATR controls, needed
-// because the displacement threshold below is measured in adaptiveATR units, not raw ATR.
-// Keep all three equal to the Master's or the drawn order blocks stop matching the engine.
-adxLenV          = input.int(14,  "  ADX length (match Master)", minval = 1, group = grpZ)
-adxThresholdV    = input.int(25,  "  ADX threshold (match Master)", minval = 10, maxval = 50, group = grpZ)
-showAdaptiveATRV = input.bool(false, "  Adaptive ATR Regime (match Master)", group = grpZ, tooltip = "Master default is OFF, in which case adaptiveATR collapses to ta.atr(14) and equals this file's atr14. Turn ON only if it is ON in the Master.")
+// v95: the F-A08 parity inputs (ADX length / threshold, Adaptive ATR) are the engine's own now (SX block).
 obKeep       = input.int(4,      "Order Blocks kept", minval = 1, maxval = 10, group = grpZ)
 obShowLabel = input.bool(true, "Label OB / FVG zones", group="Zones", tooltip="Zone identity labels, relocated here from the Master when it exceeded the Pine token limit.")
 
@@ -231,7 +226,107 @@ float atr14 = ta.atr(14)
 // `if showCandle and barstate.islast`, so the 20-bar average only ever advanced on the
 // final bar and RVOL was computed against a window that had barely accumulated. Hoisted
 // here so both consumers read one consistent series.
-float volSma20 = ta.sma(volume, 20)
+// SX-BEGIN (v95) the Master's structure + FVG engine, COPIED: every line between SX-BEGIN and SX-END is a Master line,
+// in the Master's order (sx_check.py); the backward slice of bosLabel* / chochLabel* / mssLabel* /
+// fvgDetected. Edit the Master, then re-copy. One exception: the engine switch showFVG is Visuals' draw switch.
+grpModules = "MODULES"
+showAdaptiveATR = input.bool(false, "Adaptive ATR Regime", group=grpModules)
+grpCore = "CORE"
+atrLen = input.int(14, "ATR Base", minval=1, group=grpCore)
+adxLen = input.int(14, "ADX", minval=1, group=grpCore)
+adxThreshold = input.int(25, "ADX Threshold", minval=10, maxval=50, group=grpCore)
+internalPivotLen = input.int(2, "Internal Pivot Len (fast)", minval=1, maxval=5, group=grpCore)
+swingPivotLen = input.int(5, "Swing Pivot Len (major)", minval=3, maxval=10, group=grpCore)
+atr = ta.atr(atrLen)
+[diplus, diminus, adxVal] = ta.dmi(adxLen, adxLen)
+volSma20 = ta.sma(volume, 20)
+float atrTrending = ta.atr(7)
+float atrRanging = ta.atr(21)
+float regimeStrength = math.min(math.max((adxVal - (adxThreshold - 5)) / 10.0, 0.0), 1.0)
+_rawAdaptiveATR = showAdaptiveATR ? (atrRanging * (1.0 - regimeStrength) + atrTrending * regimeStrength) : atr
+adaptiveATR = math.max(nz(_rawAdaptiveATR, ta.tr), close * 0.0001)
+pivotHigh = ta.pivothigh(high, internalPivotLen, internalPivotLen)
+pivotLow = ta.pivotlow(low, internalPivotLen, internalPivotLen)
+var float activeResistance = na
+var float activeSupport = na
+var float lastBrokenRes = na
+var float lastBrokenSup = na
+bosResistanceSnap = activeResistance
+bosSupportSnap = activeSupport
+if not na(pivotHigh)
+    if not na(activeResistance)
+        lastBrokenRes := activeResistance
+    activeResistance := pivotHigh
+if not na(pivotLow)
+    if not na(activeSupport)
+        lastBrokenSup := activeSupport
+    activeSupport := pivotLow
+swingPivotHigh = ta.pivothigh(high, swingPivotLen, swingPivotLen)
+swingPivotLow = ta.pivotlow(low, swingPivotLen, swingPivotLen)
+var float swingActiveResistance = na
+var float swingActiveSupport = na
+var float swingLastBrokenRes = na
+var float swingLastBrokenSup = na
+swingBosResSnap = swingActiveResistance
+swingBosSupSnap = swingActiveSupport
+if not na(swingPivotHigh)
+    if not na(swingActiveResistance)
+        swingLastBrokenRes := swingActiveResistance
+    swingActiveResistance := swingPivotHigh
+if not na(swingPivotLow)
+    if not na(swingActiveSupport)
+        swingLastBrokenSup := swingActiveSupport
+    swingActiveSupport := swingPivotLow
+intBosLabelBull = not na(bosResistanceSnap) and close > bosResistanceSnap and close[1] <= bosResistanceSnap[1] and bosResistanceSnap != lastBrokenRes
+intBosLabelBear = not na(bosSupportSnap) and close < bosSupportSnap and close[1] >= bosSupportSnap[1] and bosSupportSnap != lastBrokenSup
+swingBosLabelBull = not na(swingBosResSnap) and close > swingBosResSnap and close[1] <= swingBosResSnap[1] and swingBosResSnap != swingLastBrokenRes
+swingBosLabelBear = not na(swingBosSupSnap) and close < swingBosSupSnap and close[1] >= swingBosSupSnap[1] and swingBosSupSnap != swingLastBrokenSup
+bosLabelBull = intBosLabelBull or swingBosLabelBull
+bosLabelBear = intBosLabelBear or swingBosLabelBear
+if not na(activeResistance) and close > activeResistance and close[1] <= activeResistance[1] and not na(volume) and volume > volSma20
+    lastBrokenRes := activeResistance
+    activeResistance := na
+if not na(activeSupport) and close < activeSupport and close[1] >= activeSupport[1] and not na(volume) and volume > volSma20
+    lastBrokenSup := activeSupport
+    activeSupport := na
+if not na(swingActiveResistance) and close > swingActiveResistance and close[1] <= swingActiveResistance[1] and not na(volume) and volume > volSma20
+    swingLastBrokenRes := swingActiveResistance
+    swingActiveResistance := na
+if not na(swingActiveSupport) and close < swingActiveSupport and close[1] >= swingActiveSupport[1] and not na(volume) and volume > volSma20
+    swingLastBrokenSup := swingActiveSupport
+    swingActiveSupport := na
+var float seqHigh1 = na
+var float seqHigh2 = na
+var float seqHigh3 = na
+var float seqLow1 = na
+var float seqLow2 = na
+var float seqLow3 = na
+var int seqLastBar = -999
+if not na(pivotHigh) or not na(pivotLow)
+    if not na(pivotHigh)
+        seqHigh3 := seqHigh2
+        seqHigh2 := seqHigh1
+        seqHigh1 := pivotHigh
+    if not na(pivotLow)
+        seqLow3 := seqLow2
+        seqLow2 := seqLow1
+        seqLow1 := pivotLow
+    seqLastBar := bar_index
+bool seqValid = not na(seqHigh1) and not na(seqHigh2) and not na(seqHigh3) and not na(seqLow1) and not na(seqLow2) and not na(seqLow3)
+bool hl = seqValid and seqLow1 > seqLow2
+bool lh = seqValid and seqHigh1 < seqHigh2
+bool barSpaceOk = (bar_index - seqLastBar) >= 3
+float pivotAtrDist = not na(adaptiveATR) ? adaptiveATR * 0.5 : na
+bool atrDistOkBull = hl and not na(seqLow1) and not na(seqLow2) and not na(pivotAtrDist) and math.abs(seqLow1 - seqLow2) >= pivotAtrDist
+bool atrDistOkBear = lh and not na(seqHigh1) and not na(seqHigh2) and not na(pivotAtrDist) and math.abs(seqHigh1 - seqHigh2) >= pivotAtrDist
+bool priorBullSeq = seqValid and seqHigh2 > seqHigh3 and seqLow2 > seqLow3
+bool priorBearSeq = seqValid and seqHigh2 < seqHigh3 and seqLow2 < seqLow3
+chochLabelBull = priorBearSeq and hl and barSpaceOk and atrDistOkBull
+chochLabelBear = priorBullSeq and lh and barSpaceOk and atrDistOkBear
+mssLabelBull = chochLabelBull and (seqValid and seqHigh1 > seqHigh2) and barSpaceOk and atrDistOkBull
+mssLabelBear = chochLabelBear and (seqValid and seqLow1 < seqLow2) and barSpaceOk and atrDistOkBear
+fvgDetected = showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0] - high[2] > adaptiveATR * 0.3) or (low[2] > high[0] and low[2] - high[0] > adaptiveATR * 0.3))
+// SX-END
 
 // ═══════ F-A08 — MASTER DISPLACEMENT ENGINE, PORTED ═══════
 // WHY. This file previously computed its own displacement as `body > atr14 * obDispATR`
@@ -249,22 +344,17 @@ float volSma20 = ta.sma(volume, 20)
 // mitigation lifecycle (`not obBullActive`) and has a reversal-OB path for failed
 // displacement; this file keeps the last N boxes and has neither. Detection now matches;
 // RETENTION still does not, so an old box may persist here that the Master has retired.
-float atrTrendingV = ta.atr(7)
-float atrRangingV  = ta.atr(21)
-// _diPV/_diMV are UNREAD ON PURPOSE and must not be swept: ta.dmi returns a 3-tuple and
-// Pine requires every element be named. Only adxValV is needed here (the Master does use
+// v95: adaptive ATR, ADX and DI are the engine's (SX block above), so the V copies are gone.
+// diplus/diminus are UNREAD ON PURPOSE and must not be swept: ta.dmi returns a 3-tuple and
+// Pine requires every element be named. Only adxVal is needed here (the Master does use
 // its diplus/diminus, in bullTrendScore -- this file has no trend score to feed).
 // v67 (operator: nothing is dead, wire it): DI+ / DI- are now shown with ADX in the candle info panel.
-[_diPV, _diMV, adxValV] = ta.dmi(adxLenV, adxLenV)
-float regimeStrengthV = math.min(math.max((adxValV - (adxThresholdV - 5)) / 10.0, 0.0), 1.0)
-float _rawAdaptiveATRV = showAdaptiveATRV ? (atrRangingV * (1.0 - regimeStrengthV) + atrTrendingV * regimeStrengthV) : atr14
-float adaptiveATRV = math.max(nz(_rawAdaptiveATRV, ta.tr), close * 0.0001)
 float _bodySzV  = math.abs(close - open)
 float _cRangeV  = high - low
 float _bodyPctV = _cRangeV > 0 ? _bodySzV / _cRangeV * 100.0 : 0.0
 bool  _volOkV   = not na(volume) and not na(volSma20) and volume > volSma20 * 1.30
-float _dispEnterV = adaptiveATRV * obDispATR
-float _dispHoldV  = adaptiveATRV * (obDispATR * 0.6)
+float _dispEnterV = adaptiveATR * obDispATR
+float _dispHoldV  = adaptiveATR * (obDispATR * 0.6)
 bool _dispRawUpV   = _bodySzV > _dispEnterV and close > open and close > high[1] and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
 bool _dispRawDownV = _bodySzV > _dispEnterV and close < open and close < low[1]  and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
 var bool dispUpActiveV = false
@@ -426,15 +516,17 @@ plotshape(showPivots and not na(pl) ? low[pivotLen]  : na, "Swing Low",  shape.t
 
 var float lastPH   = na
 var float lastPL   = na
-var bool  bullBias = false
-var bool  haveBias = false
 if not na(ph)
     lastPH := high[pivotLen]
 if not na(pl)
     lastPL := low[pivotLen]
 
-bool brokeUp   = not na(lastPH) and close > lastPH and close[1] <= lastPH
-bool brokeDown = not na(lastPL) and close < lastPL and close[1] >= lastPL
+// v95: structure breaks are the ENGINE'S (SX block): BOS on its two pivot scales, CHoCH / MSS on its HH / HL / LH / LL
+// sequence; the events are the first bar of each state, as the Master's alert reports them.
+bool sxChochUp = chochLabelBull and not chochLabelBull[1]
+bool sxChochDn = chochLabelBear and not chochLabelBear[1]
+bool sxMssUp = mssLabelBull and not mssLabelBull[1]
+bool sxMssDn = mssLabelBear and not mssLabelBear[1]
 
 // AUDIT FIX (object lifecycle): these were the ONLY uncapped drawing calls in this
 // script — a label + line per structure break, never deleted. On a long chart they
@@ -443,18 +535,16 @@ bool brokeDown = not na(lastPL) and close < lastPL and close[1] >= lastPL
 var label[] structLb = array.new<label>()
 var line[]  structLn = array.new<line>()
 if showStruct and barstate.isconfirmed
-    if brokeUp
-        bool isChoch = haveBias and not bullBias
-        array.push(structLb, label.new(bar_index, high, isChoch ? "~CHoCH▲" : "~BOS▲", xloc.bar_index, yloc.abovebar, color.new(cBull, 20), label.style_label_down, color.white, size.tiny))
-        array.push(structLn, line.new(bar_index - 1, lastPH, bar_index, lastPH, xloc.bar_index, extend.none, cBull, line.style_solid, 2))
-        bullBias := true
-        haveBias := true
-    if brokeDown
-        bool isChoch2 = haveBias and bullBias
-        array.push(structLb, label.new(bar_index, low, isChoch2 ? "~CHoCH▼" : "~BOS▼", xloc.bar_index, yloc.belowbar, color.new(cBear, 20), label.style_label_up, color.white, size.tiny))
-        array.push(structLn, line.new(bar_index - 1, lastPL, bar_index, lastPL, xloc.bar_index, extend.none, cBear, line.style_solid, 2))
-        bullBias := false
-        haveBias := true
+    if bosLabelBull or sxChochUp or sxMssUp
+        array.push(structLb, label.new(bar_index, high, sxMssUp ? "MSS▲" : sxChochUp ? "CHoCH▲" : "BOS▲", xloc.bar_index, yloc.abovebar, color.new(cBull, 20), label.style_label_down, color.white, size.tiny))
+        if bosLabelBull
+            float _bl = intBosLabelBull ? bosResistanceSnap : swingBosResSnap
+            array.push(structLn, line.new(bar_index - 1, _bl, bar_index, _bl, xloc.bar_index, extend.none, cBull, line.style_solid, 2))
+    if bosLabelBear or sxChochDn or sxMssDn
+        array.push(structLb, label.new(bar_index, low, sxMssDn ? "MSS▼" : sxChochDn ? "CHoCH▼" : "BOS▼", xloc.bar_index, yloc.belowbar, color.new(cBear, 20), label.style_label_up, color.white, size.tiny))
+        if bosLabelBear
+            float _bs = intBosLabelBear ? bosSupportSnap : swingBosSupSnap
+            array.push(structLn, line.new(bar_index - 1, _bs, bar_index, _bs, xloc.bar_index, extend.none, cBear, line.style_solid, 2))
     while array.size(structLb) > structKeep
         label.delete(array.shift(structLb))
     while array.size(structLn) > structKeep
@@ -489,12 +579,12 @@ if alertOnPvSweep and (sweepUp or sweepDn)
 // label objects cannot accumulate past Pine's per-script drawing limit.
 var label[] obLbls = array.new<label>()
 var box[] fvgBoxes = array.new<box>()
-if showFVG and barstate.isconfirmed and bar_index > 3
+if fvgDetected and bar_index > 3   // v95: the engine's detector (SX block)
     bool bullGap = low > high[2]
     bool bearGap = low[2] > high
     float gLo = bullGap ? high[2] : bearGap ? high   : na
     float gHi = bullGap ? low     : bearGap ? low[2] : na
-    if not na(gLo) and gHi - gLo >= atr14 * fvgMinATR
+    if not na(gLo)
         color _fc = zoneFlatCol ? cFVG : bullGap ? cBull : cBear
         box nb = box.new(bar_index - 2, gHi, bar_index + fvgMaxBars, gLo, border_color = color.new(_fc, 78), border_width = 1, bgcolor = color.new(_fc, boxFade))
         array.push(fvgBoxes, nb)
@@ -843,7 +933,7 @@ if vSep and showCandle and barstate.islast
     float atrPct = close > 0 ? atr14 / close * 100.0 : na
     float rvol   = not na(volSma20) and volSma20 > 0 ? volume / volSma20 : na
     bool  isUp   = close >= open
-    string cTxt = "O " + str.tostring(open, format.mintick) + "   H " + str.tostring(high, format.mintick) + "\nL " + str.tostring(low, format.mintick) + "   C " + str.tostring(close, format.mintick) + "\nRNG " + str.tostring(rngC, "#.##") + "  (" + str.tostring(atr14 > 0 ? rngC / atr14 : na, "#.##") + " ATR)\nATR% " + str.tostring(atrPct, "#.###") + "   " + (isUp ? "▲ UP" : "▼ DOWN") + (na(rvol) ? "" : "\nRVOL " + str.tostring(rvol, "#.##") + "x") + (na(adxValV) ? "" : "\nADX " + str.tostring(adxValV, "#.#") + "  DI+ " + str.tostring(_diPV, "#.#") + " / DI- " + str.tostring(_diMV, "#.#"))
+    string cTxt = "O " + str.tostring(open, format.mintick) + "   H " + str.tostring(high, format.mintick) + "\nL " + str.tostring(low, format.mintick) + "   C " + str.tostring(close, format.mintick) + "\nRNG " + str.tostring(rngC, "#.##") + "  (" + str.tostring(atr14 > 0 ? rngC / atr14 : na, "#.##") + " ATR)\nATR% " + str.tostring(atrPct, "#.###") + "   " + (isUp ? "▲ UP" : "▼ DOWN") + (na(rvol) ? "" : "\nRVOL " + str.tostring(rvol, "#.##") + "x") + (na(adxVal) ? "" : "\nADX " + str.tostring(adxVal, "#.#") + "  DI+ " + str.tostring(diplus, "#.#") + " / DI- " + str.tostring(diminus, "#.#"))
     table.cell(tblC, 0, 0, cTxt, bgcolor = color.new(#101418, 12), text_color = isUp ? cBull : cBear, text_size = size.small, text_halign = text.align_left)
 if (not showCandle or not vSep) and not na(tblC)
     table.delete(tblC)
@@ -1381,7 +1471,6 @@ bool _fM = corrMedLen * _kM <= 4500
 // corrMedLen, chartTFSeconds, _kM, _gM, goldRetM, _wM, _fM, already the Master's) they are every statement the Master's
 // macroIntelScore / macroIntelLabel depend on. Inputs keep the Master's names and defaults (inputs_check.py). So the
 // MACRO Visuals shows is the Master's MACRO cell, never a second opinion. Display only: nothing here votes or gates.
-grpCore = "CORE"
 rsiLen = input.int(14, "RSI Length", minval=2, maxval=50, group=grpCore)
 grpV17 = "V17 PREDICTIVE ENHANCEMENTS"
 dxyRocLen = input.int(10, "DXY Momentum ROC Length (bars)", minval=5, maxval=30, group=grpV17)
@@ -1718,8 +1807,8 @@ int ckCostLv = na(ckCostPct) ? 0 : ckCostPct > 25.0 ? 2 : ckCostPct > 15.0 ? 1 :
 // Kaufman's efficiency ratio (net move / path length over 20 bars; low = choppy)
 var int ckDir = 0
 bool ckFlip = false
-if barstate.isconfirmed and (brokeUp or brokeDown)
-    int _nd = brokeDown ? -1 : 1
+if barstate.isconfirmed and (bosLabelBull or bosLabelBear)   // v95: the engine's BOS breaks
+    int _nd = bosLabelBear ? -1 : 1
     ckFlip := ckDir != 0 and _nd != ckDir
     ckDir := _nd
 int ckFlips = int(math.sum(ckFlip ? 1 : 0, 20))
@@ -1742,6 +1831,19 @@ string rgTxt = rgUp ? "▲ LONG" : rgDn ? "▼ SHORT" : "◆ FLAT"
 string rgMacTxt = na(rgRyD) or na(rgDxD) ? "20d macro: no data" : rgMac == 1 ? "20d macro supports gold" : rgMac == -1 ? "20d macro against gold" : "20d macro mixed"
 
 // ---- position size and the daily cap (typed-in result)
+// v94 LINK: the Master's two series (pick them once per chart). Unlinked, a source is `close` (> 0 on every bar); the
+// Master's decision series is 0 on every WAIT bar, so a 0 proves the link.
+lkDec = input.source(close, "Master link: LINK decision x stop", group = grpCk, tooltip = "v94: pick the Master's 'LINK decision x stop' here (and 'LINK lots' below) so Visuals scores the Master's own BUY / SELL and shows its plan lots and stop. Left at 'close', Visuals works as before (the tracker scores H2 signals).")
+lkLots = input.source(close, "Master link: LINK lots", group = grpCk)
+var bool lkOn = false
+if not lkOn and lkDec == 0
+    lkOn := true
+int lkD = lkOn and not na(lkDec) ? (lkDec > 0 ? 1 : lkDec < 0 ? -1 : 0) : 0
+float lkSLp = lkD != 0 ? math.abs(lkDec) : na
+bool lkTrig = barstate.isconfirmed and lkD != 0 and lkD != nz(lkD[1])
+bool lkLotsOn = lkOn and not na(lkLots) and lkLots != close
+bool trkLongSig = lkOn ? lkTrig and lkD > 0 : h2Long
+bool trkShortSig = lkOn ? lkTrig and lkD < 0 : h2Short
 // v94: with the link and a live DECISION, the default stop is the Master's plan stop (it was 1 ATR)
 float rkStopD = rkStop > 0 ? rkStop : not na(lkSLp) ? math.abs(close - lkSLp) : atr14
 float rkRisk = rkEquity * rkPct / 100.0
@@ -1757,19 +1859,6 @@ trkSL = input.float(500.0, "Bracket SL (in the unit above)", minval = 0.01, maxv
 trkTP = input.float(1000.0, "Bracket TP (in the unit above)", minval = 0.01, maxval = 10000000.0, group = grpCk)
 trkLot = input.float(0.5, "Bracket lot size", minval = 0.01, maxval = 100.0, step = 0.01, group = grpCk)
 trkPt = input.float(0.01, "MT5 point size (price per point; 0.01 for a 2-digit XAUUSD quote)", minval = 0.0001, maxval = 1.0, step = 0.0001, group = grpCk)
-// v94 LINK: the Master's two series (pick them once per chart). Unlinked, a source is `close` (> 0 on every bar); the
-// Master's decision series is 0 on every WAIT bar, so a 0 proves the link.
-lkDec = input.source(close, "Master link: LINK decision x stop", group = grpCk, tooltip = "v94: pick the Master's 'LINK decision x stop' here (and 'LINK lots' below) so Visuals scores the Master's own BUY / SELL and shows its plan lots and stop. Left at 'close', Visuals works as before (the tracker scores H2 signals).")
-lkLots = input.source(close, "Master link: LINK lots", group = grpCk)
-var bool lkOn = false
-if not lkOn and lkDec == 0
-    lkOn := true
-int lkD = lkOn and not na(lkDec) ? (lkDec > 0 ? 1 : lkDec < 0 ? -1 : 0) : 0
-float lkSLp = lkD != 0 ? math.abs(lkDec) : na
-bool lkTrig = barstate.isconfirmed and lkD != 0 and lkD != nz(lkD[1])
-bool lkLotsOn = lkOn and not na(lkLots) and lkLots != close
-bool trkLongSig = lkOn ? lkTrig and lkD > 0 : h2Long
-bool trkShortSig = lkOn ? lkTrig and lkD < 0 : h2Short
 float trkSLd = trkUnit == "MT5 points" ? trkSL * trkPt : trkSL / (trkLot * pointValue)
 float trkTPd = trkUnit == "MT5 points" ? trkTP * trkPt : trkTP / (trkLot * pointValue)
 var float[] trkE = array.new_float()
@@ -1962,7 +2051,7 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
             r += 1
             _tmRow(r, "RANGE", str.tostring(_rng, "#.##") + "  (" + str.tostring(atr14 > 0 ? _rng / atr14 : na, "#.##") + " ATR)  ATR% " + str.tostring(close > 0 ? atr14 / close * 100.0 : na, "#.###"), _tmV)
         r += 1
-        _tmRow(r, "FLOW", (na(_rv) ? "" : "RVOL " + str.tostring(_rv, "#.##") + "x  ") + (na(adxValV) ? "ADX —" : "ADX " + str.tostring(adxValV, "#.#") + "  DI+ " + str.tostring(_diPV, "#.#") + " / DI- " + str.tostring(_diMV, "#.#")), _tmV)
+        _tmRow(r, "FLOW", (na(_rv) ? "" : "RVOL " + str.tostring(_rv, "#.##") + "x  ") + (na(adxVal) ? "ADX —" : "ADX " + str.tostring(adxVal, "#.#") + "  DI+ " + str.tostring(diplus, "#.#") + " / DI- " + str.tostring(diminus, "#.#")), _tmV)
     if h2Show and not h2Docked
         r += 1
         _tmHead(r, "H2 SWEEP → VALUE", "pre-registered · display only", _tmSec)

@@ -23,711 +23,758 @@ srMergeATR,71,input,1,0,0,"input.float(0.5,  ""Merge distance (ATR)"", minval = 
 srMaxDistATR,72,input,1,0,0,"input.float(8.0,  ""Auto-hide beyond (ATR)"", minval = 1.0, maxval = 50.0, step = 0.5, group = grpSR, tooltip = ""Levels fa"
 srMaxKeep,73,input,1,0,0,"input.int(40,     ""Pivots retained"", minval = 10, maxval = 120, group = grpSR)"
 grpS,75,value,6,0,0,"""Structure"""
-showStruct,84,input,1,0,0,"input.bool(false, ""BOS / CHoCH labels (~ = approximation, NOT the engine's signal)"", group = grpS, tooltip = ""Drawn by a"
+showStruct,84,input,1,0,0,"input.bool(false, ""BOS / CHoCH / MSS labels (the engine's)"", group = grpS, tooltip = ""v95: drawn from the Master's own s"
 pivotLen,85,input,12,0,0,"input.int(5,      ""Pivot length"", minval = 2, maxval = 20, group = grpS)"
 showPivots,86,input,2,0,0,"input.bool(false, ""Mark swing pivots"",       group = grpS)"
 structKeep,87,input,2,0,0,"input.int(25,     ""BOS/CHoCH markers kept"", minval = 5, maxval = 100, group = grpS, tooltip = ""Older structure markers a"
 showSweep,88,input,2,0,0,"input.bool(true,  ""Liquidity sweep markers"", group = grpS)"
-grpZ,90,value,11,0,0,"""Zones"""
+grpZ,90,value,7,0,0,"""Zones"""
 showFVG,92,input,1,0,6,"input.bool(false, ""Fair Value Gaps"",         group = grpZ)"
-fvgMaxBars,93,input,1,0,6,"input.int(60,     ""FVG max age (bars)"", minval = 5, group = grpZ)"
-fvgMinATR,94,input,1,0,0,"input.float(0.3,  ""FVG min size (ATR)"", minval = 0.05, step = 0.05, group = grpZ)"
+fvgMaxBars,94,input,1,0,6,"input.int(30,     ""FVG max age (bars), as the Master's"", minval = 10, maxval = 100, group = grpZ)"
 showOB,96,input,1,0,6,"input.bool(false, ""Order Blocks"",            group = grpZ)"
 obDispATR,97,input,2,0,0,"input.float(2.5,  ""OB displacement (xATR)"", minval = 1.5, maxval = 5.0, step = 0.1, group = grpZ, tooltip = ""F-A08: was "
-adxLenV,101,input,2,0,0,"input.int(14,  ""  ADX length (match Master)"", minval = 1, group = grpZ)"
-adxThresholdV,102,input,1,0,0,"input.int(25,  ""  ADX threshold (match Master)"", minval = 10, maxval = 50, group = grpZ)"
-showAdaptiveATRV,103,input,1,0,0,"input.bool(false, ""  Adaptive ATR Regime (match Master)"", group = grpZ, tooltip = ""Master default is OFF, in which case "
-obKeep,104,input,2,0,0,"input.int(4,      ""Order Blocks kept"", minval = 1, maxval = 10, group = grpZ)"
-obShowLabel,105,input,3,0,0,"input.bool(true, ""Label OB / FVG zones"", group=""Zones"", tooltip=""Zone identity labels, relocated here from the Master wh"
-srShow,117,input,1,0,0,"input.bool(true, ""Support / Resistance levels"", group=""Zones"")"
-srMaxLv,118,input,2,0,0,"input.int(6,   ""  Max levels per side"", minval=1, maxval=12, group=""Zones"")"
-srScanLen,119,input,1,0,0,"input.int(100, ""  Scan lookback (bars)"", minval=20, maxval=400, group=""Zones"")"
-boxFade,120,input,3,0,0,"input.int(94,     ""Zone fill transparency (higher = fainter)"", minval = 80, maxval = 99, group = grpZ)"
-zoneFlatCol,121,input,3,0,0,"input.bool(true,  ""Spec colors (OB brown / FVG orange)"", group = grpZ, tooltip = ""ON = Final Edition palette. OFF = dire"
-grpC,123,value,2,0,0,"""Candle Info Panel"""
-showCandle,124,input,4,0,0,"input.bool(true,  ""Show candle info panel"",  group = grpC)"
-candlePos,125,input,3,0,0,"input.string(""Top Right"", ""Panel position"", options = [""Top Right"", ""Middle Right"", ""Bottom Right"", ""Top Left""], group ="
-grpTm,129,value,10,0,0,"""TERMINAL PANEL (v73)"""
-vLayout,130,input,1,0,0,"input.string(""Terminal (one panel)"", ""Panel layout"", options = [""Terminal (one panel)"", ""Separate cards (v72)""], group ="
-vPos,131,input,3,0,0,"input.string(""Bottom Left"", ""Terminal position"", options = [""Bottom Left"", ""Middle Left"", ""Top Left"", ""Middle Right""], g"
-vDetail,132,input,1,0,0,"input.string(""Standard"", ""Terminal detail"", options = [""Standard"", ""Compact""], group = grpTm, tooltip = ""Standard: every"
-vSep,133,value,6,0,0,"vLayout == ""Separate cards (v72)"""
-glShow,137,input,3,0,0,"input.bool(true, ""Market at a glance (8 answers)"", group = grpTm, tooltip = ""Trend, bias, heading, liquidity, macro, roo"
-glMoveA,138,input,15,0,0,"input.float(10.0, ""Move to plan for: at least ($)"", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm, tooltip = """
-glMoveB,139,input,11,0,0,"input.float(20.0, ""Move to plan for: target ($)"", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm)"
-glPlace,142,input,1,0,0,"input.string(""Bottom ticker"", ""Glance placement"", options = [""Bottom ticker"", ""In the panel""], group = grpTm, tooltip = "
-tkLift,143,input,1,0,0,"input.int(5, ""Ticker lift above the Master's plan strip (% of chart height)"", minval = 0, maxval = 40, group = grpTm, to"
-tkSize,144,input,2,0,0,"input.string(""Normal"", ""Ticker text size"", options = [""Small"", ""Normal"", ""Large""], group = grpTm)"
-tkOn,145,value,4,0,0,"glShow and glPlace == ""Bottom ticker"""
-glStyle,146,input,1,0,0,"input.string(""Gauges (compact)"", ""Glance style"", options = [""Gauges (compact)"", ""Text (v79)""], group = grpTm, tooltip = "
-gdPos,147,input,7,0,0,"input.string(""Bottom Right"", ""Gold drivers panel"", options=[""Bottom Right"", ""Bottom Center"", ""Bottom Left"", ""Middle Righ"
-gdDock,152,input,1,0,0,"input.string(""Under the Master's MACRO"", ""Gold drivers placement"", options=[""Under the Master's MACRO"", ""In the panel / "
-gdGap,153,input,1,0,0,"input.int(24, ""Dock gap below the Master dashboard (% of chart height)"", minval=0, maxval=70, group=""GOLD DRIVERS (displ"
-dashMode,154,input,5,0,6,"input.string(""Auto"", ""Dash Mode"", options=[""Auto"", ""Desktop"", ""Tablet"", ""Mobile""], group=""GOLD DRIVERS (display only)"", "
-textSize,155,input,2,0,6,"input.string(""Auto"", ""Text Size"", options=[""Auto"", ""Small"", ""Medium"", ""Large""], group=""GOLD DRIVERS (display only)"", too"
-density,156,input,2,0,6,"input.string(""Standard"", ""Density"", options=[""Compact"", ""Standard"", ""Spacious""], group=""GOLD DRIVERS (display only)"", to"
-gdDocked,157,value,6,0,0,"gdDock == ""Under the Master's MACRO"" and gdPos != ""Hidden"" and dashMode != ""Mobile"""
-grpDk,162,value,2,0,0,"""DOCK UNDER THE MASTER (v75)"""
-h2Dock,163,input,1,0,0,"input.string(""Under the Master's DECISION"", ""H2 card placement"", options=[""Under the Master's DECISION"", ""In the panel /"
-lqDock,164,input,3,0,0,"input.string(""Under the Master's LIQUIDITY"", ""Liquidity & sweeps placement"", options=[""Under the Master's LIQUIDITY"", ""I"
-h2Docked,165,value,6,0,0,"h2Dock == ""Under the Master's DECISION"" and dashMode != ""Mobile"""
-lqDocked,166,value,3,0,0,"lqDock == ""Under the Master's LIQUIDITY"" and dashMode != ""Mobile"""
-dkOn,169,value,1,0,0,gdDocked or lqDocked or h2Docked
-lqInPanel,170,value,2,0,0,"lqDock == ""In the panel"" or lqDock == ""Under the Master's LIQUIDITY"" and dashMode == ""Mobile"""
-grpSess,172,value,1,0,0,"""Sessions (UTC)"""
-showSess,174,input,4,0,0,"input.bool(false, ""Session shading"",         group = grpSess)"
-grpF,176,value,12,0,0,"""Footprint (approximation)"""
-showFP,178,input,2,0,0,"input.bool(false, ""Enable footprint engine"", group = grpF)"
-fpTf,179,input,3,0,0,"input.timeframe(""1"", ""Intrabar timeframe"",   group = grpF, tooltip = ""Must be LOWER than the chart timeframe. 1 minute o"
-fpBars,180,input,2,0,0,"input.int(25,     ""Bars to render"", minval = 5, maxval = 60, group = grpF)"
-fpBins,181,input,6,0,0,"input.int(6,      ""Price bins per bar"", minval = 3, maxval = 10, group = grpF)"
-showFpBins,182,input,1,0,0,"input.bool(true,  ""Draw volume-at-price bins"", group = grpF)"
-showFpPOC,183,input,1,0,0,"input.bool(true,  ""Mark bar volume POC"",     group = grpF)"
-showFpDelta,184,input,1,0,0,"input.bool(true,  ""Delta labels"",            group = grpF)"
-showAbs,203,input,1,0,0,"input.bool(true,  ""Absorption bubbles"",      group = grpF, tooltip = ""Tick-activity proxy, NOT exchange order-flow. Spot"
-absEffort,204,input,2,0,0,"input.float(1.6,  ""  Effort: vol vs average"", minval = 1.0, maxval = 5.0, step = 0.1, group = grpF)"
-absResult,205,input,1,0,0,"input.float(0.35, ""  Result: |c-o| / range"",  minval = 0.05, maxval = 0.9, step = 0.05, group = grpF)"
-absImb,206,input,1,0,0,"input.float(0.30, ""  Delta imbalance min"",    minval = 0.05, maxval = 0.9, step = 0.05, group = grpF)"
-absKeep,207,input,1,0,0,"input.int(40,     ""  Bubbles kept"",           minval = 5, maxval = 200, group = grpF)"
-cBull,210,value,9,0,0,#00D084
-cBear,211,value,9,0,0,#FF4D4D
-cNeut,212,value,5,0,0,#808A93
-cFast,213,value,2,0,0,#FFFFFF
-cMid,214,value,2,0,0,#3B82F6
-cSlow,215,value,2,0,0,#FFD700
-cVwap,216,value,6,0,0,#00BCD4
-cBB,217,value,6,0,0,#B084FF
-cPrice,218,value,2,0,0,#00E676
-cLevel,219,value,2,0,0,#FFD54F
-cLevelW,220,value,2,0,0,#FF8A65
-cCur,221,value,2,0,0,#4DD0E1
-cSup,222,value,2,0,0,#26A69A
-cRes,223,value,2,0,0,#EF5350
-cOB,224,value,2,0,0,#8D6E63
-cFVG,225,value,1,0,0,#FF9800
-cSweep,226,value,2,0,0,#E040FB
-atr14,228,value,17,0,0,ta.atr(14)
-volSma20,234,value,8,0,6,"ta.sma(volume, 20)"
-atrTrendingV,252,value,1,0,0,ta.atr(7)
-atrRangingV,253,value,1,0,0,ta.atr(21)
-_diPV,258,tuple,2,0,0,"ta.dmi(adxLenV, adxLenV)"
-_diMV,258,tuple,2,0,0,"ta.dmi(adxLenV, adxLenV)"
-adxValV,258,tuple,5,0,0,"ta.dmi(adxLenV, adxLenV)"
-regimeStrengthV,259,value,2,0,0,"math.min(math.max((adxValV - (adxThresholdV - 5)) / 10.0, 0.0), 1.0)"
-_rawAdaptiveATRV,260,value,1,0,0,showAdaptiveATRV ? (atrRangingV * (1.0 - regimeStrengthV) + atrTrendingV * regimeStrengthV) : atr14
-adaptiveATRV,261,value,2,0,0,"math.max(nz(_rawAdaptiveATRV, ta.tr), close * 0.0001)"
-_bodySzV,262,value,5,0,0,math.abs(close - open)
-_cRangeV,263,value,4,0,0,high - low
-_bodyPctV,264,value,2,0,0,_cRangeV > 0 ? _bodySzV / _cRangeV * 100.0 : 0.0
-_volOkV,265,value,2,0,0,not na(volume) and not na(volSma20) and volume > volSma20 * 1.30
-_dispEnterV,266,value,2,0,0,adaptiveATRV * obDispATR
-_dispHoldV,267,value,2,0,0,adaptiveATRV * (obDispATR * 0.6)
-_dispRawUpV,268,value,2,0,0,_bodySzV > _dispEnterV and close > open and close > high[1] and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
-_dispRawDownV,269,value,2,0,0,_bodySzV > _dispEnterV and close < open and close < low[1]  and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
-dispUpActiveV,270,var,1,2,0,false
-dispDnActiveV,271,var,1,2,0,false
-displacementUpV,280,value,2,0,0,_dispRawUpV or dispUpActiveV
-displacementDownV,281,value,2,0,0,_dispRawDownV or dispDnActiveV
-dispOnsetUpV,282,value,1,0,0,displacementUpV and not displacementUpV[1]
-dispOnsetDownV,283,value,1,0,0,displacementDownV and not displacementDownV[1]
-ema20,286,value,2,0,6,"ta.ema(close, ema20Len)"
-ema100,287,value,2,0,6,"ta.ema(close, ema100Len)"
-ema200,288,value,8,0,6,"ta.ema(close, ema200Len)"
-vwapD,293,value,2,0,0,ta.vwap(hlc3)
-vwapW,294,value,2,0,0,"ta.vwap(hlc3, timeframe.change(""1W""))"
-vwapM,295,value,2,0,0,"ta.vwap(hlc3, timeframe.change(""1M""))"
-bbBasis,300,value,5,0,6,"ta.sma(close, 20)"
-bbDev,301,value,4,0,6,"2.0 * ta.stdev(close, 20)"
-pBBU,302,value,1,0,0,"plot(showBB ? bbBasis + bbDev : na, ""BB Upper"", color = color.new(cBB, 25), display = display.pane)"
-pBBL,303,value,1,0,0,"plot(showBB ? bbBasis - bbDev : na, ""BB Lower"", color = color.new(cBB, 25), display = display.pane)"
-msInDay,316,value,6,0,6,86400000
-_nyMsOfDay,332,value,1,0,6,"hour(time, ""America/New_York"") * 3600000 + minute(time, ""America/New_York"") * 60000"
-_nyOffsetMs,333,value,1,0,6,_nyMsOfDay - int(time % msInDay)
-nyCloseDayMs,334,value,4,0,6,((17 * 3600000 - _nyOffsetMs) % msInDay + msInDay) % msInDay
-nyDailyHigh,335,var,3,3,6,na
-nyDailyLow,336,var,2,3,6,na
-prevNyDailyHigh,337,var,1,1,6,na
-prevNyDailyLow,338,var,1,1,6,na
-nyWeeklyHigh,339,var,2,3,6,na
-nyWeeklyLow,340,var,2,3,6,na
-prevNyWeeklyHigh,341,var,1,1,6,na
-prevNyWeeklyLow,342,var,1,1,6,na
-crossedNYDay,343,value,3,2,6,false
-_tfDayPlus,369,value,1,0,6,timeframe.in_seconds() >= 86400
-crossedNYWeek,370,value,1,0,6,"_tfDayPlus ? timeframe.change(""1W"") : (crossedNYDay and dayofweek(nz(time[1], time), ""UTC"") == dayofweek.friday)"
-_tfAboveD,401,value,2,0,6,timeframe.in_seconds() > 86400
-pdh,402,value,8,0,0,_tfAboveD ? na : prevNyDailyHigh
-pdl,403,value,8,0,0,_tfAboveD ? na : prevNyDailyLow
-_tfAboveW,405,value,2,0,6,timeframe.in_seconds() > 604800
-pwh,406,value,5,0,0,_tfAboveW ? na : prevNyWeeklyHigh
-pwl,407,value,5,0,0,_tfAboveW ? na : prevNyWeeklyLow
-pmh,408,tuple,5,0,0,"request.security(syminfo.tickerid, ""M"", [high[1], low[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)"
-pml,408,tuple,5,0,0,"request.security(syminfo.tickerid, ""M"", [high[1], low[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)"
-cdh,412,var,6,2,6,na
-cdl,413,var,6,2,6,na
-ph,422,value,3,0,0,"ta.pivothigh(pivotLen, pivotLen)"
-pl,423,value,3,0,0,"ta.pivotlow(pivotLen, pivotLen)"
-lastPH,427,var,10,1,0,na
-lastPL,428,var,10,1,0,na
-bullBias,429,var,2,2,0,false
-haveBias,430,var,2,2,0,false
-brokeUp,436,value,2,0,0,not na(lastPH) and close > lastPH and close[1] <= lastPH
-brokeDown,437,value,3,0,0,not na(lastPL) and close < lastPL and close[1] >= lastPL
-sweepUp,464,value,6,0,0,showSweep and not na(lastPH) and high > lastPH and close < lastPH and barstate.isconfirmed
-sweepDn,465,value,3,0,0,showSweep and not na(lastPL) and low  < lastPL and close > lastPL and barstate.isconfirmed
-pvLastSweep,469,var,12,1,0,"""none yet"""
-pvLastLvl,470,var,3,1,0,na
-pvLastTime,471,var,2,1,0,na
-pvLastUp,472,var,2,1,0,false
-alertOnPvSweep,481,input,1,0,0,"input.bool(true, ""Alert on pivot sweeps (✕)"", group = grpS, tooltip = ""Needs an alert on Visuals (Any alert() function c"
-_dom,566,value,7,0,6,"dayofmonth(time, ""UTC"")"
-_mon,567,value,12,0,6,"month(time, ""UTC"")"
-_yr,568,value,4,0,6,"year(time, ""UTC"")"
-_dow,569,value,3,0,6,"dayofweek(time, ""UTC"")"
-_thisSunDom,570,value,2,0,6,_dom - ((_dow - 1 + 7) % 7)
-_firstSunDom,571,value,4,1,6,_thisSunDom - 7 * int((_thisSunDom - 1) / 7)
-usDstStartDom,574,var,1,2,6,8
-usDstEndDom,575,var,1,2,6,1
-_lastUsDstYr,576,var,1,1,6,0
-usIsDST,585,value,2,0,6,(_mon > 3 and _mon < 11) or (_mon == 3 and _dom >= usDstStartDom) or (_mon == 11 and _dom < usDstEndDom)
-euDstStartDom,586,var,1,2,6,25
-euDstEndDom,587,var,1,2,6,25
-_lastEuDstYr,588,var,1,1,6,0
-euIsDST,599,value,2,0,6,(_mon > 3 and _mon < 10) or (_mon == 3 and _dom >= euDstStartDom) or (_mon == 10 and _dom < euDstEndDom)
-hU,601,value,14,0,0,"hour(time, ""UTC"")"
-londonOpen,602,value,2,0,6,7
-londonClose,603,value,3,0,6,euIsDST ? 16 : 17
-nyOpen,604,value,3,0,6,usIsDST ? 14 : 15
-nyClose,605,value,1,0,0,usIsDST ? 20 : 21
-inAsian,606,value,4,0,6,hU >= 0 and hU < londonOpen
-inLondon,607,value,6,0,6,hU >= londonOpen and hU < londonClose
-inNY,608,value,6,0,6,hU >= nyOpen and hU < nyClose
-f_sessionIntel,614,function,1,0,5,
-sessId,661,tuple,12,0,5,f_sessionIntel()
-curSessId,661,tuple,33,1,5,f_sessionIntel()
-sesHi,661,tuple,13,2,5,f_sessionIntel()
-sesLo,661,tuple,8,2,5,f_sessionIntel()
-sesOpenPx,661,tuple,5,1,5,f_sessionIntel()
-prevSesHi,661,tuple,7,1,5,f_sessionIntel()
-prevSesLo,661,tuple,7,1,5,f_sessionIntel()
-sesManip,661,tuple,7,2,5,f_sessionIntel()
-sessExpansionPct,661,tuple,6,0,5,f_sessionIntel()
-sessManipProb,661,tuple,17,0,5,f_sessionIntel()
-sessContProb,661,tuple,17,0,5,f_sessionIntel()
-volAsianEWMA,664,var,3,1,0,0.0
-volLondonEWMA,665,var,3,1,0,0.0
-volNyEWMA,666,var,3,1,0,0.0
-sessVolBase,674,value,4,0,0,inAsian ? volAsianEWMA : inLondon ? volLondonEWMA : inNY ? volNyEWMA : 0.0
-f_wil,677,function,4,0,0,
-f_ci,690,function,8,0,0,
-ckSessN,698,var,3,0,0,"array.from(0, 0, 0)"
-ckN,701,value,10,0,0,"curSessId >= 0 and curSessId <= 2 ? array.get(ckSessN, curSessId) : 0"
-srPrice,709,var,14,0,0,array.new<float>()
-srHits,710,var,5,0,0,array.new<int>()
-f_srAdd,712,function,2,0,0,
-nearestRes,736,value,3,1,0,na
-nearestSup,737,value,3,1,0,na
-tgPx,754,var,5,0,0,array.new<float>()
-tgTx,755,var,3,0,0,array.new<string>()
-tgCl,756,var,3,0,0,array.new<color>()
-f_tagAdd,760,function,18,0,0,
-tblC,838,var,4,2,0,na
-ltfC,855,value,1,0,0,"request.security_lower_tf(syminfo.tickerid, fpTf, close)"
-ltfO,856,value,1,0,0,"request.security_lower_tf(syminfo.tickerid, fpTf, open)"
-ltfV,857,value,2,0,0,"request.security_lower_tf(syminfo.tickerid, fpTf, volume)"
-absVolSma,862,value,3,0,0,"ta.sma(volume, 20)"
-fpPOC,863,value,2,1,0,na
-fpDelta,864,value,6,1,0,na
-scanSRLevels,933,function,1,0,0,
-srResLevels,977,var,8,0,5,array.new_float()
-srResStrengths,978,var,7,0,5,array.new_float()
-srSupLevels,979,var,8,0,5,array.new_float()
-srSupStrengths,980,var,7,0,5,array.new_float()
-grpH4,1030,value,4,0,0,"""4H Candle Marker"""
-showH4,1031,input,1,0,0,"input.bool(true,  ""Mark last closed 4H candle"", group = grpH4)"
-h4ShowOC,1032,input,2,0,0,"input.bool(false, ""Also mark open / close"",     group = grpH4, tooltip = ""High and low bound the 4H range. Open and clos"
-h4ShowLive,1033,input,2,0,0,"input.bool(false, ""Also mark the FORMING 4H candle (REPAINTS)"", group = grpH4, tooltip = ""The in-progress 4H bar's high "
-h4Col,1034,input,7,0,0,"input.color(color.yellow, ""Line colour"", group = grpH4)"
-h4Active,1042,value,8,0,0,showH4 and timeframe.in_seconds() < 14400
-h4H,1044,tuple,3,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
-h4L,1044,tuple,3,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
-h4O,1044,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
-h4C,1044,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
-h4LiveH,1045,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high, low], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)"
-h4LiveL,1045,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high, low], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)"
-h4Hi,1047,var,2,1,0,na
-h4Lo,1048,var,1,1,0,na
-h4Op,1049,var,1,1,0,na
-h4Cl,1050,var,1,1,0,na
-h4LvH,1051,var,1,1,0,na
-h4LvL,1052,var,1,1,0,na
-_h4Set,1058,function,6,0,0,
-grpPD,1092,value,5,0,0,"""PDH/PDL lines & alerts"""
-showPdLines,1093,input,1,0,0,"input.bool(true, ""PDH / PDL dashed lines"", group = grpPD)"
-pdCol,1096,input,3,0,0,"input.color(color.new(color.yellow, 0), ""PDH/PDL colour"", group = grpPD)"
-pdBack,1097,input,2,0,0,"input.int(200, ""Bars drawn back"", minval = 20, maxval = 500, group = grpPD)"
-pdhLn,1101,var,2,1,0,na
-pdlLn,1102,var,1,1,0,na
-_pdSet,1107,function,2,0,0,
-alertOn4H,1133,input,2,0,0,"input.bool(true, ""Alert on 4H high/low touch"", group = grpPD)"
-alertOn1D,1134,input,2,0,0,"input.bool(true, ""Alert on PDH/PDL touch"",     group = grpPD)"
-_touched,1136,function,4,0,0,not na(_lvl) and high >= _lvl and low <= _lvl
-_t4hH,1138,value,2,0,0,alertOn4H and h4Active and _touched(h4H)
-_t4hL,1139,value,2,0,0,alertOn4H and h4Active and _touched(h4L)
-_t1dH,1140,value,2,0,0,alertOn1D and _touched(pdh)
-_t1dL,1141,value,2,0,0,alertOn1D and _touched(pdl)
-h2HtfScore,1162,function,3,0,1,na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 
-h2C1,1169,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
-h2A1,1169,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
-h2B1,1169,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
-h2D1,1169,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
-h2C4,1170,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
-h2A4,1170,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
-h2B4,1170,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
-h2D4,1170,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
-h2CD,1171,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
-h2AD,1171,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
-h2BD,1171,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
-h2DD,1171,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
-h2S1,1172,value,7,0,2,"h2HtfScore(h2C1, h2A1, h2B1, h2D1)"
-h2S4,1173,value,7,0,2,"h2HtfScore(h2C4, h2A4, h2B4, h2D4)"
-h2SD,1174,value,7,0,2,"h2HtfScore(h2CD, h2AD, h2BD, h2DD)"
-h2UpN,1196,value,1,0,2,(h2S1 >= 60 ? 1 : 0) + (h2S4 >= 60 ? 1 : 0) + (h2SD >= 60 ? 1 : 0)
-h2DnN,1197,value,1,0,2,(h2S1 <= 40 ? 1 : 0) + (h2S4 <= 40 ? 1 : 0) + (h2SD <= 40 ? 1 : 0)
-h2TrendUp,1198,value,11,0,2,h2UpN >= 2
-h2TrendDn,1199,value,11,0,2,h2DnN >= 2
-h2PH,1201,value,2,0,2,"ta.pivothigh(high, 5, 5)"
-h2PL,1202,value,2,0,2,"ta.pivotlow(low, 5, 5)"
-h2SwH,1203,var,12,2,2,na
-h2SwL,1204,var,12,2,2,na
-h2SweepL,1205,value,8,0,2,barstate.isconfirmed and not na(h2SwL) and low < h2SwL and close > h2SwL
-h2SweepH,1206,value,6,0,2,barstate.isconfirmed and not na(h2SwH) and high > h2SwH and close < h2SwH
-h2SweptLvl,1207,value,2,0,2,h2SweepL ? h2SwL : h2SweepH ? h2SwH : na
-h2VHi,1217,value,2,0,2,"ta.highest(high, 100)"
-h2VLo,1218,value,6,0,2,"ta.lowest(low, 100)"
-h2Poc,1219,var,27,1,2,na
-h2Vah,1220,var,14,1,2,na
-h2Val,1221,var,14,1,2,na
-h2Atr,1253,value,6,0,2,ta.atr(14)
-h2RL,1254,value,4,0,2,h2SweepL ? close - (low - 0.15 * h2Atr) : na
-h2RS,1255,value,4,0,2,h2SweepH ? (high + 0.15 * h2Atr) - close : na
-h2Long,1256,value,12,0,2,h2SweepL and h2TrendUp and not na(h2Poc) and close <= h2Poc and h2RL >= 0.5 * h2Atr and h2RL <= 5.0 * h2Atr
-h2Short,1257,value,9,0,2,h2SweepH and h2TrendDn and not na(h2Poc) and close >= h2Poc and h2RS >= 0.5 * h2Atr and h2RS <= 5.0 * h2Atr
-h2R,1258,value,4,0,2,h2Long ? h2RL : h2Short ? h2RS : na
-h2Sl,1259,value,3,0,2,h2Long ? close - h2RL : h2Short ? close + h2RS : na
-h2Tp1,1260,value,3,0,2,"h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na"
-h2Tp2,1261,value,3,0,2,"h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h2Val, close - 2.0 * h2R) : na"
-h2Trend,1267,value,6,0,0,"h2TrendUp ? ""UP"" : h2TrendDn ? ""DOWN"" : ""MIXED"""
-grpH2,1268,value,7,0,0,"""H2 sweep-to-value (pre-registered)"""
-h2Show,1269,input,7,0,0,"input.bool(true, ""Show H2 signals and card"", group = grpH2)"
-h2CardPos,1270,input,3,0,0,"input.string(""Middle Left"", ""H2 card position"", options = [""Middle Left"", ""Bottom Left"", ""Top Left"", ""Middle Right""], gr"
-h2Layout,1271,input,2,0,0,"input.string(""Compact (phone)"", ""H2 card layout"", options = [""Compact (phone)"", ""Full""], group = grpH2, tooltip = ""Compa"
-h2TxtSize,1272,input,1,0,0,"input.string(""Small"", ""H2 card text size"", options = [""Small"", ""Normal""], group = grpH2)"
-h2Mt5,1273,input,1,0,0,"input.float(0.0, ""MT5 price offset (same value as the Master)"", minval = -50.0, maxval = 50.0, step = 0.01, group = grpH"
-_h2p,1276,function,43,0,0,"na(_x) ? ""—"" : str.tostring(_x + h2Mt5, ""#.##"")"
-f_sc,1279,function,12,0,0,"na(x) ? ""—"" : str.tostring(x, ""#"")"
-h2Next,1281,value,5,0,0,"na(h2Poc) ? ""building profile"" : close < h2Val ? ""below value → POC "" + _h2p(h2Poc) : close > h2Vah ? ""above value → POC"
-h2LastSig,1282,var,1,1,0,"""none yet"""
-h2LastSweep,1283,var,12,1,0,"""none yet"""
-h2SigCard,1284,var,4,1,0,"""none yet"""
-alertOnH2Sweep,1290,input,1,0,0,"input.bool(true, ""Alert on H2 swing sweeps"", group = grpH2, tooltip = ""Needs an alert on Visuals (Any alert() function c"
-h2StaleBars,1303,input,1,0,0,"input.int(24, ""Mark the last H2 signal stale after (bars)"", minval = 1, maxval = 1000, group = grpH2, tooltip = ""Display"
-h2SigBar,1304,var,2,1,0,na
-h2SigTime,1305,var,2,1,0,na
-h2SigDir,1306,var,18,1,0,0
-h2SigSlV,1307,var,2,1,0,na
-h2SigT1,1308,var,2,1,0,na
-h2SigT2,1309,var,2,1,0,na
-h2SigOut,1310,var,16,2,0,""""""
-h2AgeB,1324,value,3,0,0,na(h2SigBar) ? na : bar_index - h2SigBar
-h2AgeH,1325,value,3,0,0,na(h2SigTime) ? na : (time - h2SigTime) / 3600000.0
-h2TrendAgrees,1326,value,2,0,0,h2SigDir == 1 ? h2TrendUp : h2SigDir == -1 ? h2TrendDn : true
-h2SigDone,1327,value,1,0,0,"h2SigOut == ""stopped"" or h2SigOut == ""TP2 hit"" or h2SigOut == ""TP1 hit, then stop"""
-h2Stale,1328,value,6,0,0,h2SigDir != 0 and (h2SigDone or h2AgeB > h2StaleBars or not h2TrendAgrees)
-h2SigState,1330,value,15,0,0,h2SigDir == 0 ? 0 : h2Stale ? 2 : h2SigDir
-h2SigStat,1331,value,4,0,0,"h2SigDir == 0 ? """" : ""\n"" + (h2Stale ? ""○ STALE · "" : ""● LIVE · "") + (h2AgeB == 0 ? ""this bar"" : str.tostring(h2AgeB) + "
-h2Card,1337,var,4,0,0,"table.new(h2CardPos == ""Bottom Left"" ? position.bottom_left : h2CardPos == ""Top Left"" ? position.top_left : h2CardPos =="
-h2Sz,1338,value,10,0,0,"h2TxtSize == ""Normal"" ? size.normal : size.small"
-_h2Row,1339,function,10,0,0,
-safeDiv,1369,function,10,0,7,not na(a) and not na(b) and math.abs(b) > 1e-10 ? a / b : 0.0
-macroTF,1370,input,8,0,6,"input.timeframe(""60"", ""Macro Correlation Timeframe"", group=""GOLD DRIVERS (display only)"", tooltip=""Keep equal to the Mas"
-y2Symbol,1371,input,3,0,6,"input.symbol(""TVC:US02Y"", ""US 2Y Yield (blank=off)"", group=""GOLD DRIVERS (display only)"", tooltip=""With US10Y this gives"
-corrMedLen,1372,input,5,0,6,"input.int(60, ""Corr Medium Window"", minval=30, maxval=100, group=""GOLD DRIVERS (display only)"", tooltip=""Keep equal to t"
-chartTFSeconds,1373,value,1,0,6,timeframe.in_seconds()
-_kM,1374,value,6,0,6,"math.max(1, int(timeframe.in_seconds(macroTF) / chartTFSeconds))"
-_gM,1375,value,3,0,6,"request.security(syminfo.tickerid, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_on)"
-goldRetM,1376,value,5,0,6,"not na(_gM[1]) ? safeDiv(_gM, _gM[1]) - 1 : na"
-_wM,1377,value,5,0,6,"math.min(corrMedLen * _kM, 4500)"
-_fM,1378,value,5,0,6,corrMedLen * _kM <= 4500
-grpCore,1384,value,1,0,6,"""CORE"""
-rsiLen,1385,input,2,0,6,"input.int(14, ""RSI Length"", minval=2, maxval=50, group=grpCore)"
-grpV17,1386,value,9,0,6,"""V17 PREDICTIVE ENHANCEMENTS"""
-dxyRocLen,1387,input,2,0,6,"input.int(10, ""DXY Momentum ROC Length (bars)"", minval=5, maxval=30, group=grpV17)"
-znRocLen,1388,input,1,0,6,"input.int(10, ""ZN1 Rate Pressure ROC Length"", minval=5, maxval=20, group=grpV17)"
-yieldSymbol,1389,input,2,0,6,"input.symbol(""TVC:US10Y"", ""Yield Symbol (use TVC:US10Y for yield, ZN1! for futures price)"", group=grpV17)"
-invertYield,1390,input,2,0,6,"input.bool(false, ""Invert Yield Logic (enable for ZN1! futures price)"", group=grpV17)"
-dxySymbol,1391,input,1,0,6,"input.symbol(""TVC:DXY"", ""DXY Symbol"", group=grpV17)"
-silverSymbol,1392,input,1,0,6,"input.symbol(""OANDA:XAGUSD"", ""Silver Symbol"", group=grpV17)"
-eurusdSymbol,1393,input,1,0,6,"input.symbol(""OANDA:EURUSD"", ""EURUSD Symbol"", group=grpV17)"
-spxSymbol,1394,input,1,0,6,"input.symbol(""SP:SPX"", ""S&P 500 Symbol"", group=grpV17)"
-tipsSymbol,1395,input,3,0,6,"input.symbol(""TVC:US10Y"", ""TIPS/Real-Yield Symbol (blank=off)"", group=grpV17, tooltip=""Q5.5: default changed from the un"
-grpV19c,1396,value,2,0,6,"""V19 CORRELATION"""
-corrShortLen,1397,input,5,0,6,"input.int(30, ""Corr Short Window"", minval=10, maxval=50, group=grpV19c)"
-corrLongLen,1398,input,5,0,6,"input.int(120, ""Corr Long Window"", minval=60, maxval=200, group=grpV19c)"
-_rawGoldRet,1399,value,2,0,6,"safeDiv(close, nz(close[1], close)) - 1"
-_retClampW,1400,value,2,0,6,"math.min(math.max(nz(ta.stdev(_rawGoldRet, 100)[1], 0.0) * 6.0, 0.002), 0.05)"
-goldRet,1401,value,1,0,6,"math.min(math.max(_rawGoldRet, -_retClampW), _retClampW)"
-_rawDXY,1402,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
-_rawDXYFast,1402,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
-_rawDXYSlow,1402,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
-_rawDXYRoc,1402,tuple,1,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
-_rawDXYRSI,1402,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
-_rawYield,1403,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
-_rawYieldFast,1403,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
-_rawYieldSlow,1403,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
-_rawYieldRoc,1403,tuple,1,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
-_rawSilver,1404,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
-_rawSilverEMA,1404,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
-_silverRSI,1404,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
-_rawEURUSD,1405,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
-_rawEURFast,1405,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
-_rawEURSlow,1405,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
-_rawEURRoc,1405,tuple,1,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
-_rawSPX,1406,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
-_rawSPXFast,1406,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
-_rawSPXSlow,1406,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
-_rawTIPS,1407,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
-_rawTIPSFast,1407,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
-_rawTIPSSlow,1407,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
-cachedDXY,1408,var,1,1,6,na
-cachedYield,1409,var,1,1,6,na
-cachedSilver,1410,var,1,1,6,na
-cachedEURUSD,1411,var,1,1,6,na
-cachedSPX,1412,var,1,1,6,na
-cachedTIPS,1413,var,1,1,6,na
-dxyStaleCount,1414,var,2,2,6,0
-yieldStaleCount,1415,var,2,2,6,0
-silverStaleCount,1416,var,2,2,6,0
-eurusdStaleCount,1417,var,2,2,6,0
-spxStaleCount,1418,var,2,2,6,0
-tipsStaleCount,1419,var,2,2,6,0
-MACRO_STALE_MAX,1450,value,6,0,6,2
-dxyClose,1451,value,6,0,6,cachedDXY
-yieldClose,1452,value,6,0,6,cachedYield
-silverClose,1453,value,6,0,6,cachedSilver
-eurusdClose,1454,value,6,0,6,cachedEURUSD
-spxClose,1455,value,6,0,6,cachedSPX
-tipsClose,1456,value,6,0,6,cachedTIPS
-dxyValid,1457,value,13,0,6,not na(dxyClose) and not na(_rawDXYFast) and not na(_rawDXYSlow) and dxyStaleCount < MACRO_STALE_MAX
-yieldValid,1458,value,9,0,6,not na(yieldClose) and not na(_rawYieldFast) and not na(_rawYieldSlow) and yieldStaleCount < MACRO_STALE_MAX
-silverValid,1459,value,5,0,6,not na(silverClose) and not na(_rawSilverEMA) and silverStaleCount < MACRO_STALE_MAX
-eurusdValid,1460,value,10,0,6,not na(eurusdClose) and not na(_rawEURFast) and not na(_rawEURSlow) and eurusdStaleCount < MACRO_STALE_MAX
-spxValid,1461,value,8,0,6,not na(spxClose) and not na(_rawSPXFast) and not na(_rawSPXSlow) and spxStaleCount < MACRO_STALE_MAX
-_tipsOn,1462,value,1,0,6,tipsSymbol != yieldSymbol
-tipsValid,1463,value,6,0,6,_tipsOn and not na(tipsClose) and not na(_rawTIPSFast) and not na(_rawTIPSSlow) and tipsStaleCount < MACRO_STALE_MAX
-dxyEMAFast,1464,value,4,0,6,_rawDXYFast
-dxyEMASlow,1465,value,2,0,6,_rawDXYSlow
-yieldEMAFast,1466,value,4,0,6,_rawYieldFast
-yieldEMASlow,1467,value,2,0,6,_rawYieldSlow
-eurusdEMAFast,1468,value,4,0,6,_rawEURFast
-eurusdEMASlow,1469,value,2,0,6,_rawEURSlow
-spxEMAFast,1470,value,4,0,6,_rawSPXFast
-spxEMASlow,1471,value,2,0,6,_rawSPXSlow
-tipsEMAFast,1472,value,4,0,6,_rawTIPSFast
-tipsEMASlow,1473,value,2,0,6,_rawTIPSSlow
-silverEMA,1474,value,2,0,6,_rawSilverEMA
-dxyBull,1475,value,1,0,6,dxyValid and dxyClose > dxyEMAFast and dxyEMAFast > dxyEMASlow
-dxyBear,1476,value,1,0,6,dxyValid and dxyClose < dxyEMAFast and dxyEMAFast < dxyEMASlow
-_yieldUp,1477,value,2,0,6,yieldValid and yieldClose > yieldEMAFast and yieldEMAFast > yieldEMASlow
-_yieldDown,1478,value,2,0,6,yieldValid and yieldClose < yieldEMAFast and yieldEMAFast < yieldEMASlow
-yieldRising,1479,value,1,0,6,invertYield ? _yieldDown : _yieldUp
-yieldFalling,1480,value,1,0,6,invertYield ? _yieldUp : _yieldDown
-eurusdBull,1481,value,1,0,6,eurusdValid and eurusdClose > eurusdEMAFast and eurusdEMAFast > eurusdEMASlow
-eurusdBear,1482,value,1,0,6,eurusdValid and eurusdClose < eurusdEMAFast and eurusdEMAFast < eurusdEMASlow
-spxBull,1483,value,1,0,6,spxValid and spxClose > spxEMAFast and spxEMAFast > spxEMASlow
-spxBear,1484,value,1,0,6,spxValid and spxClose < spxEMAFast and spxEMAFast < spxEMASlow
-tipsRising,1485,value,1,0,6,tipsValid and tipsClose > tipsEMAFast and tipsEMAFast > tipsEMASlow
-tipsFalling,1486,value,1,0,6,tipsValid and tipsClose < tipsEMAFast and tipsEMAFast < tipsEMASlow
-dxyROC,1487,value,2,0,6,"dxyValid ? nz(_rawDXYRoc, 0.0) : 0.0"
-dxyMomBull,1488,value,1,0,6,dxyROC > 0.15
-dxyMomBear,1489,value,1,0,6,dxyROC < -0.15
-znROC,1490,value,1,0,6,"yieldValid ? nz(_rawYieldRoc, 0.0) : 0.0"
-eurusdROC,1491,value,2,0,6,"eurusdValid ? nz(_rawEURRoc, 0.0) : 0.0"
-ratePressure,1492,value,2,0,6,znROC
-ratePressureUp,1493,value,1,0,6,ratePressure > 0.1
-ratePressureDown,1494,value,1,0,6,ratePressure < -0.1
-silverRet,1495,value,1,0,6,"silverValid and not na(silverClose[1]) ? safeDiv(silverClose, silverClose[1]) - 1 : na"
-dxyRet,1496,value,1,0,6,"dxyValid and not na(dxyClose[1]) ? safeDiv(dxyClose, dxyClose[1]) - 1 : na"
-yieldRet,1497,value,1,0,6,"yieldValid and not na(yieldClose[1]) ? safeDiv(yieldClose, yieldClose[1]) - 1 : na"
-eurRet,1498,value,1,0,6,"eurusdValid and not na(eurusdClose[1]) ? safeDiv(eurusdClose, eurusdClose[1]) - 1 : na"
-spxRet,1499,value,1,0,6,"spxValid and not na(spxClose[1]) ? safeDiv(spxClose, spxClose[1]) - 1 : na"
-tipsRet,1500,value,1,0,6,"tipsValid and not na(tipsClose[1]) ? safeDiv(tipsClose, tipsClose[1]) - 1 : na"
-goldRetL,1501,value,3,0,6,goldRet[1]
-_wS,1502,value,3,0,6,"math.min(corrShortLen * _kM, 4500)"
-_wL,1503,value,3,0,6,"math.min(corrLongLen * _kM, 4500)"
-_fS,1504,value,3,0,6,corrShortLen * _kM <= 4500
-_fL,1505,value,3,0,6,corrLongLen * _kM <= 4500
-f_cc3,1506,function,6,0,6,
-corrGoldDXY_30,1511,tuple,1,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldDXY_60,1511,tuple,1,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldDXY_120,1511,tuple,1,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldYld_30,1512,tuple,1,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldYld_60,1512,tuple,1,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldYld_120,1512,tuple,1,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldSlv_30,1513,tuple,1,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldSlv_60,1513,tuple,1,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldSlv_120,1513,tuple,1,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldSPX_30,1514,tuple,1,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldSPX_60,1514,tuple,1,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldSPX_120,1514,tuple,1,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldEUR_30,1515,tuple,1,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldEUR_60,1515,tuple,1,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldEUR_120,1515,tuple,1,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
-corrGoldTIPS_30,1516,tuple,1,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldTIPS_60,1516,tuple,1,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-corrGoldTIPS_120,1516,tuple,1,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
-avgCorrDXY,1517,value,1,0,6,(nz(corrGoldDXY_30) + nz(corrGoldDXY_60) + nz(corrGoldDXY_120)) / 3.0
-avgCorrYld,1518,value,1,0,6,(nz(corrGoldYld_30) + nz(corrGoldYld_60) + nz(corrGoldYld_120)) / 3.0
-avgCorrSlv,1519,value,1,0,6,(nz(corrGoldSlv_30) + nz(corrGoldSlv_60) + nz(corrGoldSlv_120)) / 3.0
-avgCorrSPX,1520,value,1,0,6,(nz(corrGoldSPX_30) + nz(corrGoldSPX_60) + nz(corrGoldSPX_120)) / 3.0
-avgCorrEUR,1521,value,1,0,6,(nz(corrGoldEUR_30) + nz(corrGoldEUR_60) + nz(corrGoldEUR_120)) / 3.0
-avgCorrTIPS,1522,value,1,0,6,(nz(corrGoldTIPS_30) + nz(corrGoldTIPS_60) + nz(corrGoldTIPS_120)) / 3.0
-_wDXYr,1523,value,2,0,6,"math.min(math.abs(avgCorrDXY) * 100, 30)"
-_wYldr,1524,value,2,0,6,"math.min(math.abs(avgCorrYld) * 100, 30)"
-_wSlvr,1525,value,2,0,6,"math.min(math.abs(avgCorrSlv) * 100, 25)"
-_wSPXr,1526,value,2,0,6,"spxValid ? math.min(math.abs(avgCorrSPX) * 100, 15) : 0.0 // R5.1: adaptive by |corr| like the other assets (wires avgCo"
-_wEURr,1527,value,2,0,6,"eurusdValid and not dxyValid ? math.min(math.abs(avgCorrEUR) * 100, 30) : 0.0"
-_wTIPSr,1528,value,2,0,6,"math.min(math.abs(avgCorrTIPS) * 100, 25)"
-_wTot,1529,value,12,0,6,_wDXYr + _wYldr + _wSlvr + _wSPXr + _wEURr + _wTIPSr
-wDXY,1530,value,2,0,6,_wTot > 0 ? _wDXYr / _wTot * 100 : 30.0
-wYld,1531,value,2,0,6,_wTot > 0 ? _wYldr / _wTot * 100 : 25.0
-wSlv,1532,value,2,0,6,_wTot > 0 ? _wSlvr / _wTot * 100 : 20.0
-wSPX,1533,value,2,0,6,_wTot > 0 ? _wSPXr / _wTot * 100 : 15.0
-wEUR,1534,value,2,0,6,_wTot > 0 ? _wEURr / _wTot * 100 : 20.0
-wTIPS,1535,value,2,0,6,_wTot > 0 ? _wTIPSr / _wTot * 100 : 10.0
-msDXY,1536,value,2,0,6,dxyValid ? (dxyBear ? wDXY : dxyBull ? -wDXY : 0.0) : 0.0
-msYld,1537,value,2,0,6,yieldValid ? (yieldFalling ? wYld : yieldRising ? -wYld : 0.0) : 0.0
-msSPX,1538,value,2,0,6,spxValid ? (spxBull ? wSPX : spxBear ? -wSPX : 0.0) : 0.0
-msEUR,1539,value,2,0,6,eurusdValid and not dxyValid ? (eurusdBull ? wEUR : eurusdBear ? -wEUR : 0.0) : 0.0
-msSlv,1540,value,2,0,6,silverValid ? (silverClose > silverEMA ? wSlv : silverClose < silverEMA ? -wSlv : 0.0) : 0.0
-msTIPS,1541,value,2,0,6,tipsValid ? (tipsFalling ? wTIPS : tipsRising ? -wTIPS : 0.0) : 0.0
-msMom,1542,value,2,0,6,dxyValid ? (dxyMomBear ? 10.0 : dxyMomBull ? -10.0 : 0.0) : 0.0
-msRate,1543,value,2,0,6,(yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 0.0) + (eurusdValid and not dxyValid ? (eurusdROC
-macroStrengthScore,1544,value,1,0,6,"int(math.max(math.min(msDXY + msYld + msSPX + msEUR + msSlv + msTIPS + msMom + msRate, 100), -100))"
-macroIntelScore,1545,value,7,0,1,macroStrengthScore
-macroIntelValid,1546,value,1,0,6,dxyValid or yieldValid or spxValid or eurusdValid or silverValid
-macroIntelLabel,1547,value,16,0,1,"macroIntelValid ? (macroIntelScore >= 40 ? ""BULL"" : macroIntelScore <= -40 ? ""BEAR"" : macroIntelScore >= 15 ? ""BULL-ISH"""
-mxVerdict,1551,value,3,0,0,"""Macro "" + (macroIntelLabel == ""BULL"" ? ""BULL"" : macroIntelLabel == ""BEAR"" ? ""BEAR"" : macroIntelLabel == ""BULL-ISH"" ? ""b"
-mxDir,1552,value,8,0,0,"macroIntelLabel == ""BULL"" or macroIntelLabel == ""BULL-ISH"" ? 1 : macroIntelLabel == ""BEAR"" or macroIntelLabel == ""BEAR-I"
-mxGlyph,1553,value,2,0,0,"macroIntelLabel == ""BULL"" ? ""▲▲"" : macroIntelLabel == ""BULL-ISH"" ? ""▲"" : macroIntelLabel == ""BEAR"" ? ""▼▼"" : macroIntelLa"
-f_mxC,1554,function,6,0,0,"n + (not v ? "" no data"" : pts > 0 ? "" ▲+"" + str.tostring(pts, ""#"") : pts < 0 ? "" ▼"" + str.tostring(pts, ""#"") : "" ≈0"")"
-mxWhy,1555,value,1,0,0,"""MACRO = the Master's MACRO cell (same code): "" + mxVerdict + ""\n"" + f_mxC(""DXY"", dxyValid, msDXY + msMom) + "" · "" + f_m"
-f_brS,1559,function,4,0,1,up ? 1.0 : dn ? -1.0 : 0.0
-f_brM,1560,function,2,0,1,"v ? f_brS(up, dn) * (math.abs(r) > 0.5 ? 2.0 : math.abs(r) > 0.25 ? 1.0 : 0.0) : na"
-f_brMv,1561,function,5,0,1,"not v ? ""no data"" : rise ? ""rising"" : fall ? ""falling"" : ""flat"""
-brJpySym,1567,input,3,0,1,"input.symbol(""OANDA:USDJPY"", ""USDJPY symbol (blank = off)"", group=""GOLD DRIVERS (display only)"")"
-brOilSym,1568,input,3,0,1,"input.symbol(""OANDA:WTICOUSD"", ""Oil (WTI) symbol (blank = off)"", group=""GOLD DRIVERS (display only)"")"
-brRySym,1569,input,6,0,1,"input.symbol(""FRED:DFII10"", ""Real 10Y yield, daily (blank = off)"", group=""GOLD DRIVERS (display only)"", tooltip=""10-year"
-brBeSym,1570,input,3,0,1,"input.symbol(""FRED:T10YIE"", ""10Y breakeven inflation, daily (blank = off)"", group=""GOLD DRIVERS (display only)"", tooltip"
-brJc,1573,tuple,6,0,1,"request.security(brJpySym != """" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-brJf,1573,tuple,5,0,1,"request.security(brJpySym != """" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-brJs,1573,tuple,3,0,1,"request.security(brJpySym != """" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-brOc,1574,tuple,6,0,1,"request.security(brOilSym != """" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-brOf,1574,tuple,5,0,1,"request.security(brOilSym != """" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-brOs,1574,tuple,3,0,1,"request.security(brOilSym != """" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-brRc,1575,tuple,4,0,1,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
-brRf,1575,tuple,5,0,1,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
-brRs,1575,tuple,3,0,1,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
-brBc,1576,tuple,4,0,1,"request.security(brBeSym != """" ? brBeSym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
-brBf,1576,tuple,5,0,1,"request.security(brBeSym != """" ? brBeSym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
-brBs,1576,tuple,3,0,1,"request.security(brBeSym != """" ? brBeSym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
-br2c,1577,tuple,4,0,1,"request.security(y2Symbol != """" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-br2f,1577,tuple,5,0,1,"request.security(y2Symbol != """" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-br2s,1577,tuple,3,0,1,"request.security(y2Symbol != """" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
-brJv,1578,value,3,0,1,"brJpySym != """" and not na(brJc) and not na(brJf) and not na(brJs)"
-brOv,1579,value,3,0,1,"brOilSym != """" and not na(brOc) and not na(brOf) and not na(brOs)"
-brRv,1580,value,3,0,1,"brRySym != """" and not na(brRc) and not na(brRf) and not na(brRs)"
-brBv,1581,value,3,0,1,"brBeSym != """" and not na(brBc) and not na(brBf) and not na(brBs)"
-br2v,1582,value,3,0,1,"y2Symbol != """" and not na(br2c) and not na(br2f) and not na(br2s)"
-brJu,1583,value,2,0,1,brJc > brJf and brJf > brJs
-brJn,1584,value,2,0,1,brJc < brJf and brJf < brJs
-brOu,1585,value,2,0,1,brOc > brOf and brOf > brOs
-brOn,1586,value,2,0,1,brOc < brOf and brOf < brOs
-brRu,1587,value,2,0,1,brRc > brRf and brRf > brRs
-brRn,1588,value,2,0,1,brRc < brRf and brRf < brRs
-brBu,1589,value,2,0,1,brBc > brBf and brBf > brBs
-brBn,1590,value,2,0,1,brBc < brBf and brBf < brBs
-br2u,1591,value,2,0,1,br2c > br2f and br2f > br2s
-br2n,1592,value,2,0,1,br2c < br2f and br2f < br2s
-brJr,1594,value,1,0,1,"ta.correlation(goldRetM, not na(brJc[1]) ? safeDiv(brJc, brJc[1]) - 1 : na, _wM)"
-brJR,1595,value,3,0,1,brJv and _fM ? brJr : na
-brOr,1596,value,1,0,1,"ta.correlation(goldRetM, not na(brOc[1]) ? safeDiv(brOc, brOc[1]) - 1 : na, _wM)"
-brOR,1597,value,3,0,1,brOv and _fM ? brOr : na
-brJd,1599,value,12,0,1,"f_brM(brJv, brJn, brJu, nz(brJR))"
-brJh,1600,value,4,0,1,"""yen-dollar "" + f_brMv(brJv, brJu, brJn) + (na(brJR) ? """" : "" r"" + str.tostring(brJR, ""#.##""))"
-brOd,1601,value,12,0,1,"f_brM(brOv, brOu, brOn, nz(brOR))"
-brOh,1602,value,4,0,1,"""WTI "" + f_brMv(brOv, brOu, brOn) + (na(brOR) ? """" : "" r"" + str.tostring(brOR, ""#.##""))"
-brRd,1603,value,12,0,1,"brRv ? f_brS(brRn, brRu) : na"
-brRh,1604,value,4,0,1,"(brRv ? str.tostring(brRc, ""#.##"") + ""% "" : """") + f_brMv(brRv, brRu, brRn) + "" · daily"""
-brBd,1605,value,12,0,1,"brBv ? f_brS(brBu, brBn) : na"
-brBh,1606,value,4,0,1,"(brBv ? str.tostring(brBc, ""#.##"") + ""% "" : """") + f_brMv(brBv, brBu, brBn) + "" · daily"""
-br2d,1607,value,12,0,1,"br2v ? f_brS(br2n, br2u) : na"
-br2h,1608,value,4,0,1,"(br2v ? str.tostring(br2c, ""#.##"") + ""% "" : """") + f_brMv(br2v, br2u, br2n) + "" · Fed path"""
-gdT,1610,var,4,0,0,"table.new(gdPos == ""Bottom Center"" ? (tkOn ? position.bottom_right : position.bottom_center) : gdPos == ""Bottom Left"" ? "
-f_gdRow,1611,function,5,0,0,
-grpCk,1629,value,43,0,0,"""CHECKS & RISK (v86, display only)"""
-ckPanel,1630,input,2,0,0,"input.bool(true, ""Checks & risk section in the panel"", group = grpCk, tooltip = ""Score note, news calendar, cost, churn,"
-nwShow,1635,input,3,0,0,"input.bool(true, ""News calendar: NFP / CPI / FOMC (official dates)"", group = grpCk, tooltip = ""08:30 New York for NFP an"
-nwBefore,1636,input,4,0,0,"input.int(30, ""News window: minutes before"", minval = 0, maxval = 240, group = grpCk)"
-nwAfter,1637,input,5,0,0,"input.int(30, ""News window: minutes after"", minval = 0, maxval = 240, group = grpCk)"
-nwShade,1638,input,1,0,0,"input.bool(true, ""Shade the news windows"", group = grpCk)"
-nwCostMult,1639,input,3,0,0,"input.float(3.0, ""News window: cost multiplier (spread + slippage)"", minval = 1.0, maxval = 10.0, step = 0.5, group = gr"
-alertOnNews,1640,input,1,0,0,"input.bool(true, ""Alert when a news window starts"", group = grpCk, tooltip = ""Needs an alert on Visuals (Any alert() fun"
-spreadCost,1642,input,4,0,6,"input.float(0.3, ""Spread Cost (points), as in the Master"", minval=0.0, maxval=5.0, step=0.1, group=grpCk)"
-slippagePts,1643,input,1,0,6,"input.float(0.2, ""Slippage (points), as in the Master"", minval=0.0, maxval=2.0, step=0.1, group=grpCk)"
-commissionL,1644,input,1,0,6,"input.float(7.0, ""Commission per Lot (USD, round turn), as in the Master"", minval=0.0, maxval=50.0, step=0.5, group=grpC"
-pointValue,1645,input,8,0,6,"input.float(100, ""Value per Point per Lot (USD), as in the Master"", minval=1, group=grpCk)"
-rkEquity,1646,input,3,0,0,"input.float(25000.0, ""Account equity ($)"", minval = 100.0, maxval = 100000000.0, step = 100.0, group = grpCk)"
-rkPct,1647,input,2,0,0,"input.float(1.0, ""Risk per trade (% of equity)"", minval = 0.05, maxval = 5.0, step = 0.05, group = grpCk, tooltip = ""Def"
-rkStop,1648,input,3,0,0,"input.float(0.0, ""Stop distance ($ per oz; 0 = 1 ATR of this chart)"", minval = 0.0, maxval = 500.0, step = 0.1, group = "
-rkToday,1649,input,5,0,0,"input.float(0.0, ""Today's realised result (R, typed in)"", minval = -20.0, maxval = 20.0, step = 0.1, group = grpCk, tool"
-rkCap,1650,input,5,0,0,"input.float(-2.0, ""Daily loss cap (R)"", minval = -10.0, maxval = -0.5, step = 0.5, group = grpCk)"
-rgShow,1651,input,1,0,0,"input.bool(true, ""Daily regime tile (untested)"", group = grpCk, tooltip = ""12-month return and the 200-day average (tren"
-rgDxySym,1652,input,3,0,0,"input.symbol(""TVC:DXY"", ""Dollar index, daily (blank = off)"", group = grpCk)"
-lgShow,1653,input,2,0,0,"input.bool(true, ""Banner: the website's forward record"", group = grpCk, tooltip = ""Typed in from the website's forward l"
-lgArm,1657,input,3,0,0,"input.string(""H4 · 15m (deciding)"", ""Record: arm / timeframe"", group = grpCk)"
-lgAsof,1658,input,3,0,0,"input.string(""2026-10-31 00:58 UTC"", ""Record: as of"", group = grpCk)"
-lgN,1659,input,11,0,0,"input.int(171, ""Record: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
-lgW,1660,input,2,0,0,"input.int(66, ""Record: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
-lgMean,1661,input,3,0,0,"input.float(-0.0920, ""Record: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
-lgSd,1662,input,1,0,0,"input.float(0.8006, ""Record: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
-lgPF,1663,input,2,0,0,"input.float(0.7502, ""Record: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
-lgNote,1664,input,3,0,0,"input.string(""5m: N 511, mean -0.18R, interval below 0 · the Brief's H4 playbook: not for live money"", ""Record: note"", g"
-lg2Show,1665,input,2,0,0,"input.bool(true, ""Banner: a second record (H3 = the H2 card's rule)"", group = grpCk)"
-lg2Arm,1666,input,2,0,0,"input.string(""H3 · 1H (deciding) = the H2 card's rule"", ""Record 2: arm / timeframe"", group = grpCk)"
-lg2N,1667,input,11,0,0,"input.int(3, ""Record 2: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
-lg2W,1668,input,2,0,0,"input.int(1, ""Record 2: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
-lg2Mean,1669,input,3,0,0,"input.float(-0.1642, ""Record 2: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
-lg2Sd,1670,input,1,0,0,"input.float(1.6215, ""Record 2: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
-lg2PF,1671,input,2,0,0,"input.float(0.7762, ""Record 2: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
-lg2Note,1672,input,4,0,0,"input.string(""5m reported: N 14, mean +0.55R (-0.43 … +1.54): not enough trades yet"", ""Record 2: note"", group = grpCk)"
-f_tq,1675,function,2,0,0,
-f_dur,1680,function,3,0,0,
-nwCode,1685,var,1,0,0,"array.from(202610281400, 202611060830, 202611100830, 202612040830, 202612091400, 202612100830, 202701080830, 20270113083"
-nwName,1686,var,2,0,0,"array.from(""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""FOMC"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", "
-nwT,1687,var,11,0,0,array.new_int()
-nwI,1692,var,11,1,0,0
-nwBarIn,1693,value,5,1,0,false
-ckLo,1709,value,4,0,0,euIsDST ? 7 : 8
-ckKZ,1710,value,1,0,0,(hU >= ckLo + 1 and hU < ckLo + 4) or (hU >= nyOpen and hU < nyOpen + 3) or (hU >= londonClose - 1 and hU < londonClose)
-ckSpread,1711,value,1,0,0,"ckKZ ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : math.max"
-ckCost,1713,value,9,0,0,"(ckSpread + 2.0 * slippagePts) * (nwBarIn ? nwCostMult : 1.0) + commissionL / math.max(pointValue, 1.0)"
-ckCostPct,1714,value,8,0,0,atr14 > 0 ? ckCost / atr14 * 100.0 : na
-ckCostLv,1715,value,4,0,0,na(ckCostPct) ? 0 : ckCostPct > 25.0 ? 2 : ckCostPct > 15.0 ? 1 : 0
-ckDir,1719,var,2,1,0,0
-ckFlip,1720,value,1,1,0,false
-ckFlips,1725,value,3,0,0,"int(math.sum(ckFlip ? 1 : 0, 20))"
-_ckPath,1726,value,2,0,0,"math.sum(math.abs(close - close[1]), 20)"
-ckER,1727,value,4,0,0,_ckPath > 0 ? math.abs(close - close[20]) / _ckPath : na
-ckChurn,1728,value,4,0,0,ckFlips >= 2
-rgM1,1731,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
-rgM13,1731,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
-rgC1,1732,tuple,6,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
-rgSma1,1732,tuple,8,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
-rgRy1,1733,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
-rgRy21,1733,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
-rgDx1,1734,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
-rgDx21,1734,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
-rgRet12,1735,value,9,0,0,rgM1 > 0 and rgM13 > 0 ? (rgM1 / rgM13 - 1.0) * 100.0 : na
-rgUp,1736,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 > 0 and rgC1 > rgSma1
-rgDn,1737,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 < 0 and rgC1 < rgSma1
-rgRyD,1738,value,8,0,0,"brRySym != """" and not na(rgRy1) and not na(rgRy21) ? rgRy1 - rgRy21 : na"
-rgDxD,1739,value,8,0,0,"rgDxySym != """" and not na(rgDx1) and not na(rgDx21) ? rgDx1 - rgDx21 : na"
-rgMac,1740,value,2,0,0,na(rgRyD) or na(rgDxD) ? 0 : rgRyD < 0 and rgDxD < 0 ? 1 : rgRyD > 0 and rgDxD > 0 ? -1 : 0
-rgTxt,1741,value,2,0,0,"rgUp ? ""▲ LONG"" : rgDn ? ""▼ SHORT"" : ""◆ FLAT"""
-rgMacTxt,1742,value,2,0,0,"na(rgRyD) or na(rgDxD) ? ""20d macro: no data"" : rgMac == 1 ? ""20d macro supports gold"" : rgMac == -1 ? ""20d macro agains"
-rkStopD,1746,value,3,0,0,rkStop > 0 ? rkStop : not na(lkSLp) ? math.abs(close - lkSLp) : atr14
-rkRisk,1747,value,2,0,0,rkEquity * rkPct / 100.0
-rkPerLot,1748,value,2,0,0,(rkStopD + ckCost) * pointValue
-rkLots,1749,value,3,0,0,rkPerLot > 0 ? math.floor(rkRisk / rkPerLot * 100.0) / 100.0 : na
-rkLocked,1750,value,4,0,0,rkToday <= rkCap
-trkShow,1754,input,2,0,0,"input.bool(true, ""Bracket tracker: score H2 signals with my SL / TP"", group = grpCk, tooltip = ""v93: for every H2 signal"
-trkUnit,1755,input,4,0,0,"input.string(""Money ($)"", ""Bracket unit"", options = [""Money ($)"", ""MT5 points""], group = grpCk)"
-trkSL,1756,input,4,0,0,"input.float(500.0, ""Bracket SL (in the unit above)"", minval = 0.01, maxval = 10000000.0, group = grpCk)"
-trkTP,1757,input,4,0,0,"input.float(1000.0, ""Bracket TP (in the unit above)"", minval = 0.01, maxval = 10000000.0, group = grpCk)"
-trkLot,1758,input,6,0,0,"input.float(0.5, ""Bracket lot size"", minval = 0.01, maxval = 100.0, step = 0.01, group = grpCk)"
-trkPt,1759,input,2,0,0,"input.float(0.01, ""MT5 point size (price per point; 0.01 for a 2-digit XAUUSD quote)"", minval = 0.0001, maxval = 1.0, st"
-lkDec,1762,input,5,0,0,"input.source(close, ""Master link: LINK decision x stop"", group = grpCk, tooltip = ""v94: pick the Master's 'LINK decision"
-lkLots,1763,input,4,0,0,"input.source(close, ""Master link: LINK lots"", group = grpCk)"
-lkOn,1764,var,7,1,0,false
-lkD,1767,value,6,0,0,lkOn and not na(lkDec) ? (lkDec > 0 ? 1 : lkDec < 0 ? -1 : 0) : 0
-lkSLp,1768,value,3,0,0,lkD != 0 ? math.abs(lkDec) : na
-lkTrig,1769,value,2,0,0,barstate.isconfirmed and lkD != 0 and lkD != nz(lkD[1])
-lkLotsOn,1770,value,1,0,0,lkOn and not na(lkLots) and lkLots != close
-trkLongSig,1771,value,2,0,0,lkOn ? lkTrig and lkD > 0 : h2Long
-trkShortSig,1772,value,1,0,0,lkOn ? lkTrig and lkD < 0 : h2Short
-trkSLd,1773,value,9,0,0,"trkUnit == ""MT5 points"" ? trkSL * trkPt : trkSL / (trkLot * pointValue)"
-trkTPd,1774,value,6,0,0,"trkUnit == ""MT5 points"" ? trkTP * trkPt : trkTP / (trkLot * pointValue)"
-trkE,1775,var,6,0,0,array.new_float()
-trkDir,1776,var,3,0,0,array.new_int()
-trkW,1777,var,4,1,0,0
-trkL,1778,var,1,1,0,0
-trkNet,1779,var,1,2,0,0.0
-trkN,1800,value,5,0,0,trkW + trkL
-trkBE,1801,value,3,0,0,(trkSLd + ckCost) / (trkSLd + trkTPd)
-trkLo,1802,tuple,2,0,0,"f_wil(trkW, trkN)"
-trkHi,1802,tuple,2,0,0,"f_wil(trkW, trkN)"
-trkEqPct,1803,value,1,0,0,trkSLd * trkLot * pointValue / rkEquity * 100.0
-trkLv,1804,value,2,0,0,trkN < 1 ? 0 : trkLo > trkBE ? 1 : trkHi < trkBE ? -1 : 0
-trkTxt,1805,value,1,0,0,"(lkOn ? ""Master BUY / SELL"" : ""H2 signals (link the Master to score its BUY / SELL)"") + "" · SL "" + (trkUnit == ""MT5 poin"
-lgSe,1808,value,2,0,0,lgN > 1 ? lgSd / math.sqrt(lgN) : na
-lgT,1809,value,2,0,0,lgN > 1 ? f_tq(lgN - 1) : na
-lgLo,1810,value,5,0,0,lgMean - lgT * lgSe
-lgHi,1811,value,2,0,0,lgMean + lgT * lgSe
-lgWlo,1812,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
-lgWhi,1812,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
-lgVerdict,1813,value,4,0,0,"lgN < 50 ? ""UNDECIDED · N < 50"" : na(lgLo) ? ""—"" : lgLo > 0 and lgPF >= 1.2 ? ""EDGE SHOWN"" : lgLo > 0 ? ""NO EDGE SHOWN ·"
-lgLv,1814,value,4,0,0,"lgVerdict == ""EDGE SHOWN"" ? 1 : lgVerdict == ""NO EDGE · interval below 0"" ? -1 : 0"
-lgTxt,1815,value,3,0,0,"lgArm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lgN) + "" · win "" + (lgN > 0 ? str.tostring(math.min(lgW, "
-lg2Se,1817,value,2,0,0,lg2N > 1 ? lg2Sd / math.sqrt(lg2N) : na
-lg2T,1818,value,2,0,0,lg2N > 1 ? f_tq(lg2N - 1) : na
-lg2Lo,1819,value,5,0,0,lg2Mean - lg2T * lg2Se
-lg2Hi,1820,value,2,0,0,lg2Mean + lg2T * lg2Se
-lg2Wlo,1821,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
-lg2Whi,1821,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
-lg2Verdict,1822,value,4,0,0,"lg2N < 50 ? ""UNDECIDED · N < 50"" : na(lg2Lo) ? ""—"" : lg2Lo > 0 and lg2PF >= 1.2 ? ""EDGE SHOWN"" : lg2Lo > 0 ? ""NO EDGE SH"
-lg2Lv,1823,value,2,0,0,"lg2Verdict == ""EDGE SHOWN"" ? 1 : lg2Verdict == ""NO EDGE · interval below 0"" ? -1 : 0"
-lg2Txt,1824,value,3,0,0,"lg2Arm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lg2N) + "" · win "" + (lg2N > 0 ? str.tostring(math.min(lg"
-tfNote,1826,value,2,0,0,"timeframe.period == ""15"" ? ""chart 15m = the decision timeframe"" : timeframe.period == ""5"" ? ""5m chart: timing only, deci"
-lgLine,1827,value,1,0,0,"lgArm + "": "" + lgVerdict + "" · "" + str.replace_all(str.substring(lgTxt, str.pos(lgTxt, ""\n"") + 1), ""\n"", "" "")"
-lg2Line,1828,value,1,0,0,"lg2Arm + "": "" + lg2Verdict + "" · "" + str.replace_all(str.substring(lg2Txt, str.pos(lg2Txt, ""\n"") + 1), ""\n"", "" "")"
-nwK,1831,value,3,1,0,-1
-nwNowIn,1832,value,5,1,0,false
-nwMs,1833,value,7,1,0,na
-nwKName,1834,value,2,1,0,""""""
-nwNext,1835,value,3,1,0,"nwShow ? ""calendar ended: update Visuals"" : ""calendar off"""
-nwLv,1847,value,5,0,0,nwNowIn ? 2 : not na(nwMs) and nwMs <= 4 * 3600000 ? 1 : 0
-tblV,1854,var,9,0,0,"table.new(vPos == ""Middle Left"" ? position.middle_left : vPos == ""Top Left"" ? position.top_left : vPos == ""Middle Right"""
-_tmK,1855,value,5,0,0,"color.new(#7D8FA3, 0)"
-_tmV,1856,value,61,0,0,"color.new(#E6EDF3, 0)"
-_tmUp,1857,value,31,0,0,"color.new(#26A69A, 0)"
-_tmDn,1858,value,34,0,0,"color.new(#EF5350, 0)"
-_tmSec,1859,value,7,0,0,"color.new(#16202B, 0)"
-_tmS,1860,value,4,0,0,"color.new(#787B86, 0)"
-f_lv,1862,function,16,0,0,"na(p) ? n + "" —"" : n + "" "" + str.tostring(p, format.mintick) + ""  ("" + (p >= close ? ""+"" : """") + str.tostring(p - close,"
-f_glNear,1864,function,6,0,0,
-f_gBar,1874,function,5,0,0,
-f_gPos,1883,function,2,0,0,
-f_tmG,1891,function,30,0,0,"na(d) ? ""—"" : d >= 2 ? ""▲▲"" : d > 0 ? ""▲"" : d <= -2 ? ""▼▼"" : d < 0 ? ""▼"" : ""≈"""
-f_tmC,1892,function,10,0,0,"na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)"
-_tmRow,1893,function,50,0,0,
-_tmHead,1896,function,8,0,0,
-_dkW,2066,value,2,0,0,"array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)"
-_dw,2067,value,3,0,0,"density == ""Compact"" ? 0.8 : density == ""Spacious"" ? 1.25 : 1.0"
-_dsz,2068,value,2,0,0,"textSize == ""Large"" or textSize == ""Medium"" ? ""small"" : ""tiny"""
-_dbg,2069,value,2,0,0,"color.new(#0d0d1a, 40)"
-f_dock,2070,function,1,0,0,
-f_dkCell,2073,function,20,0,0,
-dkT,2078,var,23,0,0,"table.new(dashMode == ""Tablet"" ? position.top_left : position.top_right, 9, 10, border_width = 0, frame_width = 0)"
-tkT,2120,var,6,0,0,"table.new(position.bottom_center, 8, 4, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)"
-f_tk,2121,function,8,0,0,
+obKeep,99,input,2,0,0,"input.int(4,      ""Order Blocks kept"", minval = 1, maxval = 10, group = grpZ)"
+obShowLabel,100,input,3,0,0,"input.bool(true, ""Label OB / FVG zones"", group=""Zones"", tooltip=""Zone identity labels, relocated here from the Master wh"
+srShow,112,input,1,0,0,"input.bool(true, ""Support / Resistance levels"", group=""Zones"")"
+srMaxLv,113,input,2,0,0,"input.int(6,   ""  Max levels per side"", minval=1, maxval=12, group=""Zones"")"
+srScanLen,114,input,1,0,0,"input.int(100, ""  Scan lookback (bars)"", minval=20, maxval=400, group=""Zones"")"
+boxFade,115,input,3,0,0,"input.int(94,     ""Zone fill transparency (higher = fainter)"", minval = 80, maxval = 99, group = grpZ)"
+zoneFlatCol,116,input,3,0,0,"input.bool(true,  ""Spec colors (OB brown / FVG orange)"", group = grpZ, tooltip = ""ON = Final Edition palette. OFF = dire"
+grpC,118,value,2,0,0,"""Candle Info Panel"""
+showCandle,119,input,4,0,0,"input.bool(true,  ""Show candle info panel"",  group = grpC)"
+candlePos,120,input,3,0,0,"input.string(""Top Right"", ""Panel position"", options = [""Top Right"", ""Middle Right"", ""Bottom Right"", ""Top Left""], group ="
+grpTm,124,value,10,0,0,"""TERMINAL PANEL (v73)"""
+vLayout,125,input,1,0,0,"input.string(""Terminal (one panel)"", ""Panel layout"", options = [""Terminal (one panel)"", ""Separate cards (v72)""], group ="
+vPos,126,input,3,0,0,"input.string(""Bottom Left"", ""Terminal position"", options = [""Bottom Left"", ""Middle Left"", ""Top Left"", ""Middle Right""], g"
+vDetail,127,input,1,0,0,"input.string(""Standard"", ""Terminal detail"", options = [""Standard"", ""Compact""], group = grpTm, tooltip = ""Standard: every"
+vSep,128,value,6,0,0,"vLayout == ""Separate cards (v72)"""
+glShow,132,input,3,0,0,"input.bool(true, ""Market at a glance (8 answers)"", group = grpTm, tooltip = ""Trend, bias, heading, liquidity, macro, roo"
+glMoveA,133,input,15,0,0,"input.float(10.0, ""Move to plan for: at least ($)"", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm, tooltip = """
+glMoveB,134,input,11,0,0,"input.float(20.0, ""Move to plan for: target ($)"", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm)"
+glPlace,137,input,1,0,0,"input.string(""Bottom ticker"", ""Glance placement"", options = [""Bottom ticker"", ""In the panel""], group = grpTm, tooltip = "
+tkLift,138,input,1,0,0,"input.int(5, ""Ticker lift above the Master's plan strip (% of chart height)"", minval = 0, maxval = 40, group = grpTm, to"
+tkSize,139,input,2,0,0,"input.string(""Normal"", ""Ticker text size"", options = [""Small"", ""Normal"", ""Large""], group = grpTm)"
+tkOn,140,value,4,0,0,"glShow and glPlace == ""Bottom ticker"""
+glStyle,141,input,1,0,0,"input.string(""Gauges (compact)"", ""Glance style"", options = [""Gauges (compact)"", ""Text (v79)""], group = grpTm, tooltip = "
+gdPos,142,input,7,0,0,"input.string(""Bottom Right"", ""Gold drivers panel"", options=[""Bottom Right"", ""Bottom Center"", ""Bottom Left"", ""Middle Righ"
+gdDock,147,input,1,0,0,"input.string(""Under the Master's MACRO"", ""Gold drivers placement"", options=[""Under the Master's MACRO"", ""In the panel / "
+gdGap,148,input,1,0,0,"input.int(24, ""Dock gap below the Master dashboard (% of chart height)"", minval=0, maxval=70, group=""GOLD DRIVERS (displ"
+dashMode,149,input,5,0,6,"input.string(""Auto"", ""Dash Mode"", options=[""Auto"", ""Desktop"", ""Tablet"", ""Mobile""], group=""GOLD DRIVERS (display only)"", "
+textSize,150,input,2,0,6,"input.string(""Auto"", ""Text Size"", options=[""Auto"", ""Small"", ""Medium"", ""Large""], group=""GOLD DRIVERS (display only)"", too"
+density,151,input,2,0,6,"input.string(""Standard"", ""Density"", options=[""Compact"", ""Standard"", ""Spacious""], group=""GOLD DRIVERS (display only)"", to"
+gdDocked,152,value,6,0,0,"gdDock == ""Under the Master's MACRO"" and gdPos != ""Hidden"" and dashMode != ""Mobile"""
+grpDk,157,value,2,0,0,"""DOCK UNDER THE MASTER (v75)"""
+h2Dock,158,input,1,0,0,"input.string(""Under the Master's DECISION"", ""H2 card placement"", options=[""Under the Master's DECISION"", ""In the panel /"
+lqDock,159,input,3,0,0,"input.string(""Under the Master's LIQUIDITY"", ""Liquidity & sweeps placement"", options=[""Under the Master's LIQUIDITY"", ""I"
+h2Docked,160,value,6,0,0,"h2Dock == ""Under the Master's DECISION"" and dashMode != ""Mobile"""
+lqDocked,161,value,3,0,0,"lqDock == ""Under the Master's LIQUIDITY"" and dashMode != ""Mobile"""
+dkOn,164,value,1,0,0,gdDocked or lqDocked or h2Docked
+lqInPanel,165,value,2,0,0,"lqDock == ""In the panel"" or lqDock == ""Under the Master's LIQUIDITY"" and dashMode == ""Mobile"""
+grpSess,167,value,1,0,0,"""Sessions (UTC)"""
+showSess,169,input,4,0,0,"input.bool(false, ""Session shading"",         group = grpSess)"
+grpF,171,value,12,0,0,"""Footprint (approximation)"""
+showFP,173,input,2,0,0,"input.bool(false, ""Enable footprint engine"", group = grpF)"
+fpTf,174,input,3,0,0,"input.timeframe(""1"", ""Intrabar timeframe"",   group = grpF, tooltip = ""Must be LOWER than the chart timeframe. 1 minute o"
+fpBars,175,input,2,0,0,"input.int(25,     ""Bars to render"", minval = 5, maxval = 60, group = grpF)"
+fpBins,176,input,6,0,0,"input.int(6,      ""Price bins per bar"", minval = 3, maxval = 10, group = grpF)"
+showFpBins,177,input,1,0,0,"input.bool(true,  ""Draw volume-at-price bins"", group = grpF)"
+showFpPOC,178,input,1,0,0,"input.bool(true,  ""Mark bar volume POC"",     group = grpF)"
+showFpDelta,179,input,1,0,0,"input.bool(true,  ""Delta labels"",            group = grpF)"
+showAbs,198,input,1,0,0,"input.bool(true,  ""Absorption bubbles"",      group = grpF, tooltip = ""Tick-activity proxy, NOT exchange order-flow. Spot"
+absEffort,199,input,2,0,0,"input.float(1.6,  ""  Effort: vol vs average"", minval = 1.0, maxval = 5.0, step = 0.1, group = grpF)"
+absResult,200,input,1,0,0,"input.float(0.35, ""  Result: |c-o| / range"",  minval = 0.05, maxval = 0.9, step = 0.05, group = grpF)"
+absImb,201,input,1,0,0,"input.float(0.30, ""  Delta imbalance min"",    minval = 0.05, maxval = 0.9, step = 0.05, group = grpF)"
+absKeep,202,input,1,0,0,"input.int(40,     ""  Bubbles kept"",           minval = 5, maxval = 200, group = grpF)"
+cBull,205,value,9,0,0,#00D084
+cBear,206,value,9,0,0,#FF4D4D
+cNeut,207,value,5,0,0,#808A93
+cFast,208,value,2,0,0,#FFFFFF
+cMid,209,value,2,0,0,#3B82F6
+cSlow,210,value,2,0,0,#FFD700
+cVwap,211,value,6,0,0,#00BCD4
+cBB,212,value,6,0,0,#B084FF
+cPrice,213,value,2,0,0,#00E676
+cLevel,214,value,2,0,0,#FFD54F
+cLevelW,215,value,2,0,0,#FF8A65
+cCur,216,value,2,0,0,#4DD0E1
+cSup,217,value,2,0,0,#26A69A
+cRes,218,value,2,0,0,#EF5350
+cOB,219,value,2,0,0,#8D6E63
+cFVG,220,value,1,0,0,#FF9800
+cSweep,221,value,2,0,0,#E040FB
+atr14,223,value,15,0,0,ta.atr(14)
+grpModules,232,value,1,0,6,"""MODULES"""
+showAdaptiveATR,233,input,1,0,6,"input.bool(false, ""Adaptive ATR Regime"", group=grpModules)"
+grpCore,234,value,6,0,6,"""CORE"""
+atrLen,235,input,1,0,6,"input.int(14, ""ATR Base"", minval=1, group=grpCore)"
+adxLen,236,input,2,0,6,"input.int(14, ""ADX"", minval=1, group=grpCore)"
+adxThreshold,237,input,1,0,6,"input.int(25, ""ADX Threshold"", minval=10, maxval=50, group=grpCore)"
+internalPivotLen,238,input,4,0,6,"input.int(2, ""Internal Pivot Len (fast)"", minval=1, maxval=5, group=grpCore)"
+swingPivotLen,239,input,4,0,6,"input.int(5, ""Swing Pivot Len (major)"", minval=3, maxval=10, group=grpCore)"
+atr,240,value,9,0,6,ta.atr(atrLen)
+diplus,241,tuple,2,0,6,"ta.dmi(adxLen, adxLen)"
+diminus,241,tuple,2,0,6,"ta.dmi(adxLen, adxLen)"
+adxVal,241,tuple,5,0,6,"ta.dmi(adxLen, adxLen)"
+volSma20,242,value,12,0,6,"ta.sma(volume, 20)"
+atrTrending,243,value,1,0,6,ta.atr(7)
+atrRanging,244,value,1,0,6,ta.atr(21)
+regimeStrength,245,value,2,0,6,"math.min(math.max((adxVal - (adxThreshold - 5)) / 10.0, 0.0), 1.0)"
+_rawAdaptiveATR,246,value,1,0,6,showAdaptiveATR ? (atrRanging * (1.0 - regimeStrength) + atrTrending * regimeStrength) : atr
+adaptiveATR,247,value,6,0,6,"math.max(nz(_rawAdaptiveATR, ta.tr), close * 0.0001)"
+pivotHigh,248,value,5,0,6,"ta.pivothigh(high, internalPivotLen, internalPivotLen)"
+pivotLow,249,value,5,0,6,"ta.pivotlow(low, internalPivotLen, internalPivotLen)"
+activeResistance,250,var,7,2,6,na
+activeSupport,251,var,7,2,6,na
+lastBrokenRes,252,var,1,2,6,na
+lastBrokenSup,253,var,1,2,6,na
+bosResistanceSnap,254,value,5,0,6,activeResistance
+bosSupportSnap,255,value,5,0,6,activeSupport
+swingPivotHigh,264,value,2,0,6,"ta.pivothigh(high, swingPivotLen, swingPivotLen)"
+swingPivotLow,265,value,2,0,6,"ta.pivotlow(low, swingPivotLen, swingPivotLen)"
+swingActiveResistance,266,var,7,2,6,na
+swingActiveSupport,267,var,7,2,6,na
+swingLastBrokenRes,268,var,1,2,6,na
+swingLastBrokenSup,269,var,1,2,6,na
+swingBosResSnap,270,value,5,0,6,swingActiveResistance
+swingBosSupSnap,271,value,5,0,6,swingActiveSupport
+intBosLabelBull,280,value,2,0,1,not na(bosResistanceSnap) and close > bosResistanceSnap and close[1] <= bosResistanceSnap[1] and bosResistanceSnap != la
+intBosLabelBear,281,value,2,0,1,not na(bosSupportSnap) and close < bosSupportSnap and close[1] >= bosSupportSnap[1] and bosSupportSnap != lastBrokenSup
+swingBosLabelBull,282,value,1,0,1,not na(swingBosResSnap) and close > swingBosResSnap and close[1] <= swingBosResSnap[1] and swingBosResSnap != swingLastB
+swingBosLabelBear,283,value,1,0,1,not na(swingBosSupSnap) and close < swingBosSupSnap and close[1] >= swingBosSupSnap[1] and swingBosSupSnap != swingLastB
+bosLabelBull,284,value,3,0,1,intBosLabelBull or swingBosLabelBull
+bosLabelBear,285,value,4,0,1,intBosLabelBear or swingBosLabelBear
+seqHigh1,298,var,6,1,6,na
+seqHigh2,299,var,8,1,6,na
+seqHigh3,300,var,3,1,6,na
+seqLow1,301,var,6,1,6,na
+seqLow2,302,var,8,1,6,na
+seqLow3,303,var,3,1,6,na
+seqLastBar,304,var,1,1,6,-999
+seqValid,315,value,6,0,6,not na(seqHigh1) and not na(seqHigh2) and not na(seqHigh3) and not na(seqLow1) and not na(seqLow2) and not na(seqLow3)
+hl,316,value,2,0,6,seqValid and seqLow1 > seqLow2
+lh,317,value,2,0,6,seqValid and seqHigh1 < seqHigh2
+barSpaceOk,318,value,4,0,6,(bar_index - seqLastBar) >= 3
+pivotAtrDist,319,value,4,0,6,not na(adaptiveATR) ? adaptiveATR * 0.5 : na
+atrDistOkBull,320,value,2,0,6,hl and not na(seqLow1) and not na(seqLow2) and not na(pivotAtrDist) and math.abs(seqLow1 - seqLow2) >= pivotAtrDist
+atrDistOkBear,321,value,2,0,6,lh and not na(seqHigh1) and not na(seqHigh2) and not na(pivotAtrDist) and math.abs(seqHigh1 - seqHigh2) >= pivotAtrDist
+priorBullSeq,322,value,1,0,6,seqValid and seqHigh2 > seqHigh3 and seqLow2 > seqLow3
+priorBearSeq,323,value,1,0,6,seqValid and seqHigh2 < seqHigh3 and seqLow2 < seqLow3
+chochLabelBull,324,value,3,0,6,priorBearSeq and hl and barSpaceOk and atrDistOkBull
+chochLabelBear,325,value,3,0,6,priorBullSeq and lh and barSpaceOk and atrDistOkBear
+mssLabelBull,326,value,2,0,6,chochLabelBull and (seqValid and seqHigh1 > seqHigh2) and barSpaceOk and atrDistOkBull
+mssLabelBear,327,value,2,0,6,chochLabelBear and (seqValid and seqLow1 < seqLow2) and barSpaceOk and atrDistOkBear
+fvgDetected,328,value,1,0,6,showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0] - high[2] > adaptiveATR * 0.3) or (low[2] > high[0] a
+_bodySzV,352,value,5,0,0,math.abs(close - open)
+_cRangeV,353,value,4,0,0,high - low
+_bodyPctV,354,value,2,0,0,_cRangeV > 0 ? _bodySzV / _cRangeV * 100.0 : 0.0
+_volOkV,355,value,2,0,0,not na(volume) and not na(volSma20) and volume > volSma20 * 1.30
+_dispEnterV,356,value,2,0,0,adaptiveATR * obDispATR
+_dispHoldV,357,value,2,0,0,adaptiveATR * (obDispATR * 0.6)
+_dispRawUpV,358,value,2,0,0,_bodySzV > _dispEnterV and close > open and close > high[1] and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
+_dispRawDownV,359,value,2,0,0,_bodySzV > _dispEnterV and close < open and close < low[1]  and _cRangeV > 0 and _bodyPctV > 70 and _volOkV
+dispUpActiveV,360,var,1,2,0,false
+dispDnActiveV,361,var,1,2,0,false
+displacementUpV,370,value,2,0,0,_dispRawUpV or dispUpActiveV
+displacementDownV,371,value,2,0,0,_dispRawDownV or dispDnActiveV
+dispOnsetUpV,372,value,1,0,0,displacementUpV and not displacementUpV[1]
+dispOnsetDownV,373,value,1,0,0,displacementDownV and not displacementDownV[1]
+ema20,376,value,2,0,6,"ta.ema(close, ema20Len)"
+ema100,377,value,2,0,6,"ta.ema(close, ema100Len)"
+ema200,378,value,8,0,6,"ta.ema(close, ema200Len)"
+vwapD,383,value,2,0,0,ta.vwap(hlc3)
+vwapW,384,value,2,0,0,"ta.vwap(hlc3, timeframe.change(""1W""))"
+vwapM,385,value,2,0,0,"ta.vwap(hlc3, timeframe.change(""1M""))"
+bbBasis,390,value,5,0,6,"ta.sma(close, 20)"
+bbDev,391,value,4,0,6,"2.0 * ta.stdev(close, 20)"
+pBBU,392,value,1,0,0,"plot(showBB ? bbBasis + bbDev : na, ""BB Upper"", color = color.new(cBB, 25), display = display.pane)"
+pBBL,393,value,1,0,0,"plot(showBB ? bbBasis - bbDev : na, ""BB Lower"", color = color.new(cBB, 25), display = display.pane)"
+msInDay,406,value,6,0,6,86400000
+_nyMsOfDay,422,value,1,0,6,"hour(time, ""America/New_York"") * 3600000 + minute(time, ""America/New_York"") * 60000"
+_nyOffsetMs,423,value,1,0,6,_nyMsOfDay - int(time % msInDay)
+nyCloseDayMs,424,value,4,0,6,((17 * 3600000 - _nyOffsetMs) % msInDay + msInDay) % msInDay
+nyDailyHigh,425,var,3,3,6,na
+nyDailyLow,426,var,2,3,6,na
+prevNyDailyHigh,427,var,1,1,6,na
+prevNyDailyLow,428,var,1,1,6,na
+nyWeeklyHigh,429,var,2,3,6,na
+nyWeeklyLow,430,var,2,3,6,na
+prevNyWeeklyHigh,431,var,1,1,6,na
+prevNyWeeklyLow,432,var,1,1,6,na
+crossedNYDay,433,value,3,2,6,false
+_tfDayPlus,459,value,1,0,6,timeframe.in_seconds() >= 86400
+crossedNYWeek,460,value,1,0,6,"_tfDayPlus ? timeframe.change(""1W"") : (crossedNYDay and dayofweek(nz(time[1], time), ""UTC"") == dayofweek.friday)"
+_tfAboveD,491,value,2,0,6,timeframe.in_seconds() > 86400
+pdh,492,value,8,0,0,_tfAboveD ? na : prevNyDailyHigh
+pdl,493,value,8,0,0,_tfAboveD ? na : prevNyDailyLow
+_tfAboveW,495,value,2,0,6,timeframe.in_seconds() > 604800
+pwh,496,value,5,0,0,_tfAboveW ? na : prevNyWeeklyHigh
+pwl,497,value,5,0,0,_tfAboveW ? na : prevNyWeeklyLow
+pmh,498,tuple,5,0,0,"request.security(syminfo.tickerid, ""M"", [high[1], low[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)"
+pml,498,tuple,5,0,0,"request.security(syminfo.tickerid, ""M"", [high[1], low[1]], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_on)"
+cdh,502,var,6,2,6,na
+cdl,503,var,6,2,6,na
+ph,512,value,3,0,0,"ta.pivothigh(pivotLen, pivotLen)"
+pl,513,value,3,0,0,"ta.pivotlow(pivotLen, pivotLen)"
+lastPH,517,var,5,1,0,na
+lastPL,518,var,5,1,0,na
+sxChochUp,526,value,2,0,0,chochLabelBull and not chochLabelBull[1]
+sxChochDn,527,value,2,0,0,chochLabelBear and not chochLabelBear[1]
+sxMssUp,528,value,2,0,0,mssLabelBull and not mssLabelBull[1]
+sxMssDn,529,value,2,0,0,mssLabelBear and not mssLabelBear[1]
+sweepUp,554,value,6,0,0,showSweep and not na(lastPH) and high > lastPH and close < lastPH and barstate.isconfirmed
+sweepDn,555,value,3,0,0,showSweep and not na(lastPL) and low  < lastPL and close > lastPL and barstate.isconfirmed
+pvLastSweep,559,var,12,1,0,"""none yet"""
+pvLastLvl,560,var,3,1,0,na
+pvLastTime,561,var,2,1,0,na
+pvLastUp,562,var,2,1,0,false
+alertOnPvSweep,571,input,1,0,0,"input.bool(true, ""Alert on pivot sweeps (✕)"", group = grpS, tooltip = ""Needs an alert on Visuals (Any alert() function c"
+_dom,656,value,7,0,6,"dayofmonth(time, ""UTC"")"
+_mon,657,value,12,0,6,"month(time, ""UTC"")"
+_yr,658,value,4,0,6,"year(time, ""UTC"")"
+_dow,659,value,3,0,6,"dayofweek(time, ""UTC"")"
+_thisSunDom,660,value,2,0,6,_dom - ((_dow - 1 + 7) % 7)
+_firstSunDom,661,value,4,1,6,_thisSunDom - 7 * int((_thisSunDom - 1) / 7)
+usDstStartDom,664,var,1,2,6,8
+usDstEndDom,665,var,1,2,6,1
+_lastUsDstYr,666,var,1,1,6,0
+usIsDST,675,value,2,0,6,(_mon > 3 and _mon < 11) or (_mon == 3 and _dom >= usDstStartDom) or (_mon == 11 and _dom < usDstEndDom)
+euDstStartDom,676,var,1,2,6,25
+euDstEndDom,677,var,1,2,6,25
+_lastEuDstYr,678,var,1,1,6,0
+euIsDST,689,value,2,0,6,(_mon > 3 and _mon < 10) or (_mon == 3 and _dom >= euDstStartDom) or (_mon == 10 and _dom < euDstEndDom)
+hU,691,value,14,0,0,"hour(time, ""UTC"")"
+londonOpen,692,value,2,0,6,7
+londonClose,693,value,3,0,6,euIsDST ? 16 : 17
+nyOpen,694,value,3,0,6,usIsDST ? 14 : 15
+nyClose,695,value,1,0,0,usIsDST ? 20 : 21
+inAsian,696,value,4,0,6,hU >= 0 and hU < londonOpen
+inLondon,697,value,6,0,6,hU >= londonOpen and hU < londonClose
+inNY,698,value,6,0,6,hU >= nyOpen and hU < nyClose
+f_sessionIntel,704,function,1,0,5,
+sessId,751,tuple,12,0,5,f_sessionIntel()
+curSessId,751,tuple,33,1,5,f_sessionIntel()
+sesHi,751,tuple,13,2,5,f_sessionIntel()
+sesLo,751,tuple,8,2,5,f_sessionIntel()
+sesOpenPx,751,tuple,5,1,5,f_sessionIntel()
+prevSesHi,751,tuple,7,1,5,f_sessionIntel()
+prevSesLo,751,tuple,7,1,5,f_sessionIntel()
+sesManip,751,tuple,7,2,5,f_sessionIntel()
+sessExpansionPct,751,tuple,6,0,5,f_sessionIntel()
+sessManipProb,751,tuple,17,0,5,f_sessionIntel()
+sessContProb,751,tuple,17,0,5,f_sessionIntel()
+volAsianEWMA,754,var,3,1,0,0.0
+volLondonEWMA,755,var,3,1,0,0.0
+volNyEWMA,756,var,3,1,0,0.0
+sessVolBase,764,value,4,0,0,inAsian ? volAsianEWMA : inLondon ? volLondonEWMA : inNY ? volNyEWMA : 0.0
+f_wil,767,function,4,0,0,
+f_ci,780,function,8,0,0,
+ckSessN,788,var,3,0,0,"array.from(0, 0, 0)"
+ckN,791,value,10,0,0,"curSessId >= 0 and curSessId <= 2 ? array.get(ckSessN, curSessId) : 0"
+srPrice,799,var,14,0,0,array.new<float>()
+srHits,800,var,5,0,0,array.new<int>()
+f_srAdd,802,function,2,0,0,
+nearestRes,826,value,3,1,0,na
+nearestSup,827,value,3,1,0,na
+tgPx,844,var,5,0,0,array.new<float>()
+tgTx,845,var,3,0,0,array.new<string>()
+tgCl,846,var,3,0,0,array.new<color>()
+f_tagAdd,850,function,18,0,0,
+tblC,928,var,4,2,0,na
+ltfC,945,value,1,0,0,"request.security_lower_tf(syminfo.tickerid, fpTf, close)"
+ltfO,946,value,1,0,0,"request.security_lower_tf(syminfo.tickerid, fpTf, open)"
+ltfV,947,value,2,0,0,"request.security_lower_tf(syminfo.tickerid, fpTf, volume)"
+absVolSma,952,value,3,0,0,"ta.sma(volume, 20)"
+fpPOC,953,value,2,1,0,na
+fpDelta,954,value,6,1,0,na
+scanSRLevels,1023,function,1,0,0,
+srResLevels,1067,var,8,0,5,array.new_float()
+srResStrengths,1068,var,7,0,5,array.new_float()
+srSupLevels,1069,var,8,0,5,array.new_float()
+srSupStrengths,1070,var,7,0,5,array.new_float()
+grpH4,1120,value,4,0,0,"""4H Candle Marker"""
+showH4,1121,input,1,0,0,"input.bool(true,  ""Mark last closed 4H candle"", group = grpH4)"
+h4ShowOC,1122,input,2,0,0,"input.bool(false, ""Also mark open / close"",     group = grpH4, tooltip = ""High and low bound the 4H range. Open and clos"
+h4ShowLive,1123,input,2,0,0,"input.bool(false, ""Also mark the FORMING 4H candle (REPAINTS)"", group = grpH4, tooltip = ""The in-progress 4H bar's high "
+h4Col,1124,input,7,0,0,"input.color(color.yellow, ""Line colour"", group = grpH4)"
+h4Active,1132,value,8,0,0,showH4 and timeframe.in_seconds() < 14400
+h4H,1134,tuple,3,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
+h4L,1134,tuple,3,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
+h4O,1134,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
+h4C,1134,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high[1], low[1], open[1], close[1]], gaps = barmerge.gaps_off, lookahead = ba"
+h4LiveH,1135,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high, low], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)"
+h4LiveL,1135,tuple,1,0,0,"request.security(syminfo.tickerid, ""240"", [high, low], gaps = barmerge.gaps_off, lookahead = barmerge.lookahead_off)"
+h4Hi,1137,var,2,1,0,na
+h4Lo,1138,var,1,1,0,na
+h4Op,1139,var,1,1,0,na
+h4Cl,1140,var,1,1,0,na
+h4LvH,1141,var,1,1,0,na
+h4LvL,1142,var,1,1,0,na
+_h4Set,1148,function,6,0,0,
+grpPD,1182,value,5,0,0,"""PDH/PDL lines & alerts"""
+showPdLines,1183,input,1,0,0,"input.bool(true, ""PDH / PDL dashed lines"", group = grpPD)"
+pdCol,1186,input,3,0,0,"input.color(color.new(color.yellow, 0), ""PDH/PDL colour"", group = grpPD)"
+pdBack,1187,input,2,0,0,"input.int(200, ""Bars drawn back"", minval = 20, maxval = 500, group = grpPD)"
+pdhLn,1191,var,2,1,0,na
+pdlLn,1192,var,1,1,0,na
+_pdSet,1197,function,2,0,0,
+alertOn4H,1223,input,2,0,0,"input.bool(true, ""Alert on 4H high/low touch"", group = grpPD)"
+alertOn1D,1224,input,2,0,0,"input.bool(true, ""Alert on PDH/PDL touch"",     group = grpPD)"
+_touched,1226,function,4,0,0,not na(_lvl) and high >= _lvl and low <= _lvl
+_t4hH,1228,value,2,0,0,alertOn4H and h4Active and _touched(h4H)
+_t4hL,1229,value,2,0,0,alertOn4H and h4Active and _touched(h4L)
+_t1dH,1230,value,2,0,0,alertOn1D and _touched(pdh)
+_t1dL,1231,value,2,0,0,alertOn1D and _touched(pdl)
+h2HtfScore,1252,function,3,0,1,na(_c) ? 50.0 : (not na(_e200) and _c > _e200 ? 40.0 : 0.0) + (not na(_e20) and not na(_e100) and _e20 > _e100 ? 40.0 : 
+h2C1,1259,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2A1,1259,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2B1,1259,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2D1,1259,tuple,1,0,1,"request.security(syminfo.tickerid, ""60"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)],"
+h2C4,1260,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2A4,1260,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2B4,1260,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2D4,1260,tuple,1,0,1,"request.security(syminfo.tickerid, ""240"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)]"
+h2CD,1261,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2AD,1261,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2BD,1261,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2DD,1261,tuple,1,0,1,"request.security(syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 20), ta.ema(close[1], 100), ta.ema(close[1], 200)], "
+h2S1,1262,value,7,0,2,"h2HtfScore(h2C1, h2A1, h2B1, h2D1)"
+h2S4,1263,value,7,0,2,"h2HtfScore(h2C4, h2A4, h2B4, h2D4)"
+h2SD,1264,value,7,0,2,"h2HtfScore(h2CD, h2AD, h2BD, h2DD)"
+h2UpN,1286,value,1,0,2,(h2S1 >= 60 ? 1 : 0) + (h2S4 >= 60 ? 1 : 0) + (h2SD >= 60 ? 1 : 0)
+h2DnN,1287,value,1,0,2,(h2S1 <= 40 ? 1 : 0) + (h2S4 <= 40 ? 1 : 0) + (h2SD <= 40 ? 1 : 0)
+h2TrendUp,1288,value,11,0,2,h2UpN >= 2
+h2TrendDn,1289,value,11,0,2,h2DnN >= 2
+h2PH,1291,value,2,0,2,"ta.pivothigh(high, 5, 5)"
+h2PL,1292,value,2,0,2,"ta.pivotlow(low, 5, 5)"
+h2SwH,1293,var,12,2,2,na
+h2SwL,1294,var,12,2,2,na
+h2SweepL,1295,value,8,0,2,barstate.isconfirmed and not na(h2SwL) and low < h2SwL and close > h2SwL
+h2SweepH,1296,value,6,0,2,barstate.isconfirmed and not na(h2SwH) and high > h2SwH and close < h2SwH
+h2SweptLvl,1297,value,2,0,2,h2SweepL ? h2SwL : h2SweepH ? h2SwH : na
+h2VHi,1307,value,2,0,2,"ta.highest(high, 100)"
+h2VLo,1308,value,6,0,2,"ta.lowest(low, 100)"
+h2Poc,1309,var,27,1,2,na
+h2Vah,1310,var,14,1,2,na
+h2Val,1311,var,14,1,2,na
+h2Atr,1343,value,6,0,2,ta.atr(14)
+h2RL,1344,value,4,0,2,h2SweepL ? close - (low - 0.15 * h2Atr) : na
+h2RS,1345,value,4,0,2,h2SweepH ? (high + 0.15 * h2Atr) - close : na
+h2Long,1346,value,12,0,2,h2SweepL and h2TrendUp and not na(h2Poc) and close <= h2Poc and h2RL >= 0.5 * h2Atr and h2RL <= 5.0 * h2Atr
+h2Short,1347,value,9,0,2,h2SweepH and h2TrendDn and not na(h2Poc) and close >= h2Poc and h2RS >= 0.5 * h2Atr and h2RS <= 5.0 * h2Atr
+h2R,1348,value,4,0,2,h2Long ? h2RL : h2Short ? h2RS : na
+h2Sl,1349,value,3,0,2,h2Long ? close - h2RL : h2Short ? close + h2RS : na
+h2Tp1,1350,value,3,0,2,"h2Long ? math.max(h2Poc, close + h2R) : h2Short ? math.min(h2Poc, close - h2R) : na"
+h2Tp2,1351,value,3,0,2,"h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h2Val, close - 2.0 * h2R) : na"
+h2Trend,1357,value,6,0,0,"h2TrendUp ? ""UP"" : h2TrendDn ? ""DOWN"" : ""MIXED"""
+grpH2,1358,value,7,0,0,"""H2 sweep-to-value (pre-registered)"""
+h2Show,1359,input,7,0,0,"input.bool(true, ""Show H2 signals and card"", group = grpH2)"
+h2CardPos,1360,input,3,0,0,"input.string(""Middle Left"", ""H2 card position"", options = [""Middle Left"", ""Bottom Left"", ""Top Left"", ""Middle Right""], gr"
+h2Layout,1361,input,2,0,0,"input.string(""Compact (phone)"", ""H2 card layout"", options = [""Compact (phone)"", ""Full""], group = grpH2, tooltip = ""Compa"
+h2TxtSize,1362,input,1,0,0,"input.string(""Small"", ""H2 card text size"", options = [""Small"", ""Normal""], group = grpH2)"
+h2Mt5,1363,input,1,0,0,"input.float(0.0, ""MT5 price offset (same value as the Master)"", minval = -50.0, maxval = 50.0, step = 0.01, group = grpH"
+_h2p,1366,function,43,0,0,"na(_x) ? ""—"" : str.tostring(_x + h2Mt5, ""#.##"")"
+f_sc,1369,function,12,0,0,"na(x) ? ""—"" : str.tostring(x, ""#"")"
+h2Next,1371,value,5,0,0,"na(h2Poc) ? ""building profile"" : close < h2Val ? ""below value → POC "" + _h2p(h2Poc) : close > h2Vah ? ""above value → POC"
+h2LastSig,1372,var,1,1,0,"""none yet"""
+h2LastSweep,1373,var,12,1,0,"""none yet"""
+h2SigCard,1374,var,4,1,0,"""none yet"""
+alertOnH2Sweep,1380,input,1,0,0,"input.bool(true, ""Alert on H2 swing sweeps"", group = grpH2, tooltip = ""Needs an alert on Visuals (Any alert() function c"
+h2StaleBars,1393,input,1,0,0,"input.int(24, ""Mark the last H2 signal stale after (bars)"", minval = 1, maxval = 1000, group = grpH2, tooltip = ""Display"
+h2SigBar,1394,var,2,1,0,na
+h2SigTime,1395,var,2,1,0,na
+h2SigDir,1396,var,18,1,0,0
+h2SigSlV,1397,var,2,1,0,na
+h2SigT1,1398,var,2,1,0,na
+h2SigT2,1399,var,2,1,0,na
+h2SigOut,1400,var,16,2,0,""""""
+h2AgeB,1414,value,3,0,0,na(h2SigBar) ? na : bar_index - h2SigBar
+h2AgeH,1415,value,3,0,0,na(h2SigTime) ? na : (time - h2SigTime) / 3600000.0
+h2TrendAgrees,1416,value,2,0,0,h2SigDir == 1 ? h2TrendUp : h2SigDir == -1 ? h2TrendDn : true
+h2SigDone,1417,value,1,0,0,"h2SigOut == ""stopped"" or h2SigOut == ""TP2 hit"" or h2SigOut == ""TP1 hit, then stop"""
+h2Stale,1418,value,6,0,0,h2SigDir != 0 and (h2SigDone or h2AgeB > h2StaleBars or not h2TrendAgrees)
+h2SigState,1420,value,15,0,0,h2SigDir == 0 ? 0 : h2Stale ? 2 : h2SigDir
+h2SigStat,1421,value,4,0,0,"h2SigDir == 0 ? """" : ""\n"" + (h2Stale ? ""○ STALE · "" : ""● LIVE · "") + (h2AgeB == 0 ? ""this bar"" : str.tostring(h2AgeB) + "
+h2Card,1427,var,4,0,0,"table.new(h2CardPos == ""Bottom Left"" ? position.bottom_left : h2CardPos == ""Top Left"" ? position.top_left : h2CardPos =="
+h2Sz,1428,value,10,0,0,"h2TxtSize == ""Normal"" ? size.normal : size.small"
+_h2Row,1429,function,10,0,0,
+safeDiv,1459,function,10,0,7,not na(a) and not na(b) and math.abs(b) > 1e-10 ? a / b : 0.0
+macroTF,1460,input,8,0,6,"input.timeframe(""60"", ""Macro Correlation Timeframe"", group=""GOLD DRIVERS (display only)"", tooltip=""Keep equal to the Mas"
+y2Symbol,1461,input,3,0,6,"input.symbol(""TVC:US02Y"", ""US 2Y Yield (blank=off)"", group=""GOLD DRIVERS (display only)"", tooltip=""With US10Y this gives"
+corrMedLen,1462,input,5,0,6,"input.int(60, ""Corr Medium Window"", minval=30, maxval=100, group=""GOLD DRIVERS (display only)"", tooltip=""Keep equal to t"
+chartTFSeconds,1463,value,1,0,6,timeframe.in_seconds()
+_kM,1464,value,6,0,6,"math.max(1, int(timeframe.in_seconds(macroTF) / chartTFSeconds))"
+_gM,1465,value,3,0,6,"request.security(syminfo.tickerid, macroTF, close[1], barmerge.gaps_off, barmerge.lookahead_on)"
+goldRetM,1466,value,5,0,6,"not na(_gM[1]) ? safeDiv(_gM, _gM[1]) - 1 : na"
+_wM,1467,value,5,0,6,"math.min(corrMedLen * _kM, 4500)"
+_fM,1468,value,5,0,6,corrMedLen * _kM <= 4500
+rsiLen,1474,input,2,0,6,"input.int(14, ""RSI Length"", minval=2, maxval=50, group=grpCore)"
+grpV17,1475,value,9,0,6,"""V17 PREDICTIVE ENHANCEMENTS"""
+dxyRocLen,1476,input,2,0,6,"input.int(10, ""DXY Momentum ROC Length (bars)"", minval=5, maxval=30, group=grpV17)"
+znRocLen,1477,input,1,0,6,"input.int(10, ""ZN1 Rate Pressure ROC Length"", minval=5, maxval=20, group=grpV17)"
+yieldSymbol,1478,input,2,0,6,"input.symbol(""TVC:US10Y"", ""Yield Symbol (use TVC:US10Y for yield, ZN1! for futures price)"", group=grpV17)"
+invertYield,1479,input,2,0,6,"input.bool(false, ""Invert Yield Logic (enable for ZN1! futures price)"", group=grpV17)"
+dxySymbol,1480,input,1,0,6,"input.symbol(""TVC:DXY"", ""DXY Symbol"", group=grpV17)"
+silverSymbol,1481,input,1,0,6,"input.symbol(""OANDA:XAGUSD"", ""Silver Symbol"", group=grpV17)"
+eurusdSymbol,1482,input,1,0,6,"input.symbol(""OANDA:EURUSD"", ""EURUSD Symbol"", group=grpV17)"
+spxSymbol,1483,input,1,0,6,"input.symbol(""SP:SPX"", ""S&P 500 Symbol"", group=grpV17)"
+tipsSymbol,1484,input,3,0,6,"input.symbol(""TVC:US10Y"", ""TIPS/Real-Yield Symbol (blank=off)"", group=grpV17, tooltip=""Q5.5: default changed from the un"
+grpV19c,1485,value,2,0,6,"""V19 CORRELATION"""
+corrShortLen,1486,input,5,0,6,"input.int(30, ""Corr Short Window"", minval=10, maxval=50, group=grpV19c)"
+corrLongLen,1487,input,5,0,6,"input.int(120, ""Corr Long Window"", minval=60, maxval=200, group=grpV19c)"
+_rawGoldRet,1488,value,2,0,6,"safeDiv(close, nz(close[1], close)) - 1"
+_retClampW,1489,value,2,0,6,"math.min(math.max(nz(ta.stdev(_rawGoldRet, 100)[1], 0.0) * 6.0, 0.002), 0.05)"
+goldRet,1490,value,1,0,6,"math.min(math.max(_rawGoldRet, -_retClampW), _retClampW)"
+_rawDXY,1491,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYFast,1491,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYSlow,1491,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYRoc,1491,tuple,1,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawDXYRSI,1491,tuple,2,0,6,"request.security(dxySymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], dxyRocLen),"
+_rawYield,1492,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawYieldFast,1492,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawYieldSlow,1492,tuple,2,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawYieldRoc,1492,tuple,1,0,6,"request.security(yieldSymbol, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1], znRocLen)"
+_rawSilver,1493,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
+_rawSilverEMA,1493,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
+_silverRSI,1493,tuple,2,0,6,"request.security(silverSymbol, timeframe.period, [close[1], ta.ema(close[1], 20), ta.rsi(close[1], rsiLen)], barmerge.ga"
+_rawEURUSD,1494,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawEURFast,1494,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawEURSlow,1494,tuple,2,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawEURRoc,1494,tuple,1,0,6,"request.security(eurusdSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20), ta.roc(close[1],"
+_rawSPX,1495,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
+_rawSPXFast,1495,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
+_rawSPXSlow,1495,tuple,2,0,6,"request.security(spxSymbol, timeframe.period, [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)], barmerge.gaps_off,"
+_rawTIPS,1496,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
+_rawTIPSFast,1496,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
+_rawTIPSSlow,1496,tuple,2,0,6,"request.security(tipsSymbol != """" ? tipsSymbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(clos"
+cachedDXY,1497,var,1,1,6,na
+cachedYield,1498,var,1,1,6,na
+cachedSilver,1499,var,1,1,6,na
+cachedEURUSD,1500,var,1,1,6,na
+cachedSPX,1501,var,1,1,6,na
+cachedTIPS,1502,var,1,1,6,na
+dxyStaleCount,1503,var,2,2,6,0
+yieldStaleCount,1504,var,2,2,6,0
+silverStaleCount,1505,var,2,2,6,0
+eurusdStaleCount,1506,var,2,2,6,0
+spxStaleCount,1507,var,2,2,6,0
+tipsStaleCount,1508,var,2,2,6,0
+MACRO_STALE_MAX,1539,value,6,0,6,2
+dxyClose,1540,value,6,0,6,cachedDXY
+yieldClose,1541,value,6,0,6,cachedYield
+silverClose,1542,value,6,0,6,cachedSilver
+eurusdClose,1543,value,6,0,6,cachedEURUSD
+spxClose,1544,value,6,0,6,cachedSPX
+tipsClose,1545,value,6,0,6,cachedTIPS
+dxyValid,1546,value,13,0,6,not na(dxyClose) and not na(_rawDXYFast) and not na(_rawDXYSlow) and dxyStaleCount < MACRO_STALE_MAX
+yieldValid,1547,value,9,0,6,not na(yieldClose) and not na(_rawYieldFast) and not na(_rawYieldSlow) and yieldStaleCount < MACRO_STALE_MAX
+silverValid,1548,value,5,0,6,not na(silverClose) and not na(_rawSilverEMA) and silverStaleCount < MACRO_STALE_MAX
+eurusdValid,1549,value,10,0,6,not na(eurusdClose) and not na(_rawEURFast) and not na(_rawEURSlow) and eurusdStaleCount < MACRO_STALE_MAX
+spxValid,1550,value,8,0,6,not na(spxClose) and not na(_rawSPXFast) and not na(_rawSPXSlow) and spxStaleCount < MACRO_STALE_MAX
+_tipsOn,1551,value,1,0,6,tipsSymbol != yieldSymbol
+tipsValid,1552,value,6,0,6,_tipsOn and not na(tipsClose) and not na(_rawTIPSFast) and not na(_rawTIPSSlow) and tipsStaleCount < MACRO_STALE_MAX
+dxyEMAFast,1553,value,4,0,6,_rawDXYFast
+dxyEMASlow,1554,value,2,0,6,_rawDXYSlow
+yieldEMAFast,1555,value,4,0,6,_rawYieldFast
+yieldEMASlow,1556,value,2,0,6,_rawYieldSlow
+eurusdEMAFast,1557,value,4,0,6,_rawEURFast
+eurusdEMASlow,1558,value,2,0,6,_rawEURSlow
+spxEMAFast,1559,value,4,0,6,_rawSPXFast
+spxEMASlow,1560,value,2,0,6,_rawSPXSlow
+tipsEMAFast,1561,value,4,0,6,_rawTIPSFast
+tipsEMASlow,1562,value,2,0,6,_rawTIPSSlow
+silverEMA,1563,value,2,0,6,_rawSilverEMA
+dxyBull,1564,value,1,0,6,dxyValid and dxyClose > dxyEMAFast and dxyEMAFast > dxyEMASlow
+dxyBear,1565,value,1,0,6,dxyValid and dxyClose < dxyEMAFast and dxyEMAFast < dxyEMASlow
+_yieldUp,1566,value,2,0,6,yieldValid and yieldClose > yieldEMAFast and yieldEMAFast > yieldEMASlow
+_yieldDown,1567,value,2,0,6,yieldValid and yieldClose < yieldEMAFast and yieldEMAFast < yieldEMASlow
+yieldRising,1568,value,1,0,6,invertYield ? _yieldDown : _yieldUp
+yieldFalling,1569,value,1,0,6,invertYield ? _yieldUp : _yieldDown
+eurusdBull,1570,value,1,0,6,eurusdValid and eurusdClose > eurusdEMAFast and eurusdEMAFast > eurusdEMASlow
+eurusdBear,1571,value,1,0,6,eurusdValid and eurusdClose < eurusdEMAFast and eurusdEMAFast < eurusdEMASlow
+spxBull,1572,value,1,0,6,spxValid and spxClose > spxEMAFast and spxEMAFast > spxEMASlow
+spxBear,1573,value,1,0,6,spxValid and spxClose < spxEMAFast and spxEMAFast < spxEMASlow
+tipsRising,1574,value,1,0,6,tipsValid and tipsClose > tipsEMAFast and tipsEMAFast > tipsEMASlow
+tipsFalling,1575,value,1,0,6,tipsValid and tipsClose < tipsEMAFast and tipsEMAFast < tipsEMASlow
+dxyROC,1576,value,2,0,6,"dxyValid ? nz(_rawDXYRoc, 0.0) : 0.0"
+dxyMomBull,1577,value,1,0,6,dxyROC > 0.15
+dxyMomBear,1578,value,1,0,6,dxyROC < -0.15
+znROC,1579,value,1,0,6,"yieldValid ? nz(_rawYieldRoc, 0.0) : 0.0"
+eurusdROC,1580,value,2,0,6,"eurusdValid ? nz(_rawEURRoc, 0.0) : 0.0"
+ratePressure,1581,value,2,0,6,znROC
+ratePressureUp,1582,value,1,0,6,ratePressure > 0.1
+ratePressureDown,1583,value,1,0,6,ratePressure < -0.1
+silverRet,1584,value,1,0,6,"silverValid and not na(silverClose[1]) ? safeDiv(silverClose, silverClose[1]) - 1 : na"
+dxyRet,1585,value,1,0,6,"dxyValid and not na(dxyClose[1]) ? safeDiv(dxyClose, dxyClose[1]) - 1 : na"
+yieldRet,1586,value,1,0,6,"yieldValid and not na(yieldClose[1]) ? safeDiv(yieldClose, yieldClose[1]) - 1 : na"
+eurRet,1587,value,1,0,6,"eurusdValid and not na(eurusdClose[1]) ? safeDiv(eurusdClose, eurusdClose[1]) - 1 : na"
+spxRet,1588,value,1,0,6,"spxValid and not na(spxClose[1]) ? safeDiv(spxClose, spxClose[1]) - 1 : na"
+tipsRet,1589,value,1,0,6,"tipsValid and not na(tipsClose[1]) ? safeDiv(tipsClose, tipsClose[1]) - 1 : na"
+goldRetL,1590,value,3,0,6,goldRet[1]
+_wS,1591,value,3,0,6,"math.min(corrShortLen * _kM, 4500)"
+_wL,1592,value,3,0,6,"math.min(corrLongLen * _kM, 4500)"
+_fS,1593,value,3,0,6,corrShortLen * _kM <= 4500
+_fL,1594,value,3,0,6,corrLongLen * _kM <= 4500
+f_cc3,1595,function,6,0,6,
+corrGoldDXY_30,1600,tuple,1,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldDXY_60,1600,tuple,1,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldDXY_120,1600,tuple,1,0,6,"f_cc3(goldRetM, dxyRet, dxyValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldYld_30,1601,tuple,1,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldYld_60,1601,tuple,1,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldYld_120,1601,tuple,1,0,6,"f_cc3(goldRetM, yieldRet, yieldValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldSlv_30,1602,tuple,1,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSlv_60,1602,tuple,1,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSlv_120,1602,tuple,1,0,6,"f_cc3(goldRetL, silverRet, silverValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSPX_30,1603,tuple,1,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSPX_60,1603,tuple,1,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldSPX_120,1603,tuple,1,0,6,"f_cc3(goldRetL, spxRet, spxValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldEUR_30,1604,tuple,1,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldEUR_60,1604,tuple,1,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldEUR_120,1604,tuple,1,0,6,"f_cc3(goldRetL, eurRet, eurusdValid, corrShortLen, corrMedLen, corrLongLen, true, true, true)"
+corrGoldTIPS_30,1605,tuple,1,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldTIPS_60,1605,tuple,1,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+corrGoldTIPS_120,1605,tuple,1,0,6,"f_cc3(goldRetM, tipsRet, tipsValid, _wS, _wM, _wL, _fS, _fM, _fL)"
+avgCorrDXY,1606,value,1,0,6,(nz(corrGoldDXY_30) + nz(corrGoldDXY_60) + nz(corrGoldDXY_120)) / 3.0
+avgCorrYld,1607,value,1,0,6,(nz(corrGoldYld_30) + nz(corrGoldYld_60) + nz(corrGoldYld_120)) / 3.0
+avgCorrSlv,1608,value,1,0,6,(nz(corrGoldSlv_30) + nz(corrGoldSlv_60) + nz(corrGoldSlv_120)) / 3.0
+avgCorrSPX,1609,value,1,0,6,(nz(corrGoldSPX_30) + nz(corrGoldSPX_60) + nz(corrGoldSPX_120)) / 3.0
+avgCorrEUR,1610,value,1,0,6,(nz(corrGoldEUR_30) + nz(corrGoldEUR_60) + nz(corrGoldEUR_120)) / 3.0
+avgCorrTIPS,1611,value,1,0,6,(nz(corrGoldTIPS_30) + nz(corrGoldTIPS_60) + nz(corrGoldTIPS_120)) / 3.0
+_wDXYr,1612,value,2,0,6,"math.min(math.abs(avgCorrDXY) * 100, 30)"
+_wYldr,1613,value,2,0,6,"math.min(math.abs(avgCorrYld) * 100, 30)"
+_wSlvr,1614,value,2,0,6,"math.min(math.abs(avgCorrSlv) * 100, 25)"
+_wSPXr,1615,value,2,0,6,"spxValid ? math.min(math.abs(avgCorrSPX) * 100, 15) : 0.0 // R5.1: adaptive by |corr| like the other assets (wires avgCo"
+_wEURr,1616,value,2,0,6,"eurusdValid and not dxyValid ? math.min(math.abs(avgCorrEUR) * 100, 30) : 0.0"
+_wTIPSr,1617,value,2,0,6,"math.min(math.abs(avgCorrTIPS) * 100, 25)"
+_wTot,1618,value,12,0,6,_wDXYr + _wYldr + _wSlvr + _wSPXr + _wEURr + _wTIPSr
+wDXY,1619,value,2,0,6,_wTot > 0 ? _wDXYr / _wTot * 100 : 30.0
+wYld,1620,value,2,0,6,_wTot > 0 ? _wYldr / _wTot * 100 : 25.0
+wSlv,1621,value,2,0,6,_wTot > 0 ? _wSlvr / _wTot * 100 : 20.0
+wSPX,1622,value,2,0,6,_wTot > 0 ? _wSPXr / _wTot * 100 : 15.0
+wEUR,1623,value,2,0,6,_wTot > 0 ? _wEURr / _wTot * 100 : 20.0
+wTIPS,1624,value,2,0,6,_wTot > 0 ? _wTIPSr / _wTot * 100 : 10.0
+msDXY,1625,value,2,0,6,dxyValid ? (dxyBear ? wDXY : dxyBull ? -wDXY : 0.0) : 0.0
+msYld,1626,value,2,0,6,yieldValid ? (yieldFalling ? wYld : yieldRising ? -wYld : 0.0) : 0.0
+msSPX,1627,value,2,0,6,spxValid ? (spxBull ? wSPX : spxBear ? -wSPX : 0.0) : 0.0
+msEUR,1628,value,2,0,6,eurusdValid and not dxyValid ? (eurusdBull ? wEUR : eurusdBear ? -wEUR : 0.0) : 0.0
+msSlv,1629,value,2,0,6,silverValid ? (silverClose > silverEMA ? wSlv : silverClose < silverEMA ? -wSlv : 0.0) : 0.0
+msTIPS,1630,value,2,0,6,tipsValid ? (tipsFalling ? wTIPS : tipsRising ? -wTIPS : 0.0) : 0.0
+msMom,1631,value,2,0,6,dxyValid ? (dxyMomBear ? 10.0 : dxyMomBull ? -10.0 : 0.0) : 0.0
+msRate,1632,value,2,0,6,(yieldValid ? (ratePressureDown ? 5.0 : ratePressureUp ? -5.0 : 0.0) : 0.0) + (eurusdValid and not dxyValid ? (eurusdROC
+macroStrengthScore,1633,value,1,0,6,"int(math.max(math.min(msDXY + msYld + msSPX + msEUR + msSlv + msTIPS + msMom + msRate, 100), -100))"
+macroIntelScore,1634,value,7,0,1,macroStrengthScore
+macroIntelValid,1635,value,1,0,6,dxyValid or yieldValid or spxValid or eurusdValid or silverValid
+macroIntelLabel,1636,value,16,0,1,"macroIntelValid ? (macroIntelScore >= 40 ? ""BULL"" : macroIntelScore <= -40 ? ""BEAR"" : macroIntelScore >= 15 ? ""BULL-ISH"""
+mxVerdict,1640,value,3,0,0,"""Macro "" + (macroIntelLabel == ""BULL"" ? ""BULL"" : macroIntelLabel == ""BEAR"" ? ""BEAR"" : macroIntelLabel == ""BULL-ISH"" ? ""b"
+mxDir,1641,value,8,0,0,"macroIntelLabel == ""BULL"" or macroIntelLabel == ""BULL-ISH"" ? 1 : macroIntelLabel == ""BEAR"" or macroIntelLabel == ""BEAR-I"
+mxGlyph,1642,value,2,0,0,"macroIntelLabel == ""BULL"" ? ""▲▲"" : macroIntelLabel == ""BULL-ISH"" ? ""▲"" : macroIntelLabel == ""BEAR"" ? ""▼▼"" : macroIntelLa"
+f_mxC,1643,function,6,0,0,"n + (not v ? "" no data"" : pts > 0 ? "" ▲+"" + str.tostring(pts, ""#"") : pts < 0 ? "" ▼"" + str.tostring(pts, ""#"") : "" ≈0"")"
+mxWhy,1644,value,1,0,0,"""MACRO = the Master's MACRO cell (same code): "" + mxVerdict + ""\n"" + f_mxC(""DXY"", dxyValid, msDXY + msMom) + "" · "" + f_m"
+f_brS,1648,function,4,0,1,up ? 1.0 : dn ? -1.0 : 0.0
+f_brM,1649,function,2,0,1,"v ? f_brS(up, dn) * (math.abs(r) > 0.5 ? 2.0 : math.abs(r) > 0.25 ? 1.0 : 0.0) : na"
+f_brMv,1650,function,5,0,1,"not v ? ""no data"" : rise ? ""rising"" : fall ? ""falling"" : ""flat"""
+brJpySym,1656,input,3,0,1,"input.symbol(""OANDA:USDJPY"", ""USDJPY symbol (blank = off)"", group=""GOLD DRIVERS (display only)"")"
+brOilSym,1657,input,3,0,1,"input.symbol(""OANDA:WTICOUSD"", ""Oil (WTI) symbol (blank = off)"", group=""GOLD DRIVERS (display only)"")"
+brRySym,1658,input,6,0,1,"input.symbol(""FRED:DFII10"", ""Real 10Y yield, daily (blank = off)"", group=""GOLD DRIVERS (display only)"", tooltip=""10-year"
+brBeSym,1659,input,3,0,1,"input.symbol(""FRED:T10YIE"", ""10Y breakeven inflation, daily (blank = off)"", group=""GOLD DRIVERS (display only)"", tooltip"
+brJc,1662,tuple,6,0,1,"request.security(brJpySym != """" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+brJf,1662,tuple,5,0,1,"request.security(brJpySym != """" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+brJs,1662,tuple,3,0,1,"request.security(brJpySym != """" ? brJpySym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+brOc,1663,tuple,6,0,1,"request.security(brOilSym != """" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+brOf,1663,tuple,5,0,1,"request.security(brOilSym != """" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+brOs,1663,tuple,3,0,1,"request.security(brOilSym != """" ? brOilSym : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+brRc,1664,tuple,4,0,1,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
+brRf,1664,tuple,5,0,1,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
+brRs,1664,tuple,3,0,1,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
+brBc,1665,tuple,4,0,1,"request.security(brBeSym != """" ? brBeSym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
+brBf,1665,tuple,5,0,1,"request.security(brBeSym != """" ? brBeSym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
+brBs,1665,tuple,3,0,1,"request.security(brBeSym != """" ? brBeSym : syminfo.tickerid, ""D"", [close[1], ta.ema(close[1], 10), ta.ema(close[1], 20)]"
+br2c,1666,tuple,4,0,1,"request.security(y2Symbol != """" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+br2f,1666,tuple,5,0,1,"request.security(y2Symbol != """" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+br2s,1666,tuple,3,0,1,"request.security(y2Symbol != """" ? y2Symbol : syminfo.tickerid, macroTF, [close[1], ta.ema(close[1], 10), ta.ema(close[1]"
+brJv,1667,value,3,0,1,"brJpySym != """" and not na(brJc) and not na(brJf) and not na(brJs)"
+brOv,1668,value,3,0,1,"brOilSym != """" and not na(brOc) and not na(brOf) and not na(brOs)"
+brRv,1669,value,3,0,1,"brRySym != """" and not na(brRc) and not na(brRf) and not na(brRs)"
+brBv,1670,value,3,0,1,"brBeSym != """" and not na(brBc) and not na(brBf) and not na(brBs)"
+br2v,1671,value,3,0,1,"y2Symbol != """" and not na(br2c) and not na(br2f) and not na(br2s)"
+brJu,1672,value,2,0,1,brJc > brJf and brJf > brJs
+brJn,1673,value,2,0,1,brJc < brJf and brJf < brJs
+brOu,1674,value,2,0,1,brOc > brOf and brOf > brOs
+brOn,1675,value,2,0,1,brOc < brOf and brOf < brOs
+brRu,1676,value,2,0,1,brRc > brRf and brRf > brRs
+brRn,1677,value,2,0,1,brRc < brRf and brRf < brRs
+brBu,1678,value,2,0,1,brBc > brBf and brBf > brBs
+brBn,1679,value,2,0,1,brBc < brBf and brBf < brBs
+br2u,1680,value,2,0,1,br2c > br2f and br2f > br2s
+br2n,1681,value,2,0,1,br2c < br2f and br2f < br2s
+brJr,1683,value,1,0,1,"ta.correlation(goldRetM, not na(brJc[1]) ? safeDiv(brJc, brJc[1]) - 1 : na, _wM)"
+brJR,1684,value,3,0,1,brJv and _fM ? brJr : na
+brOr,1685,value,1,0,1,"ta.correlation(goldRetM, not na(brOc[1]) ? safeDiv(brOc, brOc[1]) - 1 : na, _wM)"
+brOR,1686,value,3,0,1,brOv and _fM ? brOr : na
+brJd,1688,value,12,0,1,"f_brM(brJv, brJn, brJu, nz(brJR))"
+brJh,1689,value,4,0,1,"""yen-dollar "" + f_brMv(brJv, brJu, brJn) + (na(brJR) ? """" : "" r"" + str.tostring(brJR, ""#.##""))"
+brOd,1690,value,12,0,1,"f_brM(brOv, brOu, brOn, nz(brOR))"
+brOh,1691,value,4,0,1,"""WTI "" + f_brMv(brOv, brOu, brOn) + (na(brOR) ? """" : "" r"" + str.tostring(brOR, ""#.##""))"
+brRd,1692,value,12,0,1,"brRv ? f_brS(brRn, brRu) : na"
+brRh,1693,value,4,0,1,"(brRv ? str.tostring(brRc, ""#.##"") + ""% "" : """") + f_brMv(brRv, brRu, brRn) + "" · daily"""
+brBd,1694,value,12,0,1,"brBv ? f_brS(brBu, brBn) : na"
+brBh,1695,value,4,0,1,"(brBv ? str.tostring(brBc, ""#.##"") + ""% "" : """") + f_brMv(brBv, brBu, brBn) + "" · daily"""
+br2d,1696,value,12,0,1,"br2v ? f_brS(br2n, br2u) : na"
+br2h,1697,value,4,0,1,"(br2v ? str.tostring(br2c, ""#.##"") + ""% "" : """") + f_brMv(br2v, br2u, br2n) + "" · Fed path"""
+gdT,1699,var,4,0,0,"table.new(gdPos == ""Bottom Center"" ? (tkOn ? position.bottom_right : position.bottom_center) : gdPos == ""Bottom Left"" ? "
+f_gdRow,1700,function,5,0,0,
+grpCk,1718,value,43,0,0,"""CHECKS & RISK (v86, display only)"""
+ckPanel,1719,input,2,0,0,"input.bool(true, ""Checks & risk section in the panel"", group = grpCk, tooltip = ""Score note, news calendar, cost, churn,"
+nwShow,1724,input,3,0,0,"input.bool(true, ""News calendar: NFP / CPI / FOMC (official dates)"", group = grpCk, tooltip = ""08:30 New York for NFP an"
+nwBefore,1725,input,4,0,0,"input.int(30, ""News window: minutes before"", minval = 0, maxval = 240, group = grpCk)"
+nwAfter,1726,input,5,0,0,"input.int(30, ""News window: minutes after"", minval = 0, maxval = 240, group = grpCk)"
+nwShade,1727,input,1,0,0,"input.bool(true, ""Shade the news windows"", group = grpCk)"
+nwCostMult,1728,input,3,0,0,"input.float(3.0, ""News window: cost multiplier (spread + slippage)"", minval = 1.0, maxval = 10.0, step = 0.5, group = gr"
+alertOnNews,1729,input,1,0,0,"input.bool(true, ""Alert when a news window starts"", group = grpCk, tooltip = ""Needs an alert on Visuals (Any alert() fun"
+spreadCost,1731,input,4,0,6,"input.float(0.3, ""Spread Cost (points), as in the Master"", minval=0.0, maxval=5.0, step=0.1, group=grpCk)"
+slippagePts,1732,input,1,0,6,"input.float(0.2, ""Slippage (points), as in the Master"", minval=0.0, maxval=2.0, step=0.1, group=grpCk)"
+commissionL,1733,input,1,0,6,"input.float(7.0, ""Commission per Lot (USD, round turn), as in the Master"", minval=0.0, maxval=50.0, step=0.5, group=grpC"
+pointValue,1734,input,8,0,6,"input.float(100, ""Value per Point per Lot (USD), as in the Master"", minval=1, group=grpCk)"
+rkEquity,1735,input,3,0,0,"input.float(25000.0, ""Account equity ($)"", minval = 100.0, maxval = 100000000.0, step = 100.0, group = grpCk)"
+rkPct,1736,input,2,0,0,"input.float(1.0, ""Risk per trade (% of equity)"", minval = 0.05, maxval = 5.0, step = 0.05, group = grpCk, tooltip = ""Def"
+rkStop,1737,input,3,0,0,"input.float(0.0, ""Stop distance ($ per oz; 0 = 1 ATR of this chart)"", minval = 0.0, maxval = 500.0, step = 0.1, group = "
+rkToday,1738,input,5,0,0,"input.float(0.0, ""Today's realised result (R, typed in)"", minval = -20.0, maxval = 20.0, step = 0.1, group = grpCk, tool"
+rkCap,1739,input,5,0,0,"input.float(-2.0, ""Daily loss cap (R)"", minval = -10.0, maxval = -0.5, step = 0.5, group = grpCk)"
+rgShow,1740,input,1,0,0,"input.bool(true, ""Daily regime tile (untested)"", group = grpCk, tooltip = ""12-month return and the 200-day average (tren"
+rgDxySym,1741,input,3,0,0,"input.symbol(""TVC:DXY"", ""Dollar index, daily (blank = off)"", group = grpCk)"
+lgShow,1742,input,2,0,0,"input.bool(true, ""Banner: the website's forward record"", group = grpCk, tooltip = ""Typed in from the website's forward l"
+lgArm,1746,input,3,0,0,"input.string(""H4 · 15m (deciding)"", ""Record: arm / timeframe"", group = grpCk)"
+lgAsof,1747,input,3,0,0,"input.string(""2026-10-31 00:58 UTC"", ""Record: as of"", group = grpCk)"
+lgN,1748,input,11,0,0,"input.int(171, ""Record: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
+lgW,1749,input,2,0,0,"input.int(66, ""Record: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
+lgMean,1750,input,3,0,0,"input.float(-0.0920, ""Record: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
+lgSd,1751,input,1,0,0,"input.float(0.8006, ""Record: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
+lgPF,1752,input,2,0,0,"input.float(0.7502, ""Record: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
+lgNote,1753,input,3,0,0,"input.string(""5m: N 511, mean -0.18R, interval below 0 · the Brief's H4 playbook: not for live money"", ""Record: note"", g"
+lg2Show,1754,input,2,0,0,"input.bool(true, ""Banner: a second record (H3 = the H2 card's rule)"", group = grpCk)"
+lg2Arm,1755,input,2,0,0,"input.string(""H3 · 1H (deciding) = the H2 card's rule"", ""Record 2: arm / timeframe"", group = grpCk)"
+lg2N,1756,input,11,0,0,"input.int(3, ""Record 2: closed trades (N)"", minval = 0, maxval = 100000, group = grpCk)"
+lg2W,1757,input,2,0,0,"input.int(1, ""Record 2: wins (R > 0)"", minval = 0, maxval = 100000, group = grpCk)"
+lg2Mean,1758,input,3,0,0,"input.float(-0.1642, ""Record 2: mean R"", minval = -10.0, maxval = 10.0, step = 0.0001, group = grpCk)"
+lg2Sd,1759,input,1,0,0,"input.float(1.6215, ""Record 2: standard deviation of R"", minval = 0.0, maxval = 20.0, step = 0.0001, group = grpCk)"
+lg2PF,1760,input,2,0,0,"input.float(0.7762, ""Record 2: profit factor"", minval = 0.0, maxval = 100.0, step = 0.0001, group = grpCk)"
+lg2Note,1761,input,4,0,0,"input.string(""5m reported: N 14, mean +0.55R (-0.43 … +1.54): not enough trades yet"", ""Record 2: note"", group = grpCk)"
+f_tq,1764,function,2,0,0,
+f_dur,1769,function,3,0,0,
+nwCode,1774,var,1,0,0,"array.from(202610281400, 202611060830, 202611100830, 202612040830, 202612091400, 202612100830, 202701080830, 20270113083"
+nwName,1775,var,2,0,0,"array.from(""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""FOMC"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", ""CPI"", ""NFP"", ""CPI"", ""FOMC"", ""NFP"", "
+nwT,1776,var,11,0,0,array.new_int()
+nwI,1781,var,11,1,0,0
+nwBarIn,1782,value,5,1,0,false
+ckLo,1798,value,4,0,0,euIsDST ? 7 : 8
+ckKZ,1799,value,1,0,0,(hU >= ckLo + 1 and hU < ckLo + 4) or (hU >= nyOpen and hU < nyOpen + 3) or (hU >= londonClose - 1 and hU < londonClose)
+ckSpread,1800,value,1,0,0,"ckKZ ? math.max(0.18, spreadCost) : inNY ? math.max(0.22, spreadCost) : inLondon ? math.max(0.30, spreadCost) : math.max"
+ckCost,1802,value,9,0,0,"(ckSpread + 2.0 * slippagePts) * (nwBarIn ? nwCostMult : 1.0) + commissionL / math.max(pointValue, 1.0)"
+ckCostPct,1803,value,8,0,0,atr14 > 0 ? ckCost / atr14 * 100.0 : na
+ckCostLv,1804,value,4,0,0,na(ckCostPct) ? 0 : ckCostPct > 25.0 ? 2 : ckCostPct > 15.0 ? 1 : 0
+ckDir,1808,var,2,1,0,0
+ckFlip,1809,value,1,1,0,false
+ckFlips,1814,value,3,0,0,"int(math.sum(ckFlip ? 1 : 0, 20))"
+_ckPath,1815,value,2,0,0,"math.sum(math.abs(close - close[1]), 20)"
+ckER,1816,value,4,0,0,_ckPath > 0 ? math.abs(close - close[20]) / _ckPath : na
+ckChurn,1817,value,4,0,0,ckFlips >= 2
+rgM1,1820,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
+rgM13,1820,tuple,2,0,0,"request.security(syminfo.tickerid, ""M"", [close[1], close[13]], lookahead = barmerge.lookahead_on)"
+rgC1,1821,tuple,6,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
+rgSma1,1821,tuple,8,0,0,"request.security(syminfo.tickerid, ""D"", [close[1], ta.sma(close, 200)[1]], lookahead = barmerge.lookahead_on)"
+rgRy1,1822,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
+rgRy21,1822,tuple,2,0,0,"request.security(brRySym != """" ? brRySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahead_"
+rgDx1,1823,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
+rgDx21,1823,tuple,2,0,0,"request.security(rgDxySym != """" ? rgDxySym : syminfo.tickerid, ""D"", [close[1], close[21]], lookahead = barmerge.lookahea"
+rgRet12,1824,value,9,0,0,rgM1 > 0 and rgM13 > 0 ? (rgM1 / rgM13 - 1.0) * 100.0 : na
+rgUp,1825,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 > 0 and rgC1 > rgSma1
+rgDn,1826,value,3,0,0,not na(rgRet12) and not na(rgSma1) and rgRet12 < 0 and rgC1 < rgSma1
+rgRyD,1827,value,8,0,0,"brRySym != """" and not na(rgRy1) and not na(rgRy21) ? rgRy1 - rgRy21 : na"
+rgDxD,1828,value,8,0,0,"rgDxySym != """" and not na(rgDx1) and not na(rgDx21) ? rgDx1 - rgDx21 : na"
+rgMac,1829,value,2,0,0,na(rgRyD) or na(rgDxD) ? 0 : rgRyD < 0 and rgDxD < 0 ? 1 : rgRyD > 0 and rgDxD > 0 ? -1 : 0
+rgTxt,1830,value,2,0,0,"rgUp ? ""▲ LONG"" : rgDn ? ""▼ SHORT"" : ""◆ FLAT"""
+rgMacTxt,1831,value,2,0,0,"na(rgRyD) or na(rgDxD) ? ""20d macro: no data"" : rgMac == 1 ? ""20d macro supports gold"" : rgMac == -1 ? ""20d macro agains"
+lkDec,1836,input,5,0,0,"input.source(close, ""Master link: LINK decision x stop"", group = grpCk, tooltip = ""v94: pick the Master's 'LINK decision"
+lkLots,1837,input,4,0,0,"input.source(close, ""Master link: LINK lots"", group = grpCk)"
+lkOn,1838,var,7,1,0,false
+lkD,1841,value,6,0,0,lkOn and not na(lkDec) ? (lkDec > 0 ? 1 : lkDec < 0 ? -1 : 0) : 0
+lkSLp,1842,value,3,0,0,lkD != 0 ? math.abs(lkDec) : na
+lkTrig,1843,value,2,0,0,barstate.isconfirmed and lkD != 0 and lkD != nz(lkD[1])
+lkLotsOn,1844,value,1,0,0,lkOn and not na(lkLots) and lkLots != close
+trkLongSig,1845,value,2,0,0,lkOn ? lkTrig and lkD > 0 : h2Long
+trkShortSig,1846,value,1,0,0,lkOn ? lkTrig and lkD < 0 : h2Short
+rkStopD,1848,value,3,0,0,rkStop > 0 ? rkStop : not na(lkSLp) ? math.abs(close - lkSLp) : atr14
+rkRisk,1849,value,2,0,0,rkEquity * rkPct / 100.0
+rkPerLot,1850,value,2,0,0,(rkStopD + ckCost) * pointValue
+rkLots,1851,value,3,0,0,rkPerLot > 0 ? math.floor(rkRisk / rkPerLot * 100.0) / 100.0 : na
+rkLocked,1852,value,4,0,0,rkToday <= rkCap
+trkShow,1856,input,2,0,0,"input.bool(true, ""Bracket tracker: score H2 signals with my SL / TP"", group = grpCk, tooltip = ""v93: for every H2 signal"
+trkUnit,1857,input,4,0,0,"input.string(""Money ($)"", ""Bracket unit"", options = [""Money ($)"", ""MT5 points""], group = grpCk)"
+trkSL,1858,input,4,0,0,"input.float(500.0, ""Bracket SL (in the unit above)"", minval = 0.01, maxval = 10000000.0, group = grpCk)"
+trkTP,1859,input,4,0,0,"input.float(1000.0, ""Bracket TP (in the unit above)"", minval = 0.01, maxval = 10000000.0, group = grpCk)"
+trkLot,1860,input,6,0,0,"input.float(0.5, ""Bracket lot size"", minval = 0.01, maxval = 100.0, step = 0.01, group = grpCk)"
+trkPt,1861,input,2,0,0,"input.float(0.01, ""MT5 point size (price per point; 0.01 for a 2-digit XAUUSD quote)"", minval = 0.0001, maxval = 1.0, st"
+trkSLd,1862,value,9,0,0,"trkUnit == ""MT5 points"" ? trkSL * trkPt : trkSL / (trkLot * pointValue)"
+trkTPd,1863,value,6,0,0,"trkUnit == ""MT5 points"" ? trkTP * trkPt : trkTP / (trkLot * pointValue)"
+trkE,1864,var,6,0,0,array.new_float()
+trkDir,1865,var,3,0,0,array.new_int()
+trkW,1866,var,4,1,0,0
+trkL,1867,var,1,1,0,0
+trkNet,1868,var,1,2,0,0.0
+trkN,1889,value,5,0,0,trkW + trkL
+trkBE,1890,value,3,0,0,(trkSLd + ckCost) / (trkSLd + trkTPd)
+trkLo,1891,tuple,2,0,0,"f_wil(trkW, trkN)"
+trkHi,1891,tuple,2,0,0,"f_wil(trkW, trkN)"
+trkEqPct,1892,value,1,0,0,trkSLd * trkLot * pointValue / rkEquity * 100.0
+trkLv,1893,value,2,0,0,trkN < 1 ? 0 : trkLo > trkBE ? 1 : trkHi < trkBE ? -1 : 0
+trkTxt,1894,value,1,0,0,"(lkOn ? ""Master BUY / SELL"" : ""H2 signals (link the Master to score its BUY / SELL)"") + "" · SL "" + (trkUnit == ""MT5 poin"
+lgSe,1897,value,2,0,0,lgN > 1 ? lgSd / math.sqrt(lgN) : na
+lgT,1898,value,2,0,0,lgN > 1 ? f_tq(lgN - 1) : na
+lgLo,1899,value,5,0,0,lgMean - lgT * lgSe
+lgHi,1900,value,2,0,0,lgMean + lgT * lgSe
+lgWlo,1901,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
+lgWhi,1901,tuple,1,0,0,"f_wil(math.min(lgW, lgN), lgN)"
+lgVerdict,1902,value,4,0,0,"lgN < 50 ? ""UNDECIDED · N < 50"" : na(lgLo) ? ""—"" : lgLo > 0 and lgPF >= 1.2 ? ""EDGE SHOWN"" : lgLo > 0 ? ""NO EDGE SHOWN ·"
+lgLv,1903,value,4,0,0,"lgVerdict == ""EDGE SHOWN"" ? 1 : lgVerdict == ""NO EDGE · interval below 0"" ? -1 : 0"
+lgTxt,1904,value,3,0,0,"lgArm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lgN) + "" · win "" + (lgN > 0 ? str.tostring(math.min(lgW, "
+lg2Se,1906,value,2,0,0,lg2N > 1 ? lg2Sd / math.sqrt(lg2N) : na
+lg2T,1907,value,2,0,0,lg2N > 1 ? f_tq(lg2N - 1) : na
+lg2Lo,1908,value,5,0,0,lg2Mean - lg2T * lg2Se
+lg2Hi,1909,value,2,0,0,lg2Mean + lg2T * lg2Se
+lg2Wlo,1910,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
+lg2Whi,1910,tuple,1,0,0,"f_wil(math.min(lg2W, lg2N), lg2N)"
+lg2Verdict,1911,value,4,0,0,"lg2N < 50 ? ""UNDECIDED · N < 50"" : na(lg2Lo) ? ""—"" : lg2Lo > 0 and lg2PF >= 1.2 ? ""EDGE SHOWN"" : lg2Lo > 0 ? ""NO EDGE SH"
+lg2Lv,1912,value,2,0,0,"lg2Verdict == ""EDGE SHOWN"" ? 1 : lg2Verdict == ""NO EDGE · interval below 0"" ? -1 : 0"
+lg2Txt,1913,value,3,0,0,"lg2Arm + "" · website ledger, "" + lgAsof + ""\nN "" + str.tostring(lg2N) + "" · win "" + (lg2N > 0 ? str.tostring(math.min(lg"
+tfNote,1915,value,2,0,0,"timeframe.period == ""15"" ? ""chart 15m = the decision timeframe"" : timeframe.period == ""5"" ? ""5m chart: timing only, deci"
+lgLine,1916,value,1,0,0,"lgArm + "": "" + lgVerdict + "" · "" + str.replace_all(str.substring(lgTxt, str.pos(lgTxt, ""\n"") + 1), ""\n"", "" "")"
+lg2Line,1917,value,1,0,0,"lg2Arm + "": "" + lg2Verdict + "" · "" + str.replace_all(str.substring(lg2Txt, str.pos(lg2Txt, ""\n"") + 1), ""\n"", "" "")"
+nwK,1920,value,3,1,0,-1
+nwNowIn,1921,value,5,1,0,false
+nwMs,1922,value,7,1,0,na
+nwKName,1923,value,2,1,0,""""""
+nwNext,1924,value,3,1,0,"nwShow ? ""calendar ended: update Visuals"" : ""calendar off"""
+nwLv,1936,value,5,0,0,nwNowIn ? 2 : not na(nwMs) and nwMs <= 4 * 3600000 ? 1 : 0
+tblV,1943,var,9,0,0,"table.new(vPos == ""Middle Left"" ? position.middle_left : vPos == ""Top Left"" ? position.top_left : vPos == ""Middle Right"""
+_tmK,1944,value,5,0,0,"color.new(#7D8FA3, 0)"
+_tmV,1945,value,61,0,0,"color.new(#E6EDF3, 0)"
+_tmUp,1946,value,31,0,0,"color.new(#26A69A, 0)"
+_tmDn,1947,value,34,0,0,"color.new(#EF5350, 0)"
+_tmSec,1948,value,7,0,0,"color.new(#16202B, 0)"
+_tmS,1949,value,4,0,0,"color.new(#787B86, 0)"
+f_lv,1951,function,16,0,0,"na(p) ? n + "" —"" : n + "" "" + str.tostring(p, format.mintick) + ""  ("" + (p >= close ? ""+"" : """") + str.tostring(p - close,"
+f_glNear,1953,function,6,0,0,
+f_gBar,1963,function,5,0,0,
+f_gPos,1972,function,2,0,0,
+f_tmG,1980,function,30,0,0,"na(d) ? ""—"" : d >= 2 ? ""▲▲"" : d > 0 ? ""▲"" : d <= -2 ? ""▼▼"" : d < 0 ? ""▼"" : ""≈"""
+f_tmC,1981,function,10,0,0,"na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)"
+_tmRow,1982,function,50,0,0,
+_tmHead,1985,function,8,0,0,
+_dkW,2155,value,2,0,0,"array.from(10, 10, 12, 11, 13, 10, 11, 11, 13)"
+_dw,2156,value,3,0,0,"density == ""Compact"" ? 0.8 : density == ""Spacious"" ? 1.25 : 1.0"
+_dsz,2157,value,2,0,0,"textSize == ""Large"" or textSize == ""Medium"" ? ""small"" : ""tiny"""
+_dbg,2158,value,2,0,0,"color.new(#0d0d1a, 40)"
+f_dock,2159,function,1,0,0,
+f_dkCell,2162,function,20,0,0,
+dkT,2167,var,23,0,0,"table.new(dashMode == ""Tablet"" ? position.top_left : position.top_right, 9, 10, border_width = 0, frame_width = 0)"
+tkT,2209,var,6,0,0,"table.new(position.bottom_center, 8, 4, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)"
+f_tk,2210,function,8,0,0,

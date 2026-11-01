@@ -24,11 +24,11 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 346028 | `9d406afa1bcf91719cec01b6739a4b9a37efbfc7281ad5651e3d9d1c144dbf12` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 401 | 29668 | `2007716791180f4e6e43ea1cde135cf9673b4f45d87bc33cdf3379b12fff1354` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2151 | 167394 | `f17b11cf06db63755a38ff77cd369149404dfbb2c78dc2740ed7e97cfd9a9470` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2240 | 172563 | `00868426db3510b9bc35471c472c83176541841933c26c598616467c1cdc1382` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 362135 | `c08a42235c41e20529700f3bf5a01c738b27a7382f723d84db69f9656d8c75ce` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5634 | 360833 | `5123c38253969d4e080ae72612ad8fe4db70124fce1672620966948fa6fe0438` |
 
-> **BUILD v94 — this prompt pins the current build.** The originally audited build
+> **BUILD v95 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -140,6 +140,7 @@ scope, and no other build of these scripts is in scope.
 > **v92: F-A82 / F-A83** — the Master's risk lock counts every bar's signals (the twins' `backtestAllBars` switch, byte-identical; a reload on 5m / 1m no longer lifts a same-day lock); Visuals' COST / RISK rows charge spread + slippage × a news multiplier (default 3×) inside the dated NFP / CPI / FOMC windows. The engine's news handling (F-A74) is unchanged: it needs a website amendment (`v92_check.py`).
 > **v93:** Visuals' CHECKS · RISK section has a BRACKET row: the operator's fixed SL / TP ($500 / $1000 at 0.5 lot by default, or MT5 points) scored on every H2 signal from its close, TP or SL first, with the 95% range, break-even and net $ (display only; `v93_check.py`).
 > **v94:** the Master → Visuals LINK (operator-approved 2026-10-31): two Data-Window series (decision × plan stop, plan lots) read by Visuals' source inputs; the BRACKET tracker scores the Master's own BUY / SELL and RISK uses its plan stop and lots when linked (RUNBOOK Step 1a; `v94_check.py`).
+> **v95: F-A84 / F-A85** — Visuals' structure labels, CHURN and FVG zones run on the Master's engine code copied verbatim (SX block, `sx_check.py`; F-030 closed); the v94 declaration-order error in Visuals is fixed and `order.py` / `undeclared.py` now fail on any finding.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

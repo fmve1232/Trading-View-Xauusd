@@ -172,6 +172,8 @@ DEC = _dec_ok
 report(ctl > 0, f"4c positive control: a copy that fires on every BUY / SELL bar is detected ({ctl} / 60 runs differ)")
 
 v93v = subprocess.run(["git", "show", f"{V93}:{V}"], capture_output=True, text=True, check=True).stdout
-report(F94.visuals(v93v) == "\n".join(VL), "5 Visuals == fix_v94.visuals(v93 @ ee6085672), byte for byte")
+v94v = subprocess.run(["git", "show", f"c18c4f765:{V}"], capture_output=True, text=True, check=True).stdout   # the v94 build
+report(F94.visuals(v93v) == v94v, "5 the v94 build (c18c4f765): Visuals == fix_v94.visuals(v93 @ ee6085672), byte for byte "
+       "(that build had a declaration-order error, fixed in v95: F-A84)")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- Pine text executed in Python; TradingView runtime (input.source wiring) NOT exercised")
 sys.exit(1 if fails else 0)

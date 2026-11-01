@@ -95,8 +95,10 @@ def check(path):
                 bad.append((i,nm,gl,cur))
     return bad
 
+_total=0
 for p in sys.argv[1:]:
     b=check(p)
+    _total+=len(b)
     print(f"{p.split('/')[-1]}: {len(b)} order violation(s)")
     seen=set()
     for i,nm,gl,fn in b:
@@ -104,3 +106,6 @@ for p in sys.argv[1:]:
         seen.add(nm)
         where=f"inside {fn}() defined L{ check.__self__ if False else ''}" if fn else "global scope"
         print(f"    L{i:<6} uses '{nm}' declared later at L{gl}   ({'in '+fn+'()' if fn else 'global'})")
+# v95 (C-03 of the independent v90 audit): a finding FAILS the run. Before v95 this tool always exited 0, so a
+# declaration-order error in the v94 Visuals (lkSLp read before it was declared) passed an exit-code checklist.
+sys.exit(1 if _total else 0)

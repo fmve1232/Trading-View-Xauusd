@@ -3374,3 +3374,47 @@ The model estimate went from 99,503 / 98,998 to **99,429 / 98,989**, below v93 o
 **Process note:** `fix_v94.py` computes before it writes. A transform that raised once emptied the Master in the working
 copy; it was restored from git and nothing was committed.
 
+# v95 — Visuals' structure is the engine's (SX block); the v94 order error fixed (2026-11-01)
+
+Operator: "Copy the engine's code" (alignment, 2026-10-31). Visuals only; display only; the Master is unchanged.
+
+**SX block (F-A85):** 97 Master lines, verbatim and in order: the backward slice of `bosLabel*`, `chochLabel*`,
+`mssLabel*` and `fvgDetected`. That is:
+- the two pivot scales, snapshots and breaks;
+- the HH / HL / LH / LL sequence;
+- adaptive ATR, ADX / DI and their inputs;
+- the FVG detector.
+
+The one exception: the engine switch `showFVG`, where Visuals' draw switch (OFF) stands in.
+
+**Consumers now read the engine:**
+- **Labels:** BOS / CHoCH / **MSS** (no "~"), with the BOS line at the broken level.
+- **CHURN:** the engine's BOS breaks.
+- **FVG boxes:** `fvgDetected`, with the Master's 30-bar life.
+- **Order-block displacement:** `adaptiveATR`.
+- **ADX / DI display:** `adxVal` / `diplus` / `diminus`.
+
+**Duplicates merged:**
+- the three "(match Master)" inputs (now the engine's `adxLen` / `adxThreshold` / `showAdaptiveATR`, held equal to the
+  Master by `inputs_check`);
+- their V computations;
+- the one-pivot break outputs (`lastPH` / `lastPL` stay: pivots, sweeps and S/R use them);
+- the ATR-based FVG minimum.
+
+**F-A84 (found on the way):** the v94 Visuals read `lkSLp` before declaring it. `order.py` printed the violation but
+exited 0, so the suite passed. The link lines moved above the RISK line. `order.py` and `undeclared.py` now exit 1 on
+any finding; the positive control is the v94 file, which exits 1. **v94 was never sent; do not paste it.**
+
+**Checks:**
+- `sx_check.py`: verbatim, complete, wired, CHURN executed, derivation;
+- `v94_check` §5 is anchored to the v94 commit;
+- full suite PASS;
+- Visuals' model estimate is 66,059 (−34%).
+
+**What changes on the chart:** nothing by default; the structure and FVG drawings stay OFF. Switched on, the labels
+match the Master's STRUCTURE cell, MSS appears, and the FVG boxes are the engine's. The CHURN row (always on) now
+counts the engine's breaks. Visuals' settings lose the three "(match Master)" inputs and "FVG min size", and gain the
+engine's own ADX / adaptive-ATR / pivot inputs.
+
+**Not run:** the TradingView compile.
+

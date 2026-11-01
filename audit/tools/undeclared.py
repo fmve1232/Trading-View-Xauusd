@@ -86,8 +86,13 @@ def analyze(path):
             unresolved.setdefault(n,[]).append(i)
     return unresolved
 
+_total=0
 for p in sys.argv[1:]:
     u=analyze(p)
+    _total+=len(u)
     print(f"{p.split('/')[-1]}: {len(u)} unresolved")
     for n,ls in sorted(u.items(), key=lambda x:-len(x[1]))[:15]:
         print(f"    {n:<26} {len(ls)}x  first L{ls[0]}")
+# v95 (C-03 of the independent v90 audit): a finding FAILS the run. Before v95 this tool always exited 0, so a
+# declaration-order error in the v94 Visuals (lkSLp read before it was declared) passed an exit-code checklist.
+sys.exit(1 if _total else 0)

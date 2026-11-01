@@ -7,13 +7,13 @@ cBloomBear,356,value,3,0,5,"color.new(#FF5252, 0)"
 cBloomWarn,357,value,1,0,5,"color.new(#FFC107, 0)"
 cBloomNeut,358,value,1,0,5,"color.new(#9E9E9E, 0)"
 C_TEXT,360,value,1,0,5,color.white
-grpModules,363,value,9,0,5,"""MODULES"""
+grpModules,363,value,9,0,6,"""MODULES"""
 perfMode,364,input,4,0,5,"input.bool(false, ""Institutional Performance Mode"", group=grpModules)"
 showFVG,365,input,2,0,6,"input.bool(true, ""Fair Value Gaps (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). FVG detection feeds t"
 showOB,366,input,4,0,6,"input.bool(true, ""Order Blocks (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Order-block detection fe"
 showSMT,367,input,1,0,5,"input.bool(true, ""SMT Divergence (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Gold/silver SMT diverg"
 showClimax,368,input,2,0,5,"input.bool(true, ""Volume Climax (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Volume climax feeds the"
-showAdaptiveATR,369,input,1,0,5,"input.bool(false, ""Adaptive ATR Regime"", group=grpModules)"
+showAdaptiveATR,369,input,1,0,6,"input.bool(false, ""Adaptive ATR Regime"", group=grpModules)"
 showDisplacement,370,input,2,0,5,"input.bool(true, ""Displacement Candles (engine)"", group=grpModules, tooltip=""ENGINE INPUT (F-A30, v21). Displacement is "
 showForecastCone,371,input,2,0,4,"input.bool(false, ""Forecast Cone"", group=grpModules)"
 forecastBars,372,input,1,0,5,"input.int(10, ""Forecast Projection"", minval=5, maxval=30, group=""V17 PREDICTIVE ENHANCEMENTS"")"
@@ -45,12 +45,12 @@ grpCore,411,value,23,0,6,"""CORE"""
 ema20Len,412,input,1,0,6,"input.int(20, ""EMA20"", minval=1, group=grpCore)"
 ema100Len,413,input,1,0,6,"input.int(100, ""EMA100"", minval=1, group=grpCore)"
 ema200Len,414,input,1,0,6,"input.int(200, ""EMA200"", minval=1, group=grpCore)"
-atrLen,415,input,1,0,5,"input.int(14, ""ATR Base"", minval=1, group=grpCore)"
-adxLen,416,input,2,0,5,"input.int(14, ""ADX"", minval=1, group=grpCore)"
-adxThreshold,417,input,18,0,5,"input.int(25, ""ADX Threshold"", minval=10, maxval=50, group=grpCore)"
+atrLen,415,input,1,0,6,"input.int(14, ""ATR Base"", minval=1, group=grpCore)"
+adxLen,416,input,2,0,6,"input.int(14, ""ADX"", minval=1, group=grpCore)"
+adxThreshold,417,input,18,0,6,"input.int(25, ""ADX Threshold"", minval=10, maxval=50, group=grpCore)"
 rsiLen,418,input,3,0,6,"input.int(14, ""RSI Length"", minval=2, maxval=50, group=grpCore)"
-internalPivotLen,419,input,4,0,5,"input.int(2, ""Internal Pivot Len (fast)"", minval=1, maxval=5, group=grpCore)"
-swingPivotLen,420,input,4,0,5,"input.int(5, ""Swing Pivot Len (major)"", minval=3, maxval=10, group=grpCore)"
+internalPivotLen,419,input,4,0,6,"input.int(2, ""Internal Pivot Len (fast)"", minval=1, maxval=5, group=grpCore)"
+swingPivotLen,420,input,4,0,6,"input.int(5, ""Swing Pivot Len (major)"", minval=3, maxval=10, group=grpCore)"
 recentBarsLen,421,input,1,0,5,"input.int(120, ""Signal Lookback Bars"", minval=50, maxval=500, group=grpCore)"
 structWindow,422,input,2,0,5,"input.int(8, ""Structure signal validity (bars)"", minval=1, maxval=40, group=grpCore, tooltip=""Q5.8: how long a BOS/CHoCH"
 trendThreshold,427,input,2,0,5,"input.int(60, ""Trend Score Threshold"", minval=51, maxval=90, step=5, group=grpCore)"
@@ -108,10 +108,10 @@ histWReg,547,input,1,0,5,"input.int(5, ""Regime Similarity Weight (%)"", minval=
 ema20,550,value,16,0,6,"ta.ema(close, ema20Len)"
 ema100,551,value,6,0,6,"ta.ema(close, ema100Len)"
 ema200,552,value,5,0,6,"ta.ema(close, ema200Len)"
-atr,553,value,5,0,5,ta.atr(atrLen)
-diplus,554,tuple,7,0,5,"ta.dmi(adxLen, adxLen)"
-diminus,554,tuple,7,0,5,"ta.dmi(adxLen, adxLen)"
-adxVal,554,tuple,35,0,5,"ta.dmi(adxLen, adxLen)"
+atr,553,value,5,0,6,ta.atr(atrLen)
+diplus,554,tuple,7,0,6,"ta.dmi(adxLen, adxLen)"
+diminus,554,tuple,7,0,6,"ta.dmi(adxLen, adxLen)"
+adxVal,554,tuple,35,0,6,"ta.dmi(adxLen, adxLen)"
 adxGate,557,var,5,1,5,false
 vwapVal,559,value,17,0,5,ta.vwap(hlc3)
 vixSymbol,564,input,2,0,5,"input.symbol(""TVC:VIX"", ""VIX Symbol (blank=off)"", group=grpCore)"
@@ -197,11 +197,11 @@ htfBullScoreGate,767,value,13,0,5,htfAlignmentLong >= 2
 htfBearScoreGate,768,value,13,0,5,htfAlignmentShort >= 2
 htfFullLong,769,value,1,0,5,(htf5mBull ? 1 : 0) + (htf15mBull ? 1 : 0) + (htf1hBull ? 1 : 0) + (htf4hBull ? 1 : 0) + (htf1dBull ? 1 : 0)
 htfFullShort,770,value,1,0,5,(htf5mBear ? 1 : 0) + (htf15mBear ? 1 : 0) + (htf1hBear ? 1 : 0) + (htf4hBear ? 1 : 0) + (htf1dBear ? 1 : 0)
-atrTrending,776,value,1,0,5,ta.atr(7)
-atrRanging,777,value,1,0,5,ta.atr(21)
-regimeStrength,780,value,7,0,5,"math.min(math.max((adxVal - (adxThreshold - 5)) / 10.0, 0.0), 1.0)"
-_rawAdaptiveATR,781,value,1,0,5,showAdaptiveATR ? (atrRanging * (1.0 - regimeStrength) + atrTrending * regimeStrength) : atr
-adaptiveATR,782,value,82,0,5,"math.max(nz(_rawAdaptiveATR, ta.tr), close * 0.0001)"
+atrTrending,776,value,1,0,6,ta.atr(7)
+atrRanging,777,value,1,0,6,ta.atr(21)
+regimeStrength,780,value,7,0,6,"math.min(math.max((adxVal - (adxThreshold - 5)) / 10.0, 0.0), 1.0)"
+_rawAdaptiveATR,781,value,1,0,6,showAdaptiveATR ? (atrRanging * (1.0 - regimeStrength) + atrTrending * regimeStrength) : atr
+adaptiveATR,782,value,82,0,6,"math.max(nz(_rawAdaptiveATR, ta.tr), close * 0.0001)"
 atrPercentile,783,value,21,0,5,"ta.percentrank(adaptiveATR, 50)"
 _varShort,788,value,1,0,5,"ta.variance(goldRet, 10)"
 _varLong,789,value,2,0,5,"ta.variance(goldRet, 50)"
@@ -524,22 +524,22 @@ bullTrendScore,1442,value,4,6,5,0
 bearTrendScore,1456,value,4,6,5,0
 bullTrend,1463,value,14,0,5,bullTrendScore >= trendThreshold
 bearTrend,1464,value,14,0,5,bearTrendScore >= trendThreshold
-pivotHigh,1467,value,14,0,5,"ta.pivothigh(high, internalPivotLen, internalPivotLen)"
-pivotLow,1468,value,14,0,5,"ta.pivotlow(low, internalPivotLen, internalPivotLen)"
-activeResistance,1469,var,8,2,5,na
-activeSupport,1470,var,8,2,5,na
-lastBrokenRes,1471,var,1,2,5,na
-lastBrokenSup,1472,var,1,2,5,na
-bosResistanceSnap,1473,value,5,0,5,activeResistance
-bosSupportSnap,1474,value,5,0,5,activeSupport
-swingPivotHigh,1483,value,2,0,5,"ta.pivothigh(high, swingPivotLen, swingPivotLen)"
-swingPivotLow,1484,value,2,0,5,"ta.pivotlow(low, swingPivotLen, swingPivotLen)"
-swingActiveResistance,1485,var,7,2,5,na
-swingActiveSupport,1486,var,7,2,5,na
-swingLastBrokenRes,1487,var,1,2,5,na
-swingLastBrokenSup,1488,var,1,2,5,na
-swingBosResSnap,1489,value,5,0,5,swingActiveResistance
-swingBosSupSnap,1490,value,5,0,5,swingActiveSupport
+pivotHigh,1467,value,14,0,6,"ta.pivothigh(high, internalPivotLen, internalPivotLen)"
+pivotLow,1468,value,14,0,6,"ta.pivotlow(low, internalPivotLen, internalPivotLen)"
+activeResistance,1469,var,8,2,6,na
+activeSupport,1470,var,8,2,6,na
+lastBrokenRes,1471,var,1,2,6,na
+lastBrokenSup,1472,var,1,2,6,na
+bosResistanceSnap,1473,value,5,0,6,activeResistance
+bosSupportSnap,1474,value,5,0,6,activeSupport
+swingPivotHigh,1483,value,2,0,6,"ta.pivothigh(high, swingPivotLen, swingPivotLen)"
+swingPivotLow,1484,value,2,0,6,"ta.pivotlow(low, swingPivotLen, swingPivotLen)"
+swingActiveResistance,1485,var,7,2,6,na
+swingActiveSupport,1486,var,7,2,6,na
+swingLastBrokenRes,1487,var,1,2,6,na
+swingLastBrokenSup,1488,var,1,2,6,na
+swingBosResSnap,1489,value,5,0,6,swingActiveResistance
+swingBosSupSnap,1490,value,5,0,6,swingActiveSupport
 bodySize,1501,value,9,0,5,math.abs(close - open)
 candleRange,1502,value,4,0,5,high - low
 bodyPct,1503,value,6,0,5,candleRange > 0 ? bodySize / candleRange * 100.0 : 0.0
@@ -552,26 +552,26 @@ swingBullBOS,1509,value,1,0,5,not na(swingBosResSnap) and close > swingBosResSna
 swingBearBOS,1510,value,1,0,5,not na(swingBosSupSnap) and close < swingBosSupSnap and close[1] >= swingBosSupSnap[1] and swingBosSupSnap != swingLastB
 bullBOS,1511,value,8,0,5,intBullBOS or swingBullBOS
 bearBOS,1512,value,8,0,5,intBearBOS or swingBearBOS
-seqHigh1,1529,var,6,1,5,na
-seqHigh2,1530,var,8,1,5,na
-seqHigh3,1531,var,3,1,5,na
-seqLow1,1532,var,6,1,5,na
-seqLow2,1533,var,8,1,5,na
-seqLow3,1534,var,3,1,5,na
-seqLastBar,1535,var,1,1,5,-999
-seqValid,1546,value,6,0,5,not na(seqHigh1) and not na(seqHigh2) and not na(seqHigh3) and not na(seqLow1) and not na(seqLow2) and not na(seqLow3)
-hl,1547,value,2,0,5,seqValid and seqLow1 > seqLow2
-lh,1548,value,2,0,5,seqValid and seqHigh1 < seqHigh2
-barSpaceOk,1549,value,4,0,5,(bar_index - seqLastBar) >= 3
-pivotAtrDist,1550,value,4,0,5,not na(adaptiveATR) ? adaptiveATR * 0.5 : na
-atrDistOkBull,1551,value,2,0,5,hl and not na(seqLow1) and not na(seqLow2) and not na(pivotAtrDist) and math.abs(seqLow1 - seqLow2) >= pivotAtrDist
-atrDistOkBear,1552,value,2,0,5,lh and not na(seqHigh1) and not na(seqHigh2) and not na(pivotAtrDist) and math.abs(seqHigh1 - seqHigh2) >= pivotAtrDist
-priorBullSeq,1553,value,1,0,5,seqValid and seqHigh2 > seqHigh3 and seqLow2 > seqLow3
-priorBearSeq,1554,value,1,0,5,seqValid and seqHigh2 < seqHigh3 and seqLow2 < seqLow3
-chochLabelBull,1555,value,3,0,5,priorBearSeq and hl and barSpaceOk and atrDistOkBull
-chochLabelBear,1556,value,3,0,5,priorBullSeq and lh and barSpaceOk and atrDistOkBear
-mssLabelBull,1557,value,2,0,5,chochLabelBull and (seqValid and seqHigh1 > seqHigh2) and barSpaceOk and atrDistOkBull
-mssLabelBear,1558,value,2,0,5,chochLabelBear and (seqValid and seqLow1 < seqLow2) and barSpaceOk and atrDistOkBear
+seqHigh1,1529,var,6,1,6,na
+seqHigh2,1530,var,8,1,6,na
+seqHigh3,1531,var,3,1,6,na
+seqLow1,1532,var,6,1,6,na
+seqLow2,1533,var,8,1,6,na
+seqLow3,1534,var,3,1,6,na
+seqLastBar,1535,var,1,1,6,-999
+seqValid,1546,value,6,0,6,not na(seqHigh1) and not na(seqHigh2) and not na(seqHigh3) and not na(seqLow1) and not na(seqLow2) and not na(seqLow3)
+hl,1547,value,2,0,6,seqValid and seqLow1 > seqLow2
+lh,1548,value,2,0,6,seqValid and seqHigh1 < seqHigh2
+barSpaceOk,1549,value,4,0,6,(bar_index - seqLastBar) >= 3
+pivotAtrDist,1550,value,4,0,6,not na(adaptiveATR) ? adaptiveATR * 0.5 : na
+atrDistOkBull,1551,value,2,0,6,hl and not na(seqLow1) and not na(seqLow2) and not na(pivotAtrDist) and math.abs(seqLow1 - seqLow2) >= pivotAtrDist
+atrDistOkBear,1552,value,2,0,6,lh and not na(seqHigh1) and not na(seqHigh2) and not na(pivotAtrDist) and math.abs(seqHigh1 - seqHigh2) >= pivotAtrDist
+priorBullSeq,1553,value,1,0,6,seqValid and seqHigh2 > seqHigh3 and seqLow2 > seqLow3
+priorBearSeq,1554,value,1,0,6,seqValid and seqHigh2 < seqHigh3 and seqLow2 < seqLow3
+chochLabelBull,1555,value,3,0,6,priorBearSeq and hl and barSpaceOk and atrDistOkBull
+chochLabelBear,1556,value,3,0,6,priorBullSeq and lh and barSpaceOk and atrDistOkBear
+mssLabelBull,1557,value,2,0,6,chochLabelBull and (seqValid and seqHigh1 > seqHigh2) and barSpaceOk and atrDistOkBull
+mssLabelBear,1558,value,2,0,6,chochLabelBear and (seqValid and seqLow1 < seqLow2) and barSpaceOk and atrDistOkBear
 chochEventBull,1560,value,1,0,5,chochLabelBull and not chochLabelBull[1]
 chochEventBear,1561,value,1,0,5,chochLabelBear and not chochLabelBear[1]
 mssEventBull,1562,value,1,0,5,mssLabelBull and not mssLabelBull[1]
@@ -626,7 +626,7 @@ prRawVol,1682,value,1,0,5,"ta.percentrank(volume, volLookback)"
 volPercentile,1683,value,4,0,5,"array.get(volHourCount, currHour) >= 20 ? prRelVol : prRawVol"
 climaxUp,1684,value,2,0,5,showClimax and recentBars and volPercentile >= volClimaxPerc and close > open
 climaxDown,1685,value,2,0,5,showClimax and recentBars and volPercentile >= volClimaxPerc and close < open
-fvgDetected,1688,value,2,0,5,showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0] - high[2] > adaptiveATR * 0.3) or (low[2] > high[0] a
+fvgDetected,1688,value,2,0,6,showFVG and barstate.isconfirmed and ((high[2] < low[0] and low[0] - high[2] > adaptiveATR * 0.3) or (low[2] > high[0] a
 fvgHighUpper,1689,var,2,1,5,na
 fvgLowLower,1690,var,2,1,5,na
 fvgBarIndex,1691,var,2,1,5,-1
