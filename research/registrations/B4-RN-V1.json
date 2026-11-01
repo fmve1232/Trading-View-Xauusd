@@ -1,10 +1,12 @@
 {
   "id": "B4-RN-V1",
   "title": "Round-number crossing continuation (Osler 2003), one validation test",
-  "status": "PENDING OPERATOR APPROVAL - drafted 2026-11-01; the validation partition has NOT been read",
-  "approved_by_operator": false,
-  "approval": "",
-  "partitions": ["validation"],
+  "status": "APPROVED by the operator 2026-11-01; run once after this commit",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-01 (chat): \"approve B4-RN-V1 and merge\". Approval recorded and committed before the validation partition was read.",
+  "partitions": [
+    "validation"
+  ],
   "created_utc": "2026-11-01",
   "source_of_hypothesis": "Phase B4 on development data (research/results/b4_development_2026-11-01.json, trial '15min RN_CROSS_100 T15'); mechanism: stop-loss orders cluster just beyond round numbers (Osler 2003, J. Finance 58)",
   "rule": {
