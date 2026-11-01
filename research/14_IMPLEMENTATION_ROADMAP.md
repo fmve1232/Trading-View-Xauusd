@@ -31,6 +31,7 @@ approval as a group. New strategies need registration under Amendment 11/13.
 | B2 | SMC families against matched baselines, on the operator's trade (+$20 / +$10 / +$2 before −$10) | none | **done: 54 trials, all rejected** (`B2_DEVELOPMENT_RESULTS.md`); nothing to register |
 | B2b | The same setups on +$20 before −$20 (SL / TP $1,000 at 0.5 lot) | none | **done: 18 trials, all rejected** (`B2B_DEVELOPMENT_RESULTS.md`); nothing to register |
 | B2c | The same setups on +$15 before −$10 (completes +$10 / +$15 / +$20 with a −$10 stop) | none | **done: 18 trials, all rejected** (`B2C_DEVELOPMENT_RESULTS.md`); nothing to register |
+| B3 | Combinations: 1h trend alignment + confirmation entry + SMC sequences (sweep → MSS → FVG) on the −$10 stop | none | **done: 210 trials, all rejected** (`B3_DEVELOPMENT_RESULTS.md`); no ingredient moves success more than ±1 point over matched random |
 | C | Validation, then a one-time holdout; a promoted strategy becomes a **new forward arm** with its own freeze key | new arm only; existing arms untouched | Operator approves promotion |
 | D | Dashboard: regime, selected strategy, calibrated probabilities, coverage tiers (Part 21) — only for components that passed C | display | Operator approves |
 
