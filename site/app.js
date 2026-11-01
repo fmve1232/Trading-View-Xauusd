@@ -16,6 +16,7 @@ const S = {
   account: store.get("account", null),
   costProfile: store.get("cost_profile", "engine"),
   costCustom: store.get("cost_custom", null),
+  yt: (() => { const v = store.get("your_trade", null); return v && v.sl > 0 && v.tp > 0 && v.lot > 0 ? v : { sl: 500, tp: 1000, lot: 0.5 }; })(),   // the operator's trade (1 Nov 2026): -$10 / +$20 of price
   todayR: store.get("today_r", null),
   capR: store.get("cap_r", null),
   tab: store.get("tab", "overview"),
@@ -1097,9 +1098,8 @@ function renderSide() {
   const acct = S.account || ACCT_DEFAULT;      // Pine v89 / v91 default; the engine's config (10,000) is frozen and unchanged
   // loss at the stop = distance + round-trip cost (D-13), with the viewer's account cost profile (display only:
   // the engine and the forward test keep the frozen model). Older payloads have no profiles / risk_per_lot.
-  const profs = D.cost_profiles || [], custom = S.costCustom;
-  let prof = profs.find((x) => x.id === S.costProfile) || profs[0] || null;
-  if (prof && prof.id === "custom" && custom) prof = { ...prof, commission: { ...prof.commission, ...custom.commission }, spread: { ...prof.spread, ...custom.spread }, slippage: isNum(custom.slippage) ? custom.slippage : prof.slippage };
+  const profs = D.cost_profiles || [];
+  const prof = activeProfile(D);
   const refPx = isNum(p.entry) ? p.entry : d.close;
   // Pine v92 (B-03): inside a dated NFP / CPI / FOMC window, spread + slippage x news.cost_mult (now, live clock)
   const NW = window.QCosts && D.news ? QCosts.newsState(D.news, Date.now() / 1000) : { in_window: null, next: null };
@@ -1138,6 +1138,78 @@ function renderSide() {
     };
     ["#cc-type", "#cc-rate", "#cc-basis", "#cc-spread", "#cc-slip"].forEach((q) => { $(q).onchange = save; });
   }
+  try { renderYourTrade(); } catch (e) { console.error(e); }     // it reads the cost profile chosen above
+}
+/* "Your trade" (display only; quantum/trade_race.py). The operator's own SL / TP in account dollars at a lot: what
+   that is in price, what it costs, the win rate it needs, and how often each decision source on this chart actually
+   reached that TP before that SL, next to random entries taken in the same directions over the same window. */
+function renderYourTrade() {
+  const el = $("#yourtrade"), st = $("#yt-state"); if (!el) return;
+  const D = S.data, R = D && D.trade_race;
+  if (!R || R.error || !R.sources || !window.QCosts || !QCosts.tradeMath) {
+    el.innerHTML = `<span class="muted">${R && R.error ? "not available on this run: " + esc(R.error) : "not in this build yet"}</span>`;
+    st.textContent = "—"; st.className = "pill"; return;
+  }
+  const d = D.dashboard, k = d.kelly || {}, prof = activeProfile(D), Y = S.yt;
+  const NW = D.news ? QCosts.newsState(D.news, Date.now() / 1000) : { in_window: null };
+  const newsMult = NW.in_window ? D.news.cost_mult : 1;
+  const costOz = prof && isNum(k.spread_pts) ? QCosts.costPerOz(prof, d.close, k.spread_pts, true, newsMult) : k.cost_pts;
+  const T = QCosts.tradeMath(Y.sl, Y.tp, Y.lot, costOz);
+  const usd = (x, sign = true) => (isNum(x) ? (x < 0 ? "−$" : sign ? "+$" : "$") + Math.abs(x).toFixed(Math.abs(x) < 100 ? 2 : 0) : "—");
+  const inp = (id, v, step) => `<input id="${id}" type="number" min="0" step="${step}" value="${v}" style="width:84px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)">`;
+  const bind = () => {
+    [["#yt-sl", "sl"], ["#yt-tp", "tp"], ["#yt-lot", "lot"]].forEach(([q, key]) => {
+      const e = $(q); if (e) e.onchange = (ev) => { const v = Number(ev.target.value); S.yt = { ...S.yt, [key]: v > 0 ? v : S.yt[key] }; store.set("your_trade", S.yt); renderYourTrade(); };
+    });
+  };
+  const head = kv([["Stop loss (account $)", inp("yt-sl", Y.sl, 10)], ["Take profit (account $)", inp("yt-tp", Y.tp, 10)], ["Lot (100 oz)", inp("yt-lot", Y.lot, 0.01)]]);
+  if (!T) { el.innerHTML = head + `<p class="note">Enter a stop, a target and a lot above 0.</p>`; bind(); return; }
+  const ix = QCosts.raceIndex(R, T.tp, T.sl);
+  const lead = kv([
+    ["Your trade in price", `−${f(T.sl, 2)} / +${f(T.tp, 2)} <span class="dim">${f(Y.lot, 2)} lot = ${f(T.oz, 0)} oz: $1 of price = $${f(T.oz, 0)}</span>`],
+    ["Cost per trade (round trip)", isNum(T.cost) ? `${usd(T.cost, false)} <span class="dim">${f(costOz, 2)} per oz × ${f(T.oz, 0)} oz · ${prof ? esc(prof.firm + " " + prof.account) + ` (${esc(prof.status)})` : "engine model"}${newsMult > 1 ? ` · news window ×${newsMult}` : ""}</span>` : "—"],
+    ["Net if TP / if SL", isNum(T.cost) ? `<span class="bull">${usd(Y.tp - T.cost)}</span> / <span class="bear">${usd(-(Y.sl + T.cost))}</span>` : "—"],
+    ["Break-even win rate", isNum(T.be) ? `<b>${f(T.be * 100, 1)}%</b> <span class="dim">(SL + cost) ÷ (TP + SL): win more often than this or lose money</span>` : "—"],
+    ["Measured at", ix ? `+${f(ix.tp, 2)} before −${f(ix.sl, 2)} in price, within one trading day${ix.exact ? "" : ' <span class="warn">(the nearest stricter grid point to yours: a harder TP and a tighter SL)</span>'}` : `<span class="warn">outside the measured grid (TP ${R.tp_grid[0]}–${R.tp_grid[R.tp_grid.length - 1]}, SL ${R.sl_grid[0]}–${R.sl_grid[R.sl_grid.length - 1]} in price)</span>`],
+  ]);
+  if (!ix) { el.innerHTML = head + lead; st.textContent = isNum(T.be) ? `break-even ${f(T.be * 100, 0)}%` : "—"; st.className = "pill"; bind(); return; }
+  let clears = 0, gains = 0, best = null;
+  const rows = R.sources.filter((s) => !s.error && s.n > 0).map((s) => {
+    const c = QCosts.raceCell(s, ix, Y.tp, Y.sl, T.oz, T.cost), [lo, hi] = QCosts.wilson(c.w, c.n);
+    const rnd = QCosts.matchedRandom(R, s, ix, Y.tp, Y.sl, T.oz, T.cost);
+    const cls = !isNum(T.be) ? "" : hi < T.be ? "bear" : lo > T.be ? "bull" : "warn";
+    if (cls === "bull") clears++;
+    if (c.ev >= 0) gains++;
+    if (c.n >= 30 && (!best || c.p > best.p)) best = { ...c, label: s.label };
+    const now = s.now ? ` <b class="${s.now > 0 ? "bull" : "bear"}">● ${s.now > 0 ? "BUY" : "SELL"} now</b>` : "";
+    const sub = s.key === "forward" ? `out-of-sample: ${esc((s.versions || []).join(" + "))}` : esc(s.sample || "");
+    return `<tr${s.now ? ' class="yt-now"' : ""}><td>${esc(s.label)}${now}<div class="dim">${sub} · n ${c.n} · ${s.long} L / ${s.short} S</div></td>` +
+      `<td class="${cls}"><b>${f(c.p * 100, 1)}%</b><div class="dim">${f(lo * 100, 0)}–${f(hi * 100, 0)}</div></td><td>${f(rnd.p * 100, 1)}%</td>` +
+      `<td class="${c.ev >= 0 ? "bull" : "bear"}">${usd(c.ev)}<div class="dim">${usd(rnd.ev)}</div></td></tr>`;
+  });
+  const rr = ["long", "short"].map((nm) => {
+    const r0 = R.random[nm], c = QCosts.raceCell(r0, ix, Y.tp, Y.sl, T.oz, T.cost), [lo, hi] = QCosts.wilson(c.w, c.n);
+    return `<tr class="dim"><td>Random ${nm.toUpperCase()}<div>1 in every ${R.random_step} five-minute closes · n ${c.n}</div></td><td>${f(c.p * 100, 1)}%<div>${f(lo * 100, 0)}–${f(hi * 100, 0)}</div></td><td>—</td><td>${usd(c.ev)}</td></tr>`;
+  });
+  const table = `<div class="scroll"><table class="t yt"><tr><th>Decision source · ${esc(D.meta.tf)} chart</th><th>TP first<div>95%</div></th><th>Random<div>same mix</div></th><th>$ / trade<div>random</div></th></tr>${rows.join("")}${rr.join("")}</table></div>`;
+  const verdict = !isNum(T.be) ? "" : clears
+    ? `<p class="sub"><b class="bull">${clears} source${clears > 1 ? "s" : ""} above your break-even at 95%</b> on this window. In-sample rows are seen data; only the recorded forward row is out-of-sample.</p>`
+    : `<p class="sub"><b class="bear">No decision source is clearly above your ${f(T.be * 100, 1)}% break-even.</b>${best ? ` Best with 30+ decisions: ${esc(best.label)} at ${f(best.p * 100, 1)}%.` : ""} ${gains
+      ? `${gains} source${gains > 1 ? "s" : ""} show a positive $ per trade on this window, but the 95% range still includes the break-even: not enough evidence.`
+      : "At this stop and target the trade lost money on every measured source."}</p>`;
+  st.textContent = isNum(T.be) ? `break-even ${f(T.be * 100, 0)}%` : "—";
+  st.className = "pill " + (!isNum(T.be) ? "" : clears ? "bull" : "bear");
+  const w = R.window || ["", ""];
+  el.innerHTML = head + lead + verdict + table +
+    `<p class="note"><b>How this is measured.</b> From the decision price (the trigger bar's close), on ${esc(R.bars)} ${esc(String(w[0]).slice(0, 10))} → ${esc(String(w[1]).slice(0, 10))}: did price reach your TP before your SL within one trading day (${R.horizon_bars} bars)? A bar touching both counts as a loss unless it opened beyond the TP; a path still open after a day is marked at that day's close. <b>Random, same mix</b> = 5-minute closes taken long and short in the source's own proportions over the same window: a source shows an edge only if it beats that. A random row above $0 reflects the window's trend (gold rose or fell over it), not skill. Rows marked in-sample use the stored window the chart shows (seen data, rules not fitted to it); the recorded forward row is real-time decisions. 95% = Wilson interval. Costs: the profile chosen in Risk &amp; sizing at the current session spread. Display only: nothing here changes a signal or the forward test.</p>`;
+  bind();
+}
+// The viewer's selected account cost profile (display only), with the custom rates merged in.
+function activeProfile(D) {
+  const profs = D.cost_profiles || [], custom = S.costCustom;
+  const prof = profs.find((x) => x.id === S.costProfile) || profs[0] || null;
+  if (prof && prof.id === "custom" && custom) return { ...prof, commission: { ...prof.commission, ...custom.commission }, spread: { ...prof.spread, ...custom.spread }, slippage: isNum(custom.slippage) ? custom.slippage : prof.slippage };
+  return prof;
 }
 /* Pine Visuals v86 / v92 CHECKS (display only; the DECISION is the engine's). Thresholds are Pine's stated
    conventions, fixed before they were shown on a chart: cost > 15% / 25% of 1 ATR, 2+ structure flips in 20 bars,

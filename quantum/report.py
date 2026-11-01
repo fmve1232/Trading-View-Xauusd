@@ -12,7 +12,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, cost_profiles, holdout, news_calendar, ta
+from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, cost_profiles, holdout, news_calendar, ta, trade_race
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -664,6 +664,11 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
     except Exception as e:  # noqa: BLE001 - H3 must never break the page
         h3 = {"error": f"{type(e).__name__}: {e}"[:200]}
 
+    try:   # "Your trade" panel (display only): how often each decision source reached a TP before an SL, vs random
+        race = trade_race.build(market, res, res_chal, cfg, man, store_dir)
+    except Exception as e:  # noqa: BLE001 - the panel must never break the page
+        race = {"error": f"{type(e).__name__}: {e}"[:200]}
+
     forming = None
     if market.forming is not None:
         fb = market.forming
@@ -697,5 +702,6 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "h6": h6,
         "cost_profiles": cost_profiles.export(),   # display-only sizing profiles (audit/COST_PROFILES.md)
         "news": news_calendar.export(),            # dated NFP / CPI / FOMC (display; Pine Visuals v86 / v92)
+        "trade_race": race,                        # "Your trade" panel (quantum/trade_race.py)
     }
     return _clean(payload)
