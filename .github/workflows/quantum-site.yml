@@ -121,6 +121,10 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           MT5_PRICE_OFFSET: ${{ vars.MT5_PRICE_OFFSET }}
           ALERT_TFS: ${{ vars.ALERT_TFS || '15m,1h' }}
+          PLAN_LOT: ${{ vars.PLAN_LOT }}               # the operator's plan in each alert (defaults 0.5 lot, $650 / $650)
+          PLAN_SL_USD: ${{ vars.PLAN_SL_USD }}
+          PLAN_TP_USD: ${{ vars.PLAN_TP_USD }}
+          PLAN_COST_PER_LOT: ${{ vars.PLAN_COST_PER_LOT }}
         run: python -m quantum.pipeline --store store --out site/data --tfs 15m,1h,4h,5m
 
       - name: Upcoming events (display only; outside the freeze key; never fails the run)
