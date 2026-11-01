@@ -111,6 +111,7 @@ jobs:
       - name: Save aggregate results to the research-orderflow branch (one orphan commit)
         if: always()
         run: |
+          if [ ! -d out ]; then echo "nothing to save (an earlier step stopped the run)"; exit 0; fi
           cd out
           rm -f ./*.csv ./*.dbn ./*.zst ./*.parquet
           if [ ! -d .git ]; then git init -q -b research-orderflow; fi
