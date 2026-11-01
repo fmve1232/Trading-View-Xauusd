@@ -53,12 +53,13 @@ def test_first_touch_after_the_signal_bar():
 def test_updates_send_once_and_expire():
     pl = {"tf": "15m", "t": 100, "dir": 1, "entry": 4000.0, "sl": 3987.0, "tp": 4013.0, "sl_usd": 650, "tp_usd": 650}
     other = {**pl, "tf": "1h"}
-    lines, keep = notify.plan_updates([pl, other], "15m", _chart([(200, 4013.2, 3999)]), 200)
+    lines, keep, done = notify.plan_updates([pl, other], "15m", _chart([(200, 4013.2, 3999)]), 200)
     assert len(lines) == 1 and "TP 4013.00 HIT +$650 -- trade closed in profit" in lines[0] and keep == [other]
-    lines, keep = notify.plan_updates([pl], "15m", _chart([(200, 4005, 3995)]), 200)
-    assert lines == [] and keep == [pl]
-    lines, keep = notify.plan_updates([pl], "15m", _chart([(200, 4005, 3995)]), 100 + notify.PLAN_TRACK_SEC + 1)
-    assert "no TP or SL after 3 days" in lines[0] and keep == []
+    assert done[0]["result"] == "TP" and done[0]["t_res"] == 200
+    lines, keep, done = notify.plan_updates([pl], "15m", _chart([(200, 4005, 3995)]), 200)
+    assert lines == [] and keep == [pl] and done == []
+    lines, keep, done = notify.plan_updates([pl], "15m", _chart([(200, 4005, 3995)]), 100 + notify.PLAN_TRACK_SEC + 1)
+    assert "no TP or SL after 3 days" in lines[0] and keep == [] and done[0]["result"] == "EXPIRED"
 
 
 def _payload(t_last, markers, bars):
@@ -82,7 +83,20 @@ def test_run_end_to_end(tmp_path, monkeypatch):
     assert len(sent) == 2 and "TP 3987.00 HIT +$650 -- trade closed in profit" in sent[1][0] and len(sent[1]) == 1
     notify.run(store, {"15m": _payload(3800, [sig], [(1900, 4001, 3999), (2900, 3995, 3986.8)])}, ["15m"])
     assert len(sent) == 3 and sent[2] == []                                           # nothing repeated
-    assert json.loads((tmp_path / notify.STATE).read_text())["plans"] == []
+    st = json.loads((tmp_path / notify.STATE).read_text())
+    assert st["plans"] == [] and st["plan_tally"] == {"TP": 1} and st["plan_log"][0]["result"] == "TP"
+
+
+def test_report_feeds_the_website_without_secrets(tmp_path, monkeypatch):
+    monkeypatch.setattr(notify, "send", lambda lines: [])
+    monkeypatch.setenv("NTFY_TOPIC", "secret-topic-name")
+    notify.run(str(tmp_path), {"15m": _payload(1000, [], [])}, ["15m"])
+    sig = {"t": 1900, "type": "SIGNAL", "dir": 1, "px": 4000.0, "tq": 70, "sl": 3990.0, "tp1": 4010.0, "tp2": 4020.0, "tp3": 4030.0}
+    rep = notify.run(str(tmp_path), {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"])
+    pl = rep["plans"]
+    assert pl["cfg"] == {"lot": 0.5, "sl_usd": 650.0, "tp_usd": 650.0, "cost_usd": 13.0} and pl["tp_first"] == pytest.approx(0.5)
+    assert pl["open"][0]["tp"] == 4013.0 and pl["recent"] == [] and pl["tfs"] == ["15m"]
+    assert rep["channels"] == ["ntfy"] and "secret-topic-name" not in json.dumps(rep)
 
 
 def test_notify_stays_outside_the_frozen_engine():
