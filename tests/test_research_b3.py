@@ -61,3 +61,11 @@ def test_confirmation_entry_is_exact(monkeypatch):
     assert not b3.confirm(P3, np.array([t0]), np.array([4000.0]), np.array([1.0]))[0][0]   # never confirmed
     take, jj, _, p_e = b3.confirm(P2, np.array([t0]), np.array([4000.0]), np.array([-1.0]))
     assert take[0] and p_e[0] == 3997.0                                                  # the same path confirms a short
+
+
+def test_family_aggregation_accepts_a_trial_without_trades():
+    days = pd.DatetimeIndex(["2021-03-01", "2021-03-01", "2021-03-02"], tz="UTC")
+    D = pd.DataFrame({"a": b3._daily(np.array([1.0, -0.5, 2.0]), days), "b": b3._daily(np.zeros(0), days[:0])}).fillna(0.0)
+    D.index = pd.DatetimeIndex(D.index)
+    assert D["a"].tolist() == [0.5, 2.0] and D["b"].tolist() == [0.0, 0.0]
+    assert len(D.groupby(pd.Grouper(freq="W")).sum()) >= 1

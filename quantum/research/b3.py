@@ -165,6 +165,14 @@ def evaluate(P, t_e, p_e, d, cost, targets: dict):
 
 
 # ---------------- run ----------------
+def _daily(net_r: np.ndarray, days: pd.DatetimeIndex) -> pd.Series:
+    """Net R summed per entry day; a trial without trades gives an empty series that still has a date index
+    (fixed 2026-11-01 after the first run stopped here; the trials themselves are unaffected)."""
+    if len(net_r) == 0:
+        return pd.Series(dtype=float, index=pd.DatetimeIndex([], tz="UTC"))
+    return pd.Series(net_r, index=days).groupby(level=0).sum()
+
+
 def run(rd: str, outp: str, registry: str) -> dict:
     m15 = H.partition(history.load(rd, "XAU/USD", "15min"), "development")
     h1 = H.partition(history.load(rd, "XAU/USD", "1h"), "development")
@@ -230,11 +238,12 @@ def run(rd: str, outp: str, registry: str) -> dict:
                     names.append(tid)
                     dts = pd.to_datetime(t_e[keep], unit="s", utc=True).normalize()
                     net_r = (e["pnl"][keep] - cost[keep] * scale[keep]) / (b * scale[keep]) if len(keep) else np.zeros(0)
-                    daily[tid] = pd.Series(net_r, index=dts).groupby(level=0).sum() if len(keep) else pd.Series(dtype=float)
+                    daily[tid] = _daily(net_r, dts)
                     print(f"{tid:40s} n {st.get('n', 0):5d} win {st.get('win_rate', math.nan):.3f} [{(st.get('wilson') or [math.nan])[0]:.3f}] "
                           f"be {st.get('break_even', math.nan):.3f} rand {p_rand:.3f} z {z:+.2f} net {st.get('net_r', math.nan):+.3f}R", flush=True)
 
     D = pd.DataFrame(daily).fillna(0.0).sort_index()
+    D.index = pd.DatetimeIndex(D.index)
     W = D.groupby(pd.Grouper(freq="W")).sum()
     rc = H.reality_check(D[names].to_numpy(), B=1000, mean_block=10.0)
     tr_map = {t["id"]: t for t in res["trials"]}

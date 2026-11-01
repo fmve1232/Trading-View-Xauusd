@@ -2,7 +2,7 @@
 
 This folder answers the operator's "Deep quantitative research, strategy optimization & 90% accuracy" brief.
 
-**Phase A** (audit and research design) is complete and was reviewed (PR #56). **Phase B0** (research harness, `quantum/research/harness.py`, tested), **Phase B1** (published-evidence families on development data) and **Phases B2 / B2b / B2c** (SMC setups against the operator's trades) are done: 190 trials, none passes its declared rules. Nothing in production strategy logic was
+**Phase A** (audit and research design) is complete and was reviewed (PR #56). **Phase B0** (research harness, `quantum/research/harness.py`, tested), **Phase B1** (published-evidence families on development data) **Phases B2 / B2b / B2c** (SMC setups against the operator's trades) and **Phase B3** (trend + confirmation + sequences) are done: 400 trials, none passes its declared rules, none near 90%. Nothing in production strategy logic was
 changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` and the forward test are untouched.
 
 ## Headline
@@ -40,6 +40,7 @@ changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` 
 | `B2_DEVELOPMENT_RESULTS.md` | **Phase B2 done** (development data only): 9 SMC setups × 15min / 1h × the operator's trade (+$20 / +$10 / +$2 before −$10) = 54 trials; none above break-even, none beats random; nothing registered |
 | `B2B_DEVELOPMENT_RESULTS.md` | **Phase B2b done** (development data only): the same nine setups on +$20 before −$20 (SL / TP $1,000 at 0.5 lot) = 18 trials; none passes (best 1h FVG retest 52.6% against a 52.1% break-even: t +0.44, z +1.69, Reality Check p 0.996) |
 | `B2C_DEVELOPMENT_RESULTS.md` | **Phase B2c done**: +$15 before −$10 (18 new trials), reported beside B2's +$10 and +$20 before −$10; 0 of 54 setup-target pairs net-positive; nothing registered |
+| `B3_DEVELOPMENT_RESULTS.md` | **Phase B3 done**: trend alignment + confirmation entries + SMC sequences on the −$10 stop, +$10 / +$15 / +$20: 210 trials; highest success 57.1% / 48.6% / 43.5% on small samples; 0 near 90%; none passes |
 
 ## Reproduce
 
