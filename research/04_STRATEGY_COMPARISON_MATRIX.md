@@ -23,7 +23,7 @@
 
 ## B. The research brief's library (Part 4): status
 
-Rows marked TESTED were run on development data only (Phase B1, 2026-11-01); everything else is **NOT TESTED**.
+Rows marked TESTED were run on development data only (Phase B1 and B2, 2026-11-01); everything else is **NOT TESTED**.
 
 | # | Strategy | Literature | Baseline it must beat | First test | Decision |
 |---|---|---|---|---|---|
@@ -35,17 +35,17 @@ Rows marked TESTED were run on development data only (Phase B1, 2026-11-01); eve
 | 6–9 | Session-range breakouts | R14 (intraday pattern) | unconditional continuation rate | Asia range → London; London range → NY, on 15m and 1h | **TESTED (development): REJECT** (Asia → London, London → NY: directionless, 47–50% of 1R trades won). Opening-range breakout NOT TESTED |
 | 10–11 | ATR-expansion / squeeze breakout | R13 | as 6 | | NOT TESTED |
 | 12 | Breakout and retest | practitioner | as 6 | | NOT TESTED |
-| 13–16 | Liquidity sweep / equal H/L / PDH-PDL / PWH-PWL rejection | SMC (no peer review) | matched random level | TP-before-SL at fixed R | NOT TESTED (H4's level-break variant: directionless) |
-| 17–18 | BOS continuation / CHoCH-MSS reversal | SMC | direction of the last k-bar return | | NOT TESTED |
-| 19–20 | FVG continuation / OB retest | SMC | matched random zone | | NOT TESTED |
+| 13–16 | Liquidity sweep / equal H/L / PDH-PDL / PWH-PWL rejection | SMC (no peer review) | random entries, same direction mix | +$20 / +$10 / +$2 before −$10 (price-scaled), 15min and 1h | **TESTED (development, B2): REJECT.** Win rates within ±2 points of random; none above break-even (`B2_DEVELOPMENT_RESULTS.md`) |
+| 17–18 | BOS continuation / CHoCH-MSS reversal | SMC | random entries, same direction mix | as 13–16 | **TESTED (development, B2): REJECT.** Best of all 54: 1h BOS on +$20 / −$10, 35.8% against 33.3% random and a 36.2% break-even (z +1.24, net −0.011 R) |
+| 19–20 | FVG continuation / OB retest | SMC | random entries, same direction mix | as 13–16 | **TESTED (development, B2): REJECT** (z ≤ +1.71; every trial net-negative) |
 | 21–22 | VWAP / Bollinger mean reversion | mixed | random fade | range regime only | NOT TESTED |
 | 23 | RSI divergence | folklore | — | | NOT TESTED |
 | 24 | MACD momentum | folklore | as 1 | | NOT TESTED |
-| 25 | Failed-breakout reversal | practitioner | as 13 | | NOT TESTED |
+| 25 | Failed-breakout reversal | practitioner | as 13 | 20-bar breakout failing within 3 bars | **TESTED (development, B2): REJECT** (below random on 4 of 6 trials) |
 | 26 | Volatility-regime conditioning | R13, R19 | unconditioned TSMOM | TSMOM 72h by ATR-percentile tercile | **TESTED (development): REJECT.** Less negative in high vol only because cost is a smaller share of R; gross ≈ 0 |
 | 27 | Macro-event strategy | event studies | no-event days | needs a verified historical calendar | NOT TESTED |
 | 28 | Cross-asset confirmation | R21, R22 | technical-only | point-in-time rolling relations | NOT TESTED |
-| 29 | Market-profile acceptance / rejection | practitioner | as 13 | | NOT TESTED |
+| 29 | Market-profile acceptance / rejection | practitioner | as 13 | | NOT TESTED (the research series has no volume) |
 | 30 | Trend-pullback continuation | R3 + practitioner | as 1 | | NOT TESTED |
 
 **Order of testing (proposed).** Testing all 30 at once multiplies false discoveries (R6, R8). The proposal is:

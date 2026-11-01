@@ -162,3 +162,18 @@ $500–1,000 of profit.
 - **To make money with SL $500 / TP $100 at 0.5 lot, a signal must win more than 90% of the time before costs are
   even covered.** Nothing measured does. A claimed rate also needs 184+ trades to establish a 95% lower bound of
   85%; to rule out the 90% break-even it needs far more.
+
+## 7. Follow-up (2026-11-01): the trade confirmed as SL $500 / TP $1,000, and what came after
+
+The operator confirmed the trade as **SL $500 / TP $1,000 at 0.5 lot: +$20 before −$10** (§5). Two pieces of work followed.
+
+- **The site's "Your trade" panel** (display only; `quantum/trade_race.py`).
+  - You type SL, TP and lot.
+  - It shows the break-even win rate after the selected cost profile.
+  - It shows how often each decision source on the chart reached that TP before that SL, against random entries in the same directions.
+  - Default is this trade. Its 15m numbers reproduce this study's counts exactly.
+- **Phase B2** (`B2_DEVELOPMENT_RESULTS.md`).
+  - 9 SMC setups were tested on 2020–22 development data against this trade and the two others (+$10 and +$2 before −$10).
+  - None reached the 36.2% break-even of the +$20 / −$10 trade.
+  - None beat random entries by 2 standard errors.
+  - The 2:1 shape needs only about 3 points over random. None of the setups supplies it.

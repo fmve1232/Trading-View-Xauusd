@@ -28,7 +28,7 @@ approval as a group. New strategies need registration under Amendment 11/13.
 | A-fix | The three P0 display corrections in §1 | display only (no key change) | **done** (PR #57, live) |
 | B0 | Research harness (P1, row 1) + trial registry | none (research code; outside `ENGINE_SOURCES`) | **done** (`quantum/research/harness.py`, tests) |
 | B1 | Families with an empirical prior on development data; documents `02`, `05`, `06`, `07`, `08`, `10` written from results | none | **done for TSMOM / Donchian / session breakouts / vol conditioning: all rejected** (`B1_DEVELOPMENT_RESULTS.md`); nothing to register |
-| B2 | SMC families against matched baselines; `11`, `12`, `13` | none | as B1 |
+| B2 | SMC families against matched baselines, on the operator's trade (+$20 / +$10 / +$2 before −$10) | none | **done: 54 trials, all rejected** (`B2_DEVELOPMENT_RESULTS.md`); nothing to register |
 | C | Validation, then a one-time holdout; a promoted strategy becomes a **new forward arm** with its own freeze key | new arm only; existing arms untouched | Operator approves promotion |
 | D | Dashboard: regime, selected strategy, calibrated probabilities, coverage tiers (Part 21) — only for components that passed C | display | Operator approves |
 

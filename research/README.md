@@ -2,7 +2,7 @@
 
 This folder answers the operator's "Deep quantitative research, strategy optimization & 90% accuracy" brief.
 
-**Phase A** (audit and research design) is complete and was reviewed (PR #56). **Phase B0** (research harness, `quantum/research/harness.py`, tested) and **Phase B1** (published-evidence families on development data) are done. Nothing in production strategy logic was
+**Phase A** (audit and research design) is complete and was reviewed (PR #56). **Phase B0** (research harness, `quantum/research/harness.py`, tested), **Phase B1** (published-evidence families on development data) and **Phase B2** (SMC setups against the operator's trade) are done. Nothing in production strategy logic was
 changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` and the forward test are untouched.
 
 ## Headline
@@ -37,6 +37,7 @@ changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` 
 | `15_ACCEPTANCE_TESTS.md` | done |
 | `TARGET_MOVE_90PCT_STUDY.md` | done (executed): "90% of trades move $10–20 my way": every decision source = a random entry; 90% only with ~$90 room (coin-flip arithmetic) |
 | `B1_DEVELOPMENT_RESULTS.md` | **Phase B1 done** (development data only): 100 trials, 0 with positive net expectancy; nothing registered for validation |
+| `B2_DEVELOPMENT_RESULTS.md` | **Phase B2 done** (development data only): 9 SMC setups × 15min / 1h × the operator's trade (+$20 / +$10 / +$2 before −$10) = 54 trials; none above break-even, none beats random; nothing registered |
 
 ## Reproduce
 
