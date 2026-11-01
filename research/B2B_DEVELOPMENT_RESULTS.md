@@ -104,7 +104,7 @@ The declared rule needs all five parts. **Changing the rule after seeing a resul
 
 - **A 1:1 trade at ±$20 is close to a coin toss.**
   - Random entries win about 50% of the time, and lose only the cost (−$12 to −$76 per trade at 0.5 lot).
-  - The best of the nine setups adds less than 2.6 points, and that much is expected from luck across 18 tries.
+  - The best of the nine setups adds 2.6 points at most, and that much is expected from luck across 18 tries.
 - **The research so far.** Every trial ran on development data only, with validation and the holdout sealed:
 
 | Phase | Trials | Result |
