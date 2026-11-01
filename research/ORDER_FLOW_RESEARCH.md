@@ -94,7 +94,15 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
 - **Limits:** a proxy, not true order flow, on 7.5 weeks of data. It is logged as exploratory (`live-window-2026`)
   and cannot be registered.
 
-## 5. The real study: B5 on CME data (approved 2026-11-01; declared; amended A1 before any data)
+## 5. The real study: B5 on CME data (approved 2026-11-01; amended A1 before any data; RUN: REJECT)
+
+**Result (2026-11-01, `B5_DEVELOPMENT_RESULTS.md`).**
+- 74.5 million COMEX gold trades were tested, with the buyer or seller marked.
+- All 18 trials were rejected: none beat random entries in the useful direction, and all lost money after costs.
+- Both models had an out-of-fold AUC of 0.50.
+- Order flow showed only a small reversal after strong one-sided hours, about $0.3, far below the ~$1.9 trading cost.
+- Cost: $93.27 from the $125 sign-up credit.
+
 
 **Status.**
 - The operator approved it on 2026-11-01 ("approve B5 order flow study").
