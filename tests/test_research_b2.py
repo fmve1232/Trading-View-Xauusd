@@ -94,3 +94,11 @@ def test_locate_drops_paths_outside_the_window_or_across_a_hole(short_horizon):
 def test_one_position_waits_for_the_exit():
     keep = b2.one_position(np.array([0, 10, 20, 30, 31]), np.array([25, 15, 40, 35, 50]))
     assert keep.tolist() == [0, 3]
+
+
+def test_b2b_declaration_is_one_target_and_b2_is_unchanged():
+    assert b2.B2B_TARGETS == {"T20S20": (20.0, 20.0)}
+    assert b2.TARGETS == {"T20": (20.0, 10.0), "T10": (10.0, 10.0), "T2": (2.0, 10.0)}
+    import inspect
+    sig = inspect.signature(b2.run)
+    assert sig.parameters["targets"].default is b2.TARGETS and sig.parameters["phase"].default == "B2"
