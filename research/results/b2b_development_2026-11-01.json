@@ -1,0 +1,931 @@
+{
+ "partition": "development",
+ "set": "B2b",
+ "from": "2020-01-24 02:00:00+00:00",
+ "to": "2023-01-24 02:00:00+00:00",
+ "targets": {
+  "T20S20": [
+   20.0,
+   20.0
+  ]
+ },
+ "ref_price": 4000.0,
+ "horizon_15m_bars": 288,
+ "baseline": {
+  "T20S20 long": {
+   "n": 69877,
+   "win_rate": 0.5135022968931122,
+   "wilson": [
+    0.509795766122244,
+    0.5172073431793281
+   ],
+   "net_r": -0.011637329997321299,
+   "break_even": 0.5213515498661935
+  },
+  "T20S20 short": {
+   "n": 69877,
+   "win_rate": 0.48489488672953907,
+   "wilson": [
+    0.48119026863632886,
+    0.4886011655260355
+   ],
+   "net_r": -0.07628758091757193,
+   "break_even": 0.5213515498661935
+  }
+ },
+ "trials": [
+  {
+   "id": "15min SWEEP_PD T20S20",
+   "tf": "15min",
+   "setup": "SWEEP_PD",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 670,
+   "n": 595,
+   "long": 279,
+   "short": 316,
+   "wins": 305,
+   "losses": 289,
+   "open": 1,
+   "win_rate": 0.5126050420168067,
+   "wilson": [
+    0.47249054998763906,
+    0.5525578159488505
+   ],
+   "break_even": 0.5215273109243697,
+   "net_r": -0.018671975740854715,
+   "gross_r": 0.024382646107884758,
+   "t": -0.45214774117970435,
+   "random_same_mix": 0.4983091177138027,
+   "z_vs_random": 0.6974341386739777,
+   "usd_per_trade_0p5lot": -18.671975740854716,
+   "all_triggers": {
+    "n": 670,
+    "win_rate": 0.5119402985074627,
+    "net_r": -0.019054195583082245
+   },
+   "unscaled_sensitivity": {
+    "n": 342,
+    "win_rate": 0.4269005847953216,
+    "break_even": 0.5216476608187135,
+    "net_r": -0.054140614327485244,
+    "t": -1.0581431734175013
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min SWEEP_PW T20S20",
+   "tf": "15min",
+   "setup": "SWEEP_PW",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 140,
+   "n": 138,
+   "long": 62,
+   "short": 76,
+   "wins": 67,
+   "losses": 71,
+   "open": 0,
+   "win_rate": 0.4855072463768116,
+   "wilson": [
+    0.40364917685509166,
+    0.5681503235762491
+   ],
+   "break_even": 0.5209891304347827,
+   "net_r": -0.0665307927734259,
+   "gross_r": -0.02455253190386069,
+   "t": -0.773270665485911,
+   "random_same_mix": 0.49774749129578205,
+   "z_vs_random": -0.2875835588350602,
+   "usd_per_trade_0p5lot": -66.5307927734259,
+   "all_triggers": {
+    "n": 140,
+    "win_rate": 0.4857142857142857,
+    "net_r": -0.0662732100195198
+   },
+   "unscaled_sensitivity": {
+    "n": 135,
+    "win_rate": 0.4888888888888889,
+    "break_even": 0.5209907407407407,
+    "net_r": 0.030151039629629717,
+    "t": 0.36485716962153436
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min SWEEP_EQ T20S20",
+   "tf": "15min",
+   "setup": "SWEEP_EQ",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 1721,
+   "n": 800,
+   "long": 387,
+   "short": 413,
+   "wins": 390,
+   "losses": 410,
+   "open": 0,
+   "win_rate": 0.4875,
+   "wilson": [
+    0.4530057790289856,
+    0.5221136928780319
+   ],
+   "break_even": 0.5211,
+   "net_r": -0.06932490809340479,
+   "gross_r": -0.027124908093404825,
+   "t": -1.9413383945124227,
+   "random_same_mix": 0.49873372139616756,
+   "z_vs_random": -0.6354772841052294,
+   "usd_per_trade_0p5lot": -69.32490809340479,
+   "all_triggers": {
+    "n": 1721,
+    "win_rate": 0.4683323649041255,
+    "net_r": -0.10652073322856509
+   },
+   "unscaled_sensitivity": {
+    "n": 380,
+    "win_rate": 0.45526315789473687,
+    "break_even": 0.5212763157894736,
+    "net_r": -0.002506871842105163,
+    "t": -0.051619815861039635
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min BREAK_PD T20S20",
+   "tf": "15min",
+   "setup": "BREAK_PD",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 685,
+   "n": 615,
+   "long": 327,
+   "short": 288,
+   "wins": 299,
+   "losses": 316,
+   "open": 0,
+   "win_rate": 0.4861788617886179,
+   "wilson": [
+    0.4468857688707627,
+    0.525643544160831
+   ],
+   "break_even": 0.5214613821138212,
+   "net_r": -0.06763936818604001,
+   "gross_r": -0.024716603958397775,
+   "t": -1.6636707870969323,
+   "random_same_mix": 0.5001056560360243,
+   "z_vs_random": -0.6907465471566382,
+   "usd_per_trade_0p5lot": -67.63936818604,
+   "all_triggers": {
+    "n": 685,
+    "win_rate": 0.4905109489051095,
+    "net_r": -0.059552133480897246
+   },
+   "unscaled_sensitivity": {
+    "n": 364,
+    "win_rate": 0.41208791208791207,
+    "break_even": 0.5214615384615384,
+    "net_r": -0.09416747747252742,
+    "t": -1.9065937868086715
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min BOS T20S20",
+   "tf": "15min",
+   "setup": "BOS",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 2449,
+   "n": 1185,
+   "long": 595,
+   "short": 590,
+   "wins": 583,
+   "losses": 602,
+   "open": 0,
+   "win_rate": 0.4919831223628692,
+   "wilson": [
+    0.4635905711354523,
+    0.5204274828632036
+   ],
+   "break_even": 0.5211613924050632,
+   "net_r": -0.062146308097281146,
+   "gross_r": -0.019823523287154605,
+   "t": -2.110508584577118,
+   "random_same_mix": 0.4992589449973247,
+   "z_vs_random": -0.5009238979446431,
+   "usd_per_trade_0p5lot": -62.14630809728114,
+   "all_triggers": {
+    "n": 2449,
+    "win_rate": 0.4993875051041241,
+    "net_r": -0.04382095813724893
+   },
+   "unscaled_sensitivity": {
+    "n": 483,
+    "win_rate": 0.4389233954451346,
+    "break_even": 0.5211754658385093,
+    "net_r": -0.04058536231884052,
+    "t": -0.9372483458415746
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CHOCH T20S20",
+   "tf": "15min",
+   "setup": "CHOCH",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 2526,
+   "n": 1140,
+   "long": 545,
+   "short": 595,
+   "wins": 556,
+   "losses": 584,
+   "open": 0,
+   "win_rate": 0.48771929824561405,
+   "wilson": [
+    0.4587934704230848,
+    0.5167276126932898
+   ],
+   "break_even": 0.5211052631578947,
+   "net_r": -0.06539612541375714,
+   "gross_r": -0.02318559909796767,
+   "t": -2.1596412301986905,
+   "random_same_mix": 0.49857123632528233,
+   "z_vs_random": -0.7328101929755058,
+   "usd_per_trade_0p5lot": -65.39612541375715,
+   "all_triggers": {
+    "n": 2526,
+    "win_rate": 0.49802058590657167,
+    "net_r": -0.04595103224952064
+   },
+   "unscaled_sensitivity": {
+    "n": 451,
+    "win_rate": 0.43902439024390244,
+    "break_even": 0.5214562084257206,
+    "net_r": -0.022004904323725056,
+    "t": -0.4889910074962675
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FVG_RETEST T20S20",
+   "tf": "15min",
+   "setup": "FVG_RETEST",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 7776,
+   "n": 1832,
+   "long": 951,
+   "short": 881,
+   "wins": 928,
+   "losses": 903,
+   "open": 1,
+   "win_rate": 0.5065502183406113,
+   "wilson": [
+    0.4836666619568882,
+    0.5294063623415305
+   ],
+   "break_even": 0.5205818777292576,
+   "net_r": -0.02460041122358674,
+   "gross_r": 0.01656334423492853,
+   "t": -1.0417431783193165,
+   "random_same_mix": 0.49974513076095717,
+   "z_vs_random": 0.5825410115244446,
+   "usd_per_trade_0p5lot": -24.60041122358674,
+   "all_triggers": {
+    "n": 7776,
+    "win_rate": 0.5011574074074074,
+    "net_r": -0.03849494211673869
+   },
+   "unscaled_sensitivity": {
+    "n": 570,
+    "win_rate": 0.44912280701754387,
+    "break_even": 0.5206710526315789,
+    "net_r": -0.03931402754385951,
+    "t": -0.9725197377842818
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min OB_RETEST T20S20",
+   "tf": "15min",
+   "setup": "OB_RETEST",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 3704,
+   "n": 1307,
+   "long": 664,
+   "short": 643,
+   "wins": 648,
+   "losses": 659,
+   "open": 0,
+   "win_rate": 0.4957918898240245,
+   "wilson": [
+    0.4687379974307431,
+    0.5228704461949355
+   ],
+   "break_even": 0.520940895179801,
+   "net_r": -0.0476003828172843,
+   "gross_r": -0.0057185924576821775,
+   "t": -1.7018907556483764,
+   "random_same_mix": 0.49942841415770484,
+   "z_vs_random": -0.26293873621505914,
+   "usd_per_trade_0p5lot": -47.6003828172843,
+   "all_triggers": {
+    "n": 3704,
+    "win_rate": 0.49757019438444927,
+    "net_r": -0.045702306401700185
+   },
+   "unscaled_sensitivity": {
+    "n": 483,
+    "win_rate": 0.4451345755693582,
+    "break_even": 0.5213203933747412,
+    "net_r": -0.025579326915113793,
+    "t": -0.5924394344453685
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FAILED_BO T20S20",
+   "tf": "15min",
+   "setup": "FAILED_BO",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "f113f97ad2105ff9",
+   "triggers": 3515,
+   "n": 1424,
+   "long": 689,
+   "short": 735,
+   "wins": 716,
+   "losses": 707,
+   "open": 1,
+   "win_rate": 0.5028089887640449,
+   "wilson": [
+    0.4768673261895489,
+    0.52873553675454
+   ],
+   "break_even": 0.5207949438202247,
+   "net_r": -0.03562571373405686,
+   "gross_r": 0.0059641739063925605,
+   "t": -1.3314162901051771,
+   "random_same_mix": 0.4987365339224477,
+   "z_vs_random": 0.3073566783913432,
+   "usd_per_trade_0p5lot": -35.625713734056866,
+   "all_triggers": {
+    "n": 3515,
+    "win_rate": 0.48933143669985774,
+    "net_r": -0.06243225848680055
+   },
+   "unscaled_sensitivity": {
+    "n": 524,
+    "win_rate": 0.4351145038167939,
+    "break_even": 0.5208912213740458,
+    "net_r": -0.024745875858778632,
+    "t": -0.5939785475772721
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h SWEEP_PD T20S20",
+   "tf": "1h",
+   "setup": "SWEEP_PD",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 630,
+   "n": 560,
+   "long": 264,
+   "short": 296,
+   "wins": 277,
+   "losses": 282,
+   "open": 1,
+   "win_rate": 0.49464285714285716,
+   "wilson": [
+    0.4534112209972174,
+    0.5359474898505013
+   ],
+   "break_even": 0.5214464285714285,
+   "net_r": -0.050245204454094125,
+   "gross_r": -0.007352347311237016,
+   "t": -1.181255481149391,
+   "random_same_mix": 0.4983812372352235,
+   "z_vs_random": -0.17693336636022355,
+   "usd_per_trade_0p5lot": -50.24520445409413,
+   "all_triggers": {
+    "n": 630,
+    "win_rate": 0.4984126984126984,
+    "net_r": -0.044056596728989095
+   },
+   "unscaled_sensitivity": {
+    "n": 320,
+    "win_rate": 0.43125,
+    "break_even": 0.521453125,
+    "net_r": -0.04419361562499989,
+    "t": -0.8409113141580734
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h SWEEP_PW T20S20",
+   "tf": "1h",
+   "setup": "SWEEP_PW",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 136,
+   "n": 134,
+   "long": 61,
+   "short": 73,
+   "wins": 65,
+   "losses": 69,
+   "open": 0,
+   "win_rate": 0.48507462686567165,
+   "wilson": [
+    0.40205716869166813,
+    0.5689239857994153
+   ],
+   "break_even": 0.5211902985074627,
+   "net_r": -0.06524164482898408,
+   "gross_r": -0.022861047814058726,
+   "t": -0.7445977764711559,
+   "random_same_mix": 0.49791766299803136,
+   "z_vs_random": -0.29734036183223084,
+   "usd_per_trade_0p5lot": -65.24164482898408,
+   "all_triggers": {
+    "n": 136,
+    "win_rate": 0.4852941176470588,
+    "net_r": -0.06499544416973431
+   },
+   "unscaled_sensitivity": {
+    "n": 131,
+    "win_rate": 0.46564885496183206,
+    "break_even": 0.5211965648854961,
+    "net_r": -0.02286221106870228,
+    "t": -0.2713035185283343
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h SWEEP_EQ T20S20",
+   "tf": "1h",
+   "setup": "SWEEP_EQ",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 449,
+   "n": 357,
+   "long": 174,
+   "short": 183,
+   "wins": 183,
+   "losses": 174,
+   "open": 0,
+   "win_rate": 0.5126050420168067,
+   "wilson": [
+    0.46089774305162334,
+    0.5640439585696436
+   ],
+   "break_even": 0.5207345938375351,
+   "net_r": -0.017499167591495626,
+   "gross_r": 0.02397002008357437,
+   "t": -0.3297334756917419,
+   "random_same_mix": 0.4988379942042218,
+   "z_vs_random": 0.520242822554639,
+   "usd_per_trade_0p5lot": -17.499167591495628,
+   "all_triggers": {
+    "n": 449,
+    "win_rate": 0.4922048997772829,
+    "net_r": -0.058072845540197045
+   },
+   "unscaled_sensitivity": {
+    "n": 227,
+    "win_rate": 0.3876651982378855,
+    "break_even": 0.5208359030837003,
+    "net_r": -0.12916659603524203,
+    "t": -2.084886915520038
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h BREAK_PD T20S20",
+   "tf": "1h",
+   "setup": "BREAK_PD",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 615,
+   "n": 561,
+   "long": 305,
+   "short": 256,
+   "wins": 274,
+   "losses": 287,
+   "open": 0,
+   "win_rate": 0.48841354723707664,
+   "wilson": [
+    0.44726940507062557,
+    0.5297152871901952
+   ],
+   "break_even": 0.5213355614973262,
+   "net_r": -0.0624498299377333,
+   "gross_r": -0.019778706943080912,
+   "t": -1.4646503595614244,
+   "random_same_mix": 0.500447935035938,
+   "z_vs_random": -0.5700797345145554,
+   "usd_per_trade_0p5lot": -62.449829937733305,
+   "all_triggers": {
+    "n": 615,
+    "win_rate": 0.49105691056910566,
+    "net_r": -0.05772903186189978
+   },
+   "unscaled_sensitivity": {
+    "n": 342,
+    "win_rate": 0.4649122807017544,
+    "break_even": 0.5212821637426901,
+    "net_r": 0.013255517105263254,
+    "t": 0.2603744843035095
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h BOS T20S20",
+   "tf": "1h",
+   "setup": "BOS",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 599,
+   "n": 507,
+   "long": 276,
+   "short": 231,
+   "wins": 259,
+   "losses": 248,
+   "open": 0,
+   "win_rate": 0.5108481262327417,
+   "wilson": [
+    0.4674181012628842,
+    0.5541149983099054
+   ],
+   "break_even": 0.5212223865877712,
+   "net_r": -0.019510848535201075,
+   "gross_r": 0.022933924640341302,
+   "t": -0.43804103319130844,
+   "random_same_mix": 0.5004681514339695,
+   "z_vs_random": 0.467444941947608,
+   "usd_per_trade_0p5lot": -19.510848535201074,
+   "all_triggers": {
+    "n": 599,
+    "win_rate": 0.5075125208681135,
+    "net_r": -0.0264439349178335
+   },
+   "unscaled_sensitivity": {
+    "n": 315,
+    "win_rate": 0.4857142857142857,
+    "break_even": 0.5211388888888889,
+    "net_r": 0.04685134952380973,
+    "t": 0.8772034939051149
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h CHOCH T20S20",
+   "tf": "1h",
+   "setup": "CHOCH",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 600,
+   "n": 498,
+   "long": 240,
+   "short": 258,
+   "wins": 253,
+   "losses": 245,
+   "open": 0,
+   "win_rate": 0.5080321285140562,
+   "wilson": [
+    0.46423060082991857,
+    0.5517106887116701
+   ],
+   "break_even": 0.520625502008032,
+   "net_r": -0.02457569688830296,
+   "gross_r": 0.01667530712776128,
+   "t": -0.5447485884509571,
+   "random_same_mix": 0.49868159042282734,
+   "z_vs_random": 0.41733305121975384,
+   "usd_per_trade_0p5lot": -24.57569688830296,
+   "all_triggers": {
+    "n": 600,
+    "win_rate": 0.5,
+    "net_r": -0.040833472495074026
+   },
+   "unscaled_sensitivity": {
+    "n": 297,
+    "win_rate": 0.42424242424242425,
+    "break_even": 0.5208324915824916,
+    "net_r": -0.054925209090908866,
+    "t": -1.004717583795035
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h FVG_RETEST T20S20",
+   "tf": "1h",
+   "setup": "FVG_RETEST",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 1776,
+   "n": 1045,
+   "long": 561,
+   "short": 484,
+   "wins": 550,
+   "losses": 495,
+   "open": 0,
+   "win_rate": 0.5263157894736842,
+   "wilson": [
+    0.4960015926019785,
+    0.5564372193216687
+   ],
+   "break_even": 0.5209485645933013,
+   "net_r": 0.013852204340184363,
+   "gross_r": 0.05574933352678721,
+   "t": 0.4441642614442766,
+   "random_same_mix": 0.5002525490278783,
+   "z_vs_random": 1.6850648014276217,
+   "usd_per_trade_0p5lot": 13.852204340184363,
+   "all_triggers": {
+    "n": 1776,
+    "win_rate": 0.5208333333333334,
+    "net_r": 0.0016355540441235277
+   },
+   "unscaled_sensitivity": {
+    "n": 453,
+    "win_rate": 0.4613686534216336,
+    "break_even": 0.5211484547461368,
+    "net_r": 0.004730313686534178,
+    "t": 0.10651653046046826
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h OB_RETEST T20S20",
+   "tf": "1h",
+   "setup": "OB_RETEST",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 861,
+   "n": 663,
+   "long": 349,
+   "short": 314,
+   "wins": 326,
+   "losses": 337,
+   "open": 0,
+   "win_rate": 0.4917043740573152,
+   "wilson": [
+    0.45380779091901186,
+    0.5296965340543426
+   ],
+   "break_even": 0.5206904223227752,
+   "net_r": -0.05723395159579828,
+   "gross_r": -0.015853106950247768,
+   "t": -1.4621625143518133,
+   "random_same_mix": 0.4999536893646628,
+   "z_vs_random": -0.424819717068778,
+   "usd_per_trade_0p5lot": -57.233951595798274,
+   "all_triggers": {
+    "n": 861,
+    "win_rate": 0.5052264808362369,
+    "net_r": -0.02946463264989404
+   },
+   "unscaled_sensitivity": {
+    "n": 339,
+    "win_rate": 0.415929203539823,
+    "break_even": 0.5206659292035397,
+    "net_r": -0.06650829041297932,
+    "t": -1.2879486465395669
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "1h FAILED_BO T20S20",
+   "tf": "1h",
+   "setup": "FAILED_BO",
+   "target": "T20S20",
+   "a_usd_at_4000": 20.0,
+   "b_usd_at_4000": 20.0,
+   "data_hash": "75656fd32555f56a",
+   "triggers": 774,
+   "n": 653,
+   "long": 288,
+   "short": 365,
+   "wins": 299,
+   "losses": 353,
+   "open": 1,
+   "win_rate": 0.45788667687595713,
+   "wilson": [
+    0.4200306943311164,
+    0.4962352489093217
+   ],
+   "break_even": 0.5206741960183768,
+   "net_r": -0.127530599204101,
+   "gross_r": -0.08618220716734762,
+   "t": -3.25168773508861,
+   "random_same_mix": 0.4975119374601808,
+   "z_vs_random": -2.025182167382294,
+   "usd_per_trade_0p5lot": -127.53059920410101,
+   "all_triggers": {
+    "n": 774,
+    "win_rate": 0.4625322997416021,
+    "net_r": -0.1186756009199005
+   },
+   "unscaled_sensitivity": {
+    "n": 351,
+    "win_rate": 0.38746438746438744,
+    "break_even": 0.5207457264957265,
+    "net_r": -0.10641381980056973,
+    "t": -2.1333634682816034
+   },
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  }
+ ],
+ "family": {
+  "trials": 18,
+  "days": 875,
+  "weeks": 157,
+  "reality_check": {
+   "stat": 0.489363026402882,
+   "p_value": 0.996,
+   "best": 15,
+   "B": 1000,
+   "best_id": "1h FVG_RETEST T20S20"
+  },
+  "pbo": {
+   "pbo": 0.42857142857142855,
+   "logit_mean": 0.40430594321347146,
+   "splits": 70,
+   "oos_mean_of_is_best": -0.17619659339953467,
+   "p_oos_loss_of_is_best": 0.8
+  },
+  "best_daily_sharpe": {
+   "id": "1h FVG_RETEST T20S20",
+   "sharpe_daily": 0.015362847515031485,
+   "sr0": 0.05488944997116606,
+   "dsr": 0.12180975837094854,
+   "trials": 18
+  },
+  "bh_fdr10_passed": [],
+  "passes_all": [],
+  "note": "Screens are one-sided (H1: mean net > 0). The pass flags 1-3 are per trial; 4-5 are family-wide."
+ }
+}

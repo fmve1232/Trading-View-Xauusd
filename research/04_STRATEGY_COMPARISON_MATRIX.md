@@ -35,7 +35,7 @@ Rows marked TESTED were run on development data only (Phase B1 and B2, 2026-11-0
 | 6–9 | Session-range breakouts | R14 (intraday pattern) | unconditional continuation rate | Asia range → London; London range → NY, on 15m and 1h | **TESTED (development): REJECT** (Asia → London, London → NY: directionless, 47–50% of 1R trades won). Opening-range breakout NOT TESTED |
 | 10–11 | ATR-expansion / squeeze breakout | R13 | as 6 | | NOT TESTED |
 | 12 | Breakout and retest | practitioner | as 6 | | NOT TESTED |
-| 13–16 | Liquidity sweep / equal H/L / PDH-PDL / PWH-PWL rejection | SMC (no peer review) | random entries, same direction mix | +$20 / +$10 / +$2 before −$10 (price-scaled), 15min and 1h | **TESTED (development, B2): REJECT.** Win rates within ±2 points of random; none above break-even (`B2_DEVELOPMENT_RESULTS.md`) |
+| 13–16 | Liquidity sweep / equal H/L / PDH-PDL / PWH-PWL rejection | SMC (no peer review) | random entries, same direction mix | +$20 / +$10 / +$2 before −$10 (price-scaled), 15min and 1h | **TESTED (development, B2 / B2b): REJECT.** Win rates within ±2–3 points of random; none above break-even (`B2_DEVELOPMENT_RESULTS.md`, `B2B_DEVELOPMENT_RESULTS.md`) |
 | 17–18 | BOS continuation / CHoCH-MSS reversal | SMC | random entries, same direction mix | as 13–16 | **TESTED (development, B2): REJECT.** Best of all 54: 1h BOS on +$20 / −$10, 35.8% against 33.3% random and a 36.2% break-even (z +1.24, net −0.011 R) |
 | 19–20 | FVG continuation / OB retest | SMC | random entries, same direction mix | as 13–16 | **TESTED (development, B2): REJECT** (z ≤ +1.71; every trial net-negative) |
 | 21–22 | VWAP / Bollinger mean reversion | mixed | random fade | range regime only | NOT TESTED |
