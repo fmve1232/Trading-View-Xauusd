@@ -7,6 +7,13 @@ Only events on bars that closed since the previous run are sent (state kept in t
 store), so a re-run never repeats an alert. Prices are shown with the MT5 offset from the
 MT5_PRICE_OFFSET variable (display only, like the Pine input).
 
+YOUR PLAN (operator, 2026-11-01): under every SIGNAL alert, the operator's own trade on that signal. Fixed money
+stop and target at a fixed lot, priced from the signal's entry; then ONE follow-up alert when that TP or SL is hit
+(TP first = the trade closes in profit). Variables: PLAN_LOT (0.5), PLAN_SL_USD (650), PLAN_TP_USD (650),
+PLAN_COST_PER_LOT ($26 round trip: commission ~$6.5 + ~$0.20 spread x 100 oz); PLAN=0 turns it off. Display only:
+the engine, its plan and the forward test are unchanged. The TP-first figure is geometry, SL / (TP + SL), measured
+within 0.3 points on 139,754 entries 2020-2022 (research/B5 and B6 found no signal that beats it).
+
 Structure / sweep alerts (Pine line v49): one line per closed bar on which the engine's BOS, CHoCH, MSS
 or a PDH/PDL/PWH/PWL/PMH/PML sweep first appears, plus the separately registered H2 / H3 / H4 setups. They are
 information, not entries; the DECISION is unchanged. ALERT_STRUCTURE=0 turns them off.
@@ -19,6 +26,21 @@ import os
 from .data.sources import requests
 
 STATE = "alerts_state.json"
+PLAN_TRACK_SEC = 3 * 86400          # a plan with no TP / SL after 3 days gets one "still open" alert and is dropped
+PLAN_MAX_OPEN = 60
+PLAN_LOG = 30                       # closed plans kept for the website
+
+
+def channels() -> list[str]:
+    """Which phone / chat channels are configured (names only, never the values)."""
+    out = []
+    if os.environ.get("NTFY_TOPIC", "").strip():
+        out.append("ntfy")
+    if os.environ.get("TELEGRAM_BOT_TOKEN", "").strip() and os.environ.get("TELEGRAM_CHAT_ID", "").strip():
+        out.append("telegram")
+    if os.environ.get("DISCORD_WEBHOOK_URL", "").strip():
+        out.append("discord")
+    return out
 
 
 def _fmt(x, off=0.0):
@@ -36,6 +58,9 @@ def messages(payload: dict, since_t: int | None) -> list[str]:
             d = "BUY" if m["dir"] == 1 else "SELL"
             out.append(f"XAUUSD {tf} {d} (confirmed close) | entry {_fmt(m['px'], off)} SL {_fmt(m['sl'], off)} "
                        f"TP1 {_fmt(m['tp1'], off)} TP2 {_fmt(m['tp2'], off)} TP3 {_fmt(m['tp3'], off)} | TQ {m['tq']}")
+            pl = plan_cfg()
+            if pl and m.get("px") is not None:
+                out.append(plan_line(m["px"], m["dir"], pl, off))
         elif m["type"] == "TRACK_EXIT":
             out.append(f"XAUUSD {tf} tracked plan {'STOPPED' if (m.get('r') or 0) < 0 else 'reached TP1'} at {_fmt(m['px'], off)} = {m.get('r')}R")
         elif m["type"] == "RISK_LOCK":
@@ -71,6 +96,83 @@ def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> lis
                 by_t.setdefault(g["t"], []).append(f"{arm.upper()} {'BUY' if g['dir'] == 'LONG' else 'SELL'} entry {_fmt(g['entry'], off)} "
                                                    f"SL {_fmt(g['sl'], off)} TP1 {_fmt(g['tp1'], off)} TP2 {_fmt(g['tp2'], off)}")
     return [f"XAUUSD {tf} {' '.join(v)} | info, not a DECISION" for _, v in sorted(by_t.items())]
+
+
+def plan_cfg() -> dict | None:
+    """The operator's plan from the environment (defaults 0.5 lot, SL $650, TP $650); None when PLAN=0."""
+    if os.environ.get("PLAN", "1").strip() == "0":
+        return None
+
+    def num(k: str, d: float) -> float:
+        try:
+            v = float(os.environ.get(k, "") or d)
+        except ValueError:
+            return d
+        return v if v > 0 else d
+    lot, sl, tp, cpl = num("PLAN_LOT", 0.5), num("PLAN_SL_USD", 650.0), num("PLAN_TP_USD", 650.0), num("PLAN_COST_PER_LOT", 26.0)
+    oz = lot * 100.0
+    return {"lot": lot, "sl_usd": sl, "tp_usd": tp, "cost_usd": cpl * lot, "sl_px": sl / oz, "tp_px": tp / oz}
+
+
+def plan_levels(entry: float, d: int, pl: dict) -> tuple[float, float]:
+    """(SL, TP) prices of the plan for a signal at `entry` in direction d (+1 BUY, -1 SELL)."""
+    return entry - d * pl["sl_px"], entry + d * pl["tp_px"]
+
+
+def plan_line(entry: float, d: int, pl: dict, off: float = 0.0) -> str:
+    sl, tp = plan_levels(entry, d, pl)
+    first = pl["sl_px"] / (pl["sl_px"] + pl["tp_px"])
+    be = (pl["sl_usd"] + pl["cost_usd"]) / (pl["sl_usd"] + pl["tp_usd"])
+    return (f"YOUR PLAN {pl['lot']:g} lot: SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f}) TP {_fmt(tp, off)} (+${pl['tp_usd']:,.0f}) | "
+            f"TP first ~{first:.0%} (measured; no signal beats it) | break-even {be:.0%}")
+
+
+def plan_result(plan: dict, chart: dict) -> tuple[str, int] | None:
+    """('TP' | 'SL' | 'BOTH', bar open t) for the first bar AFTER the signal bar that touches the plan's TP or SL."""
+    t, h, l = chart.get("t") or [], chart.get("h") or [], chart.get("l") or []
+    d, sl, tp = plan["dir"], plan["sl"], plan["tp"]
+    for k in range(len(t)):
+        if t[k] <= plan["t"] or h[k] is None or l[k] is None:
+            continue
+        hit_tp = h[k] >= tp if d == 1 else l[k] <= tp
+        hit_sl = l[k] <= sl if d == 1 else h[k] >= sl
+        if hit_tp and hit_sl:
+            return "BOTH", t[k]
+        if hit_tp:
+            return "TP", t[k]
+        if hit_sl:
+            return "SL", t[k]
+    return None
+
+
+def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float = 0.0) -> tuple[list[str], list[dict], list[dict]]:
+    """Follow-up alerts for this timeframe's open plans, the plans still open afterwards, and the ones that closed."""
+    from datetime import datetime, timezone
+    lines, keep, closed = [], [], []
+    for pl in plans:
+        if pl["tf"] != tf:
+            keep.append(pl)
+            continue
+        side = "BUY" if pl["dir"] == 1 else "SELL"
+        head = f"XAUUSD {tf} YOUR PLAN {side} from {_fmt(pl['entry'], off)}"
+        r = plan_result(pl, chart)
+        if r is None:
+            if now_t - pl["t"] > PLAN_TRACK_SEC:
+                lines.append(f"{head}: no TP or SL after 3 days on the site's prices -- check the trade in MT5 (tracking stopped)")
+                closed.append({**pl, "result": "EXPIRED", "t_res": now_t})
+            else:
+                keep.append(pl)
+            continue
+        what, bt = r
+        closed.append({**pl, "result": what, "t_res": bt})
+        hhmm = datetime.fromtimestamp(bt, timezone.utc).strftime("%d %b %H:%M UTC")
+        if what == "TP":
+            lines.append(f"{head}: TP {_fmt(pl['tp'], off)} HIT +${pl['tp_usd']:,.0f} -- trade closed in profit ({hhmm} bar)")
+        elif what == "SL":
+            lines.append(f"{head}: SL {_fmt(pl['sl'], off)} HIT -${pl['sl_usd']:,.0f} -- trade closed at the stop ({hhmm} bar)")
+        else:
+            lines.append(f"{head}: TP and SL both inside the {hhmm} bar -- order unknown, check MT5 (counted as SL)")
+    return lines, keep, closed
 
 
 def news_lines(news: dict | None, now_t: int, last_alerted: int | None) -> tuple[list[str], int | None]:
@@ -124,6 +226,10 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str]) -> dict:
         with open(path) as f:
             state = json.load(f)
     report = {}
+    off = float(os.environ.get("MT5_PRICE_OFFSET", "0") or 0)
+    pl_cfg = plan_cfg()
+    plans = state.get("plans", []) if pl_cfg else []
+    log, tally = state.get("plan_log", []), dict(state.get("plan_tally", {}))
     for tf in tfs:
         p = payloads.get(tf)
         if not p or p["meta"]["synthetic"]:
@@ -134,8 +240,27 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str]) -> dict:
             state[tf] = last_t   # first run: remember the position, do not replay history
             continue
         lines = messages(p, since)
+        if pl_cfg:                                         # the operator's plan: results of earlier signals, then new ones
+            upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off)
+            lines = upd + lines
+            for c in done:
+                tally[c["result"]] = tally.get(c["result"], 0) + 1
+            log = (log + done)[-PLAN_LOG:]
+            for m in p["markers"]:
+                if m["type"] == "SIGNAL" and m["t"] > since and m.get("px") is not None:
+                    sl, tp = plan_levels(m["px"], m["dir"], pl_cfg)
+                    plans.append({"tf": tf, "t": m["t"], "dir": m["dir"], "entry": m["px"], "sl": sl, "tp": tp,
+                                  "sl_usd": pl_cfg["sl_usd"], "tp_usd": pl_cfg["tp_usd"], "lot": pl_cfg["lot"]})
         report[tf] = {"lines": lines, "sent": send(lines)}
         state[tf] = last_t
+    if pl_cfg:
+        state["plans"], state["plan_log"], state["plan_tally"] = plans[-PLAN_MAX_OPEN:], log, tally
+        # for the website's "Your plan alerts" card (index.json -> alerts.plans): the plan, open trades, results, channels
+        report["plans"] = {"cfg": {k: pl_cfg[k] for k in ("lot", "sl_usd", "tp_usd", "cost_usd")},
+                           "tp_first": pl_cfg["sl_px"] / (pl_cfg["sl_px"] + pl_cfg["tp_px"]),
+                           "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
+                           "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs)}
+    report["channels"] = channels()
     first = next((payloads[tf] for tf in tfs if payloads.get(tf) and not payloads[tf]["meta"]["synthetic"]), None)
     if first is not None:                                  # news is per release, not per timeframe: once per event
         from datetime import datetime

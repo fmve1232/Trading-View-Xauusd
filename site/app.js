@@ -184,6 +184,7 @@ function renderLive() {
   $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
   try { renderQuote(); renderBrief(); } catch (e) { console.error(e); }
+  if (!S.paT || Date.now() - S.paT > 2000) { S.paT = Date.now(); try { renderPlanAlerts(); } catch (e) { console.error(e); } }   // open plans' live P/L, at most every 2 s
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
     (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
     ` Price as of ${new Date(LIVE.t).toUTCString()}.` + (LIVE.err ? " Last refresh failed: " + LIVE.err : "");
@@ -424,6 +425,7 @@ setInterval(() => {
   renderGuard(); renderHeader();
   const box = $("#hc");                        // never re-render under the viewer's cursor: it would drop what they are typing
   if (!(box && box.contains(document.activeElement) && document.activeElement.tagName === "INPUT")) { try { renderHC(); } catch (e) { console.error(e); } }
+  try { renderPlanAlerts(); } catch (e) { console.error(e); }      // live P/L of open plans
 }, 30000);
 
 /* ---------- header / banners ---------- */
@@ -1935,10 +1937,54 @@ function renderStrip() {
     cell("Decision", `${esc(dec)} · TQ ${d.trade_quality}${esc(d.tq_grade || "")}`, `${esc(d.bias_label)} · ${esc(d.session.label)} ${d.session.quality}/30`, dec === "NO TRADE" || dec === "RISK LOCK" ? "warn" : ""),
   ].join("");
 }
+/* ---------- your plan alerts (DISPLAY ONLY) ----------
+   The operator's fixed-money plan on every engine SIGNAL, exactly as the phone alert sends it (quantum/notify.py,
+   published in index.json -> alerts.plans): open trades with the live distance to TP / SL, and the results so far.
+   The TP-first figure is geometry, SL / (TP + SL), measured on 139,754 entries; no signal tested beats it. */
+const TF_SEC = { "5m": 300, "15m": 900, "1h": 3600, "4h": 14400 };
+function renderPlanAlerts() {
+  const el = $("#pa"), st = $("#pa-state"); if (!el) return;
+  const A = S.index && S.index.alerts, P = A && A.plans;
+  if (!P || !P.cfg) { el.innerHTML = `<span class="muted">Your plan appears here after the next engine run.</span>`; if (st) st.textContent = "—"; return; }
+  const c = P.cfg, ch = A.channels || [], on = ch.length > 0;
+  if (st) { st.textContent = on ? "phone ON" : "phone OFF"; st.className = "pill " + (on ? "bull" : "warn"); }
+  const usd = (x) => (x < 0 ? "−$" : "+$") + Math.abs(x).toLocaleString("en-US", { maximumFractionDigits: 0 });
+  const liveOk = LIVE.px !== null && !LIVE.err && Date.now() - LIVE.t < 10 * 60000 && !marketClosed(new Date());
+  const side = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
+  const when = (p) => tfmt(p.t + (TF_SEC[p.tf] || 0));
+  const openRows = (P.open || []).slice().reverse().map((p) => {
+    const lot = p.lot || c.lot;
+    let now = `<span class="muted" title="live price unavailable">—</span>`;
+    if (liveOk) {
+      const pl = (LIVE.px - p.entry) * p.dir * lot * 100, toTp = Math.max((p.tp - LIVE.px) * p.dir, 0), toSl = Math.max((LIVE.px - p.sl) * p.dir, 0);
+      now = `<b class="${pl >= 0 ? "bull" : "bear"}">${usd(pl)}</b><div>TP in $${f(toTp, 2)} · SL in $${f(toSl, 2)}</div>`;
+    }
+    return `<tr><td>${esc(p.tf)} ${side(p.dir)}<div>${when(p)}</div></td><td>${px(p.entry)}</td><td>${px(p.sl)}<div>−$${f(p.sl_usd, 0)}</div></td><td>${px(p.tp)}<div>+$${f(p.tp_usd, 0)}</div></td><td>${now}</td></tr>`;
+  }).join("");
+  const RES = { TP: ["bull", (p) => `TP hit ${usd(p.tp_usd)} (profit)`], SL: ["bear", (p) => `SL hit ${usd(-p.sl_usd)}`],
+                BOTH: ["warn", () => "TP and SL in one bar · counted as SL"], EXPIRED: ["", () => "no TP or SL in 3 days"] };
+  const doneRows = (P.recent || []).slice(0, 12).map((p) => {
+    const r = RES[p.result] || ["", () => esc(p.result)];
+    return `<tr><td>${esc(p.tf)} ${side(p.dir)}<div>${when(p)}</div></td><td>${px(p.entry)}</td><td colspan="2"><b class="${r[0]}">${r[1](p)}</b></td><td>${tfmt(p.t_res)}</td></tr>`;
+  }).join("");
+  const T = P.tally || {}, tp = T.TP || 0, sl = (T.SL || 0) + (T.BOTH || 0), n = tp + sl;
+  const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
+  el.innerHTML = `
+    <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}</div>
+      <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
+      <div>Break-even after costs</div><div>${pct(100 * P.break_even)}</div>
+      <div>Phone alerts</div><div class="${on ? "bull" : "warn"}">${on ? "ON via " + esc(ch.join(", ")) : "OFF · add the NTFY_TOPIC secret"}</div>
+      <div>Signals alerted</div><div>${esc((P.tfs || []).join(", ") || "—")}</div></div>
+    <p class="muted pa-note">Same plan as the phone alerts: every engine signal gets your SL and TP; a second alert says which was hit first.
+      "TP hit first" is set by the SL / TP sizes, measured on 139,754 real entries; no signal tested (507 trials) beats it. Display only: the engine is unchanged.</p>
+    <p class="pa-note">${rec}</p>
+    ${openRows ? `<h4>Open (${(P.open || []).length})</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th>SL</th><th>TP</th><th>Now</th></tr>${openRows}</table></div>` : `<p class="muted pa-note">No open plan right now.</p>`}
+    ${doneRows ? `<h4>Results</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Result</th><th>Closed bar</th></tr>${doneRows}</table></div>` : ""}`;
+}
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderPlanAlerts); safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();
