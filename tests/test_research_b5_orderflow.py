@@ -139,8 +139,8 @@ def _fake_databento(monkeypatch, cost, frames):
     class Meta:
         def get_cost(self, **kw):
             calls["get_cost"] += 1
-            assert kw["dataset"] == "GLBX.MDP3" and kw["schema"] == "tbbo" and kw["symbols"] == ["GC.v.0"] and kw["stype_in"] == "continuous"
-            return cost
+            assert kw["dataset"] == "GLBX.MDP3" and kw["schema"] in ("tbbo", "trades") and kw["symbols"] == ["GC.v.0"] and kw["stype_in"] == "continuous"
+            return cost if kw["schema"] == "tbbo" else round(cost * 0.6, 2)
 
     class TS:
         def get_range(self, **kw):
@@ -270,8 +270,9 @@ def test_quote_only_downloads_nothing(tmp_path, monkeypatch):
     out = tmp_path / "q.json"
     assert B.main(["--spot", "unused", "--out", str(out), "--trials", str(tmp_path / "t.jsonl"), "--quote-only"]) == 0
     q = json.loads(out.read_text())
-    assert q["quote_usd"] == 87.25 and calls == {"get_range": 0, "get_cost": 1} and not (tmp_path / "t.jsonl").exists()
-    assert B.summary(str(out)).startswith("quote $87.25")
+    assert q["quote_usd"] == 87.25 and q["alternatives_usd"] == {"trades": 52.35}
+    assert calls == {"get_range": 0, "get_cost": 2} and not (tmp_path / "t.jsonl").exists()
+    assert B.summary(str(out)).startswith("quote $87.25") and "trades $52.35" in B.summary(str(out))
 
 
 def test_rerun_guard_and_missing_key(tmp_path, monkeypatch):

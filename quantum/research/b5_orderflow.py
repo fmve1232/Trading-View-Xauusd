@@ -94,6 +94,7 @@ GBT = {"max_iter": 200, "learning_rate": 0.05, "max_leaf_nodes": 15, "min_sample
        "early_stopping": False, "random_state": 7}
 AUC_MIN, Z_MIN, BH_Q, RC_P = 0.55, 2.0, 0.10, 0.05
 MAX_COST_USD, CHUNK_DAYS, RETRIES = 100.0, 7, 3
+QUOTE_ALTERNATIVES = ("trades",)
 
 
 # ---------------- features ----------------
@@ -256,9 +257,9 @@ def _client(key: str):
     return db, db.Historical(key)
 
 
-def quote(key: str, start: str, end: str) -> float:
+def quote(key: str, start: str, end: str, schema: str = SCHEMA) -> float:
     _, client = _client(key)
-    return float(client.metadata.get_cost(dataset=DATASET, symbols=[SYMBOL], stype_in=STYPE, schema=SCHEMA, start=start, end=end))
+    return float(client.metadata.get_cost(dataset=DATASET, symbols=[SYMBOL], stype_in=STYPE, schema=schema, start=start, end=end))
 
 
 def fetch(key: str, start: str, end: str, max_cost: float) -> tuple[pd.DataFrame, dict]:
@@ -345,8 +346,10 @@ def _trial(P, t_close, c, cost_bar, outc, base, i, d, tn) -> tuple[dict, pd.Seri
     return rec, daily
 
 
-def study(feat: pd.DataFrame, m15: pd.DataFrame, models: tuple = (Logit, Trees)) -> dict:
-    """feat: finish_features output (futures 15-minute bars). m15: spot 15-minute bars of the development partition."""
+def study(feat: pd.DataFrame, m15: pd.DataFrame, models: tuple = (Logit, Trees), rules: tuple = RULE_FEATURES,
+          inputs: tuple = MODEL_FEATURES, directional: tuple = DIRECTIONAL, q2: str = "imb15") -> dict:
+    """feat: per-bar flow features (B5: finish_features of futures bars). m15: spot 15-minute bars of the development
+    partition. rules / inputs / directional / q2 default to B5's declaration; B5c (b5c_dukascopy.py) passes its own."""
     span = b2.HORIZON
     P = b2.Paths(m15)
     t_close = ta.epoch_s(m15.index) + BAR_SEC
@@ -356,11 +359,11 @@ def study(feat: pd.DataFrame, m15: pd.DataFrame, models: tuple = (Logit, Trees))
     outc = _outcomes(P, t_close, c)
     base = {f"{tn} {dn}": float(np.mean(outc[(tn, dn)][0][outc[(tn, dn)][0] != -2] == 1)) for tn in TARGETS for dn in ("long", "short")}
     res = {"spot_bars": len(m15), "spot_data_hash": H.data_hash(m15), "flow_bars": len(feat),
-           "spot_bars_with_flow": int(f["imb15"].notna().sum()), "roll_day_bars": int(feat.get("roll_day", pd.Series(dtype=bool)).sum()),
+           "spot_bars_with_flow": int(f[q2].notna().sum()), "roll_day_bars": int(feat.get("roll_day", pd.Series(dtype=bool)).sum()),
            "baseline": base, "trials": [], "models": {}, "execution": {}}
     daily = {}
 
-    for x in RULE_FEATURES:                                                   # Q1 rules
+    for x in rules:                                                           # Q1 rules
         sig = rule_signal(feat[x]).reindex(m15.index).fillna(0.0).to_numpy()
         for rule, sgn in (("CONT", 1.0), ("REV", -1.0)):
             i = np.flatnonzero(sig != 0)
@@ -370,7 +373,7 @@ def study(feat: pd.DataFrame, m15: pd.DataFrame, models: tuple = (Logit, Trees))
                 res["trials"].append({"id": tid, "kind": "rule", "feature": x, "rule": rule, "target": tn, **rec})
                 daily[tid] = dser
 
-    X0 = f[list(MODEL_FEATURES)].to_numpy(float)                              # Q1 models
+    X0 = f[list(inputs)].to_numpy(float)                                      # Q1 models
     valid = np.isfinite(X0).all(axis=1)
     for tn in TARGETS:
         rows, ys, dirs, idx = [], [], [], []
@@ -378,8 +381,8 @@ def study(feat: pd.DataFrame, m15: pd.DataFrame, models: tuple = (Logit, Trees))
             o = outc[(tn, dname)][0]
             m = valid & (o != -2)
             Xd = X0[m].copy()
-            for k, nm in enumerate(MODEL_FEATURES):
-                if nm in DIRECTIONAL:
+            for k, nm in enumerate(inputs):
+                if nm in directional:
                     Xd[:, k] *= dv
             rows.append(Xd)
             ys.append((o[m] == 1).astype(float))
@@ -432,7 +435,7 @@ def study(feat: pd.DataFrame, m15: pd.DataFrame, models: tuple = (Logit, Trees))
                      "bh_fdr10_passed": [x for x, okb in zip(names, bh) if okb],
                      "passes_all": [x for x in names if tmap[x].get("passes_all")]}
 
-    x = f["imb15"].to_numpy(float)                                            # Q2 execution (descriptive)
+    x = f[q2].to_numpy(float)                                                 # Q2 execution (descriptive)
     tt = P.t
     n_ = len(c)
     nxt1 = np.full(n_, np.nan)
@@ -447,7 +450,7 @@ def study(feat: pd.DataFrame, m15: pd.DataFrame, models: tuple = (Logit, Trees))
     if ok.sum() >= 100:
         dec = pd.qcut(pd.Series(x[ok]).rank(method="first"), 10, labels=False).to_numpy()
         m1, m4 = (nxt1 * sc)[ok], (nxt4 * sc)[ok]
-        res["execution"] = {"by_imb15_decile": {str(k): {"n": int((dec == k).sum()), "imb15_mean": float(x[ok][dec == k].mean()),
+        res["execution"] = {f"by_{q2}_decile": {str(k): {"n": int((dec == k).sum()), f"{q2}_mean": float(x[ok][dec == k].mean()),
                                                            "next_15m_usd": float(m1[dec == k].mean()), "next_60m_usd": float(m4[dec == k].mean())}
                                                  for k in range(10)},
                             "with_the_flow_usd": {"next_15m": float(np.mean(np.sign(x[ok]) * m1)), "next_60m": float(np.mean(np.sign(x[ok]) * m4)),
@@ -461,7 +464,8 @@ def summary(path: str) -> str:
     with open(path) as f:
         r = json.load(f)
     if "quote_usd" in r:
-        return f"quote ${r['quote_usd']:.2f} for {r['dataset']} {r['schema']} {r['symbol']} {r['from']} -> {r['to']} (budget ${r['budget_usd']:.2f})"
+        alt = "".join(f"; {k} ${v:.2f}" for k, v in r.get("alternatives_usd", {}).items())
+        return f"quote ${r['quote_usd']:.2f} for {r['dataset']} {r['schema']} {r['symbol']} {r['from']} -> {r['to']} (budget ${r['budget_usd']:.2f}){alt}"
     nan = float("nan")
     out = [f"cost ${r.get('cost_usd', nan):.2f}  trades {r.get('trades')}  flow bars {r.get('flow_bars')}  spot bars with flow {r.get('spot_bars_with_flow')}",
            (f"passes all five: {r['family']['passes_all'] or 'none'}   BH: {r['family']['bh_fdr10_passed'] or 'none'}   "
@@ -528,7 +532,9 @@ def main(argv=None) -> int:
     start, end = H.DEV[0].isoformat(), H.DEV[1].isoformat()
     if a.quote_only:
         q = {"set": "B5", "quote_usd": quote(key, start, end), "dataset": DATASET, "schema": SCHEMA, "symbol": SYMBOL, "from": start, "to": end,
-             "budget_usd": a.max_cost_usd}
+             "budget_usd": a.max_cost_usd,
+             # information only: the same window in the trades schema (aggressor side, no book), for the operator's choice
+             "alternatives_usd": {s: quote(key, start, end, s) for s in QUOTE_ALTERNATIVES}}
         with open(a.out, "w") as f:
             json.dump(q, f, indent=1)
         print(json.dumps(q, indent=1))

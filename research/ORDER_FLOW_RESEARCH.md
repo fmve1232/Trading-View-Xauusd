@@ -172,6 +172,29 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
 - This tests Osler's mechanism directly, with real (one broker's) order data instead of round-number guesses.
 - Needs an OANDA account token, and confirmation that snapshots with history are available for XAU_USD.
 
+## 5c. Free fallback: B5c on Dukascopy ticks (declared, paused, not run)
+
+**Why it exists.** The operator asked for a free source on 2026-11-01:
+- Databento is paid;
+- OANDA does not accept residents of Pakistan;
+- Dukascopy's tick data is free to everyone, but it refuses GitHub's servers, so B5c runs on the operator's Windows laptop.
+
+**The declaration.** `quantum/research/b5c_dukascopy.py`, committed before any Dukascopy data was obtained.
+- **Data:** XAUUSD ticks, the best bid and offer with the liquidity shown on Dukascopy's marketplace, for the
+  development window. Only 15-minute sums are cached on the laptop; nothing is published.
+- **Features:**
+  - Cont's order-flow imbalance on that top of book, over 15 and 60 minutes;
+  - queue imbalance (bar mean and last tick);
+  - up-tick vs down-tick balance (15 and 60 minutes);
+  - tick intensity and the spread.
+- **Tests:** 30 rules plus logistic regression (3 trials), through B5's machinery and B2's five-part rule.
+- **Q2 (execution):** the next 15 / 60 minutes' move by OFI decile.
+- **Unit check:** the run stops if Dukascopy's mid and the spot paths disagree by more than 0.5% (median).
+
+**Status.** Paused when the operator obtained a Databento key: B5 on CME data is the stronger test. B5c stays
+available if Databento's quote is above budget. 8 tests on synthetic `.bi5` files and a mocked server
+(`tests/test_research_b5c_dukascopy.py`).
+
 ## 6. What the operator needs to provide
 
 **For B5 as declared (§5):**
