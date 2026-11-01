@@ -32,6 +32,8 @@ approval as a group. New strategies need registration under Amendment 11/13.
 | B2b | The same setups on +$20 before −$20 (SL / TP $1,000 at 0.5 lot) | none | **done: 18 trials, all rejected** (`B2B_DEVELOPMENT_RESULTS.md`); nothing to register |
 | B2c | The same setups on +$15 before −$10 (completes +$10 / +$15 / +$20 with a −$10 stop) | none | **done: 18 trials, all rejected** (`B2C_DEVELOPMENT_RESULTS.md`); nothing to register |
 | B3 | Combinations: 1h trend alignment + confirmation entry + SMC sequences (sweep → MSS → FVG) on the −$10 stop | none | **done: 210 trials, all rejected** (`B3_DEVELOPMENT_RESULTS.md`); no ingredient moves success more than ±1 point over matched random |
+| B4 | Entry-price hypotheses from the literature: round numbers (Osler), session-open momentum (Gao et al.), limit entries (adverse selection) | none | **done: 48 trials, none passes**; round-number continuation is the one consistent lead and the candidate for a single pre-declared validation test (`ENTRY_PRICE_RESEARCH.md`) |
+| C (B4-RN-V1) | One validation test of the round-number lead, registered before the data was read, approved by the operator | none | **done: FAIL** (41.5% vs random 40.3%, z +0.20; net −0.044 R). Lead closed; holdout stays sealed |
 | C | Validation, then a one-time holdout; a promoted strategy becomes a **new forward arm** with its own freeze key | new arm only; existing arms untouched | Operator approves promotion |
 | D | Dashboard: regime, selected strategy, calibrated probabilities, coverage tiers (Part 21) — only for components that passed C | display | Operator approves |
 

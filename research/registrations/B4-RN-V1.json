@@ -1,0 +1,42 @@
+{
+  "id": "B4-RN-V1",
+  "title": "Round-number crossing continuation (Osler 2003), one validation test",
+  "status": "APPROVED by the operator 2026-11-01; run once after this commit",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-01 (chat): \"approve B4-RN-V1 and merge\". Approval recorded and committed before the validation partition was read.",
+  "partitions": [
+    "validation"
+  ],
+  "created_utc": "2026-11-01",
+  "source_of_hypothesis": "Phase B4 on development data (research/results/b4_development_2026-11-01.json, trial '15min RN_CROSS_100 T15'); mechanism: stop-loss orders cluster just beyond round numbers (Osler 2003, J. Finance 58)",
+  "rule": {
+    "series": "Twelve Data XAU/USD 15min (research-data branch)",
+    "signal": "quantum.research.b4.round_cross(close, 100.0): a 15-minute close crosses a multiple of $100 (previous close below, this close at or above -> LONG; mirror -> SHORT); the level not crossed by a close in the previous 20 bars",
+    "entry": "the crossing bar's close",
+    "take_profit_usd_at_4000": 15.0,
+    "stop_loss_usd_at_4000": 10.0,
+    "scaling": "distances and costs x (entry price / 4000)",
+    "horizon": "288 fifteen-minute bars (3 trading days); open at the horizon closes at that bar's close",
+    "fills": "the level, or the bar's open when it opened beyond it; a bar reaching both levels is a LOSS unless it opened beyond the target",
+    "positions": "one at a time",
+    "costs": "harness.cost_pts (frozen engine model) at the decision bar, scaled",
+    "paths": "15-minute bars of the validation partition only; trades whose horizon runs past it are not counted"
+  },
+  "primary_test": {
+    "P1": "success rate above the direction-matched random rate (every 15-minute close of the validation partition, long and short, same targets and scaling), one-sided z >= 1.645",
+    "P2": "mean net result per trade > 0 with one-sided t >= 1.645",
+    "pass": "P1 and P2 both"
+  },
+  "power_stated_in_advance": "About 100 trades are expected (212 in the three development years). If the true edge equals the development estimate (+7.9 points over random), P1 passes about half the time; development estimates are inflated by selection, so the real chance is lower. A FAIL therefore means 'not confirmed', not 'proven absent'.",
+  "secondary_reported_not_decisive": [
+    "the same rule at +$10 and +$20",
+    "$50 crossings at +$15",
+    "1h $100 crossings at +$20",
+    "by calendar half-year and by direction"
+  ],
+  "decision": {
+    "if_pass": "Propose to the operator: the same rule, unchanged, on the sealed holdout (2024-07-01 -> 2025-12-31) opened once; only after that, a new forward shadow arm with its own freeze key. No live use before.",
+    "if_fail": "The round-number continuation lead is closed; recorded in research/trials.jsonl and the write-up. No re-run with changed parameters."
+  },
+  "one_time": true
+}

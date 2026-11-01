@@ -2,7 +2,7 @@
 
 This folder answers the operator's "Deep quantitative research, strategy optimization & 90% accuracy" brief.
 
-**Phase A** (audit and research design) is complete and was reviewed (PR #56). **Phase B0** (research harness, `quantum/research/harness.py`, tested), **Phase B1** (published-evidence families on development data) **Phases B2 / B2b / B2c** (SMC setups against the operator's trades) and **Phase B3** (trend + confirmation + sequences) are done: 400 trials, none passes its declared rules, none near 90%. Nothing in production strategy logic was
+**Phase A** (audit and research design) is complete and was reviewed (PR #56). **Phase B0** (research harness, `quantum/research/harness.py`, tested), **Phase B1** (published-evidence families on development data), **Phases B2 / B2b / B2c** (SMC setups against the operator's trades), **Phase B3** (trend + confirmation + sequences) and **Phase B4** (entry-price hypotheses) are done: 448 trials, none passes its declared rules, none near 90%. Nothing in production strategy logic was
 changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` and the forward test are untouched.
 
 ## Headline
@@ -42,6 +42,7 @@ changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` 
 | `B2C_DEVELOPMENT_RESULTS.md` | **Phase B2c done**: +$15 before −$10 (18 new trials), reported beside B2's +$10 and +$20 before −$10; 0 of 54 setup-target pairs net-positive; nothing registered |
 | `B3_DEVELOPMENT_RESULTS.md` | **Phase B3 done**: trend alignment + confirmation entries + SMC sequences on the −$10 stop, +$10 / +$15 / +$20: 210 trials; highest success 57.1% / 48.6% / 43.5% on small samples; 0 near 90%; none passes |
 | `HC_PHASE1_AUDIT_AND_BASELINE.md` | **High-confidence confirmation engine brief, Phases 1–2** (no production change): requirement-by-requirement audit, dependency map, test coverage (4 / 13 / 13 of 30), executed baseline (245 + 17 tests; web.6 forward; TP-first profiles A–D), the 90% gate on current evidence, ranked findings and the proposed Step A / B / C plan awaiting approval |
+| `ENTRY_PRICE_RESEARCH.md` | **Entry-price research + Phase B4** (development only): why no entry price can confirm +$10 (optional stopping; the drift 90% would need: ≈ $11 / hour), literature review with sources, 48 declared trials. Session-open momentum: nothing; limit entries: no benefit; round-number crossings ($50 / $100): the one consistent lead (47.6% vs 43.3% break-even at +$15, z +2.35) then **validated once on sealed 2023–24 data (B4-RN-V1): FAIL** — 41.5% vs random 40.3% (z +0.20), −$22 / trade; the lead is closed; nothing near 90% |
 
 ## Reproduce
 

@@ -1,0 +1,294 @@
+{
+ "registration": "B4-RN-V1",
+ "partition": "validation",
+ "from": "2023-01-24 02:00:00+00:00",
+ "to": "2024-07-01 00:00:00+00:00",
+ "bars_15m": 33574,
+ "data_hash_15m": "d206c8cff0ebde62",
+ "random": {
+  "+10/-10": {
+   "long": 0.5080070907069675,
+   "short": 0.48505242916804375
+  },
+  "+15/-10": {
+   "long": 0.41345431601718596,
+   "short": 0.3873448907850855
+  },
+  "+20/-10": {
+   "long": 0.35213171889553224,
+   "short": 0.3143646906829312
+  }
+ },
+ "primary": {
+  "n": 65,
+  "long": 39,
+  "short": 26,
+  "wins": 27,
+  "losses": 38,
+  "open": 0,
+  "win_rate": 0.4153846153846154,
+  "wilson": [
+   0.3036024147754445,
+   0.5366101522044707
+  ],
+  "break_even": 0.4331384615384615,
+  "net_r": -0.04438461538461537,
+  "gross_r": 0.038461538461538464,
+  "t": -0.2880805719377581,
+  "random_same_mix": 0.40301054592434576,
+  "z_vs_random": 0.20338910853726197,
+  "p_one_sided": 0.41941545601645874,
+  "usd_per_trade_0p5lot": -22.192307692307683,
+  "by_half": {
+   "2023H1": {
+    "n": 24,
+    "win_rate": 0.4583333333333333
+   },
+   "2023H2": {
+    "n": 17,
+    "win_rate": 0.4117647058823529
+   },
+   "2024H1": {
+    "n": 24,
+    "win_rate": 0.375
+   }
+  },
+  "by_dir": {
+   "long": {
+    "n": 39,
+    "win_rate": 0.358974358974359
+   },
+   "short": {
+    "n": 26,
+    "win_rate": 0.5
+   }
+  },
+  "P1_pass": false,
+  "P2_pass": false,
+  "verdict": "FAIL"
+ },
+ "secondary": {
+  "$100 cross +$10": {
+   "n": 67,
+   "long": 39,
+   "short": 28,
+   "wins": 34,
+   "losses": 33,
+   "open": 0,
+   "win_rate": 0.5074626865671642,
+   "wilson": [
+    0.3906377456065883,
+    0.6234782821516152
+   ],
+   "break_even": 0.5413358208955223,
+   "net_r": -0.06396404981760154,
+   "gross_r": 0.018707591973443176,
+   "t": -0.5173074040385943,
+   "random_same_mix": 0.4984140978250292,
+   "z_vs_random": 0.14813252701781437,
+   "p_one_sided": 0.441119089883293,
+   "usd_per_trade_0p5lot": -31.982024908800767,
+   "by_half": {
+    "2023H1": {
+     "n": 26,
+     "win_rate": 0.5384615384615384
+    },
+    "2023H2": {
+     "n": 17,
+     "win_rate": 0.5882352941176471
+    },
+    "2024H1": {
+     "n": 24,
+     "win_rate": 0.4166666666666667
+    }
+   },
+   "by_dir": {
+    "long": {
+     "n": 39,
+     "win_rate": 0.46153846153846156
+    },
+    "short": {
+     "n": 28,
+     "win_rate": 0.5714285714285714
+    }
+   }
+  },
+  "$100 cross +$20": {
+   "n": 61,
+   "long": 35,
+   "short": 26,
+   "wins": 24,
+   "losses": 37,
+   "open": 0,
+   "win_rate": 0.39344262295081966,
+   "wilson": [
+    0.280683513737996,
+    0.5188274746899658
+   ],
+   "break_even": 0.3610765027322404,
+   "net_r": 0.09709836065573771,
+   "gross_r": 0.18032786885245902,
+   "t": 0.5128468769064722,
+   "random_same_mix": 0.33603429703442356,
+   "z_vs_random": 0.9492381277572124,
+   "p_one_sided": 0.1712497568972941,
+   "usd_per_trade_0p5lot": 48.549180327868854,
+   "by_half": {
+    "2023H1": {
+     "n": 23,
+     "win_rate": 0.4782608695652174
+    },
+    "2023H2": {
+     "n": 15,
+     "win_rate": 0.4
+    },
+    "2024H1": {
+     "n": 23,
+     "win_rate": 0.30434782608695654
+    }
+   },
+   "by_dir": {
+    "long": {
+     "n": 35,
+     "win_rate": 0.37142857142857144
+    },
+    "short": {
+     "n": 26,
+     "win_rate": 0.4230769230769231
+    }
+   }
+  },
+  "$50 cross +$15": {
+   "n": 148,
+   "long": 83,
+   "short": 65,
+   "wins": 69,
+   "losses": 79,
+   "open": 0,
+   "win_rate": 0.46621621621621623,
+   "wilson": [
+    0.3877195376912163,
+    0.5464222963396486
+   ],
+   "break_even": 0.4325297297297297,
+   "net_r": 0.07626114955751273,
+   "gross_r": 0.15758547388183705,
+   "t": 0.7282938833218789,
+   "random_same_mix": 0.401987338719304,
+   "z_vs_random": 1.5936751948773196,
+   "p_one_sided": 0.05550440140151699,
+   "usd_per_trade_0p5lot": 38.13057477875637,
+   "by_half": {
+    "2023H1": {
+     "n": 51,
+     "win_rate": 0.49019607843137253
+    },
+    "2023H2": {
+     "n": 34,
+     "win_rate": 0.4411764705882353
+    },
+    "2024H1": {
+     "n": 63,
+     "win_rate": 0.4603174603174603
+    }
+   },
+   "by_dir": {
+    "long": {
+     "n": 83,
+     "win_rate": 0.46987951807228917
+    },
+    "short": {
+     "n": 65,
+     "win_rate": 0.46153846153846156
+    }
+   }
+  },
+  "1h $100 cross +$20": {
+   "n": 41,
+   "long": 25,
+   "short": 16,
+   "wins": 13,
+   "losses": 28,
+   "open": 0,
+   "win_rate": 0.3170731707317073,
+   "wilson": [
+    0.19564613821423926,
+    0.4698419976711722
+   ],
+   "break_even": 0.3601382113821138,
+   "net_r": -0.14563726906468644,
+   "gross_r": -0.06522263491834497,
+   "t": -0.6517400496385697,
+   "random_same_mix": 0.33739336642232204,
+   "z_vs_random": -0.27518430145257844,
+   "p_one_sided": 0.6084126764119994,
+   "usd_per_trade_0p5lot": -72.81863453234322,
+   "by_half": {
+    "2023H1": {
+     "n": 13,
+     "win_rate": 0.46153846153846156
+    },
+    "2023H2": {
+     "n": 12,
+     "win_rate": 0.3333333333333333
+    },
+    "2024H1": {
+     "n": 16,
+     "win_rate": 0.1875
+    }
+   },
+   "by_dir": {
+    "long": {
+     "n": 25,
+     "win_rate": 0.24
+    },
+    "short": {
+     "n": 16,
+     "win_rate": 0.4375
+    }
+   }
+  }
+ },
+ "registration_record": {
+  "id": "B4-RN-V1",
+  "title": "Round-number crossing continuation (Osler 2003), one validation test",
+  "status": "APPROVED by the operator 2026-11-01; run once after this commit",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-01 (chat): \"approve B4-RN-V1 and merge\". Approval recorded and committed before the validation partition was read.",
+  "partitions": [
+   "validation"
+  ],
+  "created_utc": "2026-11-01",
+  "source_of_hypothesis": "Phase B4 on development data (research/results/b4_development_2026-11-01.json, trial '15min RN_CROSS_100 T15'); mechanism: stop-loss orders cluster just beyond round numbers (Osler 2003, J. Finance 58)",
+  "rule": {
+   "series": "Twelve Data XAU/USD 15min (research-data branch)",
+   "signal": "quantum.research.b4.round_cross(close, 100.0): a 15-minute close crosses a multiple of $100 (previous close below, this close at or above -> LONG; mirror -> SHORT); the level not crossed by a close in the previous 20 bars",
+   "entry": "the crossing bar's close",
+   "take_profit_usd_at_4000": 15.0,
+   "stop_loss_usd_at_4000": 10.0,
+   "scaling": "distances and costs x (entry price / 4000)",
+   "horizon": "288 fifteen-minute bars (3 trading days); open at the horizon closes at that bar's close",
+   "fills": "the level, or the bar's open when it opened beyond it; a bar reaching both levels is a LOSS unless it opened beyond the target",
+   "positions": "one at a time",
+   "costs": "harness.cost_pts (frozen engine model) at the decision bar, scaled",
+   "paths": "15-minute bars of the validation partition only; trades whose horizon runs past it are not counted"
+  },
+  "primary_test": {
+   "P1": "success rate above the direction-matched random rate (every 15-minute close of the validation partition, long and short, same targets and scaling), one-sided z >= 1.645",
+   "P2": "mean net result per trade > 0 with one-sided t >= 1.645",
+   "pass": "P1 and P2 both"
+  },
+  "power_stated_in_advance": "About 100 trades are expected (212 in the three development years). If the true edge equals the development estimate (+7.9 points over random), P1 passes about half the time; development estimates are inflated by selection, so the real chance is lower. A FAIL therefore means 'not confirmed', not 'proven absent'.",
+  "secondary_reported_not_decisive": [
+   "the same rule at +$10 and +$20",
+   "$50 crossings at +$15",
+   "1h $100 crossings at +$20",
+   "by calendar half-year and by direction"
+  ],
+  "decision": {
+   "if_pass": "Propose to the operator: the same rule, unchanged, on the sealed holdout (2024-07-01 -> 2025-12-31) opened once; only after that, a new forward shadow arm with its own freeze key. No live use before.",
+   "if_fail": "The round-number continuation lead is closed; recorded in research/trials.jsonl and the write-up. No re-run with changed parameters."
+  },
+  "one_time": true
+ }
+}
