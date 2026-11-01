@@ -1,0 +1,122 @@
+# Phase B5 (research/ORDER_FLOW_RESEARCH.md section 5; declared in quantum/research/b5_orderflow.py): order flow from
+# CME gold futures via Databento, on the DEVELOPMENT partition only. Manual dispatch only; the engine and the site never
+# read it. The API key is the repository secret DATABENTO_API_KEY and is never printed.
+#   mode "quote": asks Databento what the download would cost. Nothing is downloaded and nothing is charged.
+#   mode "run":   the study. It downloads nothing when the quote is above max_cost_usd.
+# Raw exchange data and per-bar features never leave the runner (CME licensing). Only aggregate results (quote / results
+# JSON and the trial records) are pushed, to the research-orderflow branch.
+name: research-orderflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "quote = price only (nothing downloaded); run = the study"
+        type: choice
+        options: [quote, run]
+        default: quote
+      max_cost_usd:
+        description: "Budget in USD. The run downloads nothing if Databento's quote is higher."
+        default: "100"
+
+permissions:
+  contents: write                 # push the research-orderflow results branch
+
+concurrency:
+  group: research-orderflow
+  cancel-in-progress: false
+
+jobs:
+  b5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      MODE: ${{ github.event.inputs.mode }}
+      BUDGET: ${{ github.event.inputs.max_cost_usd }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Check inputs and the secret
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+        run: |
+          case "$MODE" in quote|run) ;; *) echo "::error::mode must be quote or run"; exit 1;; esac
+          if ! printf '%s' "$BUDGET" | grep -Eq '^[0-9]{1,4}(\.[0-9]{1,2})?$'; then echo "::error::max_cost_usd must be a number"; exit 1; fi
+          if [ -z "$DATABENTO_API_KEY" ]; then echo "::error::the repository secret DATABENTO_API_KEY is not set"; exit 1; fi
+      - name: Install (research-only packages; never production dependencies)
+        run: pip install -r requirements.txt "databento==0.89.0" "scikit-learn==1.9.1"
+      - name: Tests of the declared study
+        run: python -m pytest -q tests/test_research_b5_orderflow.py
+        env:
+          TWELVEDATA_API_KEY: offline
+      - name: Load the research-data branch (spot paths) and the results branch
+        run: |
+          URL="https://github.com/${{ github.repository }}.git"
+          if [ "$MODE" = run ]; then git clone -q --depth 1 --branch research-data --single-branch "$URL" rd; fi
+          set +e; git ls-remote --exit-code --heads "$URL" research-orderflow >/dev/null; rc=$?; set -e
+          if [ $rc -eq 0 ]; then git clone -q --depth 1 --branch research-orderflow --single-branch "$URL" out
+          elif [ $rc -eq 2 ]; then mkdir -p out
+          else echo "::error::cannot reach the research-orderflow branch (rc=$rc)"; exit 1; fi
+      # A run that fails AFTER the paid download keeps its 15-minute sums (never trades) for a repeat. They live only in
+      # this repository's Actions cache, AES-encrypted with the secret, so a run without the secret cannot read them.
+      - name: Restore the encrypted flow cache
+        id: restore
+        if: env.MODE == 'run'
+        uses: actions/cache/restore@v4
+        with:
+          path: flowcache.enc
+          key: b5-flow-glbx-tbbo-gcv0-dev-v1
+      - name: Decrypt the flow cache
+        if: env.MODE == 'run' && steps.restore.outputs.cache-hit == 'true'
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+        run: |
+          if openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass env:DATABENTO_API_KEY -in flowcache.enc | tar -xzf -; then echo "flow cache restored: no new download"
+          else echo "::warning::the flow cache could not be decrypted (was the key changed?); it will be downloaded again"; rm -rf flowcache; fi
+      - name: B5
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+          TWELVEDATA_API_KEY: offline
+        run: |
+          if [ "$MODE" = quote ]; then
+            python -m quantum.research.b5_orderflow --spot rd --out out/b5_quote.json --trials out/b5_trials.jsonl --max-cost-usd "$BUDGET" --quote-only
+          else
+            python -m quantum.research.b5_orderflow --spot rd --out out/b5_results.json --trials out/b5_trials.jsonl --max-cost-usd "$BUDGET" --flow-cache flowcache
+          fi
+      - name: Encrypt the flow cache
+        id: enc
+        if: always() && env.MODE == 'run' && steps.restore.outputs.cache-hit != 'true' && hashFiles('flowcache/flow_meta.json') != ''
+        env:
+          DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY }}
+        run: tar -czf - flowcache | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass env:DATABENTO_API_KEY -out flowcache.enc
+      - name: Save the encrypted flow cache
+        if: always() && steps.enc.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: flowcache.enc
+          key: b5-flow-glbx-tbbo-gcv0-dev-v1
+      - name: Summary
+        if: always()
+        run: |
+          F=out/b5_results.json; [ "$MODE" = quote ] && F=out/b5_quote.json
+          {
+            echo "### B5 order flow ($MODE)"
+            echo '```'
+            python -c "import sys; from quantum.research.b5_orderflow import summary; print(summary(sys.argv[1]))" "$F" 2>/dev/null || echo "no $F (see the B5 step's log)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save aggregate results to the research-orderflow branch (one orphan commit)
+        if: always()
+        run: |
+          cd out
+          rm -f ./*.csv ./*.dbn ./*.zst ./*.parquet
+          if [ ! -d .git ]; then git init -q -b research-orderflow; fi
+          git config user.name "quantum-research"
+          git config user.email "quantum-research@users.noreply.github.com"
+          git checkout -q --orphan snapshot
+          git add -A -- '*.json' '*.jsonl'
+          git commit -q -m "B5 $MODE $(date -u +%FT%TZ)" || exit 0
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot:research-orderflow

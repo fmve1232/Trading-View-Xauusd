@@ -94,7 +94,49 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
 - **Limits:** a proxy, not true order flow, on 7.5 weeks of data. It is logged as exploratory (`live-window-2026`)
   and cannot be registered.
 
-## 5. The real study (designed, not run): B5 on CME data
+## 5. The real study: B5 on CME data (approved 2026-11-01; declared, not yet run)
+
+**Status.**
+- The operator approved it on 2026-11-01 ("approve B5 order flow study").
+- It is declared in `quantum/research/b5_orderflow.py`, committed before any order-flow data was obtained. That file
+  is the binding specification; the design notes below are the plan it came from.
+- It runs on GitHub Actions (`.github/workflows/research-orderflow.yml`):
+  - mode **quote** asks Databento for the price and downloads nothing;
+  - mode **run** is the study; it downloads nothing if the quote is above the budget (default $100).
+- Only aggregate results are published, to the `research-orderflow` branch. Raw trades and per-bar features are never
+  stored, except one exception: a repeat-after-failure copy of the 15-minute sums, AES-encrypted with the secret in
+  the repository's private Actions cache.
+
+**Deviations from the design below, stated before any data.**
+
+| Design | Declared | Why |
+|---|---|---|
+| `trades` + `mbp-1` (`mbp-10` if affordable) | `tbbo`: every trade with its aggressor side and the book just before it | A fraction of `mbp-1`'s size. Cont's OFI is therefore **trade-sampled** (between consecutive pre-trade book states). Multi-level OFI is not run |
+| 5- or 15-minute decisions; labels on GC paths | 15-minute decisions; labels on **spot** XAU/USD paths (B2's horizon, fills, costs) | The operator trades spot. Comparable with B1–B4. No futures-roll gaps in the paths |
+| Front month, roll days skipped | `GC.v.0` (most-traded contract); the roll day and the day after are blanked | Same intent |
+| Windows of 1, 5, 15 and 60 minutes | Imbalance over 1, 5, 15 and 60 minutes; OFI over 15 and 60; queue imbalance; trade-count z-score; spread | As designed, less multi-level OFI |
+| Logistic against gradient-boosted trees, calibrated | Both; 6-block purged walk-forward; out-of-fold AUC, Brier, log loss, ECE, MCE, calibration slope / intercept. No recalibration map: a map belongs to validation (`09` §5) | — |
+| Q2: slippage against the next minutes' mid | The next 15 / 60 minutes' spot move by imbalance decile, against the modelled cost | The operator's fills are on spot, which has no exchange mid; descriptive only |
+
+**Trials and the verdict.**
+- 30 rules: 5 features × follow / fade × +$10 / +$15 / +$20, firing at the trailing 90th percentile.
+- 6 model trials: each model trades its top decile, one position at a time.
+- All 36 face B2's five-part rule. A model also needs an out-of-fold AUC of at least 0.55.
+- Q2 (execution) is reported descriptively: the next 15 / 60 minutes' move by imbalance decile.
+
+**Checks before any data.**
+- 15 tests on synthetic trades and a mocked Databento client (`tests/test_research_b5_orderflow.py`):
+  - aggressor signs and OFI;
+  - no look-ahead;
+  - roll days;
+  - the purged walk-forward;
+  - the cost guard and quote-only mode (nothing downloaded);
+  - the full command line, the re-run refusal, and the cache;
+  - a power check: a planted edge is found, and noise gives an AUC of about 0.5.
+- A real DBN `tbbo` stream, built offline with `databento_dbn` 0.70 / `databento` 0.89, gave the expected frame
+  (`ts_event` column, side `B` / `A` / `N`, float prices).
+
+### Design notes (2026-11-01, before approval)
 
 **Data (Databento GLBX.MDP3).**
 - Front-month GC.
@@ -131,6 +173,19 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
 - Needs an OANDA account token, and confirmation that snapshots with history are available for XAU_USD.
 
 ## 6. What the operator needs to provide
+
+**For B5 as declared (§5):**
+1. A Databento account (new accounts get $125 of free credit).
+2. Its API key as the repository secret `DATABENTO_API_KEY`:
+   - GitHub → the repository → *Settings* → *Secrets and variables* → *Actions* → *New repository secret*;
+   - never in chat, code or a commit.
+3. The word "merge". The workflow can only be started once it is on the default branch.
+4. Then: start **research-orderflow** with mode **quote**, read the price in the run's summary, and start it again
+   with mode **run** if the price is acceptable.
+
+No change to this session's network settings is needed: GitHub's runners reach Databento.
+
+**Original list (design stage):**
 
 1. **CME data route:**
    - a Databento account (new accounts get $125 of free credit);
