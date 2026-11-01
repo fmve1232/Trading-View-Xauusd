@@ -118,6 +118,7 @@ jobs:
           git config user.name "quantum-research"
           git config user.email "quantum-research@users.noreply.github.com"
           git checkout -q --orphan snapshot
-          git add -A -- '*.json' '*.jsonl'
+          shopt -s nullglob; files=(*.json *.jsonl); [ ${#files[@]} -gt 0 ] || exit 0
+          git add -A -- "${files[@]}"
           git commit -q -m "B5 $MODE $(date -u +%FT%TZ)" || exit 0
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot:research-orderflow

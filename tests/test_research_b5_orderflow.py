@@ -139,8 +139,8 @@ def _fake_databento(monkeypatch, cost, frames):
     class Meta:
         def get_cost(self, **kw):
             calls["get_cost"] += 1
-            assert kw["dataset"] == "GLBX.MDP3" and kw["schema"] == "tbbo" and kw["symbols"] == ["GC.v.0"] and kw["stype_in"] == "continuous"
-            return cost
+            assert kw["dataset"] == "GLBX.MDP3" and kw["schema"] in ("tbbo", "trades") and kw["symbols"] == ["GC.v.0"] and kw["stype_in"] == "continuous"
+            return cost if kw["schema"] == B.SCHEMA else cost * 1.5          # the declared schema costs `cost`
 
     class TS:
         def get_range(self, **kw):
@@ -148,6 +148,8 @@ def _fake_databento(monkeypatch, cost, frames):
             a, b = pd.Timestamp(kw["start"]), pd.Timestamp(kw["end"])
             df = frames[(frames.index >= a) & (frames.index < b)].copy()
             df["ts_event"] = df.index
+            if kw["schema"] == "trades":                                     # a trades frame has no book columns
+                df = df.drop(columns=list(B.BOOK))
             return _FakeStore(df.reset_index(drop=True))
 
     class Hist:
@@ -187,7 +189,7 @@ def test_study_end_to_end_on_noise(monkeypatch):
     raw = _synthetic_flow(bars=3600)
     res = B.study(B.finish_features(raw), m15, models=(B.Logit,))
     rules = [t for t in res["trials"] if t["kind"] == "rule"]
-    assert len(rules) == len(B.RULE_FEATURES) * 2 * len(B.TARGETS) == 30
+    assert len(rules) == len(B.RULE_FEATURES) * 2 * len(B.TARGETS) == 12
     assert {t["id"] for t in res["trials"] if t["kind"] == "model"} == {f"15min LOGIT {tn}" for tn in B.TARGETS}
     for t in res["trials"]:
         if t["n"]:
@@ -195,7 +197,7 @@ def test_study_end_to_end_on_noise(monkeypatch):
                                       "5_reality_check_p_below_0p05"}
     for tid, m in res["models"].items():
         assert 0.40 < m["auc"] < 0.60, tid                                   # features are noise
-    assert res["family"]["trials"] == 33 and res["family"]["passes_all"] == []
+    assert res["family"]["trials"] == 15 and res["family"]["passes_all"] == []
     assert len(res["execution"]["by_imb15_decile"]) == 10
 
 
@@ -242,7 +244,7 @@ def test_main_end_to_end_with_a_mocked_vendor(tmp_path, monkeypatch):
     assert B.main(["--spot", "unused", "--out", str(out), "--trials", str(trials)]) == 0
     r = json.loads(out.read_text())
     assert r["cost_usd"] == 42.0 and r["trades"] == len(fr) and r["partition"] == "development" and calls["get_cost"] == 1
-    assert r["spot_bars_with_flow"] == 3000 and len([t for t in r["trials"] if t["kind"] == "rule"]) == 30
+    assert r["spot_bars_with_flow"] == 3000 and len([t for t in r["trials"] if t["kind"] == "rule"]) == 12
     lines = [json.loads(x) for x in trials.read_text().splitlines()]
     assert len(lines) == len(r["trials"]) and all(x["phase"] == "B5" and x["partition"] == "development" for x in lines)
     assert "passes all five" in B.summary(str(out))
@@ -265,13 +267,14 @@ def test_main_end_to_end_with_a_mocked_vendor(tmp_path, monkeypatch):
 
 
 def test_quote_only_downloads_nothing(tmp_path, monkeypatch):
-    calls = _fake_databento(monkeypatch, 87.25, _trades([("2021-03-01 10:00:00", "B", 1, 1.0, 1.1, 1, 1, 1)]))
+    calls = _fake_databento(monkeypatch, 80.0, _trades([("2021-03-01 10:00:00", "B", 1, 1.0, 1.1, 1, 1, 1)]))
     monkeypatch.setenv("DATABENTO_API_KEY", "test-key")
     out = tmp_path / "q.json"
     assert B.main(["--spot", "unused", "--out", str(out), "--trials", str(tmp_path / "t.jsonl"), "--quote-only"]) == 0
     q = json.loads(out.read_text())
-    assert q["quote_usd"] == 87.25 and calls == {"get_range": 0, "get_cost": 1} and not (tmp_path / "t.jsonl").exists()
-    assert B.summary(str(out)).startswith("quote $87.25")
+    assert q["quote_usd"] == 80.0 and q["schema"] == "trades" and q["alternatives_usd"] == {"tbbo": 120.0}
+    assert calls == {"get_range": 0, "get_cost": 2} and not (tmp_path / "t.jsonl").exists()
+    assert B.summary(str(out)).startswith("quote $80.00") and "tbbo $120.00" in B.summary(str(out))
 
 
 def test_rerun_guard_and_missing_key(tmp_path, monkeypatch):
@@ -285,7 +288,18 @@ def test_rerun_guard_and_missing_key(tmp_path, monkeypatch):
 
 
 def test_declared_constants():
-    assert (B.DATASET, B.SCHEMA, B.SYMBOL, B.STYPE) == ("GLBX.MDP3", "tbbo", "GC.v.0", "continuous")
+    assert (B.DATASET, B.SCHEMA, B.SYMBOL, B.STYPE) == ("GLBX.MDP3", "trades", "GC.v.0", "continuous")   # amendment A1
     assert B.TARGETS == {"T10": (10.0, 10.0), "T15": (15.0, 10.0), "T20": (20.0, 10.0)}
     assert (B.PCT, B.PCT_BARS, B.BLOCKS, B.TOP_Q, B.AUC_MIN, B.Z_MIN, B.BH_Q, B.RC_P) == (0.90, 2000, 6, 0.90, 0.55, 2.0, 0.10, 0.05)
-    assert B.MAX_COST_USD == 100.0 and B.RULE_FEATURES == ("imb15", "imb60", "ofi15", "ofi60", "qimb") and len(B.MODEL_FEATURES) == 9
+    assert B.MAX_COST_USD == 100.0 and B.RULE_FEATURES == ("imb15", "imb60") and B.MODEL_FEATURES == ("imb1", "imb5", "imb15", "imb60", "ntr_z")
+    assert B.COLS == ("side", "size", "instrument_id") and B.DIRECTIONAL == ("imb1", "imb5", "imb15", "imb60")
+
+
+def test_trades_frames_without_a_book_still_give_flow_features():
+    rows = [("2021-03-01 10:00:30", "B", 5, 1700.0, 1700.1, 10, 20, 7), ("2021-03-01 10:11:00", "A", 3, 1700.0, 1700.1, 12, 18, 7)]
+    f = B.bar_features(_trades(rows)[list(B.COLS)])
+    r0 = f.iloc[0]
+    assert (r0["buy"], r0["sell"], r0["buy5"], r0["sell5"], r0["n"]) == (5.0, 3.0, 0.0, 3.0, 2.0)
+    assert np.isnan(r0["qimb"]) and np.isnan(r0["spread"]) and np.isnan(r0["ofi"]) and r0["inst"] == 7
+    ff = B.finish_features(f)
+    assert ff["imb15"].iloc[0] == pytest.approx(0.25) and np.isnan(ff["ofi15"].iloc[0])
