@@ -78,8 +78,18 @@ def test_rule(P: b2.Paths, df: pd.DataFrame, tf_sec: int, level: float, tp: floa
                        for nm, v in (("long", 1), ("short", -1))}}
 
 
+def already_run(registry: str) -> bool:
+    """One time only: a validation record for this registration in the trial registry closes it."""
+    if not os.path.exists(registry):
+        return False
+    with open(registry) as f:
+        return any(f'"registration": "{REG_ID}"' in line and '"partition": "validation"' in line for line in f)
+
+
 def run(rd: str, outp: str, registry: str) -> dict:
     reg = registration()
+    if already_run(registry):
+        raise RuntimeError(f"{REG_ID} has already been run once (see {registry}); the result is final")
     m15 = H.partition(history.load(rd, "XAU/USD", "15min"), "validation", REG_ID)   # raises unless approved
     h1 = H.partition(history.load(rd, "XAU/USD", "1h"), "validation", REG_ID)
     P = b2.Paths(m15)

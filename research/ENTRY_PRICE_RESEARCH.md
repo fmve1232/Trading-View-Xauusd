@@ -233,3 +233,47 @@ the literature describes: limit orders fill when price is coming against you, wh
 - Elder, Miao & Ramchander (2012), macroeconomic news and metal futures — https://mountainscholar.org/handle/10217/206884
 - Limit-order adverse selection — https://arxiv.org/pdf/1409.1442 ; https://arxiv.org/html/2502.18625v2 ; https://arxiv.org/pdf/2409.12721
 - Meta-labeling and triple-barrier labels (summaries of López de Prado 2018) — https://hudsonthames.org/does-meta-labeling-add-to-signal-efficacy/
+
+## 5. Validation of the one lead: registration B4-RN-V1 — FAIL (2026-11-01)
+
+**Procedure.**
+- The registration (`research/registrations/B4-RN-V1.json`) was committed **before** the data was read (`7a5e621d9`).
+- The operator's approval ("approve B4-RN-V1 and merge") was recorded and committed (`c2c8664c6`).
+- The sealed validation partition (2023-01-24 → 2024-06-30) was then read **once** by `quantum/research/validate_rn.py`.
+- The runner now refuses a second run, enforced by the trial registry (tested).
+
+**Primary test.** A 15-minute close through a $100 level, entering in the direction of the cross, at +$15 / −$10:
+
+| | Validation (unseen) | Development (where the lead came from) |
+|---|---|---|
+| Trades | 65 | 212 |
+| Success | **41.5%** (95% 30–54%) | 47.6% (95% 41–54%) |
+| Random entries, same direction mix | 40.3% | 39.7% |
+| Edge over random | **+1.2 points** (z +0.20, p 0.42) | +7.9 points (z +2.35) |
+| Break-even after costs | 43.3% | 43.3% |
+| Net per trade | **−0.044 R ≈ −$22** at 0.5 lot (t −0.29) | +0.108 R ≈ +$54 (t +1.25) |
+| P1 (beat random, z ≥ 1.645) | **fail** | — |
+| P2 (net > 0, t ≥ 1.645) | **fail** | — |
+
+**Verdict: FAIL. As registered, the round-number continuation lead is closed.** No re-run with changed parameters.
+
+**How the primary result broke down:**
+- By half-year: 46% (2023 H1), 41% (2023 H2), 38% (2024 H1).
+- By direction: buys 36%, sells 50%. This is the reverse of development, where buys carried the effect.
+
+**Secondary results** (reported, **not deciding**: using them to rescue the hypothesis would be cherry-picking):
+
+| Variant | n | Success | Random | z | Net per trade |
+|---|---|---|---|---|---|
+| $100 cross, +$10 | 67 | 50.7% | 49.8% | +0.15 | −$32 |
+| $100 cross, +$20 | 61 | 39.3% | 33.6% | +0.95 | +$49 |
+| $50 cross, +$15 | 148 | 46.6% | 40.2% | +1.59 | +$38 |
+| 1h $100 cross, +$20 | 41 | 31.7% | 33.7% | −0.28 | −$73 |
+
+**What it means.** The development edge shrank from +7.9 to +1.2 points on unseen data. That is the usual fate of the
+best of many tries: a selection effect, not a market property. The validation step exists to catch exactly this.
+
+**Totals:**
+- **448 development trials and 1 validation test.**
+- **No setup, filter, confirmation, entry-price method or round-number rule has shown a TP-first rate reliably above
+  random entries, let alone 90%.**

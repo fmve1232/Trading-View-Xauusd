@@ -34,3 +34,10 @@ def test_validation_stays_sealed_until_the_operator_approves():
             H.partition(_DF, "validation", V.REG_ID)
     with pytest.raises(H.SealedPartition):              # never the holdout under this registration
         H.partition(_DF, "holdout", V.REG_ID)
+
+
+def test_the_registration_has_been_run_once_and_cannot_run_again(tmp_path):
+    assert V.already_run("research/trials.jsonl")            # 2026-11-01: run once, verdict FAIL
+    with pytest.raises(RuntimeError):
+        V.run(str(tmp_path), str(tmp_path / "out.json"), "research/trials.jsonl")
+    assert not V.already_run(str(tmp_path / "none.jsonl"))
