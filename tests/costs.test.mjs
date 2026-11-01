@@ -42,3 +42,41 @@ test("news multiplier widens spread + slippage only; Wilson and window state", (
   assert.equal(C.newsState(news, 1000000 + 1801).in_window, null);
   assert.equal(C.newsState(news, 1000000 + 1801).next.name, "CPI");
 });
+
+test("Your trade: dollars to price, cost, break-even (SL $500 / TP $1,000 / TP $100 at 0.5 lot)", () => {
+  const T = C.tradeMath(500, 1000, 0.5, 0.77);
+  assert.equal(T.oz, 50);
+  assert.ok(Math.abs(T.sl - 10) < 1e-12 && Math.abs(T.tp - 20) < 1e-12);
+  assert.ok(Math.abs(T.cost - 38.5) < 1e-9);
+  assert.ok(Math.abs(T.be - (500 + 38.5) / 1500) < 1e-12);         // 35.9%
+  const U = C.tradeMath(500, 100, 0.5, 0.77);
+  assert.ok(Math.abs(U.tp - 2) < 1e-12 && Math.abs(U.be - 538.5 / 600) < 1e-12);   // 89.75%
+  assert.equal(C.tradeMath(0, 100, 0.5, 0.77), null);
+  assert.equal(C.tradeMath(500, 100, 0, 0.77), null);
+  assert.ok(Number.isNaN(C.tradeMath(500, 100, 0.5, NaN).be));
+});
+
+test("Your trade: an off-grid trade is read on a stricter cell (harder TP, tighter SL)", () => {
+  const R = { tp_grid: [1, 2, 3, 4], sl_grid: [2, 5, 10, 20] };
+  assert.deepEqual(C.raceIndex(R, 2, 10), { i: 1, j: 2, tp: 2, sl: 10, exact: true });
+  const x = C.raceIndex(R, 2.3, 9);                                  // TP 2.3 -> 3 (harder), SL 9 -> 5 (tighter)
+  assert.equal(x.tp, 3); assert.equal(x.sl, 5); assert.equal(x.exact, false);
+  assert.equal(C.raceIndex(R, 5, 10), null);                         // TP beyond the grid
+  assert.equal(C.raceIndex(R, 2, 1), null);                          // SL inside the smallest
+  assert.equal(C.raceIndex(R, 2.0000000001, 10).exact, true);         // float noise from $ / oz
+});
+
+test("Your trade: cell arithmetic and the direction-matched random baseline", () => {
+  const ix = { i: 0, j: 0 };
+  const src = { n: 10, long: 6, short: 4, win: [[7]], loss: [[2]], mark: [[1.5]] };
+  const c = C.raceCell(src, ix, 1000, 500, 50, 40);
+  assert.equal(c.open, 1); assert.equal(c.p, 0.7);
+  assert.ok(Math.abs(c.ev - ((7 * 1000 - 2 * 500 + 1.5 * 50) / 10 - 40)) < 1e-9);
+  const R = { random: { long: { n: 100, win: [[40]], loss: [[60]], mark: [[0]] }, short: { n: 100, win: [[20]], loss: [[80]], mark: [[0]] } } };
+  const m = C.matchedRandom(R, src, ix, 1000, 500, 50, 40);
+  assert.ok(Math.abs(m.p - (6 * 0.4 + 4 * 0.2) / 10) < 1e-12);
+  const onlyShort = C.matchedRandom(R, { long: 0, short: 5 }, ix, 1000, 500, 50, 40);
+  assert.ok(Math.abs(onlyShort.p - 0.2) < 1e-12);
+  assert.ok(Number.isNaN(C.matchedRandom(R, { long: 0, short: 0 }, ix, 1000, 500, 50, 40).p));
+  assert.ok(Number.isNaN(C.raceCell({ n: 0, win: [[0]], loss: [[0]], mark: [[0]] }, ix, 1, 1, 1, 0).ev));
+});

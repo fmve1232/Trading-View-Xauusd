@@ -153,7 +153,8 @@ def test_no_random_or_synthetic_price_paths_in_production():
     for rel in ("site/app.js", "relay/worker.js", "scheduler/worker.js"):
         src = _read(rel)
         assert not re.search(r"Math\.(random|sin|cos)\s*\(", src), rel
-    allowed = {"backtest.py", "market.py"}          # seeded bootstrap; the labelled offline test generator
+    allowed = {"backtest.py", "market.py",          # seeded bootstrap; the labelled offline test generator
+               "harness.py"}                         # research-only seeded bootstrap (Reality Check); never imported by production (below)
     for root, _, files in os.walk(os.path.join(ROOT, "quantum")):
         for fn in files:
             if fn.endswith(".py") and fn not in allowed:
@@ -161,6 +162,18 @@ def test_no_random_or_synthetic_price_paths_in_production():
                 assert not re.search(r"\bnp\.random\b|\bimport random\b|\brandom\.\w+\(", src), fn
     wf = _read(".github/workflows/quantum-site.yml")
     assert "--synthetic" not in wf
+
+
+def test_production_never_imports_the_research_package():
+    """quantum/research is research only (Phase B): the engine, the arms, the pipeline and the site payload must not
+    import it, so its exemptions above can never reach production."""
+    for root, _, files in os.walk(os.path.join(ROOT, "quantum")):
+        if os.path.basename(root) == "research" or "__pycache__" in root:
+            continue
+        for fn in files:
+            if fn.endswith(".py"):
+                src = open(os.path.join(root, fn), encoding="utf-8").read()
+                assert not re.search(r"from \.+research\b|from quantum\.research\b|import quantum\.research\b", src), fn
 
 
 def test_no_literal_gold_prices_in_the_page():
