@@ -3562,6 +3562,8 @@ Fixing the Pine alone would break parity with the system of record, so it is han
 - `dash_wiring.py`: (A) every trading label in every file shows its own quantity (L / S / R, SL / stop, TP1–3, entry: 48
   labelled values); (B) the plan's MT5 strings executed with sentinel prices; (C) every tuple return vs its call sites, by
   position (51 call sites). Controls: m08, TP1↔TP2, SL↔entry, a builder reading the wrong price, a reordered call site.
+- `dst_check.py`: the Master's DST tracker vs the IANA zones on all 50,112 1H trading bars of 2020–2027 in ~20 s
+  (m05 was caught only by the 25-minute `tf_check`). Controls: m05, the US end rule, the pre-v63 EU rule.
 - `const_parity.py`: 13 constant groups (regime, size haircut, SL multiple and clamp, BOS / liquidity scales, both entry
   gates, break buffer, SL band and buffer, TP min / max) == the website's engine, Master and Treatment. Controls: m13, m06,
   m07, the SL band.
@@ -3570,6 +3572,17 @@ Fixing the Pine alone would break parity with the system of record, so it is han
 PF rule at its boundary with 800 positions; control m15). `v90_mutation.py`'s suite gains v97_check, level_check,
 dash_wiring, const_parity. Tripwires refreshed: `refactor_check` (chain + `fix_v99.unfix` for the twins), `v94_check` §2
 anchored to `c18c4f765`, `value_map`.
+
+**B-14 (roadmap R8, Visuals): a NOT A GATE row** in the CHECKS · RISK section (full layout): the Master's dashboard
+items that cannot change its BUY / SELL: BIAS, EI confidence, sweeps, RSI divergence, SMT, CVD, value-area position,
+VIX, the 2s10s curve, H2 SETUP. Each is outside the DECISION slice (`v90_slice.py`); `dash_wiring.py` D re-runs the slice
+on every check and fails if a listed item ever reaches the DECISION (control: `biasLabel` wired into the BUY gate).
+Deliberately NOT listed: MACRO (its strength feeds the scores) and the liquidity destination (`liqDestLabel` /
+`liqDestDist` reach the plan; the audit's B-14 list had included it). `v86_check` §8 now counts 12 rows / 19 texts.
+**B-11 / B-12 / B-13:** no Visuals text exists for them. B-11's VWAP ±2σ band is never drawn (it only feeds the
+display-only EI count; its definition is an engine matter for the website). B-12 ("HV" = the last 50 bars) and B-13
+(live sweeps in the EI count) are Master-only: the literal edits would be token-neutral, but the Master has not been
+compiled since v83, so no cosmetic Master change is stacked on the v99 fix; the NOT A GATE row covers B-13's reading.
 
 **m12 (EMA20 colour) has no test:** no operator requirement for the colour is recorded, and a test freezing colours
 would be another tripwire.

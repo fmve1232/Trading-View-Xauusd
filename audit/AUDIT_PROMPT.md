@@ -24,7 +24,7 @@ scope, and no other build of these scripts is in scope.
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5443 | 347313 | `30b00b7179fe8a31851fb76a072e5d9bca2709b8bfc1d793d78fd820c31d0b3a` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 401 | 29668 | `2007716791180f4e6e43ea1cde135cf9673b4f45d87bc33cdf3379b12fff1354` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2437 | 183355 | `92f5a312addcbf2ad815086dcee99c5b62b92ef10efa92ea78d673735e9e808b` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2443 | 183899 | `3e88412dd9a9d659dd747c7c46b597e112ce6cdb5518fce0ba217bf55ca408b0` |
 | `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5669 | 363420 | `b877eb0949f65c801b627761ec868e99d36635e91ffbf45ad01f75a002835bb6` |
 | `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5652 | 362666 | `a0f77696cb68fb962d778e5cd62bc454965141887f7e25235a34389e27e8a3a1` |
 

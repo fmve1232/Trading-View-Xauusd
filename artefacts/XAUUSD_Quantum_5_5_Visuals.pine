@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v99   (day rollover = website key)   ║
+// ║  BUILD STAMP — this file last CHANGED in v99   (rollover; NOT A GATE row)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -2314,6 +2314,12 @@ if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show
         _tmHead(r, "CHECKS · RISK", "display only · v86", _tmSec)
         r += 1
         _tmRow(r, "SCORE", "the Master's L / S / R and mP are SCORES, not win odds" + (_cmp ? "" : "\nmP measured out of sample (audit, Oct 2026): AUC 0.48-0.53,\nno better than chance; trust the levels, not the %"), _amb)
+        // v99 (B-14 / R8): the Master's dashboard items that CANNOT change its BUY / SELL (outside the DECISION slice,
+        // audit/tools/v90_slice.py; dash_wiring.py D re-checks every name on each run). Not listed although they look
+        // like context: MACRO (its strength feeds the scores) and the liquidity destination (it reaches the plan).
+        if not _cmp
+            r += 1
+            _tmRow(r, "NOT A GATE", "BIAS · EI conf · sweeps · RSI div · SMT\nCVD · value area · VIX · 2s10s · H2 SETUP: context only", _tmK)
         r += 1
         _tmRow(r, "NEWS", (nwNowIn ? "IN THE WINDOW · " : "next ") + nwNext + (na(nwMs) or nwNowIn ? "" : " · in " + f_dur(nwMs)) + (_cmp ? "" : "\nwindow −" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min · official BLS / Fed dates · the Master's engine neither blocks nor re-costs news"), nwLv == 2 ? _tmDn : nwLv == 1 ? _amb : _tmV)
         r += 1

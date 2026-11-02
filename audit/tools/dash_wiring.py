@@ -10,6 +10,9 @@
      MT5 offset, rounded as Pine's "#.##" does.
   C  tuples: for every user function that returns a list of names and every call site that destructures it into names,
      each name the two share sits at the SAME position (a reordered tuple shows one value under another's name).
+  D  Visuals' NOT A GATE row (v99, B-14): every Master item it names is OUTSIDE the DECISION slice (v90_slice.py, a
+     lexical over-approximation: outside = provably no influence on shouldBuy / shouldSell / tqVeto / _confDirLabel),
+     and every name in the row has a mapping here (the row cannot gain an unchecked item).
 Positive controls (each must be detected): m08 (L / S swapped in the SIGNAL cell), TP1 <-> TP2 in the DECISION cell,
 SL <-> entry in the plan strip, the plan builders' SL / TP1 sentinels swapped, a reordered f_tradePlan call site.
 Usage: python3 audit/tools/dash_wiring.py"""
@@ -161,6 +164,42 @@ def layer_c(src):
     return n, bad
 
 
+NOT_A_GATE = {"BIAS": ["biasLabel"], "EI conf": ["confLabel"], "sweeps": ["liqSweepBull", "liqSweepBear"],
+              "RSI div": ["bullRsiDiv", "bearRsiDiv"], "SMT": ["smtBullPair", "smtBearPair"], "CVD": ["cvd", "cvdBull", "cvdBear"],
+              "value area": ["vaPos"], "VIX": ["vixD"], "2s10s": ["curve2s10s", "curveState"], "H2 SETUP": ["h2Long", "h2Short"]}
+
+
+def dslice(master_src):
+    """the DECISION slice of a Master text, computed by v90_slice.py as written (its file path pointed at a copy)"""
+    import contextlib
+    import io
+    import tempfile
+    with tempfile.NamedTemporaryFile("w", suffix=".pine", delete=False, encoding="utf-8") as t:
+        t.write(master_src)
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "v90_slice.py"), encoding="utf-8").read()
+    src = src.replace('F = "artefacts/XAUUSD_Quantum_5_0_Master.pine"', f"F = {t.name!r}", 1)
+    g = {"__name__": "__main__", "__file__": os.path.join(os.path.dirname(os.path.abspath(__file__)), "v90_slice.py")}
+    argv, sys.argv = sys.argv, ["v90_slice.py"]
+    try:
+        with contextlib.redirect_stdout(io.StringIO()):
+            exec(compile(src, "v90_slice.py", "exec"), g)
+    finally:
+        sys.argv = argv
+        os.unlink(t.name)
+    return g["seen"]
+
+
+def layer_d(master_src, visuals_src):
+    row = next(l for l in visuals_src.split("\n") if '_tmRow(r, "NOT A GATE", ' in l)
+    text = re.search(r'"NOT A GATE", "([^"]*)"', row).group(1).replace("\\n", " · ").replace(": context only", "")
+    items = [x.strip() for x in text.split("·") if x.strip()]
+    unmapped = [x for x in items if x not in NOT_A_GATE]
+    seen = dslice(master_src)
+    reach = [(x, v) for x in items if x in NOT_A_GATE for v in NOT_A_GATE[x] if v in seen]
+    missing = [(x, v) for x in items if x in NOT_A_GATE for v in NOT_A_GATE[x] if not re.search(rf"\b{v}\b", master_src)]
+    return items, unmapped, reach, missing
+
+
 if __name__ == "__main__":
     print("== A  label -> value rules (every display string)")
     tot = {}
@@ -182,6 +221,11 @@ if __name__ == "__main__":
         n, bad = layer_c(open(f, encoding="utf-8").read())
         if n:
             report(not bad, f"{f.split('/')[-1]}: {n} call sites" + ("" if not bad else f": {bad[:4]}"))
+    print("== D  Visuals' NOT A GATE row: each named Master item is outside the DECISION slice")
+    vsrc = open("artefacts/XAUUSD_Quantum_5_5_Visuals.pine", encoding="utf-8").read()
+    items, unmapped, reach, missing = layer_d(msrc, vsrc)
+    report(not unmapped and not reach and not missing and len(items) == len(NOT_A_GATE),
+           f"{len(items)} items ({', '.join(items)}): unmapped {unmapped}, reaching the DECISION {reach}, not in the Master {missing}")
     print("== positive controls (each must be detected)")
     ctl = {
         "m08 L / S swapped in the SIGNAL cell": ('"\\nscore L " + _si(na(fBullScore) ? 50 : fBullScore) + " S " + _si(na(fBearScore) ? 50 : fBearScore)',
@@ -203,6 +247,10 @@ if __name__ == "__main__":
             mut = msrc.replace(o, n_)
         hit = bool(layer_a(mut)[1]) if layer == "a" else bool(layer_b(mut)) if layer == "b" else bool(layer_c(mut)[1])
         report(hit, f"control {name}: detected")
-    print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- A / C read the Pine as written, B executes it; "
+    wired = msrc.replace("shouldBuy = buyPreFilters and (bullStructActive or displacementUp)",
+                         "shouldBuy = buyPreFilters and (bullStructActive or displacementUp) and biasLabel != \"\"")
+    assert wired != msrc
+    report(bool(layer_d(wired, vsrc)[2]), "control D: biasLabel wired into the BUY gate is detected")
+    print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- A / C / D read the Pine as written, B executes it; "
           "TradingView runtime NOT exercised")
     sys.exit(1 if fails else 0)

@@ -44,8 +44,8 @@ MUT = {
           for f in (M, S, "artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine", "artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine",
                     "artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine", "artefacts/XAUUSD_Quantum_5_0_Brief.pine")]),
  "m14": ("Visuals cost row drops commission",
-         [(V, "float ckCost = (ckSpread + 2.0 * slippagePts) + commissionL / math.max(pointValue, 1.0)",
-              "float ckCost = (ckSpread + 2.0 * slippagePts)")]),
+         [(V, "float ckCost = (ckSpread + 2.0 * slippagePts) * (nwBarIn ? nwCostMult : 1.0) + commissionL / math.max(pointValue, 1.0)",
+              "float ckCost = (ckSpread + 2.0 * slippagePts) * (nwBarIn ? nwCostMult : 1.0)")]),   # v99: re-anchored (v92 news multiplier)
  "m15": ("scorecard PF rule 1.2 -> 1.0 in the three twins identically",
          [(f, "bool _fwpfOk = _fwgl > 0 ? _fwpf >= 1.2 : _fwgw > 0", "bool _fwpfOk = _fwgl > 0 ? _fwpf >= 1.0 : _fwgw > 0")
           for f in (S, "artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine", "artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine")]),
@@ -62,7 +62,7 @@ SUITE = ["precheck", "undeclared", "order", "deadcode", "pinelimits", "diag_pari
          "refactor_check", "inputs_check", "bug_scan", "pine_web_parity", "macro_check", "moved_check", "edgecase_cites",
          "value_map --check", "v86_check", "compile_est", "brief_trace", "v91_check", "v92_check", "v93_check", "v94_check", "sx_check",
          "v97_check", "level_check", "dash_wiring",
-         "const_parity"]   # v99: + v97_check, level_check (m09 / m17), dash_wiring (m08), const_parity (m13)
+         "const_parity", "dst_check"]   # v99: + v97_check, level_check (m09 / m17), dash_wiring (m08), const_parity (m13)
 STATIC = {"precheck", "undeclared", "order", "deadcode", "pinelimits"}
 
 

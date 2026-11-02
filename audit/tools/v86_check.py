@@ -540,7 +540,7 @@ for _ in range(1500):
                 nan8.append((who, str(out)[:60]))
         except Exception as ex:          # noqa: BLE001
             err8.add((who, str(ex)[:60]))
-report(not nan8 and not err8 and len(rows8) == 11 and len(texts) == 18,   # v93: + the BRACKET row
+report(not nan8 and not err8 and len(rows8) == 12 and len(texts) == 19,   # v93: + the BRACKET row; v99: + NOT A GATE (B-14)
        f"8 new texts (panel CHECKS rows {len(rows8)}, tiles 6 / 7, banner) executed with missing data, every derived value from "
        f"the Pine's own lines: {len(texts)} texts, {n8} evaluations, {len(nan8)} showed NaN, {len(err8)} could not be evaluated"
        + (f" -- e.g. {nan8[:2]} {sorted(err8)[:2]}" if nan8 or err8 else ""))

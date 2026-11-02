@@ -342,10 +342,11 @@ None of these are implemented. Each needs a pre-registered amendment on the webs
 | 3 | B-06: scorecard in R | Medium | twins identical (hunk counts) | Low | Display matches the registered rule |
 | **4: Execution / risk** | R2 / B-03 (display part): news cost multiplier in Visuals' COST / RISK rows. **DONE v92 (F-A83)**; engine part still needs a website amendment | Medium | broker spreads (operator) | Low | Honest cost at release minutes |
 | 4 | B-04: spread tiers as broker-sourced values | Low | broker data | Low | Session costs become real |
-| **5: Dashboard / performance** | B-14 / R8: decision vs context markers | Medium | Visuals only | Low | Less over-reading |
-| 5 | B-11 / B-12 / B-13: label wording (VWAP band, "HV" relative to 50 bars, live sweep) | Low | — | Low | Accuracy of wording |
+| **5: Dashboard / performance** | B-14 / R8: decision vs context markers. **DONE v99** (Visuals NOT A GATE row, checked against the slice by `dash_wiring` D; the liquidity destination is NOT context: it reaches the plan) | Medium | Visuals only | Low | Less over-reading |
+| 5 | B-11 / B-12 / B-13: label wording (VWAP band, "HV" relative to 50 bars, live sweep). **Assessed v99:** no Visuals text; B-11 is an engine definition (website), B-12 / B-13 Master-only, deferred until a compile (B-13's reading covered by NOT A GATE) | Low | — | Low | Accuracy of wording |
 | 5 | B-07: rename `tpDist` (identical-output check) | Low | `refactor_check` | Low | Fewer future errors |
 | **6: Validation / release** | C-02: `bug_scan` exits 1 above a triaged allowlist. **DONE v91 (F-A81)** | High (process) | — | Very low | Repaint defects cannot pass silently |
+| 6 | Mutation gaps: **v99** `level_check` (m09 / m17), `dash_wiring` (m08), `const_parity` (m13 / m06 / m07), `dst_check` (m05), `h2_trace` ties (m16), `expectancy_check` PF boundary (m15); m12 has no specification. Found F-A87 (fixed) and F-A88 (website first) |
 | 6 | Add tests E1–E10 (Report 11) | Medium | — | Medium | Edge-case coverage |
 | 6 | **Compile v86–v90 in TradingView**; EdgeCases chart run; broker specification | **Blocking** | operator | — | Turns "unverified" into verified |
 
