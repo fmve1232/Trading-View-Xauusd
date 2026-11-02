@@ -426,6 +426,26 @@ separately.
 | m17 | CDH / CDL never reset at the NY day boundary | — (tf_check also passes it) | — | refactor, v86 §9 | **Tripwire-only** |
 | m18 | Kelly Wilson z 1.96 → 1.645 | formula_trace | — | refactor, v86 §9 | **Caught** |
 
+**v99 re-run (2026-11-02, the same 18 mutants on build v99, the suite plus `level_check`, `dash_wiring`,
+`const_parity`, `dst_check` and the extended `h2_trace` / `expectancy_check`): 17 / 18 caught by a behavioural test.**
+
+| Mutant | v90 | v99 | Caught by (v99, semantic) |
+|---|---|---|---|
+| m01 repaint | read the screen | CAUGHT | bug_scan (a gate since v91) |
+| m03 lot rounding | tripwire-only | CAUGHT | v91_check |
+| m05 DST rule | tf_check only | CAUGHT | dst_check (~20 s) |
+| m08 L / S swapped | tripwire-only | CAUGHT | dash_wiring, v94_check |
+| m09 PDH reads the low | incidental | CAUGHT | level_check, deadcode |
+| m10 mid-candle alert | read the screen | CAUGHT | bug_scan |
+| m13 constant in every copy | tripwire-only | CAUGHT | const_parity |
+| m15 scorecard PF rule | tripwire-only | CAUGHT | expectancy_check §3b |
+| m16 H2 sweep tie | tripwire-only | CAUGHT | h2_trace (exact ties) |
+| m17 CDH never resets | tripwire-only | CAUGHT | level_check |
+| m12 EMA20 colour | MISSED | MISSED | no recorded requirement; a colour test would be a tripwire |
+
+m02, m04, m06, m07, m11, m14, m18 stay caught (m06 / m07 now also by const_parity). m14 was re-anchored to the v92
+cost line (same defect). The new checkers also found a real defect, F-A87 (fixed v99), and F-A88 (website first).
+
 **Summary: 9 / 18 caught by a behavioural test** (8 by the fast suite, m05 only by the 25-minute `tf_check`), including 2 only through `bug_scan`'s printed counts. **Since v91 `bug_scan` exits 1 on both of those (F-A81).** The rest:
 
 | Outcome | Count | Mutants |

@@ -3584,6 +3584,8 @@ display-only EI count; its definition is an engine matter for the website). B-12
 (live sweeps in the EI count) are Master-only: the literal edits would be token-neutral, but the Master has not been
 compiled since v83, so no cosmetic Master change is stacked on the v99 fix; the NOT A GATE row covers B-13's reading.
 
+**Mutation re-run (all 18 v90 mutants on v99): 17 / 18 caught by a behavioural test** (v90: 9 / 18); table in
+`audit/v90_audit/AUDIT_REPORT_v90.md`.
 **m12 (EMA20 colour) has no test:** no operator requirement for the colour is recorded, and a test freezing colours
 would be another tripwire.
 
