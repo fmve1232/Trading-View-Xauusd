@@ -216,6 +216,14 @@ if __name__ == "__main__":
             o = analyse(f"{arm.upper()} {tf}", T, rng)
             res.append(o)
             print(fmt(o))
+            # v98 (F-A86): after an engine restart the earlier records move to holdout/archive; each archived freeze key
+            # is analysed on its own, never pooled with the current one (the site's rule, research/03 7)
+            A = load(f"archive/{tf}_{arm}") or []
+            for k in sorted({t.get("freeze_key", "") for t in A}):
+                Tk = [t for t in A if t.get("freeze_key", "") == k]
+                o = analyse(f"{arm.upper()} {tf} (archived, key ..{k.split(':')[1][:8] if ':' in k else k[:8]})", Tk, rng)
+                res.append(o)
+                print(fmt(o))
     if "--json" in sys.argv:
         json.dump(res, open(sys.argv[sys.argv.index("--json") + 1], "w"), default=str, indent=1)
     ref = subprocess.run(["git", "log", "-1", "--format=%H %ci", BR], capture_output=True, text=True).stdout.strip()

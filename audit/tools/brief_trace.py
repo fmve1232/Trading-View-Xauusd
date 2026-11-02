@@ -306,11 +306,18 @@ report("gold arrows: colour == direction for gold (green ▲ / red ▼ / grey �
 # N = 50 and t = -2, every timeframe the Brief types a record for, and one it does not
 dl = js[js.index('const doNow = '):]
 dl = dl[:dl.index(';') + 1]
+# v98 (F-A86): since web.7 the site's h4Losing = losingRec(current record) OR losingRec(the previous engine's archived
+# record); both lines are taken from app.js and run as written. The Brief types ONE record per timeframe: the one the
+# verdict comes from (a losing current record, else a losing archived one, else either). Every (current, previous)
+# pair below is run in Node; the Brief is run once per record the rule allows it to type.
+ln = js[js.index('const losingRec = '):]
+ln = ln[:ln.index('\n')]
 hl = js[js.index('const h4Losing = '):]
 hl = hl[:hl.index('\n')]     # the whole one-line definition (its body has ';' inside)
 DECS = ['RISK LOCK', 'NO TRADE', 'BUY', 'SELL', 'WARMUP', 'WAIT']
 RECS = [(0, 0.0, 0.0), (49, -0.5, 0.6), (50, -0.5, 0.6), (50, -0.17, 0.6), (511, -0.1789, 0.8513), (171, -0.092, 0.8006),
         (60, 0.3, 0.7), (60, -0.2, 0.0), (1, -1.0, 0.5)]
+PREVS = [None, (50, -0.5, 0.6), (171, -0.092, 0.8006), (511, -0.1789, 0.8513), (49, -0.5, 0.6)]
 TFS = ['5', '15', '60', '240', 'D']
 
 
@@ -318,47 +325,103 @@ def tstat(n_, m_, s_):
     return m_ / (s_ / math.sqrt(n_)) if s_ > 0 and n_ > 1 else None
 
 
-cases = [(d, s_, b_, n_, m_, sd_) for d in DECS for s_ in (True, False) for b_ in (True, False) for (n_, m_, sd_) in RECS]
-nodejs2 = ("const isNum = (x) => typeof x === 'number' && isFinite(x); " + hl + " const out = []; for (const [dec, s, b, n, t] of "
-           + json.dumps([(d, s_, b_, n_, tstat(n_, m_, sd_)) for d, s_, b_, n_, m_, sd_ in cases]) + ") { const D = {h4: {forward: {n: n, t_stat: t}}};"
+def losing(r):                       # reference for the typing rule only; the verdict compared is the site's own line
+    return r is not None and r[0] >= 50 and tstat(*r) is not None and tstat(*r) <= -2
+
+
+def typed(cur, prev):
+    if losing(cur):
+        return [cur]
+    if losing(prev):
+        return [prev]
+    return [cur] + ([prev] if prev is not None else [])
+
+
+def jrec(r):
+    return None if r is None else {"n": r[0], "t_stat": tstat(*r)}
+
+
+cases = [(d, s_, b_, c_, p_) for d in DECS for s_ in (True, False) for b_ in (True, False) for c_ in RECS for p_ in PREVS]
+nodejs2 = ("const isNum = (x) => typeof x === 'number' && isFinite(x); " + ln + " " + hl + " const out = []; for (const [dec, s, b, fw, pv] of "
+           + json.dumps([(d, s_, b_, jrec(c_), jrec(p_)) for d, s_, b_, c_, p_ in cases]) + ") { const D = {h4: {forward: fw, previous: pv}};"
            " const sig = dec === 'BUY' || dec === 'SELL'; const pb0 = !sig ? {sell: s ? {} : null, buy: b ? {} : null} : null; "
            + dl + " out.push(doNow); } console.log(JSON.stringify(out));")
 site = json.loads(subprocess.run(['node', '-e', nodejs2], capture_output=True, text=True, check=True).stdout)
 DN, dnl = block(r'^    bool sig = _confDirLabel', r'^    string doNow = ')
 DN = [l for l in DN if l.startswith(('bool sig', 'string doNow'))]
 RL = [l for l in SRC if l.startswith(('string brTf = ', 'int brH4N = ', 'float brH4M = ', 'float brH4S = ', 'float brH4T = ', 'bool h4Losing = '))]
+nolose = {(d, s_, b_): w for (d, s_, b_, c_, p_), w in zip(cases, site) if c_ == (0, 0.0, 0.0) and p_ is None}
 bad = nst = 0
 for tf in TFS:
-    for (d, s_, b_, n_, m_, sd_), want in zip(cases, site):
-        e = P.Env(_confDirLabel=d, pbOK=s_ or b_, **{"timeframe.period": tf})
-        for k in ('5', '15', '60', '240'):     # the record typed for THIS timeframe; the others hold a different record
-            on = k == tf
-            e.update({f"brH4N{k}": float(n_ if on else 999), f"brH4M{k}": m_ if on else 1.0, f"brH4S{k}": sd_ if on else 0.5})
-        P.run(RL + DN, e)
-        exp = want if tf != 'D' else site[cases.index((d, s_, b_, 0, 0.0, 0.0))]     # no record typed for D: never losing
-        bad += e['doNow'] != exp
-        nst += 1
-report("DO NOW == site doNow with its h4Losing (engine DECISION x playbook sides x live H4 record x timeframe)", bad,
-       f"L{dnl}, {nst} states (Node)")
-# the Brief's typed record defaults == the ledger files recomputed (as of the ledger update they name)
+    for (d, s_, b_, c_, p_), want in zip(cases, site):
+        for rec in typed(c_, p_):
+            n_, m_, sd_ = rec
+            e = P.Env(_confDirLabel=d, pbOK=s_ or b_, **{"timeframe.period": tf})
+            for k in ('5', '15', '60', '240'):     # the record typed for THIS timeframe; the others hold a different record
+                on = k == tf
+                e.update({f"brH4N{k}": float(n_ if on else 999), f"brH4M{k}": m_ if on else 1.0, f"brH4S{k}": sd_ if on else 0.5})
+            P.run(RL + DN, e)
+            exp = want if tf != 'D' else nolose[(d, s_, b_)]     # no record typed for D: never losing
+            bad += e['doNow'] != exp
+            nst += 1
+report("DO NOW == site doNow with its losingRec / h4Losing (DECISION x playbook sides x current x archived H4 record x "
+       "timeframe; the Brief typed with every record the rule allows)", bad, f"L{dnl}, {nst} states (Node)")
+# positive control: the pre-v98 reading (verdict on the typed CURRENT record only) must disagree with the site somewhere
+ctl = sum(1 for (d, s_, b_, c_, p_), w in zip(cases, site) if p_ is not None and losing(p_) and not losing(c_)
+          and d not in ('BUY', 'SELL', 'RISK LOCK') and (s_ or b_) and w != nolose[(d, s_, b_)])
+report("7c control: typing only the current record would miss the site's archived-record verdict", 0 if ctl > 0 else 1,
+       f"{ctl} states differ")
+
+# the Brief's typed defaults vs the site's verdict recomputed from the ledger (current freeze key from manifest_h4,
+# previous = its history[-1], read from holdout/archive as quantum/report.py previous_record does)
 led_bad, led_note = 0, []
+
+
+def gshow(path):
+    return json.loads(subprocess.run(['git', 'show', f'origin/forward-ledger:{path}'], capture_output=True, text=True,
+                                     check=True).stdout)
+
+
+def rec_of(rows, key):
+    r_ = [t['r'] for t in rows if isinstance(t, dict) and not t.get('open') and t.get('freeze_key') == key]
+    if len(r_) < 2:
+        return (len(r_), r_[0] if r_ else 0.0, 0.0)
+    mu = sum(r_) / len(r_)
+    return (len(r_), mu, math.sqrt(sum((x - mu) ** 2 for x in r_) / (len(r_) - 1)))
+
+
+try:
+    man = gshow('holdout/manifest_h4.json')
+    cur_key, prev_key = man['freeze_key'], (man.get('history') or [{}])[-1].get('freeze_key', '')
+except (subprocess.CalledProcessError, KeyError, ValueError):
+    man = None
+    led_note.append("manifest_h4 NOT RUN (ledger not reachable)")
 for k, f in (('5', '5m_h4'), ('15', '15m_h4'), ('60', '1h_h4'), ('240', '4h_h4')):
+    if man is None:
+        break
     dN = int(re.search(rf'brH4N{k} = input\.int\((\d+),', "\n".join(SRC)).group(1))
     dM = float(re.search(rf'brH4M{k} = input\.float\(([-\d.]+),', "\n".join(SRC)).group(1))
     dS = float(re.search(rf'brH4S{k} = input\.float\(([-\d.]+),', "\n".join(SRC)).group(1))
     try:
-        rows = json.loads(subprocess.run(['git', 'show', f'origin/forward-ledger:holdout/{f}.json'], capture_output=True, text=True,
-                                         check=True).stdout)
+        cur = rec_of(gshow(f'holdout/{f}.json'), cur_key)
+        try:
+            prv = rec_of(gshow(f'holdout/archive/{f}.json'), prev_key) if prev_key else None
+        except subprocess.CalledProcessError:
+            prv = None
     except subprocess.CalledProcessError:
         led_note.append(f"{f} NOT RUN (ledger not reachable)")
         continue
-    r_ = [t['r'] for t in rows if isinstance(t, dict) and not t.get('open') and t['recorded_utc'] <= '2026-10-31T00:58:10']
-    mu = sum(r_) / len(r_)
-    sdv = math.sqrt(sum((x - mu) ** 2 for x in r_) / (len(r_) - 1))
-    ok = len(r_) == dN and abs(mu - dM) < 5e-5 and abs(sdv - dS) < 5e-5
+    if prv is not None and prv[0] == 0:
+        prv = None
+    site_l = losing(cur) or losing(prv)
+    ok_rec = any(r[0] == dN and abs(r[1] - dM) < 5e-5 and abs(r[2] - dS) < 5e-5 for r in typed(cur, prv))
+    ok = ok_rec and losing((dN, dM, dS)) == site_l
     led_bad += not ok
-    led_note.append(f"{f} N {len(r_)} mean {mu:.4f} sd {sdv:.4f} t {tstat(len(r_), mu, sdv):.2f}")
-report("H4 live-record defaults == the ledger files recomputed", led_bad, "; ".join(led_note))
+    fmt = lambda r: "none" if r is None else f"N {r[0]} t {tstat(*r):.2f}" if tstat(*r) is not None else f"N {r[0]}"
+    led_note.append(f"{f} current {fmt(cur)} / archived {fmt(prv)} -> site {'LOSING' if site_l else 'not losing'}, "
+                    f"typed N {dN} {'ok' if ok else 'WRONG'}")
+report("H4 typed records == the record the site's verdict uses, recomputed from the ledger (both keys)", led_bad,
+       "; ".join(led_note))
 
 print(f"RESULT: {'PASS' if fails == 0 else 'FAIL'} -- Pine text executed in Python against the website's code "
       "(arm_h4.py in Python, app.js in Node); TradingView runtime NOT exercised")

@@ -375,9 +375,38 @@ for _ in range(1500):
             continue
     n7v += 1
     bad7v += e7["lgVerdict"] != want
-# v89: the defaults of BOTH records == the ledger files recomputed (as of the ledger update 2026-10-31 00:58 UTC), each
-# default verdict == the pre-registered rule with the exact t, and the record-2 lines == the record-1 lines renamed
-LEDGER_ASOF = "2026-10-31T00:58:10"
+# v89: the defaults of BOTH records == the ledger files recomputed, each default verdict == the pre-registered rule with
+# the exact t, and the record-2 lines == the record-1 lines renamed.
+# v98 (F-A86): the website restarted at web.7 (2026-10-31 17:23 UTC), so the ledger file now holds only the new freeze
+# key; the old date filter left nothing, the ZeroDivisionError was caught and reported as "not reachable" inside a PASS.
+# Now the records are read by freeze key exactly as quantum/report.py does (current: manifest freeze_key in
+# holdout/{f}.json; archived: manifest history[-1] in holdout/archive/{f}.json); a default must equal one of them, and a
+# losing one (N >= 50, t <= -2) if either is losing. Unreachable = NOT RUN and FAILS the line; nothing is swallowed.
+
+
+def ledger_recs(f, arm):
+    def gs(path):
+        return json.loads(subprocess.run(["git", "show", f"origin/forward-ledger:{path}"], capture_output=True, text=True,
+                                         check=True).stdout)
+    man = gs(f"holdout/manifest_{arm}.json")
+    out = []
+    for nm, path, key in (("current", f"holdout/{f}.json", man["freeze_key"]),
+                          ("archived", f"holdout/archive/{f}.json", ((man.get("history") or [{}])[-1]).get("freeze_key"))):
+        if not key:
+            continue
+        r_ = [t["r"] for t in gs(path) if isinstance(t, dict) and not t.get("open") and t.get("freeze_key") == key]
+        if len(r_) < 2:
+            out.append((nm, len(r_), sum(x > 0 for x in r_), None, None, None))
+            continue
+        mu = sum(r_) / len(r_)
+        sdv = math.sqrt(sum((x - mu) ** 2 for x in r_) / (len(r_) - 1))
+        neg = -sum(x for x in r_ if x < 0)
+        out.append((nm, len(r_), sum(x > 0 for x in r_), mu, sdv, sum(x for x in r_ if x > 0) / neg if neg > 0 else None))
+    return out
+
+
+def rec_losing(n_, mu, sdv):
+    return n_ >= 50 and mu is not None and sdv and mu / (sdv / math.sqrt(n_)) <= -2
 
 
 def dflt(pfx):
@@ -403,17 +432,18 @@ for pfx, f in (("lg", "15m_h4"), ("lg2", "1h_h3")):
     P.run(lg if pfx == "lg" else [lg_names(l, "lg2") for l in lg], e7)
     dv[pfx] = (e7[pfx + "Verdict"], verdict(d_[0], d_[2], d_[3], d_[4]) if d_[0] > 1 else "UNDECIDED · N < 50")
     try:
-        rows = json.loads(subprocess.run(["git", "show", f"origin/forward-ledger:holdout/{f}.json"], capture_output=True, text=True,
-                                         check=True).stdout)
-        r_ = [t["r"] for t in rows if isinstance(t, dict) and not t.get("open") and t["recorded_utc"] <= LEDGER_ASOF]
-        mu = sum(r_) / len(r_)
-        sdv = math.sqrt(sum((x - mu) ** 2 for x in r_) / (len(r_) - 1))
-        pfv = sum(x for x in r_ if x > 0) / -sum(x for x in r_ if x < 0)
-        ok_ = (len(r_), sum(x > 0 for x in r_)) == d_[:2] and abs(mu - d_[2]) < 5e-5 and abs(sdv - d_[3]) < 5e-5 and abs(pfv - d_[4]) < 5e-5
-        led_ok &= ok_
-        ledger.append(f"{f} defaults == ledger (N {len(r_)}, wins {sum(x > 0 for x in r_)}, mean {mu:.4f}, sd {sdv:.4f}, PF {pfv:.4f}): {ok_}")
-    except (subprocess.CalledProcessError, KeyError, ZeroDivisionError, json.JSONDecodeError):
-        ledger.append(f"{f}: NOT RUN (forward-ledger branch not reachable)")
+        recs = ledger_recs(f, f.split("_")[1])
+    except (subprocess.CalledProcessError, json.JSONDecodeError):
+        led_ok = False
+        ledger.append(f"{f}: NOT RUN (forward-ledger branch not reachable) -> FAIL")
+        continue
+    match = [r for r in recs if r[3] is not None and (r[1], r[2]) == d_[:2] and abs(r[3] - d_[2]) < 5e-5
+             and abs(r[4] - d_[3]) < 5e-5 and r[5] is not None and abs(r[5] - d_[4]) < 5e-5]
+    any_l = any(rec_losing(r[1], r[3], r[4]) for r in recs)
+    ok_ = bool(match) and (not any_l or rec_losing(d_[0], d_[2], d_[3]))
+    led_ok &= ok_
+    ledger.append(f"{f} defaults == the {match[0][0] if match else 'NO'} record (" + ", ".join(
+        f"{r[0]} N {r[1]}" for r in recs) + f"; a losing one {'exists' if any_l else 'does not exist'}): {ok_}")
 report(bad7 == 0 and bad7r == 0 and bad7v == 0 and led_ok and rename_ok and all(a_ == b_ for a_, b_ in dv.values()),
        f"7 regime (4000 cases, mismatches {bad7}); lots = floor(risk / ((stop + cost) x $/pt) to 0.01), never above the risk, "
        f"cap lock (4000, mismatches {bad7r}); verdict vs the pre-registered rule with the exact t ({n7v} cases, mismatches "

@@ -107,7 +107,11 @@ if not rows:
     print("NOT RUN  3 real data: market-data branch not reachable")
 else:
     K = sorted(rows); T = [datetime.fromisoformat(k) for k in K]; B = [rows[k] for k in K]
+    # v98 (F-A86): since the web.7 restart (2026-10-31 17:23 UTC) the ledger file holds only the new freeze key; the
+    # earlier records are in holdout/archive (quantum/report.py previous_record), so both are read
     led = json.loads(subprocess.run(["git", "show", "origin/forward-ledger:holdout/5m_h3.json"], capture_output=True, text=True, check=True).stdout)
+    _arc = subprocess.run(["git", "show", "origin/forward-ledger:holdout/archive/5m_h3.json"], capture_output=True, text=True)
+    led = (json.loads(_arc.stdout) if _arc.returncode == 0 else []) + led
     sigs = {}
     for x in led:
         if isinstance(x, dict) and not x.get("open"):

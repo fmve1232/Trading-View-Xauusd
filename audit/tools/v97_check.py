@@ -123,7 +123,11 @@ if not rows:
     print("NOT RUN  3 real data: market-data not reachable")
 else:
     K = sorted(rows); T = [datetime.fromisoformat(k) for k in K]; B = [rows[k] for k in K]
+    # v98 (F-A86): since the web.7 restart (2026-10-31 17:23 UTC) the ledger file holds only the new freeze key; the
+    # earlier records are in holdout/archive (quantum/report.py previous_record), so both are read
     led = json.loads(subprocess.run(["git", "show", "origin/forward-ledger:holdout/5m_treatment.json"], capture_output=True, text=True, check=True).stdout)
+    _arc = subprocess.run(["git", "show", "origin/forward-ledger:holdout/archive/5m_treatment.json"], capture_output=True, text=True)
+    led = (json.loads(_arc.stdout) if _arc.returncode == 0 else []) + led
     sigs = {}
     for x in led:
         if isinstance(x, dict) and not x.get("open"):
@@ -139,6 +143,7 @@ else:
            f"TP2 {pp[1][0]}/{pp[1][0] + pp[1][1]}, TP3 {pp[2][0]}/{pp[2][0] + pp[2][1]} == the reference")
 
 v96v = subprocess.run(["git", "show", "eb8e08269:" + VF], capture_output=True, text=True, check=True).stdout
-report(F97.visuals(v96v) == "\n".join(VL), "4 Visuals == fix_v97.visuals(v96 @ eb8e08269), byte for byte")
+v97v = subprocess.run(["git", "show", "d8dc898ac:" + VF], capture_output=True, text=True, check=True).stdout   # v98 changed Visuals
+report(F97.visuals(v96v) == v97v, "4 Visuals @ v97 (d8dc898ac) == fix_v97.visuals(v96 @ eb8e08269), byte for byte")
 print(f"RESULT: {'PASS' if not fails else 'FAIL'} -- Pine text executed in Python; TradingView runtime NOT exercised")
 sys.exit(1 if fails else 0)

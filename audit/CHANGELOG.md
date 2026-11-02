@@ -3494,3 +3494,43 @@ exactly this request on 3 years of development data. B3 tested trend alignment, 
 after it passes on development data, and B3 rejected this family. A forward arm built on 6 forward trades would skip
 that rule. The next step is the operator's decision (see the chat).
 
+# v98 — the website's web.7 restart: records labelled as archived, four checkers repaired (2026-11-02)
+
+Found while preparing the v97 send (v97 was never sent; v98 replaces it). **F-A86.**
+
+**What changed on the website** (default branch @ `6725c68bb`, read only):
+- Engine web.7 (Amendment 14, 2026-10-31 17:23 UTC): a stop or target that a bar opens beyond fills at the open. Every
+  arm restarted on a new freeze key; the earlier records moved to `holdout/archive`.
+- The H4 verdict is now losingRec(current record) OR losingRec(the previous engine's archived record).
+
+**What it broke here:** `brief_trace` 7 (crash), `v86_check` 7 (a silent "NOT RUN" with a false reason inside a PASS),
+`v97_check` 3 (0 signals, FAIL), `v93_check` 3 (fewer signals). On the chart, the Brief's "H4 live" and Visuals' "as of
+2026-10-31 00:58" were wrong labels; the verdicts were right (each default equals the archived web.6 record exactly:
+5m 511 / t −4.75 losing, 15m 171, 1h 49, 4h 12; H3 1h 3; the web.7 records have N 14 / 6 / 0 / 0).
+
+**Changes:**
+- Brief (via `brief_panel.pine`, rebuilt): "H4 live" → "H4 record"; "as of" default "web.6 archived, to 2026-10-31 17:23
+  UTC"; the typing rule written down (a losing current record, else a losing archived one, else either).
+- Visuals: the record banner's "as of" default, the same text. Nothing else.
+- `brief_trace` 7: the site's `losingRec` and `h4Losing` lines run in Node with both records (6,840 states); positive
+  control: typing only the current record would miss the site's verdict in 108 states; the typed defaults == the
+  record the verdict uses, recomputed by freeze key from the ledger and `manifest_h4`.
+- `v86_check` 7: records by freeze key (current + archived); unreachable = FAIL; nothing swallowed. Mutation
+  `lgN` 171 → 172 is caught.
+- `v93_check` / `v97_check` 3: current + archived ledger (v97: 20 Treatment 5m signals; with the B3 confirmation
+  TP1 5 / 10, TP2 5 / 10, TP3 4 / 10, equal to the reference). `v97_check` 4 anchored to `d8dc898ac`.
+- `ledger_stats`: each archived freeze key listed on its own, never pooled.
+- `pine_web_parity` re-run against web.7: PASS (the outcome event is unchanged).
+
+**Website research B4: NOT declared.** The operator approved "declare it as research B4" (the Master's BUY / SELL + B3
+confirmation, −$10 / +$10 / +$15 / +$20). On reading the website before writing it:
+- "B4" is already used (entry-price hypotheses, 48 trials, declared 2026-11-01).
+- The website states the engine **cannot be replayed on its development data** (`b6_mtf_live.py`: the research history
+  has no volume, so the volume-gated signals cannot fire). A test of the engine's signals on development data cannot run.
+- The engine's signals on the live window were measured by the website already: B6-explore (all signals ±$10: 42.7%,
+  n 199, random 50.3%) and `TARGET_MOVE_90PCT_STUDY.md` (the 5m signal at +$20 / −$10: 42%, not above random). B3 found
+  the confirmation entry adds nothing on 210 trials. A new declaration on the window already seen would not be
+  pre-registered.
+So nothing was declared and no website file was touched. The tracker (v97) stays as the on-chart measurement.
+
+**Not run:** the TradingView compile.

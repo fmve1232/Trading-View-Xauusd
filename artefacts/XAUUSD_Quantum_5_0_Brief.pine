@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v90   (H4 verdict as the site)       ║
+// ║  BUILD STAMP — this file last CHANGED in v98   (H4 record as the site, web.7) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5221,12 +5221,17 @@ brAlert = input.bool(true, "Alert when a playbook trigger fires (info, not a DEC
 brGPos = input.string("Bottom Left", "Gold-arrow grid position", options=["Bottom Left", "Bottom Right", "Middle Right", "Top Left", "Hidden"], group=grpBrief) // v61: default off the panel's column
 brLayout = input.string("Full", "Panel layout", options=["Full", "Compact (phone)"], group=grpBrief, tooltip="Compact: TREND, DO NOW, the playbook and the gates only, for a phone-width chart. Full adds heading, last sweep, target, playbook note, engine cross-check and data feeds.")
 bool brCompact = brLayout == "Compact (phone)"
-// v90 (F-A77): the website's H4 verdict (site/app.js h4Losing, 2026-10-22). Each timeframe is judged on ITS OWN live H4
+// v90 (F-A77): the website's H4 verdict (site/app.js h4Losing, 2026-10-22). Each timeframe is judged on ITS OWN H4
 // record: with N >= 50 and t = mean R / (sd / sqrt N) <= -2 (backtest.metrics t_stat), the site's DO NOW no longer says
 // "Wait for a trigger" and the playbook triggers are levels, not entries. Pine cannot read the ledger, so the records
-// are typed in per timeframe (defaults: the ledger as of 2026-10-31 00:58 UTC; brief_trace.py 7 runs the site's own
-// h4Losing / doNow lines in Node against these lines, and recomputes the defaults from the ledger files).
-brH4Asof = input.string("2026-10-31 00:58 UTC", "H4 live record: as of", group=grpBrief)
+// are typed in per timeframe; brief_trace.py 7 runs the site's own losingRec / h4Losing / doNow lines in Node against
+// these lines.
+// v98 (F-A86): since web.7 (Amendment 14, 2026-10-31 17:23 UTC) the site judges losingRec(current engine's record) OR
+// losingRec(the previous engine's archived record, research/03 7). One record per timeframe is typed here: the one the
+// site's verdict comes from (a losing current record, else a losing archived one, else either: neither is losing).
+// Defaults: the archived web.6 records (freeze 6f3964ad97813cc9, 2026-10-17 -> 10-31 17:23); the web.7 records have
+// N < 50 and cannot be losing yet. brief_trace.py 7 recomputes the site's verdict from the ledger and the H4 manifest.
+brH4Asof = input.string("web.6 archived, to 2026-10-31 17:23 UTC", "H4 record (the one the site's verdict uses): as of", group=grpBrief)
 brH4N5 = input.int(511, "H4 5m: N", minval=0, maxval=100000, group=grpBrief, inline="h45")
 brH4M5 = input.float(-0.1789, "mean R", minval=-10.0, maxval=10.0, step=0.0001, group=grpBrief, inline="h45")
 brH4S5 = input.float(0.8513, "sd R", minval=0.0, maxval=20.0, step=0.0001, group=grpBrief, inline="h45")
@@ -5451,7 +5456,7 @@ if barstate.islast
     f_brC(brT, 7, "▲ BUY" + (prim > 0 ? " (lean)" : ""), sig or na(bT) ? "—" : "close > " + f_brP(bT) + " " + bN + (px > bT ? " · price through it: fires if this bar closes here" : " · away " + f_brD(bT - px)) + "\nstop " + f_brP(bS) + " · R:R 1:" + str.tostring(bR, "0.0") + "\nTP1 " + b1n + " " + f_brP(b1) + (b2 != b1 ? "\nTP2 " + b2n + " " + f_brP(b2) : "") + "\n(" + timeframe.period + " close, not yet triggered)", cU)
     f_brC(brT, 8, "GATES", (bs ? "▲ " : "▼ ") + str.tostring(gp) + "/7" + gl, gp == 7 ? (bs ? cU : cD) : cT)
     if not brCompact
-        f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\nH4 live " + brTf + ": " + (brH4N > 0 ? "N " + str.tostring(brH4N) + (na(brH4T) ? "" : " t " + str.tostring(brH4T, "#.##")) : "no record typed in") + (h4Losing ? " LOSING:\nlevels, not entries" : "") + " (" + brH4Asof + ")\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
+        f_brC(brT, 9, "PLAYBOOK", (brFired != "" ? "last: " + brFired + "\n" : "") + "conditional, not an entry;\nH4 record " + brTf + ": " + (brH4N > 0 ? "N " + str.tostring(brH4N) + (na(brH4T) ? "" : " t " + str.tostring(brH4T, "#.##")) : "no record typed in") + (h4Losing ? " LOSING:\nlevels, not entries" : "") + " (" + brH4Asof + ")\nthis panel can trail the Master\nfor a few bars: the Master rules", cW)
     // v57: the engine cross-check and data feeds, MOVED here from the Master (token room for its phone card);
     // same engine (diag_parity.py), so the same values the Master's cross-check line showed; the schema text is the
     // Master's v56 `schemaLine` wording exactly (the twin's own migState words it differently). moved_check.py holds it.
