@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5895 | 385353 | `96b135a2777019a3507ee79121ba03f136457fbee5b537e49d64aef818641fb4` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5419 | 345044 | `dc076fde70ad1525cb4b7a18f60d48498e326850c1adcf9b7c04c9c95708c5ab` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5419 | 345109 | `31596bd703c2b20a3594df8dd5d9bd25158f61114090fdc2a875519790600974` |
-| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5430 | 346028 | `9d406afa1bcf91719cec01b6739a4b9a37efbfc7281ad5651e3d9d1c144dbf12` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5908 | 386638 | `b09d00f93f4f748aefd63979907039f410917e6d1721f959921a4cb17bb3a1fa` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5432 | 346329 | `6e8fedde7d3fd065058c55cf5b22c93a4b566236ef49b32ef3b564cff07e1744` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5432 | 346394 | `e4646aac97248e7afb1eb1951e856e6e81dfe77c7a1c8c37ad4574dbaeec56f0` |
+| `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5443 | 347313 | `30b00b7179fe8a31851fb76a072e5d9bca2709b8bfc1d793d78fd820c31d0b3a` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 401 | 29668 | `2007716791180f4e6e43ea1cde135cf9673b4f45d87bc33cdf3379b12fff1354` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2424 | 182070 | `976914daf7e2a68914be03584f6d5bf0a768ded3858a2c3fb36c714192f3b6a2` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5656 | 362135 | `c08a42235c41e20529700f3bf5a01c738b27a7382f723d84db69f9656d8c75ce` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5639 | 361381 | `24c3d2828c1d8b3282f3584e0466ca5e99aeef172fe4a0c87d121d7cf16eed28` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2437 | 183355 | `92f5a312addcbf2ad815086dcee99c5b62b92ef10efa92ea78d673735e9e808b` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5669 | 363420 | `b877eb0949f65c801b627761ec868e99d36635e91ffbf45ad01f75a002835bb6` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5652 | 362666 | `a0f77696cb68fb962d778e5cd62bc454965141887f7e25235a34389e27e8a3a1` |
 
-> **BUILD v98 — this prompt pins the current build.** The originally audited build
+> **BUILD v99 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -144,6 +144,7 @@ scope, and no other build of these scripts is in scope.
 > **v96:** Visuals' order blocks are the engine's (the OB lifecycle and displacement added to the SX block, 206 Master lines; boxes drawn from the engine's queue); the ticker says 'LINK the Master' while the link is not connected (`sx_check.py`).
 > **v97:** Visuals' BRACKET tracker scores one stop against three targets (default −$10 / +$10 / +$15 / +$20 at 0.5 lot) with the website's Phase B3 confirmation entry ($3 at $4,000 gold, 2 hours); display only (`v97_check.py`). The website's B3 research found no edge in this family.
 > **v98 (F-A86):** the website's web.7 restart moved the earlier forward records to the archive; the Brief and Visuals label their typed records as the archived web.6 ones, and `brief_trace` 7 / `v86_check` 7 / `v93_check` / `v97_check` / `ledger_stats` read both freeze keys (no value or verdict changed).
+> **v99 (F-A87 / F-A88):** the NY day rollover is the website's trading-day key in all seven engine copies (it missed the US DST-start Sunday); behavioural tests for the v90 mutation gaps (`level_check`, `dash_wiring`, `const_parity`; `h2_trace` ties, `expectancy_check` PF boundary). F-A88 (weekly high / low skip each session's first bar, both engines) is handed to the website project.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been

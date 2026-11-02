@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v98   (H4 record as the site, web.7) ║
+// ║  BUILD STAMP — this file last CHANGED in v99   (day rollover = website key)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -641,13 +641,26 @@ var float nyWeeklyHigh = na
 var float nyWeeklyLow = na
 var float prevNyWeeklyHigh = na
 var float prevNyWeeklyLow = na
-bool crossedNYDay = false
-if not na(time[1])
-    int tMod = time % msInDay
-    int t1Mod = time[1] % msInDay
-    if tMod > t1Mod
-        crossedNYDay := t1Mod < nyCloseDayMs and tMod >= nyCloseDayMs
-    else
+// CHANGE ID: F-A87 (v99) | Day rollover = a change of the trading-day KEY, as the website's engine computes it
+// (quantum/sessions.py: crossed_day = the trading date, New York time + 7 h, differs from the previous bar's).
+// DEFECT. The time-of-day test (kept below as comments) compared both bars with the CURRENT bar's 17:00 boundary.
+// On the US DST-start Sunday with an 18:00 New York open (spot gold: closed Friday 17:00 -> Sunday 18:00), Friday's
+// last bar (16:55 EST = 21:55 UTC) lies after the new boundary (17:00 EDT = 21:00 UTC) and before Sunday's first
+// bar (22:00 UTC): no branch fired and Friday + Monday became one day (real 1H feed, 2026-03-08: PDH / PDL wrong
+// for 23 bars). FIX. Each bar's key counts whole days of (time - its OWN nyCloseDayMs), so it changes exactly when
+// New York crosses 17:00, whatever the gap or the DST state, and only once per day (F-004 cannot recur).
+// level_check.py: == the website's semantics on every bar (real 5m / 15m / 1h, generated 1m ... 4H, 17:00 and
+// 18:00 opens, 2024-2025). On D and above the key changes every bar, as the old test did there (P1-LVL-002).
+int _tdKey = math.floor((time - nyCloseDayMs) / msInDay)
+bool crossedNYDay = not na(time[1]) and _tdKey != _tdKey[1]
+// OLD (to v98):
+// bool crossedNYDay = false
+// if not na(time[1])
+    // int tMod = time % msInDay
+    // int t1Mod = time[1] % msInDay
+    // if tMod > t1Mod
+        // crossedNYDay := t1Mod < nyCloseDayMs and tMod >= nyCloseDayMs
+    // else
         // R5-F16 wrap case: boundary crossed if it lies after the previous bar's time-of-day
         // OR before/at the current bar's time-of-day (handles boundaries near midnight and
         // weekend gaps spanning the boundary).
@@ -664,7 +677,7 @@ if not na(time[1])
         // Measured: 11 rollovers per 6 days instead of 6. 5M/15M/1H were never affected.
         // Strict `<` still fires the weekend-gap case this branch exists for (Fri 21:00 ->
         // Sun 22:00 = true, regression-tested).
-        crossedNYDay := t1Mod < nyCloseDayMs or tMod >= nyCloseDayMs
+        // crossedNYDay := t1Mod < nyCloseDayMs or tMod >= nyCloseDayMs
 // R5.2-C1: the weekly boundary is crossed by the SUNDAY open bar (market is closed
 // Fri 17:00 ET -> Sun 17:00 ET), so checking the crossing bar's own UTC day for Friday
 // could never be true and PWH/PWL never rolled. The correct test: the PREVIOUS bar was

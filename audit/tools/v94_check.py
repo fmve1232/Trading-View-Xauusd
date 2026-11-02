@@ -67,9 +67,10 @@ def _v94(o):
         o = o.replace(x, y)
     return o
 same = len(old) == len(new) and all(_v94(o) == n for o, n in zip(old, new))
-report(bad2 == 0 and same and F94.master(v93m) == "\n".join(ML),
+v94m = subprocess.run(["git", "show", "c18c4f765:" + M], capture_output=True, text=True, check=True).stdout   # v99 changed the Master
+report(bad2 == 0 and same and F94.master(v93m) == v94m,
        f"2 the Master's rewrites: nz(x, 50) == na(x) ? 50 : x (na incl.): mismatches {bad2}; f_dashRender == v93 with color(na) -> _cn and the 2 nz rewrites, nothing else: {same}; "
-       "Master == fix_v94.master(v93 @ ee6085672), byte for byte")
+       "Master @ v94 (c18c4f765) == fix_v94.master(v93 @ ee6085672), byte for byte")
 
 # ---- 3 / 4
 DEC = [l.strip().replace("nz(lkD[1])", "lkDprev").replace("barstate.isconfirmed", "isConf") for l in VL

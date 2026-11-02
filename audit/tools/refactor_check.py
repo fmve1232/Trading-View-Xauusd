@@ -321,18 +321,19 @@ import fix_v86 as F86  # noqa: E402
 import fix_v91 as F91  # noqa: E402
 import fix_v92 as F92  # noqa: E402
 import fix_v94 as F94  # noqa: E402
-derived = F94.master(F92.master(F91.master(F86.master(F83.master(F.transform(v66m, inline_one_call=False)))))) == open(M, encoding="utf-8").read()   # v83: + news label (v84 reverted: 100,332); v86: + SIGNAL cell "score"; v91: lots incl. cost, 25k (B-01 / B-02); v92: risk lock on every bar (B-09); v94: LINK plots + color(na) / nz rewrites
+import fix_v99 as F99  # noqa: E402
+derived = F99.master(F94.master(F92.master(F91.master(F86.master(F83.master(F.transform(v66m, inline_one_call=False))))))) == open(M, encoding="utf-8").read()   # v99: day rollover = the website's key (F-A87); v83: + news label (v84 reverted: 100,332); v86: + SIGNAL cell "score"; v91: lots incl. cost, 25k (B-01 / B-02); v92: risk lock on every bar (B-09); v94: LINK plots + color(na) / nz rewrites
 once = F.params_once(v66m)
 arms_bad = 0
 for f in ("Strategy", "Strategy_OLDGATES", "Strategy_CHALLENGER"):
     path = f"artefacts/XAUUSD_Quantum_5_0_{f}.pine"
     old = [l for l in subprocess.run(["git", "show", "a5fc12ce:" + path], capture_output=True, text=True, check=True).stdout.split("\n")
            if "BUILD STAMP" not in l]
-    new = [l.replace(", 2, 11, bgco", ", 2, 10, bgco").replace(F83.NEW, F83.OLD) for l in open(path, encoding="utf-8").read().split("\n")
+    new = [l.replace(", 2, 11, bgco", ", 2, 10, bgco").replace(F83.NEW, F83.OLD) for l in F99.unfix(open(path, encoding="utf-8").read()).split("\n")
            if "BUILD STAMP" not in l and not l.startswith("_fwI(float x) =>") and "engine-stats row" not in l
            and not l.lstrip().startswith('_fwRow(10, "Engine stats (display)"') and "computed but never showed (as the Master" not in l]
     arms_bad += old != new
-report("Master == fix_v94.master(fix_v92.master(fix_v91.master(fix_v86.master(fix_v83.master(fix_v68.transform(v66 commit)))))), byte for byte; expanded helpers use each parameter once; arms == v66 "
+report("Master == fix_v99.master(fix_v94.master(fix_v92.master(fix_v91.master(fix_v86.master(fix_v83.master(fix_v68.transform(v66 commit))))))), byte for byte; expanded helpers use each parameter once; arms == v66 "
        "+ the v67 scorecard row; _b1 executed", 0 if derived and not once and not arms_bad and b1ok else 1, 1)
 
 # v59's '_gS / _gC / _gF' helpers are written out since v68 (array.get(gDash*, i)); the derivation case proves it.

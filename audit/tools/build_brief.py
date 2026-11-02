@@ -27,7 +27,7 @@ def at(prefix):
 
 
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v98   (H4 record as the site, web.7)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v99   (day rollover = website key)"
 assert len(body) < len(ref), "stamp too long"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')

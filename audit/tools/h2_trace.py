@@ -90,7 +90,7 @@ def test_plan():
         atr = rng.uniform(2, 20)
         cl = 4000 + rng.uniform(-30, 30)
         hi_, lo_ = cl + rng.uniform(0, 25), cl - rng.uniform(0, 25)
-        poc = cl + rng.uniform(-30, 30)
+        poc = cl if rng.random() < .1 else cl + rng.uniform(-30, 30)       # v99: 10% exact ties close == POC
         vah, val = poc + rng.uniform(0, 20), poc - rng.uniform(0, 20)
         env = P.Env(h2SweepL=sl, h2SweepH=sh, close=cl, low=lo_, high=hi_, h2Atr=atr, h2TrendUp=up, h2TrendDn=dn,
                     h2Poc=poc, h2Vah=vah, h2Val=val)
@@ -110,19 +110,27 @@ def test_plan():
     report("signal + plan vs the spec", bad, f"L{ln}, 3000 random cases")
 
 
-def test_state():
-    blk, ln = P.extract(H2, r'^bool h2SweepL = ', r'^    h2SwH := h2PH')
-    bad = sweeps = 0
+def run_state(blk, seed):
+    """the swing / sweep state machine on 200 seeded paths; v99: on ~15% of bars with a live swing, the bar trades
+    through it and CLOSES EXACTLY ON IT (a tie: not a sweep, the rule is a strict close beyond the level)"""
+    r = random.Random(seed)
+    bad = sweeps = ties = 0
     for _ in range(200):
         px = 4000.0
         env = P.Env(h2SwH=P.NA, h2SwL=P.NA)
         swH = swL = None
         for _ in range(300):
             o = px
-            px += rng.gauss(0, 3)
-            hi, lo = max(o, px) + abs(rng.gauss(0, 1.5)), min(o, px) - abs(rng.gauss(0, 1.5))
-            ph = hi + rng.uniform(1, 6) if rng.random() < .06 else P.NA
-            pv = lo - rng.uniform(1, 6) if rng.random() < .06 else P.NA
+            px += r.gauss(0, 3)
+            hi, lo = max(o, px) + abs(r.gauss(0, 1.5)), min(o, px) - abs(r.gauss(0, 1.5))
+            if swL is not None and r.random() < .15:
+                px, lo, hi = swL, swL - abs(r.gauss(0, 1.5)) - .01, max(o, swL) + abs(r.gauss(0, 1.5))
+                ties += 1
+            elif swH is not None and r.random() < .15:
+                px, hi, lo = swH, swH + abs(r.gauss(0, 1.5)) + .01, min(o, swH) - abs(r.gauss(0, 1.5))
+                ties += 1
+            ph = hi + r.uniform(1, 6) if r.random() < .06 else P.NA
+            pv = lo - r.uniform(1, 6) if r.random() < .06 else P.NA
             env.update({'barstate.isconfirmed': True, 'low': lo, 'high': hi, 'close': px, 'h2PH': ph, 'h2PL': pv})
             P.run(blk, env)
             sL = swL is not None and lo < swL and px > swL
@@ -139,7 +147,18 @@ def test_state():
             bad += not (env['h2SweepL'] == sL and env['h2SweepH'] == sH
                         and (P.isna(env['h2SwL']) if swL is None else env['h2SwL'] == swL)
                         and (P.isna(env['h2SwH']) if swH is None else env['h2SwH'] == swH))
-    report("swing / sweep state machine, bar by bar", bad, f"L{ln}, 200 paths x 300 bars, {sweeps} sweeps")
+    return bad, sweeps, ties
+
+
+def test_state():
+    blk, ln = P.extract(H2, r'^bool h2SweepL = ', r'^    h2SwH := h2PH')
+    bad, sweeps, ties = run_state(blk, 36)
+    report("swing / sweep state machine, bar by bar", bad, f"L{ln}, 200 paths x 300 bars, {sweeps} sweeps, {ties} exact ties")
+    # positive control (v90 mutation m16): a close EXACTLY on the level counted as a sweep must be detected
+    mut = [l.replace("close > h2SwL", "close >= h2SwL") for l in blk]
+    assert mut != blk
+    mb, _, _ = run_state(mut, 36)
+    report("control m16: close >= level (tie counted as a sweep) is detected", 0 if mb > 0 else 1, f"{mb} bars differ")
 
 
 if __name__ == '__main__':

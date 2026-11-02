@@ -3534,3 +3534,48 @@ confirmation, −$10 / +$10 / +$15 / +$20). On reading the website before writin
 So nothing was declared and no website file was touched. The tracker (v97) stays as the on-chart measurement.
 
 **Not run:** the TradingView compile.
+
+# v99 — behavioural tests for the v90 mutation gaps; the day rollover fixed to the website's key (2026-11-02)
+
+Operator: "use this project thread for pine files … focus on improving the codes" (the website is a separate project;
+recorded in CLAUDE.md). The v90 mutation run had shown half of the realistic defect classes with no behavioural test.
+Three new checkers and two extended ones close most of them, and the first one found a real defect.
+
+**F-A87 (P1, fixed): the NY day rollover missed the US DST-start Sunday** with an 18:00 New York open (spot gold's real
+reopen). Friday and Monday became one day: PDH / PDL / CDH / CDL, PWH / PWL, the plan's SL / TP candidates and the risk
+lock's daily reset (Friday's losses carried into Monday). Real 1H feed, 2026-03-08: PDH / PDL wrong for 23 bars. The
+website was right (its trading-date key), so the Pine was out of parity with the system of record.
+- Fix (`fix_v99.py`, all seven engine copies identically, Diagnostics / Brief rebuilt): `_tdKey = math.floor((time -
+  nyCloseDayMs) / msInDay)`, `crossedNYDay = not na(time[1]) and _tdKey != _tdKey[1]`. The old code stays as comments;
+  the three intermediates stay wired. Hunk counts between the twins unchanged (diag_parity).
+- Master model 99,396 / 98,946 (−33 / −43 tokens: the fix is shorter than the code it replaces).
+
+**F-A88 (P2, open, website engine first):** the weekly high / low skip the first bar of each Monday–Thursday session, in
+BOTH engines (the website's `engine.py` ~294–306 is a faithful port). Real 1H: PWH off on 345 of 4,021 bars, PWL on 230.
+Fixing the Pine alone would break parity with the system of record, so it is handed to the website project.
+
+**New checkers:**
+- `level_check.py`: the level blocks of every engine copy (Master, twins, Diagnostics, Brief, and Visuals' own copy)
+  executed bar by bar with `var` state, vs a reference built from the calendar alone; real XAU 5m / 15m / 1h with the
+  website's closure mask, and generated 5m–4H bars at 17:00 / 18:00 opens over 2024–2025; D / W / M roll every bar.
+  Controls: m09 (both forms), m17, the v98 rollover, the F-004 regression.
+- `dash_wiring.py`: (A) every trading label in every file shows its own quantity (L / S / R, SL / stop, TP1–3, entry: 48
+  labelled values); (B) the plan's MT5 strings executed with sentinel prices; (C) every tuple return vs its call sites, by
+  position (51 call sites). Controls: m08, TP1↔TP2, SL↔entry, a builder reading the wrong price, a reordered call site.
+- `const_parity.py`: 13 constant groups (regime, size haircut, SL multiple and clamp, BOS / liquidity scales, both entry
+  gates, break buffer, SL band and buffer, TP min / max) == the website's engine, Master and Treatment. Controls: m13, m06,
+  m07, the SL band.
+
+**Extended:** `h2_trace` (exact ties: a close ON the swing level; control m16), `expectancy_check` §3b (the scorecard's
+PF rule at its boundary with 800 positions; control m15). `v90_mutation.py`'s suite gains v97_check, level_check,
+dash_wiring, const_parity. Tripwires refreshed: `refactor_check` (chain + `fix_v99.unfix` for the twins), `v94_check` §2
+anchored to `c18c4f765`, `value_map`.
+
+**m12 (EMA20 colour) has no test:** no operator requirement for the colour is recorded, and a test freezing colours
+would be another tripwire.
+
+**Visible on the chart:** only around a US DST-start Sunday (next: 2027-03-14), and in loaded history around 2026-03-08 on
+charts that reach back that far (a 1H chart does): PDH / PDL / CDH / CDL, PWH / PWL and the levels the plan builds from
+are now the right day's. Nothing else changes.
+
+**Not run:** the TradingView compile.

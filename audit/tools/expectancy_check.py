@@ -135,6 +135,34 @@ for case in range(300):
     bad += 0 if ok else 1
 check(bad == 0, f"scorecard block (positions, mean = expectancy, SD, PF, avg win/loss, break-even WR, 95% t-interval, verdict): 300 random histories, mismatches {bad}")
 
+# 3b. (v99, v90 mutation m15) the verdict's PF rule AT its boundary. Random histories almost never reach it: with
+# PF < 1.2 the SD is at least ~11x the mean, so a 95% lower bound above 0 needs n > ~500 positions. Deterministic
+# histories of 800 positions (wins +w, losses -1, alternating, fixed shuffle) put the lower bound above 0 with PF on
+# either side of 1.2 (1.19 and 1.21; an exact 1.2 is avoided: a float sum may land a hair under it).
+
+
+def verdict_of(blk, w):
+    r = random.Random(15)
+    x = [w, -1.0] * 400
+    r.shuffle(x)
+    tr = [(k, k, v) for k, v in enumerate(x)]
+    f = {"strategy.closedtrades.entry_bar_index": lambda i: float(tr[int(i)][0]),
+         "strategy.closedtrades.entry_time": lambda i: float(tr[int(i)][1]),
+         "strategy.closedtrades.profit": lambda i: float(tr[int(i)][2]),
+         "strategy.opentrades.entry_bar_index": lambda i: -3.0}
+    e = P.Env(funcs=f, **{"strategy.closedtrades": float(len(tr)), "strategy.opentrades": 0.0, "fwdStart": 0.0})
+    P.run(blk, e)
+    return e["_fwv"], e["_fwlo"], e["_fwpf"]
+
+
+bnd = {w: verdict_of(block, w) for w in (1.19, 1.21)}
+check(bnd[1.19][0] == "NOT SHOWN" and bnd[1.21][0] == "EDGE SHOWN" and min(v[1] for v in bnd.values()) > 0,
+      "scorecard PF rule at its boundary (800 positions, 95% lower bound > 0): "
+      + ", ".join(f"PF {v[2]:.3f} lo {v[1]:+.3f} -> {v[0]}" for v in bnd.values()))
+mut = [l.replace("_fwpf >= 1.2", "_fwpf >= 1.0") for l in block]
+assert mut != block, "PF rule line not found"
+check(verdict_of(mut, 1.19)[0] == "EDGE SHOWN", "control m15: the PF rule at 1.0 (instead of 1.2) is detected (PF 1.19 flips to EDGE SHOWN)")
+
 # 4. Fisher t quantile vs exact
 fl = next(l.strip() for l in src if l.strip().startswith("float _fwt = "))
 errs = []
