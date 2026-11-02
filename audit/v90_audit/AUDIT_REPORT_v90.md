@@ -347,7 +347,7 @@ None of these are implemented. Each needs a pre-registered amendment on the webs
 | 5 | B-07: rename `tpDist` (identical-output check) | Low | `refactor_check` | Low | Fewer future errors |
 | **6: Validation / release** | C-02: `bug_scan` exits 1 above a triaged allowlist. **DONE v91 (F-A81)** | High (process) | — | Very low | Repaint defects cannot pass silently |
 | 6 | Mutation gaps: **v99** `level_check` (m09 / m17), `dash_wiring` (m08), `const_parity` (m13 / m06 / m07), `dst_check` (m05), `h2_trace` ties (m16), `expectancy_check` PF boundary (m15); m12 has no specification. Found F-A87 (fixed) and F-A88 (website first) |
-| 6 | Add tests E1–E10 (Report 11) | Medium | — | Medium | Edge-case coverage |
+| 6 | Add tests E1–E10 (Report 11). **Assessed v99:** E1 `v91_check` (zero / tiny / na stop); E2 impossible by construction (TPs only in the trade direction, ≥ 0.8R) + `formula_trace` (R:R ≤ 0); E5 no division by the volume average in the Master, `bug_scan` D1; E6 `decision_check` (WARMUP precedence); E9 / E10 fixed v92. Open: E3 (all macro na: DECISION unchanged), E4 (±3% gap), E7 (rapid flip), E8 (input extremes executed) | Medium | — | Medium | Edge-case coverage |
 | 6 | **Compile v86–v90 in TradingView**; EdgeCases chart run; broker specification | **Blocking** | operator | — | Turns "unverified" into verified |
 
 **Order:** Phase 6's compile first (it gates everything), then Phase 1, then the rest.
