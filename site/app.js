@@ -20,6 +20,7 @@ const S = {
   spec: store.get("contract_spec", null),                                  // the viewer's MT5 symbol specification
   yt: (() => { const v = store.get("your_trade", null); return v && v.sl > 0 && v.tp > 0 && v.lot > 0 ? v : { sl: 500, tp: 1000, lot: 0.5 }; })(),   // the operator's trade (1 Nov 2026): -$10 / +$20 of price
   todayR: store.get("today_r", null),
+  vp: store.get("vp", "this_week"),                                       // validation period on the plan-alerts card
   capR: store.get("cap_r", null),
   tab: store.get("tab", "overview"),
   btArm: "treatment",
@@ -1979,7 +1980,42 @@ function renderPlanAlerts() {
       "TP hit first" is set by the SL / TP sizes, measured on 139,754 real entries; no signal tested (507 trials) beats it. Display only: the engine is unchanged.</p>
     <p class="pa-note">${rec}</p>
     ${openRows ? `<h4>Open (${(P.open || []).length})</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th>SL</th><th>TP</th><th>Now</th></tr>${openRows}</table></div>` : `<p class="muted pa-note">No open plan right now.</p>`}
-    ${doneRows ? `<h4>Results</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Result</th><th>Closed bar</th></tr>${doneRows}</table></div>` : ""}`;
+    ${doneRows ? `<h4>Results</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Result</th><th>Closed bar</th></tr>${doneRows}</table></div>` : ""}
+    ${validationHtml(P.validation)}`;
+  el.querySelectorAll("button[data-vp]").forEach((b) => { b.onclick = () => { S.vp = b.dataset.vp; store.set("vp", S.vp); renderPlanAlerts(); }; });
+}
+/* Validation: how the market answered the alerted signals, today / this week / all time (quantum/notify.py summarize).
+   A group is called WEAK or STRONG only with 30+ results and a 95% interval that excludes break-even. */
+function validationHtml(V) {
+  if (!V) return "";
+  const per = { today: ["Today", V.today, V.open_today], this_week: ["This week", V.this_week, V.open_week], all: ["All time", V.all, null] };
+  const k = per[S.vp] ? S.vp : "this_week", [lab, sm, open] = per[k];
+  const btn = Object.entries(per).map(([key, [l]]) => `<button data-vp="${key}" class="${key === k ? "active" : ""}">${l}</button>`).join("");
+  const money = (x) => (!isNum(x) ? "—" : Math.abs(x) < 0.5 ? "$0" : (x < 0 ? "−$" : "+$") + Math.abs(x).toLocaleString("en-US", { maximumFractionDigits: 0 }));
+  const p100 = (x) => (isNum(x) ? pct(100 * x) : "—");
+  const head = sm && sm.n ? `
+    <div class="kv"><div>TP hit first</div><div><b class="${sm.rate >= sm.break_even ? "bull" : "bear"}">${sm.tp} / ${sm.n} = ${p100(sm.rate)}</b> <span class="muted">(95% range ${p100(sm.wilson[0])}–${p100(sm.wilson[1])})</span></div>
+      <div>Your target</div><div>90% <span class="${sm.rate >= 0.9 ? "bull" : "bear"}">(${fs(100 * (sm.rate - 0.9), 0)} points)</span></div>
+      <div>Expected from SL / TP sizes</div><div>${p100(sm.expected)}</div>
+      <div>Break-even after costs</div><div>${p100(sm.break_even)}</div>
+      <div>Net at your plan</div><div class="${sm.net_usd >= 0 ? "bull" : "bear"}">${money(sm.net_usd)}</div>
+      <div>Near misses (SL after 80% of the way to TP)</div><div>${sm.near_misses} of ${sm.sl}</div>
+      <div>Average move for / against</div><div>${money(sm.avg_mfe_usd)} / ${money(-sm.avg_mae_usd)}</div>
+      ${open ? `<div>Still open</div><div>${open}</div>` : ""}</div>` : `<p class="muted pa-note">No signal closed ${k === "all" ? "yet" : "in this period"}${open ? ` (${open} still open)` : ""}.</p>`;
+  const DIMS = { timeframe: "Timeframe", session: "Session (UTC)", side: "Side", weekday: "Day" };
+  const tables = sm && sm.n ? Object.entries(DIMS).map(([dim, nm]) => {
+    const g = (sm.by || {})[dim] || {};
+    const rows = Object.entries(g).map(([key, x]) => `<tr><td>${esc(key)}</td><td>${x.tp} / ${x.n}</td><td class="${x.rate >= sm.break_even ? "bull" : "bear"}">${p100(x.rate)}</td><td>${x.flag ? `<b class="${x.flag === "WEAK" ? "bear" : "bull"}">${x.flag}</b>` : `<span class="muted">${x.n < 30 ? "n < 30" : "unclear"}</span>`}</td></tr>`).join("");
+    return rows ? `<table class="yt"><tr><th>${nm}</th><th>TP / n</th><th>Rate</th><th>Verdict</th></tr>${rows}</table>` : "";
+  }).join("") : "";
+  const adv = (sm && sm.advice ? sm.advice : []).map((x) => `<li class="${/^WEAK/.test(x) ? "bear" : /^STRONG/.test(x) ? "bull" : ""}">${esc(x)}</li>`).join("");
+  return `<h4>Validation <span class="dim">· how the market answered every alert (New York day, 17:00 close)</span></h4>
+    <div class="seg" role="tablist">${btn}</div>
+    ${head}
+    ${adv ? `<ul class="pa-adv">${adv}</ul>` : ""}
+    ${tables ? `<div class="scroll pa-by">${tables}</div>` : ""}
+    <p class="muted pa-note">A daily report reaches your phone after the New York close and a weekly one after Friday's close.
+      A group is marked WEAK or STRONG only with 30+ results and a 95% range clear of break-even; smaller samples are mostly luck.</p>`;
 }
 function renderAll() {
   renderHeader(); renderSide(); renderChart();

@@ -101,3 +101,78 @@ def test_report_feeds_the_website_without_secrets(tmp_path, monkeypatch):
 
 def test_notify_stays_outside_the_frozen_engine():
     assert "notify.py" not in holdout.ENGINE_SOURCES
+
+
+# ---------------- validation: daily / weekly success rate and where it lags ----------------
+def test_sessions_and_the_new_york_trading_day():
+    t = int(pd_ts("2026-11-02 21:59"))                 # 16:59 New York (EST): still Monday's trading day
+    assert notify.trading_day(t) == "2026-11-02" and notify.trading_day(t + 60) == "2026-11-03"
+    assert notify.session_of(int(pd_ts("2026-11-02 03:00"))) == "Asia" and notify.session_of(int(pd_ts("2026-11-02 13:00"))) == "London+NY"
+    sun = int(pd_ts("2026-11-08 23:30"))               # Sunday evening session belongs to Monday
+    assert notify.trading_day(sun) == "2026-11-09" and notify.trading_week(sun) == "2026-W46"
+    fri_close = int(pd_ts("2026-11-06 22:10"))          # Friday after 17:00 New York: the weekend belongs to next week
+    assert notify.trading_day(fri_close) == "2026-11-07" and notify.trading_week(fri_close) == "2026-W46"
+    assert notify.trading_week(int(pd_ts("2026-11-06 14:00"))) == "2026-W45"
+
+
+def pd_ts(s):
+    from datetime import datetime, timezone
+    return datetime.fromisoformat(s).replace(tzinfo=timezone.utc).timestamp()
+
+
+def test_path_measures_how_far_price_went_each_way():
+    pl = {"t": 100, "dir": 1, "entry": 4000.0, "sl": 3987.0, "tp": 4013.0}
+    r = notify.plan_path(pl, _chart([(200, 4011, 3995), (300, 4005, 3986)]))
+    assert r == {"result": "SL", "t_res": 300, "mfe": 11.0, "mae": 14.0, "bars": 2}
+    assert notify.plan_path(pl, _chart([(200, 4005, 3995)]))["result"] is None
+
+
+def _rec(tf, res, dir_=1, session="London", mfe=0.0, mae=0.0, t=1793500000):
+    e = 4000.0
+    return {"tf": tf, "t": t, "t_dec": t + 900, "dir": dir_, "entry": e, "sl": e - 13 * dir_, "tp": e + 13 * dir_, "sl_usd": 650.0,
+            "tp_usd": 650.0, "lot": 0.5, "result": res, "session": session, "dow": "Mon", "mfe": mfe, "mae": mae}
+
+
+def test_summary_counts_money_and_flags_only_clear_evidence():
+    recs = [_rec("5m", "SL", session="Asia")] * 28 + [_rec("5m", "TP", session="Asia")] * 6 + \
+           [_rec("1h", "TP")] * 5 + [_rec("1h", "SL", mfe=11.0)] * 4 + [_rec("15m", "EXPIRED")]
+    sm = notify.summarize(recs, 26.0)
+    assert (sm["n"], sm["tp"], sm["sl"], sm["expired"]) == (43, 11, 32, 1)
+    assert sm["rate"] == pytest.approx(11 / 43) and sm["expected"] == pytest.approx(0.5) and sm["break_even"] == pytest.approx(663 / 1300)
+    assert sm["net_usd"] == pytest.approx(11 * 650 - 32 * 650 - 43 * 13)
+    assert sm["by"]["timeframe"]["5m"]["flag"] == "WEAK" and sm["by"]["timeframe"]["1h"]["flag"] == ""     # 1h: only 9 results
+    assert sm["by"]["session"]["Asia"]["flag"] == "WEAK" and sm["near_misses"] == 4
+    adv = " ".join(sm["advice"])
+    assert "against your 90% target" in adv and "WEAK - timeframe 5m: 6/34" in adv and "1h" not in adv.split("WEAK")[1]
+    assert notify.summarize([], 26.0)["advice"][0].startswith("No validated signals yet")
+
+
+def test_daily_and_weekly_reports_are_sent_once_at_the_close(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    store = str(tmp_path)
+
+    def pay(t_last, now, markers=(), bars=()):
+        p = _payload(t_last, list(markers), list(bars))
+        p["meta"]["generated_utc"] = now
+        return {"15m": p}
+    t0 = int(pd_ts("2026-11-06 14:00"))                                     # Friday, London+NY
+    notify.run(store, pay(t0, "2026-11-06T14:05:00+00:00"), ["15m"])
+    sig = {"t": t0 + 900, "type": "SIGNAL", "dir": 1, "px": 4000.0, "tq": 70, "sl": 3990.0, "tp1": 4010.0, "tp2": 4020.0, "tp3": 4030.0}
+    notify.run(store, pay(t0 + 1800, "2026-11-06T14:35:00+00:00", [sig], [(t0 + 900, 4001, 3999)]), ["15m"])
+    rep = notify.run(store, pay(t0 + 2700, "2026-11-06T14:50:00+00:00", [sig], [(t0 + 900, 4001, 3999), (t0 + 1800, 4013.5, 3998)]), ["15m"])
+    v = rep["plans"]["validation"]
+    assert v["today"]["n"] == 1 and v["today"]["tp"] == 1 and v["all"]["rate"] == 1.0 and v["day"] == "2026-11-06"
+    assert not any("VALIDATION" in x for b in sent for x in b)
+    n0 = len(sent)
+    notify.run(store, pay(t0 + 2700, "2026-11-06T22:10:00+00:00"), ["15m"])   # after 17:00 New York on Friday
+    rep_lines = [x for b in sent[n0:] for x in b]
+    assert any(x.startswith("XAUUSD DAILY VALIDATION Fri 06 Nov: 1 signals closed, TP first 1/1 = 100%") for x in rep_lines)
+    assert any(x.startswith("XAUUSD WEEKLY VALIDATION 2026-W45: 1 signals closed") for x in rep_lines)
+    n1 = len(sent)
+    notify.run(store, pay(t0 + 2700, "2026-11-06T22:25:00+00:00"), ["15m"])
+    assert not any("VALIDATION" in x for b in sent[n1:] for x in b)          # once per day / week
+    n2 = len(sent)
+    notify.run(store, pay(t0 + 2700, "2026-11-07T22:10:00+00:00"), ["15m"])   # Saturday: nothing to report, nothing sent
+    assert not any("VALIDATION" in x for b in sent[n2:] for x in b)
+    assert len(json.loads((tmp_path / notify.VALIDATION).read_text())) == 1

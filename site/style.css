@@ -194,6 +194,12 @@ table.yt tr.yt-now td { background: var(--bg-2); }
 #pa .pa-note { font-size: 12px; margin: 8px 0; }
 #pa h4 { margin: 10px 0 4px; font-size: 13px; }
 #pa .scroll { max-height: none; overflow-x: auto; }
+#pa .seg { display: flex; gap: 6px; margin: 4px 0 8px; }
+#pa .seg button { flex: 1; padding: 4px 6px; border: 1px solid var(--line-2); background: transparent; color: inherit; border-radius: 6px; font-size: 12px; cursor: pointer; }
+#pa .seg button.active { background: var(--bg-2); font-weight: 600; }
+#pa .pa-adv { margin: 8px 0; padding-left: 18px; font-size: 12px; }
+#pa .pa-adv li { margin: 3px 0; }
+#pa .pa-by table { margin-bottom: 8px; }
 #pa table.yt { width: 100%; }
 #pa table.yt td, #pa table.yt th { white-space: normal; }
 #pa table.yt td:first-child, #pa table.yt th:first-child { min-width: 72px; }
