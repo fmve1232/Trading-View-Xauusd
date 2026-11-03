@@ -1,0 +1,66 @@
+# Phase B7 (declared in quantum/research/b7_macro.py): macro direction for the operator's $650 / $650 trade, on the
+# DEVELOPMENT partition. Free sources with no key: Yahoo daily (dollar index, 10y yield, VIX, WTI), FRED (TIPS real
+# yield, breakeven inflation), CFTC (COMEX gold COT). Manual dispatch only; the engine and the site never read it.
+# Only aggregate results are pushed, to the research-macro branch; the fetched series are not stored.
+name: research-macro
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write                 # push the research-macro results branch
+
+concurrency:
+  group: research-macro
+  cancel-in-progress: false
+
+jobs:
+  b7:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Tests of the declared study
+        run: python -m pytest -q tests/test_research_b7.py
+        env:
+          TWELVEDATA_API_KEY: offline
+      - name: Load the research-data branch (spot paths) and the results branch
+        run: |
+          URL="https://github.com/${{ github.repository }}.git"
+          git clone -q --depth 1 --branch research-data --single-branch "$URL" rd
+          set +e; git ls-remote --exit-code --heads "$URL" research-macro >/dev/null; rc=$?; set -e
+          if [ $rc -eq 0 ]; then git clone -q --depth 1 --branch research-macro --single-branch "$URL" out
+          elif [ $rc -eq 2 ]; then mkdir -p out
+          else echo "::error::cannot reach the research-macro branch (rc=$rc)"; exit 1; fi
+      - name: B7
+        env:
+          TWELVEDATA_API_KEY: offline
+        run: python -m quantum.research.b7_macro --rd rd --out out/b7_results.json --trials out/b7_trials.jsonl
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### B7 macro"
+            echo '```'
+            python -c "import json; r=json.load(open('out/b7_results.json')); print(json.dumps({'sources': r['sources'], 'family': r['family']}, indent=1, default=float))" 2>/dev/null || echo "no results (see the B7 step's log)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Save aggregate results to the research-macro branch (one orphan commit)
+        if: always()
+        run: |
+          if [ ! -d out ]; then echo "nothing to save (an earlier step stopped the run)"; exit 0; fi
+          cd out
+          if [ ! -d .git ]; then git init -q -b research-macro; fi
+          git config user.name "quantum-research"
+          git config user.email "quantum-research@users.noreply.github.com"
+          git checkout -q --orphan snapshot
+          shopt -s nullglob; files=(*.json *.jsonl); [ ${#files[@]} -gt 0 ] || exit 0
+          git add -A -- "${files[@]}"
+          git commit -q -m "B7 $(date -u +%FT%TZ)" || exit 0
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot:research-macro
