@@ -29,7 +29,7 @@ from datetime import datetime, timezone
 import numpy as np
 import pandas as pd
 
-BAR_SEC = {"5m": 300, "15m": 900, "60m": 3600, "1h": 3600, "1d": 86400}
+BAR_SEC = {"5m": 300, "15m": 900, "30m": 1800, "60m": 3600, "1h": 3600, "1d": 86400}
 PRICE_COLS = ("open", "high", "low", "close")
 MAX_REVISIONS_PER_FILE = 500      # beyond this, only the count is recorded (a re-based series)
 

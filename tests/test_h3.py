@@ -141,10 +141,12 @@ def test_own_freeze_key_and_manifest(tmp_path):
     assert (tmp_path / "holdout" / "manifest_h3.json").exists()
 
 
-def test_structure_and_setup_alerts_are_information_only():
+def test_structure_and_setup_alerts_are_information_only(monkeypatch):
     p = {"meta": {"tf": "1h"}, "decisions": [],
          "markers": [{"t": 10, "type": "BOS", "dir": 1}, {"t": 10, "type": "SWEEP", "dir": -1}, {"t": 5, "type": "MSS", "dir": 1}],
          "h3": {"signals": [{"t": 12, "dir": "LONG", "entry": 4100.0, "sl": 4090.0, "tp1": 4110.0, "tp2": 4120.0}]}}
-    lines = notify.messages(p, 6)
-    assert lines == ["XAUUSD 1h BOS▲ SWEEP-HIGH | info, not a DECISION",
-                     "XAUUSD 1h H3 BUY entry 4100.00 SL 4090.00 TP1 4110.00 TP2 4120.00 | info, not a DECISION"]
+    h3 = "XAUUSD 1h H3 BUY entry 4100.00 SL 4090.00 TP1 4110.00 TP2 4120.00 | info, not a DECISION"
+    monkeypatch.setenv("ALERT_LIQUIDITY", "0")                  # liquidity alerts off: sweeps stay in the structure line
+    assert notify.messages(p, 6) == ["XAUUSD 1h BOS▲ SWEEP-HIGH | info, not a DECISION", h3]
+    monkeypatch.setenv("ALERT_LIQUIDITY", "1")                  # on (default): sweeps go to the LIQUIDITY GRAB alerts
+    assert notify.messages(p, 6) == ["XAUUSD 1h BOS▲ | info, not a DECISION", h3]

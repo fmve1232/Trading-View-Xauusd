@@ -11,7 +11,7 @@ from quantum import holdout, notify
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
     for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_COST_PER_LOT", "MT5_PRICE_OFFSET", "ALERT_STRUCTURE",
-              "PLAN_LATE_FRAC", "MT5_SERVER_UTC_OFFSET", "ALERT_LOCAL_TZ"):
+              "PLAN_LATE_FRAC", "MT5_SERVER_UTC_OFFSET", "ALERT_LOCAL_TZ", "ALERT_LIQUIDITY", "LIQ_NEAR_USD"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
 
@@ -271,3 +271,91 @@ def test_run_records_when_each_alert_went_out_and_the_move_by_then(tmp_path, mon
     op = rep["plans"]["open"][0]
     assert (op["t_alert"], op["px_alert"], op["move_alert"], op["late"]) == (3220, 4004.5, -4.5, True)
     assert rep["plans"]["open"][0]["entry"] == 4000.0 and rep["plans"]["open"][0]["tp"] == 3987.0   # the plan itself is unchanged
+
+
+# ---------------- liquidity alerts: NEAR a pool, GRAB (swept, closed back), BREAK (closed beyond) ----------------
+T0 = 1793692800                                                     # 2026-11-03 08:00 UTC (Tue), one trading day
+
+
+def _liq_payload(tf="15m", bars=(), markers=(), pools=None, forming=None, gen="2026-11-03T09:00:00+00:00"):
+    """bars: (t, h, l, c, pdh, pdl)."""
+    return {"meta": {"tf": tf, "synthetic": False, "generated_utc": gen, "price_source": "td", "forming": forming},
+            "markers": list(markers), "decisions": [],
+            "dashboard": {"liquidity": {"pools": pools or {}}},
+            "chart": {"t": [b[0] for b in bars], "h": [b[1] for b in bars], "l": [b[2] for b in bars], "c": [b[3] for b in bars],
+                      "pdh": [b[4] for b in bars], "pdl": [b[5] for b in bars], "pwh": [None] * len(bars), "pwl": [None] * len(bars)}}
+
+
+def test_grab_is_the_engines_sweep_once_per_pool_per_day_and_timeframe():
+    bars = [(T0 + i * 900, 3985, 3970, 3978.0 + i, 4069.89, 3975.83) for i in range(4)]
+    sw = [{"t": T0 + i * 900, "type": "SWEEP", "dir": 1, "px": 3971.5, "lvl": [{"name": "PDL", "px": 3975.83}]} for i in range(3)]
+    seen: dict = {}
+    ev = notify.liquidity_events(_liq_payload(bars=bars, markers=sw), T0 - 1, seen)
+    assert [(r["kind"], r["name"], r["t"]) for r in ev] == [("GRAB", "PDL", T0)]          # 3 sweep bars -> 1 alert
+    assert notify.liq_text(ev[0]).startswith("XAUUSD 15m LIQUIDITY GRAB: PDL 3975.83 swept -- low 3971.50, closed back "
+                                             "above at 3978.00 (sell-side liquidity taken, then rejected) | 15m bar 08:00 UTC = 10:00 MT5")
+    assert notify.liquidity_events(_liq_payload(bars=bars, markers=sw), T0 - 1, seen) == []   # nothing repeated
+    assert len(notify.liquidity_events(_liq_payload("1h", bars=bars, markers=sw), T0 - 1, seen)) == 1  # 1h is its own
+    nxt = T0 + 86400                                                                        # next trading day: may alert again
+    assert len(notify.liquidity_events(_liq_payload(bars=[(nxt, 1, 1, 3978, 1, 1)], markers=[{**sw[0], "t": nxt}]), nxt - 1, seen)) == 1
+    hi = {"t": T0, "type": "SWEEP", "dir": -1, "px": 4071.0, "lvl": [{"name": "PDH", "px": 4069.89}]}
+    txt = notify.liq_text(notify.liquidity_events(_liq_payload(bars=bars[:1], markers=[hi]), T0 - 1, {})[0])
+    assert "PDH 4069.89 swept -- high 4071.00, closed back below at 3978.00 (buy-side liquidity taken" in txt
+
+
+def test_break_is_a_close_beyond_a_pool_once_per_day():
+    up = [(T0, 4070, 4060, 4068.0, 4069.89, 4006.15), (T0 + 900, 4074, 4066, 4072.1, 4069.89, 4006.15),
+          (T0 + 1800, 4076, 4068, 4069.0, 4069.89, 4006.15), (T0 + 2700, 4078, 4069, 4073.0, 4069.89, 4006.15)]
+    seen: dict = {}
+    ev = notify.liquidity_events(_liq_payload(bars=up), T0 - 1, seen)
+    assert [(r["kind"], r["name"], r["t"]) for r in ev] == [("BREAK", "PDH", T0 + 900)]    # the re-break later: same day, not repeated
+    assert notify.liq_text(ev[0]).startswith("XAUUSD 15m LIQUIDITY BREAK: PDH 4069.89 broken -- closed above at 4072.10 "
+                                             "(buy-side liquidity taken, price holding beyond)")
+    wick = [(T0, 4070, 4060, 4068.0, 4069.89, 4006.15), (T0 + 900, 4075, 4066, 4069.5, 4069.89, 4006.15)]
+    assert notify.liquidity_events(_liq_payload(bars=wick), T0 - 1, {}) == []              # wick above, close below: no break
+    dn = [(T0, 4010, 4007, 4008.0, 4069.89, 4006.15), (T0 + 900, 4009, 4001, 4003.0, 4069.89, 4006.15)]
+    assert [r["name"] for r in notify.liquidity_events(_liq_payload(bars=dn), T0 - 1, {})] == ["PDL"]
+    later = notify.liquidity_events(_liq_payload(bars=up), T0 + 900, {})                  # only bars after since_t:
+    assert [r["t"] for r in later] == [T0 + 2700]                                          # the re-break, with a fresh memory
+
+
+def test_near_is_the_untaken_side_on_a_live_price_once_per_day(monkeypatch):
+    pools = {"PDH": 4069.89, "PDL": 4006.15, "PWH": 4190.13, "EQH": None}
+    bars = [(T0, 4060, 4050, 4058.0, 4069.89, 4006.15)]
+    live = {"t": T0 + 900, "o": 4058, "h": 4066.0, "l": 4057, "c": 4065.10}
+    p = {"15m": _liq_payload(bars=bars, pools=pools, forming=live)}
+    seen: dict = {}
+    ev = notify.liquidity_near(p, ["15m"], seen, T0 + 1000)
+    assert [(r["name"], r["dist"]) for r in ev] == [("PDH", 4.79)]                       # PDL $59 away, PWH far: not near
+    assert notify.liq_text(ev[0]).startswith("XAUUSD LIQUIDITY NEAR: price 4065.10 is $4.79 below PDH 4069.89 (buy-side "
+                                             "liquidity above) | 09:00 UTC = 11:00 MT5 = 14:00 PKT | watch for a grab")
+    assert notify.liquidity_near(p, ["15m"], seen, T0 + 1900) == []                      # once per pool per day
+    taken = {"15m": _liq_payload(bars=[(T0, 4071, 4050, 4058.0, 4069.89, 4006.15)], pools=pools, forming=live)}
+    assert notify.liquidity_near(taken, ["15m"], {}, T0 + 1000) == []                    # already traded through today
+    above = {"15m": _liq_payload(bars=bars, pools=pools, forming={**live, "h": 4072.0, "c": 4071.0})}
+    assert notify.liquidity_near(above, ["15m"], {}, T0 + 1000) == []                    # price beyond it: not "near"
+    assert notify.liquidity_near({"15m": _liq_payload(bars=bars, pools=pools)}, ["15m"], {}, T0 + 1000) == []  # no live price
+    monkeypatch.setenv("LIQ_NEAR_USD", "3")
+    assert notify.liquidity_near(p, ["15m"], {}, T0 + 1000) == []
+
+
+def test_run_sends_liquidity_alerts_publishes_them_and_can_be_turned_off(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    store = str(tmp_path)
+    notify.run(store, {"15m": _liq_payload(bars=[(T0 - 900, 3990, 3980, 3985, 4069.89, 3975.83)])}, ["15m"], sent_t=T0)
+    sw = {"t": T0, "type": "SWEEP", "dir": 1, "px": 3971.5, "lvl": [{"name": "PDL", "px": 3975.83}]}
+    bars = [(T0 - 900, 3990, 3980, 3985, 4069.89, 3975.83), (T0, 3985, 3971.5, 3978.0, 4069.89, 3975.83)]
+    rep = notify.run(store, {"15m": _liq_payload(bars=bars, markers=[sw])}, ["15m"], sent_t=T0 + 1200)
+    assert any(x.startswith("XAUUSD 15m LIQUIDITY GRAB: PDL 3975.83") for x in sent[0])
+    assert not any("SWEEP-LOW" in x for x in sent[0])                                   # not also in a structure line
+    assert rep["liquidity"]["on"] is True and rep["liquidity"]["near_usd"] == 5.0
+    assert rep["liquidity"]["recent"][0]["kind"] == "GRAB" and rep["liquidity"]["recent"][0]["name"] == "PDL"
+    st = json.loads((tmp_path / notify.STATE).read_text())
+    assert list(st["liq_seen"].values()) == ["2026-11-03"] and len(st["liq_log"]) == 1
+    monkeypatch.setenv("ALERT_LIQUIDITY", "0")
+    sent.clear()
+    sw2 = {**sw, "t": T0 + 900, "lvl": [{"name": "PWL", "px": 3972.0}]}
+    notify.run(store, {"15m": _liq_payload(bars=[*bars, (T0 + 900, 3980, 3971, 3976, 4069.89, 3975.83)], markers=[sw, sw2])},
+               ["15m"], sent_t=T0 + 2100)
+    assert not any("LIQUIDITY" in x for x in sent[0])

@@ -1,7 +1,7 @@
 /* XAUUSD Quantum -- front-end. Renders the JSON the pipeline publishes; decides nothing itself. */
 "use strict";
 
-const TFS = ["5m", "15m", "1h", "4h"];
+const TFS = ["5m", "15m", "30m", "1h", "4h"];
 const $ = (s) => document.querySelector(s);
 const store = {
   get(k, d) { try { const v = localStorage.getItem("q5." + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -1945,7 +1945,7 @@ function renderStrip() {
    The operator's fixed-money plan on every engine SIGNAL, exactly as the phone alert sends it (quantum/notify.py,
    published in index.json -> alerts.plans): open trades with the live distance to TP / SL, and the results so far.
    The TP-first figure is geometry, SL / (TP + SL), measured on 139,754 entries; no signal tested beats it. */
-const TF_SEC = { "5m": 300, "15m": 900, "1h": 3600, "4h": 14400 };
+const TF_SEC = { "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400 };
 function renderPlanAlerts() {
   const el = $("#pa"), st = $("#pa-state"); if (!el) return;
   const A = S.index && S.index.alerts, P = A && A.plans;
@@ -1982,6 +1982,16 @@ function renderPlanAlerts() {
     const r = RES[p.result] || ["", () => esc(p.result)];
     return `<tr><td>${esc(p.tf)} ${side(p.dir)}<div>${when(p)}</div></td><td>${px(p.entry)}</td><td colspan="2"><b class="${r[0]}">${r[1](p)}</b></td><td>${tfmt(p.t_res)}</td></tr>`;
   }).join("");
+  // Liquidity alerts (quantum/notify.py): NEAR a pool, GRAB (swept, closed back), BREAK (closed beyond); info only
+  const L = A.liquidity || {}, HI = ["PDH", "PWH", "PMH", "EQH"];
+  const KIND = { GRAB: ["warn", "Grab", "swept, closed back"], BREAK: ["", "Break", "closed beyond"], NEAR: ["dim", "Near", "price close to it"] };
+  const liqRows = (L.recent || []).slice(0, 10).map((r) => {
+    const k = KIND[r.kind] || ["", esc(r.kind), ""], hi = HI.includes(r.name);
+    const what = r.kind === "NEAR" ? `price ${px(r.price)} · $${f(r.dist, 2)} away`
+      : r.kind === "GRAB" ? `${hi ? "high" : "low"} ${px(r.wick)} · close ${px(r.close)}` : `close ${px(r.close)}`;
+    return `<tr><td>${tfmt(r.t)}<div>${esc(r.tf || "live price")}</div></td><td><b class="${k[0]}">${k[1]}</b><div>${k[2]}</div></td>
+      <td>${esc(r.name)} ${px(r.px)}<div>${hi ? "buy-side" : "sell-side"}</div></td><td>${what}</td></tr>`;
+  }).join("");
   const T = P.tally || {}, tp = T.TP || 0, sl = (T.SL || 0) + (T.BOTH || 0), n = tp + sl;
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   el.innerHTML = `
@@ -1991,7 +2001,8 @@ function renderPlanAlerts() {
       <div>Phone alerts</div><div class="${on ? "bull" : "warn"}">${on ? "ON via " + esc(ch.join(", ")) : "OFF · add the NTFY_TOPIC secret"}</div>
       <div>Signals alerted</div><div>${esc((P.tfs || []).join(", ") || "—")}</div>
       <div>On MT5</div><div>SL ${isNum(dSl) ? "$" + f(dSl, 2) : "—"} and TP ${isNum(dTp) ? "$" + f(dTp, 2) : "—"} from <b>your fill</b>: right at any broker price</div>
-      <div>Alert delay</div><div>${delay}</div></div>
+      <div>Alert delay</div><div>${delay}</div>
+      <div>Liquidity alerts</div><div>${L.on === false ? "OFF" : L.on ? `ON · near = within $${f(L.near_usd, 2)} · grab / break once per pool per day` : "—"}</div></div>
     <p class="muted pa-note">Same plan as the phone alerts: every engine signal gets your SL and TP; a second alert says which was hit first.
       "TP hit first" is set by the SL / TP sizes, measured on 139,754 real entries; no signal tested (561 trials) beats it. Display only: the engine is unchanged.</p>
     <p class="muted pa-note">Your broker's prices differ from this site's feed, so the prices here are a reference: place SL and TP as distances from your own MT5 fill.
@@ -1999,6 +2010,8 @@ function renderPlanAlerts() {
     <p class="pa-note">${rec}</p>
     ${openRows ? `<h4>Open (${(P.open || []).length})</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th>SL</th><th>TP</th><th>Now</th></tr>${openRows}</table></div>` : `<p class="muted pa-note">No open plan right now.</p>`}
     ${doneRows ? `<h4>Results</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Result</th><th>Closed bar</th></tr>${doneRows}</table></div>` : ""}
+    ${L.on ? `<h4>Liquidity alerts</h4>${liqRows ? `<div class="scroll"><table class="yt"><tr><th>Time</th><th>Event</th><th>Pool</th><th>Detail</th></tr>${liqRows}</table></div>` : `<p class="muted pa-note">No liquidity alert yet.</p>`}
+      <p class="muted pa-note">Pools: previous day / week / month high and low (PDH … PML) and equal highs / lows. Information, not trade signals: sweeps and breaks were tested on 2020–2022 data (B2, B3) and did not beat break-even.</p>` : ""}
     ${validationHtml(P.validation)}`;
   el.querySelectorAll("button[data-vp]").forEach((b) => { b.onclick = () => { S.vp = b.dataset.vp; store.set("vp", S.vp); renderPlanAlerts(); }; });
 }
