@@ -1,9 +1,9 @@
 {
-  "freeze_key": "5e4630924d663fc5:60bb01794d03c9ac",
+  "freeze_key": "5e4630924d663fc5:a6f2be58c74887ed",
   "config_hash": "5e4630924d663fc5",
-  "engine_code_hash": "60bb01794d03c9ac",
-  "engine_version": "Q7.2-web.7",
-  "freeze_utc": "2026-10-31T17:23:01.937700+00:00",
+  "engine_code_hash": "a6f2be58c74887ed",
+  "engine_version": "Q7.2-web.8",
+  "freeze_utc": "2026-11-03T23:47:43.533901+00:00",
   "status": "RESET",
   "history": [
     {
@@ -45,6 +45,14 @@
       "engine_version": "Q7.2-web.6",
       "freeze_utc": "2026-10-17T21:26:18.328813+00:00",
       "ended_utc": "2026-10-31T17:23:01.937700+00:00"
+    },
+    {
+      "freeze_key": "5e4630924d663fc5:60bb01794d03c9ac",
+      "config_hash": "5e4630924d663fc5",
+      "engine_code_hash": "60bb01794d03c9ac",
+      "engine_version": "Q7.2-web.7",
+      "freeze_utc": "2026-10-31T17:23:01.937700+00:00",
+      "ended_utc": "2026-11-03T23:47:43.533901+00:00"
     }
   ]
 }
