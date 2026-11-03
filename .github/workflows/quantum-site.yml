@@ -10,6 +10,7 @@
 #   TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID, DISCORD_WEBHOOK_URL
 # Optional variables: MT5_PRICE_OFFSET (alert prices), ALERT_TFS (default "15m,1h")
 #   PLAN_LATE_FRAC, MT5_SERVER_UTC_OFFSET, ALERT_LOCAL_TZ (alert timing; see quantum/notify.py)
+#   ALERT_LIQUIDITY, LIQ_NEAR_USD (liquidity alerts; see quantum/notify.py)
 name: quantum-site
 
 on:
@@ -129,6 +130,8 @@ jobs:
           PLAN_LATE_FRAC: ${{ vars.PLAN_LATE_FRAC }}   # alert marked LATE when price moved this share of the stop (0.30)
           MT5_SERVER_UTC_OFFSET: ${{ vars.MT5_SERVER_UTC_OFFSET }}   # empty = New York + 7 h (UTC+2 winter / UTC+3 summer)
           ALERT_LOCAL_TZ: ${{ vars.ALERT_LOCAL_TZ }}   # local clock in alerts (Asia/Karachi)
+          ALERT_LIQUIDITY: ${{ vars.ALERT_LIQUIDITY }}   # liquidity alerts (near / grab / break); 0 = off
+          LIQ_NEAR_USD: ${{ vars.LIQ_NEAR_USD }}   # NEAR = price within this many $ of a pool (5)
         run: python -m quantum.pipeline --store store --out site/data --tfs 15m,1h,4h,5m
 
       - name: Upcoming events (display only; outside the freeze key; never fails the run)

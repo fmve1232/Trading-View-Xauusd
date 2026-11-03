@@ -29,6 +29,14 @@ SIGNAL alert also carries:
 MT5 server time = New York + 7 h (UTC+2 in the northern winter, UTC+3 in summer: most prop-firm brokers);
 MT5_SERVER_UTC_OFFSET (hours) fixes another offset. Local time: ALERT_LOCAL_TZ (Asia/Karachi). A TP / SL follow-up
 decided by less than FEED_MARGIN ($0.50) on the site's prices says to confirm it in MT5.
+
+LIQUIDITY (operator, 2026-11-03), once per pool per trading day (ALERT_LIQUIDITY=0 turns them off):
+  NEAR   the live price within LIQ_NEAR_USD ($5) of a pool on the side it has not reached and not traded through
+         today: previous day / week / month high or low, equal highs / lows (the 15m dashboard's pools);
+  GRAB   the engine's own SWEEP on a closed bar (wick through, close back), per timeframe;
+  BREAK  a closed bar beyond a previous day / week high or low it had not closed beyond the bar before.
+Information, not trade signals (sweeps and breaks did not beat break-even on 2020-2022 data, research B2 / B3). They
+replace the per-bar SWEEP tags of the structure line, which fired on every bar near the same pool.
 """
 from __future__ import annotations
 
@@ -197,7 +205,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None) -> lis
         elif m["type"] == "RISK_LOCK":
             out.append(f"XAUUSD {tf} RISK LOCK engaged -- new entries blocked")
     if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0":
-        out += structure_lines(payload, since_t, off)
+        out += structure_lines(payload, since_t, off, sweeps=not liq_on())
     for d in payload["decisions"]:
         if since_t is not None and d["t"] <= since_t:
             continue
@@ -211,11 +219,14 @@ _TAG = {("BOS", 1): "BOS▲", ("BOS", -1): "BOS▼", ("CHoCH", 1): "CHoCH▲", (
         ("MSS", 1): "MSS▲", ("MSS", -1): "MSS▼", ("SWEEP", 1): "SWEEP-LOW", ("SWEEP", -1): "SWEEP-HIGH"}
 
 
-def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> list[str]:
-    """One line per newly closed bar: its structure / sweep events and any H2 / H3 setup on it."""
+def structure_lines(payload: dict, since_t: int | None, off: float = 0.0, sweeps: bool = True) -> list[str]:
+    """One line per newly closed bar: its structure / sweep events and any H2 / H3 setup on it. sweeps=False leaves
+    the sweeps to the LIQUIDITY alerts (one per pool per day instead of one per bar)."""
     tf = payload["meta"]["tf"]
     by_t: dict = {}
     for m in payload["markers"]:
+        if m["type"] == "SWEEP" and not sweeps:
+            continue
         tag = _TAG.get((m["type"], m.get("dir")))
         if tag and m["type"] == "SWEEP" and m.get("lvl"):       # name the swept pool and its price (Pine v84)
             tag += " " + " ".join(f"{x['name']} {_fmt(x['px'], off)}" for x in m["lvl"])
@@ -227,6 +238,113 @@ def structure_lines(payload: dict, since_t: int | None, off: float = 0.0) -> lis
                 by_t.setdefault(g["t"], []).append(f"{arm.upper()} {'BUY' if g['dir'] == 'LONG' else 'SELL'} entry {_fmt(g['entry'], off)} "
                                                    f"SL {_fmt(g['sl'], off)} TP1 {_fmt(g['tp1'], off)} TP2 {_fmt(g['tp2'], off)}")
     return [f"XAUUSD {tf} {' '.join(v)} | info, not a DECISION" for _, v in sorted(by_t.items())]
+
+
+# ---------------- liquidity alerts (operator, 2026-11-03): price near a pool, a pool grabbed, a pool broken ----------------
+LIQ_NEAR_USD = 5.0     # NEAR = within $5 of a pool not yet traded through today (declared 2026-11-03, before use)
+_HIGHS = ("PDH", "PWH", "PMH", "EQH")
+_LIQ_LOG = 40
+
+
+def liq_on() -> bool:
+    return os.environ.get("ALERT_LIQUIDITY", "1").strip() != "0"
+
+
+def _liq_side(name: str) -> str:
+    return "buy-side liquidity above" if name in _HIGHS else "sell-side liquidity below"
+
+
+def _first_today(seen: dict, key: tuple, t: int) -> bool:
+    """True the first time `key` happens on this trading day (and remembers it)."""
+    k, day = "|".join(str(x) for x in key), trading_day(t)
+    if seen.get(k) == day:
+        return False
+    seen[k] = day
+    return True
+
+
+def liquidity_events(payload: dict, since_t: int | None, seen: dict) -> list[dict]:
+    """GRAB: the engine's own SWEEP (wick through a previous day / week / month high or low, close back), once per
+    pool per day per timeframe. BREAK: a bar closed beyond a previous day / week high or low it had not closed beyond
+    on the bar before, once per pool per day per timeframe. Bars closed after since_t only."""
+    tf, ch = payload["meta"]["tf"], payload.get("chart") or {}
+    t, c = ch.get("t") or [], ch.get("c") or []
+    at = {tt: k for k, tt in enumerate(t)}
+    out = []
+    for m in payload["markers"]:
+        if m["type"] != "SWEEP" or (since_t is not None and m["t"] <= since_t):
+            continue
+        k = at.get(m["t"])
+        close = c[k] if k is not None and k < len(c) else None
+        for x in m.get("lvl") or []:
+            if x.get("px") is not None and _first_today(seen, (tf, "GRAB", x["name"], f"{x['px']:.2f}"), m["t"]):
+                out.append({"kind": "GRAB", "tf": tf, "t": int(m["t"]), "name": x["name"], "px": x["px"],
+                            "wick": m.get("px"), "close": close})
+    for k in range(1, min(len(t), len(c))):
+        if (since_t is not None and t[k] <= since_t) or c[k] is None or c[k - 1] is None:
+            continue
+        for name, key in (("PDH", "pdh"), ("PWH", "pwh"), ("PDL", "pdl"), ("PWL", "pwl")):
+            lv = (ch.get(key) or [None] * len(t))[k]
+            if lv is None:
+                continue
+            hi = name in _HIGHS
+            crossed = (c[k] > lv >= c[k - 1]) if hi else (c[k] < lv <= c[k - 1])
+            if crossed and _first_today(seen, (tf, "BREAK", name, f"{lv:.2f}"), t[k]):
+                out.append({"kind": "BREAK", "tf": tf, "t": int(t[k]), "name": name, "px": lv, "close": c[k]})
+    return sorted(out, key=lambda r: r["t"])
+
+
+def _taken_today(p: dict, lv: float, hi: bool) -> bool:
+    """Has price already traded through this level on the current trading day (closed bars and the forming one)?"""
+    ch, fb = p.get("chart") or {}, p["meta"].get("forming") or {}
+    t, h, l = ch.get("t") or [], ch.get("h") or [], ch.get("l") or []
+    if not t:
+        return False
+    day = trading_day(int(fb["t"]) if fb.get("t") else int(t[-1]))
+    ext = [x for k, x in enumerate(h if hi else l) if k < len(t) and x is not None and trading_day(int(t[k])) == day]
+    if fb.get("h" if hi else "l") is not None:
+        ext.append(fb["h" if hi else "l"])
+    return any(x >= lv for x in ext) if hi else any(x <= lv for x in ext)
+
+
+def liquidity_near(payloads: dict, tfs: list[str], seen: dict, t_now: int) -> list[dict]:
+    """NEAR: the price now within LIQ_NEAR_USD of a pool (the 15m dashboard's: previous day / week / month highs and
+    lows, equal highs / lows) on the side it has not reached, and not traded through today; once per pool per day."""
+    src = next((payloads[x] for x in ["15m", *tfs] if payloads.get(x) and not payloads[x]["meta"].get("synthetic")), None)
+    if src is None:
+        return []
+    pn = price_now(payloads, src["meta"]["tf"])
+    pools = ((src.get("dashboard") or {}).get("liquidity") or {}).get("pools") or {}
+    if not pn or not pn.get("live"):                   # only on a live price: a stale close is not "near now"
+        return []
+    near = _env_float("LIQ_NEAR_USD", LIQ_NEAR_USD)
+    out = []
+    for name, lv in pools.items():
+        if lv is None:
+            continue
+        hi = name in _HIGHS
+        dist = (lv - pn["px"]) if hi else (pn["px"] - lv)
+        if 0 < dist <= near and not _taken_today(src, lv, hi) and _first_today(seen, ("NEAR", name, f"{lv:.2f}"), t_now):
+            out.append({"kind": "NEAR", "tf": "", "t": int(pn["t"]), "name": name, "px": round(float(lv), 2),
+                        "price": pn["px"], "dist": round(dist, 2)})
+    return out
+
+
+def liq_text(r: dict, off: float = 0.0) -> str:
+    nm, lv, side = r["name"], _fmt(r["px"], off), _liq_side(r["name"])
+    if r["kind"] == "NEAR":
+        where = "below" if r["name"] in _HIGHS else "above"
+        return (f"XAUUSD LIQUIDITY NEAR: price {_fmt(r['price'], off)} is ${r['dist']:.2f} {where} {nm} {lv} ({side}) | "
+                f"{clocks(r['t'])} | watch for a grab (wick through, close back) or a break | info, not a trade signal")
+    bar, side = f"{r['tf']} bar {clocks(r['t'])}", side.rsplit(" ", 1)[0]       # "buy-side liquidity"
+    if r["kind"] == "GRAB":
+        lows = r["name"] not in _HIGHS
+        return (f"XAUUSD {r['tf']} LIQUIDITY GRAB: {nm} {lv} swept -- {'low' if lows else 'high'} {_fmt(r.get('wick'), off)}, "
+                f"closed back {'above' if lows else 'below'} at {_fmt(r.get('close'), off)} ({side} taken, then rejected) | "
+                f"{bar} | info, not a trade signal")
+    hi = r["name"] in _HIGHS
+    return (f"XAUUSD {r['tf']} LIQUIDITY BREAK: {nm} {lv} broken -- closed {'above' if hi else 'below'} at "
+            f"{_fmt(r.get('close'), off)} ({side} taken, price holding beyond) | {bar} | info, not a trade signal")
 
 
 def plan_cfg() -> dict | None:
@@ -505,6 +623,8 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     log, tally = state.get("plan_log", []), dict(state.get("plan_tally", {}))
     vpath = os.path.join(store_dir, VALIDATION) if store_dir else None
     vlog: list = []
+    seen, liq_log, alerted = dict(state.get("liq_seen", {})), list(state.get("liq_log", [])), False
+    t_send = int(sent_t if sent_t is not None else datetime.now(timezone.utc).timestamp())
     if vpath and os.path.exists(vpath):
         with open(vpath) as f:
             vlog = json.load(f)
@@ -517,10 +637,14 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         if since is None:
             state[tf] = last_t   # first run: remember the position, do not replay history
             continue
+        alerted = True
         pn = price_now(payloads, tf)
-        now = {"t": int(sent_t if sent_t is not None else datetime.now(timezone.utc).timestamp()),
-               **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
+        now = {"t": t_send, **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
         lines = messages(p, since, now)
+        if liq_on():                                       # liquidity grabs / breaks on this timeframe's new bars
+            ev = liquidity_events(p, since, seen)
+            lines += [liq_text(r, off) for r in ev]
+            liq_log += ev
         if pl_cfg:                                         # the operator's plan: results of earlier signals, then new ones
             upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off)
             lines = upd + lines
@@ -548,6 +672,16 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                            "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
                            "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs),
                            "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC)}
+    if liq_on() and alerted:                               # price near a pool: once per run, not per timeframe
+        ev = liquidity_near(payloads, tfs, seen, t_send)
+        if ev:
+            lines = [liq_text(r, off) for r in ev]
+            report["liquidity_near"] = {"lines": lines, "sent": send(lines)}
+            liq_log += ev
+    keep_from = trading_day(t_send - 3 * 86400)
+    state["liq_seen"] = {k: v for k, v in seen.items() if v >= keep_from}
+    state["liq_log"] = liq_log[-_LIQ_LOG:]
+    report["liquidity"] = {"on": liq_on(), "near_usd": _env_float("LIQ_NEAR_USD", LIQ_NEAR_USD), "recent": state["liq_log"][::-1]}
     report["channels"] = channels()
     first = next((payloads[tf] for tf in tfs if payloads.get(tf) and not payloads[tf]["meta"]["synthetic"]), None)
     if first is not None and pl_cfg:                       # validation: daily at the New York close, weekly at Friday's
