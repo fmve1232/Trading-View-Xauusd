@@ -1,1 +1,30 @@
-[]
+[
+{
+"dir": "SHORT",
+"entry_time": "2026-11-03T09:45:00+00:00",
+"exit_time": "2026-11-03T12:15:00+00:00",
+"entry_i": 5839,
+"exit_i": 5849,
+"entry": 3909.386,
+"sl": 3915.434,
+"tp1": 3900.0,
+"tp2": 3896.205,
+"exit": 3909.386,
+"exit_reason": "BE",
+"tp1_hit": true,
+"pts": 3.923,
+"gross_pts": 4.693,
+"cost_pts": 0.77,
+"r": 0.6487,
+"bars": 10,
+"tq": 62,
+"p": 0.5874,
+"ev": 0.0085,
+"session": "LON-KZ",
+"regime": "STRONG TR",
+"open": false,
+"recorded_utc": "2026-11-03T12:36:31.648832+00:00",
+"freeze_key": "5e4630924d663fc5:60bb01794d03c9ac:40d438ea0c144199",
+"price_source": "twelvedata:XAU/USD"
+}
+]
