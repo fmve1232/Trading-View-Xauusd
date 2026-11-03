@@ -1061,3 +1061,37 @@ decides nothing**:
 
 **What 30m can show.** Nothing about the 1H decisions. Its alerts are information for the operator. The research
 programme (B1–B8, 561 trials) found no signal that beats the stop / target geometry SL / (TP + SL) after costs.
+
+**Amendment 15 start record (2026-11-03 UTC).** Deployed by merge `06a82fb9964f5adf787d50d15f2c5e533f21810c` (PR #73), run
+`quantum-site` #2496 (Actions run 41740780015). The run recorded the following on `forward-ledger` @
+`4bb6ca8777040444f7d06ef3da20d80e7f4e2f0f`:
+
+| Item | Value |
+|---|---|
+| Main key | `5e4630924d663fc5:a6f2be58c74887ed` |
+| Engine | Q7.2-web.8 |
+| Freeze (start) | **2026-11-03 23:47:43.533901 UTC** |
+| Status | RESET |
+
+The web.7 key `5e4630924d663fc5:60bb01794d03c9ac` (2026-10-31 17:23:01 → 2026-11-03 23:47:43) is in `history`.
+
+Arm keys, each started at the same time and each keeping its web.7 key in its own manifest's `history`:
+
+| Arm | Key suffix (unchanged arm hash) |
+|---|---|
+| H2 | `19433c9889d94f09` |
+| H3 | `0eb650f81d99803e` |
+| H4 | `090418672c210848` |
+| H5 | `40d438ea0c144199` |
+| H6 | `7c4ac023578836c6` |
+
+**30m.** The first run built 3,407 bars from Twelve Data `30min` and opened the eight 30m ledgers (treatment, control,
+challenger, H2–H6). The other timeframes ran on the same bar counts as the run before.
+
+**Archive check:**
+
+- The 106 web.7 trades of the `audit/FORWARD_WEB7_FINAL.md` snapshot are all in `holdout/archive/`; none were lost.
+- One more web.7 trade closed after that snapshot and is archived with them, 107 in all: 15m H4, short at 2026-11-03
+  19:00 UTC, stopped at 23:00, −1.105 R.
+- No web.7 trade remains in a live ledger.
+- Archive files went from 21 to 24, and none shrank.

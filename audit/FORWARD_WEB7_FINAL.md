@@ -43,3 +43,8 @@ So the restart discards no evidence that could have decided anything.
 
 The other timeframes are descriptive only, as before. 5m H4 (62 trades, −0.149 R per trade, interval −0.379 to +0.116)
 is the largest; it decides nothing.
+
+**Complete record (added 2026-11-03 after the restart; facts only).** The first web.8 run moved 107 web.7 trades to
+`holdout/archive/` (`forward-ledger` @ `4bb6ca8777040444f7d06ef3da20d80e7f4e2f0f`). These are the 106 above, plus one
+that closed after the snapshot: 15m H4, short at 2026-11-03 19:00 UTC, stopped at 23:00, −1.105 R. It changes no 1H
+figure.
