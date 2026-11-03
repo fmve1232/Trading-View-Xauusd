@@ -12,7 +12,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 
-ENGINE_VERSION = "Q7.2-web.7"   # Pine QVERSION this engine ports, plus the web build
+ENGINE_VERSION = "Q7.2-web.8"   # Pine QVERSION this engine ports, plus the web build
 SCHEMA_BUILD = 6                 # same schema build as Pine v32 (F-A38 Cornish-Fisher guard)
 
 
@@ -121,6 +121,7 @@ DEFAULT = Config()
 TIMEFRAMES = {
     "5m": {"sec": 300, "yahoo": "5m", "range": "60d"},
     "15m": {"sec": 900, "yahoo": "15m", "range": "60d"},
+    "30m": {"sec": 1800, "yahoo": "30m", "range": "60d"},   # Amendment 15 (operator, 2026-11-03): descriptive only
     "1h": {"sec": 3600, "yahoo": "60m", "range": "730d"},
     "4h": {"sec": 14400, "yahoo": "60m", "range": "730d", "resample_from": "1h"},
 }

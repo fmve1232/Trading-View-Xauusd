@@ -132,7 +132,7 @@ jobs:
           ALERT_LOCAL_TZ: ${{ vars.ALERT_LOCAL_TZ }}   # local clock in alerts (Asia/Karachi)
           ALERT_LIQUIDITY: ${{ vars.ALERT_LIQUIDITY }}   # liquidity alerts (near / grab / break); 0 = off
           LIQ_NEAR_USD: ${{ vars.LIQ_NEAR_USD }}   # NEAR = price within this many $ of a pool (5)
-        run: python -m quantum.pipeline --store store --out site/data --tfs 15m,1h,4h,5m
+        run: python -m quantum.pipeline --store store --out site/data --tfs 15m,30m,1h,4h,5m
 
       - name: Upcoming events (display only; outside the freeze key; never fails the run)
         continue-on-error: true

@@ -41,4 +41,4 @@ def test_entry_based_reward_risk_formula():
 
 
 def test_keys_unchanged():
-    assert holdout.freeze_key(DEFAULT) == "5e4630924d663fc5:60bb01794d03c9ac"
+    assert holdout.freeze_key(DEFAULT) == "5e4630924d663fc5:a6f2be58c74887ed"   # web.8 (Amendment 15)

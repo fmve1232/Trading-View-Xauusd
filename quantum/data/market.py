@@ -153,8 +153,8 @@ class Downloads:
 def download_all(store_dir: str | None = None, intervals=("5m", "15m", "60m")) -> Downloads:
     status: dict = {}
     td_key = os.environ.get("TWELVEDATA_API_KEY", "").strip()
-    td_int = {"5m": "5min", "15m": "15min", "60m": "1h", "1d": "1day"}
-    rng = {"5m": "60d", "15m": "60d", "60m": "730d", "1d": "10y"}
+    td_int = {"5m": "5min", "15m": "15min", "30m": "30min", "60m": "1h", "1d": "1day"}
+    rng = {"5m": "60d", "15m": "60d", "30m": "60d", "60m": "730d", "1d": "10y"}
 
     # PRICE: one instrument for every interval, so PDH/PMH/HTF levels share a price scale.
     # Order: Twelve Data spot (if a key is set) -> Yahoo spot -> Yahoo COMEX futures.
@@ -182,7 +182,7 @@ def download_all(store_dir: str | None = None, intervals=("5m", "15m", "60m")) -
         m5 = sources.repair_reopen(prim.get("5m"), 300)
         if m5 is not None:
             prim["5m"] = m5
-        for i, sec in (("15m", 900), ("60m", 3600)):
+        for i, sec in (("15m", 900), ("30m", 1800), ("60m", 3600)):
             if i in prim:
                 prim[i] = sources.repair_reopen(prim[i], sec, m5)
 

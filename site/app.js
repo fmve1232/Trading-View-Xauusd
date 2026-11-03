@@ -1,7 +1,7 @@
 /* XAUUSD Quantum -- front-end. Renders the JSON the pipeline publishes; decides nothing itself. */
 "use strict";
 
-const TFS = ["5m", "15m", "1h", "4h"];
+const TFS = ["5m", "15m", "30m", "1h", "4h"];
 const $ = (s) => document.querySelector(s);
 const store = {
   get(k, d) { try { const v = localStorage.getItem("q5." + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
@@ -1945,7 +1945,7 @@ function renderStrip() {
    The operator's fixed-money plan on every engine SIGNAL, exactly as the phone alert sends it (quantum/notify.py,
    published in index.json -> alerts.plans): open trades with the live distance to TP / SL, and the results so far.
    The TP-first figure is geometry, SL / (TP + SL), measured on 139,754 entries; no signal tested beats it. */
-const TF_SEC = { "5m": 300, "15m": 900, "1h": 3600, "4h": 14400 };
+const TF_SEC = { "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400 };
 function renderPlanAlerts() {
   const el = $("#pa"), st = $("#pa-state"); if (!el) return;
   const A = S.index && S.index.alerts, P = A && A.plans;
