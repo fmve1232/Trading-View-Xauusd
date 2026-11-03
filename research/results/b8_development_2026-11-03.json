@@ -1,0 +1,1115 @@
+{
+ "set": "B8",
+ "partition": "development",
+ "from": "2020-01-24 02:00:00+00:00",
+ "to": "2023-01-24 02:00:00+00:00",
+ "data_hash": "f113f97ad2105ff9",
+ "events": {
+  "CPI": {
+   "listed": 36,
+   "with_bars": 35,
+   "flagged_low_ratio": [
+    "2020-02-13",
+    "2020-03-11",
+    "2020-05-12",
+    "2020-06-10",
+    "2020-09-11",
+    "2020-11-12",
+    "2021-01-13"
+   ],
+   "median_ratio": 2.822199725929414
+  },
+  "NFP": {
+   "listed": 36,
+   "with_bars": 35,
+   "flagged_low_ratio": [
+    "2020-10-02",
+    "2022-03-04"
+   ],
+   "median_ratio": 3.0468979395317484
+  },
+  "FOMC": {
+   "listed": 23,
+   "with_bars": 23,
+   "flagged_low_ratio": [],
+   "median_ratio": 6.772479992335331
+  }
+ },
+ "baseline": {
+  "CPI W15": {
+   "T13 long": 0.47935103244837757,
+   "T10 long": 0.47935103244837757,
+   "T13 short": 0.5206489675516224,
+   "T10 short": 0.5191740412979351,
+   "n_days": 678
+  },
+  "CPI W30": {
+   "T13 long": 0.5036818851251841,
+   "T10 long": 0.49189985272459497,
+   "T13 short": 0.4963181148748159,
+   "T10 short": 0.5036818851251841,
+   "n_days": 679
+  },
+  "NFP W15": {
+   "T13 long": 0.47935103244837757,
+   "T10 long": 0.47935103244837757,
+   "T13 short": 0.5206489675516224,
+   "T10 short": 0.5191740412979351,
+   "n_days": 678
+  },
+  "NFP W30": {
+   "T13 long": 0.5036818851251841,
+   "T10 long": 0.49189985272459497,
+   "T13 short": 0.4963181148748159,
+   "T10 short": 0.5036818851251841,
+   "n_days": 679
+  },
+  "FOMC W15": {
+   "T13 long": 0.5184049079754601,
+   "T10 long": 0.50920245398773,
+   "T13 short": 0.48006134969325154,
+   "T10 short": 0.48773006134969327,
+   "n_days": 652
+  },
+  "FOMC W30": {
+   "T13 long": 0.5422427035330261,
+   "T10 long": 0.5084485407066052,
+   "T13 short": 0.45468509984639016,
+   "T10 short": 0.4915514592933948,
+   "n_days": 651
+  }
+ },
+ "trials": [
+  {
+   "id": "15min CPI W15 CONT T13",
+   "event": "CPI",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 34,
+   "long": 26,
+   "short": 8,
+   "wins": 20,
+   "losses": 14,
+   "open": 0,
+   "win_rate": 0.5882352941176471,
+   "wilson": [
+    0.422215937544422,
+    0.7363403173510689
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": 0.11723981900452492,
+   "t": 0.6842298473021606,
+   "random_same_mix": 0.4890681936491411,
+   "z_vs_random": 1.1567536921030133,
+   "usd_per_trade_0p5lot": 76.2058823529412,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CPI W15 CONT T10",
+   "event": "CPI",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 34,
+   "long": 26,
+   "short": 8,
+   "wins": 18,
+   "losses": 16,
+   "open": 0,
+   "win_rate": 0.5294117647058824,
+   "wilson": [
+    0.36736712863069904,
+    0.6854849563344647
+   ],
+   "break_even": 0.5385,
+   "net_r": -0.01817647058823529,
+   "t": -0.10459699445968795,
+   "random_same_mix": 0.4887211521776852,
+   "z_vs_random": 0.4746507867531413,
+   "usd_per_trade_0p5lot": -9.088235294117645,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CPI W15 FADE T13",
+   "event": "CPI",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 34,
+   "long": 8,
+   "short": 26,
+   "wins": 14,
+   "losses": 20,
+   "open": 0,
+   "win_rate": 0.4117647058823529,
+   "wilson": [
+    0.26365968264893114,
+    0.5777840624555781
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.23570135746606333,
+   "t": -1.3755898396746251,
+   "random_same_mix": 0.5109318063508589,
+   "z_vs_random": -1.1567536921030133,
+   "usd_per_trade_0p5lot": -153.20588235294116,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CPI W15 FADE T10",
+   "event": "CPI",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 34,
+   "long": 8,
+   "short": 26,
+   "wins": 16,
+   "losses": 18,
+   "open": 0,
+   "win_rate": 0.47058823529411764,
+   "wilson": [
+    0.3145150436655354,
+    0.632632871369301
+   ],
+   "break_even": 0.5385,
+   "net_r": -0.13582352941176468,
+   "t": -0.781600194846018,
+   "random_same_mix": 0.5098039215686274,
+   "z_vs_random": -0.45741749991749214,
+   "usd_per_trade_0p5lot": -67.91176470588233,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CPI W30 CONT T13",
+   "event": "CPI",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 35,
+   "long": 25,
+   "short": 10,
+   "wins": 19,
+   "losses": 16,
+   "open": 0,
+   "win_rate": 0.5428571428571428,
+   "wilson": [
+    0.3818972495098324,
+    0.6953398081704248
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": 0.026483516483516517,
+   "t": 0.15499452791196675,
+   "random_same_mix": 0.5015779507679359,
+   "z_vs_random": 0.4884244198532311,
+   "usd_per_trade_0p5lot": 17.214285714285737,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CPI W30 CONT T10",
+   "event": "CPI",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 35,
+   "long": 25,
+   "short": 10,
+   "wins": 15,
+   "losses": 20,
+   "open": 0,
+   "win_rate": 0.42857142857142855,
+   "wilson": [
+    0.2798456807626357,
+    0.5914258897702688
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.2198571428571428,
+   "t": -1.2952615083449361,
+   "random_same_mix": 0.49526614769619176,
+   "z_vs_random": -0.789177929640616,
+   "usd_per_trade_0p5lot": -109.9285714285714,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CPI W30 FADE T13",
+   "event": "CPI",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 35,
+   "long": 10,
+   "short": 25,
+   "wins": 16,
+   "losses": 19,
+   "open": 0,
+   "win_rate": 0.45714285714285713,
+   "wilson": [
+    0.30466019182957504,
+    0.6181027504901676
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.1449450549450549,
+   "t": -0.8482895531779412,
+   "random_same_mix": 0.4984220492320641,
+   "z_vs_random": -0.48842441985323176,
+   "usd_per_trade_0p5lot": -94.2142857142857,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min CPI W30 FADE T10",
+   "event": "CPI",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 35,
+   "long": 10,
+   "short": 25,
+   "wins": 19,
+   "losses": 16,
+   "open": 0,
+   "win_rate": 0.5428571428571428,
+   "wilson": [
+    0.3818972495098324,
+    0.6953398081704248
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": 0.008714285714285716,
+   "t": 0.051000274122070324,
+   "random_same_mix": 0.5003155901535871,
+   "z_vs_random": 0.503358540048503,
+   "usd_per_trade_0p5lot": 4.357142857142858,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W15 CONT T13",
+   "event": "NFP",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 35,
+   "long": 15,
+   "short": 20,
+   "wins": 17,
+   "losses": 18,
+   "open": 0,
+   "win_rate": 0.4857142857142857,
+   "wilson": [
+    0.32994235892786083,
+    0.64431195517872
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.08780219780219777,
+   "t": -0.5121794871794869,
+   "random_same_mix": 0.5029498525073747,
+   "z_vs_random": -0.20393752571830603,
+   "usd_per_trade_0p5lot": -57.07142857142855,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W15 CONT T10",
+   "event": "NFP",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 35,
+   "long": 15,
+   "short": 20,
+   "wins": 18,
+   "losses": 17,
+   "open": 0,
+   "win_rate": 0.5142857142857142,
+   "wilson": [
+    0.3556880448212799,
+    0.6700576410721392
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.05020181677591472,
+   "t": -0.2922952531749837,
+   "random_same_mix": 0.5021070375052676,
+   "z_vs_random": 0.14410132648361976,
+   "usd_per_trade_0p5lot": -25.10090838795736,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W15 FADE T13",
+   "event": "NFP",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 35,
+   "long": 20,
+   "short": 15,
+   "wins": 18,
+   "losses": 17,
+   "open": 0,
+   "win_rate": 0.5142857142857142,
+   "wilson": [
+    0.3556880448212799,
+    0.6700576410721392
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.030659340659340627,
+   "t": -0.17884615384615365,
+   "random_same_mix": 0.4970501474926254,
+   "z_vs_random": 0.20393752571830476,
+   "usd_per_trade_0p5lot": -19.928571428571406,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W15 FADE T10",
+   "event": "NFP",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 35,
+   "long": 20,
+   "short": 15,
+   "wins": 16,
+   "losses": 19,
+   "open": 0,
+   "win_rate": 0.45714285714285713,
+   "wilson": [
+    0.30466019182957504,
+    0.6181027504901676
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.16094104036694235,
+   "t": -0.9400339643458726,
+   "random_same_mix": 0.4964180362410451,
+   "z_vs_random": -0.4647221114348084,
+   "usd_per_trade_0p5lot": -80.47052018347117,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W30 CONT T13",
+   "event": "NFP",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 35,
+   "long": 17,
+   "short": 18,
+   "wins": 12,
+   "losses": 23,
+   "open": 0,
+   "win_rate": 0.34285714285714286,
+   "wilson": [
+    0.20831694901323755,
+    0.5084805061591524
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.3735164835164835,
+   "t": -2.2942077284963003,
+   "random_same_mix": 0.49989480328213765,
+   "z_vs_random": -1.8580946971757994,
+   "usd_per_trade_0p5lot": -242.78571428571425,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W30 CONT T10",
+   "event": "NFP",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 35,
+   "long": 17,
+   "short": 18,
+   "wins": 15,
+   "losses": 20,
+   "open": 0,
+   "win_rate": 0.42857142857142855,
+   "wilson": [
+    0.2798456807626357,
+    0.5914258897702688
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.21658924415801778,
+   "t": -1.2709381448779142,
+   "random_same_mix": 0.49795918367346925,
+   "z_vs_random": -0.8210138292685398,
+   "usd_per_trade_0p5lot": -108.29462207900889,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W30 FADE T13",
+   "event": "NFP",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 35,
+   "long": 18,
+   "short": 17,
+   "wins": 23,
+   "losses": 12,
+   "open": 0,
+   "win_rate": 0.6571428571428571,
+   "wilson": [
+    0.4915194938408475,
+    0.7916830509867624
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": 0.2550549450549451,
+   "t": 1.5665949214003863,
+   "random_same_mix": 0.5001051967178624,
+   "z_vs_random": 1.8580946971757994,
+   "usd_per_trade_0p5lot": 165.78571428571428,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min NFP W30 FADE T10",
+   "event": "NFP",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 35,
+   "long": 18,
+   "short": 17,
+   "wins": 20,
+   "losses": 15,
+   "open": 0,
+   "win_rate": 0.5714285714285714,
+   "wilson": [
+    0.4085741102297311,
+    0.7201543192373643
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": 0.0625892441580178,
+   "t": 0.3672715058808116,
+   "random_same_mix": 0.4976225541763096,
+   "z_vs_random": 0.8732944452849052,
+   "usd_per_trade_0p5lot": 31.2946220790089,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W15 CONT T13",
+   "event": "FOMC",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 23,
+   "long": 15,
+   "short": 8,
+   "wins": 10,
+   "losses": 13,
+   "open": 0,
+   "win_rate": 0.43478260869565216,
+   "wilson": [
+    0.25634635211064416,
+    0.6318862505482785
+   ],
+   "break_even": 0.5296153846153846,
+   "net_r": -0.15685408551078964,
+   "t": -0.7076583074187078,
+   "random_same_mix": 0.5050680181381703,
+   "z_vs_random": -0.6741885981655178,
+   "usd_per_trade_0p5lot": -101.95515558201326,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W15 CONT T10",
+   "event": "FOMC",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 23,
+   "long": 15,
+   "short": 8,
+   "wins": 8,
+   "losses": 15,
+   "open": 0,
+   "win_rate": 0.34782608695652173,
+   "wilson": [
+    0.18811275843801456,
+    0.5510966477661382
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.32564944159880915,
+   "t": -1.4426923178226347,
+   "random_same_mix": 0.5017337956788475,
+   "z_vs_random": -1.4762397576629391,
+   "usd_per_trade_0p5lot": -162.8247207994046,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W15 FADE T13",
+   "event": "FOMC",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 23,
+   "long": 8,
+   "short": 15,
+   "wins": 13,
+   "losses": 10,
+   "open": 0,
+   "win_rate": 0.5652173913043478,
+   "wilson": [
+    0.3681137494517215,
+    0.7436536478893558
+   ],
+   "break_even": 0.5296153846153846,
+   "net_r": 0.038392547049251255,
+   "t": 0.17321069307115608,
+   "random_same_mix": 0.49339823953054146,
+   "z_vs_random": 0.6889251579090395,
+   "usd_per_trade_0p5lot": 24.955155582013315,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W15 FADE T10",
+   "event": "FOMC",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 23,
+   "long": 8,
+   "short": 15,
+   "wins": 13,
+   "losses": 10,
+   "open": 0,
+   "win_rate": 0.5652173913043478,
+   "wilson": [
+    0.3681137494517215,
+    0.7436536478893558
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.0022636018794516266,
+   "t": -0.009785721054611804,
+   "random_same_mix": 0.4951987196585755,
+   "z_vs_random": 0.6716264711726916,
+   "usd_per_trade_0p5lot": -1.1318009397258133,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W30 CONT T13",
+   "event": "FOMC",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 23,
+   "long": 16,
+   "short": 7,
+   "wins": 13,
+   "losses": 10,
+   "open": 0,
+   "win_rate": 0.5652173913043478,
+   "wilson": [
+    0.3681137494517215,
+    0.7436536478893558
+   ],
+   "break_even": 0.5296153846153846,
+   "net_r": 0.08636561006934387,
+   "t": 0.40220271569377475,
+   "random_same_mix": 0.515594737193615,
+   "z_vs_random": 0.476195451559609,
+   "usd_per_trade_0p5lot": 56.137646545073515,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W30 CONT T10",
+   "event": "FOMC",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 23,
+   "long": 16,
+   "short": 7,
+   "wins": 12,
+   "losses": 11,
+   "open": 0,
+   "win_rate": 0.5217391304347826,
+   "wilson": [
+    0.3296273720444183,
+    0.7076284270692741
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.03352173913043479,
+   "t": -0.15737971597381922,
+   "random_same_mix": 0.5033059507112803,
+   "z_vs_random": 0.17680871362248418,
+   "usd_per_trade_0p5lot": -16.760869565217394,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W30 FADE T13",
+   "event": "FOMC",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 23,
+   "long": 7,
+   "short": 16,
+   "wins": 9,
+   "losses": 14,
+   "open": 0,
+   "win_rate": 0.391304347826087,
+   "wilson": [
+    0.22157622687390552,
+    0.5921447775576323
+   ],
+   "break_even": 0.5296153846153846,
+   "net_r": -0.2917836702700127,
+   "t": -1.3814038346165853,
+   "random_same_mix": 0.4813330661858011,
+   "z_vs_random": -0.8641275591493014,
+   "usd_per_trade_0p5lot": -189.65938567550825,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min FOMC W30 FADE T10",
+   "event": "FOMC",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 23,
+   "long": 7,
+   "short": 16,
+   "wins": 9,
+   "losses": 14,
+   "open": 0,
+   "win_rate": 0.391304347826087,
+   "wilson": [
+    0.22157622687390552,
+    0.5921447775576323
+   ],
+   "break_even": 0.5384999999999999,
+   "net_r": -0.29439130434782607,
+   "t": -1.4146496158817154,
+   "random_same_mix": 0.4966940492887198,
+   "z_vs_random": -1.010884601798115,
+   "usd_per_trade_0p5lot": -147.19565217391303,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W15 CONT T13",
+   "event": "ALL",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 92,
+   "long": 56,
+   "short": 36,
+   "wins": 47,
+   "losses": 45,
+   "open": 0,
+   "win_rate": 0.5108695652173914,
+   "wilson": [
+    0.4103549202972908,
+    0.6105128755746095
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.029288772213817794,
+   "t": -0.27641413483545063,
+   "random_same_mix": 0.49834921564137835,
+   "z_vs_random": 0.24018325776322685,
+   "usd_per_trade_0p5lot": -19.037701938981566,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W15 CONT T10",
+   "event": "ALL",
+   "wait_min": 15,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 92,
+   "long": 56,
+   "short": 36,
+   "wins": 44,
+   "losses": 48,
+   "open": 0,
+   "win_rate": 0.4782608695652174,
+   "wilson": [
+    0.3791213815069779,
+    0.5791430267492217
+   ],
+   "break_even": 0.5385,
+   "net_r": -0.10722826895575678,
+   "t": -1.000068938904603,
+   "random_same_mix": 0.4970667694275998,
+   "z_vs_random": -0.3607659175361283,
+   "usd_per_trade_0p5lot": -53.614134477878395,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W15 FADE T13",
+   "event": "ALL",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 92,
+   "long": 36,
+   "short": 56,
+   "wins": 45,
+   "losses": 47,
+   "open": 0,
+   "win_rate": 0.4891304347826087,
+   "wilson": [
+    0.3894871244253905,
+    0.5896450797027093
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.08917276624772061,
+   "t": -0.8415720827525469,
+   "random_same_mix": 0.5012673487757994,
+   "z_vs_random": -0.2328271268195696,
+   "usd_per_trade_0p5lot": -57.962298061018394,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W15 FADE T10",
+   "event": "ALL",
+   "wait_min": 15,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 92,
+   "long": 36,
+   "short": 56,
+   "wins": 45,
+   "losses": 47,
+   "open": 0,
+   "win_rate": 0.4891304347826087,
+   "wilson": [
+    0.3894871244253905,
+    0.5896450797027093
+   ],
+   "break_even": 0.5385,
+   "net_r": -0.11198912234859096,
+   "t": -1.0446262657705205,
+   "random_same_mix": 0.5010601647164908,
+   "z_vs_random": -0.22885241396364261,
+   "usd_per_trade_0p5lot": -55.99456117429548,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W30 CONT T13",
+   "event": "ALL",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T13",
+   "n": 93,
+   "long": 58,
+   "short": 35,
+   "wins": 44,
+   "losses": 49,
+   "open": 0,
+   "win_rate": 0.4731182795698925,
+   "wilson": [
+    0.3747394090104935,
+    0.5736298115923395
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.10924456789848316,
+   "t": -1.044549074920148,
+   "random_same_mix": 0.5044110252387711,
+   "z_vs_random": -0.6035761093576384,
+   "usd_per_trade_0p5lot": -71.00896913401405,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W30 CONT T10",
+   "event": "ALL",
+   "wait_min": 30,
+   "rule": "CONT",
+   "target": "T10",
+   "n": 93,
+   "long": 58,
+   "short": 35,
+   "wins": 42,
+   "losses": 51,
+   "open": 0,
+   "win_rate": 0.45161290322580644,
+   "wilson": [
+    0.3543976128134025,
+    0.552666984271697
+   ],
+   "break_even": 0.5385,
+   "net_r": -0.172544339199254,
+   "t": -1.6604159214637848,
+   "random_same_mix": 0.4982679942397583,
+   "z_vs_random": -0.899856206794383,
+   "usd_per_trade_0p5lot": -86.272169599627,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W30 FADE T13",
+   "event": "ALL",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T13",
+   "n": 93,
+   "long": 35,
+   "short": 58,
+   "wins": 48,
+   "losses": 45,
+   "open": 0,
+   "win_rate": 0.5161290322580645,
+   "wilson": [
+    0.4159554917235341,
+    0.615022975914766
+   ],
+   "break_even": 0.5296153846153845,
+   "net_r": -0.03072234690714125,
+   "t": -0.29350756787256377,
+   "random_same_mix": 0.4948291841991489,
+   "z_vs_random": 0.41083856192960994,
+   "usd_per_trade_0p5lot": -19.96952548964181,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  },
+  {
+   "id": "15min ALL W30 FADE T10",
+   "event": "ALL",
+   "wait_min": 30,
+   "rule": "FADE",
+   "target": "T10",
+   "n": 93,
+   "long": 35,
+   "short": 58,
+   "wins": 48,
+   "losses": 45,
+   "open": 0,
+   "win_rate": 0.5161290322580645,
+   "wilson": [
+    0.4159554917235341,
+    0.615022975914766
+   ],
+   "break_even": 0.5385,
+   "net_r": -0.04597178983300402,
+   "t": -0.4405853084903242,
+   "random_same_mix": 0.4984064320987839,
+   "z_vs_random": 0.3418228691201371,
+   "usd_per_trade_0p5lot": -22.98589491650201,
+   "pass": {
+    "1_wilson_lb_above_break_even": false,
+    "2_t_above_3": false,
+    "3_beats_random_by_2se": false,
+    "4_bh_fdr10": false,
+    "5_reality_check_p_below_0p05": false
+   },
+   "passes_all": false
+  }
+ ],
+ "family": {
+  "trials": 32,
+  "reality_check_p": 0.822,
+  "best_id": "15min NFP W30 FADE T13",
+  "bh_fdr10_passed": [],
+  "passes_all": []
+ }
+}
