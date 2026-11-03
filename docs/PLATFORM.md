@@ -40,6 +40,9 @@ Optional, in **Settings → Secrets and variables → Actions**:
 | `DISCORD_WEBHOOK_URL` | secret | Discord alerts. |
 | `MT5_PRICE_OFFSET` | variable | Broker minus feed, in points, applied to alert prices (display only). |
 | `ALERT_TFS` | variable | Timeframes that alert. Default `15m,1h`. |
+| `PLAN_LATE_FRAC` | variable | A SIGNAL alert is marked LATE when price already moved this share of the plan's stop since the signal close. Default `0.30` (display only). |
+| `MT5_SERVER_UTC_OFFSET` | variable | Hours from UTC of the broker's MT5 server clock in alerts. Empty = New York + 7 h (UTC+2 winter, UTC+3 summer). |
+| `ALERT_LOCAL_TZ` | variable | IANA zone of the local clock in alerts. Default `Asia/Karachi`. |
 | `STREAM_URL` | variable | `wss://…/stream` of the tick relay (`relay/README.md`): the live chip and forming candle stream ticks. Empty = the 60 s gold-api poll. Display only. |
 | `OANDA_API_TOKEN` | secret | A free OANDA **practice** account's API token: bid/ask candles and a pricing snapshot for the Price-sources panel (`quantum/reference.py`). Display and validation only. Without it the panel says UNAVAILABLE. |
 | `OANDA_ENV`, `OANDA_ACCOUNT_ID` | variable | Optional. `OANDA_ENV=live` for a live account (default `practice`); the account id is otherwise read from the token. |

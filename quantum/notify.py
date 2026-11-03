@@ -17,6 +17,18 @@ within 0.3 points on 139,754 entries 2020-2022 (research/B5 and B6 found no sign
 Structure / sweep alerts (Pine line v49): one line per closed bar on which the engine's BOS, CHoCH, MSS
 or a PDH/PDL/PWH/PWL/PMH/PML sweep first appears, plus the separately registered H2 / H3 / H4 setups. They are
 information, not entries; the DECISION is unchanged. ALERT_STRUCTURE=0 turns them off.
+
+MT5 vs the site (operator, 2026-11-03): the broker's prices differ from the site's feed by a variable amount, and an
+alert arrives minutes after the bar closed (a run every 15 min; median 6-7 min, a 5m signal up to ~17 min). So every
+SIGNAL alert also carries:
+  ON MT5   SL and TP as distances from YOUR fill ($650 / $650 = $13.00 at 0.5 lot), right at any broker price;
+  TIMING   the bar close in UTC, MT5 server time and local time, the alert's delay, and the price move since the
+           signal (the 5m forming bar of the same download, else the last close);
+  LATE     when that move is >= PLAN_LATE_FRAC (0.30) of the stop: the alert's levels are stale (a discipline rule,
+           not a measured edge: no tested signal beats SL / (TP + SL), so neither does skipping).
+MT5 server time = New York + 7 h (UTC+2 in the northern winter, UTC+3 in summer: most prop-firm brokers);
+MT5_SERVER_UTC_OFFSET (hours) fixes another offset. Local time: ALERT_LOCAL_TZ (Asia/Karachi). A TP / SL follow-up
+decided by less than FEED_MARGIN ($0.50) on the site's prices says to confirm it in MT5.
 """
 from __future__ import annotations
 
@@ -38,6 +50,8 @@ MIN_N = 30                            # a group is called WEAK / STRONG only wit
 NY = ZoneInfo("America/New_York")     # ... and a 95% interval that excludes break-even
 TF_SEC = {"5m": 300, "15m": 900, "1h": 3600, "4h": 14400}
 SESSIONS = ((0, 7, "Asia"), (7, 12, "London"), (12, 16, "London+NY"), (16, 21, "New York"), (21, 24, "Rollover"))
+LATE_FRAC = 0.30     # a move since the signal of 30% of the stop marks the alert LATE (declared 2026-11-03, before use)
+FEED_MARGIN = 0.50   # $ of price: a TP / SL decided by less than this on the site's feed may differ on the broker's
 
 
 def channels() -> list[str]:
@@ -56,7 +70,109 @@ def _fmt(x, off=0.0):
     return "—" if x is None else f"{x + off:.2f}"
 
 
-def messages(payload: dict, since_t: int | None) -> list[str]:
+# ---------------- MT5 vs the site: clocks, the price now, and how late an alert is ----------------
+def _env_float(k: str, d: float) -> float:
+    try:
+        v = float(os.environ.get(k, "") or d)
+    except ValueError:
+        return d
+    return v if math.isfinite(v) else d
+
+
+def mt5_clock(t: int) -> datetime:
+    """Wall-clock time on the MT5 server: New York + 7 h unless MT5_SERVER_UTC_OFFSET (hours) is set."""
+    v = os.environ.get("MT5_SERVER_UTC_OFFSET", "").strip()
+    if v:
+        try:
+            h = float(v)
+            if -14 <= h <= 14:
+                return datetime.fromtimestamp(t, timezone(timedelta(hours=h)))
+        except ValueError:
+            pass
+    return datetime.fromtimestamp(t, NY) + timedelta(hours=7)
+
+
+def local_clock(t: int) -> datetime:
+    try:
+        tz = ZoneInfo(os.environ.get("ALERT_LOCAL_TZ", "").strip() or "Asia/Karachi")
+    except (ValueError, KeyError, OSError):
+        tz = ZoneInfo("Asia/Karachi")
+    return datetime.fromtimestamp(t, tz)
+
+
+def clocks(t: int) -> str:
+    """'06:30 UTC = 08:30 MT5 = 11:30 PKT' for one instant."""
+    loc = local_clock(t)
+    return f"{datetime.fromtimestamp(t, timezone.utc):%H:%M} UTC = {mt5_clock(t):%H:%M} MT5 = {loc:%H:%M} {loc.tzname()}"
+
+
+def price_now(payloads: dict, tf: str) -> dict | None:
+    """The newest price of this run's download: the 5m forming bar (then this timeframe's), else the last closed bar.
+    {'px', 't' (when it was read, or the bar's close), 'live' (forming bar or not)}. The 5m price is used only when
+    it comes from the same source as the signal (futures trade $10-30 over spot: a mixed pair would fake a move)."""
+    own, m5 = payloads.get(tf), payloads.get("5m")
+    if not own or own["meta"].get("synthetic"):
+        return None
+    same = m5 and not m5["meta"].get("synthetic") and m5["meta"].get("price_source") == own["meta"].get("price_source")
+    order = [m5, own] if same else [own]
+    for p in order:
+        fb = p["meta"].get("forming") or {}
+        if fb.get("c") is not None and p["meta"].get("generated_utc"):
+            return {"px": float(fb["c"]), "t": int(datetime.fromisoformat(p["meta"]["generated_utc"]).timestamp()), "live": True}
+    for p in order:
+        ch = p.get("chart") or {}
+        c, t = ch.get("c") or [], ch.get("t") or []
+        k = next((i for i in range(len(c) - 1, -1, -1) if c[i] is not None), None)
+        if k is not None and k < len(t):
+            return {"px": float(c[k]), "t": int(t[k]) + TF_SEC.get(p["meta"].get("tf"), 0), "live": False}
+    return None
+
+
+def alert_timing(m: dict, tf: str, now: dict | None, pl: dict | None) -> dict | None:
+    """How late this SIGNAL alert is and how far price has moved since the signal close (+ = toward TP)."""
+    if not now or now.get("t") is None or m.get("px") is None:
+        return None
+    t_close = int(m["t"]) + TF_SEC.get(tf, 0)
+    stop = pl["sl_px"] if pl else abs(m["px"] - m["sl"]) if m.get("sl") is not None else None
+    frac = _env_float("PLAN_LATE_FRAC", LATE_FRAC)
+    out = {"t_close": t_close, "t_alert": int(now["t"]), "delay_min": max(0, round((now["t"] - t_close) / 60)),
+           "px_now": None, "t_px": None, "live": None, "move": None, "limit": None, "late": False}
+    if now.get("px") is not None:
+        mv = (now["px"] - m["px"]) * m["dir"]
+        out.update(px_now=now["px"], t_px=now.get("t_px"), live=now.get("live"), move=round(mv, 2))
+        if stop:
+            out["limit"] = round(frac * stop, 2)
+            out["late"] = abs(mv) >= frac * stop
+    return out
+
+
+def mt5_line(d: int, pl: dict) -> str:
+    s, side = ("+", "-") if d == -1 else ("-", "+")
+    return (f"ON MT5: {'BUY' if d == 1 else 'SELL'} at market, then SL = your fill {s} {pl['sl_px']:.2f}, "
+            f"TP = your fill {side} {pl['tp_px']:.2f} (= -${pl['sl_usd']:,.0f} / +${pl['tp_usd']:,.0f} at {pl['lot']:g} lot, "
+            "at any broker price)")
+
+
+def timing_lines(tm: dict | None, off: float = 0.0) -> tuple[str | None, str | None]:
+    """(LATE warning or None, TIMING line or None)."""
+    if not tm:
+        return None, None
+    s = f"TIMING: bar closed {clocks(tm['t_close'])} | alert {tm['delay_min']} min after the close"
+    late = None
+    if tm["move"] is not None:
+        where = "toward TP" if tm["move"] > 0 else "toward SL" if tm["move"] < 0 else "unchanged"
+        what = "price" if tm["live"] else "last close"
+        at = datetime.fromtimestamp(tm["t_px"], timezone.utc).strftime("%H:%M UTC") if tm["t_px"] else "?"
+        s += f" | {what} {_fmt(tm['px_now'], off)} at {at}: ${abs(tm['move']):.2f} {where} since the signal"
+        if tm["late"]:
+            late = (f"LATE: price already moved ${abs(tm['move']):.2f} {where} since the signal (limit ${tm['limit']:.2f} = "
+                    f"{_env_float('PLAN_LATE_FRAC', LATE_FRAC):.0%} of the stop). The alert's levels are stale: skip it")
+    return late, s
+
+
+def messages(payload: dict, since_t: int | None, now: dict | None = None) -> list[str]:
+    """Alert lines for bars closed after since_t. `now` ({'t' send time, 'px', 't_px', 'live'}) adds the MT5 and
+    timing lines to each SIGNAL."""
     tf = payload["meta"]["tf"]
     off = float(os.environ.get("MT5_PRICE_OFFSET", "0") or 0)
     out = []
@@ -68,8 +184,14 @@ def messages(payload: dict, since_t: int | None) -> list[str]:
             out.append(f"XAUUSD {tf} {d} (confirmed close) | entry {_fmt(m['px'], off)} SL {_fmt(m['sl'], off)} "
                        f"TP1 {_fmt(m['tp1'], off)} TP2 {_fmt(m['tp2'], off)} TP3 {_fmt(m['tp3'], off)} | TQ {m['tq']}")
             pl = plan_cfg()
+            late, timing = timing_lines(alert_timing(m, tf, now, pl), off)
+            if late:
+                out.append(late)                           # second line: visible in the phone's preview
             if pl and m.get("px") is not None:
                 out.append(plan_line(m["px"], m["dir"], pl, off))
+                out.append(mt5_line(m["dir"], pl))
+            if timing:
+                out.append(timing)
         elif m["type"] == "TRACK_EXIT":
             out.append(f"XAUUSD {tf} tracked plan {'STOPPED' if (m.get('r') or 0) < 0 else 'reached TP1'} at {_fmt(m['px'], off)} = {m.get('r')}R")
         elif m["type"] == "RISK_LOCK":
@@ -183,10 +305,22 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
         what, bt = path["result"], path["t_res"]
         closed.append({**pl, **path})
         hhmm = datetime.fromtimestamp(bt, timezone.utc).strftime("%d %b %H:%M UTC")
+        hhmm += f" = {mt5_clock(bt):%H:%M} MT5"
+        to_tp, to_sl = abs(pl["tp"] - pl["entry"]), abs(pl["entry"] - pl["sl"])
         if what == "TP":
-            lines.append(f"{head}: TP {_fmt(pl['tp'], off)} HIT +${pl['tp_usd']:,.0f} -- trade closed in profit ({hhmm} bar)")
+            s = f"{head}: TP {_fmt(pl['tp'], off)} HIT +${pl['tp_usd']:,.0f} -- trade closed in profit ({hhmm} bar)"
+            past = path["mfe"] - to_tp
+            if past < FEED_MARGIN:
+                s += f" | only ${past:.2f} past TP on the site's prices: confirm in MT5 (broker prices differ)"
+            lines.append(s)
         elif what == "SL":
-            lines.append(f"{head}: SL {_fmt(pl['sl'], off)} HIT -${pl['sl_usd']:,.0f} -- trade closed at the stop ({hhmm} bar)")
+            s = f"{head}: SL {_fmt(pl['sl'], off)} HIT -${pl['sl_usd']:,.0f} -- trade closed at the stop ({hhmm} bar)"
+            past, short = path["mae"] - to_sl, to_tp - path["mfe"]
+            if past < FEED_MARGIN:
+                s += f" | only ${past:.2f} past SL on the site's prices: confirm in MT5 (broker prices differ)"
+            if short < FEED_MARGIN:
+                s += f" | price came within ${max(short, 0):.2f} of TP: check MT5, your TP may have filled"
+            lines.append(s)
         else:
             lines.append(f"{head}: TP and SL both inside the {hhmm} bar -- order unknown, check MT5 (counted as SL)")
     return lines, keep, closed
@@ -357,7 +491,8 @@ def send(lines: list[str]) -> list[str]:
     return sent
 
 
-def run(store_dir: str | None, payloads: dict, tfs: list[str]) -> dict:
+def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | None = None) -> dict:
+    """sent_t: the send time (tests); None = the clock when the alerts go out."""
     path = os.path.join(store_dir, STATE) if store_dir else None
     state = {}
     if path and os.path.exists(path):
@@ -382,7 +517,10 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str]) -> dict:
         if since is None:
             state[tf] = last_t   # first run: remember the position, do not replay history
             continue
-        lines = messages(p, since)
+        pn = price_now(payloads, tf)
+        now = {"t": int(sent_t if sent_t is not None else datetime.now(timezone.utc).timestamp()),
+               **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
+        lines = messages(p, since, now)
         if pl_cfg:                                         # the operator's plan: results of earlier signals, then new ones
             upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off)
             lines = upd + lines
@@ -394,10 +532,12 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str]) -> dict:
                 if m["type"] == "SIGNAL" and m["t"] > since and m.get("px") is not None:
                     sl, tp = plan_levels(m["px"], m["dir"], pl_cfg)
                     t_dec = int(m["t"]) + TF_SEC.get(tf, 0)
+                    tm = alert_timing(m, tf, now, pl_cfg) or {}
                     plans.append({"tf": tf, "t": m["t"], "dir": m["dir"], "entry": m["px"], "sl": sl, "tp": tp,
                                   "sl_usd": pl_cfg["sl_usd"], "tp_usd": pl_cfg["tp_usd"], "lot": pl_cfg["lot"], "t_dec": t_dec,
                                   "session": session_of(t_dec), "dow": date.fromisoformat(trading_day(t_dec)).strftime("%a"),
-                                  "tq": m.get("tq")})
+                                  "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
+                                  "move_alert": tm.get("move"), "late": tm.get("late")})
         report[tf] = {"lines": lines, "sent": send(lines)}
         state[tf] = last_t
     if pl_cfg:
@@ -406,7 +546,8 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str]) -> dict:
         report["plans"] = {"cfg": {k: pl_cfg[k] for k in ("lot", "sl_usd", "tp_usd", "cost_usd")},
                            "tp_first": pl_cfg["sl_px"] / (pl_cfg["sl_px"] + pl_cfg["tp_px"]),
                            "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
-                           "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs)}
+                           "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs),
+                           "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC)}
     report["channels"] = channels()
     first = next((payloads[tf] for tf in tfs if payloads.get(tf) and not payloads[tf]["meta"]["synthetic"]), None)
     if first is not None and pl_cfg:                       # validation: daily at the New York close, weekly at Friday's

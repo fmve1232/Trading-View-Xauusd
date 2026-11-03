@@ -39,11 +39,14 @@ const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 // A malformed system locale (e.g. "en-US@posix") makes Intl throw; fall back to en-US.
 const LOCALE = (() => { const l = (navigator.language || "en-US").split("@")[0]; try { new Intl.DateTimeFormat(l); return l; } catch (e) { return "en-US"; } })();
+// "MT5" = the MT5 server clock most prop-firm brokers use: New York + 7 h (UTC+2 in winter, UTC+3 in summer), so the
+// site's candle times match the MT5 chart's. Intl has no such zone: format New York time 7 h later.
+const tzShift = (opt) => { if (S.tz === "MT5") { opt.timeZone = "America/New_York"; return 7 * 3600; } if (S.tz !== "local") opt.timeZone = S.tz; return 0; };
 function tfmt(epochSec, withDate = true) {
   const opt = { hour: "2-digit", minute: "2-digit", hour12: false };
   if (withDate) Object.assign(opt, { month: "short", day: "2-digit" });
-  if (S.tz !== "local") opt.timeZone = S.tz;
-  return new Intl.DateTimeFormat(LOCALE, opt).format(new Date(epochSec * 1000));
+  const sh = tzShift(opt);
+  return new Intl.DateTimeFormat(LOCALE, opt).format(new Date((epochSec + sh) * 1000));
 }
 const ago = (iso) => {
   const m = (Date.now() - new Date(iso).getTime()) / 60000;
@@ -1474,8 +1477,8 @@ function tickFmt(t, type) {
   if (!isNum(t)) return "";
   const opt = type === 0 ? { year: "numeric" } : type === 1 ? { month: "short" } : type === 2 ? { day: "numeric", month: "short" }
     : { hour: "2-digit", minute: "2-digit", hour12: false, ...(type === 4 ? { second: "2-digit" } : {}) };
-  if (S.tz !== "local") opt.timeZone = S.tz;
-  try { return new Intl.DateTimeFormat(LOCALE, opt).format(new Date(t * 1000)); } catch (e) { return ""; }
+  const sh = tzShift(opt);
+  try { return new Intl.DateTimeFormat(LOCALE, opt).format(new Date((t + sh) * 1000)); } catch (e) { return ""; }
 }
 function chartOpts() {
   const tf = (t) => { try { return isNum(t) ? tfmt(t, true) : ""; } catch (e) { return ""; } };
@@ -1953,6 +1956,17 @@ function renderPlanAlerts() {
   const liveOk = LIVE.px !== null && !LIVE.err && Date.now() - LIVE.t < 10 * 60000 && !marketClosed(new Date());
   const side = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
   const when = (p) => tfmt(p.t + (TF_SEC[p.tf] || 0));
+  // When the phone alert went out and how far price had moved by then (+ = toward TP); LATE = 30%+ of the stop
+  const lateMin = (p) => (p.t_alert - (p.t_dec || p.t + (TF_SEC[p.tf] || 0))) / 60;
+  const alertNote = (p) => {
+    if (!isNum(p.t_alert)) return "";
+    const mv = isNum(p.move_alert) ? ` · ${p.move_alert >= 0 ? "+" : "−"}$${f(Math.abs(p.move_alert), 2)} ${p.move_alert >= 0 ? "toward TP" : "toward SL"}` : "";
+    return `<div class="dim">alert +${Math.max(0, Math.round(lateMin(p)))} min${mv}${p.late ? ' <b class="warn">LATE</b>' : ""}</div>`;
+  };
+  const sent = [...(P.open || []), ...(P.recent || [])].filter((p) => isNum(p.t_alert)).map(lateMin).sort((a, b) => a - b);
+  const med = sent.length ? (sent[Math.floor((sent.length - 1) / 2)] + sent[Math.ceil((sent.length - 1) / 2)]) / 2 : null;
+  const delay = sent.length ? `median ${Math.round(med)} min after the bar close (last ${sent.length})` : "shown after the next alert";
+  const dSl = c.lot > 0 ? c.sl_usd / (c.lot * 100) : null, dTp = c.lot > 0 ? c.tp_usd / (c.lot * 100) : null;
   const openRows = (P.open || []).slice().reverse().map((p) => {
     const lot = p.lot || c.lot;
     let now = `<span class="muted" title="live price unavailable">—</span>`;
@@ -1960,7 +1974,7 @@ function renderPlanAlerts() {
       const pl = (LIVE.px - p.entry) * p.dir * lot * 100, toTp = Math.max((p.tp - LIVE.px) * p.dir, 0), toSl = Math.max((LIVE.px - p.sl) * p.dir, 0);
       now = `<b class="${pl >= 0 ? "bull" : "bear"}">${usd(pl)}</b><div>TP in $${f(toTp, 2)} · SL in $${f(toSl, 2)}</div>`;
     }
-    return `<tr><td>${esc(p.tf)} ${side(p.dir)}<div>${when(p)}</div></td><td>${px(p.entry)}</td><td>${px(p.sl)}<div>−$${f(p.sl_usd, 0)}</div></td><td>${px(p.tp)}<div>+$${f(p.tp_usd, 0)}</div></td><td>${now}</td></tr>`;
+    return `<tr><td>${esc(p.tf)} ${side(p.dir)}<div>${when(p)}</div>${alertNote(p)}</td><td>${px(p.entry)}</td><td>${px(p.sl)}<div>−$${f(p.sl_usd, 0)}</div></td><td>${px(p.tp)}<div>+$${f(p.tp_usd, 0)}</div></td><td>${now}</td></tr>`;
   }).join("");
   const RES = { TP: ["bull", (p) => `TP hit ${usd(p.tp_usd)} (profit)`], SL: ["bear", (p) => `SL hit ${usd(-p.sl_usd)}`],
                 BOTH: ["warn", () => "TP and SL in one bar · counted as SL"], EXPIRED: ["", () => "no TP or SL in 3 days"] };
@@ -1975,9 +1989,13 @@ function renderPlanAlerts() {
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
       <div>Break-even after costs</div><div>${pct(100 * P.break_even)}</div>
       <div>Phone alerts</div><div class="${on ? "bull" : "warn"}">${on ? "ON via " + esc(ch.join(", ")) : "OFF · add the NTFY_TOPIC secret"}</div>
-      <div>Signals alerted</div><div>${esc((P.tfs || []).join(", ") || "—")}</div></div>
+      <div>Signals alerted</div><div>${esc((P.tfs || []).join(", ") || "—")}</div>
+      <div>On MT5</div><div>SL ${isNum(dSl) ? "$" + f(dSl, 2) : "—"} and TP ${isNum(dTp) ? "$" + f(dTp, 2) : "—"} from <b>your fill</b>: right at any broker price</div>
+      <div>Alert delay</div><div>${delay}</div></div>
     <p class="muted pa-note">Same plan as the phone alerts: every engine signal gets your SL and TP; a second alert says which was hit first.
-      "TP hit first" is set by the SL / TP sizes, measured on 139,754 real entries; no signal tested (507 trials) beats it. Display only: the engine is unchanged.</p>
+      "TP hit first" is set by the SL / TP sizes, measured on 139,754 real entries; no signal tested (561 trials) beats it. Display only: the engine is unchanged.</p>
+    <p class="muted pa-note">Your broker's prices differ from this site's feed, so the prices here are a reference: place SL and TP as distances from your own MT5 fill.
+      An alert marked LATE (price already moved ${pct(100 * (isNum(P.late_frac) ? P.late_frac : 0.3))} of the stop) is stale: skip it. Pick "MT5 server" under Time to match the MT5 chart's candle times.</p>
     <p class="pa-note">${rec}</p>
     ${openRows ? `<h4>Open (${(P.open || []).length})</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th>SL</th><th>TP</th><th>Now</th></tr>${openRows}</table></div>` : `<p class="muted pa-note">No open plan right now.</p>`}
     ${doneRows ? `<h4>Results</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Result</th><th>Closed bar</th></tr>${doneRows}</table></div>` : ""}

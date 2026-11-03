@@ -10,7 +10,8 @@ from quantum import holdout, notify
 
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
-    for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_COST_PER_LOT", "MT5_PRICE_OFFSET", "ALERT_STRUCTURE"):
+    for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_COST_PER_LOT", "MT5_PRICE_OFFSET", "ALERT_STRUCTURE",
+              "PLAN_LATE_FRAC", "MT5_SERVER_UTC_OFFSET", "ALERT_LOCAL_TZ"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
 
@@ -95,7 +96,7 @@ def test_report_feeds_the_website_without_secrets(tmp_path, monkeypatch):
     rep = notify.run(str(tmp_path), {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"])
     pl = rep["plans"]
     assert pl["cfg"] == {"lot": 0.5, "sl_usd": 650.0, "tp_usd": 650.0, "cost_usd": 13.0} and pl["tp_first"] == pytest.approx(0.5)
-    assert pl["open"][0]["tp"] == 4013.0 and pl["recent"] == [] and pl["tfs"] == ["15m"]
+    assert pl["open"][0]["tp"] == 4013.0 and pl["recent"] == [] and pl["tfs"] == ["15m"] and pl["late_frac"] == 0.3
     assert rep["channels"] == ["ntfy"] and "secret-topic-name" not in json.dumps(rep)
 
 
@@ -176,3 +177,97 @@ def test_daily_and_weekly_reports_are_sent_once_at_the_close(tmp_path, monkeypat
     notify.run(store, pay(t0 + 2700, "2026-11-07T22:10:00+00:00"), ["15m"])   # Saturday: nothing to report, nothing sent
     assert not any("VALIDATION" in x for b in sent[n2:] for x in b)
     assert len(json.loads((tmp_path / notify.VALIDATION).read_text())) == 1
+
+
+# ---------------- MT5 vs the site: clocks, the price now, ON MT5 distances, LATE, close calls ----------------
+def _ts(s):
+    from datetime import datetime
+    return int(datetime.fromisoformat(s).timestamp())
+
+
+def test_mt5_server_clock_is_new_york_plus_7_and_can_be_fixed(monkeypatch):
+    winter, summer = _ts("2026-11-03T06:30:00+00:00"), _ts("2026-07-03T06:30:00+00:00")
+    assert notify.clocks(winter) == "06:30 UTC = 08:30 MT5 = 11:30 PKT"         # after the US clock change: UTC+2
+    assert notify.clocks(summer) == "06:30 UTC = 09:30 MT5 = 11:30 PKT"         # US summer time: UTC+3
+    monkeypatch.setenv("MT5_SERVER_UTC_OFFSET", "3")
+    assert notify.clocks(winter).startswith("06:30 UTC = 09:30 MT5")
+    monkeypatch.setenv("MT5_SERVER_UTC_OFFSET", "nonsense")                     # unreadable -> the default, not a crash
+    monkeypatch.setenv("ALERT_LOCAL_TZ", "Not/AZone")
+    assert notify.clocks(winter) == "06:30 UTC = 08:30 MT5 = 11:30 PKT"
+    monkeypatch.setenv("ALERT_LOCAL_TZ", "Europe/London")
+    assert notify.clocks(winter).endswith("06:30 GMT")
+
+
+def _p(tf, forming_c=None, closes=(4000.0,), t0=1000, gen="2026-11-03T06:35:27+00:00", synthetic=False):
+    sec = notify.TF_SEC[tf]
+    t = [t0 + i * sec for i in range(len(closes))]
+    return {"meta": {"tf": tf, "synthetic": synthetic, "generated_utc": gen, "price_source": "Twelve Data XAU/USD",
+                     "forming": None if forming_c is None else {"t": t[-1] + sec, "o": 1, "h": 1, "l": 1, "c": forming_c}},
+            "chart": {"t": t, "c": list(closes)}}
+
+
+def test_price_now_prefers_the_5m_forming_bar_then_the_last_close():
+    gen = _ts("2026-11-03T06:35:27+00:00")
+    assert notify.price_now({"5m": _p("5m", 4003.1), "15m": _p("15m", 4001.0)}, "15m") == {"px": 4003.1, "t": gen, "live": True}
+    assert notify.price_now({"15m": _p("15m", 4001.0)}, "15m")["px"] == 4001.0                    # no 5m payload
+    assert notify.price_now({"5m": _p("5m", 4003.1, synthetic=True), "15m": _p("15m", 4001.0)}, "15m")["px"] == 4001.0
+    fut = _p("5m", 4031.0)
+    fut["meta"]["price_source"] = "COMEX GC=F (fallback)"                     # another source: never compared with spot
+    assert notify.price_now({"5m": fut, "15m": _p("15m", 4001.0)}, "15m")["px"] == 4001.0
+    last = notify.price_now({"5m": _p("5m", None, (3999.0, 4002.5, None)), "15m": _p("15m")}, "15m")  # market closed
+    assert last == {"px": 4002.5, "t": 1000 + 300 + 300, "live": False}                            # that bar's close time
+    assert notify.price_now({}, "15m") is None
+
+
+def _sig(d=-1, px=4000.0, t=1800):
+    return {"t": t, "type": "SIGNAL", "dir": d, "px": px, "tq": 70, "sl": px + 10 * d * -1, "tp1": px - 10 * d * -1,
+            "tp2": px, "tp3": px}
+
+
+def test_signal_alert_has_fill_based_levels_timing_and_a_late_warning(monkeypatch):
+    pay = {"meta": {"tf": "15m"}, "markers": [_sig(-1, t=1800)], "decisions": []}
+    t_sent = 1800 + 900 + 380                                                    # 6.3 min after the bar close
+    on_time = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
+    assert [x.split(":")[0].split(" ")[0] for x in on_time] == ["XAUUSD", "YOUR", "ON", "TIMING"]
+    assert on_time[2] == ("ON MT5: SELL at market, then SL = your fill + 13.00, TP = your fill - 13.00 "
+                          "(= -$650 / +$650 at 0.5 lot, at any broker price)")
+    assert "alert 6 min after the close" in on_time[3] and "$1.17 toward SL since the signal" in on_time[3]
+    late = notify.messages(pay, 1000, {"t": t_sent, "px": 4003.90, "t_px": t_sent - 50, "live": True})
+    assert late[1].startswith("LATE: price already moved $3.90 toward SL") and "limit $3.90 = 30% of the stop" in late[1]
+    toward_tp = notify.messages(pay, 1000, {"t": t_sent, "px": 3995.0, "t_px": t_sent - 50, "live": True})
+    assert toward_tp[1].startswith("LATE: price already moved $5.00 toward TP")
+    monkeypatch.setenv("PLAN_LATE_FRAC", "0.5")                                 # the limit is a variable
+    assert not notify.messages(pay, 1000, {"t": t_sent, "px": 3995.0, "t_px": t_sent - 50, "live": True})[1].startswith("LATE")
+    buy = notify.messages({**pay, "markers": [_sig(1)]}, 1000, {"t": t_sent})    # no price known: no move, no LATE
+    assert "BUY at market, then SL = your fill - 13.00, TP = your fill + 13.00" in buy[2] and buy[3].endswith("after the close")
+    monkeypatch.setenv("MT5_PRICE_OFFSET", "-2.61")                             # offsets move prices, never the distances
+    off = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
+    assert "SL = your fill + 13.00" in off[2] and "price 3998.56" in off[3] and "$1.17 toward SL" in off[3]
+
+
+def test_follow_ups_decided_by_cents_say_confirm_in_mt5():
+    pl = {"tf": "15m", "t": 100, "dir": 1, "entry": 4000.0, "sl": 3987.0, "tp": 4013.0, "sl_usd": 650, "tp_usd": 650}
+    clear = notify.plan_updates([pl], "15m", _chart([(200, 4014.0, 3999)]), 200)[0][0]
+    assert "HIT +$650" in clear and "confirm in MT5" not in clear and " MT5 bar)" in clear
+    thin = notify.plan_updates([pl], "15m", _chart([(200, 4013.2, 3999)]), 200)[0][0]
+    assert "only $0.20 past TP on the site's prices: confirm in MT5" in thin
+    near_tp = notify.plan_updates([pl], "15m", _chart([(200, 4012.7, 3999), (300, 4001, 3985.0)]), 300)[0][0]
+    assert "SL 3987.00 HIT" in near_tp and "price came within $0.30 of TP" in near_tp and "past SL" not in near_tp
+    thin_sl = notify.plan_updates([pl], "15m", _chart([(200, 4001, 3986.9)]), 200)[0][0]
+    assert "only $0.10 past SL" in thin_sl and "of TP" not in thin_sl
+
+
+def test_run_records_when_each_alert_went_out_and_the_move_by_then(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    store = str(tmp_path)
+    notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"])
+    sig = {"t": 1900, "type": "SIGNAL", "dir": -1, "px": 4000.0, "tq": 70, "sl": 4010.0, "tp1": 3990.0, "tp2": 3980.0, "tp3": 3970.0}
+    p15 = _payload(2000, [sig], [(1900, 4001, 3999)])
+    p5 = _p("5m", 4004.5, gen="2026-11-02T10:00:00+00:00")
+    p5["meta"]["price_source"] = p15["meta"].get("price_source")
+    rep = notify.run(store, {"15m": p15, "5m": p5}, ["15m"], sent_t=1900 + 900 + 420)
+    assert sent[0][1].startswith("LATE: price already moved $4.50 toward SL") and sent[0][2].startswith("YOUR PLAN")
+    op = rep["plans"]["open"][0]
+    assert (op["t_alert"], op["px_alert"], op["move_alert"], op["late"]) == (3220, 4004.5, -4.5, True)
+    assert rep["plans"]["open"][0]["entry"] == 4000.0 and rep["plans"]["open"][0]["tp"] == 3987.0   # the plan itself is unchanged
