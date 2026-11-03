@@ -995,3 +995,69 @@ each for:
 - **H5 on 15m:** mean R −0.489 → −0.497.
 
 No other arm, and no conclusion, changes. See `audit/WEB7_VERIFICATION_2026-11-01.md` §4.
+
+## Amendment 15 (2026-11-03, operator approval "All is approved my side"; written and committed before any code below was changed): the 30-minute timeframe
+
+**Approval record.**
+
+1. 2026-11-03, the operator: "15m,30m,1h,4h — I need alert of these timeframes as 5m is too quick and I need alert
+   specially on liquidity".
+2. The reply stated that 30m needs an entry in `quantum/config.py`, which is inside the freeze key, so adding it
+   restarts the forward test (the web.7 record since 2026-10-31 17:23 UTC), and asked for written approval.
+3. The operator, in writing: "I already updated timeframes in GitHub but you need to add alert on 30 mints as well and
+   then after completion of job merge it", then "All is approved my side so please update code and. Website".
+
+**What changes. Nothing else rides along.**
+
+| File | Change |
+|---|---|
+| `quantum/config.py` | `TIMEFRAMES` gains `"30m": {"sec": 1800, "yahoo": "30m", "range": "60d"}`. `ENGINE_VERSION` `Q7.2-web.7` → `Q7.2-web.8` |
+| `quantum/data/market.py` | Twelve Data interval `30min` and Yahoo range `60d` for 30m; the Sunday-reopen repair (`sources.repair_reopen`, D-09) is applied to 30m bars, as it already is to 15m and 1h |
+| Outside the key (display and alerts) | the workflow's `--tfs` adds 30m; `notify.py` and the site learn the 30m bar length; the site gets a 30m tab |
+
+- **No threshold, weight, gate or cost changes.** This is not tuning (`audit/AUDIT_PROMPT.md` §9). The engine is generic
+  in the bar length, as Pine is on any chart. On 30m, the 1H, 4H and 1D layers are above the chart and vote; 5m and 15m
+  do not. That is the existing rule for every timeframe.
+- **The existing timeframes do not change.** 5m, 15m, 1h and 4h run the same code on the same data. This is checked
+  before the merge by comparing their engine output before and after the change on the same inputs.
+- **Data cost.** One more Twelve Data call per run: 5 instead of 4 (5min, 15min, 30min, 1h, 1day). That is about 480 of
+  the free plan's 800 a day, within its 8 a minute. Yahoo adds 30m for GC=F volume, silver, EUR/USD and the S&P 500.
+
+**The 30m timeframe in the forward test.** It is logged and shown like 5m, 15m and 4h. It is **descriptive only and
+decides nothing**:
+
+- the §7 arms, H2 (Amendment 5), H4 (Amendment 8), H5 (Amendment 10) and H6 (Amendment 12) are still decided on
+  **1H**, by their unchanged rules and dates;
+- any use of the 30m record for a decision needs a new amendment, registered before its data is read.
+
+**Restart.** This is §7's rule, which nobody can skip. On the first run after the merge:
+
+- the engine code hash changes, so the main freeze key changes;
+- `holdout.load_or_freeze` sets status RESET, records web.7 in `history` with its end time, and starts web.8;
+- web.7 ledger entries move, never deleted, to `holdout/archive/` on `forward-ledger`;
+- every arm key (engine key + arm hash) changes with it, so H2–H6 restart together.
+
+**The web.7 record.**
+
+- It ran 2026-10-31 17:23:01 UTC until the restart.
+- It is stated separately in `audit/FORWARD_WEB7_FINAL.md`, written before the change from the `forward-ledger`
+  snapshot named there.
+- It is never pooled with web.8.
+
+**Procedure.**
+
+1. Commit this amendment before any code.
+2. Write `audit/FORWARD_WEB7_FINAL.md`.
+3. Change only the two engine files above, and the display files.
+4. Update the tests that pin the freeze key. They exist to make a key change deliberate; this is that deliberate change.
+5. Run `python -m pytest -q tests` (all of it, including no-look-ahead) and the before / after comparison on the
+   existing timeframes.
+6. Merge, then dispatch `quantum-site.yml`.
+7. Verify:
+   - the new key is published, and web.7 is in `history`;
+   - web.7 entries are in `holdout/archive/`, and no file is deleted;
+   - a 30m payload is produced.
+8. Record the web.8 start here (key, time, run ID), as for Amendments 9 and 14.
+
+**What 30m can show.** Nothing about the 1H decisions. Its alerts are information for the operator. The research
+programme (B1–B8, 561 trials) found no signal that beats the stop / target geometry SL / (TP + SL) after costs.
