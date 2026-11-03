@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v99   (day rollover = website key)   ║
+// ║  BUILD STAMP — this file last CHANGED in v100  (one BUY / SELL alert per run) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5879,9 +5879,11 @@ if showDashboard and barstate.islast
 alertcondition(shouldBuy and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Buy Signal", message="XAUUSD {{ticker}} {{interval}}: BUY signal @ {{close}}")
 alertcondition(shouldSell and not tqVeto and not perfMode and barstate.isconfirmed, title="Nexus Sell Signal", message="XAUUSD {{ticker}} {{interval}}: SELL signal @ {{close}}")
 string _mt5Plan = "MT5 entry " + tpEntryStr + " SL " + tpSLStr + " TP1 " + tp1Str + " TP2 " + tp2Str + " TP3 " + tp3Str + " (" + tpRRStr + ") P" + str.tostring(math.round((tpIsLong ? _calPLong : _calPShort) * 100.0)) + "% EV" + (na(planExpectancy) ? "—" : str.tostring(planExpectancy, "#.##") + "R")
-if shouldBuy and not tqVeto and barstate.isconfirmed and not perfMode
+// v100 (F-A90, E7): the BUY / SELL alert() fires on the first bar of a signal run (the website engine on 15m: 29 of
+// 36 BUY alerts repeated a signal already sent, up to 9 bars in a row); the DECISION-change alert is unchanged.
+if shouldBuy and not tqVeto and barstate.isconfirmed and not perfMode and _confDirLabel[1] != "BUY"
     _al(" BUY | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel)
-if shouldSell and not tqVeto and barstate.isconfirmed and not perfMode
+if shouldSell and not tqVeto and barstate.isconfirmed and not perfMode and _confDirLabel[1] != "SELL"
     _al(" SELL | " + _mt5Plan + " | " + biasLabel + " | TQ" + str.tostring(tradeQuality) + " | " + sessionLabel)
 alertcondition(showSignals and barstate.isconfirmed and bullBOS and not perfMode, "Bull BOS", "XAUUSD Bull BOS @ {{close}}")
 alertcondition(showSignals and barstate.isconfirmed and bearBOS and not perfMode, "Bear BOS", "XAUUSD Bear BOS @ {{close}}")

@@ -3594,3 +3594,34 @@ charts that reach back that far (a 1H chart does): PDH / PDL / CDH / CDL, PWH / 
 are now the right day's. Nothing else changes.
 
 **Not run:** the TradingView compile.
+
+# v100 — one BUY / SELL alert per signal run; edge cases E3 / E4 / E7 / E8 executed (2026-11-03)
+
+Operator: "Continue with the open edge-case tests E3, E4, E7, E8". `edge_check.py` (new) executes them; E7 found a
+real defect.
+
+**F-A90 (P2, fixed): the BUY / SELL alert repeated on every bar of a signal.** The website's engine, read-only on the
+live 15m store (Aug 5 → Nov 3): the executed BUY was true on 36 bars in 7 runs of up to 9 bars, so 29 of 36 BUY alerts
+repeated a signal already sent, each with a new MT5 plan at a later price; SELL 10 of 21. `fix_v100.py` adds
+`_confDirLabel[1] != "BUY"` / `"SELL"` to the two alert() lines. The DECISION cell still shows BUY / SELL for the whole
+run, the DECISION-change alert is unchanged, the alertcondition() entries are unchanged (not the documented setup; no
+token room). Master model 99,419 / 98,976 (+23 / +30), below v83's compiled 99,542 / 99,004.
+
+**`edge_check.py`:**
+- **E3** (every macro feed missing): the stale tracker, validity, weights, ms* terms, score and label run as written:
+  score 0, label "N/A", no evidence, even with every trend flag bullish. A missing request drops that feed on the same
+  bar. Found: F-A89 (TIPS-only shows "N/A" with a score; both engines) and F-A91 (the stale guard cannot fire with
+  gaps_off; a frozen feed keeps voting, the website ages values out after 5 days).
+- **E4** (±3% gap): clamped to the 6σ window (0.33%), z ≈ ±6 → ABNORMAL on the gap bar only, no NaN.
+- **E7** (rapid signals): one alert per run on its first bar over 4,000 random bars incl. vetoes, the lock and 19
+  direct flips; never both sides on one bar. Control: the v99 condition repeats 468 times. The twins cannot double-enter
+  (each entry is guarded by `strategy.position_size`).
+- **E8** (runtime errors): all 25 `for .. to array.size(A) - 1` loops in the nine files are size-guarded or triaged
+  (a Pine `for 0 to -1` runs on an empty array); 8 input-bounded sizes / loop ends valid at minval and maxval.
+
+`refactor_check` chain + `fix_v100.master`; `value_map` regenerated; `ALERTS_SETUP.md` updated.
+
+**Visible on the chart / phone:** one "BUY | MT5 entry …" (or SELL) alert when a signal starts, not one per bar while
+it lasts. Nothing else changes.
+
+**Not run:** the TradingView compile; `tf_check` (the timeframe code is unchanged since its v99 run).

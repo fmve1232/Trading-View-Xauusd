@@ -7,7 +7,7 @@ value, and it never fires intrabar on a signal that disappears by the close. Pri
 
 | Event | Message (example) |
 |---|---|
-| **Confirmed BUY / SELL** | `XAUUSD 15 BUY \| MT5 entry … SL … TP1 … TP2 … TP3 … (RR) P..% EV.. \| bias \| TQ.. \| session` |
+| **Confirmed BUY / SELL** (since v100: on the FIRST bar of a signal run only; the DECISION cell keeps showing BUY / SELL while it lasts) | `XAUUSD 15 BUY \| MT5 entry … SL … TP1 … TP2 … TP3 … (RR) P..% EV.. \| bias \| TQ.. \| session` |
 | **DECISION change** | `XAUUSD 15 DECISION WAIT -> SELL \| MT5 plan …` (also BUY → NO TRADE when a veto engages) |
 | **CHoCH / BOS / MSS** (first bar) | `XAUUSD 15 CHoCH▼ \| info, not a DECISION` (BOS▲ / BOS▼, MSS▲ / MSS▼ alike) |
 | **Pool sweep** (PDH / PDL, PWH / PWL, PMH / PML: wick through, close back) | `… SWEEP-HIGH \| info, not a DECISION` |
