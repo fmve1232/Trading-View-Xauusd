@@ -85,3 +85,15 @@ break-even rises to 67.3%, and each loss becomes $1,300 at 0.5 lot.
 - On the website, the plan card shows the running count, rate and verdict.
 
 **Unchanged:** the engine, its configuration, every freeze key, the signal alerts and their validation.
+
+## Start record (2026-11-04 UTC)
+
+The test was deployed by merge `96f409ca71528ea69f2082c360714dfff19f1bee` (PR #75), run `quantum-site` #2592 (Actions
+run 41935901280).
+
+| Item | Value |
+|---|---|
+| Started | **2026-11-04 23:47:25 UTC**; only GRAB bars closing after this count |
+| Record | `research_forward/B9-GRAB-FWD.json` on `market-data`, and with git history on `forward-ledger` @ `d6556ff1dfea1fed2071d134344f420e8a9219ac` |
+| Trades at start | 0; no checks; no verdict |
+| Engine key | unchanged, `5e4630924d663fc5:a6f2be58c74887ed` (web.8) |
