@@ -42,9 +42,18 @@ KNOWN_OVER = {"v70 Master": ("Master", "cb88ecc0", 103989), "v71 Master": ("Mast
 # side): reported as INFO. The v66 Brief compiled although the model said ~101,000.
 KNOWN_UNDER = {"v60 Master": ("Master", "eb3e0c00"), "v66 Master": ("Master", "a5fc12ce"), "v66 Brief": ("Brief", "a5fc12ce"),
                "v69 Master": ("Master", "61871d60"), "v68 Brief": ("Brief", "c524e2a7"), "v68 Diagnostics": ("Diagnostics", "c524e2a7"),
-               "v70 Brief": ("Brief", "cb88ecc0"), "v72 Master": ("Master", "89078a56"), "v83 Master": ("Master", "85bb6f7a")}
+               "v70 Brief": ("Brief", "cb88ecc0"), "v72 Master": ("Master", "89078a56"), "v83 Master": ("Master", "85bb6f7a"),
+               "v85 Visuals": ("Visuals", "8feb2166b")}   # v101: + Visuals v85 (compiled, 2026-10-21); v99 Visuals FAILED CE10295
 BEST, PESS = 1.6197, 2.1497        # best fit (v23 / v67, the higher); pessimistic model at its v67 ratio
 MAIN_BODY_OK, MAIN_BODY_FAIL = 26538, 28122   # v68 Diagnostics compiled / v68 Master CE10295
+# v101 (F-A92): Visuals v99 FAILED with CE10295 at 23,962 lexical main body while the Master compiles at 23,844, so
+# lexical tokens alone are not TradingView's measure. "main-body tokens + 2 x the words inside string literals" orders
+# every known result: compiled v79 / v84 / v85 Visuals 17,793 / 19,996 / 20,145, v83 Master 27,758, v70 / v83 Brief
+# 29,629 / 29,677, v68 / v83 Diagnostics 30,520 / 30,568; FAILED v68 Master 32,640, v99 Visuals 32,920 (the panel text
+# is long strings in Visuals' main body). Fitted on these points: a model, not the rule. Gate: at most the largest that
+# compiled (v83 Diagnostics, operator's screenshot 2026-10-21).
+STR_WORD_W = 2
+MAIN_BODY_STR_OK, MAIN_BODY_STR_FAIL = 30568, 32640
 CEILING = {"Brief": (101003, 104385),       # a file's own confirmed compile, where the model is cautious for it
            # v85 (F-A72): the Master's lineage since v68 compiled at 99,542 / 99,004 (v72 = v83) and FAILED at 100,332 with
            # 99,602 / 99,084 (v84, +~40 raw tokens of alert text). The v66 ceiling is too loose for it: the Master may not
@@ -99,6 +108,24 @@ def model(text):
     return lex_all, lex_top, inl
 
 
+def main_str(text):
+    """main-body lexical tokens + STR_WORD_W x the words in its string literals (v101 model, see MAIN_BODY_STR_OK)"""
+    L = text.split("\n")
+    fun = re.compile(r"^[A-Za-z_]\w*\(.*\)\s*=>")
+    top, i = [], 0
+    while i < len(L):
+        if fun.match(L[i]):
+            i += 1
+            while i < len(L) and (not L[i].strip() or L[i][0] in " \t"):
+                i += 1
+            continue
+        if L[i].strip() and not L[i].lstrip().startswith("//"):
+            top.append(L[i])
+        i += 1
+    words = sum(len(re.findall(r"\S+", m)) for l in top for m in re.findall(r'"((?:[^"\\]|\\.)*)"', l))
+    return sum(len(toks(l)) for l in top) + STR_WORD_W * words
+
+
 def estimate(text):
     la, lt, inl = model(text)
     return (la + inl) * BEST, (lt + inl) * PESS, lt
@@ -112,13 +139,23 @@ if __name__ == "__main__":
         cb, cw = next((v for k, v in CEILING.items() if k in os.path.basename(p)), DEFAULT_CEILING)
         txt = open(p, encoding="utf-8").read()
         gd = "Master" in os.path.basename(p) and "// GD-BEGIN" in txt
-        ok = b <= max(cb, 0) and w <= max(cw, 0) and (b < LIMIT or cb >= LIMIT) and lt <= MAIN_BODY_OK and not gd
+        ms = main_str(txt)
+        ok = b <= max(cb, 0) and w <= max(cw, 0) and (b < LIMIT or cb >= LIMIT) and lt <= MAIN_BODY_OK and not gd \
+            and ms <= MAIN_BODY_STR_OK
         if gd:
             print("FAIL  the Master contains the GD block: v70 / v71 with it failed to compile and the model misses why (F-A68)")
         fails += not ok
         print(f"{'PASS' if ok else 'FAIL'}  {os.path.basename(p):46s} best-fit {b:9,.0f} ({b / LIMIT - 1:+.2%})"
-              f"   pessimistic {w:9,.0f} ({w / LIMIT - 1:+.2%})   main body {lt:,} (max OK {MAIN_BODY_OK:,})")
+              f"   pessimistic {w:9,.0f} ({w / LIMIT - 1:+.2%})   main body {lt:,} (max OK {MAIN_BODY_OK:,})"
+              f"   main body + strings {ms:,} (max OK {MAIN_BODY_STR_OK:,}, failed at {MAIN_BODY_STR_FAIL:,})")
     import subprocess
+    for tag, (fname, commit) in {"v99 Visuals": ("Visuals", "2f8b3b796"), "v68 Master": ("Master", "c524e2a7")}.items():
+        fp = next(x for x in sorted(glob.glob("artefacts/*.pine")) if fname in x)   # v101: known CE10295 failures
+        t = subprocess.run(["git", "show", f"{commit}:{fp}"], capture_output=True, text=True).stdout
+        ms = main_str(t)
+        fails += ms <= MAIN_BODY_STR_OK
+        print(f"{'PASS' if ms > MAIN_BODY_STR_OK else 'FAIL'}  control: {tag} FAILED with CE10295; main body + strings {ms:,} "
+              f"> {MAIN_BODY_STR_OK:,}: the gate rejects it")
     for tag, (fname, commit) in KNOWN_UNDER.items():   # every compile the operator confirmed
         t = subprocess.run(["git", "show", f"{commit}:artefacts/XAUUSD_Quantum_5_0_{fname}.pine"], capture_output=True, text=True).stdout
         if t:

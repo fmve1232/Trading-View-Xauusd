@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v99   (rollover; NOT A GATE row)     ║
+// ║  BUILD STAMP — this file last CHANGED in v101  (main body: 10 blocks wrapped) ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -634,21 +634,25 @@ bool sxMssDn = mssLabelBear and not mssLabelBear[1]
 // drops the OLDEST objects, which also starves the tag registry below. Now bounded.
 var label[] structLb = array.new<label>()
 var line[]  structLn = array.new<line>()
-if showStruct and barstate.isconfirmed
-    if bosLabelBull or sxChochUp or sxMssUp
-        array.push(structLb, label.new(bar_index, high, sxMssUp ? "MSS▲" : sxChochUp ? "CHoCH▲" : "BOS▲", xloc.bar_index, yloc.abovebar, color.new(cBull, 20), label.style_label_down, color.white, size.tiny))
-        if bosLabelBull
-            float _bl = intBosLabelBull ? bosResistanceSnap : swingBosResSnap
-            array.push(structLn, line.new(bar_index - 1, _bl, bar_index, _bl, xloc.bar_index, extend.none, cBull, line.style_solid, 2))
-    if bosLabelBear or sxChochDn or sxMssDn
-        array.push(structLb, label.new(bar_index, low, sxMssDn ? "MSS▼" : sxChochDn ? "CHoCH▼" : "BOS▼", xloc.bar_index, yloc.belowbar, color.new(cBear, 20), label.style_label_up, color.white, size.tiny))
-        if bosLabelBear
-            float _bs = intBosLabelBear ? bosSupportSnap : swingBosSupSnap
-            array.push(structLn, line.new(bar_index - 1, _bs, bar_index, _bs, xloc.bar_index, extend.none, cBear, line.style_solid, 2))
-    while array.size(structLb) > structKeep
-        label.delete(array.shift(structLb))
-    while array.size(structLn) > structKeep
-        line.delete(array.shift(structLn))
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101Struct() =>
+    if showStruct and barstate.isconfirmed
+        if bosLabelBull or sxChochUp or sxMssUp
+            array.push(structLb, label.new(bar_index, high, sxMssUp ? "MSS▲" : sxChochUp ? "CHoCH▲" : "BOS▲", xloc.bar_index, yloc.abovebar, color.new(cBull, 20), label.style_label_down, color.white, size.tiny))
+            if bosLabelBull
+                float _bl = intBosLabelBull ? bosResistanceSnap : swingBosResSnap
+                array.push(structLn, line.new(bar_index - 1, _bl, bar_index, _bl, xloc.bar_index, extend.none, cBull, line.style_solid, 2))
+        if bosLabelBear or sxChochDn or sxMssDn
+            array.push(structLb, label.new(bar_index, low, sxMssDn ? "MSS▼" : sxChochDn ? "CHoCH▼" : "BOS▼", xloc.bar_index, yloc.belowbar, color.new(cBear, 20), label.style_label_up, color.white, size.tiny))
+            if bosLabelBear
+                float _bs = intBosLabelBear ? bosSupportSnap : swingBosSupSnap
+                array.push(structLn, line.new(bar_index - 1, _bs, bar_index, _bs, xloc.bar_index, extend.none, cBear, line.style_solid, 2))
+        while array.size(structLb) > structKeep
+            label.delete(array.shift(structLb))
+        while array.size(structLn) > structKeep
+            line.delete(array.shift(structLn))
+    0
+f_v101Struct()
 
 // Liquidity sweep = trade beyond a confirmed pivot, then close back inside it.
 bool sweepUp = showSweep and not na(lastPH) and high > lastPH and close < lastPH and barstate.isconfirmed
@@ -957,76 +961,80 @@ f_tagAdd(_px, _txt, _col, _on) =>
         array.push(tgTx, _txt)
         array.push(tgCl, _col)
 
-if barstate.islast
-    while array.size(tgLn) > 0
-        line.delete(array.pop(tgLn))
-    while array.size(tgLb) > 0
-        label.delete(array.pop(tgLb))
-    array.clear(tgPx)
-    array.clear(tgTx)
-    array.clear(tgCl)
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101Tags() =>
+    if barstate.islast
+        while array.size(tgLn) > 0
+            line.delete(array.pop(tgLn))
+        while array.size(tgLb) > 0
+            label.delete(array.pop(tgLb))
+        array.clear(tgPx)
+        array.clear(tgTx)
+        array.clear(tgCl)
 
-    f_tagAdd(close,           str.tostring(close, format.mintick), cPrice, showPriceLine)
-    // Extended horizontal reference at the live price. The registry only draws a short
-    // leader into the tag; this restores the full-width line the V2 rewrite dropped.
-    if showPriceLine
-        array.push(tgLn, line.new(math.max(bar_index - 250, 0), close, bar_index + tagOffset, close, xloc.bar_index, extend.right, color.new(cPrice, 55), line.style_dotted, 1))
-    f_tagAdd(ema20,           "EMA " + str.tostring(ema20Len),  cFast, showTags and showEma)
-    f_tagAdd(ema100,          "EMA " + str.tostring(ema100Len), cMid,  showTags and showEma)
-    f_tagAdd(ema200,          "EMA " + str.tostring(ema200Len), cSlow, showTags and showEma)
-    f_tagAdd(vwapD,           "VWAP D",  cVwap, showTags and showVwap)
-    f_tagAdd(vwapW,           "VWAP W",  cVwap, showTags and showVwapWM)
-    f_tagAdd(vwapM,           "VWAP M",  cVwap, showTags and showVwapWM)
-    f_tagAdd(bbBasis + bbDev, "BB +2σ",  cBB,   showTags and showBB)
-    f_tagAdd(bbBasis - bbDev, "BB −2σ",  cBB,   showTags and showBB)
-    f_tagAdd(pdh, "PDH " + str.tostring(pdh, format.mintick), cLevel,  showLevels)
-    f_tagAdd(pdl, "PDL " + str.tostring(pdl, format.mintick), cLevel,  showLevels)
-    f_tagAdd(pwh, "PWH " + str.tostring(pwh, format.mintick), cLevelW, showLevels)
-    f_tagAdd(pwl, "PWL " + str.tostring(pwl, format.mintick), cLevelW, showLevels)
-    f_tagAdd(pmh, "PMH " + str.tostring(pmh, format.mintick), cNeut,   showMonthly)
-    f_tagAdd(pml, "PML " + str.tostring(pml, format.mintick), cNeut,   showMonthly)
-    f_tagAdd(cdh, "CDH " + str.tostring(cdh, format.mintick), cCur,    showCurDay)
-    f_tagAdd(cdl, "CDL " + str.tostring(cdl, format.mintick), cCur,    showCurDay)
+        f_tagAdd(close,           str.tostring(close, format.mintick), cPrice, showPriceLine)
+        // Extended horizontal reference at the live price. The registry only draws a short
+        // leader into the tag; this restores the full-width line the V2 rewrite dropped.
+        if showPriceLine
+            array.push(tgLn, line.new(math.max(bar_index - 250, 0), close, bar_index + tagOffset, close, xloc.bar_index, extend.right, color.new(cPrice, 55), line.style_dotted, 1))
+        f_tagAdd(ema20,           "EMA " + str.tostring(ema20Len),  cFast, showTags and showEma)
+        f_tagAdd(ema100,          "EMA " + str.tostring(ema100Len), cMid,  showTags and showEma)
+        f_tagAdd(ema200,          "EMA " + str.tostring(ema200Len), cSlow, showTags and showEma)
+        f_tagAdd(vwapD,           "VWAP D",  cVwap, showTags and showVwap)
+        f_tagAdd(vwapW,           "VWAP W",  cVwap, showTags and showVwapWM)
+        f_tagAdd(vwapM,           "VWAP M",  cVwap, showTags and showVwapWM)
+        f_tagAdd(bbBasis + bbDev, "BB +2σ",  cBB,   showTags and showBB)
+        f_tagAdd(bbBasis - bbDev, "BB −2σ",  cBB,   showTags and showBB)
+        f_tagAdd(pdh, "PDH " + str.tostring(pdh, format.mintick), cLevel,  showLevels)
+        f_tagAdd(pdl, "PDL " + str.tostring(pdl, format.mintick), cLevel,  showLevels)
+        f_tagAdd(pwh, "PWH " + str.tostring(pwh, format.mintick), cLevelW, showLevels)
+        f_tagAdd(pwl, "PWL " + str.tostring(pwl, format.mintick), cLevelW, showLevels)
+        f_tagAdd(pmh, "PMH " + str.tostring(pmh, format.mintick), cNeut,   showMonthly)
+        f_tagAdd(pml, "PML " + str.tostring(pml, format.mintick), cNeut,   showMonthly)
+        f_tagAdd(cdh, "CDH " + str.tostring(cdh, format.mintick), cCur,    showCurDay)
+        f_tagAdd(cdl, "CDL " + str.tostring(cdl, format.mintick), cCur,    showCurDay)
 
-    // S/R: nearest srCount each side, auto-hidden beyond srMaxDistATR
-    if showSR and array.size(srPrice) > 0
-        float maxDist = atr14 * srMaxDistATR
-        for _side = 0 to 1
-            float lastPick = na
-            for _rank = 0 to srCount - 1
-                float best = na
-                int bestHits = 0
-                for i = 0 to array.size(srPrice) - 1
-                    float lv = array.get(srPrice, i)
-                    bool sideOk = _side == 0 ? lv > close : lv < close
-                    bool beyond = na(lastPick) or (_side == 0 ? lv > lastPick : lv < lastPick)
-                    bool closer = na(best) or (_side == 0 ? lv < best : lv > best)
-                    if sideOk and beyond and closer and math.abs(lv - close) <= maxDist
-                        best := lv
-                        bestHits := array.get(srHits, i)
-                if not na(best)
-                    color _sc = _side == 0 ? cRes : cSup
-                    f_tagAdd(best, (_side == 0 ? "R" : "S") + str.tostring(_rank + 1) + " " + str.tostring(best, format.mintick) + " ×" + str.tostring(bestHits), _sc, true)
-                    line sl = line.new(math.max(bar_index - 200, 0), best, bar_index + tagOffset, best, xloc.bar_index, extend.none, color.new(_sc, 70), line.style_dotted, bestHits >= 3 ? 2 : 1)
-                    array.push(tgLn, sl)
-                    lastPick := best
+        // S/R: nearest srCount each side, auto-hidden beyond srMaxDistATR
+        if showSR and array.size(srPrice) > 0
+            float maxDist = atr14 * srMaxDistATR
+            for _side = 0 to 1
+                float lastPick = na
+                for _rank = 0 to srCount - 1
+                    float best = na
+                    int bestHits = 0
+                    for i = 0 to array.size(srPrice) - 1
+                        float lv = array.get(srPrice, i)
+                        bool sideOk = _side == 0 ? lv > close : lv < close
+                        bool beyond = na(lastPick) or (_side == 0 ? lv > lastPick : lv < lastPick)
+                        bool closer = na(best) or (_side == 0 ? lv < best : lv > best)
+                        if sideOk and beyond and closer and math.abs(lv - close) <= maxDist
+                            best := lv
+                            bestHits := array.get(srHits, i)
+                    if not na(best)
+                        color _sc = _side == 0 ? cRes : cSup
+                        f_tagAdd(best, (_side == 0 ? "R" : "S") + str.tostring(_rank + 1) + " " + str.tostring(best, format.mintick) + " ×" + str.tostring(bestHits), _sc, true)
+                        line sl = line.new(math.max(bar_index - 200, 0), best, bar_index + tagOffset, best, xloc.bar_index, extend.none, color.new(_sc, 70), line.style_dotted, bestHits >= 3 ? 2 : 1)
+                        array.push(tgLn, sl)
+                        lastPick := best
 
-    // collision pass: sort by price, push overlapping labels apart
-    int nTag = array.size(tgPx)
-    if nTag > 0
-        int[] ord = array.sort_indices(tgPx, order.ascending)
-        float minGap = atr14 * tagGapATR
-        float prevY = na
-        for k = 0 to nTag - 1
-            int i = array.get(ord, k)
-            float truePx = array.get(tgPx, i)
-            float dispY = na(prevY) or minGap <= 0 ? truePx : math.max(truePx, prevY + minGap)
-            prevY := dispY
-            color c = array.get(tgCl, i)
-            line ln = line.new(bar_index, truePx, bar_index + tagOffset, dispY, xloc.bar_index, extend.none, color.new(c, 45), line.style_dotted, 1)
-            label lb = label.new(bar_index + tagOffset, dispY, array.get(tgTx, i), xloc.bar_index, yloc.price, color.new(c, 82), label.style_label_left, c, size.small)
-            array.push(tgLn, ln)
-            array.push(tgLb, lb)
+        // collision pass: sort by price, push overlapping labels apart
+        int nTag = array.size(tgPx)
+        if nTag > 0
+            int[] ord = array.sort_indices(tgPx, order.ascending)
+            float minGap = atr14 * tagGapATR
+            float prevY = na
+            for k = 0 to nTag - 1
+                int i = array.get(ord, k)
+                float truePx = array.get(tgPx, i)
+                float dispY = na(prevY) or minGap <= 0 ? truePx : math.max(truePx, prevY + minGap)
+                prevY := dispY
+                color c = array.get(tgCl, i)
+                line ln = line.new(bar_index, truePx, bar_index + tagOffset, dispY, xloc.bar_index, extend.none, color.new(c, 45), line.style_dotted, 1)
+                label lb = label.new(bar_index + tagOffset, dispY, array.get(tgTx, i), xloc.bar_index, yloc.price, color.new(c, 82), label.style_label_left, c, size.small)
+                array.push(tgLn, ln)
+                array.push(tgLb, lb)
+    0
+f_v101Tags()
 
 // ═══════════════════ CANDLE INFO PANEL ═══════════════════
 var table tblC = na
@@ -1174,36 +1182,40 @@ var float[] srSupLevels    = array.new_float()
 var float[] srSupStrengths = array.new_float()
 var line[]  srLines        = array.new_line()
 
-if barstate.islast
-    // F-031: this passed ta.atr(14) INSIDE the barstate.islast branch, so the call was
-    // evaluated on one bar instead of every bar. ta.* functions keep internal state that
-    // only stays correct when called on each calculation -- a conditionally-called ta.atr
-    // returns an unreliable value, and that value sets the S/R cluster threshold. The file
-    // already maintains atr14 = ta.atr(14) globally at the top, so reuse it rather than
-    // making a second, conditionally-evaluated call.
-    scanSRLevels(srResLevels, srResStrengths, srSupLevels, srSupStrengths, srMaxLv, srScanLen, atr14, false)
-    // clear previous frame's lines before redrawing
-    if array.size(srLines) > 0
-        for i = 0 to array.size(srLines) - 1
-            line _sl = array.get(srLines, i)
-            if not na(_sl)
-                line.delete(_sl)
-        array.clear(srLines)
-    // Single merged pass over both sides (resistance then support), preserving the
-    // Master's draw order and colour tiers exactly.
-    for _p = 0 to 1
-        float[] _lv = _p == 0 ? srResLevels : srSupLevels
-        float[] _st = _p == 0 ? srResStrengths : srSupStrengths
-        color   _bc = _p == 0 ? #FF4D4D : #00D084
-        if srShow and array.size(_lv) > 0
-            for i = 0 to array.size(_lv) - 1
-                if i >= srMaxLv
-                    break
-                float lev = array.get(_lv, i)
-                float st  = array.get(_st, i)
-                if not na(lev)
-                    color lc = color.new(_bc, st >= 3 ? 30 : st >= 2 ? 50 : 65)
-                    array.push(srLines, line.new(bar_index - 1, lev, bar_index, lev, xloc.bar_index, extend.both, lc, line.style_dotted, 1))
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101Levels() =>
+    if barstate.islast
+        // F-031: this passed ta.atr(14) INSIDE the barstate.islast branch, so the call was
+        // evaluated on one bar instead of every bar. ta.* functions keep internal state that
+        // only stays correct when called on each calculation -- a conditionally-called ta.atr
+        // returns an unreliable value, and that value sets the S/R cluster threshold. The file
+        // already maintains atr14 = ta.atr(14) globally at the top, so reuse it rather than
+        // making a second, conditionally-evaluated call.
+        scanSRLevels(srResLevels, srResStrengths, srSupLevels, srSupStrengths, srMaxLv, srScanLen, atr14, false)
+        // clear previous frame's lines before redrawing
+        if array.size(srLines) > 0
+            for i = 0 to array.size(srLines) - 1
+                line _sl = array.get(srLines, i)
+                if not na(_sl)
+                    line.delete(_sl)
+            array.clear(srLines)
+        // Single merged pass over both sides (resistance then support), preserving the
+        // Master's draw order and colour tiers exactly.
+        for _p = 0 to 1
+            float[] _lv = _p == 0 ? srResLevels : srSupLevels
+            float[] _st = _p == 0 ? srResStrengths : srSupStrengths
+            color   _bc = _p == 0 ? #FF4D4D : #00D084
+            if srShow and array.size(_lv) > 0
+                for i = 0 to array.size(_lv) - 1
+                    if i >= srMaxLv
+                        break
+                    float lev = array.get(_lv, i)
+                    float st  = array.get(_st, i)
+                    if not na(lev)
+                        color lc = color.new(_bc, st >= 3 ? 30 : st >= 2 ? 50 : 65)
+                        array.push(srLines, line.new(bar_index - 1, lev, bar_index, lev, xloc.bar_index, extend.both, lc, line.style_dotted, 1))
+    0
+f_v101Levels()
 
 // ═══════════════════ LAST 4H CANDLE — yellow dotted reference ═══════════════════
 // Marks the most recent CLOSED 4H candle on a lower-timeframe chart.
@@ -1533,26 +1545,30 @@ h2Sz = h2TxtSize == "Normal" ? size.normal : size.small
 _h2Row(int _r, string _k, string _x, color _c) =>
     table.cell(h2Card, 0, _r, _k, text_color = color.new(#8FA3B8, 0), text_size = h2Sz, text_halign = text.align_left)
     table.cell(h2Card, 1, _r, _x, text_color = _c, text_size = h2Sz, text_halign = text.align_left)
-if vSep and h2Show and not h2Docked and barstate.islast
-    color _h2t = color.new(#E6EDF3, 0)
-    color _h2u = color.new(#00D084, 0)
-    color _h2d = color.new(#FF4D4D, 0)
-    color _h2s = color.new(#787B86, 0)
-    bool _full = h2Layout == "Full"
-    table.cell(h2Card, 0, 0, "H2 SWEEP→VALUE", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
-    table.cell(h2Card, 1, 0, timeframe.period + " · display only", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
-    _h2Row(1, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _h2u : h2SigState == -1 ? _h2d : h2SigState == 2 ? _h2s : _h2t)
-    _h2Row(2, "TREND", h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _h2u : h2TrendDn ? _h2d : _h2t)
-    _h2Row(3, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _h2t)
-    _h2Row(4, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _h2t)
-    _h2Row(5, "SWEEP", h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _h2u : str.startswith(h2LastSweep, "HIGH") ? _h2d : _h2t)
-    _h2Row(6, "NEXT", h2Next, na(h2Poc) ? _h2t : close < h2Val ? _h2u : close > h2Vah ? _h2d : _h2t)
-    if _full
-        string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
-        _h2Row(7, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _h2t)
-        _h2Row(8, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _h2t)
-        _h2Row(9, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _h2t)
-    _h2Row(_full ? 10 : 7, "NOTE", "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101H2Card() =>
+    if vSep and h2Show and not h2Docked and barstate.islast
+        color _h2t = color.new(#E6EDF3, 0)
+        color _h2u = color.new(#00D084, 0)
+        color _h2d = color.new(#FF4D4D, 0)
+        color _h2s = color.new(#787B86, 0)
+        bool _full = h2Layout == "Full"
+        table.cell(h2Card, 0, 0, "H2 SWEEP→VALUE", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
+        table.cell(h2Card, 1, 0, timeframe.period + " · display only", text_color = color.white, bgcolor = color.new(#1F3A5F, 0), text_size = h2Sz, text_halign = text.align_left)
+        _h2Row(1, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _h2u : h2SigState == -1 ? _h2d : h2SigState == 2 ? _h2s : _h2t)
+        _h2Row(2, "TREND", h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _h2u : h2TrendDn ? _h2d : _h2t)
+        _h2Row(3, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _h2t)
+        _h2Row(4, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _h2t)
+        _h2Row(5, "SWEEP", h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _h2u : str.startswith(h2LastSweep, "HIGH") ? _h2d : _h2t)
+        _h2Row(6, "NEXT", h2Next, na(h2Poc) ? _h2t : close < h2Val ? _h2u : close > h2Vah ? _h2d : _h2t)
+        if _full
+            string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
+            _h2Row(7, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _h2t)
+            _h2Row(8, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _h2t)
+            _h2Row(9, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _h2t)
+        _h2Row(_full ? 10 : 7, "NOTE", "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
+    0
+f_v101H2Card()
 
 // ═══════════════════ GOLD DRIVERS (v66) — display only ═══════════════════
 // The free TradingView plan allows two indicators per chart, so Master + Visuals is the everyday pair. The five
@@ -1805,14 +1821,18 @@ f_gdRow(int r, string nm, float d, string how) =>
     color c = na(d) ? color.new(#787B86, 0) : d > 0 ? color.new(#26A69A, 0) : d < 0 ? color.new(#EF5350, 0) : color.new(#B2B5BE, 0)
     table.cell(gdT, 0, r, nm + " " + (na(d) ? "—" : d >= 2 ? "▲▲" : d > 0 ? "▲" : d <= -2 ? "▼▼" : d < 0 ? "▼" : "≈"), text_color=c, text_size=size.small, text_halign=text.align_left)
     table.cell(gdT, 1, r, how, text_color=c, text_size=size.small, text_halign=text.align_left)
-if vSep and barstate.islast and gdPos != "Hidden" and not gdDocked
-    table.cell(gdT, 0, 0, "GOLD DRIVERS · green = supports gold UP · red = DOWN · display only", text_color=color.new(#D1D4DC, 0), text_size=size.small, text_halign=text.align_left)
-    table.merge_cells(gdT, 0, 0, 1, 0)
-    f_gdRow(1, "USDJPY", brJd, brJh)
-    f_gdRow(2, "OIL", brOd, brOh)
-    f_gdRow(3, "REAL YLD", brRd, brRh)
-    f_gdRow(4, "BREAKEVEN", brBd, brBh)
-    f_gdRow(5, "US 2Y", br2d, br2h)
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101GdCard() =>
+    if vSep and barstate.islast and gdPos != "Hidden" and not gdDocked
+        table.cell(gdT, 0, 0, "GOLD DRIVERS · green = supports gold UP · red = DOWN · display only", text_color=color.new(#D1D4DC, 0), text_size=size.small, text_halign=text.align_left)
+        table.merge_cells(gdT, 0, 0, 1, 0)
+        f_gdRow(1, "USDJPY", brJd, brJh)
+        f_gdRow(2, "OIL", brOd, brOh)
+        f_gdRow(3, "REAL YLD", brRd, brRh)
+        f_gdRow(4, "BREAKEVEN", brBd, brBh)
+        f_gdRow(5, "US 2Y", br2d, br2h)
+    0
+f_v101GdCard()
 
 // ═══════════════════ CHECKS & RISK (v86) — display only ═══════════════════
 // The Phase 1 research audit's display items (audit/RESEARCH_AUDIT_PHASE1.md §4, §9, §10). DISPLAY ONLY: no gate, no
@@ -2185,169 +2205,173 @@ _tmHead(int r, string k, string v, color bg) =>
 if not vSep and barstate.islast
     table.clear(tblV, 0, 0, 1, 63)
 // v75: drawn only while it has a section (everything docked under the Master + candle panel off = no empty frame)
-if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel or ckPanel)
-    bool _cmp = vDetail == "Compact"
-    int r = 0
-    _tmHead(r, "XAUUSD · " + timeframe.period, "VISUALS · " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC", color.new(#1F3A5F, 0))
-    if glShow and not tkOn
-        [_upP, _upN] = f_glNear(true, close)
-        [_dnP, _dnN] = f_glNear(false, close)
-        [_up2P, _up2N] = f_glNear(true, nz(_upP, close))
-        [_dn2P, _dn2N] = f_glNear(false, nz(_dnP, close))
-        float _gNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
-        float _upR = na(_upP) ? na : _upP - close
-        float _dnR = na(_dnP) ? na : close - _dnP
-        if glStyle == "Text (v79)"
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101Panel() =>
+    if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel or ckPanel)
+        bool _cmp = vDetail == "Compact"
+        int r = 0
+        _tmHead(r, "XAUUSD · " + timeframe.period, "VISUALS · " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC", color.new(#1F3A5F, 0))
+        if glShow and not tkOn
+            [_upP, _upN] = f_glNear(true, close)
+            [_dnP, _dnN] = f_glNear(false, close)
+            [_up2P, _up2N] = f_glNear(true, nz(_upP, close))
+            [_dn2P, _dn2N] = f_glNear(false, nz(_dnP, close))
+            float _gNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
+            float _upR = na(_upP) ? na : _upP - close
+            float _dnR = na(_dnP) ? na : close - _dnP
+            if glStyle == "Text (v79)"
+                r += 1
+                _tmHead(r, "MARKET AT A GLANCE", "display only · plain words", _tmSec)
+                r += 1
+                _tmRow(r, "1 TREND", h2Trend + " on 1H/4H/1D (2 of 3 vote) · price " + (na(ema200) ? "—" : close > ema200 ? "above" : "below") + " EMA200", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+                r += 1
+                _tmRow(r, "2 BIAS", "the Master's BIAS + DECISION cells (top): its engine's call", _tmK)
+                r += 1
+                _tmRow(r, "3 HEADING", h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+                r += 1
+                _tmRow(r, "4 LIQUIDITY", "last swept: " + pvLastSweep + "\nnext above: " + (na(_upP) ? "none tagged" : _upN + " " + str.tostring(_upP, format.mintick) + " (+" + str.tostring(_upR, "#.##") + ")") + " · below: " + (na(_dnP) ? "none tagged" : _dnN + " " + str.tostring(_dnP, format.mintick) + " (−" + str.tostring(_dnR, "#.##") + ")"), _tmV)
+                r += 1
+                _tmRow(r, "5 MACRO", "the Master's MACRO: " + mxVerdict + " · other drivers (context) net " + f_tmG(_gNet), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
+                r += 1
+                _tmRow(r, "6 ROOM", "up $" + (na(_upR) ? "—" : str.tostring(_upR, "#.##")) + (na(_upR) ? "" : _upR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_up2P) ? "" : " (then " + _up2N + " +" + str.tostring(_up2P - close, "#.##") + ")")) + "\ndown $" + (na(_dnR) ? "—" : str.tostring(_dnR, "#.##")) + (na(_dnR) ? "" : _dnR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_dn2P) ? "" : " (then " + _dn2N + " −" + str.tostring(close - _dn2P, "#.##") + ")")) + " · plan: the Master's plan strip", _tmV)
+                r += 1
+                _tmRow(r, "7 HISTORY", "this session: manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + " · continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nlast H2 signal: " + (h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY " : "SELL ") + (h2SigOut == "" ? "open" : h2SigOut) + (h2Stale ? " · stale" : " · live")), _tmV)
+                r += 1
+                _tmRow(r, "8 ODDS", "the Master's SIGNAL cell: L / S / R scores, not win odds (Diagnostics: RELIABILITY)", _tmK)
+            else
+                string _mk = "✗<$" + str.tostring(glMoveA, "#")
+                r += 1
+                _tmHead(r, "AT A GLANCE · " + timeframe.period, h2TrendUp ? "▲ TREND UP" : h2TrendDn ? "▼ TREND DOWN" : "◆ TREND MIXED", _tmSec)
+                r += 1
+                _tmRow(r, "TREND", "1H " + f_gBar(h2S1, 5) + "  4H " + f_gBar(h2S4, 5) + "  1D " + f_gBar(h2SD, 5) + (na(ema200) ? "" : close > ema200 ? "  ▲EMA200" : "  ▼EMA200"), h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+                r += 1
+                _tmRow(r, "VALUE", "VAL " + f_gPos(h2Val, close, h2Vah, 11) + " VAH" + (na(h2Poc) ? "" : close >= h2Poc ? "  over POC" : "  under POC"), na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+                r += 1
+                _tmRow(r, "ROOM", (na(_dnP) ? "—" : _dnN + " −" + str.tostring(_dnR, "#.#")) + " " + f_gPos(_dnP, close, _upP, 11) + " " + (na(_upP) ? "—" : "+" + str.tostring(_upR, "#.#") + " " + _upN) + "\n↓ " + (na(_dnR) ? "—" : _dnR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk) + "    ↑ " + (na(_upR) ? "—" : _upR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk), _tmV)
+                r += 1
+                _tmRow(r, "MACRO", mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)) + " = Master · other: JPY" + f_tmG(brJd) + " OIL" + f_tmG(brOd) + " RY" + f_tmG(brRd) + " BE" + f_tmG(brBd) + " 2Y" + f_tmG(br2d) + " (net " + f_tmG(_gNet) + ")", (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
+                r += 1
+                _tmRow(r, "SWEPT", pvLastSweep, str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+                r += 1
+                _tmRow(r, "HISTORY", "manip " + f_gBar(sessManipProb, 5) + (na(sessManipProb) ? "" : " " + str.tostring(int(sessManipProb)) + "%") + "  cont " + f_gBar(sessContProb, 5) + (na(sessContProb) ? "" : " " + str.tostring(int(sessContProb)) + "%") + (ckN > 0 ? "  n" + str.tostring(ckN) : ""), _tmV)
+                r += 1
+                _tmRow(r, "H2", h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " · ○ stale" : " · ● live") + (h2SigOut != "" ? " · " + h2SigOut : ""), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
+                r += 1
+                _tmRow(r, "BIAS · ODDS", "→ the Master's BIAS / SIGNAL cells (scores, not odds)", _tmK)
+        if showCandle
+            float _rng = high - low
+            bool _up = close >= open
+            float _rv = not na(volSma20) and volSma20 > 0 ? volume / volSma20 : na
             r += 1
-            _tmHead(r, "MARKET AT A GLANCE", "display only · plain words", _tmSec)
+            _tmHead(r, "MARKET", "last bar " + (_up ? "▲ UP" : "▼ DOWN"), _tmSec)
             r += 1
-            _tmRow(r, "1 TREND", h2Trend + " on 1H/4H/1D (2 of 3 vote) · price " + (na(ema200) ? "—" : close > ema200 ? "above" : "below") + " EMA200", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+            _tmRow(r, "PRICE", (_cmp ? "" : "O " + str.tostring(open, format.mintick) + "  H " + str.tostring(high, format.mintick) + "  L " + str.tostring(low, format.mintick) + "  ") + "C " + str.tostring(close, format.mintick), _up ? _tmUp : _tmDn)
+            if not _cmp
+                r += 1
+                _tmRow(r, "RANGE", str.tostring(_rng, "#.##") + "  (" + str.tostring(atr14 > 0 ? _rng / atr14 : na, "#.##") + " ATR)  ATR% " + str.tostring(close > 0 ? atr14 / close * 100.0 : na, "#.###"), _tmV)
             r += 1
-            _tmRow(r, "2 BIAS", "the Master's BIAS + DECISION cells (top): its engine's call", _tmK)
+            _tmRow(r, "FLOW", (na(_rv) ? "" : "RVOL " + str.tostring(_rv, "#.##") + "x  ") + (na(adxVal) ? "ADX —" : "ADX " + str.tostring(adxVal, "#.#") + "  DI+ " + str.tostring(diplus, "#.#") + " / DI- " + str.tostring(diminus, "#.#")), _tmV)
+        if h2Show and not h2Docked
             r += 1
-            _tmRow(r, "3 HEADING", h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+            _tmHead(r, "H2 SWEEP → VALUE", "pre-registered · display only", _tmSec)
             r += 1
-            _tmRow(r, "4 LIQUIDITY", "last swept: " + pvLastSweep + "\nnext above: " + (na(_upP) ? "none tagged" : _upN + " " + str.tostring(_upP, format.mintick) + " (+" + str.tostring(_upR, "#.##") + ")") + " · below: " + (na(_dnP) ? "none tagged" : _dnN + " " + str.tostring(_dnP, format.mintick) + " (−" + str.tostring(_dnR, "#.##") + ")"), _tmV)
+            _tmRow(r, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
+            if not _cmp
+                r += 1
+                _tmRow(r, "TREND", h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+                r += 1
+                _tmRow(r, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
+                r += 1
+                _tmRow(r, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
+                r += 1
+                _tmRow(r, "SWEEP", h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
             r += 1
-            _tmRow(r, "5 MACRO", "the Master's MACRO: " + mxVerdict + " · other drivers (context) net " + f_tmG(_gNet), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
+            _tmRow(r, "NEXT", h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+            if h2Layout == "Full"
+                string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
+                r += 1
+                _tmRow(r, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _tmV)
+                r += 1
+                _tmRow(r, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _tmV)
+                r += 1
+                _tmRow(r, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _tmV)
+        if gdPos != "Hidden" and not gdDocked
             r += 1
-            _tmRow(r, "6 ROOM", "up $" + (na(_upR) ? "—" : str.tostring(_upR, "#.##")) + (na(_upR) ? "" : _upR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_up2P) ? "" : " (then " + _up2N + " +" + str.tostring(_up2P - close, "#.##") + ")")) + "\ndown $" + (na(_dnR) ? "—" : str.tostring(_dnR, "#.##")) + (na(_dnR) ? "" : _dnR >= glMoveB ? " ✓ $" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? " ✓ $" + str.tostring(glMoveA, "#") : " ✗ <$" + str.tostring(glMoveA, "#") + (na(_dn2P) ? "" : " (then " + _dn2N + " −" + str.tostring(close - _dn2P, "#.##") + ")")) + " · plan: the Master's plan strip", _tmV)
             r += 1
-            _tmRow(r, "7 HISTORY", "this session: manipulation " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + " · continuation " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nlast H2 signal: " + (h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY " : "SELL ") + (h2SigOut == "" ? "open" : h2SigOut) + (h2Stale ? " · stale" : " · live")), _tmV)
+            _tmRow(r, "MACRO", mxVerdict + " (= the Master's MACRO cell)", (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
+            _tmHead(r + 1, "OTHER DRIVERS", "context · not in the MACRO score", _tmSec)
             r += 1
-            _tmRow(r, "8 ODDS", "the Master's SIGNAL cell: L / S / R scores, not win odds (Diagnostics: RELIABILITY)", _tmK)
-        else
-            string _mk = "✗<$" + str.tostring(glMoveA, "#")
+            if _cmp
+                float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
+                r += 1
+                table.cell(tblV, 0, r, "OTHER", text_color = _tmK, text_size = h2Sz, text_halign = text.align_left)
+                table.cell(tblV, 1, r, "JPY" + f_tmG(brJd) + "  OIL" + f_tmG(brOd) + "  RY" + f_tmG(brRd) + "  BE" + f_tmG(brBd) + "  2Y" + f_tmG(br2d), text_color = _tmV, text_size = h2Sz, text_halign = text.align_left, tooltip = "Net of the five: " + f_tmG(_net) + " (context only; the MACRO verdict is the row above)\nUSDJPY: " + brJh + "\nOIL: " + brOh + "\nREAL YLD: " + brRh + "\nBREAKEVEN: " + brBh + "\nUS 2Y: " + br2h)
+            else
+                r += 1
+                _tmRow(r, "USDJPY " + f_tmG(brJd), brJh, f_tmC(brJd))
+                r += 1
+                _tmRow(r, "OIL " + f_tmG(brOd), brOh, f_tmC(brOd))
+                r += 1
+                _tmRow(r, "REAL YLD " + f_tmG(brRd), brRh, f_tmC(brRd))
+                r += 1
+                _tmRow(r, "BREAKEVEN " + f_tmG(brBd), brBh, f_tmC(brBd))
+                r += 1
+                _tmRow(r, "US 2Y " + f_tmG(br2d), br2h, f_tmC(br2d))
+        if lqInPanel
             r += 1
-            _tmHead(r, "AT A GLANCE · " + timeframe.period, h2TrendUp ? "▲ TREND UP" : h2TrendDn ? "▼ TREND DOWN" : "◆ TREND MIXED", _tmSec)
+            _tmHead(r, "LIQUIDITY · SWEEPS", "TradingView prices", _tmSec)
             r += 1
-            _tmRow(r, "TREND", "1H " + f_gBar(h2S1, 5) + "  4H " + f_gBar(h2S4, 5) + "  1D " + f_gBar(h2SD, 5) + (na(ema200) ? "" : close > ema200 ? "  ▲EMA200" : "  ▼EMA200"), h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+            _tmRow(r, "DAY", f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
             r += 1
-            _tmRow(r, "VALUE", "VAL " + f_gPos(h2Val, close, h2Vah, 11) + " VAH" + (na(h2Poc) ? "" : close >= h2Poc ? "  over POC" : "  under POC"), na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+            _tmRow(r, "WEEK", f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
             r += 1
-            _tmRow(r, "ROOM", (na(_dnP) ? "—" : _dnN + " −" + str.tostring(_dnR, "#.#")) + " " + f_gPos(_dnP, close, _upP, 11) + " " + (na(_upP) ? "—" : "+" + str.tostring(_upR, "#.#") + " " + _upN) + "\n↓ " + (na(_dnR) ? "—" : _dnR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _dnR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk) + "    ↑ " + (na(_upR) ? "—" : _upR >= glMoveB ? "✓$" + str.tostring(glMoveB, "#") : _upR >= glMoveA ? "✓$" + str.tostring(glMoveA, "#") : _mk), _tmV)
+            _tmRow(r, "MONTH", f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
             r += 1
-            _tmRow(r, "MACRO", mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)) + " = Master · other: JPY" + f_tmG(brJd) + " OIL" + f_tmG(brOd) + " RY" + f_tmG(brRd) + " BE" + f_tmG(brBd) + " 2Y" + f_tmG(br2d) + " (net " + f_tmG(_gNet) + ")", (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
+            _tmRow(r, "TODAY", f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
             r += 1
-            _tmRow(r, "SWEPT", pvLastSweep, str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+            _tmRow(r, "SWEEPS", "pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+        if ckPanel
+            color _amb = color.new(#FFB74D, 0)
             r += 1
-            _tmRow(r, "HISTORY", "manip " + f_gBar(sessManipProb, 5) + (na(sessManipProb) ? "" : " " + str.tostring(int(sessManipProb)) + "%") + "  cont " + f_gBar(sessContProb, 5) + (na(sessContProb) ? "" : " " + str.tostring(int(sessContProb)) + "%") + (ckN > 0 ? "  n" + str.tostring(ckN) : ""), _tmV)
+            _tmHead(r, "CHECKS · RISK", "display only · v86", _tmSec)
             r += 1
-            _tmRow(r, "H2", h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " · ○ stale" : " · ● live") + (h2SigOut != "" ? " · " + h2SigOut : ""), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
+            _tmRow(r, "SCORE", "the Master's L / S / R and mP are SCORES, not win odds" + (_cmp ? "" : "\nmP measured out of sample (audit, Oct 2026): AUC 0.48-0.53,\nno better than chance; trust the levels, not the %"), _amb)
+            // v99 (B-14 / R8): the Master's dashboard items that CANNOT change its BUY / SELL (outside the DECISION slice,
+            // audit/tools/v90_slice.py; dash_wiring.py D re-checks every name on each run). Not listed although they look
+            // like context: MACRO (its strength feeds the scores) and the liquidity destination (it reaches the plan).
+            if not _cmp
+                r += 1
+                _tmRow(r, "NOT A GATE", "BIAS · EI conf · sweeps · RSI div · SMT\nCVD · value area · VIX · 2s10s · H2 SETUP: context only", _tmK)
             r += 1
-            _tmRow(r, "BIAS · ODDS", "→ the Master's BIAS / SIGNAL cells (scores, not odds)", _tmK)
-    if showCandle
-        float _rng = high - low
-        bool _up = close >= open
-        float _rv = not na(volSma20) and volSma20 > 0 ? volume / volSma20 : na
+            _tmRow(r, "NEWS", (nwNowIn ? "IN THE WINDOW · " : "next ") + nwNext + (na(nwMs) or nwNowIn ? "" : " · in " + f_dur(nwMs)) + (_cmp ? "" : "\nwindow −" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min · official BLS / Fed dates · the Master's engine neither blocks nor re-costs news"), nwLv == 2 ? _tmDn : nwLv == 1 ? _amb : _tmV)
+            r += 1
+            _tmRow(r, "COST", str.tostring(ckCost, "#.##") + " pts round trip" + (nwBarIn and nwCostMult > 1.0 ? " (NEWS ×" + str.tostring(nwCostMult, "#.#") + ")" : "") + " = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (" + (na(atr14) ? "—" : str.tostring(atr14, "#.##")) + ")" + (_cmp ? "" : "\nTP1 should be ≥ 4 × cost = $" + str.tostring(4.0 * ckCost, "#.##") + " · above 25% the cost eats the edge"), ckCostLv == 2 ? _tmDn : ckCostLv == 1 ? _amb : _tmV)
+            if not _cmp
+                r += 1
+                _tmRow(r, "CHURN", "structure flips " + str.tostring(ckFlips) + " in 20 bars · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\n" + (ckChurn ? "CHURN: signals tend to flip within a few bars" : "no churn (2+ flips = churn; efficiency < 0.25 = choppy)"), ckChurn ? _amb : _tmV)
+                r += 1
+                _tmRow(r, "DAILY", rgTxt + " · 12M " + (na(rgRet12) ? "—" : (rgRet12 >= 0 ? "+" : "") + str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above SMA200" : "below SMA200") + "\nreal yld 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " · " + rgMacTxt + " · UNTESTED", rgUp ? _tmUp : rgDn ? _tmDn : _tmV)
+            r += 1
+            _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : not na(lkSLp) ? " (the Master's plan SL)" : " (1 ATR, not the Master's plan SL: type it in)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)") + (lkLotsOn ? "\nthe Master's plan: " + (lkLots < 0 ? "below 0.01 lot" : str.tostring(lkLots, "#.##") + " lot (half-Kelly, capped at its Risk %)") : ""), _tmV)
+            if trkShow
+                r += 1
+                _tmRow(r, "BRACKET", trkTxt, trkLvAll == 1 ? _tmUp : trkLvAll == -1 ? _tmDn : _amb)
+            r += 1
+            _tmRow(r, "TODAY", rkLocked ? "STOP FOR THE DAY · " + str.tostring(rkToday, "#.##") + "R reached the " + str.tostring(rkCap, "#.#") + "R cap" : str.tostring(rkToday, "#.##") + "R so far · " + str.tostring(rkToday - rkCap, "#.##") + "R left before the " + str.tostring(rkCap, "#.#") + "R cap (typed in)", rkLocked ? _tmDn : _tmV)
+            if not _cmp
+                r += 1
+                _tmRow(r, "SESSIONS", "this session: manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "\ncont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + " · 95% ranges (Wilson)", _tmV)
+            if lgShow
+                r += 1
+                _tmRow(r, "RECORD", lgTxt + "\n→ " + lgVerdict + (lgNote != "" ? " · " + lgNote : "") + "\n" + tfNote, lgLv == -1 ? _tmDn : lgLv == 1 ? _tmUp : _amb)
+            if lg2Show
+                r += 1
+                _tmRow(r, "RECORD 2", lg2Txt + "\n→ " + lg2Verdict + (lg2Note != "" ? " · " + lg2Note : ""), lg2Lv == -1 ? _tmDn : lg2Lv == 1 ? _tmUp : _amb)
         r += 1
-        _tmHead(r, "MARKET", "last bar " + (_up ? "▲ UP" : "▼ DOWN"), _tmSec)
-        r += 1
-        _tmRow(r, "PRICE", (_cmp ? "" : "O " + str.tostring(open, format.mintick) + "  H " + str.tostring(high, format.mintick) + "  L " + str.tostring(low, format.mintick) + "  ") + "C " + str.tostring(close, format.mintick), _up ? _tmUp : _tmDn)
-        if not _cmp
-            r += 1
-            _tmRow(r, "RANGE", str.tostring(_rng, "#.##") + "  (" + str.tostring(atr14 > 0 ? _rng / atr14 : na, "#.##") + " ATR)  ATR% " + str.tostring(close > 0 ? atr14 / close * 100.0 : na, "#.###"), _tmV)
-        r += 1
-        _tmRow(r, "FLOW", (na(_rv) ? "" : "RVOL " + str.tostring(_rv, "#.##") + "x  ") + (na(adxVal) ? "ADX —" : "ADX " + str.tostring(adxVal, "#.#") + "  DI+ " + str.tostring(diplus, "#.#") + " / DI- " + str.tostring(diminus, "#.#")), _tmV)
-    if h2Show and not h2Docked
-        r += 1
-        _tmHead(r, "H2 SWEEP → VALUE", "pre-registered · display only", _tmSec)
-        r += 1
-        _tmRow(r, "SIGNAL", h2SigCard + h2SigStat, h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV)
-        if not _cmp
-            r += 1
-            _tmRow(r, "TREND", h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
-            r += 1
-            _tmRow(r, "VALUE", "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
-            r += 1
-            _tmRow(r, "SWINGS", "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
-            r += 1
-            _tmRow(r, "SWEEP", h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
-        r += 1
-        _tmRow(r, "NEXT", h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
-        if h2Layout == "Full"
-            string _sn = sessId == 0 ? "Asian" : sessId == 1 ? "London" : sessId == 2 ? "NY" : "off-session"
-            r += 1
-            _tmRow(r, "SESSION", _sn + (curSessId != sessId or na(sesHi) ? "\nstarts next confirmed bar" : "  range " + _h2p(sesLo) + "-" + _h2p(sesHi) + "\nopen " + _h2p(sesOpenPx) + "  exp " + (na(sessExpansionPct) ? "—" : str.tostring(int(sessExpansionPct)) + "% of avg") + (sesManip ? "\nSWEPT prev session extreme" : "")), sesManip ? color.orange : _tmV)
-            r += 1
-            _tmRow(r, "HISTORY", "manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "  cont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + "\nprev H " + _h2p(prevSesHi) + "  L " + _h2p(prevSesLo), _tmV)
-            r += 1
-            _tmRow(r, "VOLUME", sessVolBase > 0 and not na(volume) ? "x" + str.tostring(volume / sessVolBase, "#.#") + " of session avg\n(tick volume)" : "—", _tmV)
-    if gdPos != "Hidden" and not gdDocked
-        r += 1
-        r += 1
-        _tmRow(r, "MACRO", mxVerdict + " (= the Master's MACRO cell)", (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV))
-        _tmHead(r + 1, "OTHER DRIVERS", "context · not in the MACRO score", _tmSec)
-        r += 1
-        if _cmp
-            float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
-            r += 1
-            table.cell(tblV, 0, r, "OTHER", text_color = _tmK, text_size = h2Sz, text_halign = text.align_left)
-            table.cell(tblV, 1, r, "JPY" + f_tmG(brJd) + "  OIL" + f_tmG(brOd) + "  RY" + f_tmG(brRd) + "  BE" + f_tmG(brBd) + "  2Y" + f_tmG(br2d), text_color = _tmV, text_size = h2Sz, text_halign = text.align_left, tooltip = "Net of the five: " + f_tmG(_net) + " (context only; the MACRO verdict is the row above)\nUSDJPY: " + brJh + "\nOIL: " + brOh + "\nREAL YLD: " + brRh + "\nBREAKEVEN: " + brBh + "\nUS 2Y: " + br2h)
-        else
-            r += 1
-            _tmRow(r, "USDJPY " + f_tmG(brJd), brJh, f_tmC(brJd))
-            r += 1
-            _tmRow(r, "OIL " + f_tmG(brOd), brOh, f_tmC(brOd))
-            r += 1
-            _tmRow(r, "REAL YLD " + f_tmG(brRd), brRh, f_tmC(brRd))
-            r += 1
-            _tmRow(r, "BREAKEVEN " + f_tmG(brBd), brBh, f_tmC(brBd))
-            r += 1
-            _tmRow(r, "US 2Y " + f_tmG(br2d), br2h, f_tmC(br2d))
-    if lqInPanel
-        r += 1
-        _tmHead(r, "LIQUIDITY · SWEEPS", "TradingView prices", _tmSec)
-        r += 1
-        _tmRow(r, "DAY", f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
-        r += 1
-        _tmRow(r, "WEEK", f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
-        r += 1
-        _tmRow(r, "MONTH", f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
-        r += 1
-        _tmRow(r, "TODAY", f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
-        r += 1
-        _tmRow(r, "SWEEPS", "pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
-    if ckPanel
-        color _amb = color.new(#FFB74D, 0)
-        r += 1
-        _tmHead(r, "CHECKS · RISK", "display only · v86", _tmSec)
-        r += 1
-        _tmRow(r, "SCORE", "the Master's L / S / R and mP are SCORES, not win odds" + (_cmp ? "" : "\nmP measured out of sample (audit, Oct 2026): AUC 0.48-0.53,\nno better than chance; trust the levels, not the %"), _amb)
-        // v99 (B-14 / R8): the Master's dashboard items that CANNOT change its BUY / SELL (outside the DECISION slice,
-        // audit/tools/v90_slice.py; dash_wiring.py D re-checks every name on each run). Not listed although they look
-        // like context: MACRO (its strength feeds the scores) and the liquidity destination (it reaches the plan).
-        if not _cmp
-            r += 1
-            _tmRow(r, "NOT A GATE", "BIAS · EI conf · sweeps · RSI div · SMT\nCVD · value area · VIX · 2s10s · H2 SETUP: context only", _tmK)
-        r += 1
-        _tmRow(r, "NEWS", (nwNowIn ? "IN THE WINDOW · " : "next ") + nwNext + (na(nwMs) or nwNowIn ? "" : " · in " + f_dur(nwMs)) + (_cmp ? "" : "\nwindow −" + str.tostring(nwBefore) + "/+" + str.tostring(nwAfter) + " min · official BLS / Fed dates · the Master's engine neither blocks nor re-costs news"), nwLv == 2 ? _tmDn : nwLv == 1 ? _amb : _tmV)
-        r += 1
-        _tmRow(r, "COST", str.tostring(ckCost, "#.##") + " pts round trip" + (nwBarIn and nwCostMult > 1.0 ? " (NEWS ×" + str.tostring(nwCostMult, "#.#") + ")" : "") + " = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (" + (na(atr14) ? "—" : str.tostring(atr14, "#.##")) + ")" + (_cmp ? "" : "\nTP1 should be ≥ 4 × cost = $" + str.tostring(4.0 * ckCost, "#.##") + " · above 25% the cost eats the edge"), ckCostLv == 2 ? _tmDn : ckCostLv == 1 ? _amb : _tmV)
-        if not _cmp
-            r += 1
-            _tmRow(r, "CHURN", "structure flips " + str.tostring(ckFlips) + " in 20 bars · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\n" + (ckChurn ? "CHURN: signals tend to flip within a few bars" : "no churn (2+ flips = churn; efficiency < 0.25 = choppy)"), ckChurn ? _amb : _tmV)
-            r += 1
-            _tmRow(r, "DAILY", rgTxt + " · 12M " + (na(rgRet12) ? "—" : (rgRet12 >= 0 ? "+" : "") + str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above SMA200" : "below SMA200") + "\nreal yld 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " · " + rgMacTxt + " · UNTESTED", rgUp ? _tmUp : rgDn ? _tmDn : _tmV)
-        r += 1
-        _tmRow(r, "RISK", str.tostring(rkPct, "#.##") + "% of $" + str.tostring(rkEquity, "#") + " = $" + str.tostring(rkRisk, "#.##") + " · stop $" + (na(rkStopD) ? "—" : str.tostring(rkStopD, "#.##")) + (rkStop > 0 ? "" : not na(lkSLp) ? " (the Master's plan SL)" : " (1 ATR, not the Master's plan SL: type it in)") + " + cost " + str.tostring(ckCost, "#.##") + "\n→ " + (na(rkLots) ? "—" : rkLots < 0.01 ? "below 0.01 lot: skip or widen the account" : str.tostring(rkLots, "#.##") + " lot (MT5 step 0.01, " + str.tostring(pointValue, "#") + " oz)") + (lkLotsOn ? "\nthe Master's plan: " + (lkLots < 0 ? "below 0.01 lot" : str.tostring(lkLots, "#.##") + " lot (half-Kelly, capped at its Risk %)") : ""), _tmV)
-        if trkShow
-            r += 1
-            _tmRow(r, "BRACKET", trkTxt, trkLvAll == 1 ? _tmUp : trkLvAll == -1 ? _tmDn : _amb)
-        r += 1
-        _tmRow(r, "TODAY", rkLocked ? "STOP FOR THE DAY · " + str.tostring(rkToday, "#.##") + "R reached the " + str.tostring(rkCap, "#.#") + "R cap" : str.tostring(rkToday, "#.##") + "R so far · " + str.tostring(rkToday - rkCap, "#.##") + "R left before the " + str.tostring(rkCap, "#.#") + "R cap (typed in)", rkLocked ? _tmDn : _tmV)
-        if not _cmp
-            r += 1
-            _tmRow(r, "SESSIONS", "this session: manip " + (na(sessManipProb) ? "—" : str.tostring(int(sessManipProb)) + "%" + f_ci(sessManipProb, ckN)) + "\ncont " + (na(sessContProb) ? "—" : str.tostring(int(sessContProb)) + "%" + f_ci(sessContProb, ckN)) + " · 95% ranges (Wilson)", _tmV)
-        if lgShow
-            r += 1
-            _tmRow(r, "RECORD", lgTxt + "\n→ " + lgVerdict + (lgNote != "" ? " · " + lgNote : "") + "\n" + tfNote, lgLv == -1 ? _tmDn : lgLv == 1 ? _tmUp : _amb)
-        if lg2Show
-            r += 1
-            _tmRow(r, "RECORD 2", lg2Txt + "\n→ " + lg2Verdict + (lg2Note != "" ? " · " + lg2Note : ""), lg2Lv == -1 ? _tmDn : lg2Lv == 1 ? _tmUp : _amb)
-    r += 1
-    table.cell(tblV, 0, r, "display only · the DECISION is the Master's · H2 record: the website", text_color = color.new(#5D6B7A, 0), text_size = size.tiny, text_halign = text.align_left)
-    table.merge_cells(tblV, 0, r, 1, r)
+        table.cell(tblV, 0, r, "display only · the DECISION is the Master's · H2 record: the website", text_color = color.new(#5D6B7A, 0), text_size = size.tiny, text_halign = text.align_left)
+        table.merge_cells(tblV, 0, r, 1, r)
+    0
+f_v101Panel()
 
 // ═══════════════════ DOCKS UNDER THE MASTER'S DASHBOARD (v74 drivers; v75 H2 card, liquidity) ═══════════════════
 // Same anchor, no border / frame and the same nine column widths as the Master's dashboard, so a dock's column c sits
@@ -2372,34 +2396,46 @@ if barstate.islast
     table.clear(dkT, 0, 0, 8, 9)
 if (gdDocked or lqDocked or h2Docked and h2Show) and barstate.islast
     f_dock(dkT, 0, gdGap)
-if gdDocked and barstate.islast
-    float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
-    table.cell(dkT, 6, 1, "OTHER DRIVERS · context", text_color = color.new(#AEBBC9, 0), bgcolor = _dbg, text_size = _dsz, width = int(11 * _dw), text_halign = text.align_left, tooltip = "Not in the Master's MACRO score: the MACRO verdict is the Master's MACRO cell above (Visuals' ticker shows the same). Net of these five: " + f_tmG(_net) + ". Each arrow: green = supports gold up, red = down. Display only.")
-    f_dkCell(dkT, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, f_tmC(brJd))
-    f_dkCell(dkT, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, f_tmC(brOd))
-    f_dkCell(dkT, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, f_tmC(brRd))
-    f_dkCell(dkT, 6, 5, "BREAKEVEN " + f_tmG(brBd) + "\n" + brBh, f_tmC(brBd))
-    f_dkCell(dkT, 6, 6, "US 2Y " + f_tmG(br2d) + "\n" + br2h, f_tmC(br2d))
-if lqDocked and barstate.islast
-    f_dkCell(dkT, 4, 1, "LIQUIDITY · SWEEPS", color.new(#AEBBC9, 0))
-    f_dkCell(dkT, 4, 2, f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
-    f_dkCell(dkT, 4, 3, f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
-    f_dkCell(dkT, 4, 4, f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
-    f_dkCell(dkT, 4, 5, f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
-    f_dkCell(dkT, 4, 6, "SWEPT pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
-if h2Docked and h2Show and barstate.islast
-    f_dkCell(dkT, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + " · = website H3", color.new(#AEBBC9, 0))
-    array<string> _sp = str.split("SIGNAL  " + h2SigCard + h2SigStat, "\n")
-    int _ns = array.size(_sp)
-    color _sgc = h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV
-    f_dkCell(dkT, 8, 2, _ns > 1 ? array.get(_sp, 0) + "\n" + array.get(_sp, 1) : array.get(_sp, 0), _sgc)
-    f_dkCell(dkT, 8, 3, _ns > 2 ? array.join(array.slice(_sp, 2, _ns), "\n") : "", _sgc)
-    f_dkCell(dkT, 8, 4, "TREND  " + h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
-    f_dkCell(dkT, 8, 5, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
-    f_dkCell(dkT, 8, 6, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
-    f_dkCell(dkT, 8, 7, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
-    f_dkCell(dkT, 8, 8, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
-    f_dkCell(dkT, 8, 9, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101GdDock() =>
+    if gdDocked and barstate.islast
+        float _net = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
+        table.cell(dkT, 6, 1, "OTHER DRIVERS · context", text_color = color.new(#AEBBC9, 0), bgcolor = _dbg, text_size = _dsz, width = int(11 * _dw), text_halign = text.align_left, tooltip = "Not in the Master's MACRO score: the MACRO verdict is the Master's MACRO cell above (Visuals' ticker shows the same). Net of these five: " + f_tmG(_net) + ". Each arrow: green = supports gold up, red = down. Display only.")
+        f_dkCell(dkT, 6, 2, "USDJPY " + f_tmG(brJd) + "\n" + brJh, f_tmC(brJd))
+        f_dkCell(dkT, 6, 3, "OIL " + f_tmG(brOd) + "\n" + brOh, f_tmC(brOd))
+        f_dkCell(dkT, 6, 4, "REAL YLD " + f_tmG(brRd) + "\n" + brRh, f_tmC(brRd))
+        f_dkCell(dkT, 6, 5, "BREAKEVEN " + f_tmG(brBd) + "\n" + brBh, f_tmC(brBd))
+        f_dkCell(dkT, 6, 6, "US 2Y " + f_tmG(br2d) + "\n" + br2h, f_tmC(br2d))
+    0
+f_v101GdDock()
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101LqDock() =>
+    if lqDocked and barstate.islast
+        f_dkCell(dkT, 4, 1, "LIQUIDITY · SWEEPS", color.new(#AEBBC9, 0))
+        f_dkCell(dkT, 4, 2, f_lv("PDH", pdh) + "\n" + f_lv("PDL", pdl), _tmV)
+        f_dkCell(dkT, 4, 3, f_lv("PWH", pwh) + "\n" + f_lv("PWL", pwl), _tmV)
+        f_dkCell(dkT, 4, 4, f_lv("PMH", pmh) + "\n" + f_lv("PML", pml), _tmV)
+        f_dkCell(dkT, 4, 5, f_lv("CDH", cdh) + "\n" + f_lv("CDL", cdl), _tmV)
+        f_dkCell(dkT, 4, 6, "SWEPT pivot ✕ " + pvLastSweep + "\nH2 " + str.replace_all(h2LastSweep, "\n", "  "), str.startswith(pvLastSweep, "LOW") ? _tmUp : str.startswith(pvLastSweep, "HIGH") ? _tmDn : _tmV)
+    0
+f_v101LqDock()
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101H2Dock() =>
+    if h2Docked and h2Show and barstate.islast
+        f_dkCell(dkT, 8, 1, "H2 SWEEP → VALUE · " + timeframe.period + " · = website H3", color.new(#AEBBC9, 0))
+        array<string> _sp = str.split("SIGNAL  " + h2SigCard + h2SigStat, "\n")
+        int _ns = array.size(_sp)
+        color _sgc = h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV
+        f_dkCell(dkT, 8, 2, _ns > 1 ? array.get(_sp, 0) + "\n" + array.get(_sp, 1) : array.get(_sp, 0), _sgc)
+        f_dkCell(dkT, 8, 3, _ns > 2 ? array.join(array.slice(_sp, 2, _ns), "\n") : "", _sgc)
+        f_dkCell(dkT, 8, 4, "TREND  " + h2Trend + "  1H " + f_sc(h2S1) + " 4H " + f_sc(h2S4) + " 1D " + f_sc(h2SD) + "\n(>=60 up, <=40 down)", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV)
+        f_dkCell(dkT, 8, 5, "VALUE  " + "VAL " + _h2p(h2Val) + "  POC " + _h2p(h2Poc) + "\nVAH " + _h2p(h2Vah) + "  (100 bars)", _tmV)
+        f_dkCell(dkT, 8, 6, "SWINGS  " + "high " + (na(h2SwH) ? "consumed" : _h2p(h2SwH)) + "\nlow " + (na(h2SwL) ? "consumed" : _h2p(h2SwL)) + "  (unswept)", _tmV)
+        f_dkCell(dkT, 8, 7, "SWEEP  " + h2LastSweep, str.startswith(h2LastSweep, "LOW") ? _tmUp : str.startswith(h2LastSweep, "HIGH") ? _tmDn : _tmV)
+        f_dkCell(dkT, 8, 8, "NEXT  " + h2Next, na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV)
+        f_dkCell(dkT, 8, 9, "conditional, not an entry\nH2 record: the website", color.new(#8FA3B8, 0))
+    0
+f_v101H2Dock()
 
 // ═══════════════════ BOTTOM TICKER (v81) — the glance in one strip ═══════════════════
 // Six tiles, each a large value over a small grey label, the same values as the glance (trend vote, value position,
@@ -2415,29 +2451,33 @@ f_tk(int c, string v, color vc, string lbl, string tip) =>
     table.cell(tkT, c, 2, lbl, text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#0F141B, 0), text_size = size.tiny, tooltip = tip)
 if barstate.islast
     table.clear(tkT, 0, 0, 7, 3)
-if tkOn and barstate.islast
-    [_tUpP, _tUpN] = f_glNear(true, close)
-    [_tDnP, _tDnN] = f_glNear(false, close)
-    float _tUpR = na(_tUpP) ? na : _tUpP - close
-    float _tDnR = na(_tDnP) ? na : close - _tDnP
-    float _tNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
-    string _ok = "✓"
-    string _no = "✗"
-    f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and scores: the Master's BIAS / SIGNAL cells (scores, not calibrated odds).")
-    f_tk(1, na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
-    f_tk(2, "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
-    f_tk(3, mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV), "macro · = Master", mxWhy + "\nOther drivers (context, not in the score), net " + f_tmG(_tNet) + ": USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
-    f_tk(4, na(pvLastLvl) ? "none yet" : (pvLastUp ? "HIGH " : "LOW ") + str.tostring(pvLastLvl, format.mintick), na(pvLastLvl) ? _tmV : pvLastUp ? _tmDn : _tmUp, "last sweep" + (na(pvLastTime) ? "" : " · " + str.tostring((time - pvLastTime) / 3600000.0, "#.#") + " h ago"), "Pivot sweep (the ✕ markers): " + pvLastSweep + "\nH2 sweep: " + str.replace_all(h2LastSweep, "\n", "  "))
-    f_tk(5, h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " ○" : " ●"), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV, "H2 · " + (h2SigDir == 0 ? "no signal" : (h2Stale ? "stale" : "live") + (h2SigOut != "" ? " · " + h2SigOut : "")), h2SigCard + h2SigStat)
-    int _c = 6
-    if rgShow
-        f_tk(_c, rgTxt, rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (a 20-day daily reading, not the Master's MACRO)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
-        _c += 1
-    int _ckLv = math.max(nwLv, ckCostLv, rkLocked ? 2 : 0, ckChurn ? 1 : 0)
-    string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "") + (lkOn ? "" : "LINK the Master · ")
-    f_tk(_c, _ckTx == "" ? "OK ✓" : str.substring(_ckTx, 0, str.length(_ckTx) - 3), _ckLv == 2 ? _tmDn : _ckLv == 1 ? color.new(#FFB74D, 0) : _tmUp, "checks · next " + nwNext, "NEWS " + (nwNowIn ? "in the window: " : "next: ") + nwNext + (na(nwMs) or nwNowIn ? "" : " in " + f_dur(nwMs)) + "\nCOST " + str.tostring(ckCost, "#.##") + " pts = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (red > 25%, amber > 15%)\nCHURN " + str.tostring(ckFlips) + " structure flips in 20 bars (2+ = churn) · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\nTODAY " + str.tostring(rkToday, "#.##") + "R of the " + str.tostring(rkCap, "#.#") + "R cap\nScores in the Master are not win odds.")
-    if lgShow
-        table.cell(tkT, 0, 0, "● " + lgLine + " · " + tfNote + (lg2Show ? "\n● " + lg2Line + (lg2Note != "" ? " · " + lg2Note : "") : ""), text_color = color.white, bgcolor = lgLv == -1 ? color.new(#B71C1C, 15) : lgLv == 1 ? color.new(#1B5E20, 15) : color.new(#6D4C00, 15), text_size = size.tiny, tooltip = "Typed in from the website's forward ledger as of " + lgAsof + " (Visuals settings, CHECKS & RISK). Rule: N >= 50, 95% t-interval of mean R above 0, PF >= 1.2.\n" + lgArm + " note: " + lgNote)
-        table.merge_cells(tkT, 0, 0, _c, 0)
-    for c = 0 to 7
-        table.cell(tkT, c, 3, "", height = tkLift, bgcolor = color(na))
+// v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
+f_v101Ticker() =>
+    if tkOn and barstate.islast
+        [_tUpP, _tUpN] = f_glNear(true, close)
+        [_tDnP, _tDnN] = f_glNear(false, close)
+        float _tUpR = na(_tUpP) ? na : _tUpP - close
+        float _tDnR = na(_tDnP) ? na : close - _tDnP
+        float _tNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
+        string _ok = "✓"
+        string _no = "✗"
+        f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and scores: the Master's BIAS / SIGNAL cells (scores, not calibrated odds).")
+        f_tk(1, na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
+        f_tk(2, "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
+        f_tk(3, mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV), "macro · = Master", mxWhy + "\nOther drivers (context, not in the score), net " + f_tmG(_tNet) + ": USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
+        f_tk(4, na(pvLastLvl) ? "none yet" : (pvLastUp ? "HIGH " : "LOW ") + str.tostring(pvLastLvl, format.mintick), na(pvLastLvl) ? _tmV : pvLastUp ? _tmDn : _tmUp, "last sweep" + (na(pvLastTime) ? "" : " · " + str.tostring((time - pvLastTime) / 3600000.0, "#.#") + " h ago"), "Pivot sweep (the ✕ markers): " + pvLastSweep + "\nH2 sweep: " + str.replace_all(h2LastSweep, "\n", "  "))
+        f_tk(5, h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " ○" : " ●"), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV, "H2 · " + (h2SigDir == 0 ? "no signal" : (h2Stale ? "stale" : "live") + (h2SigOut != "" ? " · " + h2SigOut : "")), h2SigCard + h2SigStat)
+        int _c = 6
+        if rgShow
+            f_tk(_c, rgTxt, rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (a 20-day daily reading, not the Master's MACRO)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
+            _c += 1
+        int _ckLv = math.max(nwLv, ckCostLv, rkLocked ? 2 : 0, ckChurn ? 1 : 0)
+        string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "") + (lkOn ? "" : "LINK the Master · ")
+        f_tk(_c, _ckTx == "" ? "OK ✓" : str.substring(_ckTx, 0, str.length(_ckTx) - 3), _ckLv == 2 ? _tmDn : _ckLv == 1 ? color.new(#FFB74D, 0) : _tmUp, "checks · next " + nwNext, "NEWS " + (nwNowIn ? "in the window: " : "next: ") + nwNext + (na(nwMs) or nwNowIn ? "" : " in " + f_dur(nwMs)) + "\nCOST " + str.tostring(ckCost, "#.##") + " pts = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (red > 25%, amber > 15%)\nCHURN " + str.tostring(ckFlips) + " structure flips in 20 bars (2+ = churn) · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\nTODAY " + str.tostring(rkToday, "#.##") + "R of the " + str.tostring(rkCap, "#.#") + "R cap\nScores in the Master are not win odds.")
+        if lgShow
+            table.cell(tkT, 0, 0, "● " + lgLine + " · " + tfNote + (lg2Show ? "\n● " + lg2Line + (lg2Note != "" ? " · " + lg2Note : "") : ""), text_color = color.white, bgcolor = lgLv == -1 ? color.new(#B71C1C, 15) : lgLv == 1 ? color.new(#1B5E20, 15) : color.new(#6D4C00, 15), text_size = size.tiny, tooltip = "Typed in from the website's forward ledger as of " + lgAsof + " (Visuals settings, CHECKS & RISK). Rule: N >= 50, 95% t-interval of mean R above 0, PF >= 1.2.\n" + lgArm + " note: " + lgNote)
+            table.merge_cells(tkT, 0, 0, _c, 0)
+        for c = 0 to 7
+            table.cell(tkT, c, 3, "", height = tkLift, bgcolor = color(na))
+    0
+f_v101Ticker()

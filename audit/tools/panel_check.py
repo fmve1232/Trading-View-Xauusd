@@ -13,7 +13,10 @@ Usage: python3 audit/tools/panel_check.py"""
 import re
 import sys
 
-V = open("artefacts/XAUUSD_Quantum_5_5_Visuals.pine", encoding="utf-8").read()
+import fix_v101 as F101  # noqa: E402
+# v101 (F-A92): ten display blocks are wrapped in functions (CE10295); this checker reads them in their unwrapped form,
+# fix_v101.unfix() (exact inverse; v101_check.py proves the wrapping changes nothing but indentation and the wrapper)
+V = F101.unfix(open("artefacts/XAUUSD_Quantum_5_5_Visuals.pine", encoding="utf-8").read())
 L = V.split("\n")
 fails = 0
 

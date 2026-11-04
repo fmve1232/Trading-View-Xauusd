@@ -3625,3 +3625,40 @@ token room). Master model 99,419 / 98,976 (+23 / +30), below v83's compiled 99,5
 it lasts. Nothing else changes.
 
 **Not run:** the TradingView compile; `tf_check` (the timeframe code is unchanged since its v99 run).
+
+# v101 — Visuals compiles again: ten display blocks wrapped in functions (CE10295, F-A92) (2026-11-04)
+
+**Compiler report (operator's screenshots, 2026-11-04):** Visuals (the v99 file, identical in v100) failed with CE10295
+"The main body of the script is too long"; a Master compiled and drew its dashboard (build stamp not visible).
+
+**Why the checkers missed it:** compile_est's main-body gate counted lexical tokens outside functions and was
+calibrated only on the Master: Visuals v99 was 23,962 on it, under the 26,538 that compiled, while the Master compiles
+at 23,844. A measure that orders all known results is main-body tokens + 2 × the words in string literals:
+
+| Build | Measure | Result |
+|---|---:|---|
+| Visuals v79 / v84 / v85 | 17,793 / 19,996 / 20,145 | compiled |
+| Master v83 | 27,758 | compiled |
+| Brief v70 / v83 | 29,629 / 29,677 | compiled |
+| Diagnostics v68 / v83 | 30,520 / 30,568 | compiled |
+| Master v68 | 32,640 | **failed** |
+| Visuals v99 | 32,920 | **failed** |
+
+Visuals' panel text is long strings in its main body; the Master keeps its text in functions. Fitted on ten points: a
+model, not the rule.
+
+**Fix (`fix_v101.py`, Visuals only):** the ten display-only top-level blocks (panel, ticker, tags, H2 card, H2 /
+drivers / liquidity docks, levels, drivers card, structure labels) each become a function defined where the block was
+and called on the next line. Each is checked to reassign no global, call no ta.* / request.* and no plot-family
+function. Same code, same order. Visuals: main body + strings 23,254 (from 32,920); total best-fit 81,803 /
+pessimistic 86,005 (a function called once counts twice).
+
+**Checks:** `v101_check.py` (byte-for-byte from v100; an independent reconstruction gives v100 back; one definition /
+one call each; the safety checks refuse a global-reassigning, a ta.* and a plot() block). `compile_est` gains the
+main-body + strings gate (≤ 30,568, the v83 Diagnostics) with v99 Visuals and v68 Master as controls; every current
+file passes it (Diagnostics 30,548, Brief 30,349, Master 27,900). `panel_check` reads the panel through
+`fix_v101.unfix()` (its exact inverse). Every Visuals checker passes.
+
+**Visible on the chart:** Visuals loads again: panel, ticker, docks, cards, tags and structure labels as in v99 / v100.
+
+**Not run:** the TradingView compile of v101 (the operator's next paste).
