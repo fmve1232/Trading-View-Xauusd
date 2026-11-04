@@ -112,6 +112,10 @@ jobs:
             echo "::warning::store had no holdout manifest: restored from forward-ledger"
             cp ledger/holdout_manifest.json store/ && mkdir -p store/holdout && cp -r ledger/holdout/. store/holdout/
           fi
+          if [ ! -d store/research_forward ] && [ -d ledger/research_forward ]; then
+            echo "::warning::store had no research_forward record: restored from forward-ledger"
+            cp -r ledger/research_forward store/
+          fi
           touch ledger-loaded.flag
 
       - name: Run pipeline
@@ -191,6 +195,8 @@ jobs:
         run: |
           cp store/holdout_manifest.json ledger/
           mkdir -p ledger/holdout && cp -r store/holdout/. ledger/holdout/ 2>/dev/null || true
+          # registered alert-layer tests (B9-GRAB-FWD): the same git history as the engine's ledgers
+          if [ -d store/research_forward ]; then mkdir -p ledger/research_forward && cp -r store/research_forward/. ledger/research_forward/; fi
           cd ledger
           git config user.name "quantum-pipeline"
           git config user.email "quantum-pipeline@users.noreply.github.com"

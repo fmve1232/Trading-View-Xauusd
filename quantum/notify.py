@@ -347,6 +347,195 @@ def liq_text(r: dict, off: float = 0.0) -> str:
             f"{_fmt(r.get('close'), off)} ({side} taken, price holding beyond) | {bar} | info, not a trade signal")
 
 
+# ---------------- B9-GRAB-FWD: the registered live test of the liquidity GRAB (research/registrations/B9-GRAB-FWD.json) ----
+GRAB_ID = "B9-GRAB-FWD"
+GRAB_DIR, GRAB_FILE = "research_forward", "B9-GRAB-FWD.json"   # in the store; copied to forward-ledger (git history)
+GRAB_TFS = ("15m", "30m", "1h", "4h")    # registered timeframes, in this order within a run
+GRAB_TP = GRAB_SL = 13.0                 # price $: +$650 / -$650 at 0.5 lot
+GRAB_H = 288                             # five-minute bars: one trading day
+GRAB_WAIT = 3 * 86400                    # the first path bar more than 3 days after the close is a data hole (GAP)
+GRAB_STALE = 5 * 86400                   # an open test trade not resolvable for 5 days (missing path) is GAP
+GRAB_BE = (13.0 + 0.26) / 26.0           # break-even 51.0%
+GRAB_LOOKS = tuple(range(30, 101, 10))   # the verdict is checked only at these numbers of decided results
+GRAB_DEADLINE = "2027-03-31"
+
+
+def grab_new(payload: dict, since_t: int | None, started: int, seen: dict) -> list[dict]:
+    """New test trades on this timeframe's bars closed after since_t: one per pool per trading day (the first
+    timeframe that shows it wins: `seen` is shared by the four timeframes); one trade per bar."""
+    tf, ch = payload["meta"]["tf"], payload.get("chart") or {}
+    t, c = ch.get("t") or [], ch.get("c") or []
+    at = {tt: k for k, tt in enumerate(t)}
+    out = []
+    for m in payload["markers"]:
+        if m["type"] != "SWEEP" or m.get("dir") not in (1, -1) or (since_t is not None and m["t"] <= since_t):
+            continue
+        t_close = int(m["t"]) + TF_SEC.get(tf, 0)
+        k = at.get(m["t"])
+        if t_close <= started or k is None or k >= len(c) or c[k] is None:
+            continue
+        pools = [x for x in m.get("lvl") or [] if x.get("px") is not None]
+        fresh = [x for x in pools if _first_today(seen, ("GRAB", x["name"], f"{x['px']:.2f}"), t_close)]
+        if not fresh:
+            continue
+        d, e = int(m["dir"]), float(c[k])
+        out.append({"tf": tf, "t": int(m["t"]), "t_close": t_close, "dir": d, "pools": [x["name"] for x in fresh],
+                    "levels": [x["px"] for x in fresh], "wick": m.get("px"), "entry": e,
+                    "tp": round(e + d * GRAB_TP, 2), "sl": round(e - d * GRAB_SL, 2),
+                    "src": payload["meta"].get("price_source"), "status": "OPEN", "mfe": 0.0, "mae": 0.0})
+    return out
+
+
+def grab_resolve(tr: dict, p5: dict | None, now_t: int) -> dict:
+    """The test trade's status on the 5-minute path (quantum/trade_race.py rules): TP / SL / NONE / GAP, or OPEN."""
+    if p5 is None or p5["meta"].get("synthetic") or p5["meta"].get("price_source") != tr.get("src"):
+        return {**tr, "status": "GAP", "t_res": now_t} if now_t - tr["t_close"] > GRAB_STALE else tr
+    ch = p5.get("chart") or {}
+    t, o, h, l = ch.get("t") or [], ch.get("o") or [], ch.get("h") or [], ch.get("l") or []
+    j = next((i for i, x in enumerate(t) if x >= tr["t_close"]), None)
+    if j is None:
+        return {**tr, "status": "GAP", "t_res": now_t} if now_t - tr["t_close"] > GRAB_STALE else tr
+    if (j == 0 and t[0] > tr["t_close"]) or t[j] - tr["t_close"] > GRAB_WAIT:
+        return {**tr, "status": "GAP", "t_res": now_t}      # the path's start is not in the data
+    d, e, mfe, mae = tr["dir"], tr["entry"], 0.0, 0.0
+    end = min(j + GRAB_H, len(t))
+    for k in range(j, end):
+        if h[k] is None or l[k] is None:
+            continue
+        fav, adv = ((h[k] - e), (e - l[k])) if d == 1 else ((e - l[k]), (h[k] - e))
+        mfe, mae = max(mfe, fav), max(mae, adv)
+        hit_tp, hit_sl = fav >= GRAB_TP - 1e-9, adv >= GRAB_SL - 1e-9
+        if hit_tp or hit_sl:
+            win = hit_tp and (not hit_sl or (o[k] is not None and (o[k] - e) * d >= GRAB_TP - 1e-9))
+            return {**tr, "status": "TP" if win else "SL", "t_res": int(t[k]), "bars": k - j + 1,
+                    "mfe": round(mfe, 2), "mae": round(mae, 2)}
+    if j + GRAB_H <= len(t):
+        return {**tr, "status": "NONE", "t_res": int(t[j + GRAB_H - 1]), "bars": GRAB_H, "mfe": round(mfe, 2), "mae": round(mae, 2)}
+    return {**tr, "mfe": round(mfe, 2), "mae": round(mae, 2)}
+
+
+def grab_verdict(trades: list[dict], book: dict, now_t: int) -> dict:
+    """Checks only at 30, 40 ... 100 decided results, in the order they were decided; PROVEN when the Wilson 95%
+    lower bound is above break-even at a check; NOT PROVEN at 100 or after the deadline. A verdict is final."""
+    dec = sorted((x for x in trades if x["status"] in ("TP", "SL")), key=lambda x: (x["t_res"], x["id"]))
+    checks = list(book.get("checks") or [])
+    verdict = book.get("verdict")
+    if verdict is None:
+        for look in GRAB_LOOKS:
+            if len(dec) < look or any(ch["n"] == look for ch in checks):
+                continue
+            k = sum(x["status"] == "TP" for x in dec[:look])
+            lo, hi = _wilson(k, look)
+            checks.append({"n": look, "tp": k, "wilson": [lo, hi], "utc": now_t, "proven": lo > GRAB_BE})
+            if lo > GRAB_BE:
+                verdict = {"verdict": "PROVEN", "at_n": look, "utc": now_t}
+                break
+        if verdict is None and (len(dec) >= GRAB_LOOKS[-1] or
+                                datetime.fromtimestamp(now_t, timezone.utc).date() > date.fromisoformat(GRAB_DEADLINE)):
+            verdict = {"verdict": "NOT PROVEN", "at_n": len(dec), "utc": now_t}
+    n, k = len(dec), sum(x["status"] == "TP" for x in dec)
+    lo, hi = _wilson(k, n)
+    nxt = next((x for x in GRAB_LOOKS if x > n), None)
+    status = (f"{verdict['verdict']} at {verdict['at_n']} results" if verdict else
+              f"COLLECTING: {n} results, {k / n:.0%} TP first; first check at {GRAB_LOOKS[0]}" if n and n < GRAB_LOOKS[0] else
+              f"COLLECTING: {n} results, {k / n:.0%} TP first; next check at {nxt}" if n else
+              f"COLLECTING: no result yet; first check at {GRAB_LOOKS[0]}")
+    return {"checks": checks, "verdict": verdict, "n": n, "tp": k, "sl": n - k, "rate": k / n if n else None,
+            "wilson": [lo, hi] if n else None, "next_check": None if verdict else nxt, "status": status}
+
+
+def grab_lines_new(tr: dict, now: dict | None, off: float = 0.0) -> list[str]:
+    side, d = ("BUY", 1) if tr["dir"] == 1 else ("SELL", -1)
+    back = "above" if d == 1 else "below"
+    pools = " + ".join(f"{nm} {_fmt(px, off)}" for nm, px in zip(tr["pools"], tr["levels"]))
+    s1, s2 = ("-", "+") if d == 1 else ("+", "-")
+    late, timing = timing_lines(alert_timing({"t": tr["t"], "px": tr["entry"], "dir": d, "sl": tr["sl"]}, tr["tf"], now,
+                                             {"sl_px": GRAB_SL}), off)
+    out = [f"XAUUSD {tr['tf']} GRAB FORWARD TEST #{tr['id']}: {side} after {pools} swept, closed back {back} at {_fmt(tr['entry'], off)}"]
+    if late:
+        out.append(late)
+    out.append(f"TEST TRADE: entry {_fmt(tr['entry'], off)} TP {_fmt(tr['tp'], off)} (+$650) SL {_fmt(tr['sl'], off)} (-$650) | "
+               f"ON MT5: {side} at market, then SL = your fill {s1} {GRAB_SL:.2f}, TP = your fill {s2} {GRAB_TP:.2f}")
+    if timing:
+        out.append(timing)
+    return out
+
+
+def grab_line_done(tr: dict, status: str, off: float = 0.0) -> str:
+    side = "BUY" if tr["dir"] == 1 else "SELL"
+    head = f"XAUUSD GRAB TEST #{tr['id']} {side} from {_fmt(tr['entry'], off)}"
+    when = datetime.fromtimestamp(tr["t_res"], timezone.utc).strftime("%d %b %H:%M UTC") + f" = {mt5_clock(tr['t_res']):%H:%M} MT5"
+    what = {"TP": f"TP {_fmt(tr['tp'], off)} HIT +$650 ({when} 5m bar)", "SL": f"SL {_fmt(tr['sl'], off)} HIT -$650 ({when} 5m bar)",
+            "NONE": "no TP or SL within one trading day (not counted)", "GAP": "price data missing for its path (not counted)"}
+    return f"{head}: {what[tr['status']]} | test {status}"
+
+
+def grab_run(store_dir: str | None, state: dict, payloads: dict, t_send: int, off: float = 0.0) -> tuple[list[str], dict]:
+    """One run of B9-GRAB-FWD: resolve open test trades, open new ones, check the verdict. Returns the alert lines and
+    the website block. The record (every trade and every check) is kept in <store>/research_forward/."""
+    g = state.setdefault("grab", {})
+    path = os.path.join(store_dir, GRAB_DIR, GRAB_FILE) if store_dir else None
+    book = {"id": GRAB_ID, "trades": [], "checks": [], "verdict": None}
+    if path and os.path.exists(path):
+        with open(path) as f:
+            book = json.load(f)
+    if g.get("started_utc") is None:                        # the first run with this code: start, replay nothing
+        g["started_utc"] = book.get("started_utc") or t_send
+    book["started_utc"] = g["started_utc"]
+    pos, seen, trades = g.setdefault("pos", {}), g.setdefault("seen", {}), book["trades"]
+    p5 = payloads.get("5m")
+    lines, done = [], []
+    for i, tr in enumerate(trades):                         # results first
+        if tr["status"] == "OPEN":
+            trades[i] = grab_resolve(tr, p5, t_send)
+            if trades[i]["status"] != "OPEN":
+                done.append(trades[i])
+    new = []
+    for tf in GRAB_TFS:                                     # then new test trades, 15m before 30m before 1h before 4h
+        p = payloads.get(tf)
+        if not p or p["meta"].get("synthetic") or not (p.get("chart") or {}).get("t"):
+            continue
+        last_t = p["chart"]["t"][-1]
+        if tf in pos:
+            for tr in grab_new(p, pos[tf], g["started_utc"], seen):
+                tr["id"] = len(trades) + 1
+                pn = price_now(payloads, tf)
+                tr["alert"] = {"t": t_send, **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
+                trades.append(tr)
+                new.append(tr)
+        pos[tf] = last_t
+    sm = grab_verdict(trades, book, t_send)
+    book["checks"], book["verdict"] = sm["checks"], sm["verdict"]
+    for tr in done:
+        lines.append(grab_line_done(tr, sm["status"], off))
+    for tr in new:
+        lines += grab_lines_new(tr, tr["alert"], off)
+    if new:
+        lines.append(f"Registered test {GRAB_ID}, not a proven signal: {sm['status']} (break-even {GRAB_BE:.0%})")
+    keep_from = trading_day(t_send - 3 * 86400)
+    g["seen"] = {k: v for k, v in seen.items() if v >= keep_from}
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(book, f, indent=1)
+    by = {}
+    for dim, fn in (("timeframe", lambda x: x["tf"]), ("side", lambda x: "BUY" if x["dir"] == 1 else "SELL"),
+                    ("pool", lambda x: {"D": "day", "W": "week", "M": "month"}.get(x["pools"][0][1:2], "?") if x["pools"] else "?")):
+        grp: dict = {}
+        for x in trades:
+            if x["status"] in ("TP", "SL"):
+                a = grp.setdefault(fn(x), [0, 0])
+                a[0] += 1
+                a[1] += x["status"] == "TP"
+        by[dim] = {k: {"n": v[0], "tp": v[1], "rate": v[1] / v[0]} for k, v in sorted(grp.items())}
+    counts = {s: sum(x["status"] == s for x in trades) for s in ("OPEN", "TP", "SL", "NONE", "GAP")}
+    block = {"id": GRAB_ID, "started_utc": g["started_utc"], "tp_px": GRAB_TP, "sl_px": GRAB_SL, "break_even": GRAB_BE,
+             "looks": list(GRAB_LOOKS), "deadline": GRAB_DEADLINE, "counts": counts, **sm, "by": by,
+             "open": [x for x in trades if x["status"] == "OPEN"][-20:],
+             "recent": [x for x in trades if x["status"] != "OPEN"][::-1][:15]}
+    return lines, block
+
+
 def plan_cfg() -> dict | None:
     """The operator's plan from the environment (defaults 0.5 lot, SL $650, TP $650); None when PLAN=0."""
     if os.environ.get("PLAN", "1").strip() == "0":
@@ -672,6 +861,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                            "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
                            "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs),
                            "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC)}
+    glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
+    if glines:
+        report["grab_test_alert"] = {"lines": glines, "sent": send(glines)}
     if liq_on() and alerted:                               # price near a pool: once per run, not per timeframe
         ev = liquidity_near(payloads, tfs, seen, t_send)
         if ev:
@@ -702,6 +894,11 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             n_open = sum(1 for p in plans if trading_week(_decision_t(p)) == prev)
             if recs or n_open:
                 lines += report_lines("WEEKLY", prev, summarize(recs, cpl), n_open)
+        gt = report["grab_test"]
+        g_prev = [x for x in gt["recent"] + gt["open"]
+                  if state.get("report_day") and state["report_day"] != day and trading_day(x["t_close"]) == state["report_day"]]
+        if lines or g_prev:                                # the registered GRAB test's state rides with the daily report
+            lines.append(f"GRAB TEST ({GRAB_ID}): {gt['status']} | break-even {GRAB_BE:.0%}")
         state["report_day"], state["report_week"] = day, week
         if lines:
             report["validation_report"] = {"lines": lines, "sent": send(lines)}

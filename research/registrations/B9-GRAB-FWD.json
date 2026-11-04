@@ -1,0 +1,45 @@
+{
+  "id": "B9-GRAB-FWD",
+  "title": "Liquidity GRAB reversal, +$13 before -$13, live forward test on the alerts",
+  "status": "APPROVED by the operator 2026-11-04; recorded from the first site run after this registration's code is merged",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-04 (chat): \"approve GRAB forward test\". Approval recorded and committed before any tracking code was written.",
+  "partitions": [
+    "live forward (new data only): GRABs whose bar closes after the first site run that carries this code"
+  ],
+  "created_utc": "2026-11-04",
+  "source_of_hypothesis": "B9-explore (research/results/b9_explore_2026-11-04.json; 50 cells in research/trials.jsonl): on the stored data 2026-09-09 -> 2026-11-04, the 15m liquidity GRAB reached +$13 before -$13 61.7% of the time (60 decided, Wilson 95% 49.0-72.9%) against 46.6% for random entries in the same directions (z +2.35); 5m 59.0%, 30m 58.3%, 1h 55.0%, 4h 51.8%. It is the best of about 50 comparisons on one 8-week window, so the estimate is inflated by selection. The 2020-2022 development study of the same family (research B2 / B2b / B2c: SWEEP_PD / SWEEP_PW / SWEEP_EQ) found no edge. The mechanism is a practitioners' claim (stops beyond a prior high / low are taken, then price reverts). The academic evidence points the other way: stop-loss orders clustered beyond levels tend to produce continuation once triggered (Osler 2003, J. Finance 58; Osler 2005, J. Int. Money and Finance 24), so the literature does not support the reversal.",
+  "rule": {
+    "signal": "the engine's own SWEEP event on a closed bar (wick through a previous day / week / month high or low, close back on the other side: quantum/engine.py, pools named by quantum/report.py swept_levels), as published in the site payload markers",
+    "timeframes": "15m, 30m, 1h, 4h (the operator's alert timeframes on 2026-11-04); 5m excluded",
+    "direction": "a sweep of a low (PDL / PWL / PML) -> BUY; a sweep of a high (PDH / PWH / PMH) -> SELL",
+    "one_trade_per": "pool (name and level) per New York trading day, at the first of the four timeframes whose bar shows it (within one run: 15m, 30m, 1h, 4h in that order). A bar that sweeps two pools opens ONE trade. Later sweeps of a pool already tested that day open nothing. Trades may overlap.",
+    "entry": "the GRAB bar's close (as in B9-explore), not the alert time; the alert-time price and delay are recorded beside it",
+    "take_profit_price": 13.0,
+    "stop_loss_price": 13.0,
+    "money_at_0_5_lot": "+$650 / -$650",
+    "path": "the stored 5-minute bars of the same download (site payload 5m chart), from the first 5-minute bar opening at or after the GRAB bar's close, for 288 five-minute bars (one trading day)",
+    "fills": "a bar reaching both levels is a LOSS unless it opened beyond the target (quantum/trade_race.py rules)",
+    "no_result": "neither level within the 288 bars: NONE, reported, not counted in the rate",
+    "data_gap": "if the 5-minute path needed is no longer in the payload (a gap of runs), the trade is GAP: reported, not counted",
+    "costs": "break-even = (13 + 0.26) / 26 = 51.0% (the operator's $650 / $650 at 0.5 lot plus about $13 round trip)"
+  },
+  "primary_test": {
+    "looks": "only when the number of decided results (TP + SL) first reaches 30, 40, 50, 60, 70, 80, 90 and 100",
+    "proven": "at a look, the Wilson 95% lower bound of the TP-first rate is above 51.0% (needs 21/30, 27/40, 33/50, 39/60, 44/70, 50/80, 56/90, 61/100)",
+    "not_proven": "not proven by 100 decided results, or by 2027-03-31, whichever comes first",
+    "between_looks": "the site and the reports show the running count and rate as COLLECTING, never a verdict"
+  },
+  "error_rates_stated_in_advance": "Simulated (200,000 runs): with no edge (true rate 50%) the rule says PROVEN 5.4% of the time (49%: 3.9%). With a true rate of 55% it proves 22.6% of the time, 60%: 56.5%, 61.7% (the selection-inflated exploration estimate): 69.0%, 65%: 87.4%. NOT PROVEN therefore means 'not confirmed', not 'proven absent'. Overlapping trades are correlated, so the real intervals are somewhat wider than Wilson's.",
+  "expected_pace": "about 7-9 GRABs a week on these timeframes (B9-explore: about 60 pool-days in 8 weeks), so 30 results in about 4 weeks and 100 in about 3 months",
+  "secondary_reported_not_decisive": [
+    "the rate by timeframe of first detection, by direction (BUY after a low swept / SELL after a high swept) and by pool (day / week / month)",
+    "the rate measured from the alert-time price instead of the bar close",
+    "at the verdict: random 5-minute entries in the same directions over the same weeks (quantum/trade_race.py random baseline), and the result in money after costs"
+  ],
+  "unchanged": "the engine, its configuration and every freeze key; the signal alerts and the plan validation; the liquidity alerts' text (only the first GRAB of a pool per day gains the plan lines)",
+  "decision": {
+    "if_proven": "Report it to the operator with the secondary checks; propose (never adopt automatically) a registered engine arm with its own freeze key, or an alert labelled as the confirmed setup. Still not a guarantee: a PROVEN rate is an average, and any single trade can lose.",
+    "if_not_proven": "The GRAB lead is closed; recorded in research/trials.jsonl and the write-up. No re-run with changed distances, timeframes or filters on the same data."
+  }
+}
