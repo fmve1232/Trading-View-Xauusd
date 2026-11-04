@@ -1992,6 +1992,38 @@ function renderPlanAlerts() {
     return `<tr><td>${tfmt(r.t)}<div>${esc(r.tf || "live price")}</div></td><td><b class="${k[0]}">${k[1]}</b><div>${k[2]}</div></td>
       <td>${esc(r.name)} ${px(r.px)}<div>${hi ? "buy-side" : "sell-side"}</div></td><td>${what}</td></tr>`;
   }).join("");
+  // B9-GRAB-FWD (research/registrations/B9-GRAB-FWD.json): the registered live test of the liquidity GRAB, +$13 / -$13
+  const G = A.grab_test;
+  const grabHtml = (() => {
+    if (!G) return "";
+    const C = G.counts || {}, v = G.verdict && G.verdict.verdict;
+    const pill = v === "PROVEN" ? "bull" : v === "NOT PROVEN" ? "bear" : "warn";
+    const pools = (x) => (x.pools || []).map((nm, i) => `${esc(nm)} ${px((x.levels || [])[i])}`).join(" + ");
+    const liveOk2 = LIVE.px !== null && !LIVE.err && Date.now() - LIVE.t < 10 * 60000 && !marketClosed(new Date());
+    const oRows = (G.open || []).slice().reverse().map((x) => {
+      const pl = liveOk2 ? (LIVE.px - x.entry) * x.dir * 50 : null;
+      return `<tr><td>#${x.id} ${esc(x.tf)} ${side(x.dir)}<div>${tfmt(x.t_close)}</div></td><td>${pools(x)}</td><td>${px(x.entry)}</td>
+        <td>${px(x.tp)} / ${px(x.sl)}</td><td>${isNum(pl) ? `<b class="${pl >= 0 ? "bull" : "bear"}">${usd(pl)}</b>` : "—"}</td></tr>`;
+    }).join("");
+    const RS = { TP: ["bull", "TP +$650"], SL: ["bear", "SL −$650"], NONE: ["", "no TP or SL in a day (not counted)"], GAP: ["", "data gap (not counted)"] };
+    const rRows = (G.recent || []).slice(0, 10).map((x) => {
+      const r = RS[x.status] || ["", esc(x.status)];
+      return `<tr><td>#${x.id} ${esc(x.tf)} ${side(x.dir)}<div>${tfmt(x.t_close)}</div></td><td>${pools(x)}</td><td>${px(x.entry)}</td><td><b class="${r[0]}">${r[1]}</b></td></tr>`;
+    }).join("");
+    const rate = isNum(G.rate) ? `${pct(100 * G.rate, 1)} of ${G.n}${G.wilson ? ` <span class="dim">(95% ${pct(100 * G.wilson[0])}–${pct(100 * G.wilson[1])})</span>` : ""}` : "no result yet";
+    return `<h4>GRAB forward test (registered ${esc(G.id)})</h4>
+      <div class="kv"><div>Status</div><div><span class="pill ${pill}">${esc(v || "COLLECTING")}</span> ${esc(String(G.status || "").replace(/^COLLECTING: /, ""))}</div>
+        <div>Reached +$13 first</div><div>${rate}</div>
+        <div>Break-even</div><div>${pct(100 * G.break_even, 1)}</div>
+        <div>Counted</div><div>${C.TP || 0} TP · ${C.SL || 0} SL · not counted: ${C.NONE || 0} no result, ${C.GAP || 0} gap · open ${C.OPEN || 0}</div>
+        <div>Verdict checks</div><div>at ${esc((G.looks || []).join(", "))} results only · deadline ${esc(G.deadline)}</div>
+        <div>Started</div><div>${isNum(G.started_utc) ? tfmt(G.started_utc) : "—"}</div></div>
+      ${oRows ? `<div class="scroll"><table class="yt"><tr><th>Test</th><th>Pool swept</th><th>Entry</th><th>TP / SL</th><th>Now (0.5 lot)</th></tr>${oRows}</table></div>` : ""}
+      ${rRows ? `<div class="scroll"><table class="yt"><tr><th>Test</th><th>Pool swept</th><th>Entry</th><th>Result</th></tr>${rRows}</table></div>` : ""}
+      <p class="muted pa-note">Every liquidity GRAB on 15m / 30m / 1h / 4h (once per pool per day): BUY after a low is swept, SELL after a high,
+        from the bar's close, +$13 / −$13 on 5-minute bars for one trading day. Rules fixed before any data
+        (research/registrations/B9-GRAB-FWD.json). It is not a proven signal until the verdict says PROVEN; NOT PROVEN means not confirmed.</p>`;
+  })();
   const T = P.tally || {}, tp = T.TP || 0, sl = (T.SL || 0) + (T.BOTH || 0), n = tp + sl;
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   el.innerHTML = `
@@ -2012,6 +2044,7 @@ function renderPlanAlerts() {
     ${doneRows ? `<h4>Results</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Result</th><th>Closed bar</th></tr>${doneRows}</table></div>` : ""}
     ${L.on ? `<h4>Liquidity alerts</h4>${liqRows ? `<div class="scroll"><table class="yt"><tr><th>Time</th><th>Event</th><th>Pool</th><th>Detail</th></tr>${liqRows}</table></div>` : `<p class="muted pa-note">No liquidity alert yet.</p>`}
       <p class="muted pa-note">Pools: previous day / week / month high and low (PDH … PML) and equal highs / lows. Information, not trade signals: sweeps and breaks were tested on 2020–2022 data (B2, B3) and did not beat break-even.</p>` : ""}
+    ${grabHtml}
     ${validationHtml(P.validation)}`;
   el.querySelectorAll("button[data-vp]").forEach((b) => { b.onclick = () => { S.vp = b.dataset.vp; store.set("vp", S.vp); renderPlanAlerts(); }; });
 }
