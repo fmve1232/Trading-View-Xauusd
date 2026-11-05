@@ -1,0 +1,400 @@
+{
+ "registration": "B10",
+ "utc": "2026-11-05T07:11:44.103773+00:00",
+ "tfs": {
+  "15m": {
+   "tf": "15m",
+   "bars": 70173,
+   "window": [
+    "2020-01-24 02:00:00+00:00",
+    "2023-01-24 01:45:00+00:00"
+   ],
+   "random": {
+    "long": 0.5038097861011659,
+    "short": 0.49270173505921233
+   },
+   "trials": {
+    "baseline signals": {
+     "n": 70,
+     "wins": 45,
+     "losses": 25,
+     "long": 15,
+     "short": 55,
+     "win_rate": 0.6428571428571429,
+     "wilson": [
+      0.5258839453794033,
+      0.7449666079953756
+     ],
+     "random_same_mix": 0.4950820317110596,
+     "z_vs_random": 2.47287019085944,
+     "p_one_sided": 0.006701640873492565,
+     "break_even": 0.5296153846153845,
+     "mean_net_usd_at_4000_per_oz": 1.3424699430124285,
+     "t": 1.9338984742157124,
+     "usd_per_trade_0p5lot_at_4000": 67.12349715062143
+    },
+    "B10-1a added signals": {
+     "n": 3,
+     "wins": 1,
+     "losses": 2,
+     "long": 0,
+     "short": 3,
+     "win_rate": 0.3333333333333333,
+     "wilson": [
+      0.06149194402093078,
+      0.7923404011921757
+     ],
+     "random_same_mix": 0.4927017350592123,
+     "z_vs_random": -0.5521271586968588,
+     "p_one_sided": 0.7095693820998191,
+     "break_even": 0.5296153846153846,
+     "mean_net_usd_at_4000_per_oz": -2.4188434451333336,
+     "t": -0.5760426558108668,
+     "usd_per_trade_0p5lot_at_4000": -120.94217225666668,
+     "released_bars_bear_gate": 27341,
+     "released_bars_bull_gate": 23042,
+     "removed_signals": 3
+    },
+    "B10-1a all signals": {
+     "n": 70,
+     "wins": 46,
+     "losses": 24,
+     "long": 14,
+     "short": 56,
+     "win_rate": 0.6571428571428571,
+     "wilson": [
+      0.5403954960407292,
+      0.7575401126715274
+     ],
+     "random_same_mix": 0.494923345267603,
+     "z_vs_random": 2.714591549009067,
+     "p_one_sided": 0.0033178778294998823,
+     "break_even": 0.5296153846153845,
+     "mean_net_usd_at_4000_per_oz": 1.5189258745149288,
+     "t": 2.2072188287859986,
+     "usd_per_trade_0p5lot_at_4000": 75.94629372574644
+    },
+    "B10-1b added signals": {
+     "n": 8,
+     "wins": 5,
+     "losses": 3,
+     "long": 2,
+     "short": 6,
+     "win_rate": 0.625,
+     "wilson": [
+      0.30574239265377096,
+      0.8631557152608771
+     ],
+     "random_same_mix": 0.4954787478197007,
+     "z_vs_random": 0.7327128022298338,
+     "p_one_sided": 0.23186680701417317,
+     "break_even": 0.5296153846153846,
+     "mean_net_usd_at_4000_per_oz": 1.09781335163125,
+     "t": 0.4887545071694179,
+     "usd_per_trade_0p5lot_at_4000": 54.890667581562504,
+     "released_bars_bear_gate": 28455,
+     "released_bars_bull_gate": 26595,
+     "removed_signals": 3
+    },
+    "B10-1b all signals": {
+     "n": 75,
+     "wins": 50,
+     "losses": 25,
+     "long": 17,
+     "short": 58,
+     "win_rate": 0.6666666666666666,
+     "wilson": [
+      0.5541742602317201,
+      0.7629177920302768
+     ],
+     "random_same_mix": 0.4952195599620551,
+     "z_vs_random": 2.9696867294998546,
+     "p_one_sided": 0.001490517884239262,
+     "break_even": 0.5296153846153845,
+     "mean_net_usd_at_4000_per_oz": 1.6286065443603666,
+     "t": 2.465564415772588,
+     "usd_per_trade_0p5lot_at_4000": 81.43032721801833
+    },
+    "B10-2a GRAB in range": {
+     "n": 394,
+     "wins": 196,
+     "losses": 198,
+     "long": 171,
+     "short": 223,
+     "win_rate": 0.49746192893401014,
+     "wilson": [
+      0.44835521709446985,
+      0.54661765474844
+     ],
+     "random_same_mix": 0.49752274198351193,
+     "z_vs_random": -0.00241423876418645,
+     "p_one_sided": 0.5009631409823989,
+     "break_even": 0.5334029675907849,
+     "mean_net_usd_at_4000_per_oz": -0.4222616707335786,
+     "t": -1.4238115329043384,
+     "usd_per_trade_0p5lot_at_4000": -21.113083536678932
+    },
+    "GRAB all regimes": {
+     "n": 913,
+     "wins": 451,
+     "losses": 462,
+     "long": 422,
+     "short": 491,
+     "win_rate": 0.4939759036144578,
+     "wilson": [
+      0.4616388284923714,
+      0.5263634592603859
+     ],
+     "random_same_mix": 0.4978360149493596,
+     "z_vs_random": -0.23327558267204654,
+     "p_one_sided": 0.5922262910895921,
+     "break_even": 0.5329181059903951,
+     "mean_net_usd_at_4000_per_oz": -0.45239803121883343,
+     "t": -2.3226317837136587,
+     "usd_per_trade_0p5lot_at_4000": -22.61990156094167
+    },
+    "B10-2b BREAK in trend": {
+     "n": 540,
+     "wins": 283,
+     "losses": 257,
+     "long": 290,
+     "short": 250,
+     "win_rate": 0.524074074074074,
+     "wilson": [
+      0.4819299128369403,
+      0.565878137791423
+     ],
+     "random_same_mix": 0.4986671698780393,
+     "z_vs_random": 1.180810397235126,
+     "p_one_sided": 0.11883902638138899,
+     "break_even": 0.5325925925925925,
+     "mean_net_usd_at_4000_per_oz": -0.09845837303458796,
+     "t": -0.38891253561938827,
+     "usd_per_trade_0p5lot_at_4000": -4.922918651729398
+    },
+    "BREAK all regimes": {
+     "n": 895,
+     "wins": 450,
+     "losses": 445,
+     "long": 493,
+     "short": 402,
+     "win_rate": 0.5027932960893855,
+     "wilson": [
+      0.4700947540606474,
+      0.5354679622010424
+     ],
+     "random_same_mix": 0.4988204715549477,
+     "z_vs_random": 0.2377070738837178,
+     "p_one_sided": 0.406054148375677,
+     "break_even": 0.5330189084658358,
+     "mean_net_usd_at_4000_per_oz": -0.3635671049397262,
+     "t": -1.8452125314661498,
+     "usd_per_trade_0p5lot_at_4000": -18.17835524698631
+    }
+   }
+  },
+  "1h": {
+   "tf": "1h",
+   "bars": 17566,
+   "window": [
+    "2020-01-24 02:00:00+00:00",
+    "2023-01-24 01:00:00+00:00"
+   ],
+   "random": {
+    "long": 0.5045905251560778,
+    "short": 0.4924715387440323
+   },
+   "trials": {
+    "baseline signals": {
+     "n": 25,
+     "wins": 10,
+     "losses": 15,
+     "long": 18,
+     "short": 7,
+     "win_rate": 0.4,
+     "wilson": [
+      0.2340330227270205,
+      0.5926054278250577
+     ],
+     "random_same_mix": 0.5011972089607051,
+     "z_vs_random": -1.0119749905575304,
+     "p_one_sided": 0.8442249942743066,
+     "break_even": 0.5296153846153846,
+     "mean_net_usd_at_4000_per_oz": -1.7024426703296,
+     "t": -1.4033390096727634,
+     "usd_per_trade_0p5lot_at_4000": -85.12213351648
+    },
+    "B10-1a added signals": {
+     "n": 0,
+     "wins": 0,
+     "losses": 0,
+     "long": 0,
+     "short": 0,
+     "win_rate": null,
+     "wilson": [
+      null,
+      null
+     ],
+     "random_same_mix": null,
+     "z_vs_random": null,
+     "p_one_sided": null,
+     "break_even": null,
+     "mean_net_usd_at_4000_per_oz": null,
+     "t": null,
+     "usd_per_trade_0p5lot_at_4000": null,
+     "released_bars_bear_gate": 6839,
+     "released_bars_bull_gate": 5675,
+     "removed_signals": 2
+    },
+    "B10-1a all signals": {
+     "n": 23,
+     "wins": 9,
+     "losses": 14,
+     "long": 16,
+     "short": 7,
+     "win_rate": 0.391304347826087,
+     "wilson": [
+      0.22157622687390552,
+      0.5921447775576323
+     ],
+     "random_same_mix": 0.5009021379871944,
+     "z_vs_random": -1.0512267849695318,
+     "p_one_sided": 0.8534227779505625,
+     "break_even": 0.5296153846153846,
+     "mean_net_usd_at_4000_per_oz": -1.8104279218300001,
+     "t": -1.4380636753983356,
+     "usd_per_trade_0p5lot_at_4000": -90.52139609150001
+    },
+    "B10-1b added signals": {
+     "n": 0,
+     "wins": 0,
+     "losses": 0,
+     "long": 0,
+     "short": 0,
+     "win_rate": null,
+     "wilson": [
+      null,
+      null
+     ],
+     "random_same_mix": null,
+     "z_vs_random": null,
+     "p_one_sided": null,
+     "break_even": null,
+     "mean_net_usd_at_4000_per_oz": null,
+     "t": null,
+     "usd_per_trade_0p5lot_at_4000": null,
+     "released_bars_bear_gate": 6913,
+     "released_bars_bull_gate": 6132,
+     "removed_signals": 1
+    },
+    "B10-1b all signals": {
+     "n": 24,
+     "wins": 9,
+     "losses": 15,
+     "long": 18,
+     "short": 6,
+     "win_rate": 0.375,
+     "wilson": [
+      0.21159367459047676,
+      0.5729003770473553
+     ],
+     "random_same_mix": 0.5015607785530665,
+     "z_vs_random": -1.24004335719715,
+     "p_one_sided": 0.8925203210720203,
+     "break_even": 0.5296153846153846,
+     "mean_net_usd_at_4000_per_oz": -1.9904246069381248,
+     "t": -1.6200364140563468,
+     "usd_per_trade_0p5lot_at_4000": -99.52123034690624
+    },
+    "B10-2a GRAB in range": {
+     "n": 371,
+     "wins": 182,
+     "losses": 189,
+     "long": 167,
+     "short": 204,
+     "win_rate": 0.49056603773584906,
+     "wilson": [
+      0.44005488349538946,
+      0.5412705546754806
+     ],
+     "random_same_mix": 0.4979267159160312,
+     "z_vs_random": -0.2835557864734174,
+     "p_one_sided": 0.611624587949668,
+     "break_even": 0.532932821895086,
+     "mean_net_usd_at_4000_per_oz": -0.4946552157374595,
+     "t": -1.616389730290473,
+     "usd_per_trade_0p5lot_at_4000": -24.732760786872976
+    },
+    "GRAB all regimes": {
+     "n": 824,
+     "wins": 398,
+     "losses": 426,
+     "long": 385,
+     "short": 439,
+     "win_rate": 0.4830097087378641,
+     "wilson": [
+      0.4490481381729383,
+      0.5171289604736579
+     ],
+     "random_same_mix": 0.49813392923995164,
+     "z_vs_random": -0.8682996513546204,
+     "p_one_sided": 0.8073848435028752,
+     "break_even": 0.5328547423450336,
+     "mean_net_usd_at_4000_per_oz": -0.5719661689890412,
+     "t": -2.7924152049836763,
+     "usd_per_trade_0p5lot_at_4000": -28.59830844945206
+    },
+    "B10-2b BREAK in trend": {
+     "n": 336,
+     "wins": 168,
+     "losses": 168,
+     "long": 178,
+     "short": 158,
+     "win_rate": 0.5,
+     "wilson": [
+      0.4468406185354325,
+      0.5531593814645674
+     ],
+     "random_same_mix": 0.49889171606946126,
+     "z_vs_random": 0.04063045983793924,
+     "p_one_sided": 0.4837952503804388,
+     "break_even": 0.5329349816849817,
+     "mean_net_usd_at_4000_per_oz": -0.3725288474690476,
+     "t": -1.1577341643330417,
+     "usd_per_trade_0p5lot_at_4000": -18.626442373452377
+    },
+    "BREAK all regimes": {
+     "n": 793,
+     "wins": 396,
+     "losses": 397,
+     "long": 441,
+     "short": 352,
+     "win_rate": 0.49936948297604034,
+     "wilson": [
+      0.46465635358382523,
+      0.53408869163332
+     ],
+     "random_same_mix": 0.49921110117494294,
+     "z_vs_random": 0.008920155131258,
+     "p_one_sided": 0.4964414201626699,
+     "break_even": 0.5328358715685324,
+     "mean_net_usd_at_4000_per_oz": -0.3873113124123897,
+     "t": -1.8501535054996525,
+     "usd_per_trade_0p5lot_at_4000": -19.365565620619485
+    }
+   }
+  }
+ },
+ "primary": {
+  "holm_p1": {
+   "B10-2b": false,
+   "B10-2a": false,
+   "B10-1a": false
+  },
+  "verdict": {
+   "B10-1a": "INSUFFICIENT",
+   "B10-2a": "FAIL",
+   "B10-2b": "FAIL"
+  }
+ }
+}
