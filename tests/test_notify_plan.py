@@ -11,7 +11,8 @@ from quantum import holdout, notify
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
     for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_COST_PER_LOT", "MT5_PRICE_OFFSET", "ALERT_STRUCTURE",
-              "PLAN_LATE_FRAC", "MT5_SERVER_UTC_OFFSET", "ALERT_LOCAL_TZ", "ALERT_LIQUIDITY", "LIQ_NEAR_USD"):
+              "PLAN_LATE_FRAC", "MT5_SERVER_UTC_OFFSET", "ALERT_LOCAL_TZ", "ALERT_LIQUIDITY", "LIQ_NEAR_USD",
+              "ACCOUNT_USD", "DAILY_LIMIT_PCT"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
 
@@ -228,10 +229,11 @@ def test_signal_alert_has_fill_based_levels_timing_and_a_late_warning(monkeypatc
     pay = {"meta": {"tf": "15m"}, "markers": [_sig(-1, t=1800)], "decisions": []}
     t_sent = 1800 + 900 + 380                                                    # 6.3 min after the bar close
     on_time = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
-    assert [x.split(":")[0].split(" ")[0] for x in on_time] == ["XAUUSD", "YOUR", "ON", "TIMING"]
+    assert [x.split(":")[0].split(" ")[0] for x in on_time] == ["XAUUSD", "YOUR", "ON", "LADDER", "TIMING"]
     assert on_time[2] == ("ON MT5: SELL at market, then SL = your fill + 13.00, TP = your fill - 13.00 "
                           "(= -$650 / +$650 at 0.5 lot, at any broker price)")
-    assert "alert 6 min after the close" in on_time[3] and "$1.17 toward SL since the signal" in on_time[3]
+    assert on_time[3].startswith("LADDER before -$13.00")
+    assert "alert 6 min after the close" in on_time[4] and "$1.17 toward SL since the signal" in on_time[4]
     late = notify.messages(pay, 1000, {"t": t_sent, "px": 4003.90, "t_px": t_sent - 50, "live": True})
     assert late[1].startswith("LATE: price already moved $3.90 toward SL") and "limit $3.90 = 30% of the stop" in late[1]
     toward_tp = notify.messages(pay, 1000, {"t": t_sent, "px": 3995.0, "t_px": t_sent - 50, "live": True})
@@ -239,10 +241,10 @@ def test_signal_alert_has_fill_based_levels_timing_and_a_late_warning(monkeypatc
     monkeypatch.setenv("PLAN_LATE_FRAC", "0.5")                                 # the limit is a variable
     assert not notify.messages(pay, 1000, {"t": t_sent, "px": 3995.0, "t_px": t_sent - 50, "live": True})[1].startswith("LATE")
     buy = notify.messages({**pay, "markers": [_sig(1)]}, 1000, {"t": t_sent})    # no price known: no move, no LATE
-    assert "BUY at market, then SL = your fill - 13.00, TP = your fill + 13.00" in buy[2] and buy[3].endswith("after the close")
+    assert "BUY at market, then SL = your fill - 13.00, TP = your fill + 13.00" in buy[2] and buy[4].endswith("after the close")
     monkeypatch.setenv("MT5_PRICE_OFFSET", "-2.61")                             # offsets move prices, never the distances
     off = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
-    assert "SL = your fill + 13.00" in off[2] and "price 3998.56" in off[3] and "$1.17 toward SL" in off[3]
+    assert "SL = your fill + 13.00" in off[2] and "price 3998.56" in off[4] and "$1.17 toward SL" in off[4]
 
 
 def test_follow_ups_decided_by_cents_say_confirm_in_mt5():
@@ -359,3 +361,40 @@ def test_run_sends_liquidity_alerts_publishes_them_and_can_be_turned_off(tmp_pat
     notify.run(store, {"15m": _liq_payload(bars=[*bars, (T0 + 900, 3980, 3971, 3976, 4069.89, 3975.83)], markers=[sw, sw2])},
                ["15m"], sent_t=T0 + 2100)
     assert not any("LIQUIDITY" in x for x in sent[0])
+
+
+def _p5(rows, src="twelvedata:XAU/USD"):
+    return {"meta": {"synthetic": False, "price_source": src},
+            "chart": {"t": [r[0] for r in rows], "o": [r[1] for r in rows], "h": [r[2] for r in rows], "l": [r[3] for r in rows]}}
+
+
+def test_a_4h_plan_is_resolved_on_the_5m_path_from_its_close():
+    # 4h signal bar opens at 0 and closes at 14400; its own 5m bars (before 14400) must not count
+    pl = {"id": 1, "tf": "4h", "t": 0, "t_dec": 14400, "dir": 1, "entry": 4000.0, "sl": 3987.0, "tp": 4013.0,
+          "sl_usd": 650, "tp_usd": 650, "lot": 0.5}
+    p5 = _p5([(14100, 4000, 4020, 3980, ), (14400, 4000, 4005, 3995), (14700, 4004, 4013.4, 4001)])
+    r = notify.plan_path5(pl, p5)
+    assert (r["result"], r["t_res"], r["path"]) == ("TP", 14700, "5m")
+    # the whole next 4h bar spans both levels: on 4h bars that is BOTH (a loss); the 5m path finds the TP first
+    four = _chart([(0, 4001, 3999), (14400, 4020, 3980)])
+    assert notify.plan_result(pl, four) == ("BOTH", 14400)
+    lines, _keep, done = notify.plan_updates([pl], "4h", four, 14700, 0.0, p5)
+    assert done[0]["result"] == "TP" and done[0]["t_res"] == 14700 and "5m bar" in lines[0]
+    # one 5m bar touching both is a loss unless it opened beyond the TP (trade_race / B9 rule)
+    assert notify.plan_path5(pl, _p5([(13800, 4000, 4000, 4000), (14400, 4000, 4014, 3986)]))["result"] == "BOTH"
+    assert notify.plan_path5(pl, _p5([(13800, 4000, 4000, 4000), (14400, 4013.5, 4014, 3986)]))["result"] == "TP"
+    # 5m bars that start after the close do not cover it: the caller falls back to the signal's timeframe
+    assert notify.plan_path5(pl, _p5([(15000, 4000, 4020, 3999)])) is None
+    lines, _keep, done = notify.plan_updates([pl], "4h", four, 15000, 0.0, _p5([(15000, 4000, 4020, 3999)]))
+    assert done[0]["result"] == "BOTH" and "5m" not in lines[0]
+
+
+def test_ladder_line_odds_money_and_the_daily_limit(monkeypatch):
+    pl = notify.plan_cfg()
+    s = notify.ladder_line(pl)
+    assert "+$10 57% ($500)" in s and "+$13 50% ($650)" in s and "+$15 46% ($750)" in s and "+$20 39% ($1,000)" in s
+    assert "2 stops in a day = -$1,326 (5.3% of $25,000): OVER a 5% daily limit -- only one loss a day fits at 0.5 lot" in s
+    monkeypatch.setenv("PLAN_LOT", "0.4")
+    monkeypatch.setenv("PLAN_SL_USD", "520")
+    s = notify.ladder_line(notify.plan_cfg())
+    assert "before -$13.00" in s and "-$1,061 (4.2% of $25,000): inside a 5% daily limit" in s
