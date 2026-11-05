@@ -25,7 +25,8 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, __import__("os").path.join(__import__("os").path.dirname(__file__), "..", ".."))
-from quantum.data import sources, store as ST  # noqa: E402
+from quantum.data import sources
+from quantum.data import store as ST
 
 STORE, OUT = sys.argv[1], sys.argv[2]
 NY = "America/New_York"
@@ -153,7 +154,7 @@ def entries():
         if rng <= 0:
             continue
         for side in (1, -1):
-            for name, L in lv.items():
+            for L in lv.values():
                 if side == 1:
                     touch = Ll[k] <= L + 2 and Ll[k] >= L - 6 and C[k] >= L + 1 and (C[k] - Ll[k]) >= 0.5 * rng and L < C[k]
                 else:
@@ -181,9 +182,9 @@ def entries():
                     seen["V3"].add(key); ev["V3"].append((k, side))
                 if vol is not None and np.isfinite(med[k]) and med[k] > 0 and vol[k] >= 1.2 * med[k] and key not in seen["V4"]:
                     seen["V4"].add(key); ev["V4"].append((k, side))
-    for v in ev:                                     # one entry per bar per variant
+    for v, lst in ev.items():                        # one entry per bar per variant
         u, out = set(), []
-        for k, s in ev[v]:
+        for k, s in lst:
             if (k, s) not in u:
                 u.add((k, s)); out.append((k, s))
         ev[v] = out
@@ -247,7 +248,8 @@ for v, lst in ev.items():
         r22 = row["T22"]["rate"]
         row["usd_per_trade_0p5lot"] = r22 * (1100 - 13) - (1 - r22) * (1100 + 13)
     res["variants"][v] = row
-json.dump(res, open(OUT, "w"), indent=1, default=lambda x: None if x != x else float(x))
+with open(OUT, "w") as fh:
+    json.dump(res, fh, indent=1, default=lambda x: None if math.isnan(float(x)) else float(x))
 print(f"window {res['window']}; random +22 first: long {rnd[(TP, 1)]:.3f} short {rnd[(TP, -1)]:.3f}")
 for v, row in res["variants"].items():
     t = row["T22"]
