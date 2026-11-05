@@ -1,0 +1,74 @@
+{
+  "id": "B13",
+  "title": "The operator's target: +$10 to +$20 (ideal +$15) before a -$13 stop. Geometry check, literature clock effects, an ML model, and one validation opening for the B10 lead",
+  "status": "APPROVED by the operator 2026-11-05; development part runs once after this commit; validation opens once, after the development part, for the candidates listed under validation_opening",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-05 (chat): \"you have full rights to evaluate and audit the code and the engines and the strategies, calculation, each and everything which you have developed till date. If we need any modification and improvement, that is approved from my side.\" The same message sets the target: \"minimum $10 to $20 in the same direction, and $15 price movement in the same direction is ideal\", stop $650 at 0.5 lot ($13). Recorded and committed before any B13 code was written or any outcome read. B11 (proposed 2026-11-05 in research/16) is folded into B13 as B13-2a / 2b / 3 and B13-1.",
+  "partitions": [
+    "development",
+    "validation"
+  ],
+  "created_utc": "2026-11-05",
+  "source_of_hypothesis": "research/16 section 5 (B11-a overnight vs day, Blose, Gondhalekar & Kort 2018; B11-b intraday momentum, Gao, Han, Li & Zhou 2018; B11-c the B10 lead) and the operator's request for statistical machine learning. B12-explore (live window) found no edge in the operator's multi-timeframe level criteria; their inputs are features of the B13-4 model.",
+  "data": {
+    "series": "Twelve Data XAU/USD 15min and 1h, research-data branch @ a0d74e4980e78d8662af9dd0fe7c294cb8e63043 (15min data_hash e67a9b6042f56190, 1h 510972b73b6ee2a3), read through quantum.research.history.load",
+    "development": "harness.DEV (2020-01-24 02:00 -> 2023-01-24 02:00 UTC), scored from 2020-04-01; a path must end inside the partition",
+    "validation": "harness.VAL (2023-01-24 02:00 -> 2024-07-01 00:00 UTC), opened once, only for B13-1 and the development passes, after the development results are committed. Engine warm-up may read development bars; outcome paths may read only validation bars. The holdout stays sealed.",
+    "live_window": "B13-0 only: the site's store, 5-minute XAU/USD, 2026-09-09 -> 2026-11-05, unscaled dollars (descriptive)"
+  },
+  "outcome": {
+    "event": "+T before -S from the decision bar's close; primary T = 15, S = 13; secondary T = 10 and 20 with S = 13, and T = 13 with S = 13. Distances are dollars at a $4,000 price, scaled by entry / 4000 (the B4 / B7 / B10 convention)",
+    "path": "15-minute bars of the same partition, 96 bars (one trading day) unless a rule states a shorter window; a bar reaching both levels is a LOSS unless it opened beyond the target; neither level: OPEN, not counted",
+    "costs": "harness.cost_pts at the decision bar, scaled like the distances; break-even = (S + cost) / (T + S)",
+    "random_baseline": "B13-1 and B13-4: every third 15-minute close of the same partition, long and short separately, same outcome, weighted by the rule's long / short mix. B13-2 / 3 (fixed clock times, shorter windows): the same decision bars traded long and short, averaged (time-matched, direction-balanced)"
+  },
+  "hypotheses": {
+    "B13-0 (descriptive, audit)": {
+      "rule": "Random entries: every third 15-minute close, long and short, T in {10, 13, 15, 20}, S in {10, 13, 15, 20, 26, 30}; also the live window on 5-minute bars in unscaled dollars, and the median time to resolution by session",
+      "check": "For a driftless price the chance of +T before -S is S / (T + S) whatever the indicators (optional stopping). The long / short average must lie within 2 percentage points of that value, less the tie rule's effect; a larger gap means a labeller bug or real structure, and is investigated before anything else is read",
+      "verdict": "CONSISTENT / INCONSISTENT, no trading claim"
+    },
+    "B13-2a (development, primary)": {
+      "rule": "Overnight BUY: buy at the close of the 15-minute bar ending 13:30 New York (COMEX day close) on each trading day; the window ends with the bar ending 08:30 New York on the next trading day",
+      "question": "Is gold's overnight drift (Blose et al. 2018) large enough to move the +15 / -13 race?"
+    },
+    "B13-2b (development, primary)": {
+      "rule": "Day SELL: sell at the close of the bar ending 08:30 New York; the window ends with the bar ending 13:30 New York the same day",
+      "question": "The daytime half of the same effect"
+    },
+    "B13-3 (development, primary)": {
+      "rule": "Intraday momentum: at the close of the bar ending 09:00 New York, trade in the direction of the return from the previous trading day's 13:30 New York close to that 09:00 close (Gao et al. 2018: the opening return); the window ends with the bar ending 13:30 New York; a zero return is no trade",
+      "question": "Does the opening return predict the rest of the COMEX day in gold?"
+    },
+    "B13-4 (development, primary)": {
+      "rule": "A machine-learning direction model. At every 15-minute close two labels: long (+15 before -13) and short (the mirror); OPEN labels dropped. Features, all from bars up to that close: log returns over 1, 4, 16, 96 bars; ATR(14) 15m and 1h over price; the ATR ratio to its 480-bar median; today's range over the daily ATR(14); the close's position in today's range; the distance in 15m ATRs (clipped to +-20) to today's high and low so far, the previous day's, week's and month's high and low; the three B12 trend votes and their sum; the 15m EMA20 slope over 4 bars in ATRs; RSI(14); the bar's close location and both wicks over its range; New York hour (sine, cosine), weekday, London and New York session flags. Model fixed in advance, no tuning: sklearn HistGradientBoostingClassifier(max_depth=3, learning_rate=0.05, max_iter=300, l2_regularization=1.0, min_samples_leaf=200, random_state=13), one per side. Purged walk-forward: the scored window cut into 6 equal time blocks; for blocks 2-6, train on every earlier block, dropping the last 96 bars before the test block (label overlap); predict the test block. Trading rule: per fold, a side's threshold is the 90th percentile of its predictions on its own training rows; enter at a bar whose out-of-fold prediction is at or above a threshold, on the side with the larger excess; one position at a time (the next entry only after the previous trade resolves or its window ends)",
+      "question": "Do the operator's criteria and the standard technical inputs, combined by a model, carry information about +15 before -13?",
+      "reported_with_it": "out-of-fold AUC per side (below 0.52 is read as no usable information), Brier score against the base rate, calibration by decile; the same pipeline with a standardised logistic regression (C = 1) as a secondary"
+    },
+    "B13-1 (validation, primary)": {
+      "rule": "The B10 lead unchanged: the SIGNAL events of the frozen web.8 engine (quantum.engine.run, treatment arm, config.DEFAULT) on 15min, with the Market of quantum.research.b10.make_market (no macro, volume or cross-asset inputs), traded in their direction",
+      "cells": "T = 13 / S = 13 (the measure that produced the lead: 64.3%, n 70, development) and T = 15 / S = 13 (the operator's ideal), each a primary",
+      "question": "Does the engine's own 15-minute signal stream keep its development result on data it has never seen?"
+    }
+  },
+  "primary_test": {
+    "per_hypothesis": "P1: success rate above its random baseline, one-sided z; P2: mean net result per trade after costs > 0, one-sided t >= 1.645",
+    "development_family": "Holm over B13-2a, 2b, 3 and 4 at one-sided alpha 0.05, applied to P1; a pass needs the Holm-adjusted P1 and P2. A pass earns only a place in the validation opening",
+    "validation_family": "Holm at one-sided alpha 0.05 over the two B13-1 cells and every development pass (its T15 cell), P1 and P2 as above",
+    "minimum": "fewer than 30 decided trades: INSUFFICIENT"
+  },
+  "validation_opening": "Once, after the development results are committed: B13-1 (both cells) plus each development pass, exactly as specified here. Nothing else is read from the validation partition. A validation pass earns a registered live forward test (alerts and an automatic scorecard, like B9-GRAB-FWD), not an engine change and not a claim of a probability.",
+  "power_stated_in_advance": "B13-1: about 35 signals are expected in 17 months (70 in 34 development months). If the true rate were 64% against a 50% random rate, the test detects it about 40-50% of the time (after Holm); at 58%, about 15-25%. A fail is weak evidence against; a pass is meaningful. B13-2 / 3: about 700 trading days each; a 4-point rise in the rate is detected about 45-70% of the time (with and without Holm). B13-4: depends on how many bars the thresholds select (expected 1,000 or more trades).",
+  "secondary_reported_not_decisive": [
+    "every rule at T = 10, 13 and 20 with S = 13",
+    "B13-2 / 3: the raw mean log return of each window and its t-statistic (the Blose and Gao measures)",
+    "B13-4: the logistic-regression pipeline; results by side and by fold",
+    "B13-0 tables and times to resolution",
+    "prop-firm pass probabilities for the operator's geometries (arithmetic, no market data)"
+  ],
+  "decision": {
+    "if_pass": "Development pass: tested in the validation opening. Validation pass: a live forward test registered before it starts. No live use, no engine amendment and no probability on the site before that.",
+    "if_fail_or_insufficient": "Recorded in research/trials.jsonl and the write-up. No re-run with changed features, thresholds, windows or targets on the same data."
+  },
+  "unchanged": "the engine, its configuration and every freeze key; B9-GRAB-FWD (still +13 / -13 as registered); the forward ledgers"
+}
