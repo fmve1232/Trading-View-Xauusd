@@ -1,6 +1,34 @@
 {
  "id": "B9-GRAB-FWD",
- "trades": [],
+ "trades": [
+  {
+   "tf": "15m",
+   "t": 1793835900,
+   "t_close": 1793836800,
+   "dir": -1,
+   "pools": [
+    "PDH"
+   ],
+   "levels": [
+    4070.46
+   ],
+   "wick": 4071.33,
+   "entry": 4065.17,
+   "tp": 4052.17,
+   "sl": 4078.17,
+   "src": "twelvedata:XAU/USD",
+   "status": "OPEN",
+   "mfe": 0.0,
+   "mae": 0.0,
+   "id": 1,
+   "alert": {
+    "t": 1793837098,
+    "px": 4065.31,
+    "t_px": 1793837057,
+    "live": true
+   }
+  }
+ ],
  "checks": [],
  "verdict": null,
  "started_utc": 1793836045
