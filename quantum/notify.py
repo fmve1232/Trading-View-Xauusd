@@ -13,6 +13,12 @@ stop and target at a fixed lot, priced from the signal's entry; then ONE follow-
 PLAN_COST_PER_LOT ($26 round trip: commission ~$6.5 + ~$0.20 spread x 100 oz); PLAN=0 turns it off. Display only:
 the engine, its plan and the forward test are unchanged. The TP-first figure is geometry, SL / (TP + SL), measured
 within 0.3 points on 139,754 entries 2020-2022 (research/B5 and B6 found no signal that beats it).
+Plans are resolved on the 5-minute path when the same feed's 5m bars cover the signal's close (the trade_race and
+B9 rules: a 5m bar touching both levels is a loss unless it opened beyond the TP); otherwise on the signal's own
+timeframe. On 1h / 4h a whole bar can span both levels, and its close came up to 4 h after the touch (audit
+2026-11-05). LADDER: the driftless odds of +$10 / +$13 / +$15 / +$20 before the plan's stop (B13-0: within 0.5 points
+of S / (T + S) on 2020-2022 and on the live window), and whether two stops in one day fit a daily loss limit
+(ACCOUNT_USD 25,000, DAILY_LIMIT_PCT 5).
 
 Structure / sweep alerts (Pine line v49): one line per closed bar on which the engine's BOS, CHoCH, MSS
 or a PDH/PDL/PWH/PWL/PMH/PML sweep first appears, plus the separately registered H2 / H3 / H4 setups. They are
@@ -161,6 +167,22 @@ def mt5_line(d: int, pl: dict) -> str:
             "at any broker price)")
 
 
+LADDER_USD = (10.0, 13.0, 15.0, 20.0)       # the operator's range of moves (2026-11-05: "$10 to $20, $15 ideal")
+
+
+def ladder_line(pl: dict) -> str:
+    """The driftless chance of each move before the plan's stop, its value at the plan's lot, and the daily-limit check."""
+    oz, sl = pl["lot"] * 100.0, pl["sl_px"]
+    steps = " | ".join(f"+${a:g} {sl / (a + sl):.0%} (${a * oz:,.0f})" for a in LADDER_USD)
+    acct, lim = _env_float("ACCOUNT_USD", 25000.0), _env_float("DAILY_LIMIT_PCT", 5.0)
+    two = 2 * (pl["sl_usd"] + pl["cost_usd"])
+    fits = two <= acct * lim / 100.0
+    day = (f"2 stops in a day = -${two:,.0f} ({100 * two / acct:.1f}% of ${acct:,.0f}): "
+           + ("inside" if fits else "OVER") + f" a {lim:g}% daily limit"
+           + ("" if fits else f" -- only one loss a day fits at {pl['lot']:g} lot"))
+    return f"LADDER before -${sl:.2f} (no signal beats these odds): {steps} | {day}"
+
+
 def timing_lines(tm: dict | None, off: float = 0.0) -> tuple[str | None, str | None]:
     """(LATE warning or None, TIMING line or None)."""
     if not tm:
@@ -301,6 +323,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             if pl and m.get("px") is not None:
                 out.append(plan_line(m["px"], m["dir"], pl, off))
                 out.append(mt5_line(m["dir"], pl))
+                out.append(ladder_line(pl))
             if timing:
                 out.append(timing)
             cl = context_line(payload, m["dir"], (ctx or {}).get("breaks") or []) if ctx is not None else None
@@ -692,14 +715,48 @@ def plan_path(plan: dict, chart: dict) -> dict:
     return {"result": None, "t_res": None, "mfe": mfe, "mae": mae, "bars": bars}
 
 
+def plan_path5(plan: dict, p5: dict | None) -> dict | None:
+    """The plan's path on the 5-minute bars opening at / after its signal's close, with the trade_race tie rule (a bar
+    touching both levels is a loss, 'BOTH', unless it opened beyond the TP). None when the 5m bars do not cover that
+    close (the caller then uses the signal's own timeframe)."""
+    if not p5 or (p5.get("meta") or {}).get("synthetic"):
+        return None
+    ch = p5.get("chart") or {}
+    t, o, h, lo_ = ch.get("t") or [], ch.get("o") or [], ch.get("h") or [], ch.get("l") or []
+    t_dec = _decision_t(plan)
+    if not t or t[0] > t_dec:
+        return None
+    d, sl, tp, e = plan["dir"], plan["sl"], plan["tp"], plan["entry"]
+    mfe = mae = 0.0
+    bars = 0
+    for k in range(len(t)):
+        if t[k] < t_dec or h[k] is None or lo_[k] is None:
+            continue
+        bars += 1
+        mfe = max(mfe, (h[k] - e) if d == 1 else (e - lo_[k]))
+        mae = max(mae, (e - lo_[k]) if d == 1 else (h[k] - e))
+        hit_tp = h[k] >= tp if d == 1 else lo_[k] <= tp
+        hit_sl = lo_[k] <= sl if d == 1 else h[k] >= sl
+        if hit_tp and hit_sl:
+            beyond = o[k] is not None and (o[k] - tp) * d >= 0
+            what = "TP" if beyond else "BOTH"
+        else:
+            what = "TP" if hit_tp else "SL" if hit_sl else None
+        if what:
+            return {"result": what, "t_res": t[k], "mfe": mfe, "mae": mae, "bars": bars, "path": "5m"}
+    return {"result": None, "t_res": None, "mfe": mfe, "mae": mae, "bars": bars, "path": "5m"}
+
+
 def plan_result(plan: dict, chart: dict) -> tuple[str, int] | None:
     """('TP' | 'SL' | 'BOTH', bar open t) for the first bar AFTER the signal bar that touches the plan's TP or SL."""
     r = plan_path(plan, chart)
     return (r["result"], r["t_res"]) if r["result"] else None
 
 
-def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float = 0.0) -> tuple[list[str], list[dict], list[dict]]:
-    """Follow-up alerts for this timeframe's open plans, the plans still open afterwards, and the ones that closed."""
+def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float = 0.0,
+                 p5: dict | None = None) -> tuple[list[str], list[dict], list[dict]]:
+    """Follow-up alerts for this timeframe's open plans, the plans still open afterwards, and the ones that closed.
+    p5: the same feed's 5m payload; plans are resolved on it when it covers their signal's close."""
     lines, keep, closed = [], [], []
     for pl in plans:
         if pl["tf"] != tf:
@@ -707,7 +764,7 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
             continue
         side = "BUY" if pl["dir"] == 1 else "SELL"
         head = f"XAUUSD {tf} YOUR PLAN {side} from {_fmt(pl['entry'], off)}"
-        path = plan_path(pl, chart)
+        path = plan_path5(pl, p5) or plan_path(pl, chart)
         if path["result"] is None:
             if now_t - pl["t"] > PLAN_TRACK_SEC:
                 lines.append(f"{head}: no TP or SL after 3 days on the site's prices -- check the trade in MT5 (tracking stopped)")
@@ -718,7 +775,7 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
         what, bt = path["result"], path["t_res"]
         closed.append({**pl, **path})
         hhmm = datetime.fromtimestamp(bt, timezone.utc).strftime("%d %b %H:%M UTC")
-        hhmm += f" = {mt5_clock(bt):%H:%M} MT5"
+        hhmm += f" = {mt5_clock(bt):%H:%M} MT5" + (" 5m" if path.get("path") == "5m" else "")
         to_tp, to_sl = abs(pl["tp"] - pl["entry"]), abs(pl["entry"] - pl["sl"])
         if what == "TP":
             s = f"{head}: TP {_fmt(pl['tp'], off)} HIT +${pl['tp_usd']:,.0f} -- trade closed in profit ({hhmm} bar)"
@@ -939,7 +996,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         liq_log += ev
         upd, repeats = [], {}
         if pl_cfg:                                         # the operator's plan: results of earlier signals, then new ones
-            upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off)
+            p5 = payloads.get("5m")
+            same = p5 is not None and (p5.get("meta") or {}).get("price_source") == p["meta"].get("price_source")
+            upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off, p5 if same else None)
             for c in done:
                 tally[c["result"]] = tally.get(c["result"], 0) + 1
             log = (log + done)[-PLAN_LOG:]

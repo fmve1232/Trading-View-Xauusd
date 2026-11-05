@@ -20,7 +20,7 @@ them on 2026-11-05 ("approve B10"). The code is `quantum/research/b10.py`. The r
 
 - Development partition: 2020-01-24 → 2023-01-24, scored from 2020-04-01.
 - Outcome: +13 / −13 at $4,000, scaled by entry / 4000, on 15-minute bars for one trading day.
-- Break-even after costs: about 53.3% (scaled costs are a larger share at 2020–2022 prices).
+- Break-even after costs: about 53.3%, from the frozen model's cost ($0.77 per oz in session, $0.97 off session at $4,000; see the erratum).
 
 ## What it means
 
@@ -77,3 +77,15 @@ The registration says the release starts "from the first bar whose close is abov
 reads this as a close from below: the previous close at or below the level. So after a release ends (the 5-day cap or
 the opposite close), a new release needs a new break. Without this, the cap would not bind while price stays above the
 level. The change was made when a unit test exposed the ambiguity, before the study read any outcome.
+
+## Erratum (audit, 2026-11-05; verdicts unchanged)
+
+- **The "Mean net / oz" columns, and `mean_net_usd_at_4000_per_oz` / `usd_per_trade_0p5lot_at_4000` in the results
+  file, are in 2020–2022 dollars, not dollars at $4,000.** `b10.outcomes` multiplies both the distances and the cost by
+  entry / 4000. At 2020–2022 prices that factor is about 0.45, so the figures at $4,000 are about 2.2 times larger.
+  For example, the engine's 15m signals at +$1.34 are about +$3.0 per oz at $4,000.
+- Every verdict stands: the registration's P2 is the t-statistic of these scaled dollars ("mean net result per trade > 0 (scaled $, after costs)"), so only the labels were wrong.
+- **The break-even note was wrong.** Scaling the cost keeps its share of the distances the same. The 53.3% comes from
+  the frozen engine's cost model (`harness.cost_pts`: $0.77 / $0.97 per oz at $4,000). The operator's measured round
+  trip is $0.26, which gives (13 + 0.26) / 26 = 51.0%.
+- B13 reports net results in dollars at $4,000 with both costs.

@@ -87,6 +87,8 @@ change a short barrier race by much.
 | **B11-c** | The B10 lead: the engine's own 15m signals | B10 secondary (64.3%, n 70, development) | Opens the **sealed validation** partition (2023-01 → 2024-07) once, for this one stream, unchanged | It is likely to regress toward 50%: one of 18 comparisons, and 1h was 40%. Only a pass there earns a forward test |
 | B11-d (later) | Meta-label a stream that passed B11-c | López de Prado; Joubert | Purged CV on development, then the validation result | Only if B11-c passes |
 
+**Run on 2026-11-05 as B13** (`B13_RESULTS.md`, at +$15 / −$13): B11-a 48.0% / 47.7% and B11-b 45.7% on development, B11-c 61.4% of 44 on validation; all FAIL their registered tests. B11-d was not run (it needed a B11-c pass).
+
 **What we will not do, as the literature warns:**
 
 - tune many variants on the same data (Sullivan, Timmermann & White, 1999; Bailey et al., 2017);
