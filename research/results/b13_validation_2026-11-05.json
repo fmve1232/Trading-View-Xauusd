@@ -1,0 +1,137 @@
+{
+ "registration": "B13",
+ "utc": "2026-11-05T10:21:03.215744+00:00",
+ "stage": "validation",
+ "bars_validation": 33574,
+ "window": [
+  "2023-01-24 02:00:00+00:00",
+  "2024-06-30 23:45:00+00:00"
+ ],
+ "signals_in_validation": 44,
+ "random": {
+  "T10": {
+   "long": 0.5723707986989519,
+   "short": 0.5469653179190751
+  },
+  "T13": {
+   "long": 0.5117491085306757,
+   "short": 0.4824906281430008
+  },
+  "T15": {
+   "long": 0.47919165820799114,
+   "short": 0.4469459309835763
+  },
+  "T20": {
+   "long": 0.4075270861053032,
+   "short": 0.3641325162772884
+  }
+ },
+ "trials": {
+  "B13-1 T10": {
+   "n": 44,
+   "wins": 27,
+   "long": 39,
+   "short": 5,
+   "open": 0,
+   "ties_counted_loss": 0,
+   "rate": 0.6136363636363636,
+   "wilson": [
+    0.4662357527839017,
+    0.7427879733698503
+   ],
+   "random": 0.5694838122466931,
+   "theory_driftless": 0.5652173913043478,
+   "z": 0.591489048682837,
+   "p_one_sided": 0.27709639536120234,
+   "break_even_model_cost": 0.5986956521739131,
+   "break_even_operator_cost": 0.5765217391304348,
+   "mean_net_usd_per_oz_at_4000": 0.34363636363636413,
+   "t": 0.2012110559208842,
+   "mean_net_operator_cost": 0.853636363636364,
+   "t_operator_cost": 0.4998338135177515,
+   "usd_per_trade_0p5lot_at_4000": 17.181818181818205
+  },
+  "B13-1 T13": {
+   "n": 44,
+   "wins": 27,
+   "long": 39,
+   "short": 5,
+   "open": 0,
+   "ties_counted_loss": 0,
+   "rate": 0.6136363636363636,
+   "wilson": [
+    0.4662357527839017,
+    0.7427879733698503
+   ],
+   "random": 0.5084242812138945,
+   "theory_driftless": 0.5,
+   "z": 1.3959941605552093,
+   "p_one_sided": 0.08135812680658239,
+   "break_even_model_cost": 0.5296153846153845,
+   "break_even_operator_cost": 0.51,
+   "mean_net_usd_per_oz_at_4000": 2.1845454545454555,
+   "t": 1.131535800741894,
+   "mean_net_operator_cost": 2.694545454545455,
+   "t_operator_cost": 1.3957020863083534,
+   "usd_per_trade_0p5lot_at_4000": 109.22727272727278
+  },
+  "B13-1 T15": {
+   "n": 44,
+   "wins": 27,
+   "long": 39,
+   "short": 5,
+   "open": 0,
+   "ties_counted_loss": 0,
+   "rate": 0.6136363636363636,
+   "wilson": [
+    0.4662357527839017,
+    0.7427879733698503
+   ],
+   "random": 0.4755273710233986,
+   "theory_driftless": 0.4642857142857143,
+   "z": 1.8344214573793327,
+   "p_one_sided": 0.03329572843652273,
+   "break_even_model_cost": 0.4917857142857143,
+   "break_even_operator_cost": 0.4735714285714286,
+   "mean_net_usd_per_oz_at_4000": 3.411818181818182,
+   "t": 1.6409993514772092,
+   "mean_net_operator_cost": 3.921818181818183,
+   "t_operator_cost": 1.8862966166460646,
+   "usd_per_trade_0p5lot_at_4000": 170.5909090909091
+  },
+  "B13-1 T20": {
+   "n": 44,
+   "wins": 25,
+   "long": 39,
+   "short": 5,
+   "open": 0,
+   "ties_counted_loss": 0,
+   "rate": 0.5681818181818182,
+   "wilson": [
+    0.4222414688363042,
+    0.703172766855947
+   ],
+   "random": 0.4025958849884834,
+   "theory_driftless": 0.3939393939393939,
+   "z": 2.2396543990089284,
+   "p_one_sided": 0.012556684079123026,
+   "break_even_model_cost": 0.41727272727272724,
+   "break_even_operator_cost": 0.4018181818181818,
+   "mean_net_usd_per_oz_at_4000": 4.98,
+   "t": 1.9978160707711758,
+   "mean_net_operator_cost": 5.489999999999998,
+   "t_operator_cost": 2.202411692476657,
+   "usd_per_trade_0p5lot_at_4000": 249.00000000000003
+  }
+ },
+ "primary": {
+  "holm_p1": {
+   "B13-1 T15": false,
+   "B13-1 T13": false
+  },
+  "verdict": {
+   "B13-1 T13": "FAIL",
+   "B13-1 T15": "FAIL"
+  }
+ }
+}
