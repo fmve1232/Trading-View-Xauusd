@@ -1,0 +1,60 @@
+{
+  "id": "B10",
+  "title": "Lagging higher-timeframe gate and regime-matched liquidity alerts, on development data",
+  "status": "APPROVED by the operator 2026-11-05; run once on the development partition after this commit",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-05 (chat): \"approve A without daily loss guard and approve B10.\" Approval recorded and committed before any B10 code was written or any data read for it.",
+  "partitions": [
+    "development"
+  ],
+  "created_utc": "2026-11-05",
+  "source_of_hypothesis": "The signal audit of 2026-11-02 -> 11-05 (chat, 2026-11-05). 13 alerted signals, all SELL: 2 TP, 10 SL, 1 both. During a +$250 rally on 4-5 Nov the treatment arm's higher-timeframe bear gate (features.py: htf_align_short >= 2) was on for 103 of 119 15-minute bars and blocked every BUY while the engine's own bias was bullish. Liquidity BREAK alerts (continuation) went 3 of 3 and the GRAB test trade (reversal) failed, in a trending market; over 2026-09-09 -> 11-04 (B9-explore) BREAKs reached +$13 first only 38.6% of the time and GRABs 61.7%. These are anecdotes from the live window; they select the questions, never the answers.",
+  "data": {
+    "series": "Twelve Data XAU/USD 15min and 1h (research-data branch @ a0d74e4980e78d8662af9dd0fe7c294cb8e63043), read through quantum.research.history.load",
+    "partition": "development only (harness.DEV: 2020-01-24 02:00 -> 2023-01-24 02:00 UTC); validation and holdout stay sealed",
+    "engine": "the frozen web.8 engine (quantum.engine.run, treatment arm, config.DEFAULT) on a Market built from these series: 15min (or 1h) base bars; higher timeframes 1h, 4h (NY-session resample) and 1D from the 1h series; no forming bar",
+    "missing_inputs": "GC futures volume, silver, EUR/USD, S&P 500, DXY, US 10y, VIX, FRED and COT are not stored for 2020-2023, so their layers are neutral. The live engine has them. The gate and the regime label under test do not read them, but the signals they gate do, so the baseline here is not the live engine's signal stream",
+    "warm_up": "signals are scored from 2020-04-01 (about two months warm the engine's history up); a path must end before 2023-01-24 02:00"
+  },
+  "outcome": {
+    "event": "+13 before -13 at a $4,000 price, distances scaled by entry / 4000 (the B4 / B7 convention), from the decision bar's close",
+    "path": "15-minute bars of the development partition, 96 bars (one trading day); a bar reaching both levels is a LOSS unless it opened beyond the target; neither level: OPEN, not counted",
+    "costs": "harness.cost_pts at the decision bar, scaled like the distances; break-even = (13 + cost) / 26 in scaled units",
+    "random_baseline": "every 15-minute close of the scored window, long and short separately, same targets and scaling, weighted by each set's long / short mix"
+  },
+  "hypotheses": {
+    "B10-1a (primary)": {
+      "rule": "Release the bear gate after a weekly break: from the first bar whose close is above the previous week's high (the engine's pwh of that bar), htf_bear_gate is ignored until the earlier of a close below the previous week's low (pwl) or 480 fifteen-minute bars (5 trading days; 120 bars on 1h). Mirror for htf_bull_gate after a close below pwl. Only the two gate arrays passed to engine.run change; nothing else.",
+      "measured_on": "the signals the variant ADDS: SIGNAL events of the variant run whose bar and direction are not SIGNAL events of the baseline run, on 15min",
+      "question": "Does the lagging gate block signals that would have been right?"
+    },
+    "B10-2a (primary)": {
+      "rule": "GRAB in a range: the engine's SWEEP events (wick through PDH / PDL / PWH / PWL / PMH / PML, close back) on bars whose regime_label is RANGE or COMPRESS, traded in the sweep's direction (low swept -> BUY, high swept -> SELL), once per pool per New York trading day",
+      "measured_on": "15min",
+      "question": "Do sweeps revert when the market is ranging?"
+    },
+    "B10-2b (primary)": {
+      "rule": "BREAK in a trend: a close beyond PDH / PDL / PWH / PWL that the previous bar had not closed beyond, on bars whose regime_label is STRONG TR or EXPANSION, traded in the break's direction (above a high -> BUY, below a low -> SELL), once per pool per New York trading day",
+      "measured_on": "15min",
+      "question": "Do breaks continue when the market is trending?"
+    }
+  },
+  "primary_test": {
+    "per_hypothesis": "P1: success rate above the direction-matched random rate, one-sided z; P2: mean net result per trade > 0 (scaled $, after costs), one-sided t",
+    "multiplicity": "Holm over the three primary hypotheses at one-sided alpha 0.05, applied to P1; a hypothesis passes when its Holm-adjusted P1 passes and its P2 t >= 1.645",
+    "minimum": "a hypothesis with fewer than 30 decided trades is INSUFFICIENT, not a pass or a fail"
+  },
+  "secondary_reported_not_decisive": [
+    "B10-1b: the same release after a close beyond the previous DAY's high / low, for the rest of that trading day and the next",
+    "B10-1a and B10-1b on 1h",
+    "the baseline's own signals and the variant's full signal set (counts, success rate, mean net)",
+    "GRAB and BREAK in every regime, and by direction, on 15min and 1h",
+    "by calendar half-year"
+  ],
+  "power_stated_in_advance": "Unknown before the run: the number of added signals depends on how often the gate binds after a weekly break. If B10-1a adds fewer than 30 decided trades it is reported INSUFFICIENT. Development estimates are biased by the live anecdotes that suggested the questions, which is why a pass only earns a validation-partition test.",
+  "decision": {
+    "if_pass": "Propose to the operator: the same rule, unchanged, on the sealed validation partition (2023-01-24 -> 2024-07-01), opened once under a new registration. Only after that pass would an engine amendment be proposed (it changes the freeze key and restarts the forward test) or the alert labels change. No live use before.",
+    "if_fail_or_insufficient": "Recorded in research/trials.jsonl and the write-up. No re-run with changed windows, levels or regimes on the same data."
+  },
+  "unchanged": "the engine, its configuration and every freeze key; the B9-GRAB-FWD live test; the alerts (part A of the 2026-11-05 plan is a separate, display-only change)"
+}

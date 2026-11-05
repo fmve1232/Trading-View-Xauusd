@@ -2024,6 +2024,17 @@ function renderPlanAlerts() {
         from the bar's close, +$13 / −$13 on 5-minute bars for one trading day. Rules fixed before any data
         (research/registrations/B9-GRAB-FWD.json). It is not a proven signal until the verdict says PROVEN; NOT PROVEN means not confirmed.</p>`;
   })();
+  // Part A (2026-11-05): one idea, one alert -- same-direction signals within 4 h and $15 of an open plan open no plan
+  const RP = P.repeats || [], RR = P.repeat_rule || {};
+  const repRows = RP.slice(0, 6).map((r) => `<tr><td>${esc(r.tf)} ${side(r.dir)}<div>${tfmt(r.t_dec)}</div></td><td>${px(r.entry)}</td>
+    <td colspan="2">REPEAT of #${esc(r.of_id ?? "?")} <span class="dim">(${esc(r.of_tf)} from ${px(r.of_entry)})</span></td></tr>`).join("");
+  const repHtml = repRows ? `<h4>Repeats: same idea, no new plan</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Same idea as</th></tr>${repRows}</table></div>
+    <p class="muted pa-note">A signal in the same direction within ${isNum(RR.sec) ? Math.round(RR.sec / 3600) : 4} hours and $${isNum(RR.usd) ? f(RR.usd, 0) : 15} of an open plan, on any timeframe, is the same idea: one trade, not several.</p>` : "";
+  // Part A2: trend-change warnings (same-direction PDH / PWH or PDL / PWL breaks on 2+ timeframes against the engine)
+  const TW = (A.turn_log || []).slice(0, 5).map((w) => `<tr><td>${tfmt(w.t)}</td><td><b class="${w.dir === 1 ? "bull" : "bear"}">${w.dir === 1 ? "Broke up" : "Broke down"}</b><div>${esc((w.tfs || []).join(", "))}</div></td>
+    <td>${esc(w.pools || "")}</td><td>${w.blocked >= 2 ? `engine gate blocks ${w.dir === 1 ? "BUYs" : "SELLs"} (${w.blocked} TFs)` : ""}${w.opposite_signals ? `${w.blocked >= 2 ? " · " : ""}${w.opposite_signals} opposite signal(s) today` : ""}</td></tr>`).join("");
+  const twHtml = TW ? `<h4>Trend-change warnings</h4><div class="scroll"><table class="yt"><tr><th>Time</th><th>Move</th><th>Levels</th><th>Against</th></tr>${TW}</table></div>
+    <p class="muted pa-note">Price closed beyond a previous day / week high or low on 2+ timeframes while the engine's slow higher-timeframe gate (or today's signals) pointed the other way. Information, not a trade signal.</p>` : "";
   const T = P.tally || {}, tp = T.TP || 0, sl = (T.SL || 0) + (T.BOTH || 0), n = tp + sl;
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   el.innerHTML = `
@@ -2041,9 +2052,11 @@ function renderPlanAlerts() {
       An alert marked LATE (price already moved ${pct(100 * (isNum(P.late_frac) ? P.late_frac : 0.3))} of the stop) is stale: skip it. Pick "MT5 server" under Time to match the MT5 chart's candle times.</p>
     <p class="pa-note">${rec}</p>
     ${openRows ? `<h4>Open (${(P.open || []).length})</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th>SL</th><th>TP</th><th>Now</th></tr>${openRows}</table></div>` : `<p class="muted pa-note">No open plan right now.</p>`}
+    ${repHtml}
     ${doneRows ? `<h4>Results</h4><div class="scroll"><table class="yt"><tr><th>Signal</th><th>Entry</th><th colspan="2">Result</th><th>Closed bar</th></tr>${doneRows}</table></div>` : ""}
     ${L.on ? `<h4>Liquidity alerts</h4>${liqRows ? `<div class="scroll"><table class="yt"><tr><th>Time</th><th>Event</th><th>Pool</th><th>Detail</th></tr>${liqRows}</table></div>` : `<p class="muted pa-note">No liquidity alert yet.</p>`}
       <p class="muted pa-note">Pools: previous day / week / month high and low (PDH … PML) and equal highs / lows. Information, not trade signals: sweeps and breaks were tested on 2020–2022 data (B2, B3) and did not beat break-even.</p>` : ""}
+    ${twHtml}
     ${grabHtml}
     ${validationHtml(P.validation)}`;
   el.querySelectorAll("button[data-vp]").forEach((b) => { b.onclick = () => { S.vp = b.dataset.vp; store.set("vp", S.vp); renderPlanAlerts(); }; });

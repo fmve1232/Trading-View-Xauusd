@@ -178,9 +178,108 @@ def timing_lines(tm: dict | None, off: float = 0.0) -> tuple[str | None, str | N
     return late, s
 
 
-def messages(payload: dict, since_t: int | None, now: dict | None = None) -> list[str]:
+# ---------------- part A of the 2026-11-05 signal audit (operator: "approve A without daily loss guard") ----------------
+REPEAT_SEC = 4 * 3600      # A1: a same-direction signal within 4 hours ...
+REPEAT_USD = 15.0          # ... and $15 of an OPEN plan (any timeframe) is the same idea: no new plan (declared 2026-11-05)
+TURN_MIN_TFS = 2           # A2: same-direction BREAKs on 2+ timeframes in one trading day ...
+TURN_KEEP = 20
+_HTF_LAYERS = (("15", "15m", 900), ("60", "1h", 3600), ("240", "4h", 14400), ("D", "1D", 86400))
+_TF_ORDER = ("5m", "15m", "30m", "1h", "4h")
+
+
+def repeat_of(m: dict, tf: str, plans: list[dict]) -> dict | None:
+    """A1: the open plan this SIGNAL repeats (same direction, decision within REPEAT_SEC, entry within REPEAT_USD)."""
+    t_dec = int(m["t"]) + TF_SEC.get(tf, 0)
+    hits = [p for p in plans if p.get("dir") == m.get("dir") and abs(t_dec - _decision_t(p)) <= REPEAT_SEC
+            and m.get("px") is not None and abs(float(m["px"]) - float(p["entry"])) <= REPEAT_USD]
+    return min(hits, key=_decision_t) if hits else None
+
+
+def repeat_line(m: dict, tf: str, rp: dict, off: float = 0.0) -> str:
+    side = "BUY" if m["dir"] == 1 else "SELL"
+    when = datetime.fromtimestamp(_decision_t(rp), timezone.utc).strftime("%H:%M UTC")
+    return (f"REPEAT of #{rp.get('id', '?')} ({rp['tf']} {side} from {_fmt(rp['entry'], off)} at {when}, still open): "
+            f"the same idea -- don't add a trade (no new plan)")
+
+
+def _breaks_today(liq_log: list[dict], day: str) -> list[dict]:
+    return [r for r in liq_log if r.get("kind") == "BREAK" and r.get("tf") in TF_SEC
+            and trading_day(int(r["t"]) + TF_SEC[r["tf"]]) == day]
+
+
+def context_line(payload: dict, d: int, breaks: list[dict]) -> str | None:
+    """A3: the higher timeframes, regime and session at this run, and a warning when the signal goes against today's
+    latest previous day / week high or low break."""
+    db = payload.get("dashboard") or {}
+    sc = (db.get("mtf") or {}).get("scores") or {}
+    tf_sec = TF_SEC.get(payload["meta"]["tf"], 0)
+    parts, agree, against = [], 0, 0
+    for k, lbl, sec in _HTF_LAYERS:
+        v = sc.get(k)
+        if sec <= tf_sec or v is None:
+            continue
+        a = 1 if v >= 60 else -1 if v <= 40 else 0
+        parts.append(f"{lbl} {'▲' if a == 1 else '▼' if a == -1 else '='}")
+        agree += a == d
+        against += a == -d
+    if not parts and not db:
+        return None
+    reg, sess = (db.get("regime") or {}).get("label"), (db.get("session") or {}).get("label")
+    s = (f"CONTEXT (now): higher timeframes {' '.join(parts) or 'n/a'} ({agree} agree, {against} against) | "
+         f"regime {reg or '—'} | session {sess or '—'}")
+    if breaks:
+        last = max(breaks, key=lambda r: int(r["t"]) + TF_SEC[r["tf"]])
+        bd = 1 if last["name"] in _HIGHS else -1
+        if bd == -d:
+            hhmm = datetime.fromtimestamp(int(last["t"]) + TF_SEC[last["tf"]], timezone.utc).strftime("%H:%M UTC")
+            s += f" | ⚠ against today's {last['name']} {last['px']:.2f} break ({last['tf']}, {hhmm})"
+    return s
+
+
+def turn_lines(state: dict, payloads: dict, tfs: list[str], liq_log: list[dict], plans_today: list[dict], t_send: int,
+               off: float = 0.0) -> list[str]:
+    """A2: same-direction BREAKs of PDH / PWH (or PDL / PWL) on TURN_MIN_TFS+ timeframes today, while the engine's
+    higher-timeframe gate blocks that side (align >= 2 of the layers above the chart) or today's alerted signals were
+    the other way: one warning per direction per trading day. Information, not a signal."""
+    day = trading_day(t_send)
+    brk = _breaks_today(liq_log, day)
+    sent = state.setdefault("turn_sent", {})
+    ref = next((payloads[x] for x in ["15m", *tfs] if payloads.get(x) and not payloads[x]["meta"].get("synthetic")), None)
+    mtf = ((ref or {}).get("dashboard") or {}).get("mtf") or {}
+    out = []
+    for direction in (1, -1):
+        mine = [r for r in brk if (1 if r["name"] in _HIGHS else -1) == direction]
+        tfs_dir = sorted({r["tf"] for r in mine}, key=_TF_ORDER.index)
+        key = f"{day}|{direction}"
+        if len(tfs_dir) < TURN_MIN_TFS or key in sent:
+            continue
+        n_block = int(mtf.get("align_short" if direction == 1 else "align_long") or 0)
+        opp = [p for p in plans_today if p.get("dir") == -direction]
+        if n_block < 2 and not opp:
+            continue
+        up = direction == 1
+        pools = ", ".join(sorted({f"{r['name']} {_fmt(r['px'], off)}" for r in mine}))
+        why = []
+        if n_block >= 2:
+            why.append(f"the engine's higher-timeframe gate still blocks {'BUY' if up else 'SELL'} signals "
+                       f"({n_block} higher timeframes read {'down' if up else 'up'}; it lags)")
+        if opp:
+            why.append(f"today's {len(opp)} alerted signal(s) were {'SELL' if up else 'BUY'}")
+        out.append(f"XAUUSD TREND-CHANGE WARNING: price closed {'above' if up else 'below'} {pools} on {', '.join(tfs_dir)} today "
+                   f"({'buy' if up else 'sell'}-side liquidity taken, holding beyond) -- {'; '.join(why)}. "
+                   f"Don't {'SELL' if up else 'BUY'} into it; the engine may stay silent on this move | info, not a trade signal")
+        sent[key] = t_send
+        state["turn_log"] = (state.get("turn_log", []) + [{"t": t_send, "dir": direction, "tfs": tfs_dir, "pools": pools,
+                                                           "blocked": n_block, "opposite_signals": len(opp)}])[-TURN_KEEP:]
+    keep_from = trading_day(t_send - 3 * 86400)
+    state["turn_sent"] = {k: v for k, v in sent.items() if k.split("|")[0] >= keep_from}
+    return out
+
+
+def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: dict | None = None) -> list[str]:
     """Alert lines for bars closed after since_t. `now` ({'t' send time, 'px', 't_px', 'live'}) adds the MT5 and
-    timing lines to each SIGNAL."""
+    timing lines to each SIGNAL; `ctx` ({'repeats': {bar t: plan}, 'breaks': today's BREAKs}) the REPEAT and CONTEXT
+    lines (part A, 2026-11-05)."""
     tf = payload["meta"]["tf"]
     off = float(os.environ.get("MT5_PRICE_OFFSET", "0") or 0)
     out = []
@@ -191,6 +290,10 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None) -> lis
             d = "BUY" if m["dir"] == 1 else "SELL"
             out.append(f"XAUUSD {tf} {d} (confirmed close) | entry {_fmt(m['px'], off)} SL {_fmt(m['sl'], off)} "
                        f"TP1 {_fmt(m['tp1'], off)} TP2 {_fmt(m['tp2'], off)} TP3 {_fmt(m['tp3'], off)} | TQ {m['tq']}")
+            rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
+            if rp is not None:
+                out.append(repeat_line(m, tf, rp, off))
+                continue
             pl = plan_cfg()
             late, timing = timing_lines(alert_timing(m, tf, now, pl), off)
             if late:
@@ -200,6 +303,9 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None) -> lis
                 out.append(mt5_line(m["dir"], pl))
             if timing:
                 out.append(timing)
+            cl = context_line(payload, m["dir"], (ctx or {}).get("breaks") or []) if ctx is not None else None
+            if cl:
+                out.append(cl)
         elif m["type"] == "TRACK_EXIT":
             out.append(f"XAUUSD {tf} tracked plan {'STOPPED' if (m.get('r') or 0) < 0 else 'reached TP1'} at {_fmt(m['px'], off)} = {m.get('r')}R")
         elif m["type"] == "RISK_LOCK":
@@ -829,28 +935,36 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         alerted = True
         pn = price_now(payloads, tf)
         now = {"t": t_send, **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
-        lines = messages(p, since, now)
-        if liq_on():                                       # liquidity grabs / breaks on this timeframe's new bars
-            ev = liquidity_events(p, since, seen)
-            lines += [liq_text(r, off) for r in ev]
-            liq_log += ev
+        ev = liquidity_events(p, since, seen) if liq_on() else []   # liquidity grabs / breaks on this timeframe's new bars
+        liq_log += ev
+        upd, repeats = [], {}
         if pl_cfg:                                         # the operator's plan: results of earlier signals, then new ones
             upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off)
-            lines = upd + lines
             for c in done:
                 tally[c["result"]] = tally.get(c["result"], 0) + 1
             log = (log + done)[-PLAN_LOG:]
             vlog = (vlog + done)[-VALIDATION_MAX:]
-            for m in p["markers"]:
-                if m["type"] == "SIGNAL" and m["t"] > since and m.get("px") is not None:
-                    sl, tp = plan_levels(m["px"], m["dir"], pl_cfg)
-                    t_dec = int(m["t"]) + TF_SEC.get(tf, 0)
-                    tm = alert_timing(m, tf, now, pl_cfg) or {}
-                    plans.append({"tf": tf, "t": m["t"], "dir": m["dir"], "entry": m["px"], "sl": sl, "tp": tp,
-                                  "sl_usd": pl_cfg["sl_usd"], "tp_usd": pl_cfg["tp_usd"], "lot": pl_cfg["lot"], "t_dec": t_dec,
-                                  "session": session_of(t_dec), "dow": date.fromisoformat(trading_day(t_dec)).strftime("%a"),
-                                  "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
-                                  "move_alert": tm.get("move"), "late": tm.get("late")})
+            sigs = sorted((m for m in p["markers"] if m["type"] == "SIGNAL" and m["t"] > since and m.get("px") is not None),
+                          key=lambda m: m["t"])
+            for m in sigs:
+                rp = repeat_of(m, tf, plans)               # A1: one idea, one plan
+                if rp is not None:
+                    repeats[m["t"]] = rp
+                    state["plan_repeats"] = (state.get("plan_repeats", []) + [
+                        {"tf": tf, "t": m["t"], "t_dec": int(m["t"]) + TF_SEC.get(tf, 0), "dir": m["dir"], "entry": m["px"],
+                         "of_id": rp.get("id"), "of_tf": rp["tf"], "of_entry": rp["entry"], "t_alert": t_send}])[-PLAN_LOG:]
+                    continue
+                sl, tp = plan_levels(m["px"], m["dir"], pl_cfg)
+                t_dec = int(m["t"]) + TF_SEC.get(tf, 0)
+                tm = alert_timing(m, tf, now, pl_cfg) or {}
+                state["plan_seq"] = int(state.get("plan_seq", 0)) + 1
+                plans.append({"id": state["plan_seq"], "tf": tf, "t": m["t"], "dir": m["dir"], "entry": m["px"], "sl": sl, "tp": tp,
+                              "sl_usd": pl_cfg["sl_usd"], "tp_usd": pl_cfg["tp_usd"], "lot": pl_cfg["lot"], "t_dec": t_dec,
+                              "session": session_of(t_dec), "dow": date.fromisoformat(trading_day(t_dec)).strftime("%a"),
+                              "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
+                              "move_alert": tm.get("move"), "late": tm.get("late")})
+        ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send))}
+        lines = upd + messages(p, since, now, ctx) + [liq_text(r, off) for r in ev]
         report[tf] = {"lines": lines, "sent": send(lines)}
         state[tf] = last_t
     if pl_cfg:
@@ -860,7 +974,15 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                            "tp_first": pl_cfg["sl_px"] / (pl_cfg["sl_px"] + pl_cfg["tp_px"]),
                            "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
                            "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs),
-                           "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC)}
+                           "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC),
+                           "repeats": state.get("plan_repeats", [])[::-1][:10], "repeat_rule": {"sec": REPEAT_SEC, "usd": REPEAT_USD}}
+    if liq_on() and alerted:                               # A2: trend-change warning, once per direction per trading day
+        today = trading_day(t_send)
+        tl = turn_lines(state, payloads, tfs, liq_log, [x for x in plans + log if trading_day(_decision_t(x)) == today],
+                        t_send, off)
+        if tl:
+            report["turn_warning"] = {"lines": tl, "sent": send(tl)}
+    report["turn_log"] = state.get("turn_log", [])[::-1][:10]
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
         report["grab_test_alert"] = {"lines": glines, "sent": send(glines)}
