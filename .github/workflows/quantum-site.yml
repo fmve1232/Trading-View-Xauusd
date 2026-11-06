@@ -131,6 +131,8 @@ jobs:
           PLAN_SL_USD: ${{ vars.PLAN_SL_USD }}
           PLAN_TP_USD: ${{ vars.PLAN_TP_USD }}
           PLAN_TP2_USD: ${{ vars.PLAN_TP2_USD }}         # two targets: the second half's TP in $ (default $20 of price; 0 = one TP)
+          ALERT_SETUPS: ${{ vars.ALERT_SETUPS }}         # SETUP alerts from the operator's level rules (B16); 0 = off
+          SETUP_LEVELS: ${{ vars.SETUP_LEVELS }}         # all (default) or major = previous day / week / month levels only
           PLAN_COST_PER_LOT: ${{ vars.PLAN_COST_PER_LOT }}
           PLAN_LATE_FRAC: ${{ vars.PLAN_LATE_FRAC }}   # alert marked LATE when price moved this share of the stop (0.30)
           MT5_SERVER_UTC_OFFSET: ${{ vars.MT5_SERVER_UTC_OFFSET }}   # empty = New York + 7 h (UTC+2 winter / UTC+3 summer)

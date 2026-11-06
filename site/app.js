@@ -2054,6 +2054,33 @@ function renderPlanAlerts() {
         did price reach +$13 before −$13? Rules fixed before any result (research/registrations/B15-ENGINE-FWD.json). PROVEN needs the 95% range above
         break-even at a check; until then the signals are unproven, however the running rate looks.</p>`;
   })();
+  // SETUP alerts (operator's level rules, research/registrations/B16.json): sweeps / breakouts of PD/PW/PM/today/4h/1h levels
+  const SU = A.setups;
+  const setHtml = (() => {
+    if (!SU || !SU.on) return "";
+    const NM = { PDH: "prev day high", PDL: "prev day low", PWH: "prev week high", PWL: "prev week low", PMH: "prev month high",
+                 PML: "prev month low", TDH: "today's high", TDL: "today's low", "4HH": "last 4h high", "4HL": "last 4h low",
+                 "1HH": "last 1h high", "1HL": "last 1h low" };
+    const lv = (x) => (x.levels || []).map((a) => `${esc(NM[a[0]] || a[0])} ${px(a[1])}`).join(" + ");
+    const hist = (k) => { const h = (SU.hist || {})[k]; return h ? `${pct(100 * h[0], 1)} of ${Number(h[1]).toLocaleString("en-US")} (random ${pct(100 * h[2], 1)}): ${esc(h[3])}` : "—"; };
+    const liveT = (k) => { const g = (SU.live || {})[k]; return g && g[0] ? `${g[1]} of ${g[0]} (${pct(100 * g[1] / g[0])})` : "none decided yet"; };
+    const RS = { TP: ["bull", "+$15 first"], SL: ["bear", "SL −$13 first"], BOTH: ["warn", "both in one bar · SL"], EXPIRED: ["", "no result in a day"] };
+    const oRows = (SU.open || []).slice().reverse().map((x) => `<tr><td>#${x.id} ${esc(x.kind === "SWEEP" ? "Sweep" : "Breakout")} ${side(x.dir)}<div>${tfmt(x.t_dec)}</div></td>
+      <td>${lv(x)}<div>${esc((x.zones || []).join(", "))}</div></td><td>${px(x.entry)}</td><td>${px(x.tp)} / ${px(x.sl)}</td></tr>`).join("");
+    const rRows = (SU.recent || []).slice(0, 10).map((x) => { const r = RS[x.result] || ["", esc(x.result)];
+      return `<tr><td>#${x.id} ${esc(x.kind === "SWEEP" ? "Sweep" : "Breakout")} ${side(x.dir)}<div>${tfmt(x.t_dec)}</div></td><td>${lv(x)}</td><td>${px(x.entry)}</td><td><b class="${r[0]}">${r[1]}</b></td></tr>`; }).join("");
+    return `<h4>Setups from your rules (sweeps and breakouts)</h4>
+      <div class="kv"><div>3-year record: sweeps</div><div>${hist("SWEEP")}</div>
+        <div>3-year record: breakouts</div><div>${hist("BREAKOUT")}</div>
+        <div>Live: sweeps +$15 first</div><div>${liveT("SWEEP")}</div>
+        <div>Live: breakouts +$15 first</div><div>${liveT("BREAKOUT")}</div>
+        <div>Since</div><div>${isNum(SU.started_utc) ? tfmt(SU.started_utc) : "—"}</div></div>
+      ${oRows ? `<div class="scroll"><table class="yt"><tr><th>Setup</th><th>Level · zone</th><th>Entry</th><th>+$15 / SL</th></tr>${oRows}</table></div>` : ""}
+      ${rRows ? `<div class="scroll"><table class="yt"><tr><th>Setup</th><th>Level</th><th>Entry</th><th>Result</th></tr>${rRows}</table></div>` : ""}
+      <p class="muted pa-note">Your rules, applied strictly on 15m bars: a sweep of a previous day / week / month, today's, last-4h or last-1h high or low that closes back,
+        at an order block, the value-area edge or the POC; or a close beyond such a level outside the value area. Each is scored +$15 before −$13.
+        Tested on 2020–22 (research/registrations/B16.json): neither beat random entries. Information, not a confirmed signal.</p>`;
+  })();
   // Part A (2026-11-05): one idea, one alert -- same-direction signals within 4 h and $15 of an open plan open no plan
   const RP = P.repeats || [], RR = P.repeat_rule || {};
   const repRows = RP.slice(0, 6).map((r) => `<tr><td>${esc(r.tf)} ${side(r.dir)}<div>${tfmt(r.t_dec)}</div></td><td>${px(r.entry)}</td>
@@ -2087,6 +2114,7 @@ function renderPlanAlerts() {
     ${L.on ? `<h4>Liquidity alerts</h4>${liqRows ? `<div class="scroll"><table class="yt"><tr><th>Time</th><th>Event</th><th>Pool</th><th>Detail</th></tr>${liqRows}</table></div>` : `<p class="muted pa-note">No liquidity alert yet.</p>`}
       <p class="muted pa-note">Pools: previous day / week / month high and low (PDH … PML) and equal highs / lows. Information, not trade signals: sweeps and breaks were tested on 2020–2022 data (B2, B3) and did not beat break-even.</p>` : ""}
     ${twHtml}
+    ${setHtml}
     ${engHtml}
     ${grabHtml}
     ${validationHtml(P.validation)}`;
