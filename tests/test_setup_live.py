@@ -194,3 +194,21 @@ def test_sixty_mode_keeps_setups_and_4h_breakouts_on_the_website(tmp_path, monke
     rep = notify.run(store, {"1h": up["1h"], "4h": _p4(60)}, ["4h"], sent_t=T0 + 360)
     assert not any(b and b[0].startswith("XAUUSD 4h CANDLE BREAKOUT") for b in sent) and rep["h4_alerts"][0]["sent"] == []
     assert rep["setups"]["open"][0]["confirmed"] is True and rep["setups"]["open"][0]["phone"] is False
+
+
+def test_a_weekend_does_not_expire_a_friday_setup():
+    """One trading day of bars, as in B16-B18: a Friday setup still open on Sunday is kept until Monday's bars decide it."""
+    fri = T0 + 4 * 3600                                                        # Fri 18:00 UTC close
+    st = {"id": 3, "tf": "15m", "t": fri - 900, "t_dec": fri, "dir": 1, "entry": 4100.0, "sl": 4087.0, "tp": 4115.0, "kind": "SWEEP"}
+    fri_bars = [fri + 900 * k for k in range(16)]                              # to the 22:00 close: 4 h of trading
+    chart = {"t": fri_bars, "h": [4105.0] * 16, "l": [4095.0] * 16}
+    lines, keep, done = notify.setup_track([st], chart, None, fri + 30 * 3600, 0.0)   # Sunday 00:00 UTC, market shut
+    assert lines == [] and keep == [st] and done == []
+    mon = fri + 49 * 3600                                                      # Sunday 23:00 UTC open, then 20 h more
+    day = fri_bars + [mon + 900 * k for k in range(80)]                        # 96 bars after the setup = one trading day
+    chart = {"t": day, "h": [4105.0] * 96, "l": [4095.0] * 96}
+    lines, keep, done = notify.setup_track([st], chart, None, mon + 80 * 900, 0.0)
+    assert lines == ["XAUUSD 15m SETUP #3 BUY from 4100.00: neither +$15 nor -$13 within a trading day (not counted)"]
+    assert keep == [] and done[0]["result"] == "EXPIRED"
+    lines, keep, done = notify.setup_track([st], {"t": fri_bars, "h": [4105.0] * 16, "l": [4095.0] * 16}, None, fri + 8 * 86400, 0.0)
+    assert done[0]["result"] == "EXPIRED"                                      # the feed stopped: clock limit

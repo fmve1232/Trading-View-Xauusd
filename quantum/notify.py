@@ -737,7 +737,8 @@ def setup_events(t: list, h: list, lo_: list, c: list, lv: dict, z: dict, rows, 
 
 SETUP_ZKEYS = ("ob_bull_lo", "ob_bull_hi", "ob_bear_lo", "ob_bear_hi", "vah", "val", "vpoc")
 SETUP_TP_PX, SETUP_SL_PX = 15.0, 13.0           # the registered outcome: +$15 before -$13 (B16)
-SETUP_TRACK_SEC = 86400                          # one trading day, as in the test
+SETUP_TRACK_SEC = 86400                          # one trading day OF BARS, as in the test (B16-B18: 96 15m bars)
+SETUP_STALE_SEC = 7 * 86400                      # clock limit if the feed stops (a weekend is not trading time)
 SETUP_FILE = "SETUP-LIVE.json"                   # <store>/research_forward/: every alerted setup and its result
 SETUP_HIST = {"SWEEP": (0.466, 5918, 0.462, "not an edge"),        # B16 development 2020-22 (research/B16_RESULTS.md):
               "BREAKOUT": (0.461, 6729, 0.463, "not an edge")}     # +$15 before -$13, rate, n, random same mix, verdict
@@ -1009,14 +1010,16 @@ def setup_track(setups: list[dict], chart: dict, p5: dict | None, now_t: int, of
     decided; no result within a trading day = EXPIRED (not counted)."""
     lines, keep, closed = [], [], []
     for s in setups:
-        path = plan_path5(s, p5) or plan_path(s, chart)
+        p5path = plan_path5(s, p5)
+        path = p5path or plan_path(s, chart)
         side = "BUY" if s["dir"] == 1 else "SELL"
         what = "4h CANDLE BREAKOUT" if s.get("kind") == "4H BREAKOUT" else "15m SETUP"   # the alert's own label
         head = f"XAUUSD {what} #{s['id']} {side} from {_fmt(s['entry'], off)}"
         if path["result"] is None:
-            if now_t - s["t_dec"] > SETUP_TRACK_SEC:
+            traded = path["bars"] * (300 if p5path else 900)      # trading time covered by bars, so a weekend does not count
+            if traded >= SETUP_TRACK_SEC or now_t - s["t_dec"] > SETUP_STALE_SEC:
                 closed.append({**s, **path, "result": "EXPIRED", "t_res": now_t})
-                lines.append(f"{head}: neither +$15 nor -$13 within a day (not counted)")
+                lines.append(f"{head}: neither +$15 nor -$13 within a trading day (not counted)")
             else:
                 keep.append(s)
             continue
@@ -1611,7 +1614,8 @@ def send(lines: list[str]) -> list[str]:
 
 
 GATE_NAMES = {"Trend": "trend", "HTF": "higher-timeframe gate", "Sess": "session", "Trig": "no trigger", "Recent": "old bar",
-              "News": "news", "DD": "drawdown", "all passed": "all gates passed (vetoed or already in a trade)", "?": "not logged"}
+              "News": "news", "DD": "drawdown", "all passed": "all gates passed (vetoed or already in a trade)",
+              "?": "reason unclear"}   # '?': the engine's log for that bar could not be split into BUY / SELL reasons
 
 
 def h_records(store_dir: str | None, tf: str) -> dict:
