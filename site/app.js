@@ -2074,7 +2074,7 @@ function renderPlanAlerts() {
     const h4r = h4h ? `${pct(100 * h4h[0], 1)} of ${Number(h4h[1]).toLocaleString("en-US")} (random ${pct(100 * h4h[2], 1)}): ${esc(h4h[3])}` : "—";
     const conf = hc ? `${pct(100 * hc[0], 1)} of ${Number(hc[1]).toLocaleString("en-US")} (random ${pct(100 * hc[2], 1)}): ${esc(hc[3])}` : "—";
     return `<h4>Setups from your rules (sweeps and breakouts)</h4>
-      <div class="kv"><div>Phone</div><div>${SU.quality ? "<b>quality mode</b>: 15m setups and 4h candle breakouts, each only with all 4 confirmations (beyond a day/week/month level, trend 3 of 3, engine bias, London/NY)" : "every setup"}</div>
+      <div class="kv"><div>Phone</div><div>${SU.sixty ? "website only: setups are below 60% (operator, 2026-11-06: alerts above 60% only)" : SU.quality ? "<b>quality mode</b>: 15m setups and 4h candle breakouts, each only with all 4 confirmations (beyond a day/week/month level, trend 3 of 3, engine bias, London/NY)" : "every setup"}</div>
         <div>3-year record: 4h breakout + all 4</div><div>${h4r}</div>
         <div>Live: 4h breakout + all 4</div><div>${liveT("4H CONFIRMED")}</div>
         <div>3-year record: 15m setups + all 4</div><div>${conf}</div>
@@ -2109,7 +2109,7 @@ function renderPlanAlerts() {
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
       <div>Break-even after costs</div><div>${pct(100 * P.break_even)}</div>
       <div>Phone alerts</div><div class="${on ? "bull" : "warn"}">${on ? "ON via " + esc(ch.join(", ")) : "OFF · add the NTFY_TOPIC secret"}</div>
-      <div>Signals alerted</div><div>${esc((P.tfs || []).join(", ") || "—")}</div>
+      <div>Signals alerted</div><div>${P.mode === "sixty" ? `<b>phone: ${esc((P.phone_tfs || []).join(", ") || "none")} only</b> (the one alert with a record above 60%: 64% of 70 and 61% of 44, not proven) · tracked: ${esc((P.tfs || []).join(", ") || "—")}` : esc((P.tfs || []).join(", ") || "—")}</div>
       <div>On MT5</div><div>SL ${isNum(dSl) ? "$" + f(dSl, 2) : "—"} and TP ${isNum(dTp) ? "$" + f(dTp, 2) : "—"}${c.tp2_usd && c.lot > 0 ? ` (TP2 $${f(c.tp2_usd / (c.lot * 100), 2)} on the second half)` : ""} from <b>your fill</b>: right at any broker price</div>
       <div>Alert delay</div><div>${delay}</div>
       <div>Liquidity alerts</div><div>${L.on === false ? "OFF" : L.on ? `ON · near = within $${f(L.near_usd, 2)} · grab / break once per pool per day` : "—"}</div></div>

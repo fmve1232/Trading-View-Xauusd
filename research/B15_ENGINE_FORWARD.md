@@ -54,3 +54,12 @@ seen?
   trades, no checks and no verdict.
 - **Freeze key:** unchanged, `5e4630924d663fc5:a6f2be58c74887ed`.
 - **Counted plans:** only those whose signal closed at or after the start. Earlier plans are not counted.
+
+## Note, 2026-11-06: phone delivery narrowed (the test is unchanged)
+
+- **Operator:** "ALERTS WITH MORE THAN 60% SUCCESSFUL TRADES ONLY".
+- **Phone:** from then on it receives only the 15m engine signals (`ALERT_MODE=sixty`).
+- **This test:** its stream is still every plan the alerts open on 15m, 30m, 1h and 4h. Plans keep opening on every
+  alerted timeframe, with the alert-time price, delay and LATE flag recorded as before, so the stream and the decision
+  rule are untouched.
+- **Reporting:** the 15m share can be reported beside the verdict as a secondary figure. It is not a new test.
