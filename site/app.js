@@ -2032,6 +2032,28 @@ function renderPlanAlerts() {
         from the bar's close, +$13 / −$13 on 5-minute bars for one trading day. Rules fixed before any data
         (research/registrations/B9-GRAB-FWD.json). It is not a proven signal until the verdict says PROVEN; NOT PROVEN means not confirmed.</p>`;
   })();
+  // B15-ENGINE-FWD (research/registrations/B15-ENGINE-FWD.json): the engine's own signal alerts, TP1 +$13 before SL -$13
+  const E = A.engine_test;
+  const engHtml = (() => {
+    if (!E) return "";
+    const v = E.verdict && E.verdict.verdict, pill = v === "PROVEN" ? "bull" : v === "NOT PROVEN" ? "bear" : "warn";
+    const rate = isNum(E.rate) ? `${pct(100 * E.rate, 1)} of ${E.n}${E.wilson ? ` <span class="dim">(95% ${pct(100 * E.wilson[0])}–${pct(100 * E.wilson[1])})</span>` : ""}` : "no result yet";
+    const tfs = Object.entries(E.by_tf || {}).map(([k, g]) => `${esc(k)} ${g.tp}/${g.n}`).join(" · ") || "—";
+    const chk = (E.checks || []).map((c) => `${c.n}: ${c.tp}/${c.n} ${c.proven ? "✓" : "✗"}`).join(" · ") || "none yet";
+    const t2 = E.tp2 && E.tp2.of_tp1 ? `${E.tp2.hit} of ${E.tp2.of_tp1} TP1 winners went on to TP2` : "—";
+    return `<h4>Engine signal test (registered ${esc(E.id)})</h4>
+      <div class="kv"><div>Status</div><div><span class="pill ${pill}">${esc(v || "COLLECTING")}</span> ${esc(String(E.status || "").replace(/^COLLECTING: /, ""))}</div>
+        <div>TP1 +$13 before SL −$13</div><div>${rate}</div>
+        <div>Break-even</div><div>${pct(100 * E.break_even, 1)}</div>
+        <div>By timeframe</div><div>${tfs}</div>
+        <div>TP2 +$20 after TP1</div><div>${t2}</div>
+        <div>Counted</div><div>${E.tp || 0} TP1 · ${E.sl || 0} SL · open ${E.open || 0} · not counted: ${E.expired || 0} expired, ${E.excluded || 0} other sizes</div>
+        <div>Verdict checks</div><div>${esc(chk)} <span class="dim">(only at ${esc((E.looks || []).join(", "))} results; deadline ${esc(E.deadline)})</span></div>
+        <div>Started</div><div>${isNum(E.started_utc) ? tfmt(E.started_utc) : "—"}</div></div>
+      <p class="muted pa-note">Every engine signal alert that opens a plan (15m / 30m / 1h / 4h; repeats excluded), scored from the signal's close:
+        did price reach +$13 before −$13? Rules fixed before any result (research/registrations/B15-ENGINE-FWD.json). PROVEN needs the 95% range above
+        break-even at a check; until then the signals are unproven, however the running rate looks.</p>`;
+  })();
   // Part A (2026-11-05): one idea, one alert -- same-direction signals within 4 h and $15 of an open plan open no plan
   const RP = P.repeats || [], RR = P.repeat_rule || {};
   const repRows = RP.slice(0, 6).map((r) => `<tr><td>${esc(r.tf)} ${side(r.dir)}<div>${tfmt(r.t_dec)}</div></td><td>${px(r.entry)}</td>
@@ -2065,6 +2087,7 @@ function renderPlanAlerts() {
     ${L.on ? `<h4>Liquidity alerts</h4>${liqRows ? `<div class="scroll"><table class="yt"><tr><th>Time</th><th>Event</th><th>Pool</th><th>Detail</th></tr>${liqRows}</table></div>` : `<p class="muted pa-note">No liquidity alert yet.</p>`}
       <p class="muted pa-note">Pools: previous day / week / month high and low (PDH … PML) and equal highs / lows. Information, not trade signals: sweeps and breaks were tested on 2020–2022 data (B2, B3) and did not beat break-even.</p>` : ""}
     ${twHtml}
+    ${engHtml}
     ${grabHtml}
     ${validationHtml(P.validation)}`;
   el.querySelectorAll("button[data-vp]").forEach((b) => { b.onclick = () => { S.vp = b.dataset.vp; store.set("vp", S.vp); renderPlanAlerts(); }; });

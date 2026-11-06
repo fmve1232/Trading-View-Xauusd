@@ -609,6 +609,107 @@ def grab_verdict(trades: list[dict], book: dict, now_t: int) -> dict:
             "wilson": [lo, hi] if n else None, "next_check": None if verdict else nxt, "status": status}
 
 
+# ---------------- B15-ENGINE-FWD: the registered live test of the engine's own signal alerts ----------------
+ENG_ID, ENG_FILE = "B15-ENGINE-FWD", "B15-ENGINE-FWD.json"   # in <store>/research_forward/, copied to forward-ledger
+ENG_LOOKS = (30, 40, 50, 60, 70, 80, 90, 100)
+ENG_PX = 13.0                            # TP1 and SL in price $ (registered)
+ENG_BE = (13.0 + 0.26) / 26.0            # 51.0%
+ENG_DEADLINE = "2027-06-30"
+
+
+def eng_trades(vlog: list[dict], started: int) -> tuple[list[dict], int]:
+    """The test's trades: closed alert plans whose signal closed at / after the start, with TP1 and SL $13 of price.
+    TP1 first = TP; SL or both-in-one-bar = SL; no result in 3 days = EXPIRED (not counted). Returns (trades, excluded)."""
+    out, excluded = [], 0
+    for r in vlog:
+        if _decision_t(r) < started or r.get("result") not in ("TP", "SL", "BOTH", "EXPIRED"):
+            continue
+        if abs(abs(r["tp"] - r["entry"]) - ENG_PX) > 0.011 or abs(abs(r["entry"] - r["sl"]) - ENG_PX) > 0.011:
+            excluded += 1
+            continue
+        out.append({"id": r.get("id"), "tf": r["tf"], "dir": r["dir"], "entry": r["entry"], "t_dec": _decision_t(r),
+                    "status": "TP" if r["result"] == "TP" else "EXPIRED" if r["result"] == "EXPIRED" else "SL",
+                    "result": r["result"], "t_res": int(r.get("t_res") or 0), "tp2_result": r.get("tp2_result"),
+                    "path": r.get("path"), "late": r.get("late"), "move_alert": r.get("move_alert"),
+                    "session": r.get("session") or session_of(_decision_t(r))})
+    return out, excluded
+
+
+def eng_verdict(trades: list[dict], book: dict, now_t: int) -> dict:
+    """The registered rule (that of B9-GRAB-FWD): checks only at 30, 40 ... 100 decided results in the order they
+    resolved; PROVEN when the Wilson 95% lower bound is above 51.0% at a check; NOT PROVEN at 100 or after the
+    deadline. A verdict is final."""
+    dec = sorted((x for x in trades if x["status"] in ("TP", "SL")), key=lambda x: (x["t_res"], x["t_dec"]))
+    checks = list(book.get("checks") or [])
+    verdict = book.get("verdict")
+    if verdict is None:
+        for look in ENG_LOOKS:
+            if len(dec) < look or any(ch["n"] == look for ch in checks):
+                continue
+            k = sum(x["status"] == "TP" for x in dec[:look])
+            lo, hi = _wilson(k, look)
+            checks.append({"n": look, "tp": k, "wilson": [lo, hi], "utc": now_t, "proven": lo > ENG_BE})
+            if lo > ENG_BE:
+                verdict = {"verdict": "PROVEN", "at_n": look, "utc": now_t}
+                break
+        if verdict is None and (len(dec) >= ENG_LOOKS[-1] or
+                                datetime.fromtimestamp(now_t, timezone.utc).date() > date.fromisoformat(ENG_DEADLINE)):
+            verdict = {"verdict": "NOT PROVEN", "at_n": len(dec), "utc": now_t}
+    n, k = len(dec), sum(x["status"] == "TP" for x in dec)
+    lo, hi = _wilson(k, n)
+    nxt = next((x for x in ENG_LOOKS if x > n), None)
+    status = (f"{verdict['verdict']} at {verdict['at_n']} results" if verdict else
+              f"COLLECTING: {n} results, {k / n:.0%} TP1 first; {'first' if n < ENG_LOOKS[0] else 'next'} check at {nxt}" if n else
+              f"COLLECTING: no result yet; first check at {ENG_LOOKS[0]}")
+    return {"checks": checks, "verdict": verdict, "n": n, "tp": k, "sl": n - k, "rate": k / n if n else None,
+            "wilson": [lo, hi] if n else None, "next_check": None if verdict else nxt, "status": status}
+
+
+def eng_run(store_dir: str | None, vlog: list[dict], plans: list[dict], now_t: int) -> tuple[list[str], dict]:
+    """Every run: rebuild the test's trades from the plan log, apply the rule, save the record (every trade and every
+    check) to <store>/research_forward/, and return a phone line for each new check and for the verdict."""
+    path = os.path.join(store_dir, GRAB_DIR, ENG_FILE) if store_dir else None
+    book: dict = {}
+    if path and os.path.exists(path):
+        with open(path) as f:
+            book = json.load(f)
+    started = int(book.get("started_utc") or now_t)
+    trades, excluded = eng_trades(vlog, started)
+    v = eng_verdict(trades, book, now_t)
+    old = {c["n"] for c in book.get("checks") or []}
+    lines = []
+    for c in v["checks"]:
+        if c["n"] not in old:
+            lines.append(f"ENGINE TEST ({ENG_ID}) CHECK at {c['n']} results: TP1 first {c['tp']}/{c['n']} = {c['tp'] / c['n']:.0%} "
+                         f"(95% {c['wilson'][0]:.0%}-{c['wilson'][1]:.0%}; break-even {ENG_BE:.0%}) -> "
+                         + ("PROVEN" if c["proven"] else "not proven yet"))
+    if v["verdict"] and not book.get("verdict"):
+        lines.append(f"ENGINE TEST ({ENG_ID}): {v['verdict']['verdict']} at {v['verdict']['at_n']} results. "
+                     + ("The engine's signal alerts beat break-even on new data; an average, not a guarantee for one trade."
+                        if v["verdict"]["verdict"] == "PROVEN" else "Not confirmed: treat the engine's alerts as unproven."))
+    rec = {"id": ENG_ID, "registration": "research/registrations/B15-ENGINE-FWD.json", "started_utc": started,
+           "trades": trades, "excluded": excluded, "checks": v["checks"], "verdict": v["verdict"]}
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(rec, f, indent=1)
+    by_tf: dict = {}
+    for x in trades:
+        if x["status"] in ("TP", "SL"):
+            g = by_tf.setdefault(x["tf"], [0, 0])
+            g[0] += 1
+            g[1] += x["status"] == "TP"
+    tp1 = [x for x in trades if x["status"] == "TP" and x.get("tp2_result")]
+    block = {"id": ENG_ID, "started_utc": started, "break_even": ENG_BE, "looks": list(ENG_LOOKS), "deadline": ENG_DEADLINE,
+             **{k: v[k] for k in ("n", "tp", "sl", "rate", "wilson", "status", "next_check", "verdict", "checks")},
+             "open": sum(1 for p in plans if _decision_t(p) >= started), "excluded": excluded,
+             "expired": sum(1 for x in trades if x["status"] == "EXPIRED"),
+             "by_tf": {k: {"n": a, "tp": b} for k, (a, b) in sorted(by_tf.items())},
+             "tp2": {"of_tp1": len(tp1), "hit": sum(1 for x in tp1 if x["tp2_result"] == "TP2")},
+             "recent": trades[::-1][:10]}
+    return lines, block
+
+
 def grab_lines_new(tr: dict, now: dict | None, off: float = 0.0) -> list[str]:
     side, d = ("BUY", 1) if tr["dir"] == 1 else ("SELL", -1)
     back = "above" if d == 1 else "below"
@@ -1225,6 +1326,10 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
         report["grab_test_alert"] = {"lines": glines, "sent": send(glines)}
+    if pl_cfg:                                             # B15-ENGINE-FWD, every run (reads the plans' results)
+        elines, report["engine_test"] = eng_run(store_dir, vlog, plans, t_send)
+        if elines:
+            report["engine_test_alert"] = {"lines": elines, "sent": send(elines)}
     if liq_on() and alerted:                               # price near a pool: once per run, not per timeframe
         ev = liquidity_near(payloads, tfs, seen, t_send)
         if ev:
@@ -1265,6 +1370,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                   if state.get("report_day") and state["report_day"] != day and trading_day(x["t_close"]) == state["report_day"]]
         if lines or g_prev:                                # the registered GRAB test's state rides with the daily report
             lines.append(f"GRAB TEST ({GRAB_ID}): {gt['status']} | break-even {GRAB_BE:.0%}")
+        et = report.get("engine_test")
+        if lines and et:                                   # and the engine test's (B15-ENGINE-FWD)
+            lines.append(f"ENGINE TEST ({ENG_ID}): {et['status']} | open {et['open']} | break-even {ENG_BE:.0%}")
         state["report_day"], state["report_week"] = day, week
         if lines:
             report["validation_report"] = {"lines": lines, "sent": send(lines)}
