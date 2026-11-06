@@ -803,10 +803,41 @@ def setup_checks(e: dict, votes: list, bull: list, bear: list) -> dict:
             "session": session_of(e["t"] + 900) in SETUP_SESSIONS}
 
 
+def h4_events(t4: list, h4: list, l4: list, c4: list, bull4: list, bear4: list, lv4: dict, votes4: list, rows) -> list[dict]:
+    """B18 (research/registrations/B18.json) on closed 4h candles (open times t4): a close above the previous 4h high
+    (BUY) or below its low (SELL), with the four confirmations: beyond a previous day / week / month level in that
+    direction, all three trend votes at the close (votes4), the engine's own bias on the candle, a London / New York
+    close. One event per breakout candle."""
+    out = []
+    for i in rows:
+        if i < 1 or c4[i] is None or h4[i - 1] is None or l4[i - 1] is None:
+            continue
+        d = 1 if c4[i] > h4[i - 1] else -1 if c4[i] < l4[i - 1] else 0
+        if d == 0:
+            continue
+        names = ("PDH", "PWH", "PMH") if d > 0 else ("PDL", "PWL", "PML")
+        beyond = []
+        for nm in names:
+            x = (lv4.get(nm) or [None] * (i + 1))[i]
+            if x is not None and (c4[i] - x) * d > 0:
+                beyond.append((nm, x))
+        bu, be = bull4[i] if i < len(bull4) else None, bear4[i] if i < len(bear4) else None
+        v = votes4[i] if i < len(votes4) else None
+        checks = {"major": bool(beyond), "trend": v is not None and v == 3 * d,
+                  "bias": bu is not None and be is not None and ((bu >= be) if d > 0 else (be >= bu)),
+                  "session": session_of(int(t4[i]) + 14400) in SETUP_SESSIONS}
+        out.append({"i": i, "t": int(t4[i]), "t_close": int(t4[i]) + 14400, "dir": d, "close": c4[i], "kind": "4H BREAKOUT",
+                    "prev_high": h4[i - 1], "prev_low": l4[i - 1], "beyond": beyond, "checks": checks,
+                    "confirmed": all(checks.values())})
+    return out
+
+
 def quality() -> bool:
     """ALERT_MODE (operator, 2026-11-06: "quality rather than the quantity"): quality (default) sends only engine
     signals with their follow-ups, setups with all four B17 confirmations, the trend-change warning, the registered
     tests' checks and the reports; liquidity, structure and H-setup lines and unconfirmed setups stay on the website.
+    Since B18 (operator, 2026-11-06: "confirm movement of market at every 4 h candle"), the phone's setup alerts in this
+    mode are the 4h candle breakouts with all four confirmations; the 15m setups stay on the website and in the records.
     all = every alert as before."""
     return os.environ.get("ALERT_MODE", "quality").strip().lower() != "all"
 
@@ -847,6 +878,61 @@ def setup_scan(payloads: dict, since: int | None, seen: dict) -> list[dict]:
             e["checks"] = setup_checks(e, votes, bull, bear)
             e["confirmed"] = all(e["checks"].values())
     return ev
+
+
+H4_HIST = (0.458, 319, 0.462, "not an edge")   # B18 development 2020-22: +$15 before -$13, n, random, verdict
+
+
+def h4_scan(payloads: dict, since: int | None) -> list[dict]:
+    """B18 on the site's 4h candles closed after since (levels from the 4h payload, PMH / PML and trend from the 1h)."""
+    p = payloads.get("4h")
+    if not p or (p.get("meta") or {}).get("synthetic"):
+        return []
+    ch = p.get("chart") or {}
+    t, h, lo_, c = ch.get("t") or [], ch.get("h") or [], ch.get("l") or [], ch.get("c") or []
+    n = min(len(t), len(h), len(lo_), len(c))
+    if n < 2:
+        return []
+    t, h, lo_, c = t[:n], h[:n], lo_[:n], c[:n]
+    h1 = (payloads.get("1h") or {}).get("chart")
+    lv = setup_levels(t, h, lo_, h1, {"t": t, "h": h, "l": lo_})
+    for k in ("pdh", "pdl", "pwh", "pwl"):
+        lv[k.upper()] = (ch.get(k) or [None] * n)[:n]
+    votes = trend_votes([x + 14400 for x in t], h1, {"t": t, "c": c})
+    rows = [i for i in range(n) if since is None or t[i] > since]
+    return h4_events(t, h, lo_, c, (ch.get("bull") or [None] * n)[:n], (ch.get("bear") or [None] * n)[:n], lv, votes, rows)
+
+
+def h4_lines(e: dict, sid: int, pl: dict | None, now: dict | None, off: float, live: dict) -> list[str]:
+    d, side = e["dir"], "BUY" if e["dir"] == 1 else "SELL"
+    x = e["close"]
+    lot = pl["lot"] if pl else 0.5
+    oz = lot * 100.0
+    prev = e["prev_high"] if d == 1 else e["prev_low"]
+    beyond = " + ".join(f"{SETUP_NAMES[nm]} {_fmt(v, off)}" for nm, v in e["beyond"]) or "no day / week / month level"
+    head = (f"XAUUSD 4h CANDLE BREAKOUT #{sid} {side} (your rule) -- the 4h candle closed {'above' if d == 1 else 'below'} the "
+            f"previous 4h {'high' if d == 1 else 'low'} {_fmt(prev, off)} at {_fmt(x, off)} | beyond {beyond} | "
+            f"candle closed {clocks(e['t_close'])}")
+    out = [head]
+    tm = alert_timing({"t": e["t"], "px": x, "dir": d, "sl": x - d * SETUP_SL_PX}, "4h", now, {"sl_px": SETUP_SL_PX})
+    late, timing = timing_lines(tm, off)
+    if late:
+        out.append(late)
+    ck = e["checks"]
+    out.append("CONFIRMATIONS: " + " | ".join(f"{nm} {'YES' if ck.get(k) else 'no'}" for k, nm in (
+        ("major", "beyond a day/week/month level"), ("trend", "trend 3 of 3"), ("bias", "engine bias"), ("session", "London/NY")))
+        + (" -> ALL 4" if e["confirmed"] else ""))
+    out.append(f"ENTRY {_fmt(x, off)} | SL {_fmt(x - d * SETUP_SL_PX, off)} (-${SETUP_SL_PX * oz:,.0f}) | TP1 {_fmt(x + d * 13, off)} "
+               f"(close half, SL to entry) | +$15 at {_fmt(x + d * SETUP_TP_PX, off)} | TP2 {_fmt(x + d * 20, off)} | at {lot:g} lot")
+    if pl:
+        out.append(mt5_line(d, pl))
+    g = live.get("4H CONFIRMED") or [0, 0]
+    out.append(f"3-year record of this rule with all 4 (B18), 2020-22: +$15 before -$13 {H4_HIST[0]:.0%} of {H4_HIST[1]:,} "
+               f"(random {H4_HIST[2]:.0%}): {H4_HIST[3]}" + (f" | live so far {g[1]}/{g[0]}" if g[0] else "")
+               + " | information, not a confirmed signal")
+    if timing:
+        out.append(timing)
+    return out
 
 
 def setup_lines(e: dict, sid: int, pl: dict | None, now: dict | None, off: float, live: dict) -> list[str]:
@@ -894,7 +980,8 @@ def setup_track(setups: list[dict], chart: dict, p5: dict | None, now_t: int, of
     for s in setups:
         path = plan_path5(s, p5) or plan_path(s, chart)
         side = "BUY" if s["dir"] == 1 else "SELL"
-        head = f"XAUUSD 15m SETUP #{s['id']} {side} from {_fmt(s['entry'], off)}"
+        what = "4h CANDLE BREAKOUT" if s.get("kind") == "4H BREAKOUT" else "15m SETUP"   # the alert's own label
+        head = f"XAUUSD {what} #{s['id']} {side} from {_fmt(s['entry'], off)}"
         if path["result"] is None:
             if now_t - s["t_dec"] > SETUP_TRACK_SEC:
                 closed.append({**s, **path, "result": "EXPIRED", "t_res": now_t})
@@ -919,7 +1006,8 @@ def setup_record(store_dir: str | None, log: list[dict], now_t: int) -> dict:
     live: dict = {}
     for r in log:
         if r.get("result") in ("TP", "SL", "BOTH"):
-            for key in (r["kind"], "CONFIRMED") if r.get("confirmed") else (r["kind"],):
+            ck = "4H CONFIRMED" if r["kind"] == "4H BREAKOUT" else "CONFIRMED"
+            for key in (r["kind"], ck) if r.get("confirmed") else (r["kind"],):
                 g = live.setdefault(key, [0, 0])
                 g[0] += 1
                 g[1] += r["result"] == "TP"
@@ -1643,17 +1731,31 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                 s_open.append({"id": sid, "tf": "15m", "t": e["t"], "t_dec": e["t"] + 900, "dir": d, "entry": x, "kind": e["kind"],
                                "levels": e["levels"], "zones": e["zones"], "sl": round(x - d * SETUP_SL_PX, 2),
                                "tp": round(x + d * SETUP_TP_PX, 2), "checks": e.get("checks"), "confirmed": conf,
-                               "phone": conf or not quality(), "t_alert": t_send})
+                               "phone": not quality(), "t_alert": t_send})
                 sl_ = setup_lines(e, sid, pl_cfg, now, off, live)
-                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if (conf or not quality()) else []})
+                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": [] if quality() else send(sl_)})
             if s_upd:                                      # results only for setups that reached the phone
                 shown = {c_["id"] for c_ in s_done if c_.get("phone", True)}
-                s_upd = [x for x in s_upd if any(f"SETUP #{k} " in x for k in shown)]
+                s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]
                 if s_upd:
                     report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
             state["setups"], state["setup_log"] = s_open[-60:], s_log
             keep_s = trading_day(t_send - 3 * 86400)
             state["setup_seen"] = {k: v for k, v in sseen.items() if v >= keep_s}
+        if tf == "4h" and setups_on():                     # B18: the operator's 4h candle breakout with all four confirmations
+            live = setup_record(None, state.get("setup_log", []), t_send)["live"]
+            s_open = list(state.get("setups", []))
+            for e in h4_scan(payloads, since):
+                state["setup_seq"] = int(state.get("setup_seq", 0)) + 1
+                sid, d, x = state["setup_seq"], e["dir"], e["close"]
+                phone = e["confirmed"] or not quality()
+                s_open.append({"id": sid, "tf": "15m", "t": e["t_close"] - 900, "t_dec": e["t_close"], "dir": d, "entry": x,
+                               "kind": "4H BREAKOUT", "levels": e["beyond"], "zones": [], "sl": round(x - d * SETUP_SL_PX, 2),
+                               "tp": round(x + d * SETUP_TP_PX, 2), "checks": e["checks"], "confirmed": e["confirmed"],
+                               "phone": phone, "t_alert": t_send})
+                hl = h4_lines(e, sid, pl_cfg, now, off, live)
+                report.setdefault("h4_alerts", []).append({"lines": hl, "sent": send(hl) if phone else []})
+            state["setups"] = s_open[-60:]
         state[tf] = last_t
     if pl_cfg:
         state["plans"], state["plan_log"], state["plan_tally"] = plans[-PLAN_MAX_OPEN:], log, tally
@@ -1677,6 +1779,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     if setups_on():                                        # the live SETUP record (descriptive) and the site block
         srec = setup_record(store_dir, state.get("setup_log", []), t_send)
         report["setups"] = {"on": True, "quality": quality(), "hist_confirmed": list(SETUP_HIST_CONFIRMED) if SETUP_HIST_CONFIRMED else None,
+                            "hist_4h": list(H4_HIST),
                             "started_utc": srec["started_utc"], "live": srec["live"], "open": state.get("setups", []),
                             "recent": state.get("setup_log", [])[::-1][:12], "hist": {k: list(v) for k, v in SETUP_HIST.items()},
                             "rule": "research/registrations/B16.json", "tp_px": SETUP_TP_PX, "sl_px": SETUP_SL_PX}

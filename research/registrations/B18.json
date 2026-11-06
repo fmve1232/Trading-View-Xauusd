@@ -1,0 +1,35 @@
+{
+  "id": "B18",
+  "title": "The operator's 4h candle breakout with all four confirmations (day / week / month level, trend 3 of 3, engine bias, London / New York close)",
+  "status": "APPROVED by the operator 2026-11-06; development part runs once after this commit; validation opens once only if the primary passes",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-06 (chat): \"I need quality trades with confirm movement of market at every 4 h candle confirmation. You have to strictly follow my instructions\"; then chose \"4h candle breakout alert\" and \"4h + all four\". Standing approval 2026-11-05. Recorded before any B18 code or outcome.",
+  "partitions": [
+    "development",
+    "validation"
+  ],
+  "created_utc": "2026-11-06",
+  "rules": {
+    "candles": "4h candles aligned to the 17:00 New York session (the site's 4h timeframe; quantum.data.sources.resample_ny_session of the 1h bars)",
+    "breakout": "at each closed 4h candle: BUY when it closes above the previous 4h candle's high; SELL when it closes below the previous 4h candle's low",
+    "C1 level": "the close is beyond at least one previous day / week / month level in the trade's direction: above PDH, PWH or PMH for a BUY; below PDL, PWL or PML for a SELL",
+    "C2 trend": "all three trend votes agree with the direction at the candle's close (quantum.notify.trend_votes evaluated at the close: the last completed trading day's close against its 20-day average, the 4h and 1h EMA20 against EMA50 of the last bars closed at that time)",
+    "C3 engine bias": "the frozen engine's own score on that 4h candle agrees (bull >= bear for a BUY, bear >= bull for a SELL), from the engine run on 4h bars",
+    "C4 session": "the candle closes in London or New York hours (quantum.notify.session_of: London, London+NY or New York)",
+    "alert": "only when the breakout and all four confirmations hold; one alert per candle"
+  },
+  "outcome": {
+    "primary": "+$15 before -$13 from the 4h close, dollars at $4,000 scaled by entry / 4000, on 15m bars for 96 bars (quantum.research.b13.race); a bar reaching both levels is a loss unless it opened beyond the target",
+    "secondary": "+$13 and +$20 before -$13; the ladder from every 4h breakout through C1, C1+C2, C1+C2+C3 to all four; '+$15 at any time in the day'",
+    "costs": "harness.cost_pts (frozen model) and the operator's $0.26",
+    "random_baseline": "every third 15m close of the scored window, long and short, weighted by the set's long / short mix; and, reported beside it, 4h closes taken in the same directions"
+  },
+  "primary_test": "One hypothesis (confirmed 4h breakouts): P1 rate above random (one-sided z, alpha 0.05) and P2 mean net after the frozen costs > 0 (t >= 1.645). Fewer than 30 decided trades: INSUFFICIENT.",
+  "data": "research-data @ a0d74e4980e78d8662af9dd0fe7c294cb8e63043, development 2020-01-24 -> 2023-01-24 scored from 2020-04-01; the frozen web.8 engine (treatment, config.DEFAULT) on 4h bars from quantum.research.b10.make_market with volume 1 per bar (no volume on these data; the B16 amendment)",
+  "alerts": "The live alert applies the same code to the site's 4h, 1h and 15m payloads at each 4h close and states this test's measured rate. In quality mode the phone's setup alerts are these confirmed 4h breakouts; the 15m setups stay on the website and in the records.",
+  "decision": {
+    "if_pass": "Validation opens once for the rule, unchanged; only a validation pass earns a registered live forward test with a verdict.",
+    "if_fail_or_insufficient": "Recorded; the alerts still follow the operator's rule and state the measured rate and 'not a proven edge'. No re-run with changed candles, confirmations or targets."
+  },
+  "unchanged": "the engine, its configuration and every freeze key; B9-GRAB-FWD; B15-ENGINE-FWD; B16; B17"
+}

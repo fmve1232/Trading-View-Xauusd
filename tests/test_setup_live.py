@@ -108,7 +108,7 @@ def _trend_up_payloads(bars, bull=60.0, bear=30.0):
     return {"15m": p, "1h": h1, "4h": h4}
 
 
-def test_quality_mode_sends_only_confirmed_setups(tmp_path, monkeypatch):
+def test_quality_mode_keeps_15m_setups_on_the_website(tmp_path, monkeypatch):
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
     monkeypatch.setenv("ALERT_MODE", "quality")
@@ -120,19 +120,54 @@ def test_quality_mode_sends_only_confirmed_setups(tmp_path, monkeypatch):
     brk = base + [(T0 + 900, 4151.0, 4145.0, 4150.0)]                                  # closes above PDH 4147.60, above value
     pay = _trend_up_payloads(brk)
     pay["15m"]["chart"]["vah"] = [4140.0, 4140.0]
-    notify.run(store, pay, ["15m"], sent_t=T0 + 1800 + 300)
-    a = next(b for b in sent if b and b[0].startswith("XAUUSD 15m SETUP #1 BUY"))
+    rep = notify.run(store, pay, ["15m"], sent_t=T0 + 1800 + 300)
+    assert not any(b and b[0].startswith("XAUUSD 15m SETUP") for b in sent)            # quality: the phone gets the 4h rule
+    assert rep["setup_alerts"][0]["sent"] == [] and rep["setups"]["open"][0]["confirmed"] is True
     assert any(x.startswith("CONFIRMATIONS: day/week/month level YES | trend 3 of 3 YES | engine bias YES | London/NY YES -> ALL 4")
+               for x in rep["setup_alerts"][0]["lines"])
+
+
+def _p4(n, last_close=None, bull=60.0, bear=30.0):
+    """4h candles opening every 4 h up to T0 - 4h (the last closes at T0 = 14:00 UTC, London+NY), rising."""
+    t = [T0 - 14400 * (60 - k) for k in range(n)]
+    c = [4000.0 + 2 * k for k in range(n)]
+    if last_close is not None:
+        c[-1] = last_close
+    return {"meta": {"tf": "4h", "synthetic": False, "generated_utc": "2026-11-06T14:06:00+00:00", "price_source": "td"},
+            "markers": [], "decisions": [], "news": None,
+            "chart": {"t": t, "h": [x + 1 for x in c], "l": [x - 1 for x in c], "c": c, "bull": [bull] * n, "bear": [bear] * n,
+                      "pdh": [c[-1] - 5] * n, "pdl": [3900.0] * n, "pwh": [4300.0] * n, "pwl": [3800.0] * n}}
+
+
+def test_4h_breakout_with_all_four_is_sent(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setenv("ALERT_MODE", "quality")
+    store = str(tmp_path)
+    up = _trend_up_payloads([(T0, 4147.0, 4140.0, 4146.0)])
+    notify.run(store, {"1h": up["1h"], "4h": _p4(59)}, ["4h"], sent_t=T0 - 3000)        # first run: position only
+    rep = notify.run(store, {"1h": up["1h"], "4h": _p4(60)}, ["4h"], sent_t=T0 + 360)  # the new candle closed above
+    a = next(b for b in sent if b and b[0].startswith("XAUUSD 4h CANDLE BREAKOUT #1 BUY (your rule)"))
+    assert "closed above the previous 4h high 4117.00 at 4118.00" in a[0]
+    assert any(x.endswith("London/NY YES -> ALL 4") for x in a)
+    assert any(x.startswith("3-year record of this rule with all 4 (B18), 2020-22: +$15 before -$13 46% of 319 (random 46%): not an edge")
                for x in a)
-    assert any("with all 4 confirmations (B17), 2020-22: +$15 before -$13 52% of 184 (random 46%): not proven (p 0.07)" in x for x in a)
-    # the same bar with the engine's bias the other way: recorded, not sent
-    sent.clear()
+    op = rep["setups"]["open"][0]
+    assert (op["kind"], op["t_dec"], op["tp"], op["sl"]) == ("4H BREAKOUT", T0, 4133.0, 4105.0)
+    sent.clear()                                                                          # engine bias the other way: website only
     store2 = str(tmp_path / "b")
-    pay = _trend_up_payloads(base, bull=30.0, bear=60.0)
-    pay["15m"]["chart"]["vah"] = [4140.0]
-    notify.run(store2, pay, ["15m"], sent_t=T0 + 1000)
-    pay = _trend_up_payloads(brk, bull=30.0, bear=60.0)
-    pay["15m"]["chart"]["vah"] = [4140.0, 4140.0]
-    rep = notify.run(store2, pay, ["15m"], sent_t=T0 + 1800 + 300)
-    assert not any(b and b[0].startswith("XAUUSD 15m SETUP") for b in sent)
-    assert rep["setup_alerts"][0]["sent"] == [] and rep["setups"]["open"][0]["confirmed"] is False
+    notify.run(store2, {"1h": up["1h"], "4h": _p4(59, bull=30.0, bear=60.0)}, ["4h"], sent_t=T0 - 3000)
+    rep = notify.run(store2, {"1h": up["1h"], "4h": _p4(60, bull=30.0, bear=60.0)}, ["4h"], sent_t=T0 + 360)
+    assert not any(b and b[0].startswith("XAUUSD 4h CANDLE BREAKOUT") for b in sent) and rep["h4_alerts"][0]["sent"] == []
+
+
+def test_4h_breakout_result_keeps_the_alert_label():
+    """The follow-up names the 4h breakout as its alert did (not '15m SETUP'), on the 15m bars from the 4h close."""
+    s4 = {"id": 7, "tf": "15m", "t": T0 - 900, "t_dec": T0, "dir": 1, "entry": 4118.0, "kind": "4H BREAKOUT",
+          "sl": 4105.0, "tp": 4133.0}
+    s15 = {**s4, "id": 8, "kind": "BREAKOUT"}
+    chart = {"t": [T0 - 900, T0, T0 + 900], "h": [4140.0, 4125.0, 4134.0], "l": [4100.0, 4110.0, 4120.0]}
+    lines, keep, done = notify.setup_track([s4, s15], chart, None, T0 + 1800, 0.0)
+    assert lines == ["XAUUSD 4h CANDLE BREAKOUT #7 BUY from 4118.00: +$15 reached first (4133.00)",
+                     "XAUUSD 15m SETUP #8 BUY from 4118.00: +$15 reached first (4133.00)"]
+    assert keep == [] and [d["result"] for d in done] == ["TP", "TP"]
