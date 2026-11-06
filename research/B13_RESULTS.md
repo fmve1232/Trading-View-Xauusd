@@ -144,3 +144,10 @@ The inputs a discretionary trader reads carry no usable information about the ne
   - the driftless odds of +$10 / +$13 / +$15 / +$20 before the plan's stop, and their value at the plan's lot;
   - whether two stops in a day fit the daily limit (ACCOUNT_USD, DAILY_LIMIT_PCT).
 - **B10 erratum:** see `B10_DEVELOPMENT_RESULTS.md`.
+
+## Erratum (2026-11-07, B19)
+
+- **What was counted:** B13-1 (61.4% of 44 on validation) counted every engine SIGNAL, as B10 did.
+- **One per idea:** under the live REPEAT rule, the 2023–24 engine signals (15m–4h pooled) are 24 ideas, 45.8% of 24 at ±$13 (B19's exit rule).
+- **Development:** the 15m lead (64.3% of 70) is 52.2% of 23.
+- **Source:** `research/B19_RESULTS.md` section 5. The numbers above are left as they were.

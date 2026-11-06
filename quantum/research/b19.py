@@ -305,7 +305,7 @@ def summarize(A: dict, C: dict, T_: dict) -> dict:
 
     def t_of(x):
         sd = float(np.std(x, ddof=1)) if len(x) > 2 else 0.0
-        return float(np.mean(x) / (sd / math.sqrt(len(x)))) if sd > 0 else math.nan
+        return float(np.mean(x) / (sd / math.sqrt(len(x)))) if sd > 1e-9 else math.nan    # identical results: undefined
 
     amb = out == "AMBIGUOUS"
     st = C["status"]

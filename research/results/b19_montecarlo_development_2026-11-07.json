@@ -1,0 +1,116 @@
+{
+ "source": "research/results/b19_development_2026-11-07.json",
+ "sims": 10000,
+ "trades_per_sim": 100,
+ "seed": 19,
+ "strategies": {
+  "ENG 1 as alerted": {
+   "trades": 64,
+   "mean_r": -0.2167903156710188,
+   "median_max_dd_r": 25.01687030441788,
+   "p95_max_dd_r": 40.02074412700266,
+   "p_dd_ge_10r": 0.9795,
+   "p_dd_ge_5r": 0.9996,
+   "median_total_r": -22.03765712602216,
+   "p_total_below_0": 0.9883
+  },
+  "ENG X15F0 E1 S13 T20": {
+   "trades": 20,
+   "mean_r": 0.20538461538461678,
+   "median_max_dd_r": 8.163076923076888,
+   "p95_max_dd_r": 15.686923076923035,
+   "p_dd_ge_10r": 0.2994,
+   "p_dd_ge_5r": 0.9199,
+   "median_total_r": 20.538461538461508,
+   "p_total_below_0": 0.0444
+  },
+  "ENG X15F1 E1 S13 T20": {
+   "trades": 5,
+   "note": "too few trades to resample"
+  },
+  "ENG X20F0 E1 S13 T20": {
+   "trades": 19,
+   "mean_r": 0.006356275303646026,
+   "median_max_dd_r": 13.061538461538246,
+   "p95_max_dd_r": 26.008192307692067,
+   "p_dd_ge_10r": 0.729,
+   "p_dd_ge_5r": 0.9919,
+   "median_total_r": 0.376923076923284,
+   "p_total_below_0": 0.4541
+  },
+  "ENG X20F1 E1 S13 T20": {
+   "trades": 5,
+   "note": "too few trades to resample"
+  },
+  "ENG none E1 S13 T20": {
+   "trades": 64,
+   "mean_r": -0.17239780143113637,
+   "median_max_dd_r": 23.67842410992254,
+   "p95_max_dd_r": 41.434935960521535,
+   "p_dd_ge_10r": 0.9654,
+   "p_dd_ge_5r": 0.9999,
+   "median_total_r": -17.253041741406804,
+   "p_total_below_0": 0.9127
+  },
+  "STR 1 as alerted": {
+   "trades": 409,
+   "mean_r": -0.027999019253837295,
+   "median_max_dd_r": 11.785990118258812,
+   "p95_max_dd_r": 23.449442985716367,
+   "p_dd_ge_10r": 0.6456,
+   "p_dd_ge_5r": 0.9772,
+   "median_total_r": -2.247564333903877,
+   "p_total_below_0": 0.5977
+  },
+  "STR X15F0 E1 S13 T20": {
+   "trades": 125,
+   "mean_r": 0.178228141278675,
+   "median_max_dd_r": 8.743832357857425,
+   "p95_max_dd_r": 17.160152466555,
+   "p_dd_ge_10r": 0.3722,
+   "p_dd_ge_5r": 0.9442,
+   "median_total_r": 18.076923076923023,
+   "p_total_below_0": 0.0831
+  },
+  "STR X15F1 E1 S13 T20": {
+   "trades": 35,
+   "mean_r": 0.37129064742313317,
+   "median_max_dd_r": 6.355384615384665,
+   "p95_max_dd_r": 11.688461538461514,
+   "p_dd_ge_10r": 0.1136,
+   "p_dd_ge_5r": 0.7948,
+   "median_total_r": 36.666287210198476,
+   "p_total_below_0": 0.0027
+  },
+  "STR X20F0 E1 S13 T20": {
+   "trades": 104,
+   "mean_r": 0.06275801587786403,
+   "median_max_dd_r": 11.280769230769256,
+   "p95_max_dd_r": 22.57101518793553,
+   "p_dd_ge_10r": 0.6169,
+   "p_dd_ge_5r": 0.9865,
+   "median_total_r": 6.063184338577646,
+   "p_total_below_0": 0.311
+  },
+  "STR X20F1 E1 S13 T20": {
+   "trades": 33,
+   "mean_r": 0.285566758196083,
+   "median_max_dd_r": 7.414615384615363,
+   "p95_max_dd_r": 13.606153846153926,
+   "p_dd_ge_10r": 0.1919,
+   "p_dd_ge_5r": 0.8809,
+   "median_total_r": 28.525867579402984,
+   "p_total_below_0": 0.0158
+  },
+  "STR none E1 S13 T20": {
+   "trades": 409,
+   "mean_r": -0.05554974145288561,
+   "median_max_dd_r": 16.024034064747326,
+   "p95_max_dd_r": 30.897213047409917,
+   "p_dd_ge_10r": 0.8441,
+   "p_dd_ge_5r": 0.9988,
+   "median_total_r": -5.750505675273473,
+   "p_total_below_0": 0.6679
+  }
+ }
+}
