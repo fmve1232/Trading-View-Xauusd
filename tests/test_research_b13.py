@@ -66,3 +66,23 @@ def test_clock_rule_times_across_dst():
         ends = {pd.Timestamp(int(e), unit="s", tz="UTC").tz_convert("America/New_York").strftime("%H:%M") for e in end_t}
         assert ends == ({"08:30"} if key == "B13-2a" else {"13:30"})
     assert set(out["B13-2a"][1]) == {1} and set(out["B13-2b"][1]) == {-1} and set(out["B13-3"][1]) == {1}
+
+
+def test_b14_two_timeframe_break_against_the_gate():
+    from quantum.research import b14
+    idx15 = pd.date_range("2021-03-02 14:00", periods=8, freq="15min", tz="UTC")
+    idx1 = pd.date_range("2021-03-02 14:00", periods=2, freq="1h", tz="UTC")
+    c15 = np.array([99.0, 99.5, 101.0, 100.5, 102.0, 103.0, 104.0, 105.0])
+    c1 = np.array([100.5, 105.0])                                   # 1h closes beyond 100 only at 16:00
+    lv15 = {"pdh": np.full(8, 100.0), "pwh": np.full(8, np.nan), "pdl": np.full(8, 90.0), "pwl": np.full(8, np.nan)}
+    lv1 = {"pdh": np.full(2, 100.0), "pwh": np.full(2, np.nan), "pdl": np.full(2, 90.0), "pwl": np.full(2, np.nan)}
+    assert [(k, nm, d) for k, nm, _lv, d in b14.breaks(lv15, c15)] == [(2, "PDH", 1)]   # 100.5 after 101: not a new cross
+    lv1x = {**lv1, "pdh": np.full(2, 100.5)}                        # a different level on 1h: no match
+    F = {"htf_bear_gate": np.ones(8, bool), "htf_bull_gate": np.zeros(8, bool)}
+    ev = b14.events(idx15, c15, lv15, F, idx1, np.array([99.0, 101.0]), lv1)
+    assert [(e["k"], e["pool"], e["dir"], e["gate_on"]) for e in ev] == [(7, "PDH", 1, True)]   # the 16:00 close
+    assert b14.events(idx15, c15, lv15, F, idx1, np.array([99.0, 101.0]), lv1x) == []
+    assert b14.events(idx15, c15, lv15, {**F, "htf_bear_gate": np.zeros(8, bool)}, idx1, np.array([99.0, 101.0]), lv1)[0]["gate_on"] is False
+    two = [{"day": 1, "dir": 1, "k": 3}, {"day": 1, "dir": 1, "k": 5}, {"day": 1, "dir": -1, "k": 6}, {"day": 2, "dir": 1, "k": 9}]
+    assert [e["k"] for e in b14.once_per_day(two)] == [3, 6, 9]
+    del c1
