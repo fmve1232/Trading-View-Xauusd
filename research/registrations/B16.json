@@ -1,0 +1,39 @@
+{
+  "id": "B16",
+  "title": "The operator's level rules: liquidity sweeps and breakouts at the day / week / month / 4h / 1h highs and lows, with order blocks, volume profile and POC; +$15 after the alert",
+  "status": "APPROVED by the operator 2026-11-06; development part runs once after this commit; validation opens once only if a primary passes",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-06 (chat): \"consider the previous day high, previous day low, previous week high, previous week low, previous month high, previous month low, current day high, current day low, 4-hour candle high, 4-hour candle low, 1-hour candle high, 1-hour candle low. Consider all the liquidity sweep areas, considered order block, consider volume profile, consider POC, and give me the alert ... strictly follow the rules ... I need at least $15 price movement after I get the alert.\" Standing approval 2026-11-05: \"If we need any modification and improvement, that is approved from my side.\" Recorded before any B16 code or outcome.",
+  "partitions": [
+    "development",
+    "validation"
+  ],
+  "created_utc": "2026-11-06",
+  "rules": {
+    "trigger_bar": "a closed 15-minute bar",
+    "high_side_levels": "previous day high (PDH), previous week high (PWH), previous month high (PMH), today's high from the bars before the trigger bar (TDH), the high of the last 4h bar and of the last 1h bar that closed at or before the trigger bar's open (4HH, 1HH)",
+    "low_side_levels": "the mirror: PDL, PWL, PML, TDL, 4HL, 1HL",
+    "zones": "the frozen engine's own values at the trigger bar: the active bullish and bearish order blocks (rows ob_bull_lo / hi, ob_bear_lo / hi) and the volume profile's value-area high, value-area low and POC (rows vah, val, vpoc)",
+    "tolerance": "$3 at a $4,000 price, scaled by price / 4000 (B convention)",
+    "SWEEP BUY": "the bar's low is below a low-side level L and the bar closes above L (swept, closed back), AND L lies in an active bullish order block (within the tolerance) or within the tolerance of the value-area low or the POC",
+    "SWEEP SELL": "the mirror: the high above a high-side level L, the close below L, AND L in an active bearish order block or within the tolerance of the value-area high or the POC",
+    "BREAKOUT BUY": "the bar closes above a high-side level L that the previous bar's close was at or below, AND the close is above the value-area high, AND the close is not inside an active bearish order block",
+    "BREAKOUT SELL": "the mirror: a close below a low-side level L from at or above, below the value-area low, not inside an active bullish order block",
+    "entry": "the trigger bar's close; several levels on one bar are one trade per direction; one trade per setup, direction and level per New York trading day"
+  },
+  "outcome": {
+    "primary": "+$15 before -$13 (the operator's +$15 requirement against the plan's stop), dollars at $4,000 scaled by entry / 4000, on 15-minute bars of the same partition for 96 bars; a bar reaching both levels is a loss unless it opened beyond the target",
+    "secondary": "+$13 and +$20 before -$13; the share of trades whose price moved +$15 in the trade's direction at any time within the day (the operator's literal requirement, ignoring the stop); by level and by zone",
+    "costs": "harness.cost_pts (frozen model) and the operator's $0.26",
+    "random_baseline": "every third 15-minute close of the scored window, long and short, weighted by each set's long / short mix"
+  },
+  "primary_test": "SWEEP (both directions) and BREAKOUT (both directions), Holm over the two at one-sided alpha 0.05 on P1 (rate above random, z); a pass also needs P2 (mean net after the frozen costs > 0, t >= 1.645). Fewer than 30 decided trades: INSUFFICIENT.",
+  "data": "research-data @ a0d74e4980e78d8662af9dd0fe7c294cb8e63043, development partition 2020-01-24 -> 2023-01-24, scored from 2020-04-01; the frozen web.8 engine (treatment, config.DEFAULT) on quantum.research.b10.make_market (no macro, volume or cross-asset inputs, so the order blocks and volume profile are the engine's own; its volume profile uses the series' volume where present)",
+  "alerts": "The operator asked for these alerts whatever the result. The live alert follows the same rules on the site's 15m bars (levels and zones from the site's 15m, 1h and 4h payloads), carries the plan (SL -$13, TP1 +$13 on half, TP2 +$20, the +$15 mark) and states this test's measured rate. It is display only and is scored live in its own record, separate from the engine test (B15).",
+  "decision": {
+    "if_pass": "Validation opens once for the passing primary, unchanged; only a validation pass would earn a registered live forward test with a verdict.",
+    "if_fail_or_insufficient": "The alerts still go out (the operator's request), each stating the measured 3-year rate and 'not a proven edge'. Recorded in research/trials.jsonl. No re-run with changed levels, zones, tolerances or targets."
+  },
+  "unchanged": "the engine, its configuration and every freeze key; B9-GRAB-FWD; B15-ENGINE-FWD",
+  "amendment_before_outcomes": "2026-11-06, before any B16 outcome code was written or run: the development series (Twelve Data spot XAU/USD) carries no volume (every bar 0), so the engine's volume profile is degenerate there (its POC falls to the lowest bin). The engine reads bar volume only in its volume profile (quantum/engine.py, F['v'] in the profile block), so the test runs the frozen engine with each bar's volume set to 1: a time-at-price profile with the engine's own method (100 bars, 40 bins, 70% value area). Order blocks and every other row are unchanged by this. The live alerts use the engine's profile on GC futures volume, so the VAH / VAL / POC part is tested with a stand-in, and the write-up says so."
+}

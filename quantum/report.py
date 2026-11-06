@@ -519,6 +519,8 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "tq": _arr(R["tq"], 0, s), "conf": _arr(R["conf"], 0, s), "pdh": _arr(R["pdh"], 2, s), "pdl": _arr(R["pdl"], 2, s),
         "pwh": _arr(R["pwh"], 2, s), "pwl": _arr(R["pwl"], 2, s), "vpoc": _arr(R["vpoc"], 2, s),
         "vah": _arr(R["vah"], 2, s), "val": _arr(R["val"], 2, s), "adx": _arr(F["adx"], 1, s), "rsi": _arr(F["rsi"], 1, s),
+        "ob_bull_lo": _arr(R["ob_bull_lo"], 2, s), "ob_bull_hi": _arr(R["ob_bull_hi"], 2, s),     # SETUP alerts (B16)
+        "ob_bear_lo": _arr(R["ob_bear_lo"], 2, s), "ob_bear_hi": _arr(R["ob_bear_hi"], 2, s),
         "session": [str(x) for x in F["session_label"][s:]],
     }
     cal = F["cal"]

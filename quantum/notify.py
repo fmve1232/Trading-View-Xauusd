@@ -609,6 +609,240 @@ def grab_verdict(trades: list[dict], book: dict, now_t: int) -> dict:
             "wilson": [lo, hi] if n else None, "next_check": None if verdict else nxt, "status": status}
 
 
+# ---------------- SETUP: the operator's level rules (research/registrations/B16.json; operator, 2026-11-06) ----------------
+SETUP_TOL_USD = 3.0                              # zone tolerance, $ of price (scaled by price / 4000 in the research test)
+SETUP_HI = ("PDH", "PWH", "PMH", "TDH", "4HH", "1HH")
+SETUP_LO = ("PDL", "PWL", "PML", "TDL", "4HL", "1HL")
+SETUP_NAMES = {"PDH": "previous day high", "PWH": "previous week high", "PMH": "previous month high", "TDH": "today's high",
+               "4HH": "last 4h high", "1HH": "last 1h high", "PDL": "previous day low", "PWL": "previous week low",
+               "PML": "previous month low", "TDL": "today's low", "4HL": "last 4h low", "1HL": "last 1h low"}
+
+
+def _prev_month(ym: str) -> str:
+    y, m = int(ym[:4]), int(ym[5:7])
+    return f"{y - 1}-12" if m == 1 else f"{y}-{m - 1:02d}"
+
+
+def setup_levels(t: list, h: list, lo_: list, h1: dict, h4: dict) -> dict:
+    """Per trigger bar (bar open times t): today's high / low from the bars BEFORE it in the same New York trading day,
+    the high / low of the last 1h and 4h bars that closed at or before its open, and the previous trading month's
+    high / low (from the 1h bars). None where unknown."""
+    n = len(t)
+    out = {k: [None] * n for k in ("TDH", "TDL", "1HH", "1HL", "4HH", "4HL", "PMH", "PML")}
+    day, dh, dl = None, None, None
+    for i in range(n):
+        d = trading_day(int(t[i]))
+        if d != day:
+            day, dh, dl = d, None, None
+        out["TDH"][i], out["TDL"][i] = dh, dl
+        if h[i] is not None:
+            dh = h[i] if dh is None else max(dh, h[i])
+        if lo_[i] is not None:
+            dl = lo_[i] if dl is None else min(dl, lo_[i])
+    for key, ch, sec in (("1H", h1, 3600), ("4H", h4, 14400)):
+        ct, chh, cll = (ch or {}).get("t") or [], (ch or {}).get("h") or [], (ch or {}).get("l") or []
+        j = -1
+        for i in range(n):
+            while j + 1 < len(ct) and ct[j + 1] + sec <= t[i]:
+                j += 1
+            if j >= 0:
+                out[key + "H"][i], out[key + "L"][i] = chh[j], cll[j]
+    ct, chh, cll = (h1 or {}).get("t") or [], (h1 or {}).get("h") or [], (h1 or {}).get("l") or []
+    mon: dict = {}
+    for k in range(len(ct)):
+        if chh[k] is None or cll[k] is None:
+            continue
+        ym = trading_day(int(ct[k]))[:7]
+        a = mon.setdefault(ym, [chh[k], cll[k]])
+        a[0], a[1] = max(a[0], chh[k]), min(a[1], cll[k])
+    first = min(mon) if mon else None
+    for i in range(n):
+        pm = _prev_month(trading_day(int(t[i]))[:7])
+        if pm in mon and pm != first:                 # the first month in the data may be partial
+            out["PMH"][i], out["PML"][i] = mon[pm]
+    return out
+
+
+def _setup_zone(L: float, side: int, zb: tuple, tol: float) -> str | None:
+    """The zone a swept level sits in: the active order block on the trade's side, the value-area edge, or the POC."""
+    bl, bh, sl_, sh, vah, val, poc = zb
+    if side > 0 and bl is not None and bh is not None and bl - tol <= L <= bh + tol:
+        return f"bull order block {bl:.2f}-{bh:.2f}"
+    if side < 0 and sl_ is not None and sh is not None and sl_ - tol <= L <= sh + tol:
+        return f"bear order block {sl_:.2f}-{sh:.2f}"
+    va = val if side > 0 else vah
+    if va is not None and abs(L - va) <= tol:
+        return f"value-area {'low' if side > 0 else 'high'} {va:.2f}"
+    if poc is not None and abs(L - poc) <= tol:
+        return f"POC {poc:.2f}"
+    return None
+
+
+def setup_events(t: list, h: list, lo_: list, c: list, lv: dict, z: dict, rows, seen: dict, scale: bool = False) -> list[dict]:
+    """The registered rules on each bar in rows. lv: level name -> per-bar values (SETUP_HI / SETUP_LO); z: per-bar
+    ob_bull_lo / ob_bull_hi / ob_bear_lo / ob_bear_hi / vah / val / vpoc. One event per setup and direction per bar; a
+    level counts once per setup, direction and trading day (seen)."""
+    def g(k, i):
+        a = z.get(k)
+        x = a[i] if a is not None and i < len(a) else None
+        return None if x is None or (isinstance(x, float) and math.isnan(x)) else x
+
+    out = []
+    for i in rows:
+        if i < 1 or c[i] is None or c[i - 1] is None or h[i] is None or lo_[i] is None:
+            continue
+        tol = SETUP_TOL_USD * (c[i] / 4000.0 if scale else 1.0)
+        bl, bh, sl_, sh = g("ob_bull_lo", i), g("ob_bull_hi", i), g("ob_bear_lo", i), g("ob_bear_hi", i)
+        vah, val, poc = g("vah", i), g("val", i), g("vpoc", i)
+        zb = (bl, bh, sl_, sh, vah, val, poc)
+        cand = []
+        for name in SETUP_LO:                                      # SWEEP BUY: low through a low-side level, close back above
+            L = (lv.get(name) or [None] * (i + 1))[i]
+            if L is not None and lo_[i] < L < c[i]:
+                zn = _setup_zone(L, 1, zb, tol)
+                if zn:
+                    cand.append(("SWEEP", 1, name, L, zn))
+        for name in SETUP_HI:                                      # SWEEP SELL: the mirror
+            L = (lv.get(name) or [None] * (i + 1))[i]
+            if L is not None and c[i] < L < h[i]:
+                zn = _setup_zone(L, -1, zb, tol)
+                if zn:
+                    cand.append(("SWEEP", -1, name, L, zn))
+        in_bear = sl_ is not None and sh is not None and sl_ <= c[i] <= sh
+        in_bull = bl is not None and bh is not None and bl <= c[i] <= bh
+        for name in SETUP_HI:                                      # BREAKOUT BUY: close above a high-side level, above value
+            L = (lv.get(name) or [None] * (i + 1))[i]
+            if L is not None and c[i] > L >= c[i - 1] and vah is not None and c[i] > vah and not in_bear:
+                cand.append(("BREAKOUT", 1, name, L, f"above value-area high {vah:.2f}"))
+        for name in SETUP_LO:                                      # BREAKOUT SELL: the mirror
+            L = (lv.get(name) or [None] * (i + 1))[i]
+            if L is not None and c[i] < L <= c[i - 1] and val is not None and c[i] < val and not in_bull:
+                cand.append(("BREAKOUT", -1, name, L, f"below value-area low {val:.2f}"))
+        groups: dict = {}
+        for kind, d, name, L, zn in cand:
+            if _first_today(seen, ("SETUP", kind, d, name, f"{L:.2f}"), int(t[i])):
+                groups.setdefault((i, kind, d), []).append((name, L, zn))
+        for (ii, kind, d), lst in groups.items():
+            out.append({"i": ii, "t": int(t[ii]), "kind": kind, "dir": d, "close": c[ii], "levels": [(a, b) for a, b, _ in lst],
+                        "zones": sorted({x for _, _, x in lst}), "low": lo_[ii], "high": h[ii]})
+    return out
+
+
+SETUP_ZKEYS = ("ob_bull_lo", "ob_bull_hi", "ob_bear_lo", "ob_bear_hi", "vah", "val", "vpoc")
+SETUP_TP_PX, SETUP_SL_PX = 15.0, 13.0           # the registered outcome: +$15 before -$13 (B16)
+SETUP_TRACK_SEC = 86400                          # one trading day, as in the test
+SETUP_FILE = "SETUP-LIVE.json"                   # <store>/research_forward/: every alerted setup and its result
+SETUP_HIST = {"SWEEP": (0.466, 5918, 0.462, "not an edge"),        # B16 development 2020-22 (research/B16_RESULTS.md):
+              "BREAKOUT": (0.461, 6729, 0.463, "not an edge")}     # +$15 before -$13, rate, n, random same mix, verdict
+SETUP_MAJOR = ("PDH", "PDL", "PWH", "PWL", "PMH", "PML")         # SETUP_LEVELS=major: day / week / month levels only
+
+
+def setups_on() -> bool:
+    return os.environ.get("ALERT_SETUPS", "1").strip() != "0"
+
+
+def setups_major() -> bool:
+    """SETUP_LEVELS=major keeps only the previous day / week / month levels (about 1-2 alerts a day instead of ~18)."""
+    return os.environ.get("SETUP_LEVELS", "all").strip().lower() == "major"
+
+
+def setup_scan(payloads: dict, since: int | None, seen: dict) -> list[dict]:
+    """The registered rules on the site's 15m bars closed after since; levels and zones from the 15m, 1h and 4h
+    payloads (the engine's order blocks and volume profile on GC futures volume)."""
+    p = payloads.get("15m")
+    if not p or (p.get("meta") or {}).get("synthetic"):
+        return []
+    ch = p.get("chart") or {}
+    t, h, lo_, c = ch.get("t") or [], ch.get("h") or [], ch.get("l") or [], ch.get("c") or []
+    n = min(len(t), len(h), len(lo_), len(c))
+    if n < 2:
+        return []
+    t, h, lo_, c = t[:n], h[:n], lo_[:n], c[:n]
+    lv = setup_levels(t, h, lo_, (payloads.get("1h") or {}).get("chart"), (payloads.get("4h") or {}).get("chart"))
+    for k in ("pdh", "pdl", "pwh", "pwl"):
+        lv[k.upper()] = (ch.get(k) or [None] * n)[:n]
+    if setups_major():
+        lv = {k: (v if k in SETUP_MAJOR else [None] * n) for k, v in lv.items()}
+    z = {k: (ch.get(k) or [None] * n)[:n] for k in SETUP_ZKEYS}
+    rows = [i for i in range(n) if since is None or t[i] > since]
+    return setup_events(t, h, lo_, c, lv, z, rows, seen)
+
+
+def setup_lines(e: dict, sid: int, pl: dict | None, now: dict | None, off: float, live: dict) -> list[str]:
+    d, side = e["dir"], "BUY" if e["dir"] == 1 else "SELL"
+    lv = " + ".join(f"{SETUP_NAMES[nm]} {_fmt(x, off)}" for nm, x in e["levels"])
+    t_close = e["t"] + 900
+    if e["kind"] == "SWEEP":
+        what = (f"liquidity sweep: {lv} swept ({'low' if d == 1 else 'high'} {_fmt(e['low'] if d == 1 else e['high'], off)}), "
+                f"closed back {'above' if d == 1 else 'below'} at {_fmt(e['close'], off)}")
+    else:
+        what = f"breakout: closed {'above' if d == 1 else 'below'} {lv} at {_fmt(e['close'], off)}"
+    x = e["close"]
+    lot = pl["lot"] if pl else 0.5
+    oz = lot * 100.0
+    out = [f"XAUUSD 15m SETUP #{sid} {side} (your rules) -- {what} | at {', '.join(e['zones'])} | bar closed {clocks(t_close)}"]
+    tm = alert_timing({"t": e["t"], "px": x, "dir": d, "sl": x - d * SETUP_SL_PX}, "15m", now, {"sl_px": SETUP_SL_PX})
+    late, timing = timing_lines(tm, off)
+    if late:
+        out.append(late)
+    out.append(f"ENTRY {_fmt(x, off)} | SL {_fmt(x - d * SETUP_SL_PX, off)} (-${SETUP_SL_PX * oz:,.0f}) | TP1 {_fmt(x + d * 13, off)} "
+               f"(close half, SL to entry) | +$15 at {_fmt(x + d * SETUP_TP_PX, off)} | TP2 {_fmt(x + d * 20, off)} | at {lot:g} lot")
+    if pl:
+        out.append(mt5_line(d, pl))
+    hist = SETUP_HIST.get(e["kind"])
+    rec = (f"3-year record of this rule (2020-22, B16): +$15 before -$13 {hist[0]:.0%} of {hist[1]:,} (random {hist[2]:.0%}): "
+           f"{hist[3]}" if hist else "3-year record: being measured (B16)")
+    lv_ = live.get(e["kind"]) or [0, 0]
+    out.append(rec + (f" | live so far {lv_[1]}/{lv_[0]} reached +$15 first" if lv_[0] else "") +
+               " | information, not a confirmed signal")
+    if timing:
+        out.append(timing)
+    return out
+
+
+def setup_track(setups: list[dict], chart: dict, p5: dict | None, now_t: int, off: float) -> tuple[list[str], list[dict], list[dict]]:
+    """Each open setup's result: +$15 before -$13 on the same feed's 5m path (else the 15m bars); one line when it is
+    decided; no result within a trading day = EXPIRED (not counted)."""
+    lines, keep, closed = [], [], []
+    for s in setups:
+        path = plan_path5(s, p5) or plan_path(s, chart)
+        side = "BUY" if s["dir"] == 1 else "SELL"
+        head = f"XAUUSD 15m SETUP #{s['id']} {side} from {_fmt(s['entry'], off)}"
+        if path["result"] is None:
+            if now_t - s["t_dec"] > SETUP_TRACK_SEC:
+                closed.append({**s, **path, "result": "EXPIRED", "t_res": now_t})
+                lines.append(f"{head}: neither +$15 nor -$13 within a day (not counted)")
+            else:
+                keep.append(s)
+            continue
+        closed.append({**s, **path})
+        lines.append(f"{head}: " + {"TP": f"+$15 reached first ({_fmt(s['tp'], off)})", "SL": f"SL -$13 first ({_fmt(s['sl'], off)})",
+                                     "BOTH": "+$15 and -$13 inside one bar (counted as SL)"}[path["result"]])
+    return lines, keep, closed
+
+
+def setup_record(store_dir: str | None, log: list[dict], now_t: int) -> dict:
+    """The live record of every alerted setup (descriptive; the registered test is B16 on history). Saved to
+    <store>/research_forward/ so the workflow copies it to forward-ledger."""
+    path = os.path.join(store_dir, GRAB_DIR, SETUP_FILE) if store_dir else None
+    started = now_t
+    if path and os.path.exists(path):
+        with open(path) as f:
+            started = int(json.load(f).get("started_utc") or now_t)
+    live: dict = {}
+    for r in log:
+        if r.get("result") in ("TP", "SL", "BOTH"):
+            g = live.setdefault(r["kind"], [0, 0])
+            g[0] += 1
+            g[1] += r["result"] == "TP"
+    rec = {"rules": "research/registrations/B16.json", "started_utc": started, "setups": log, "live": live}
+    if path:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            json.dump(rec, f, indent=1)
+    return rec
+
+
 # ---------------- B15-ENGINE-FWD: the registered live test of the engine's own signal alerts ----------------
 ENG_ID, ENG_FILE = "B15-ENGINE-FWD", "B15-ENGINE-FWD.json"   # in <store>/research_forward/, copied to forward-ledger
 ENG_LOOKS = (30, 40, 50, 60, 70, 80, 90, 100)
@@ -1306,6 +1540,26 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf)}
         lines = upd + messages(p, since, now, ctx) + liq_lines(ev, seen, off)
         report[tf] = {"lines": lines, "sent": send(lines)}
+        if tf == "15m" and setups_on():                    # SETUP alerts: the operator's level rules (B16)
+            p5s = payloads.get("5m")
+            p5s = p5s if p5s is not None and (p5s.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
+            s_upd, s_open, s_done = setup_track(state.get("setups", []), p["chart"], p5s, t_send, off)
+            s_log = (list(state.get("setup_log", [])) + s_done)[-500:]
+            sseen = dict(state.get("setup_seen", {}))
+            live = setup_record(None, s_log, t_send)["live"]
+            for e in setup_scan(payloads, since, sseen):
+                state["setup_seq"] = int(state.get("setup_seq", 0)) + 1
+                sid, d, x = state["setup_seq"], e["dir"], e["close"]
+                s_open.append({"id": sid, "tf": "15m", "t": e["t"], "t_dec": e["t"] + 900, "dir": d, "entry": x, "kind": e["kind"],
+                               "levels": e["levels"], "zones": e["zones"], "sl": round(x - d * SETUP_SL_PX, 2),
+                               "tp": round(x + d * SETUP_TP_PX, 2), "t_alert": t_send})
+                sl_ = setup_lines(e, sid, pl_cfg, now, off, live)
+                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_)})
+            if s_upd:
+                report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
+            state["setups"], state["setup_log"] = s_open[-60:], s_log
+            keep_s = trading_day(t_send - 3 * 86400)
+            state["setup_seen"] = {k: v for k, v in sseen.items() if v >= keep_s}
         state[tf] = last_t
     if pl_cfg:
         state["plans"], state["plan_log"], state["plan_tally"] = plans[-PLAN_MAX_OPEN:], log, tally
@@ -1326,6 +1580,11 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
         report["grab_test_alert"] = {"lines": glines, "sent": send(glines)}
+    if setups_on():                                        # the live SETUP record (descriptive) and the site block
+        srec = setup_record(store_dir, state.get("setup_log", []), t_send)
+        report["setups"] = {"on": True, "started_utc": srec["started_utc"], "live": srec["live"], "open": state.get("setups", []),
+                            "recent": state.get("setup_log", [])[::-1][:12], "hist": {k: list(v) for k, v in SETUP_HIST.items()},
+                            "rule": "research/registrations/B16.json", "tp_px": SETUP_TP_PX, "sl_px": SETUP_SL_PX}
     if pl_cfg:                                             # B15-ENGINE-FWD, every run (reads the plans' results)
         elines, report["engine_test"] = eng_run(store_dir, vlog, plans, t_send)
         if elines:
@@ -1370,6 +1629,14 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                   if state.get("report_day") and state["report_day"] != day and trading_day(x["t_close"]) == state["report_day"]]
         if lines or g_prev:                                # the registered GRAB test's state rides with the daily report
             lines.append(f"GRAB TEST ({GRAB_ID}): {gt['status']} | break-even {GRAB_BE:.0%}")
+        su = report.get("setups")
+        if lines and su and state.get("report_day") and state["report_day"] != day:
+            prev_d = state["report_day"]
+            dd_ = [r for r in state.get("setup_log", []) if trading_day(_decision_t(r)) == prev_d and r.get("result") in ("TP", "SL", "BOTH")]
+            tot = sum(v[0] for v in su["live"].values())
+            won = sum(v[1] for v in su["live"].values())
+            lines.append(f"SETUPS (your rules) {date.fromisoformat(prev_d):%a %d %b}: {len(dd_)} decided, "
+                         f"{sum(r['result'] == 'TP' for r in dd_)} reached +$15 first | since start {won}/{tot}")
         et = report.get("engine_test")
         if lines and et:                                   # and the engine test's (B15-ENGINE-FWD)
             lines.append(f"ENGINE TEST ({ENG_ID}): {et['status']} | open {et['open']} | break-even {ENG_BE:.0%}")
