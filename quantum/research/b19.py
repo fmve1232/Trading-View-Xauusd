@@ -453,7 +453,7 @@ def run(rd: str, part: str = "development", configs: list[str] | None = None, lo
                         out["configs"][key] = sm
                         ex = T_["execute"]
                         o = np.argsort(T_["t_entry"][ex], kind="stable")
-                        if fam_name != "N2" or (conf, entry, stop, T) in PRIMARY.values():
+                        if fam_name != "N2" or (conf, entry, stop, T) in PRIMARY.values() or want is not None:
                             out["per_trade"][key] = {"net": T_["net"][ex][o], "r": T_["r"][ex][o], "t": T_["t_entry"][ex][o]}
                         if fam_name != "N2":
                             out["monthly"][key] = monthly(T_, months).tolist()
@@ -600,6 +600,20 @@ def main(argv=None) -> int:
     if a.part == "development":
         out["grid"] = grid_stats(out)
         out["candidates"] = candidates(out, out["grid"])
+    else:                                                   # the registration's pass rule for each declared configuration
+        out["validation_checks"], out["validation_pass"] = {}, {}
+        for k, sm in out["configs"].items():
+            if k.startswith("N2"):
+                continue
+            base = " ".join(k.split()[1:])
+            me = np.asarray(out["per_trade"].get(k, {}).get("net", []), float)
+            n2 = np.asarray(out["per_trade"].get(f"N2 {base}", {}).get("net", []), float)
+            p_w = welch_p(me, n2)
+            ok = bool(sm["trades"] >= 3 and (sm["mean_net_usd_per_oz"] or 0) > 0 and (sm["t"] or 0) >= 1.645
+                      and math.isfinite(p_w) and p_w <= 0.05)
+            out["validation_checks"][k] = {"trades": sm["trades"], "mean_net": sm["mean_net_usd_per_oz"], "t": sm["t"],
+                                           "n2_mean_net": float(n2.mean()) if len(n2) else None, "p_vs_n2": p_w}
+            out["validation_pass"][k] = ok
     keep = {k for k in out["per_trade"] if " 1 as alerted" in k or any(k.endswith(f"{c} {e} {st} T{t:g}") for c, e, st, t in PRIMARY.values())}
     out["per_trade"] = {k: {a_: v[a_].tolist() for a_ in v} for k, v in out["per_trade"].items() if k in keep}
     with open(a.out, "w") as f:
