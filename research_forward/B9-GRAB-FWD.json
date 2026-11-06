@@ -46,8 +46,8 @@
    "tp": 4053.37,
    "sl": 4079.37,
    "src": "twelvedata:XAU/USD",
-   "status": "OPEN",
-   "mfe": 8.51,
+   "status": "TP",
+   "mfe": 13.36,
    "mae": 11.43,
    "id": 2,
    "alert": {
@@ -55,7 +55,9 @@
     "px": 4069.83,
     "t_px": 1793928925,
     "live": true
-   }
+   },
+   "t_res": 1793934300,
+   "bars": 20
   },
   {
    "tf": "15m",
@@ -73,16 +75,18 @@
    "tp": 4082.63,
    "sl": 4056.63,
    "src": "twelvedata:XAU/USD",
-   "status": "OPEN",
+   "status": "SL",
    "mfe": 2.86,
-   "mae": 11.68,
+   "mae": 16.62,
    "id": 3,
    "alert": {
     "t": 1793931695,
     "px": 4067.67,
     "t_px": 1793931622,
     "live": true
-   }
+   },
+   "t_res": 1793934300,
+   "bars": 11
   }
  ],
  "checks": [],
