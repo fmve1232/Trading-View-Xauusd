@@ -34,5 +34,6 @@
     "if_pass": "Validation opens once for the passing primary, unchanged; only a validation pass would earn a registered live forward test with a verdict.",
     "if_fail_or_insufficient": "The alerts still go out (the operator's request), each stating the measured 3-year rate and 'not a proven edge'. Recorded in research/trials.jsonl. No re-run with changed levels, zones, tolerances or targets."
   },
-  "unchanged": "the engine, its configuration and every freeze key; B9-GRAB-FWD; B15-ENGINE-FWD"
+  "unchanged": "the engine, its configuration and every freeze key; B9-GRAB-FWD; B15-ENGINE-FWD",
+  "amendment_before_outcomes": "2026-11-06, before any B16 outcome code was written or run: the development series (Twelve Data spot XAU/USD) carries no volume (every bar 0), so the engine's volume profile is degenerate there (its POC falls to the lowest bin). The engine reads bar volume only in its volume profile (quantum/engine.py, F['v'] in the profile block), so the test runs the frozen engine with each bar's volume set to 1: a time-at-price profile with the engine's own method (100 bars, 40 bins, 70% value area). Order blocks and every other row are unchanged by this. The live alerts use the engine's profile on GC futures volume, so the VAH / VAL / POC part is tested with a stand-in, and the write-up says so."
 }
