@@ -46,3 +46,11 @@ seen?
 - at the verdict: random entries in the same directions over the same weeks.
 
 **Start:** the first site run that carries this code. The run's time is recorded as `started_utc` in the record.
+
+## Start record
+
+- **Started:** 2026-11-06 12:56:12 UTC, the first site run carrying the code (PR #81, merge 9ddc611b8, run 42220669929).
+- **Record:** `research_forward/B15-ENGINE-FWD.json` on `market-data` and `forward-ledger` (both at 12:56 UTC), with 0
+  trades, no checks and no verdict.
+- **Freeze key:** unchanged, `5e4630924d663fc5:a6f2be58c74887ed`.
+- **Counted plans:** only those whose signal closed at or after the start. Earlier plans are not counted.
