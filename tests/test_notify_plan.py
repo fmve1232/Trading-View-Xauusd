@@ -2,6 +2,7 @@
 lot, one follow-up alert when TP or SL is hit, nothing repeated, and the engine untouched (notify.py is outside the
 freeze key)."""
 import json
+from datetime import datetime, timezone
 
 import pytest
 
@@ -354,7 +355,8 @@ def test_run_sends_liquidity_alerts_publishes_them_and_can_be_turned_off(tmp_pat
     assert rep["liquidity"]["on"] is True and rep["liquidity"]["near_usd"] == 5.0
     assert rep["liquidity"]["recent"][0]["kind"] == "GRAB" and rep["liquidity"]["recent"][0]["name"] == "PDL"
     st = json.loads((tmp_path / notify.STATE).read_text())
-    assert list(st["liq_seen"].values()) == ["2026-11-03"] and len(st["liq_log"]) == 1
+    assert sorted(st["liq_seen"]) == ["15m|GRAB|PDL|3975.83", "SENT|GRAB|PDL|3975.83"]      # per timeframe + once across them
+    assert set(st["liq_seen"].values()) == {"2026-11-03"} and len(st["liq_log"]) == 1 and st["liq_log"][0]["sent"] is True
     monkeypatch.setenv("ALERT_LIQUIDITY", "0")
     sent.clear()
     sw2 = {**sw, "t": T0 + 900, "lvl": [{"name": "PWL", "px": 3972.0}]}
@@ -398,3 +400,68 @@ def test_ladder_line_odds_money_and_the_daily_limit(monkeypatch):
     monkeypatch.setenv("PLAN_SL_USD", "520")
     s = notify.ladder_line(notify.plan_cfg())
     assert "before -$13.00" in s and "-$1,061 (4.2% of $25,000): inside a 5% daily limit" in s
+
+
+# ---------------- audit 2026-11-06: one alert per liquidity event, base rates, setup records, engine status ----------------
+def test_liquidity_alert_once_per_event_across_timeframes_and_pools_on_one_bar_share_a_line():
+    seen: dict = {}
+    b15 = {"kind": "BREAK", "tf": "15m", "t": T0, "name": "PDH", "px": 4070.46, "close": 4078.75}
+    b15w = {**b15, "name": "PWH", "px": 4081.97}
+    lines = notify.liq_lines([b15, b15w], seen)
+    assert len(lines) == 1 and "LIQUIDITY BREAK: PDH 4070.46 + PWH 4081.97 broken -- closed above at 4078.75" in lines[0]
+    assert "2020-22: +$13 before -$13 after a BREAK 50% of 895 (random 50%) | info, not a trade signal" in lines[0]
+    b30 = {**b15, "tf": "30m", "t": T0}
+    b1h = {**b15w, "tf": "1h", "t": T0 + 900}
+    assert notify.liq_lines([b30], seen) == [] and notify.liq_lines([b1h], seen) == []    # the same event on 30m / 1h
+    assert b30["sent"] is False and b15["sent"] is True
+    g = {"kind": "GRAB", "tf": "1h", "t": T0, "name": "PDL", "px": 4058.44, "wick": 4057.86, "close": 4062.81}
+    assert "after a GRAB 49% of 913" in notify.liq_lines([g], seen)[0]                     # a different pool: its own alert
+    assert len(notify.liq_lines([{**b15, "t": T0 + 86400}], seen)) == 1                    # next trading day: again
+
+
+def test_setup_lines_carry_their_forward_record(tmp_path):
+    (tmp_path / "holdout").mkdir()
+    (tmp_path / "holdout" / "15m_h4.json").write_text(json.dumps([{"pts": 5.0}, {"pts": -8.0}, {"pts": 1.5}]))
+    rec = notify.h_records(str(tmp_path), "15m")
+    assert rec == {"h4": {"n": 3, "won": 2, "pts": -1.5}}
+    p = {"meta": {"tf": "15m"}, "markers": [], "decisions": [],
+         "h4": {"signals": [{"t": 12, "dir": "LONG", "entry": 4100.0, "sl": 4090.0, "tp1": 4110.0, "tp2": 4120.0}]}}
+    assert notify.structure_lines(p, 6, rec=rec)[0].endswith("TP2 4120.00 [forward record: 3 trades, 2 won, -1.5 pts] | info, not a DECISION")
+    assert notify.h_records(None, "15m") == {} and notify.h_records(str(tmp_path), "1h") == {}
+
+
+def test_engine_status_counts_the_first_blocking_gate_once_per_bar():
+    st: dict = {}
+    def pay(lb, long_, short_):
+        return {"meta": {"last_bar_open": lb}, "dashboard": {"gate_sides": {"long": long_, "short": short_, "logged": "long"}}}
+    notify.gate_tally(st, pay("2026-11-04T14:00:00+00:00", ["HTF"], ["Trend", "Trig"]), "15m")
+    notify.gate_tally(st, pay("2026-11-04T14:00:00+00:00", ["HTF"], ["Trend"]), "15m")      # same bar again: not counted
+    notify.gate_tally(st, pay("2026-11-04T14:15:00+00:00", ["Trend", "HTF"], ["Trend"]), "15m")
+    notify.gate_tally(st, pay("2026-11-04T14:30:00+00:00", [], ["Sess"]), "15m")
+    g = st["gates"]["2026-11-04"]["15m"]
+    assert g["bars"] == 3 and g["long"] == {"HTF": 1, "Trend": 1, "all passed": 1} and g["short"] == {"Trend": 2, "Sess": 1}
+    line = notify.engine_line(st, "2026-11-04", ["15m", "1h"], {"tf": "4h", "dir": -1, "t_dec": 1793743200})
+    assert line.startswith("XAUUSD ENGINE Wed 04 Nov: 15m 0 signals in 3 bars (BUY blocked by higher-timeframe gate 33%, trend 33%; "
+                           "SELL by trend 67%, session 33%) | last signal 4h SELL Tue 03 Nov 22:00 UTC")
+    assert notify.engine_line(st, "2026-11-05", ["15m"], None) is None
+
+
+def test_a_silent_weekday_still_gets_the_engine_line_in_the_daily_report(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    store = str(tmp_path)
+
+    def pay(t_last, now):
+        p = _payload(t_last, [], [])
+        p["meta"]["generated_utc"] = now
+        p["meta"]["last_bar_open"] = datetime.fromtimestamp(t_last, timezone.utc).isoformat()
+        p["dashboard"] = {"gate_sides": {"long": ["HTF"], "short": ["Trend"], "logged": "long"}}
+        return {"15m": p}
+    t0 = int(pd_ts("2026-11-05 14:00"))                                     # Thursday
+    for k in range(4):
+        notify.run(store, pay(t0 + k * 900, f"2026-11-05T14:{5 + k * 15:02d}:00+00:00"), ["15m"])
+    notify.run(store, pay(t0 + 3 * 900, "2026-11-05T22:10:00+00:00"), ["15m"])   # after the New York close
+    out = [x for b in sent for x in b]
+    eng = [x for x in out if x.startswith("XAUUSD ENGINE Thu 05 Nov: 15m 0 signals in 3 bars")]
+    assert eng and "BUY blocked by higher-timeframe gate 100%" in eng[0] and "SELL by trend 100%" in eng[0]
+    assert not any("VALIDATION" in x for x in out)                          # no signal closed: no validation line
