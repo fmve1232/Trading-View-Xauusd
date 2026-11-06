@@ -587,7 +587,10 @@ def main(argv=None) -> int:
     if a.part in ("validation", "holdout", "recent") and not cfgs:
         raise SystemExit("validation / holdout / recent run only the declared configurations (--configs)")
     if a.part == "holdout":                                 # the registration's gate: development AND validation passed
-        val = json.load(open(a.val_results)) if a.val_results else {}
+        val = {}
+        if a.val_results:
+            with open(a.val_results) as f:
+                val = json.load(f)
         passed = {k for k, v in (val.get("validation_pass") or {}).items() if v}
         if not cfgs or not set(cfgs) <= passed:
             raise SystemExit(f"the holdout opens only for candidates that passed validation: {sorted(set(cfgs or []) - passed)}")
