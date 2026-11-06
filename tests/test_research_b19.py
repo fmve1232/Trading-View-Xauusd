@@ -237,3 +237,14 @@ def test_the_holdout_run_refuses_a_configuration_that_did_not_pass_validation(tm
                   "--val-results", str(vr)])
     with pytest.raises(SystemExit, match="declared configurations"):
         b19.main(["--rd", str(tmp_path), "--part", "validation", "--out", str(tmp_path / "o.json")])
+
+
+def test_a_configuration_without_a_losing_trade_has_no_profit_factor_and_saves_as_json():
+    import json
+    P = _confirmed_path()
+    _bar(P, 108, h=4040.0, l=4010.0)
+    A = _A(P)
+    C = b19.confirm(P, A, "X15F0")
+    sm = b19.summarize(A, C, b19.plan_and_exit(P, A, C, "X15F0", "E1", "S13", 20.0))
+    assert sm["no_losing_trade"] and sm["profit_factor"] != sm["profit_factor"]       # NaN, saved as null
+    json.dumps(b19.b13._clean(sm), allow_nan=False)

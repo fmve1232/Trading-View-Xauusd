@@ -317,7 +317,8 @@ def summarize(A: dict, C: dict, T_: dict) -> dict:
             "missed_opportunities_30": int((C["reached30"] & ~ex).sum()),
             "trades": n, "tp_first": float(np.mean(out == "TP")) if n else math.nan, "sl_first": float(np.mean(out == "SL")) if n else math.nan,
             "ambiguous": float(np.mean(amb)) if n else math.nan, "timeout": float(np.mean(out == "TIMEOUT")) if n else math.nan,
-            "profit_factor": float(wins / losses) if losses > 0 else (math.inf if wins > 0 else math.nan),
+            "profit_factor": float(wins / losses) if losses > 0 else math.nan,     # undefined without a losing trade
+            "no_losing_trade": bool(n and losses == 0),
             "mean_net_usd_per_oz": float(np.mean(net)) if n else math.nan, "sd_net": float(np.std(net, ddof=1)) if n > 2 else math.nan,
             "t": t_of(net) if n else math.nan, "mean_r": float(np.mean(r)) if n else math.nan,
             "max_drawdown_r": max_drawdown(r), "avg_hold_min": float(np.mean(T_["hold_min"][ex])) if n else math.nan,
