@@ -344,7 +344,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             out.append(f"XAUUSD {tf} tracked plan {'STOPPED' if (m.get('r') or 0) < 0 else 'reached TP1'} at {_fmt(m['px'], off)} = {m.get('r')}R")
         elif m["type"] == "RISK_LOCK":
             out.append(f"XAUUSD {tf} RISK LOCK engaged -- new entries blocked")
-    if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0":
+    if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0" and not quality():
         out += structure_lines(payload, since_t, off, sweeps=not liq_on(), rec=(ctx or {}).get("h_records"))
     for d in payload["decisions"]:
         if since_t is not None and d["t"] <= since_t:
@@ -735,6 +735,80 @@ SETUP_FILE = "SETUP-LIVE.json"                   # <store>/research_forward/: ev
 SETUP_HIST = {"SWEEP": (0.466, 5918, 0.462, "not an edge"),        # B16 development 2020-22 (research/B16_RESULTS.md):
               "BREAKOUT": (0.461, 6729, 0.463, "not an edge")}     # +$15 before -$13, rate, n, random same mix, verdict
 SETUP_MAJOR = ("PDH", "PDL", "PWH", "PWL", "PMH", "PML")         # SETUP_LEVELS=major: day / week / month levels only
+SETUP_HIST_CONFIRMED: tuple | None = (0.516, 184, 0.463, "not proven (p 0.07)")   # B17 development result, all 4
+
+
+def _ema(xs: list, n: int) -> list:
+    out, e, a = [], None, 2.0 / (n + 1)
+    for x in xs:
+        if x is not None:
+            e = x if e is None else e + a * (x - e)
+        out.append(e)
+    return out
+
+
+def trend_votes(t: list, h1: dict | None, h4: dict | None) -> list:
+    """Per bar (open times t), the sum of the three B12 trend votes, each +1 (up) or -1 (down): the last completed
+    trading day's close against its 20-day average (days from the 1h bars), and the last completed 4h and 1h bars'
+    EMA20 against EMA50. None until all three are known."""
+    def ema_side(ch):
+        ct, cc = (ch or {}).get("t") or [], (ch or {}).get("c") or []
+        e20, e50 = _ema(cc, 20), _ema(cc, 50)
+        return ct, [None if a is None or b is None else (1 if a > b else -1) for a, b in zip(e20, e50)]
+    t1, v1 = ema_side(h1)
+    t4, v4 = ema_side(h4)
+    days: list = []                                       # (trading day, last close)
+    for tt, cc in zip((h1 or {}).get("t") or [], (h1 or {}).get("c") or []):
+        if cc is None:
+            continue
+        d = trading_day(int(tt))
+        if days and days[-1][0] == d:
+            days[-1] = (d, cc)
+        else:
+            days.append((d, cc))
+    vd = {}
+    for k in range(19, len(days)):
+        sma = sum(x for _, x in days[k - 19:k + 1]) / 20.0
+        vd[days[k][0]] = 1 if days[k][1] > sma else -1
+    order = [d for d, _ in days]
+    out, j1, j4, kd = [], -1, -1, -1
+    for x in t:
+        while j1 + 1 < len(t1) and t1[j1 + 1] + 3600 <= x:
+            j1 += 1
+        while j4 + 1 < len(t4) and t4[j4 + 1] + 14400 <= x:
+            j4 += 1
+        today = trading_day(int(x))
+        while kd + 1 < len(order) and order[kd + 1] < today:   # t is in time order: the last day before today
+            kd += 1
+        prev = order[kd] if kd >= 0 else None
+        a = v1[j1] if j1 >= 0 else None
+        b = v4[j4] if j4 >= 0 else None
+        c_ = vd.get(prev) if prev else None
+        out.append(None if a is None or b is None or c_ is None else a + b + c_)
+    return out
+
+
+SETUP_SESSIONS = ("London", "London+NY", "New York")
+
+
+def setup_checks(e: dict, votes: list, bull: list, bear: list) -> dict:
+    """B17's four confirmations of a B16 setup (research/registrations/B17.json)."""
+    i, d = e["i"], e["dir"]
+    v = votes[i] if i < len(votes) else None
+    bu = bull[i] if i < len(bull) else None
+    be = bear[i] if i < len(bear) else None
+    return {"major": any(nm in SETUP_MAJOR for nm, _ in e["levels"]),
+            "trend": v is not None and v == 3 * d,
+            "bias": bu is not None and be is not None and ((bu >= be) if d > 0 else (be >= bu)),
+            "session": session_of(e["t"] + 900) in SETUP_SESSIONS}
+
+
+def quality() -> bool:
+    """ALERT_MODE (operator, 2026-11-06: "quality rather than the quantity"): quality (default) sends only engine
+    signals with their follow-ups, setups with all four B17 confirmations, the trend-change warning, the registered
+    tests' checks and the reports; liquidity, structure and H-setup lines and unconfirmed setups stay on the website.
+    all = every alert as before."""
+    return os.environ.get("ALERT_MODE", "quality").strip().lower() != "all"
 
 
 def setups_on() -> bool:
@@ -765,7 +839,14 @@ def setup_scan(payloads: dict, since: int | None, seen: dict) -> list[dict]:
         lv = {k: (v if k in SETUP_MAJOR else [None] * n) for k, v in lv.items()}
     z = {k: (ch.get(k) or [None] * n)[:n] for k in SETUP_ZKEYS}
     rows = [i for i in range(n) if since is None or t[i] > since]
-    return setup_events(t, h, lo_, c, lv, z, rows, seen)
+    ev = setup_events(t, h, lo_, c, lv, z, rows, seen)
+    if ev:
+        votes = trend_votes(t, (payloads.get("1h") or {}).get("chart"), (payloads.get("4h") or {}).get("chart"))
+        bull, bear = (ch.get("bull") or [None] * n)[:n], (ch.get("bear") or [None] * n)[:n]
+        for e in ev:
+            e["checks"] = setup_checks(e, votes, bull, bear)
+            e["confirmed"] = all(e["checks"].values())
+    return ev
 
 
 def setup_lines(e: dict, sid: int, pl: dict | None, now: dict | None, off: float, live: dict) -> list[str]:
@@ -789,9 +870,15 @@ def setup_lines(e: dict, sid: int, pl: dict | None, now: dict | None, off: float
                f"(close half, SL to entry) | +$15 at {_fmt(x + d * SETUP_TP_PX, off)} | TP2 {_fmt(x + d * 20, off)} | at {lot:g} lot")
     if pl:
         out.append(mt5_line(d, pl))
-    hist = SETUP_HIST.get(e["kind"])
-    rec = (f"3-year record of this rule (2020-22, B16): +$15 before -$13 {hist[0]:.0%} of {hist[1]:,} (random {hist[2]:.0%}): "
-           f"{hist[3]}" if hist else "3-year record: being measured (B16)")
+    ck = e.get("checks") or {}
+    if ck:
+        out.append("CONFIRMATIONS: " + " | ".join(f"{nm} {'YES' if ck.get(k) else 'no'}" for k, nm in (
+            ("major", "day/week/month level"), ("trend", "trend 3 of 3"), ("bias", "engine bias"), ("session", "London/NY")))
+            + (" -> ALL 4" if e.get("confirmed") else ""))
+    hist = SETUP_HIST_CONFIRMED if e.get("confirmed") and SETUP_HIST_CONFIRMED else SETUP_HIST.get(e["kind"])
+    which = "with all 4 confirmations (B17)" if e.get("confirmed") and SETUP_HIST_CONFIRMED else "(B16)"
+    rec = (f"3-year record of this rule {which}, 2020-22: +$15 before -$13 {hist[0]:.0%} of {hist[1]:,} (random {hist[2]:.0%}): "
+           f"{hist[3]}" if hist else "3-year record: being measured")
     lv_ = live.get(e["kind"]) or [0, 0]
     out.append(rec + (f" | live so far {lv_[1]}/{lv_[0]} reached +$15 first" if lv_[0] else "") +
                " | information, not a confirmed signal")
@@ -832,9 +919,10 @@ def setup_record(store_dir: str | None, log: list[dict], now_t: int) -> dict:
     live: dict = {}
     for r in log:
         if r.get("result") in ("TP", "SL", "BOTH"):
-            g = live.setdefault(r["kind"], [0, 0])
-            g[0] += 1
-            g[1] += r["result"] == "TP"
+            for key in (r["kind"], "CONFIRMED") if r.get("confirmed") else (r["kind"],):
+                g = live.setdefault(key, [0, 0])
+                g[0] += 1
+                g[1] += r["result"] == "TP"
     rec = {"rules": "research/registrations/B16.json", "started_utc": started, "setups": log, "live": live}
     if path:
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1538,7 +1626,8 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                               "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
                               "move_alert": tm.get("move"), "late": tm.get("late")})
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf)}
-        lines = upd + messages(p, since, now, ctx) + liq_lines(ev, seen, off)
+        ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
+        lines = upd + messages(p, since, now, ctx) + ([] if quality() else ll)
         report[tf] = {"lines": lines, "sent": send(lines)}
         if tf == "15m" and setups_on():                    # SETUP alerts: the operator's level rules (B16)
             p5s = payloads.get("5m")
@@ -1550,13 +1639,18 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             for e in setup_scan(payloads, since, sseen):
                 state["setup_seq"] = int(state.get("setup_seq", 0)) + 1
                 sid, d, x = state["setup_seq"], e["dir"], e["close"]
+                conf = bool(e.get("confirmed"))
                 s_open.append({"id": sid, "tf": "15m", "t": e["t"], "t_dec": e["t"] + 900, "dir": d, "entry": x, "kind": e["kind"],
                                "levels": e["levels"], "zones": e["zones"], "sl": round(x - d * SETUP_SL_PX, 2),
-                               "tp": round(x + d * SETUP_TP_PX, 2), "t_alert": t_send})
+                               "tp": round(x + d * SETUP_TP_PX, 2), "checks": e.get("checks"), "confirmed": conf,
+                               "phone": conf or not quality(), "t_alert": t_send})
                 sl_ = setup_lines(e, sid, pl_cfg, now, off, live)
-                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_)})
-            if s_upd:
-                report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
+                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if (conf or not quality()) else []})
+            if s_upd:                                      # results only for setups that reached the phone
+                shown = {c_["id"] for c_ in s_done if c_.get("phone", True)}
+                s_upd = [x for x in s_upd if any(f"SETUP #{k} " in x for k in shown)]
+                if s_upd:
+                    report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
             state["setups"], state["setup_log"] = s_open[-60:], s_log
             keep_s = trading_day(t_send - 3 * 86400)
             state["setup_seen"] = {k: v for k, v in sseen.items() if v >= keep_s}
@@ -1582,7 +1676,8 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         report["grab_test_alert"] = {"lines": glines, "sent": send(glines)}
     if setups_on():                                        # the live SETUP record (descriptive) and the site block
         srec = setup_record(store_dir, state.get("setup_log", []), t_send)
-        report["setups"] = {"on": True, "started_utc": srec["started_utc"], "live": srec["live"], "open": state.get("setups", []),
+        report["setups"] = {"on": True, "quality": quality(), "hist_confirmed": list(SETUP_HIST_CONFIRMED) if SETUP_HIST_CONFIRMED else None,
+                            "started_utc": srec["started_utc"], "live": srec["live"], "open": state.get("setups", []),
                             "recent": state.get("setup_log", [])[::-1][:12], "hist": {k: list(v) for k, v in SETUP_HIST.items()},
                             "rule": "research/registrations/B16.json", "tp_px": SETUP_TP_PX, "sl_px": SETUP_SL_PX}
     if pl_cfg:                                             # B15-ENGINE-FWD, every run (reads the plans' results)
@@ -1593,7 +1688,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         ev = liquidity_near(payloads, tfs, seen, t_send)
         if ev:
             lines = [liq_text(r, off) for r in ev]
-            report["liquidity_near"] = {"lines": lines, "sent": send(lines)}
+            report["liquidity_near"] = {"lines": lines, "sent": [] if quality() else send(lines)}
             liq_log += ev
     keep_from = trading_day(t_send - 3 * 86400)
     state["liq_seen"] = {k: v for k, v in seen.items() if v >= keep_from}

@@ -146,6 +146,7 @@ def test_structure_and_setup_alerts_are_information_only(monkeypatch):
          "markers": [{"t": 10, "type": "BOS", "dir": 1}, {"t": 10, "type": "SWEEP", "dir": -1}, {"t": 5, "type": "MSS", "dir": 1}],
          "h3": {"signals": [{"t": 12, "dir": "LONG", "entry": 4100.0, "sl": 4090.0, "tp1": 4110.0, "tp2": 4120.0}]}}
     h3 = "XAUUSD 1h H3 BUY entry 4100.00 SL 4090.00 TP1 4110.00 TP2 4120.00 | info, not a DECISION"
+    monkeypatch.setenv("ALERT_MODE", "all")                     # structure lines reach the phone only in the 'all' mode
     monkeypatch.setenv("ALERT_LIQUIDITY", "0")                  # liquidity alerts off: sweeps stay in the structure line
     assert notify.messages(p, 6) == ["XAUUSD 1h BOS▲ SWEEP-HIGH | info, not a DECISION", h3]
     monkeypatch.setenv("ALERT_LIQUIDITY", "1")                  # on (default): sweeps go to the LIQUIDITY GRAB alerts
