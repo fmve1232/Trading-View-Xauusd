@@ -1,0 +1,395 @@
+{
+ "utc": "2026-11-06T11:45:51.427576+00:00",
+ "registration": "B14",
+ "stage": "development",
+ "bars_15m": 70173,
+ "bars_1h": 17566,
+ "window": [
+  "2020-01-24 02:00:00+00:00",
+  "2023-01-24 01:45:00+00:00"
+ ],
+ "two_tf_breaks_all": 795,
+ "random": {
+  "T10": {
+   "long": 0.5689781355777147,
+   "short": 0.5580555174463804
+  },
+  "T13": {
+   "long": 0.5038097861011659,
+   "short": 0.49270173505921233
+  },
+  "T15": {
+   "long": 0.4672966121226089,
+   "short": 0.45742473837075287
+  },
+  "T20": {
+   "long": 0.39545028142589117,
+   "short": 0.3844714686623012
+  }
+ },
+ "trials": {
+  "B14-a T10": {
+   "n": 230,
+   "wins": 129,
+   "long": 134,
+   "short": 96,
+   "open": 0,
+   "ties_counted_loss": 0,
+   "rate": 0.5608695652173913,
+   "wilson": [
+    0.4962532799412101,
+    0.6234859661871401
+   ],
+   "random": 0.5644191297489838,
+   "theory_driftless": 0.5652173913043478,
+   "z": -0.10856847375634596,
+   "p_one_sided": 0.5432276163984726,
+   "break_even_model_cost": 0.6022117202268431,
+   "break_even_operator_cost": 0.5765217391304348,
+   "mean_net_usd_per_oz_at_4000": -0.9508695652173911,
+   "t": -1.2613138396555352,
+   "mean_net_operator_cost": -0.35999999999999954,
+   "t_operator_cost": -0.4772706190838302,
+   "usd_per_trade_0p5lot_at_4000": -47.543478260869556,
+   "pools": {
+    "PDH": 127,
+    "PDL": 95,
+    "PWH": 7,
+    "PWL": 2
+   }
+  },
+  "B14-a T13": {
+   "n": 230,
+   "wins": 121,
+   "long": 134,
+   "short": 96,
+   "open": 0,
+   "ties_counted_loss": 0,
+   "rate": 0.5260869565217391,
+   "wilson": [
+    0.46165911733489523,
+    0.5896577024343976
+   ],
+   "random": 0.49917338218800267,
+   "theory_driftless": 0.5,
+   "z": 0.8163302433005705,
+   "p_one_sided": 0.2071556407317604,
+   "break_even_model_cost": 0.5327257525083611,
+   "break_even_operator_cost": 0.51,
+   "mean_net_usd_per_oz_at_4000": -0.17260869565217354,
+   "t": -0.20127771705635306,
+   "mean_net_operator_cost": 0.41826086956521785,
+   "t_operator_cost": 0.4875436800353142,
+   "usd_per_trade_0p5lot_at_4000": -8.630434782608678,
+   "pools": {
+    "PDH": 127,
+    "PDL": 95,
+    "PWH": 7,
+    "PWL": 2
+   }
+  },
+  "B14-a T15": {
+   "n": 229,
+   "wins": 110,
+   "long": 133,
+   "short": 96,
+   "open": 1,
+   "ties_counted_loss": 0,
+   "rate": 0.48034934497816595,
+   "wilson": [
+    0.416499735280227,
+    0.5448473545239636
+   ],
+   "random": 0.46315818469825004,
+   "theory_driftless": 0.4642857142857143,
+   "z": 0.5217171232878063,
+   "p_one_sided": 0.30093365031102126,
+   "break_even_model_cost": 0.49468652526512785,
+   "break_even_operator_cost": 0.4735714285714286,
+   "mean_net_usd_per_oz_at_4000": -0.4014410480349341,
+   "t": -0.43347771105754906,
+   "mean_net_operator_cost": 0.18978165938864638,
+   "t_operator_cost": 0.204846850387368,
+   "usd_per_trade_0p5lot_at_4000": -20.072052401746703,
+   "pools": {
+    "PDH": 127,
+    "PDL": 95,
+    "PWH": 7,
+    "PWL": 2
+   }
+  },
+  "B14-a T20": {
+   "n": 226,
+   "wins": 88,
+   "long": 133,
+   "short": 93,
+   "open": 4,
+   "ties_counted_loss": 0,
+   "rate": 0.3893805309734513,
+   "wilson": [
+    0.32816369544668567,
+    0.45429504701272827
+   ],
+   "random": 0.39093245139485644,
+   "theory_driftless": 0.3939393939393939,
+   "z": -0.047812348432975674,
+   "p_one_sided": 0.5190671024069,
+   "break_even_model_cost": 0.41973987664253143,
+   "break_even_operator_cost": 0.4018181818181818,
+   "mean_net_usd_per_oz_at_4000": -1.001858407079645,
+   "t": -0.9341353075158957,
+   "mean_net_operator_cost": -0.41044247787610727,
+   "t_operator_cost": -0.3826107604630955,
+   "usd_per_trade_0p5lot_at_4000": -50.09292035398225,
+   "pools": {
+    "PDH": 127,
+    "PDL": 95,
+    "PWH": 7,
+    "PWL": 2
+   }
+  },
+  "B14-b T10": {
+   "n": 396,
+   "wins": 220,
+   "long": 217,
+   "short": 179,
+   "open": 1,
+   "ties_counted_loss": 5,
+   "rate": 0.5555555555555556,
+   "wilson": [
+    0.5063135332545561,
+    0.6037300828404488
+   ],
+   "random": 0.5640408915233995,
+   "theory_driftless": 0.5652173913043478,
+   "z": -0.34051673636537666,
+   "p_one_sided": 0.63326628938073,
+   "break_even_model_cost": 0.6027360562143171,
+   "break_even_operator_cost": 0.5765217391304348,
+   "mean_net_usd_per_oz_at_4000": -1.0851515151515148,
+   "t": -1.8874670036435521,
+   "mean_net_operator_cost": -0.4822222222222216,
+   "t_operator_cost": -0.8385818211119479,
+   "usd_per_trade_0p5lot_at_4000": -54.25757575757574,
+   "pools": {
+    "PDH": 184,
+    "PDL": 154,
+    "PWH": 35,
+    "PWL": 25
+   }
+  },
+  "B14-b T13": {
+   "n": 395,
+   "wins": 187,
+   "long": 216,
+   "short": 179,
+   "open": 2,
+   "ties_counted_loss": 4,
+   "rate": 0.47341772151898737,
+   "wilson": [
+    0.42467226398729685,
+    0.5226752357964455
+   ],
+   "random": 0.49877601107202735,
+   "theory_driftless": 0.5,
+   "z": -1.007975093972039,
+   "p_one_sided": 0.8432667904905078,
+   "break_even_model_cost": 0.5331791626095423,
+   "break_even_operator_cost": 0.51,
+   "mean_net_usd_per_oz_at_4000": -1.5537974683544298,
+   "t": -2.375818990225634,
+   "mean_net_operator_cost": -0.9511392405063288,
+   "t_operator_cost": -1.4543317560458326,
+   "usd_per_trade_0p5lot_at_4000": -77.68987341772149,
+   "pools": {
+    "PDH": 184,
+    "PDL": 154,
+    "PWH": 35,
+    "PWL": 25
+   }
+  },
+  "B14-b T15": {
+   "n": 395,
+   "wins": 173,
+   "long": 216,
+   "short": 179,
+   "open": 2,
+   "ties_counted_loss": 5,
+   "rate": 0.4379746835443038,
+   "wilson": [
+    0.3898772283351162,
+    0.4872669378269491
+   ],
+   "random": 0.46282302882746396,
+   "theory_driftless": 0.4642857142857143,
+   "z": -0.9904438231548909,
+   "p_one_sided": 0.8390213827564796,
+   "break_even_model_cost": 0.49509493670886073,
+   "break_even_operator_cost": 0.4735714285714286,
+   "mean_net_usd_per_oz_at_4000": -1.599367088607595,
+   "t": -2.2851769511304574,
+   "mean_net_operator_cost": -0.996708860759493,
+   "t_operator_cost": -1.4241507259144335,
+   "usd_per_trade_0p5lot_at_4000": -79.96835443037975,
+   "pools": {
+    "PDH": 184,
+    "PDL": 154,
+    "PWH": 35,
+    "PWL": 25
+   }
+  },
+  "B14-b T20": {
+   "n": 389,
+   "wins": 149,
+   "long": 210,
+   "short": 179,
+   "open": 8,
+   "ties_counted_loss": 3,
+   "rate": 0.38303341902313626,
+   "wilson": [
+    0.33609198764791137,
+    0.43226240076327394
+   ],
+   "random": 0.3903983341644964,
+   "theory_driftless": 0.3939393939393939,
+   "z": -0.29775941150196195,
+   "p_one_sided": 0.6170566024887599,
+   "break_even_model_cost": 0.42007712082262205,
+   "break_even_operator_cost": 0.4018181818181818,
+   "mean_net_usd_per_oz_at_4000": -1.2224421593830328,
+   "t": -1.5008787688609992,
+   "mean_net_operator_cost": -0.6198971722365043,
+   "t_operator_cost": -0.7611538079421006,
+   "usd_per_trade_0p5lot_at_4000": -61.12210796915164,
+   "pools": {
+    "PDH": 184,
+    "PDL": 154,
+    "PWH": 35,
+    "PWL": 25
+   }
+  },
+  "B14-c T10": {
+   "n": 620,
+   "wins": 347,
+   "long": 347,
+   "short": 273,
+   "open": 1,
+   "ties_counted_loss": 5,
+   "rate": 0.5596774193548387,
+   "wilson": [
+    0.5203530155745971,
+    0.5982668660419607
+   ],
+   "random": 0.564168660174724,
+   "theory_driftless": 0.5652173913043478,
+   "z": -0.22552696759046825,
+   "p_one_sided": 0.5892153257069503,
+   "break_even_model_cost": 0.6025806451612904,
+   "break_even_operator_cost": 0.5765217391304348,
+   "mean_net_usd_per_oz_at_4000": -0.986774193548387,
+   "t": -2.150859356591383,
+   "mean_net_operator_cost": -0.3874193548387092,
+   "t_operator_cost": -0.8441982171585773,
+   "usd_per_trade_0p5lot_at_4000": -49.33870967741935,
+   "pools": {
+    "PDH": 311,
+    "PDL": 249,
+    "PWH": 38,
+    "PWL": 25
+   }
+  },
+  "B14-c T13": {
+   "n": 619,
+   "wins": 307,
+   "long": 346,
+   "short": 273,
+   "open": 2,
+   "ties_counted_loss": 4,
+   "rate": 0.49596122778675283,
+   "wilson": [
+    0.4567202641584639,
+    0.5352520107620582
+   ],
+   "random": 0.49891075874340607,
+   "theory_driftless": 0.5,
+   "z": -0.1467673015326304,
+   "p_one_sided": 0.5583421526305171,
+   "break_even_model_cost": 0.5330452342487884,
+   "break_even_operator_cost": 0.51,
+   "mean_net_usd_per_oz_at_4000": -0.964184168012924,
+   "t": -1.8439876500691974,
+   "mean_net_operator_cost": -0.36500807754442594,
+   "t_operator_cost": -0.6980194580874541,
+   "usd_per_trade_0p5lot_at_4000": -48.2092084006462,
+   "pools": {
+    "PDH": 311,
+    "PDL": 249,
+    "PWH": 38,
+    "PWL": 25
+   }
+  },
+  "B14-c T15": {
+   "n": 618,
+   "wins": 282,
+   "long": 345,
+   "short": 273,
+   "open": 3,
+   "ties_counted_loss": 5,
+   "rate": 0.4563106796116505,
+   "wilson": [
+    0.4174312461571463,
+    0.49572989929438577
+   ],
+   "random": 0.4629357358535852,
+   "theory_driftless": 0.4642857142857143,
+   "z": -0.33030133245324433,
+   "p_one_sided": 0.6294138568835274,
+   "break_even_model_cost": 0.4949757281553398,
+   "break_even_operator_cost": 0.4735714285714286,
+   "mean_net_usd_per_oz_at_4000": -1.082621359223301,
+   "t": -1.9283507610345905,
+   "mean_net_operator_cost": -0.48330097087378576,
+   "t_operator_cost": -0.8607885876486023,
+   "usd_per_trade_0p5lot_at_4000": -54.131067961165044,
+   "pools": {
+    "PDH": 311,
+    "PDL": 249,
+    "PWH": 38,
+    "PWL": 25
+   }
+  },
+  "B14-c T20": {
+   "n": 609,
+   "wins": 236,
+   "long": 339,
+   "short": 270,
+   "open": 12,
+   "ties_counted_loss": 3,
+   "rate": 0.38752052545155996,
+   "wilson": [
+    0.3496475791958483,
+    0.42680357629535326
+   ],
+   "random": 0.3905828274912947,
+   "theory_driftless": 0.3939393939393939,
+   "z": -0.1548969097489309,
+   "p_one_sided": 0.5615487050461394,
+   "break_even_model_cost": 0.41997959894511616,
+   "break_even_operator_cost": 0.4018181818181818,
+   "mean_net_usd_per_oz_at_4000": -1.0711494252873557,
+   "t": -1.642847694639369,
+   "mean_net_operator_cost": -0.4718226600985225,
+   "t_operator_cost": -0.7236415909919791,
+   "usd_per_trade_0p5lot_at_4000": -53.557471264367784,
+   "pools": {
+    "PDH": 311,
+    "PDL": 249,
+    "PWH": 38,
+    "PWL": 25
+   }
+  }
+ },
+ "primary": {
+  "B14-a": "FAIL"
+ }
+}

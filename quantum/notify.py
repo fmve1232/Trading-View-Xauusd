@@ -334,7 +334,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
         elif m["type"] == "RISK_LOCK":
             out.append(f"XAUUSD {tf} RISK LOCK engaged -- new entries blocked")
     if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0":
-        out += structure_lines(payload, since_t, off, sweeps=not liq_on())
+        out += structure_lines(payload, since_t, off, sweeps=not liq_on(), rec=(ctx or {}).get("h_records"))
     for d in payload["decisions"]:
         if since_t is not None and d["t"] <= since_t:
             continue
@@ -348,9 +348,11 @@ _TAG = {("BOS", 1): "BOS▲", ("BOS", -1): "BOS▼", ("CHoCH", 1): "CHoCH▲", (
         ("MSS", 1): "MSS▲", ("MSS", -1): "MSS▼", ("SWEEP", 1): "SWEEP-LOW", ("SWEEP", -1): "SWEEP-HIGH"}
 
 
-def structure_lines(payload: dict, since_t: int | None, off: float = 0.0, sweeps: bool = True) -> list[str]:
+def structure_lines(payload: dict, since_t: int | None, off: float = 0.0, sweeps: bool = True,
+                    rec: dict | None = None) -> list[str]:
     """One line per newly closed bar: its structure / sweep events and any H2 / H3 setup on it. sweeps=False leaves
-    the sweeps to the LIQUIDITY alerts (one per pool per day instead of one per bar)."""
+    the sweeps to the LIQUIDITY alerts (one per pool per day instead of one per bar). rec: each setup's forward record
+    on this timeframe (h_records), shown on its line so an unproven setup is not read as a trade call."""
     tf = payload["meta"]["tf"]
     by_t: dict = {}
     for m in payload["markers"]:
@@ -364,8 +366,10 @@ def structure_lines(payload: dict, since_t: int | None, off: float = 0.0, sweeps
     for arm in ("h2", "h3", "h4", "h5", "h6"):
         for g in (payload.get(arm) or {}).get("signals") or []:
             if since_t is None or g["t"] > since_t:
+                r = (rec or {}).get(arm)
+                tail = (f" [forward record: {r['n']} trades, {r['won']} won, {r['pts']:+.1f} pts]" if r and r["n"] else "")
                 by_t.setdefault(g["t"], []).append(f"{arm.upper()} {'BUY' if g['dir'] == 'LONG' else 'SELL'} entry {_fmt(g['entry'], off)} "
-                                                   f"SL {_fmt(g['sl'], off)} TP1 {_fmt(g['tp1'], off)} TP2 {_fmt(g['tp2'], off)}")
+                                                   f"SL {_fmt(g['sl'], off)} TP1 {_fmt(g['tp1'], off)} TP2 {_fmt(g['tp2'], off)}{tail}")
     return [f"XAUUSD {tf} {' '.join(v)} | info, not a DECISION" for _, v in sorted(by_t.items())]
 
 
@@ -459,8 +463,17 @@ def liquidity_near(payloads: dict, tfs: list[str], seen: dict, t_now: int) -> li
     return out
 
 
+LIQ_HIST = {"GRAB": (0.494, 913), "BREAK": (0.503, 895)}   # B10 development 2020-22, 15m, +13 / -13, all regimes
+
+
+def _liq_hist(kind: str) -> str:
+    rate, n = LIQ_HIST[kind]
+    return f"2020-22: +$13 before -$13 after a {kind} {rate:.0%} of {n:,} (random 50%)"
+
+
 def liq_text(r: dict, off: float = 0.0) -> str:
     nm, lv, side = r["name"], _fmt(r["px"], off), _liq_side(r["name"])
+    also = "".join(f" + {a} {_fmt(x, off)}" for a, x in r.get("also") or [])
     if r["kind"] == "NEAR":
         where = "below" if r["name"] in _HIGHS else "above"
         return (f"XAUUSD LIQUIDITY NEAR: price {_fmt(r['price'], off)} is ${r['dist']:.2f} {where} {nm} {lv} ({side}) | "
@@ -468,12 +481,24 @@ def liq_text(r: dict, off: float = 0.0) -> str:
     bar, side = f"{r['tf']} bar {clocks(r['t'])}", side.rsplit(" ", 1)[0]       # "buy-side liquidity"
     if r["kind"] == "GRAB":
         lows = r["name"] not in _HIGHS
-        return (f"XAUUSD {r['tf']} LIQUIDITY GRAB: {nm} {lv} swept -- {'low' if lows else 'high'} {_fmt(r.get('wick'), off)}, "
+        return (f"XAUUSD {r['tf']} LIQUIDITY GRAB: {nm} {lv}{also} swept -- {'low' if lows else 'high'} {_fmt(r.get('wick'), off)}, "
                 f"closed back {'above' if lows else 'below'} at {_fmt(r.get('close'), off)} ({side} taken, then rejected) | "
-                f"{bar} | info, not a trade signal")
+                f"{bar} | {_liq_hist('GRAB')} | info, not a trade signal")
     hi = r["name"] in _HIGHS
-    return (f"XAUUSD {r['tf']} LIQUIDITY BREAK: {nm} {lv} broken -- closed {'above' if hi else 'below'} at "
-            f"{_fmt(r.get('close'), off)} ({side} taken, price holding beyond) | {bar} | info, not a trade signal")
+    return (f"XAUUSD {r['tf']} LIQUIDITY BREAK: {nm} {lv}{also} broken -- closed {'above' if hi else 'below'} at "
+            f"{_fmt(r.get('close'), off)} ({side} taken, price holding beyond) | {bar} | {_liq_hist('BREAK')} | info, not a trade signal")
+
+
+def liq_lines(ev: list[dict], seen: dict, off: float = 0.0) -> list[str]:
+    """Phone lines for GRAB / BREAK events: one per pool per trading day ACROSS timeframes (the first timeframe that
+    shows it; the others stay in the log for the site and the A2 warning), and pools taken on the same bar in the same
+    direction in one line (audit 2026-11-06: 27 alerts for 6 market events). Marks each event sent / not sent."""
+    groups: dict = {}
+    for r in ev:
+        r["sent"] = _first_today(seen, ("SENT", r["kind"], r["name"], f"{r['px']:.2f}"), r["t"])
+        if r["sent"]:
+            groups.setdefault((r["t"], r["kind"], r["name"] in _HIGHS), []).append(r)
+    return [liq_text({**rs[0], "also": [(x["name"], x["px"]) for x in rs[1:]]}, off) for _, rs in sorted(groups.items())]
 
 
 # ---------------- B9-GRAB-FWD: the registered live test of the liquidity GRAB (research/registrations/B9-GRAB-FWD.json) ----
@@ -961,6 +986,71 @@ def send(lines: list[str]) -> list[str]:
     return sent
 
 
+GATE_NAMES = {"Trend": "trend", "HTF": "higher-timeframe gate", "Sess": "session", "Trig": "no trigger", "Recent": "old bar",
+              "News": "news", "DD": "drawdown", "all passed": "all gates passed (vetoed or already in a trade)", "?": "not logged"}
+
+
+def h_records(store_dir: str | None, tf: str) -> dict:
+    """Each H-setup's forward record on this timeframe (store/holdout/<tf>_<arm>.json): trades, winners, net points."""
+    out = {}
+    for arm in ("h2", "h3", "h4", "h5", "h6"):
+        path = os.path.join(store_dir, "holdout", f"{tf}_{arm}.json") if store_dir else None
+        if not path or not os.path.exists(path):
+            continue
+        try:
+            with open(path) as f:
+                tr = json.load(f)
+        except (OSError, ValueError):
+            continue
+        pts = [float(x.get("pts") or 0.0) for x in tr if isinstance(x, dict)]
+        out[arm] = {"n": len(pts), "won": sum(1 for x in pts if x > 0), "pts": round(sum(pts), 1)}
+    return out
+
+
+def gate_tally(state: dict, payload: dict, tf: str) -> None:
+    """Count, once per closed bar, the first entry gate that blocked each side (the dashboard's gate_sides, rebuilt
+    from the engine's own log), per trading day and timeframe; kept for six days."""
+    lb = (payload.get("meta") or {}).get("last_bar_open")
+    if not lb:
+        return
+    seen = state.setdefault("gates_seen", {})
+    if seen.get(tf) == lb:
+        return
+    seen[tf] = lb
+    t = int(datetime.fromisoformat(lb).timestamp())
+    gs = (payload.get("dashboard") or {}).get("gate_sides")
+    g = state.setdefault("gates", {}).setdefault(trading_day(t), {}).setdefault(tf, {"bars": 0, "signals": 0, "long": {}, "short": {}})
+    g["bars"] += 1
+    for side in ("long", "short"):
+        f = (gs or {}).get(side)
+        key = "?" if not gs else (f[0] if f else "all passed")
+        g[side][key] = g[side].get(key, 0) + 1
+    keep = trading_day(t - 6 * 86400)
+    state["gates"] = {d: v for d, v in state["gates"].items() if d >= keep}
+
+
+def engine_line(state: dict, day: str, tfs: list[str], last: dict | None) -> str | None:
+    """The day's engine status for the daily report: signals per timeframe and what blocked each side most often."""
+    g = (state.get("gates") or {}).get(day) or {}
+    parts = []
+    for tf in tfs:
+        x = g.get(tf)
+        if not x or not x["bars"]:
+            continue
+
+        def top(side, x=x):
+            items = sorted(x[side].items(), key=lambda kv: -kv[1])[:2]
+            return ", ".join(f"{GATE_NAMES.get(k, k)} {100 * v / x['bars']:.0f}%" for k, v in items)
+        parts.append(f"{tf} {x['signals']} signal{'' if x['signals'] == 1 else 's'} in {x['bars']} bars "
+                     f"(BUY blocked by {top('long')}; SELL by {top('short')})")
+    if not parts:
+        return None
+    ls = (f"last signal {last['tf']} {'BUY' if last['dir'] == 1 else 'SELL'} "
+          f"{datetime.fromtimestamp(int(last['t_dec']), timezone.utc):%a %d %b %H:%M} UTC" if last else "no signal recorded yet")
+    return (f"XAUUSD ENGINE {date.fromisoformat(day):%a %d %b}: " + " | ".join(parts) + f" | {ls} | "
+            "no signal = no trade by the engine's rules (by design, not a fault)")
+
+
 def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | None = None) -> dict:
     """sent_t: the send time (tests); None = the clock when the alerts go out."""
     path = os.path.join(store_dir, STATE) if store_dir else None
@@ -990,6 +1080,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             state[tf] = last_t   # first run: remember the position, do not replay history
             continue
         alerted = True
+        gate_tally(state, p, tf)
         pn = price_now(payloads, tf)
         now = {"t": t_send, **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
         ev = liquidity_events(p, since, seen) if liq_on() else []   # liquidity grabs / breaks on this timeframe's new bars
@@ -1006,6 +1097,11 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             sigs = sorted((m for m in p["markers"] if m["type"] == "SIGNAL" and m["t"] > since and m.get("px") is not None),
                           key=lambda m: m["t"])
             for m in sigs:
+                td_m = int(m["t"]) + TF_SEC.get(tf, 0)
+                gday = state.setdefault("gates", {}).setdefault(trading_day(td_m), {}).setdefault(
+                    tf, {"bars": 0, "signals": 0, "long": {}, "short": {}})
+                gday["signals"] += 1
+                state["last_signal"] = {"tf": tf, "dir": m["dir"], "t_dec": td_m, "px": m["px"]}
                 rp = repeat_of(m, tf, plans)               # A1: one idea, one plan
                 if rp is not None:
                     repeats[m["t"]] = rp
@@ -1022,8 +1118,8 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                               "session": session_of(t_dec), "dow": date.fromisoformat(trading_day(t_dec)).strftime("%a"),
                               "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
                               "move_alert": tm.get("move"), "late": tm.get("late")})
-        ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send))}
-        lines = upd + messages(p, since, now, ctx) + [liq_text(r, off) for r in ev]
+        ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf)}
+        lines = upd + messages(p, since, now, ctx) + liq_lines(ev, seen, off)
         report[tf] = {"lines": lines, "sent": send(lines)}
         state[tf] = last_t
     if pl_cfg:
@@ -1055,6 +1151,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     state["liq_seen"] = {k: v for k, v in seen.items() if v >= keep_from}
     state["liq_log"] = liq_log[-_LIQ_LOG:]
     report["liquidity"] = {"on": liq_on(), "near_usd": _env_float("LIQ_NEAR_USD", LIQ_NEAR_USD), "recent": state["liq_log"][::-1]}
+    report["engine_status"] = {"gates": state.get("gates", {}), "last_signal": state.get("last_signal")}
     report["channels"] = channels()
     first = next((payloads[tf] for tf in tfs if payloads.get(tf) and not payloads[tf]["meta"]["synthetic"]), None)
     if first is not None and pl_cfg:                       # validation: daily at the New York close, weekly at Friday's
@@ -1069,6 +1166,10 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             n_open = sum(1 for p in plans if trading_day(_decision_t(p)) == prev)
             if recs or n_open:                             # a day without alerted signals (weekends) sends nothing
                 lines += report_lines("DAILY", date.fromisoformat(prev).strftime("%a %d %b"), summarize(recs, cpl), n_open)
+            last = state.get("last_signal") or next(({"tf": r["tf"], "dir": r["dir"], "t_dec": _decision_t(r)} for r in vlog[::-1]), None)
+            el = engine_line(state, prev, tfs, last)       # also on a silent weekday: why there was no signal
+            if el:
+                lines.append(el)
         if state.get("report_week") and state["report_week"] != week:
             prev = state["report_week"]
             recs = [r for r in vlog if trading_week(_decision_t(r)) == prev]
