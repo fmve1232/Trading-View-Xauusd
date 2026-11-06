@@ -309,10 +309,11 @@ def turn_lines(state: dict, payloads: dict, tfs: list[str], liq_log: list[dict],
     return out
 
 
-def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: dict | None = None) -> list[str]:
+def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: dict | None = None,
+             signals_only: bool = False) -> list[str]:
     """Alert lines for bars closed after since_t. `now` ({'t' send time, 'px', 't_px', 'live'}) adds the MT5 and
     timing lines to each SIGNAL; `ctx` ({'repeats': {bar t: plan}, 'breaks': today's BREAKs}) the REPEAT and CONTEXT
-    lines (part A, 2026-11-05)."""
+    lines (part A, 2026-11-05). signals_only: the SIGNAL alerts alone (the phone in sixty mode)."""
     tf = payload["meta"]["tf"]
     off = float(os.environ.get("MT5_PRICE_OFFSET", "0") or 0)
     out = []
@@ -340,10 +341,16 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             cl = context_line(payload, m["dir"], (ctx or {}).get("breaks") or []) if ctx is not None else None
             if cl:
                 out.append(cl)
+            if sixty() and tf in SIGNAL_RECORD:
+                out.append(SIGNAL_RECORD[tf])
+        elif signals_only:
+            continue
         elif m["type"] == "TRACK_EXIT":
             out.append(f"XAUUSD {tf} tracked plan {'STOPPED' if (m.get('r') or 0) < 0 else 'reached TP1'} at {_fmt(m['px'], off)} = {m.get('r')}R")
         elif m["type"] == "RISK_LOCK":
             out.append(f"XAUUSD {tf} RISK LOCK engaged -- new entries blocked")
+    if signals_only:
+        return out
     if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0" and not quality():
         out += structure_lines(payload, since_t, off, sweeps=not liq_on(), rec=(ctx or {}).get("h_records"))
     for d in payload["decisions"]:
@@ -832,6 +839,29 @@ def h4_events(t4: list, h4: list, l4: list, c4: list, bull4: list, bear4: list, 
     return out
 
 
+PHONE_TFS_SIXTY = ("15m",)
+# Operator, 2026-11-06: "ALERTS WITH MORE THAN 60% SUCCESSFUL TRADES ONLY". The one alert stream whose measured record is
+# above 60% (stop -$13): the engine's 15m signals, 64.3% of 70 at +$13 (B10, 2020-22) and 61.4% of 44 (B13-1, 2023-24,
+# not passed after Holm). 1h signals 40.0% of 25 (B10); 30m / 4h signals never measured; setups 51.6% (B17) / 45.8% (B18);
+# liquidity grabs 49.4% of 913 (B10). Live Sep-Nov 2026 the 15m signals did 31.8% of 22 (B9-explore): not proven.
+SIGNAL_RECORD = {"15m": "RECORD of 15m engine signals (stop -$13): 64% of 70 (2020-22), 61% of 44 (2023-24); live Sep-Nov 2026 "
+                        "32% of 22 | live test B15 running | the only alert above 60% on history, not proven"}
+
+
+def alert_mode() -> str:
+    """ALERT_MODE: sixty (default since 2026-11-06), quality or all; unset or empty = sixty."""
+    return (os.environ.get("ALERT_MODE") or "").strip().lower() or "sixty"
+
+
+def sixty() -> bool:
+    """sixty (operator, 2026-11-06, "ALERTS WITH MORE THAN 60% SUCCESSFUL TRADES ONLY"): quality mode, and the phone
+    gets only the engine's 15m signals with their plan follow-ups (PHONE_TFS_SIXTY), the registered engine test's checks,
+    the daily report and news. Every other stream (30m / 1h / 4h signals, setups, 4h breakouts, the grab test's trades,
+    the trend-change warning, DECISION / RISK LOCK lines) stays on the website. Plans still open and are scored on every
+    alerted timeframe, so B15-ENGINE-FWD and B9-GRAB-FWD record exactly as before."""
+    return alert_mode() not in ("all", "quality")
+
+
 def quality() -> bool:
     """ALERT_MODE (operator, 2026-11-06: "quality rather than the quantity"): quality (default) sends only engine
     signals with their follow-ups, setups with all four B17 confirmations, the trend-change warning, the registered
@@ -839,8 +869,8 @@ def quality() -> bool:
     Since B18 (operator, 2026-11-06: "confirm movement of market at every 4 h candle") the 4h candle breakouts with all
     four confirmations reach the phone too; the operator then asked (2026-11-06, "Yes please") for the 15m setups with all
     four confirmations back on the phone beside them. Unconfirmed setups stay on the website and in the records.
-    all = every alert as before."""
-    return os.environ.get("ALERT_MODE", "quality").strip().lower() != "all"
+    all = every alert as before. sixty (the default) narrows quality further: see sixty()."""
+    return alert_mode() != "all"
 
 
 def setups_on() -> bool:
@@ -1717,7 +1747,11 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf)}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
         lines = upd + messages(p, since, now, ctx) + ([] if quality() else ll)
-        report[tf] = {"lines": lines, "sent": send(lines)}
+        if sixty():                                        # the phone: 15m signals and their plan follow-ups only
+            phone_lines = upd + messages(p, since, now, ctx, signals_only=True) if tf in PHONE_TFS_SIXTY else []
+        else:
+            phone_lines = lines
+        report[tf] = {"lines": lines, "sent": send(phone_lines)}
         if tf == "15m" and setups_on():                    # SETUP alerts: the operator's level rules (B16)
             p5s = payloads.get("5m")
             p5s = p5s if p5s is not None and (p5s.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
@@ -1732,9 +1766,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                 s_open.append({"id": sid, "tf": "15m", "t": e["t"], "t_dec": e["t"] + 900, "dir": d, "entry": x, "kind": e["kind"],
                                "levels": e["levels"], "zones": e["zones"], "sl": round(x - d * SETUP_SL_PX, 2),
                                "tp": round(x + d * SETUP_TP_PX, 2), "checks": e.get("checks"), "confirmed": conf,
-                               "phone": conf or not quality(), "t_alert": t_send})
+                               "phone": (conf and not sixty()) or not quality(), "t_alert": t_send})
                 sl_ = setup_lines(e, sid, pl_cfg, now, off, live)
-                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if (conf or not quality()) else []})
+                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if s_open[-1]["phone"] else []})
             if s_upd:                                      # results only for setups that reached the phone
                 shown = {c_["id"] for c_ in s_done if c_.get("phone", True)}
                 s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]
@@ -1749,7 +1783,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             for e in h4_scan(payloads, since):
                 state["setup_seq"] = int(state.get("setup_seq", 0)) + 1
                 sid, d, x = state["setup_seq"], e["dir"], e["close"]
-                phone = e["confirmed"] or not quality()
+                phone = (e["confirmed"] and not sixty()) or not quality()
                 s_open.append({"id": sid, "tf": "15m", "t": e["t_close"] - 900, "t_dec": e["t_close"], "dir": d, "entry": x,
                                "kind": "4H BREAKOUT", "levels": e["beyond"], "zones": [], "sl": round(x - d * SETUP_SL_PX, 2),
                                "tp": round(x + d * SETUP_TP_PX, 2), "checks": e["checks"], "confirmed": e["confirmed"],
@@ -1766,20 +1800,21 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                            "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
                            "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs),
                            "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC),
-                           "repeats": state.get("plan_repeats", [])[::-1][:10], "repeat_rule": {"sec": REPEAT_SEC, "usd": REPEAT_USD}}
+                           "repeats": state.get("plan_repeats", [])[::-1][:10], "repeat_rule": {"sec": REPEAT_SEC, "usd": REPEAT_USD},
+                           "mode": alert_mode(), "phone_tfs": [x for x in tfs if x in PHONE_TFS_SIXTY] if sixty() else list(tfs)}
     if liq_on() and alerted:                               # A2: trend-change warning, once per direction per trading day
         today = trading_day(t_send)
         tl = turn_lines(state, payloads, tfs, liq_log, [x for x in plans + log if trading_day(_decision_t(x)) == today],
                         t_send, off)
         if tl:
-            report["turn_warning"] = {"lines": tl, "sent": send(tl)}
+            report["turn_warning"] = {"lines": tl, "sent": [] if sixty() else send(tl)}
     report["turn_log"] = state.get("turn_log", [])[::-1][:10]
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
-        report["grab_test_alert"] = {"lines": glines, "sent": send(glines)}
+        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else send(glines)}   # trades and results
     if setups_on():                                        # the live SETUP record (descriptive) and the site block
         srec = setup_record(store_dir, state.get("setup_log", []), t_send)
-        report["setups"] = {"on": True, "quality": quality(), "hist_confirmed": list(SETUP_HIST_CONFIRMED) if SETUP_HIST_CONFIRMED else None,
+        report["setups"] = {"on": True, "quality": quality(), "sixty": sixty(), "hist_confirmed": list(SETUP_HIST_CONFIRMED) if SETUP_HIST_CONFIRMED else None,
                             "hist_4h": list(H4_HIST),
                             "started_utc": srec["started_utc"], "live": srec["live"], "open": state.get("setups", []),
                             "recent": state.get("setup_log", [])[::-1][:12], "hist": {k: list(v) for k, v in SETUP_HIST.items()},

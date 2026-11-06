@@ -108,10 +108,10 @@ def _trend_up_payloads(bars, bull=60.0, bear=30.0):
     return {"15m": p, "1h": h1, "4h": h4}
 
 
-def _quality_15m_run(store, monkeypatch, bull=60.0, bear=30.0):
+def _quality_15m_run(store, monkeypatch, bull=60.0, bear=30.0, mode="quality"):
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
-    monkeypatch.setenv("ALERT_MODE", "quality")
+    monkeypatch.setenv("ALERT_MODE", mode)
     base = [(T0, 4147.0, 4140.0, 4146.0)]
     pay = _trend_up_payloads(base, bull, bear)
     pay["15m"]["chart"]["vah"] = [4140.0]
@@ -179,3 +179,18 @@ def test_4h_breakout_result_keeps_the_alert_label():
     assert lines == ["XAUUSD 4h CANDLE BREAKOUT #7 BUY from 4118.00: +$15 reached first (4133.00)",
                      "XAUUSD 15m SETUP #8 BUY from 4118.00: +$15 reached first (4133.00)"]
     assert keep == [] and [d["result"] for d in done] == ["TP", "TP"]
+
+
+def test_sixty_mode_keeps_setups_and_4h_breakouts_on_the_website(tmp_path, monkeypatch):
+    """Operator, 2026-11-06: alerts above 60% only. Setups (B17 51.6%) and 4h breakouts (B18 45.8%) are recorded, not sent."""
+    sent, rep = _quality_15m_run(str(tmp_path), monkeypatch, mode="sixty")
+    assert not any(b and b[0].startswith("XAUUSD 15m SETUP") for b in sent)
+    op = rep["setups"]["open"][0]
+    assert op["confirmed"] is True and op["phone"] is False and rep["setup_alerts"][0]["sent"] == [] and rep["setups"]["sixty"]
+    sent.clear()
+    store = str(tmp_path / "h4")
+    up = _trend_up_payloads([(T0, 4147.0, 4140.0, 4146.0)])
+    notify.run(store, {"1h": up["1h"], "4h": _p4(59)}, ["4h"], sent_t=T0 - 3000)
+    rep = notify.run(store, {"1h": up["1h"], "4h": _p4(60)}, ["4h"], sent_t=T0 + 360)
+    assert not any(b and b[0].startswith("XAUUSD 4h CANDLE BREAKOUT") for b in sent) and rep["h4_alerts"][0]["sent"] == []
+    assert rep["setups"]["open"][0]["confirmed"] is True and rep["setups"]["open"][0]["phone"] is False
