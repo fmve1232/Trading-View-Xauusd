@@ -159,3 +159,15 @@ def test_4h_breakout_with_all_four_is_sent(tmp_path, monkeypatch):
     notify.run(store2, {"1h": up["1h"], "4h": _p4(59, bull=30.0, bear=60.0)}, ["4h"], sent_t=T0 - 3000)
     rep = notify.run(store2, {"1h": up["1h"], "4h": _p4(60, bull=30.0, bear=60.0)}, ["4h"], sent_t=T0 + 360)
     assert not any(b and b[0].startswith("XAUUSD 4h CANDLE BREAKOUT") for b in sent) and rep["h4_alerts"][0]["sent"] == []
+
+
+def test_4h_breakout_result_keeps_the_alert_label():
+    """The follow-up names the 4h breakout as its alert did (not '15m SETUP'), on the 15m bars from the 4h close."""
+    s4 = {"id": 7, "tf": "15m", "t": T0 - 900, "t_dec": T0, "dir": 1, "entry": 4118.0, "kind": "4H BREAKOUT",
+          "sl": 4105.0, "tp": 4133.0}
+    s15 = {**s4, "id": 8, "kind": "BREAKOUT"}
+    chart = {"t": [T0 - 900, T0, T0 + 900], "h": [4140.0, 4125.0, 4134.0], "l": [4100.0, 4110.0, 4120.0]}
+    lines, keep, done = notify.setup_track([s4, s15], chart, None, T0 + 1800, 0.0)
+    assert lines == ["XAUUSD 4h CANDLE BREAKOUT #7 BUY from 4118.00: +$15 reached first (4133.00)",
+                     "XAUUSD 15m SETUP #8 BUY from 4118.00: +$15 reached first (4133.00)"]
+    assert keep == [] and [d["result"] for d in done] == ["TP", "TP"]

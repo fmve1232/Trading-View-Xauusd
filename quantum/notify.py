@@ -980,7 +980,8 @@ def setup_track(setups: list[dict], chart: dict, p5: dict | None, now_t: int, of
     for s in setups:
         path = plan_path5(s, p5) or plan_path(s, chart)
         side = "BUY" if s["dir"] == 1 else "SELL"
-        head = f"XAUUSD 15m SETUP #{s['id']} {side} from {_fmt(s['entry'], off)}"
+        what = "4h CANDLE BREAKOUT" if s.get("kind") == "4H BREAKOUT" else "15m SETUP"   # the alert's own label
+        head = f"XAUUSD {what} #{s['id']} {side} from {_fmt(s['entry'], off)}"
         if path["result"] is None:
             if now_t - s["t_dec"] > SETUP_TRACK_SEC:
                 closed.append({**s, **path, "result": "EXPIRED", "t_res": now_t})
@@ -1735,7 +1736,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                 report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": [] if quality() else send(sl_)})
             if s_upd:                                      # results only for setups that reached the phone
                 shown = {c_["id"] for c_ in s_done if c_.get("phone", True)}
-                s_upd = [x for x in s_upd if any(f"SETUP #{k} " in x for k in shown)]
+                s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]
                 if s_upd:
                     report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
             state["setups"], state["setup_log"] = s_open[-60:], s_log
