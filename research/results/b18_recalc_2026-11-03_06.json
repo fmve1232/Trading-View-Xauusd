@@ -1,0 +1,190 @@
+{
+ "window": [
+  "2026-11-03 12:00:00+00:00",
+  "2026-11-06 22:00:00+00:00"
+ ],
+ "breakouts": [
+  {
+   "close_utc": "Wed 04 Nov 02:00",
+   "side": "BUY",
+   "entry": 3946.98,
+   "prev": 3934.84,
+   "beyond": [],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL"
+   }
+  },
+  {
+   "close_utc": "Wed 04 Nov 06:00",
+   "side": "BUY",
+   "entry": 4000.32,
+   "prev": 3964.48,
+   "beyond": [
+    "PDH 3969.20"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP"
+   }
+  },
+  {
+   "close_utc": "Wed 04 Nov 10:00",
+   "side": "BUY",
+   "entry": 4042.9,
+   "prev": 4010.11,
+   "beyond": [
+    "PDH 3969.20"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP"
+   }
+  },
+  {
+   "close_utc": "Wed 04 Nov 18:00",
+   "side": "BUY",
+   "entry": 4066.67,
+   "prev": 4050.31,
+   "beyond": [
+    "PDH 3969.20"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP"
+   }
+  },
+  {
+   "close_utc": "Thu 05 Nov 02:00",
+   "side": "BUY",
+   "entry": 4127.06,
+   "prev": 4070.46,
+   "beyond": [
+    "PDH 4070.46",
+    "PWH 4081.97"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP"
+   }
+  },
+  {
+   "close_utc": "Thu 05 Nov 18:00",
+   "side": "SELL",
+   "entry": 4102.86,
+   "prev": 4112.35,
+   "beyond": [],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL"
+   }
+  },
+  {
+   "close_utc": "Fri 06 Nov 02:00",
+   "side": "SELL",
+   "entry": 4060.52,
+   "prev": 4081.97,
+   "beyond": [],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP"
+   }
+  },
+  {
+   "close_utc": "Fri 06 Nov 06:00",
+   "side": "SELL",
+   "entry": 4039.16,
+   "prev": 4059.56,
+   "beyond": [
+    "PDL 4058.44"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL"
+   }
+  },
+  {
+   "close_utc": "Fri 06 Nov 10:00",
+   "side": "BUY",
+   "entry": 4073.54,
+   "prev": 4072.49,
+   "beyond": [],
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL"
+   }
+  }
+ ]
+}
