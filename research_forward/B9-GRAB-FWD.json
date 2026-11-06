@@ -56,6 +56,33 @@
     "t_px": 1793928925,
     "live": true
    }
+  },
+  {
+   "tf": "15m",
+   "t": 1793930400,
+   "t_close": 1793931300,
+   "dir": 1,
+   "pools": [
+    "PDL"
+   ],
+   "levels": [
+    4058.44
+   ],
+   "wick": 4057.86,
+   "entry": 4069.63,
+   "tp": 4082.63,
+   "sl": 4056.63,
+   "src": "twelvedata:XAU/USD",
+   "status": "OPEN",
+   "mfe": 0.0,
+   "mae": 0.0,
+   "id": 3,
+   "alert": {
+    "t": 1793931695,
+    "px": 4067.67,
+    "t_px": 1793931622,
+    "live": true
+   }
   }
  ],
  "checks": [],
