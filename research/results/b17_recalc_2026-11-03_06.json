@@ -1,0 +1,1187 @@
+{
+ "window": [
+  "2026-11-03 12:00:00+00:00",
+  "2026-11-06 22:00:00+00:00"
+ ],
+ "setups": [
+  {
+   "utc": "Tue 03 Nov 14:00",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 3965.29,
+   "levels": [
+    "TDH 3967.62"
+   ],
+   "zones": [
+    "value-area high 3969.06"
+   ],
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Tue 03 Nov 17:15",
+   "kind": "SWEEP",
+   "side": "BUY",
+   "entry": 3929.15,
+   "levels": [
+    "1HL 3926.34"
+   ],
+   "zones": [
+    "value-area low 3928.48"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Tue 03 Nov 19:30",
+   "kind": "SWEEP",
+   "side": "BUY",
+   "entry": 3925.18,
+   "levels": [
+    "4HL 3922.95"
+   ],
+   "zones": [
+    "value-area low 3924.49"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Tue 03 Nov 20:00",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 3919.2,
+   "levels": [
+    "4HL 3922.95"
+   ],
+   "zones": [
+    "below value-area low 3924.49"
+   ],
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Tue 03 Nov 23:45",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 3929.62,
+   "levels": [
+    "TDH 3934.13",
+    "1HH 3930.66"
+   ],
+   "zones": [
+    "POC 3931.79"
+   ],
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 01:45",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 3964.27,
+   "levels": [
+    "TDH 3960.24"
+   ],
+   "zones": [
+    "above value-area high 3959.16"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 03:15",
+   "kind": "SWEEP",
+   "side": "BUY",
+   "entry": 3934.91,
+   "levels": [
+    "1HL 3933.17"
+   ],
+   "zones": [
+    "POC 3931.79"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 05:45",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 3982.93,
+   "levels": [
+    "PDH 3969.20",
+    "TDH 3964.48",
+    "4HH 3964.48"
+   ],
+   "zones": [
+    "above value-area high 3957.36"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 06:00",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4000.32,
+   "levels": [
+    "TDH 3988.51"
+   ],
+   "zones": [
+    "above value-area high 3960.27"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 06:30",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4014.99,
+   "levels": [
+    "TDH 4010.59",
+    "4HH 4010.11",
+    "1HH 4010.11"
+   ],
+   "zones": [
+    "above value-area high 3953.43"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 07:00",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4024.25,
+   "levels": [
+    "TDH 4021.56"
+   ],
+   "zones": [
+    "above value-area high 3976.65"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 08:15",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4034.06,
+   "levels": [
+    "TDH 4028.95",
+    "1HH 4028.95"
+   ],
+   "zones": [
+    "above value-area high 3955.70"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 09:15",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4045.16,
+   "levels": [
+    "TDH 4040.45",
+    "1HH 4040.45"
+   ],
+   "zones": [
+    "above value-area high 4004.31"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 14:45",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 4047.04,
+   "levels": [
+    "TDH 4050.31",
+    "4HH 4050.31",
+    "1HH 4049.07"
+   ],
+   "zones": [
+    "value-area high 4050.12"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 16:45",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4060.51,
+   "levels": [
+    "TDH 4051.85",
+    "4HH 4050.31",
+    "1HH 4049.07"
+   ],
+   "zones": [
+    "above value-area high 4059.12"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 17:15",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 4065.27,
+   "levels": [
+    "TDH 4066.86",
+    "1HH 4066.86"
+   ],
+   "zones": [
+    "value-area high 4067.14"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 17:45",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4069.37,
+   "levels": [
+    "TDH 4069.04",
+    "1HH 4066.86"
+   ],
+   "zones": [
+    "above value-area high 4067.90"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 18:00",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 4066.67,
+   "levels": [
+    "TDH 4069.80"
+   ],
+   "zones": [
+    "value-area high 4068.26"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 18:15",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 4068.74,
+   "levels": [
+    "TDH 4070.17",
+    "4HH 4070.17",
+    "1HH 4070.17"
+   ],
+   "zones": [
+    "value-area high 4068.54"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Wed 04 Nov 23:45",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 4064.54,
+   "levels": [
+    "1HH 4066.30"
+   ],
+   "zones": [
+    "value-area high 4068.57"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 00:00",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 4065.17,
+   "levels": [
+    "PDH 4070.46",
+    "TDH 4066.54",
+    "4HH 4070.46"
+   ],
+   "zones": [
+    "value-area high 4069.43"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 00:30",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4078.75,
+   "levels": [
+    "PDH 4070.46",
+    "TDH 4071.33",
+    "4HH 4070.46",
+    "1HH 4071.33"
+   ],
+   "zones": [
+    "above value-area high 4069.80"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 00:45",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4090.54,
+   "levels": [
+    "PWH 4081.97",
+    "TDH 4079.80"
+   ],
+   "zones": [
+    "above value-area high 4074.09"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 01:15",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4108.97,
+   "levels": [
+    "TDH 4098.15",
+    "1HH 4098.15"
+   ],
+   "zones": [
+    "above value-area high 4088.68"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 01:45",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4124.95,
+   "levels": [
+    "TDH 4119.76"
+   ],
+   "zones": [
+    "above value-area high 4092.00"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 02:00",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4127.06,
+   "levels": [
+    "TDH 4125.43"
+   ],
+   "zones": [
+    "above value-area high 4100.94"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 03:15",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4137.15,
+   "levels": [
+    "4HH 4136.11"
+   ],
+   "zones": [
+    "above value-area high 4100.44"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 03:45",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4139.17,
+   "levels": [
+    "1HH 4137.88"
+   ],
+   "zones": [
+    "above value-area high 4089.77"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 04:00",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4141.71,
+   "levels": [
+    "TDH 4140.44"
+   ],
+   "zones": [
+    "above value-area high 4089.72"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 09:15",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4132.89,
+   "levels": [
+    "1HH 4132.27"
+   ],
+   "zones": [
+    "above value-area high 4088.56"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 11:30",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4134.58,
+   "levels": [
+    "4HH 4133.94",
+    "1HH 4131.79"
+   ],
+   "zones": [
+    "above value-area high 4107.88"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 17:00",
+   "kind": "BREAKOUT",
+   "side": "BUY",
+   "entry": 4126.99,
+   "levels": [
+    "1HH 4120.63"
+   ],
+   "zones": [
+    "above value-area high 4125.53"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 18:45",
+   "kind": "SWEEP",
+   "side": "BUY",
+   "entry": 4102.48,
+   "levels": [
+    "1HL 4102.23"
+   ],
+   "zones": [
+    "POC 4102.69"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 21:00",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4096.0,
+   "levels": [
+    "1HL 4098.39"
+   ],
+   "zones": [
+    "below value-area low 4102.69"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 21:15",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4088.83,
+   "levels": [
+    "1HL 4095.67"
+   ],
+   "zones": [
+    "below value-area low 4102.69"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Thu 05 Nov 23:30",
+   "kind": "SWEEP",
+   "side": "BUY",
+   "entry": 4094.63,
+   "levels": [
+    "TDL 4085.30"
+   ],
+   "zones": [
+    "value-area low 4085.85"
+   ],
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 01:30",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4066.37,
+   "levels": [
+    "TDL 4068.94",
+    "4HL 4081.97",
+    "1HL 4084.80"
+   ],
+   "zones": [
+    "below value-area low 4099.12"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 03:15",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4053.35,
+   "levels": [
+    "PDL 4058.44",
+    "TDL 4057.86",
+    "4HL 4059.56",
+    "1HL 4057.86"
+   ],
+   "zones": [
+    "below value-area low 4087.15"
+   ],
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 03:45",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4045.63,
+   "levels": [
+    "TDL 4047.93"
+   ],
+   "zones": [
+    "below value-area low 4087.62"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 04:15",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4040.1,
+   "levels": [
+    "TDL 4040.98",
+    "1HL 4040.98"
+   ],
+   "zones": [
+    "below value-area low 4086.20"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 10:15",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4070.93,
+   "levels": [
+    "1HL 4072.37"
+   ],
+   "zones": [
+    "below value-area low 4086.97"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "TP",
+    "+20": "TP",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 12:00",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4063.24,
+   "levels": [
+    "1HL 4063.72"
+   ],
+   "zones": [
+    "below value-area low 4086.97"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 12:15",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4062.0,
+   "levels": [
+    "1HL 4063.00"
+   ],
+   "zones": [
+    "below value-area low 4086.97"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 13:15",
+   "kind": "BREAKOUT",
+   "side": "SELL",
+   "entry": 4058.3,
+   "levels": [
+    "1HL 4060.42"
+   ],
+   "zones": [
+    "below value-area low 4079.24"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "SL",
+    "+15": "SL",
+    "+20": "SL",
+    "moved +15 in the day": true
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 19:15",
+   "kind": "SWEEP",
+   "side": "SELL",
+   "entry": 4072.44,
+   "levels": [
+    "1HH 4076.89"
+   ],
+   "zones": [
+    "value-area high 4079.16"
+   ],
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "TP",
+    "+15": "OPEN",
+    "+20": "OPEN",
+    "moved +15 in the day": false
+   }
+  },
+  {
+   "utc": "Fri 06 Nov 20:15",
+   "kind": "SWEEP",
+   "side": "BUY",
+   "entry": 4064.24,
+   "levels": [
+    "1HL 4061.41"
+   ],
+   "zones": [
+    "POC 4063.21"
+   ],
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "outcome": {
+    "+13": "OPEN",
+    "+15": "OPEN",
+    "+20": "OPEN",
+    "moved +15 in the day": false
+   }
+  }
+ ]
+}

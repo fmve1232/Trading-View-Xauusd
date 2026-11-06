@@ -355,6 +355,7 @@ def test_near_is_the_untaken_side_on_a_live_price_once_per_day(monkeypatch):
 
 
 def test_run_sends_liquidity_alerts_publishes_them_and_can_be_turned_off(tmp_path, monkeypatch):
+    monkeypatch.setenv("ALERT_MODE", "all")                     # liquidity lines reach the phone only in the 'all' mode
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
     store = str(tmp_path)

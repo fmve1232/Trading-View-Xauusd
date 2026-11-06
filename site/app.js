@@ -2065,12 +2065,18 @@ function renderPlanAlerts() {
     const hist = (k) => { const h = (SU.hist || {})[k]; return h ? `${pct(100 * h[0], 1)} of ${Number(h[1]).toLocaleString("en-US")} (random ${pct(100 * h[2], 1)}): ${esc(h[3])}` : "—"; };
     const liveT = (k) => { const g = (SU.live || {})[k]; return g && g[0] ? `${g[1]} of ${g[0]} (${pct(100 * g[1] / g[0])})` : "none decided yet"; };
     const RS = { TP: ["bull", "+$15 first"], SL: ["bear", "SL −$13 first"], BOTH: ["warn", "both in one bar · SL"], EXPIRED: ["", "no result in a day"] };
-    const oRows = (SU.open || []).slice().reverse().map((x) => `<tr><td>#${x.id} ${esc(x.kind === "SWEEP" ? "Sweep" : "Breakout")} ${side(x.dir)}<div>${tfmt(x.t_dec)}</div></td>
+    const star = (x) => x.confirmed ? ' <b class="bull">all 4</b>' : "";
+    const oRows = (SU.open || []).slice().reverse().map((x) => `<tr><td>#${x.id} ${esc(x.kind === "SWEEP" ? "Sweep" : "Breakout")} ${side(x.dir)}${star(x)}<div>${tfmt(x.t_dec)}</div></td>
       <td>${lv(x)}<div>${esc((x.zones || []).join(", "))}</div></td><td>${px(x.entry)}</td><td>${px(x.tp)} / ${px(x.sl)}</td></tr>`).join("");
     const rRows = (SU.recent || []).slice(0, 10).map((x) => { const r = RS[x.result] || ["", esc(x.result)];
-      return `<tr><td>#${x.id} ${esc(x.kind === "SWEEP" ? "Sweep" : "Breakout")} ${side(x.dir)}<div>${tfmt(x.t_dec)}</div></td><td>${lv(x)}</td><td>${px(x.entry)}</td><td><b class="${r[0]}">${r[1]}</b></td></tr>`; }).join("");
+      return `<tr><td>#${x.id} ${esc(x.kind === "SWEEP" ? "Sweep" : "Breakout")} ${side(x.dir)}${star(x)}<div>${tfmt(x.t_dec)}</div></td><td>${lv(x)}</td><td>${px(x.entry)}</td><td><b class="${r[0]}">${r[1]}</b></td></tr>`; }).join("");
+    const hc = SU.hist_confirmed;
+    const conf = hc ? `${pct(100 * hc[0], 1)} of ${Number(hc[1]).toLocaleString("en-US")} (random ${pct(100 * hc[2], 1)}): ${esc(hc[3])}` : "—";
     return `<h4>Setups from your rules (sweeps and breakouts)</h4>
-      <div class="kv"><div>3-year record: sweeps</div><div>${hist("SWEEP")}</div>
+      <div class="kv"><div>Phone</div><div>${SU.quality ? "<b>quality mode</b>: only setups with all 4 confirmations (day/week/month level, trend 3 of 3, engine bias, London/NY)" : "every setup"}</div>
+        <div>3-year record: all 4 confirmations</div><div>${conf}</div>
+        <div>Live: all 4 confirmations</div><div>${liveT("CONFIRMED")}</div>
+        <div>3-year record: sweeps</div><div>${hist("SWEEP")}</div>
         <div>3-year record: breakouts</div><div>${hist("BREAKOUT")}</div>
         <div>Live: sweeps +$15 first</div><div>${liveT("SWEEP")}</div>
         <div>Live: breakouts +$15 first</div><div>${liveT("BREAKOUT")}</div>
@@ -2079,7 +2085,8 @@ function renderPlanAlerts() {
       ${rRows ? `<div class="scroll"><table class="yt"><tr><th>Setup</th><th>Level</th><th>Entry</th><th>Result</th></tr>${rRows}</table></div>` : ""}
       <p class="muted pa-note">Your rules, applied strictly on 15m bars: a sweep of a previous day / week / month, today's, last-4h or last-1h high or low that closes back,
         at an order block, the value-area edge or the POC; or a close beyond such a level outside the value area. Each is scored +$15 before −$13.
-        Tested on 2020–22 (research/registrations/B16.json): neither beat random entries. Information, not a confirmed signal.</p>`;
+        Tested on 2020–22 (research/registrations/B16.json): neither beat random entries. With all four confirmations (B17) 51.6% of 184 against 46.3% random:
+        better, but not proven (p 0.07), and about one a week. Information, not a confirmed signal.</p>`;
   })();
   // Part A (2026-11-05): one idea, one alert -- same-direction signals within 4 h and $15 of an open plan open no plan
   const RP = P.repeats || [], RR = P.repeat_rule || {};

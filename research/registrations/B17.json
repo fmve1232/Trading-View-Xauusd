@@ -1,0 +1,35 @@
+{
+  "id": "B17",
+  "title": "Quality over quantity: a B16 setup taken only when every confirmation agrees (major level, three-timeframe trend, the engine's bias, liquid session)",
+  "status": "APPROVED by the operator 2026-11-06; development part runs once after this commit; validation opens once only if the primary passes",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-06 (chat): \"On quality rather than the quantity ... refined alerts in which the movement of price is confirmed, and we can backtest and we can recalculate on previous 3 days so that I enter the market only at that time where we have all the confirmations ... at least 13 to 15 or maximum $20 in the same direction ... Give me only authentic trades.\" Standing approval 2026-11-05. Recorded before any B17 code or outcome.",
+  "partitions": [
+    "development",
+    "validation"
+  ],
+  "created_utc": "2026-11-06",
+  "rules": {
+    "base": "a B16 setup (research/registrations/B16.json: SWEEP or BREAKOUT on a closed 15m bar, quantum.notify.setup_events)",
+    "C1 major level": "at least one of its levels is a previous day, week or month high or low (PDH, PDL, PWH, PWL, PMH, PML)",
+    "C2 trend": "all three trend votes agree with the setup's direction: the last completed trading day's close against its 20-day average; the last completed 4h bar's EMA20 against its EMA50; the last completed 1h bar's EMA20 against its EMA50 (the B12 votes; EMAs seeded with the first close)",
+    "C3 engine bias": "the frozen engine's own score on the trigger bar agrees: bull score >= bear score for a BUY, bear >= bull for a SELL (rows bull / bear)",
+    "C4 session": "the trigger bar closes in London or New York hours (quantum.notify.session_of: London, London+NY or New York)",
+    "confirmed": "C1 and C2 and C3 and C4 together"
+  },
+  "outcome": {
+    "primary": "+$15 before -$13 for the confirmed setups (both kinds and directions pooled), dollars at $4,000 scaled by entry / 4000, on 15m bars for 96 bars (quantum.research.b13.race); a bar reaching both levels is a loss unless it opened beyond the target",
+    "secondary": "+$13 and +$20 before -$13; by kind; the ladder from all B16 setups through C1, C1+C2, C1+C2+C3 to all four; '+$15 at any time in the day'",
+    "costs": "harness.cost_pts (frozen model) and the operator's $0.26",
+    "random_baseline": "every third 15m close of the scored window, long and short, weighted by the set's long / short mix"
+  },
+  "primary_test": "One hypothesis: P1 rate above random (one-sided z, alpha 0.05) and P2 mean net after the frozen costs > 0 (t >= 1.645). Fewer than 30 decided trades: INSUFFICIENT.",
+  "data": "As B16: research-data @ a0d74e4980e78d8662af9dd0fe7c294cb8e63043, development 2020-01-24 -> 2023-01-24 scored from 2020-04-01; the frozen engine with volume 1 per bar (the B16 amendment: no volume on these data, so the profile is time-at-price)",
+  "recalculation_on_the_last_3_days": "Reported beside the result, not decisive: the same rules on the site's stored data 2026-11-03 12:00 -> 2026-11-06 22:00 UTC (live engine values, GC volume), each setup with its outcome on the 5m path. Three days are far too few to judge any rate.",
+  "alerts": "If the operator wants quality over quantity, the phone receives only engine signals and confirmed setups (ALERT_MODE=quality); everything else stays on the website. The confirmed setups' alert states this test's measured rate.",
+  "decision": {
+    "if_pass": "Validation opens once for the confirmed rule, unchanged; only a validation pass earns a registered live forward test with a verdict.",
+    "if_fail_or_insufficient": "Recorded; the confirmed alerts state the measured rate and 'not a proven edge'. No re-run with changed confirmations, thresholds or targets."
+  },
+  "unchanged": "the engine, its configuration and every freeze key; B9-GRAB-FWD; B15-ENGINE-FWD; B16"
+}

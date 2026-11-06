@@ -12,9 +12,10 @@ T0 = 1793973600                                   # 2026-11-06 14:00 UTC (Friday
 @pytest.fixture(autouse=True)
 def _env(monkeypatch):
     for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_TP2_USD", "ALERT_SETUPS", "ALERT_STRUCTURE", "ALERT_LIQUIDITY",
-              "MT5_PRICE_OFFSET"):
+              "MT5_PRICE_OFFSET", "SETUP_LEVELS"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
+    monkeypatch.setenv("ALERT_MODE", "all")                     # these tests send every setup; quality mode: below
 
 
 def _p15(bars, gen="2026-11-06T14:40:00+00:00"):
@@ -81,7 +82,7 @@ def test_record_line_and_major_levels_switch(tmp_path, monkeypatch):
     notify.run(store, {"15m": _p15(base)}, ["15m"], sent_t=T0 + 1000)
     notify.run(store, {"15m": _p15(base + [(T0 + 900, 4063.0, 4055.22, 4060.10)])}, ["15m"], sent_t=T0 + 2000)
     a = next(b for b in sent if b and b[0].startswith("XAUUSD 15m SETUP #1"))
-    assert any(x.startswith("3-year record of this rule (2020-22, B16): +$15 before -$13 47% of 5,918 (random 46%): not an edge")
+    assert any(x.startswith("3-year record of this rule (B16), 2020-22: +$15 before -$13 47% of 5,918 (random 46%): not an edge")
                for x in a)
     monkeypatch.setenv("SETUP_LEVELS", "major")                 # the same bar sweeping only a 1h low: no alert
     p = _p15(base + [(T0 + 900, 4063.0, 4055.22, 4060.10)])
@@ -91,3 +92,47 @@ def test_record_line_and_major_levels_switch(tmp_path, monkeypatch):
     assert notify.setup_scan({"15m": p, "1h": h1}, T0, {}) == []
     monkeypatch.setenv("SETUP_LEVELS", "all")
     assert [e["levels"] for e in notify.setup_scan({"15m": p, "1h": h1}, T0, {})] == [[("1HL", 4058.5)]]
+
+
+def _trend_up_payloads(bars, bull=60.0, bear=30.0):
+    """15m payload plus rising 1h / 4h series: all three trend votes up."""
+    p = _p15(bars)
+    n = len(bars)
+    p["chart"]["bull"], p["chart"]["bear"] = [bull] * n, [bear] * n
+    h1 = {"meta": {"tf": "1h", "synthetic": False, "price_source": "td"}, "markers": [], "decisions": [], "news": None,
+          "chart": {"t": [T0 - (720 - k) * 3600 for k in range(720)], "c": [4000 + 0.1 * k for k in range(720)],
+                    "h": [4001 + 0.1 * k for k in range(720)], "l": [3999 + 0.1 * k for k in range(720)]}}
+    h4 = {"meta": {"tf": "4h", "synthetic": False, "price_source": "td"}, "markers": [], "decisions": [], "news": None,
+          "chart": {"t": [T0 - (180 - k) * 14400 for k in range(180)], "c": [4000 + 0.4 * k for k in range(180)],
+                    "h": [4001 + 0.4 * k for k in range(180)], "l": [3999 + 0.4 * k for k in range(180)]}}
+    return {"15m": p, "1h": h1, "4h": h4}
+
+
+def test_quality_mode_sends_only_confirmed_setups(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setenv("ALERT_MODE", "quality")
+    store = str(tmp_path)
+    base = [(T0, 4147.0, 4140.0, 4146.0)]
+    pay = _trend_up_payloads(base)
+    pay["15m"]["chart"]["vah"] = [4140.0]
+    notify.run(store, pay, ["15m"], sent_t=T0 + 1000)
+    brk = base + [(T0 + 900, 4151.0, 4145.0, 4150.0)]                                  # closes above PDH 4147.60, above value
+    pay = _trend_up_payloads(brk)
+    pay["15m"]["chart"]["vah"] = [4140.0, 4140.0]
+    notify.run(store, pay, ["15m"], sent_t=T0 + 1800 + 300)
+    a = next(b for b in sent if b and b[0].startswith("XAUUSD 15m SETUP #1 BUY"))
+    assert any(x.startswith("CONFIRMATIONS: day/week/month level YES | trend 3 of 3 YES | engine bias YES | London/NY YES -> ALL 4")
+               for x in a)
+    assert any("with all 4 confirmations (B17), 2020-22: +$15 before -$13 52% of 184 (random 46%): not proven (p 0.07)" in x for x in a)
+    # the same bar with the engine's bias the other way: recorded, not sent
+    sent.clear()
+    store2 = str(tmp_path / "b")
+    pay = _trend_up_payloads(base, bull=30.0, bear=60.0)
+    pay["15m"]["chart"]["vah"] = [4140.0]
+    notify.run(store2, pay, ["15m"], sent_t=T0 + 1000)
+    pay = _trend_up_payloads(brk, bull=30.0, bear=60.0)
+    pay["15m"]["chart"]["vah"] = [4140.0, 4140.0]
+    rep = notify.run(store2, pay, ["15m"], sent_t=T0 + 1800 + 300)
+    assert not any(b and b[0].startswith("XAUUSD 15m SETUP") for b in sent)
+    assert rep["setup_alerts"][0]["sent"] == [] and rep["setups"]["open"][0]["confirmed"] is False
