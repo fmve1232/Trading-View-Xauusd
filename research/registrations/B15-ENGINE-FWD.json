@@ -1,0 +1,41 @@
+{
+  "id": "B15-ENGINE-FWD",
+  "title": "The engine's own signal alerts, TP1 +$13 before SL -$13, live forward test",
+  "status": "APPROVED by the operator 2026-11-06; recorded from the first site run after this registration's code is merged",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-06 (chat): \"approve engine test\". Approval recorded and committed before any tracking code was written.",
+  "partitions": [
+    "live forward (new data only): alert plans whose signal bar closes at or after the first site run that carries this code"
+  ],
+  "created_utc": "2026-11-06",
+  "source_of_hypothesis": "The engine's own 15m signals are the only stream that beat random on two separate histories: 64.3% of 70 at +13 / -13 on 2020-22 development data (B10 secondary) and 61.4% of 44 on the 2023-24 validation partition (B13-1, which failed its Holm-corrected test, p 0.033 against 0.025). On the live window 2026-09-09 -> 11-04 the live engine's 15m signals did 31.8% of 22 (B9-explore). The research engine lacks the live engine's macro, volume and cross-asset inputs, so the live signal stream is what must be tested.",
+  "rule": {
+    "stream": "every plan the alerts open: a SIGNAL event of the frozen treatment engine on 15m, 30m, 1h or 4h (ALERT_TFS), as published in the site payload; signals sent as REPEAT (same direction within 4 hours and $15 of an open plan, part A) open no plan and are not counted",
+    "entry": "the signal bar's close (the plan's entry), not the alert time; the alert-time price, delay and LATE flag are recorded beside it",
+    "take_profit_1_price": 13.0,
+    "stop_loss_price": 13.0,
+    "outcome": "TP1 (+$13) before SL (-$13) from the entry: the plan's own result (quantum/notify.py), on the same feed's 5-minute bars when they cover the signal's close (a bar reaching both levels is a loss unless it opened beyond TP1), otherwise on the signal's own timeframe (recorded per trade)",
+    "no_result": "neither level within 3 days: EXPIRED, reported, not counted",
+    "excluded": "plans whose TP1 or SL is not $13 of price (the plan variables changed): reported, not counted",
+    "costs": "break-even = (13 + 0.26) / 26 = 51.0%"
+  },
+  "primary_test": {
+    "looks": "only when the number of decided results (TP1 or SL, in the order they resolved) first reaches 30, 40, 50, 60, 70, 80, 90 and 100",
+    "proven": "at a look, the Wilson 95% lower bound of the TP1-first rate is above 51.0% (needs 21/30, 27/40, 33/50, 39/60, 44/70, 50/80, 56/90, 61/100): the B9-GRAB-FWD rule",
+    "not_proven": "not proven by 100 decided results, or by 2027-06-30, whichever comes first",
+    "between_looks": "the site and the reports show the running count and rate as COLLECTING, never a verdict"
+  },
+  "error_rates_stated_in_advance": "Simulated (200,000 runs, independent trades): with no edge (true rate 50%) the rule says PROVEN 5.5% of the time (49%: 3.9%). A true 55% proves 22.6% of the time, 58% 41.5%, 60% 56.6%, 64% (the development estimate) 82.7%. NOT PROVEN means 'not confirmed', not 'proven absent'.",
+  "expected_pace": "uncertain: 2 plans in the 3 days to 2026-11-06, about 13 in the week before. At 3-6 a week, 30 results take 5-10 weeks and 100 take 4-8 months; hence the 2027-06-30 deadline",
+  "secondary_reported_not_decisive": [
+    "the rate by timeframe, by direction and by session",
+    "TP2 (+$20) reached after TP1 (the two-target plan, 2026-11-06), and the result in money at the plan after costs",
+    "the rate measured from the alert-time price instead of the bar close, and without LATE alerts",
+    "at the verdict: random 5-minute entries in the same directions over the same weeks"
+  ],
+  "unchanged": "the engine, its configuration and every freeze key; the alerts and the plan validation (this test reads the plans' recorded results only); B9-GRAB-FWD",
+  "decision": {
+    "if_proven": "Report it with the secondary checks and propose (never adopt automatically) that the phone receive the engine's signals as the confirmed stream. Still not a guarantee: a PROVEN rate is an average, and any single trade can lose.",
+    "if_not_proven": "The engine-signal lead is closed for the alerts; recorded in research/trials.jsonl and the write-up. No re-run with changed distances, timeframes or filters on the same data."
+  }
+}
