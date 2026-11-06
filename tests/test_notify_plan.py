@@ -13,13 +13,20 @@ from quantum import holdout, notify
 def _env(monkeypatch):
     for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_COST_PER_LOT", "MT5_PRICE_OFFSET", "ALERT_STRUCTURE",
               "PLAN_LATE_FRAC", "MT5_SERVER_UTC_OFFSET", "ALERT_LOCAL_TZ", "ALERT_LIQUIDITY", "LIQ_NEAR_USD",
-              "ACCOUNT_USD", "DAILY_LIMIT_PCT"):
+              "ACCOUNT_USD", "DAILY_LIMIT_PCT", "PLAN_TP2_USD"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
 
 
-def test_defaults_are_the_operators_650_plan_and_levels_follow_the_direction():
+def test_defaults_are_the_operators_650_plan_and_levels_follow_the_direction(monkeypatch):
+    pl = notify.plan_cfg()                                   # default: two targets, TP2 $20 = $1,000 at 0.5 lot
+    assert (pl["lot"], pl["sl_usd"], pl["tp_usd"], pl["tp2_usd"]) == (0.5, 650.0, 650.0, 1000.0) and pl["tp2_px"] == pytest.approx(20.0)
+    line2 = notify.plan_line(4000.0, -1, pl, off=-2.61)
+    assert line2.startswith("YOUR PLAN 0.5 lot: SL 4010.39 (-$650) | TP1 3984.39: close half (+$325), move SL to entry | "
+                            "TP2 3977.39: the rest (+$500) | odds with no edge: SL 50% · TP1 then entry 18% · TP2 32%")
+    monkeypatch.setenv("PLAN_TP2_USD", "0")                  # one TP
     pl = notify.plan_cfg()
+    assert pl["tp2_usd"] == 0.0 and pl["tp2_px"] is None
     assert (pl["lot"], pl["sl_usd"], pl["tp_usd"]) == (0.5, 650.0, 650.0) and pl["sl_px"] == pytest.approx(13.0)
     assert notify.plan_levels(4000.0, 1, pl) == pytest.approx((3987.0, 4013.0))
     assert notify.plan_levels(4000.0, -1, pl) == pytest.approx((4013.0, 3987.0))
@@ -30,6 +37,7 @@ def test_defaults_are_the_operators_650_plan_and_levels_follow_the_direction():
 def test_variables_change_the_plan_and_plan_0_turns_it_off(monkeypatch):
     monkeypatch.setenv("PLAN_LOT", "0.25")
     monkeypatch.setenv("PLAN_TP_USD", "325")
+    monkeypatch.setenv("PLAN_TP2_USD", "0")
     pl = notify.plan_cfg()
     assert pl["sl_px"] == pytest.approx(26.0) and pl["tp_px"] == pytest.approx(13.0)
     assert "TP first ~67%" in notify.plan_line(4000.0, 1, pl)
@@ -72,6 +80,7 @@ def _payload(t_last, markers, bars):
 
 
 def test_run_end_to_end(tmp_path, monkeypatch):
+    monkeypatch.setenv("PLAN_TP2_USD", "0")                  # the one-TP plan (two targets: test_two_targets_end_to_end)
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
     store = str(tmp_path)
@@ -97,7 +106,8 @@ def test_report_feeds_the_website_without_secrets(tmp_path, monkeypatch):
     sig = {"t": 1900, "type": "SIGNAL", "dir": 1, "px": 4000.0, "tq": 70, "sl": 3990.0, "tp1": 4010.0, "tp2": 4020.0, "tp3": 4030.0}
     rep = notify.run(str(tmp_path), {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"])
     pl = rep["plans"]
-    assert pl["cfg"] == {"lot": 0.5, "sl_usd": 650.0, "tp_usd": 650.0, "cost_usd": 13.0} and pl["tp_first"] == pytest.approx(0.5)
+    assert pl["cfg"] == {"lot": 0.5, "sl_usd": 650.0, "tp_usd": 650.0, "cost_usd": 13.0, "tp2_usd": 1000.0} and pl["tp_first"] == pytest.approx(0.5)
+    assert pl["open"][0]["tp2"] == 4020.0 and pl["open"][0]["tp2_usd"] == 1000.0
     assert pl["open"][0]["tp"] == 4013.0 and pl["recent"] == [] and pl["tfs"] == ["15m"] and pl["late_frac"] == 0.3
     assert rep["channels"] == ["ntfy"] and "secret-topic-name" not in json.dumps(rep)
 
@@ -151,6 +161,7 @@ def test_summary_counts_money_and_flags_only_clear_evidence():
 
 
 def test_daily_and_weekly_reports_are_sent_once_at_the_close(tmp_path, monkeypatch):
+    monkeypatch.setenv("PLAN_TP2_USD", "0")
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
     store = str(tmp_path)
@@ -227,6 +238,7 @@ def _sig(d=-1, px=4000.0, t=1800):
 
 
 def test_signal_alert_has_fill_based_levels_timing_and_a_late_warning(monkeypatch):
+    monkeypatch.setenv("PLAN_TP2_USD", "0")
     pay = {"meta": {"tf": "15m"}, "markers": [_sig(-1, t=1800)], "decisions": []}
     t_sent = 1800 + 900 + 380                                                    # 6.3 min after the bar close
     on_time = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
@@ -465,3 +477,45 @@ def test_a_silent_weekday_still_gets_the_engine_line_in_the_daily_report(tmp_pat
     eng = [x for x in out if x.startswith("XAUUSD ENGINE Thu 05 Nov: 15m 0 signals in 3 bars")]
     assert eng and "BUY blocked by higher-timeframe gate 100%" in eng[0] and "SELL by trend 100%" in eng[0]
     assert not any("VALIDATION" in x for x in out)                          # no signal closed: no validation line
+
+
+# ---------------- two targets (operator, 2026-11-06: "TP1 +$13, TP2 +$20") ----------------
+def test_two_targets_mt5_line_and_the_stage_after_tp1():
+    pl = notify.plan_cfg()
+    assert notify.mt5_line(1, pl) == ("ON MT5: BUY 2 x 0.25 lot at market; SL on both = your fill - 13.00; TP = your fill + 13.00 "
+                                      "on one and + 20.00 on the other; when the first closes at TP, move the other's SL to your fill "
+                                      "(= -$650 total / +$325 then +$500, at any broker price)")
+    plan = {"dir": 1, "entry": 4000.0, "tp2": 4020.0}
+    ch = {"t": [100, 200, 300], "o": [4013, 4014, 4015], "h": [4019, 4021, 4022], "l": [3999, 4010, 4012]}
+    assert notify.plan_stage2(plan, ch, 100) == {"result": "TP2", "t_res": 200}       # the TP1 bar itself is skipped
+    assert notify.plan_stage2(plan, {**ch, "l": [3999, 3999.5, 4012]}, 100) == {"result": "BE", "t_res": 200}  # both: BE
+    assert notify.plan_stage2(plan, {**ch, "o": [4013, 4020.5, 4015], "l": [3999, 3999.5, 4012]}, 100)["result"] == "TP2"
+    assert notify.plan_stage2(plan, {**ch, "h": [4019, 4015, 4016], "l": [3999, 4005, 4006]}, 100)["result"] is None
+    short = {"dir": -1, "entry": 4000.0, "tp2": 3980.0}
+    assert notify.plan_stage2(short, {"t": [100, 200], "h": [4001, 4000.5], "l": [3986, 3990]}, 100) == {"result": "BE", "t_res": 200}
+
+
+def test_two_targets_end_to_end(tmp_path, monkeypatch):
+    sent = []
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    store = str(tmp_path)
+    notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"])
+    sig = {"t": 1900, "type": "SIGNAL", "dir": 1, "px": 4000.0, "tq": 70, "sl": 3990.0, "tp1": 4010.0, "tp2": 4020.0, "tp3": 4030.0}
+    notify.run(store, {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"])
+    assert sent[0][1].startswith("YOUR PLAN 0.5 lot: SL 3987.00 (-$650) | TP1 4013.00: close half (+$325)") and "TP2 4020.00" in sent[0][1]
+    bars = [(1900, 4001, 3999), (2000, 4013.5, 4001)]                                  # TP1 hit
+    notify.run(store, {"15m": _payload(2900, [sig], bars)}, ["15m"])
+    assert len(sent[1]) == 1 and "TP1 4013.00 HIT +$325 on half -- close half, move the other half's SL to your fill" in sent[1][0]
+    st = json.loads((tmp_path / notify.STATE).read_text())
+    assert len(st["plans"]) == 1 and st["plans"][0]["tp1_sent"] is True and st["plan_log"] == []   # still open: the rest runs
+    notify.run(store, {"15m": _payload(3800, [sig], bars + [(2900, 4012, 4003)])}, ["15m"])
+    assert sent[2] == []                                                               # TP1 not repeated; nothing new
+    notify.run(store, {"15m": _payload(4700, [sig], bars + [(2900, 4012, 4003), (3800, 4020.5, 4008)])}, ["15m"])
+    assert len(sent[3]) == 1 and "TP2 4020.00 HIT -- trade closed: +$825 total" in sent[3][0]
+    st = json.loads((tmp_path / notify.STATE).read_text())
+    assert st["plans"] == [] and st["plan_log"][0]["result"] == "TP" and st["plan_log"][0]["tp2_result"] == "TP2"
+    sm = notify.summarize(st["plan_log"], 26.0)
+    assert sm["tp"] == 1 and sm["tp2"] == 1 and sm["net_usd"] == pytest.approx(825.0 - 13.0)
+    be = {**st["plan_log"][0], "tp2_result": "BE"}
+    assert notify.summarize([be], 26.0)["net_usd"] == pytest.approx(325.0 - 13.0)
+    assert notify.summarize([{**be, "result": "SL"}], 26.0)["net_usd"] == pytest.approx(-650.0 - 13.0)

@@ -13,6 +13,11 @@ stop and target at a fixed lot, priced from the signal's entry; then ONE follow-
 PLAN_COST_PER_LOT ($26 round trip: commission ~$6.5 + ~$0.20 spread x 100 oz); PLAN=0 turns it off. Display only:
 the engine, its plan and the forward test are unchanged. The TP-first figure is geometry, SL / (TP + SL), measured
 within 0.3 points on 139,754 entries 2020-2022 (research/B5 and B6 found no signal that beats it).
+TWO TARGETS (operator, 2026-11-06: "TP1 +$13, TP2 +$20"): PLAN_TP2_USD ($1,000 = $20 at 0.5 lot; 0 = one TP). The
+trade is two half positions with the same SL: one closes at TP1 (PLAN_TP_USD), then the other's SL moves to the fill
+(break-even) and it runs to TP2. Results: SL (both halves), TP1 then BE, or TP1 then TP2. With no edge its expected
+value equals one TP at TP1 (the rest reaches TP2 before the fill TP1 / TP2 of the time), so break-even is unchanged.
+After TP1 a 5m bar touching TP2 and the fill counts as break-even unless it opened beyond TP2.
 Plans are resolved on the 5-minute path when the same feed's 5m bars cover the signal's close (the trade_race and
 B9 rules: a 5m bar touching both levels is a loss unless it opened beyond the TP); otherwise on the signal's own
 timeframe. On 1h / 4h a whole bar can span both levels, and its close came up to 4 h after the touch (audit
@@ -162,6 +167,12 @@ def alert_timing(m: dict, tf: str, now: dict | None, pl: dict | None) -> dict | 
 
 def mt5_line(d: int, pl: dict) -> str:
     s, side = ("+", "-") if d == -1 else ("-", "+")
+    if pl.get("tp2_px"):
+        half = round(pl["lot"] / 2, 2)
+        return (f"ON MT5: {'BUY' if d == 1 else 'SELL'} 2 x {half:g} lot at market; SL on both = your fill {s} {pl['sl_px']:.2f}; "
+                f"TP = your fill {side} {pl['tp_px']:.2f} on one and {side} {pl['tp2_px']:.2f} on the other; when the first "
+                f"closes at TP, move the other's SL to your fill (= -${pl['sl_usd']:,.0f} total / +${pl['tp_usd'] / 2:,.0f} "
+                f"then +${pl['tp2_usd'] / 2:,.0f}, at any broker price)")
     return (f"ON MT5: {'BUY' if d == 1 else 'SELL'} at market, then SL = your fill {s} {pl['sl_px']:.2f}, "
             f"TP = your fill {side} {pl['tp_px']:.2f} (= -${pl['sl_usd']:,.0f} / +${pl['tp_usd']:,.0f} at {pl['lot']:g} lot, "
             "at any broker price)")
@@ -690,6 +701,9 @@ def grab_run(store_dir: str | None, state: dict, payloads: dict, t_send: int, of
     return lines, block
 
 
+PLAN_TP2_DEFAULT_PX = 20.0            # TP2 in price $ (the operator's choice, 2026-11-06): $1,000 at 0.5 lot
+
+
 def plan_cfg() -> dict | None:
     """The operator's plan from the environment (defaults 0.5 lot, SL $650, TP $650); None when PLAN=0."""
     if os.environ.get("PLAN", "1").strip() == "0":
@@ -703,7 +717,14 @@ def plan_cfg() -> dict | None:
         return v if v > 0 else d
     lot, sl, tp, cpl = num("PLAN_LOT", 0.5), num("PLAN_SL_USD", 650.0), num("PLAN_TP_USD", 650.0), num("PLAN_COST_PER_LOT", 26.0)
     oz = lot * 100.0
-    return {"lot": lot, "sl_usd": sl, "tp_usd": tp, "cost_usd": cpl * lot, "sl_px": sl / oz, "tp_px": tp / oz}
+    raw = os.environ.get("PLAN_TP2_USD", "").strip()
+    try:
+        tp2 = float(raw) if raw else PLAN_TP2_DEFAULT_PX * oz
+    except ValueError:
+        tp2 = PLAN_TP2_DEFAULT_PX * oz
+    tp2 = tp2 if tp2 > tp else 0.0                      # 0 (or not beyond TP1): one TP
+    return {"lot": lot, "sl_usd": sl, "tp_usd": tp, "cost_usd": cpl * lot, "sl_px": sl / oz, "tp_px": tp / oz,
+            "tp2_usd": tp2, "tp2_px": tp2 / oz if tp2 else None}
 
 
 def plan_levels(entry: float, d: int, pl: dict) -> tuple[float, float]:
@@ -715,6 +736,12 @@ def plan_line(entry: float, d: int, pl: dict, off: float = 0.0) -> str:
     sl, tp = plan_levels(entry, d, pl)
     first = pl["sl_px"] / (pl["sl_px"] + pl["tp_px"])
     be = (pl["sl_usd"] + pl["cost_usd"]) / (pl["sl_usd"] + pl["tp_usd"])
+    if pl.get("tp2_px"):
+        tp2, p2 = entry + d * pl["tp2_px"], pl["tp_px"] / pl["tp2_px"]
+        return (f"YOUR PLAN {pl['lot']:g} lot: SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f}) | TP1 {_fmt(tp, off)}: close half "
+                f"(+${pl['tp_usd'] / 2:,.0f}), move SL to entry | TP2 {_fmt(tp2, off)}: the rest (+${pl['tp2_usd'] / 2:,.0f}) | "
+                f"odds with no edge: SL {1 - first:.0%} · TP1 then entry {first * (1 - p2):.0%} · TP2 {first * p2:.0%} "
+                f"(no signal beats these) | break-even {be:.0%} TP1 first")
     return (f"YOUR PLAN {pl['lot']:g} lot: SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f}) TP {_fmt(tp, off)} (+${pl['tp_usd']:,.0f}) | "
             f"TP first ~{first:.0%} (measured; no signal beats it) | break-even {be:.0%}")
 
@@ -772,6 +799,24 @@ def plan_path5(plan: dict, p5: dict | None) -> dict | None:
     return {"result": None, "t_res": None, "mfe": mfe, "mae": mae, "bars": bars, "path": "5m"}
 
 
+def plan_stage2(plan: dict, chart: dict, t_from: int) -> dict:
+    """After TP1 (on the bar opening at t_from): the rest's TP2 against the SL moved to the entry, on the bars opening
+    after that bar. A bar touching both counts as break-even (BE) unless it opened beyond TP2."""
+    t, h, lo_ = chart.get("t") or [], chart.get("h") or [], chart.get("l") or []
+    o = chart.get("o") or [None] * len(t)
+    d, e, tp2 = plan["dir"], plan["entry"], plan["tp2"]
+    for k in range(len(t)):
+        if t[k] <= t_from or h[k] is None or lo_[k] is None:
+            continue
+        hit2 = h[k] >= tp2 if d == 1 else lo_[k] <= tp2
+        hit_be = lo_[k] <= e if d == 1 else h[k] >= e
+        if hit2 and hit_be:
+            return {"result": "TP2" if (o[k] is not None and (o[k] - tp2) * d >= 0) else "BE", "t_res": t[k]}
+        if hit2 or hit_be:
+            return {"result": "TP2" if hit2 else "BE", "t_res": t[k]}
+    return {"result": None, "t_res": None}
+
+
 def plan_result(plan: dict, chart: dict) -> tuple[str, int] | None:
     """('TP' | 'SL' | 'BOTH', bar open t) for the first bar AFTER the signal bar that touches the plan's TP or SL."""
     r = plan_path(plan, chart)
@@ -798,10 +843,42 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
                 keep.append(pl)
             continue
         what, bt = path["result"], path["t_res"]
-        closed.append({**pl, **path})
-        hhmm = datetime.fromtimestamp(bt, timezone.utc).strftime("%d %b %H:%M UTC")
-        hhmm += f" = {mt5_clock(bt):%H:%M} MT5" + (" 5m" if path.get("path") == "5m" else "")
+
+        def clock(x, path=path):
+            return (datetime.fromtimestamp(x, timezone.utc).strftime("%d %b %H:%M UTC") + f" = {mt5_clock(x):%H:%M} MT5"
+                    + (" 5m" if path.get("path") == "5m" else ""))
+        hhmm = clock(bt)
         to_tp, to_sl = abs(pl["tp"] - pl["entry"]), abs(pl["entry"] - pl["sl"])
+        two = what == "TP" and pl.get("tp2") is not None
+        if two:                                            # TP1 hit: half closed, the rest runs to TP2 or the entry
+            if not pl.get("tp1_sent"):
+                s = (f"{head}: TP1 {_fmt(pl['tp'], off)} HIT +${pl['tp_usd'] / 2:,.0f} on half -- close half, move the other "
+                     f"half's SL to your fill (break-even); it runs to TP2 {_fmt(pl['tp2'], off)} (+${pl['tp2_usd'] / 2:,.0f}) "
+                     f"({hhmm} bar)")
+                if path["mfe"] - to_tp < FEED_MARGIN:
+                    s += f" | only ${path['mfe'] - to_tp:.2f} past TP1 on the site's prices: confirm in MT5 (broker prices differ)"
+                lines.append(s)
+                pl = {**pl, "tp1_sent": True, "t_tp1": bt}
+            ch2 = (p5 or {}).get("chart") if path.get("path") == "5m" else chart
+            s2 = plan_stage2(pl, ch2 or {}, bt)
+            banked = pl["tp_usd"] / 2
+            if s2["result"] is None:
+                if now_t - pl["t"] > PLAN_TRACK_SEC:
+                    lines.append(f"{head}: no TP2 or break-even after 3 days on the site's prices -- check MT5 (tracking "
+                                 f"stopped); +${banked:,.0f} banked at TP1")
+                    closed.append({**pl, **path, "tp2_result": "EXPIRED", "t_tp2": now_t})
+                else:
+                    keep.append(pl)
+                continue
+            if s2["result"] == "TP2":
+                lines.append(f"{head}: TP2 {_fmt(pl['tp2'], off)} HIT -- trade closed: +${banked + pl['tp2_usd'] / 2:,.0f} "
+                             f"total ({clock(s2['t_res'])} bar)")
+            else:
+                lines.append(f"{head}: back at entry {_fmt(pl['entry'], off)} after TP1 -- the rest closed at break-even: "
+                             f"+${banked:,.0f} total ({clock(s2['t_res'])} bar)")
+            closed.append({**pl, **path, "tp2_result": s2["result"], "t_tp2": s2["t_res"]})
+            continue
+        closed.append({**pl, **path})
         if what == "TP":
             s = f"{head}: TP {_fmt(pl['tp'], off)} HIT +${pl['tp_usd']:,.0f} -- trade closed in profit ({hhmm} bar)"
             past = path["mfe"] - to_tp
@@ -865,7 +942,11 @@ def summarize(recs: list[dict], cost_per_lot: float) -> dict:
         return cost_per_lot * float(r.get("lot") or 0.5)
     exp = sum(r["sl_usd"] / (r["sl_usd"] + r["tp_usd"]) for r in dec) / n if n else math.nan
     be = sum((r["sl_usd"] + cost(r)) / (r["sl_usd"] + r["tp_usd"]) for r in dec) / n if n else math.nan
-    net = sum((r["tp_usd"] if r["result"] == "TP" else -r["sl_usd"]) - cost(r) for r in dec)
+    def won(r):                                          # two targets: half at TP1, the rest at TP2 or the entry
+        if r.get("tp2_result") and r.get("tp2_usd"):
+            return r["tp_usd"] / 2 + (r["tp2_usd"] / 2 if r["tp2_result"] == "TP2" else 0.0)
+        return r["tp_usd"]
+    net = sum((won(r) if r["result"] == "TP" else -r["sl_usd"]) - cost(r) for r in dec)
     oz = [float(r.get("lot") or 0.5) * 100.0 for r in dec]
     stops = [r for r in dec if r["result"] != "TP"]
     wins = [r for r in dec if r["result"] == "TP"]
@@ -873,6 +954,7 @@ def summarize(recs: list[dict], cost_per_lot: float) -> dict:
     close_call = sum(1 for r in wins if r.get("mae", 0) >= 0.8 * abs(r["entry"] - r["sl"]))
     lo, hi = _wilson(tp, n)
     out = {"n": n, "tp": tp, "sl": n - tp, "expired": sum(r.get("result") == "EXPIRED" for r in recs),
+           "tp2": sum(1 for r in dec if r.get("tp2_result") == "TP2"), "be_after_tp1": sum(1 for r in dec if r.get("tp2_result") == "BE"),
            "rate": tp / n if n else math.nan, "wilson": [lo, hi], "target": 0.90, "expected": exp, "break_even": be,
            "net_usd": net, "near_misses": near, "close_calls": close_call,
            "avg_mfe_usd": sum(r.get("mfe", 0) * o for r, o in zip(dec, oz)) / n if n else math.nan,
@@ -1113,7 +1195,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                 t_dec = int(m["t"]) + TF_SEC.get(tf, 0)
                 tm = alert_timing(m, tf, now, pl_cfg) or {}
                 state["plan_seq"] = int(state.get("plan_seq", 0)) + 1
+                tp2 = round(m["px"] + m["dir"] * pl_cfg["tp2_px"], 2) if pl_cfg.get("tp2_px") else None
                 plans.append({"id": state["plan_seq"], "tf": tf, "t": m["t"], "dir": m["dir"], "entry": m["px"], "sl": sl, "tp": tp,
+                              "tp2": tp2, "tp2_usd": pl_cfg["tp2_usd"] if tp2 is not None else None,
                               "sl_usd": pl_cfg["sl_usd"], "tp_usd": pl_cfg["tp_usd"], "lot": pl_cfg["lot"], "t_dec": t_dec,
                               "session": session_of(t_dec), "dow": date.fromisoformat(trading_day(t_dec)).strftime("%a"),
                               "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
@@ -1125,7 +1209,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     if pl_cfg:
         state["plans"], state["plan_log"], state["plan_tally"] = plans[-PLAN_MAX_OPEN:], log, tally
         # for the website's "Your plan alerts" card (index.json -> alerts.plans): the plan, open trades, results, channels
-        report["plans"] = {"cfg": {k: pl_cfg[k] for k in ("lot", "sl_usd", "tp_usd", "cost_usd")},
+        report["plans"] = {"cfg": {k: pl_cfg[k] for k in ("lot", "sl_usd", "tp_usd", "cost_usd", "tp2_usd")},
                            "tp_first": pl_cfg["sl_px"] / (pl_cfg["sl_px"] + pl_cfg["tp_px"]),
                            "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
                            "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs),
