@@ -1,0 +1,38 @@
+{
+ "utc": "2026-11-06T22:37:18.884459+00:00",
+ "kind": "exploratory hindsight demonstration",
+ "stage": "development",
+ "breakouts": 2016,
+ "rules": {
+  "hindsight: BUY + beyond a level + engine bias": {
+   "picked_on": "4 of 4 TP first on 3-6 Nov",
+   "n": 368,
+   "rate": 0.47282608695652173,
+   "wilson": [
+    0.4223606205801398,
+    0.5238530155749811
+   ],
+   "random": 0.46729661212260887,
+   "z": 0.2126026872144637,
+   "p_one_sided": 0.4158184376344718,
+   "mean_net_usd_per_oz_at_4000": -0.6113043478260864,
+   "t": -0.8379080026775467,
+   "per_year": 130.9
+  },
+  "same rule, both directions": {
+   "picked_on": "4 of 5 on 3-6 Nov",
+   "n": 765,
+   "rate": 0.4718954248366013,
+   "wilson": [
+    0.4367487459232102,
+    0.507322948568178
+   ],
+   "random": 0.46217356129975024,
+   "z": 0.5393325297457258,
+   "p_one_sided": 0.29482871344065975,
+   "mean_net_usd_per_oz_at_4000": -0.6335294117647055,
+   "t": -1.252824685193926,
+   "per_year": 272.1
+  }
+ }
+}
