@@ -2074,7 +2074,7 @@ function renderPlanAlerts() {
     const h4r = h4h ? `${pct(100 * h4h[0], 1)} of ${Number(h4h[1]).toLocaleString("en-US")} (random ${pct(100 * h4h[2], 1)}): ${esc(h4h[3])}` : "—";
     const conf = hc ? `${pct(100 * hc[0], 1)} of ${Number(hc[1]).toLocaleString("en-US")} (random ${pct(100 * hc[2], 1)}): ${esc(hc[3])}` : "—";
     return `<h4>Setups from your rules (sweeps and breakouts)</h4>
-      <div class="kv"><div>Phone</div><div>${SU.quality ? "<b>quality mode</b>: 4h candle breakouts with all 4 confirmations (beyond a day/week/month level, trend 3 of 3, engine bias, London/NY), checked at every 4h close" : "every setup"}</div>
+      <div class="kv"><div>Phone</div><div>${SU.quality ? "<b>quality mode</b>: 15m setups and 4h candle breakouts, each only with all 4 confirmations (beyond a day/week/month level, trend 3 of 3, engine bias, London/NY)" : "every setup"}</div>
         <div>3-year record: 4h breakout + all 4</div><div>${h4r}</div>
         <div>Live: 4h breakout + all 4</div><div>${liveT("4H CONFIRMED")}</div>
         <div>3-year record: 15m setups + all 4</div><div>${conf}</div>

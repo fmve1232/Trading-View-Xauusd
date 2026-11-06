@@ -64,3 +64,6 @@ follow my instructions". The operator chose a **4h candle breakout alert** with 
   to the phone.
 - **Records:** every 4h breakout, confirmed or not, is scored +$15 before −$13 in `research_forward/SETUP-LIVE.json`.
 - **No validation opening:** the rule failed. No re-run with changed candles, confirmations or targets.
+
+**Later the same day (operator, "Yes please"):** the 15m setups with all four confirmations went back to the phone,
+beside the 4h breakouts. B17 measured them at 51.6% of 184 (random 46.3%, p 0.07): better than this rule, still not proven.

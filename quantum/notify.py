@@ -836,8 +836,9 @@ def quality() -> bool:
     """ALERT_MODE (operator, 2026-11-06: "quality rather than the quantity"): quality (default) sends only engine
     signals with their follow-ups, setups with all four B17 confirmations, the trend-change warning, the registered
     tests' checks and the reports; liquidity, structure and H-setup lines and unconfirmed setups stay on the website.
-    Since B18 (operator, 2026-11-06: "confirm movement of market at every 4 h candle"), the phone's setup alerts in this
-    mode are the 4h candle breakouts with all four confirmations; the 15m setups stay on the website and in the records.
+    Since B18 (operator, 2026-11-06: "confirm movement of market at every 4 h candle") the 4h candle breakouts with all
+    four confirmations reach the phone too; the operator then asked (2026-11-06, "Yes please") for the 15m setups with all
+    four confirmations back on the phone beside them. Unconfirmed setups stay on the website and in the records.
     all = every alert as before."""
     return os.environ.get("ALERT_MODE", "quality").strip().lower() != "all"
 
@@ -1731,9 +1732,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                 s_open.append({"id": sid, "tf": "15m", "t": e["t"], "t_dec": e["t"] + 900, "dir": d, "entry": x, "kind": e["kind"],
                                "levels": e["levels"], "zones": e["zones"], "sl": round(x - d * SETUP_SL_PX, 2),
                                "tp": round(x + d * SETUP_TP_PX, 2), "checks": e.get("checks"), "confirmed": conf,
-                               "phone": not quality(), "t_alert": t_send})
+                               "phone": conf or not quality(), "t_alert": t_send})
                 sl_ = setup_lines(e, sid, pl_cfg, now, off, live)
-                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": [] if quality() else send(sl_)})
+                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if (conf or not quality()) else []})
             if s_upd:                                      # results only for setups that reached the phone
                 shown = {c_["id"] for c_ in s_done if c_.get("phone", True)}
                 s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]

@@ -108,23 +108,31 @@ def _trend_up_payloads(bars, bull=60.0, bear=30.0):
     return {"15m": p, "1h": h1, "4h": h4}
 
 
-def test_quality_mode_keeps_15m_setups_on_the_website(tmp_path, monkeypatch):
+def _quality_15m_run(store, monkeypatch, bull=60.0, bear=30.0):
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
     monkeypatch.setenv("ALERT_MODE", "quality")
-    store = str(tmp_path)
     base = [(T0, 4147.0, 4140.0, 4146.0)]
-    pay = _trend_up_payloads(base)
+    pay = _trend_up_payloads(base, bull, bear)
     pay["15m"]["chart"]["vah"] = [4140.0]
     notify.run(store, pay, ["15m"], sent_t=T0 + 1000)
     brk = base + [(T0 + 900, 4151.0, 4145.0, 4150.0)]                                  # closes above PDH 4147.60, above value
-    pay = _trend_up_payloads(brk)
+    pay = _trend_up_payloads(brk, bull, bear)
     pay["15m"]["chart"]["vah"] = [4140.0, 4140.0]
-    rep = notify.run(store, pay, ["15m"], sent_t=T0 + 1800 + 300)
-    assert not any(b and b[0].startswith("XAUUSD 15m SETUP") for b in sent)            # quality: the phone gets the 4h rule
-    assert rep["setup_alerts"][0]["sent"] == [] and rep["setups"]["open"][0]["confirmed"] is True
+    return sent, notify.run(store, pay, ["15m"], sent_t=T0 + 1800 + 300)
+
+
+def test_quality_mode_sends_15m_setups_only_with_all_four(tmp_path, monkeypatch):
+    """Operator, 2026-11-06 ("Yes please"): confirmed 15m setups reach the phone beside the 4h breakouts."""
+    sent, rep = _quality_15m_run(str(tmp_path), monkeypatch)
+    a = [b for b in sent if b and b[0].startswith("XAUUSD 15m SETUP #1 BUY (your rules)")]
+    assert len(a) == 1 and rep["setup_alerts"][0]["sent"] == ["test"] and rep["setups"]["open"][0]["phone"] is True
     assert any(x.startswith("CONFIRMATIONS: day/week/month level YES | trend 3 of 3 YES | engine bias YES | London/NY YES -> ALL 4")
-               for x in rep["setup_alerts"][0]["lines"])
+               for x in a[0])
+    sent, rep = _quality_15m_run(str(tmp_path / "b"), monkeypatch, bull=30.0, bear=60.0)   # engine bias against: website only
+    assert not any(b and b[0].startswith("XAUUSD 15m SETUP") for b in sent)
+    assert rep["setup_alerts"][0]["sent"] == [] and rep["setups"]["open"][0]["confirmed"] is False
+    assert rep["setups"]["open"][0]["phone"] is False
 
 
 def _p4(n, last_close=None, bull=60.0, bear=30.0):
