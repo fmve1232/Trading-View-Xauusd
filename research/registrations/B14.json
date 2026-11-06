@@ -1,0 +1,37 @@
+{
+  "id": "B14",
+  "title": "A break confirmed on two timeframes while the engine's higher-timeframe gate blocks that side (the A2 trend-change condition), on development data",
+  "status": "APPROVED by the operator 2026-11-05 (standing approval) and requested 2026-11-06; development part runs once after this commit; validation opens once only if B14-a passes",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-05 (chat): \"If we need any modification and improvement, that is approved from my side.\" 2026-11-06: \"Audit the signals of last 3 days and improve the strategies.\" Recorded and committed before any B14 code was written or any outcome read.",
+  "partitions": [
+    "development",
+    "validation"
+  ],
+  "created_utc": "2026-11-06",
+  "source_of_hypothesis": "Two live audits. 2-5 Nov: no BUY during a +$250 rally while the higher-timeframe bear gate was on for 103 of 119 15m bars; BREAK alerts 3 of 3. 3-6 Nov (research/AUDIT_SIGNALS_2026-11-06.md): the engine gave no signal for 2.5 days; the bear gate blocked BUYs on 135 of 273 15m bars (all 92 bars of 4 Nov); BREAK alerts reached +13 first 14 of 16 times (three separate episodes) and GRAB alerts 4 of 10. The live window selects the question only. B10-2b (BREAK in trend regimes, 52.4%, n 540) and B10-1a (releasing the gate, 3 signals added) are related but different: neither required the break on two timeframes nor the gate to be on.",
+  "data": {
+    "series": "Twelve Data XAU/USD 15min and 1h (research-data @ a0d74e4980e78d8662af9dd0fe7c294cb8e63043), via quantum.research.history.load",
+    "development": "harness.DEV, scored from 2020-04-01 (B10 convention)",
+    "engine": "the frozen web.8 engine (treatment, config.DEFAULT) on quantum.research.b10.make_market, run on 15min and on 1h; its previous day / week highs and lows (rows pdh / pdl / pwh / pwl) and its 15min htf_bear_gate / htf_bull_gate"
+  },
+  "event": {
+    "break": "a bar closes beyond a previous-day or previous-week high (low) that the bar before had not closed beyond (the alerts' BREAK rule, notify.liquidity_events), on that timeframe's own series",
+    "B14-a (primary)": "the first 15min close of a New York trading day at which the same pool (name and level within $0.01) has been broken in the same direction on BOTH 15min and 1h that day, and the 15min engine's gate blocks that direction at that bar (an upside break with htf_bear_gate on; a downside break with htf_bull_gate on). Traded in the break's direction from that 15min close; once per direction per trading day",
+    "B14-b (secondary)": "the same two-timeframe break with the gate OFF",
+    "B14-c (secondary)": "every two-timeframe break, gate on or off"
+  },
+  "outcome": {
+    "primary": "+15 before -13, dollars at $4,000 scaled by entry / 4000, on 15min bars of the partition for 96 bars; a bar reaching both is a loss unless it opened beyond the target; neither: OPEN, not counted",
+    "secondary": "+10, +13 and +20 before -13",
+    "costs": "harness.cost_pts at the decision bar (the frozen model; results in dollars at $4,000), and the operator's $0.26 round trip",
+    "random_baseline": "every third 15min close of the scored window, long and short, weighted by the rule's long / short mix"
+  },
+  "primary_test": "B14-a only: P1 success rate above the random baseline, one-sided z at alpha 0.05; P2 mean net result per trade (frozen cost) > 0, one-sided t >= 1.645. Fewer than 30 decided trades: INSUFFICIENT.",
+  "power_stated_in_advance": "Unknown before the run. B10 found 540 BREAKs in trend regimes on 15min in 34 months; requiring a 1h confirmation and the gate on may leave 50-150. A 10-point rise over random with 100 trades is detected about 70% of the time.",
+  "decision": {
+    "if_pass": "Validation opens once, for B14-a unchanged (T15 primary). Only a validation pass earns a registered live forward test of the A2 warning as a trade (alerts with an automatic scorecard), and only that could later justify an engine amendment proposal.",
+    "if_fail_or_insufficient": "The A2 warning stays a risk warning, not an entry; recorded in research/trials.jsonl. No re-run with changed pools, timeframes, gates or targets."
+  },
+  "unchanged": "the engine, its configuration and every freeze key; B9-GRAB-FWD; the forward ledgers"
+}
