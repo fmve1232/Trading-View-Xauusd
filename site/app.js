@@ -1970,13 +1970,21 @@ function renderPlanAlerts() {
   const openRows = (P.open || []).slice().reverse().map((p) => {
     const lot = p.lot || c.lot;
     let now = `<span class="muted" title="live price unavailable">—</span>`;
+    const two = isNum(p.tp2), stage2 = two && p.tp1_sent;          // two targets: TP1 on half, the rest to TP2, SL then at entry
     if (liveOk) {
-      const pl = (LIVE.px - p.entry) * p.dir * lot * 100, toTp = Math.max((p.tp - LIVE.px) * p.dir, 0), toSl = Math.max((LIVE.px - p.sl) * p.dir, 0);
-      now = `<b class="${pl >= 0 ? "bull" : "bear"}">${usd(pl)}</b><div>TP in $${f(toTp, 2)} · SL in $${f(toSl, 2)}</div>`;
+      const pl = stage2 ? p.tp_usd / 2 + (LIVE.px - p.entry) * p.dir * lot * 50 : (LIVE.px - p.entry) * p.dir * lot * 100;
+      const toTp = Math.max(((stage2 ? p.tp2 : p.tp) - LIVE.px) * p.dir, 0), toSl = Math.max((LIVE.px - (stage2 ? p.entry : p.sl)) * p.dir, 0);
+      now = `<b class="${pl >= 0 ? "bull" : "bear"}">${usd(pl)}</b><div>${stage2 ? "TP2" : "TP"} in $${f(toTp, 2)} · ${stage2 ? "entry" : "SL"} in $${f(toSl, 2)}</div>`;
     }
-    return `<tr><td>${esc(p.tf)} ${side(p.dir)}<div>${when(p)}</div>${alertNote(p)}</td><td>${px(p.entry)}</td><td>${px(p.sl)}<div>−$${f(p.sl_usd, 0)}</div></td><td>${px(p.tp)}<div>+$${f(p.tp_usd, 0)}</div></td><td>${now}</td></tr>`;
+    const tpCell = two ? `${px(p.tp)}<div>TP1 +$${f(p.tp_usd / 2, 0)} on half${stage2 ? ' · <b class="bull">hit</b>' : ""}</div>${px(p.tp2)}<div>TP2 +$${f(p.tp2_usd / 2, 0)} on half</div>`
+      : `${px(p.tp)}<div>+$${f(p.tp_usd, 0)}</div>`;
+    const slCell = stage2 ? `${px(p.entry)}<div>SL moved to entry</div>` : `${px(p.sl)}<div>−$${f(p.sl_usd, 0)}</div>`;
+    return `<tr><td>${esc(p.tf)} ${side(p.dir)}<div>${when(p)}</div>${alertNote(p)}</td><td>${px(p.entry)}</td><td>${slCell}</td><td>${tpCell}</td><td>${now}</td></tr>`;
   }).join("");
-  const RES = { TP: ["bull", (p) => `TP hit ${usd(p.tp_usd)} (profit)`], SL: ["bear", (p) => `SL hit ${usd(-p.sl_usd)}`],
+  const tpRes = (p) => !p.tp2_result ? `TP hit ${usd(p.tp_usd)} (profit)`
+    : p.tp2_result === "TP2" ? `TP1 + TP2 hit ${usd(p.tp_usd / 2 + p.tp2_usd / 2)} (profit)`
+    : p.tp2_result === "BE" ? `TP1 hit, rest closed at entry ${usd(p.tp_usd / 2)}` : `TP1 hit ${usd(p.tp_usd / 2)}; rest not closed in 3 days`;
+  const RES = { TP: ["bull", tpRes], SL: ["bear", (p) => `SL hit ${usd(-p.sl_usd)}`],
                 BOTH: ["warn", () => "TP and SL in one bar · counted as SL"], EXPIRED: ["", () => "no TP or SL in 3 days"] };
   const doneRows = (P.recent || []).slice(0, 12).map((p) => {
     const r = RES[p.result] || ["", () => esc(p.result)];
@@ -2038,12 +2046,12 @@ function renderPlanAlerts() {
   const T = P.tally || {}, tp = T.TP || 0, sl = (T.SL || 0) + (T.BOTH || 0), n = tp + sl;
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   el.innerHTML = `
-    <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}</div>
+    <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}${c.tp2_usd ? ` · two targets: TP1 +$${f(c.tp_usd / 2, 0)} on half, then SL to entry, TP2 +$${f(c.tp2_usd / 2, 0)} on the rest` : ""}</div>
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
       <div>Break-even after costs</div><div>${pct(100 * P.break_even)}</div>
       <div>Phone alerts</div><div class="${on ? "bull" : "warn"}">${on ? "ON via " + esc(ch.join(", ")) : "OFF · add the NTFY_TOPIC secret"}</div>
       <div>Signals alerted</div><div>${esc((P.tfs || []).join(", ") || "—")}</div>
-      <div>On MT5</div><div>SL ${isNum(dSl) ? "$" + f(dSl, 2) : "—"} and TP ${isNum(dTp) ? "$" + f(dTp, 2) : "—"} from <b>your fill</b>: right at any broker price</div>
+      <div>On MT5</div><div>SL ${isNum(dSl) ? "$" + f(dSl, 2) : "—"} and TP ${isNum(dTp) ? "$" + f(dTp, 2) : "—"}${c.tp2_usd && c.lot > 0 ? ` (TP2 $${f(c.tp2_usd / (c.lot * 100), 2)} on the second half)` : ""} from <b>your fill</b>: right at any broker price</div>
       <div>Alert delay</div><div>${delay}</div>
       <div>Liquidity alerts</div><div>${L.on === false ? "OFF" : L.on ? `ON · near = within $${f(L.near_usd, 2)} · grab / break once per pool per day` : "—"}</div></div>
     <p class="muted pa-note">Same plan as the phone alerts: every engine signal gets your SL and TP; a second alert says which was hit first.
