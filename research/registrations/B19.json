@@ -1,0 +1,86 @@
+{
+  "id": "B19",
+  "title": "Two-stage signals: an engine trigger, then a confirmed $15 / $20 move in the SAME direction, then a trade plan with its own stop, target and risk/reward check",
+  "status": "APPROVED by the operator 2026-11-07 (re-engineering brief); development runs once after this commit; validation opens once, after the development results are committed, for the configurations listed under validation_opening; the holdout opens only for a candidate that passes development AND validation",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-07 (chat), QUANTUM XAUUSD RE-ENGINEERING REQUEST: section 5 \"Test the redesigned strategy using: existing 2020-2022 historical dataset; 2023-2024 validation data; 2025-2026 out-of-sample data, wherever complete and available; walk-forward testing; Monte Carlo simulations; different market regimes\"; section 6 \"Register all changes before implementation ... Create a separate strategy version for this experiment ... Keep the existing live B15 test unchanged\"; final instruction \"Do not modify production alerts or the existing B15 experiment until I approve the research findings and implementation plan.\"",
+  "partitions": ["development", "validation", "holdout"],
+  "created_utc": "2026-11-07T00:30:00Z",
+  "source_of_hypothesis": "The operator's brief: a BUY / SELL trigger is only an opportunity; the market must then show a confirmed $15-$20 move in the trigger's own direction before a trade plan is made. Statistically this is a time-series momentum (continuation) hypothesis at an intraday horizon: after a confirmed +$15 move, the next +T arrives before -S more often than S / (S + T). Under a driftless random walk the confirmation adds nothing, so every result is compared with the same pipeline run on random triggers (null N2) and with the geometry S / (S + T) (null N1).",
+  "unchanged": "Production alerts, the engine, config.py, the frozen website holdout (freeze key 5e4630924d663fc5:a6f2be58c74887ed), B9-GRAB-FWD and B15-ENGINE-FWD. B19 is research code (quantum/research/b19.py), never imported by production.",
+  "data": {
+    "series": "Twelve Data XAU/USD 15min and 1h (research data directory, the same files as B10-B18)",
+    "development": "2020-01-24 -> 2023-01-24 (scored from 2020-04-01, after the engine's warm-up)",
+    "validation": "2023-01-24 -> 2024-07-01. Opened once before (B13-1: the engine's 15m signals at +$13 / +$15 before -$13), so for engine-signal triggers it is not fully blind; stated in every report",
+    "holdout": "2024-07-01 -> 2026-01-01. Never opened",
+    "recent": "2026-01-01 -> the last stored bar. Not sealed; partly seen (B9-explore and B12-explore used Sep-Nov 2026); descriptive only",
+    "scaling": "Every distance is dollars at a $4,000 price, scaled by price / 4000 (s = P / 4000), as B4-B18. Costs are dollars per oz, not scaled (today's dollar costs), as B13-B18",
+    "volume": "None stored for 2020-2024: the engine runs on the research Market of quantum.research.b10.make_market (no macro, volume or cross-asset inputs), exactly as B10 / B13-1"
+  },
+  "stage_a_triggers": {
+    "ENG": "The frozen treatment engine's SIGNAL events (quantum.engine.run, config.DEFAULT) on 15m, 30m (15m resampled to 30min), 1h and 4h (1h resampled on the 17:00 New York grid). Trigger price P0 = the signal bar's close; trigger time = that bar's close.",
+    "STR": "The engine's own structure events (BOS, MSS, CHoCH) on the same four timeframes, kept when, at that bar, the engine's bias agrees (bull > bear for BUY, bear > bull for SELL), the close is beyond the session VWAP in that direction and session_quality >= 30. Same P0 and time convention.",
+    "repeat_rule": "Pooled across timeframes in time order; a trigger in the same direction within 4 hours and $15 (scaled) of the P0 of an earlier kept trigger is a REPEAT and dropped (the live alerts' rule A1).",
+    "recorded": "direction, P0, time, timeframe, engine bull / bear scores, regime label, session label, ATR14, RSI14, EMA20 / 100 / 200, VWAP, the previous day / week high and low"
+  },
+  "stage_b_confirmation": {
+    "path": "The 15m bars that open at or after the trigger time, up to 96 of them (one trading day). Every condition is evaluated at a bar's CLOSE with data up to that close only.",
+    "milestones": "REACHED_15 / REACHED_20: a bar's high (BUY) or low (SELL) touches P0 + d x 15s / 20s. Recorded, never counted as confirmation.",
+    "invalidation": "Before confirmation: (a) price: a bar's low (BUY) / high (SELL) reaches P0 - d x 13s; (b) structure: an opposite-direction BOS / MSS / CHoCH on the 15m engine run after the trigger. When a bar both invalidates and closes beyond the threshold, invalidation wins (intrabar order unknown).",
+    "confirmed": "CONFIRMED_X (X = 15 or 20): the first bar, not invalidated, whose CLOSE is beyond P0 + d x X s and that passes the filter set. A bar that closes beyond the threshold but fails a filter leaves the status CONFIRMATION PENDING; a later bar can still confirm.",
+    "filters": {
+      "F0": "the close beyond the threshold only",
+      "F1": "F0 and: momentum (RSI14 on 15m >= 55 for BUY, <= 45 for SELL, and the close beyond EMA20 in the direction); structure continuation (at least one same-direction BOS / MSS / CHoCH on the 15m run after the trigger, up to that bar); cost (the model cost at that bar <= $0.80 per oz, i.e. London, New York or a kill zone); volatility (that bar's range <= 2.5 x ATR14 and |open - previous close| <= 0.5 x ATR14, ATR14 on 15m)"
+    },
+    "expired": "No confirmation within the 96 bars.",
+    "statuses": ["TRIGGERED", "CONFIRMATION PENDING", "15 CONFIRMED", "20 CONFIRMED", "INVALIDATED", "EXPIRED"]
+  },
+  "trade_plan": {
+    "entry": {"E1": "market at the confirmation bar's close", "E2": "limit at the threshold level P0 + d x X s, good for 8 bars after confirmation; filled when a bar trades through it (at the limit, or at the open when a bar opens beyond it in the trade's favour); not filled = MISSED"},
+    "stop": {"S10": "10s from entry", "S13": "13s from entry", "SATR": "3.0 x ATR14 on 15m at the confirmation bar", "SSTR": "the structure low (BUY) / high (SELL) of the 15m bars from the trigger to the confirmation bar, minus / plus 0.2 x ATR14"},
+    "target": {"T15": "15s", "T20": "20s", "T25": "25s", "T30": "30s", "note": "from the entry"},
+    "decision": "EXECUTE when target / stop distance >= 1.0, the stop distance is within [5s, 40s] and the cost is <= 15% of the stop distance; REJECT otherwise. (WAIT is the live status while confirmation is pending.)",
+    "exit": "First touch on the 15m bars after entry, up to 192 bars (two trading days). A bar opening beyond a level fills at its open (Amendment 14). A bar touching both levels without opening beyond either is AMBIGUOUS: counted as a loss in every primary figure and reported separately; a sensitivity line excludes it. Neither level in 192 bars = TIMEOUT at that bar's close.",
+    "money": "net per trade = (exit - entry) x d / s - cost, in $ per oz at $4,000; R = net / (stop distance / s). Cost = the frozen engine cost model (spread + 2 x slippage + commission; about $0.77-$0.97 per oz round trip); the operator's measured $0.26 per oz is a sensitivity line."
+  },
+  "strategies_compared": {
+    "1": "Existing engine as alerted: ENG triggers, entry at P0, -$13 / +$13 (the B15 plan); secondary: the engine's own SL / TP1",
+    "2": "Trigger only: ENG triggers, entry at P0, S13, T20",
+    "3": "$15 confirmation: ENG, X15 F0, E1, S13, T20",
+    "4": "$20 confirmation: ENG, X20 F0, E1, S13, T20",
+    "5a": "$15 confirmation with momentum and structure filters: ENG, X15 F1, E1, S13, T20",
+    "5b": "$20 confirmation with momentum and structure filters: ENG, X20 F1, E1, S13, T20",
+    "STR versions": "the same six on STR triggers"
+  },
+  "nulls": {
+    "N1": "geometry: S / (S + T) and random entries at the same direction mix (quantum.research.b13.random_rates convention)",
+    "N2": "the full B19 pipeline (confirmation, filters, plan, exit) on random triggers: every 8th 15m bar of the partition, both directions"
+  },
+  "primary_test": {
+    "hypotheses": "H1-H4: strategies 3, 4, 5a, 5b on ENG triggers; H5-H8: the same on STR triggers",
+    "per_hypothesis": "mean net $ per trade > 0, one-sided t; AND above the N2 null for the same configuration (one-sided Welch t)",
+    "family": "Holm over H1-H8 at one-sided alpha 0.05 on the expectancy test; a pass also needs the N2 test at 0.05, profit factor >= 1.1 and at least 50 trades. A development pass earns only a place in the validation opening."
+  },
+  "grid_secondary": {
+    "configurations": "trigger {ENG, STR} x confirmation {none, X15 F0, X20 F0, X15 F1, X20 F1} x entry {E1, E2; E1 only for none} x stop {S10, S13, SATR, SSTR} x target {T15, T20, T25, T30} = 288",
+    "walk_forward": "development only: train 12 months, test the next 6, rolling by 6 months from 2020-04-01; in each train window the configuration with the highest mean net R among those with >= 20 trades is selected and scored on the test window; the concatenated test results are reported",
+    "pbo": "CSCV (quantum.research.harness.pbo_cscv), 8 groups over monthly blocks of mean net R per configuration",
+    "dsr": "Deflated Sharpe of the best configuration, against the per-trade Sharpe ratios of all 288 configurations; the registry's total trial count is reported beside it",
+    "reality_check": "White's Reality Check on monthly mean net R of all 288 configurations against no trade",
+    "monte_carlo": "10,000 resamples of each primary strategy's trade results, 100 trades each: median and 95th percentile maximum drawdown in R, and the probability of a 10 R drawdown (a 10% maximum loss at 1% risk per trade)",
+    "regimes": "per trigger, descriptive: trending (regime STRONG TR / EXPANSION), ranging (RANGE / COMPRESS), volatile (ATR14 / price in the partition's top quintile), news (within 2 hours after a CPI / payrolls / FOMC release; B8's calendar, development only)",
+    "reported": "triggers, reached $15, reached $20, confirmed, invalidated (price / structure), expired, rejected, missed, trades, TP first, SL first, ambiguous, timeout, profit factor, net expectancy ($ / oz and R), t, maximum drawdown, average holding time, average cost, missed opportunities (triggers whose price reached P0 + d x 30s within the window with no trade taken)"
+  },
+  "validation_opening": {
+    "runs_once": "after the development results are committed",
+    "configurations": "strategies 1, 2, 3, 4, 5a, 5b on ENG and STR triggers (declared here, not selected), plus at most two development candidates: grid configurations with t >= 2.0, profit factor >= 1.2, >= 50 trades and a positive walk-forward test mean, ranked by DSR",
+    "pass": "mean net $ per trade > 0 with one-sided t >= 1.645 and above N2 at 0.05"
+  },
+  "holdout_opening": "Only for a candidate that passes development AND validation; once; same pass rule. Otherwise the holdout stays sealed and the report says so.",
+  "power_stated_in_advance": "B10 found 70 engine signals on 15m and 25 on 1h in development; with 30m and 4h and the REPEAT rule, ENG may give about 100-150 triggers, of which only part confirm: H1-H4 may well be INSUFFICIENT (< 50 trades). STR is declared for power. A true +$1.5 per trade edge with a standard deviation near $15 needs about 270 trades for 80% power at one-sided 0.05.",
+  "secondary_reported_not_decisive": "every grid configuration, per timeframe, per regime, ambiguity-excluded and operator-cost sensitivity lines, E2 entries",
+  "decision": {
+    "if_pass_all": "A candidate that passes development, validation and the holdout is proposed for a live forward test, registered separately before it starts, with the confirmation panel and alerts. No production change before the operator approves.",
+    "if_not": "Recorded in research/trials.jsonl and the write-up (research/B19_RESULTS.md). No re-run with changed thresholds, filters, windows or targets on the same data. The confirmation panel may still be offered as a display of measured odds, for the operator to decide."
+  }
+}

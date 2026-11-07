@@ -1,0 +1,91 @@
+{
+ "entries_per_direction": 16457,
+ "mean_cost_usd_per_oz": 0.854304551254785,
+ "stops": {
+  "13": {
+   "tp_first": 0.4633409385213048,
+   "geometry": 0.4642857142857143,
+   "decided": 32434,
+   "expectancy_usd_per_oz": -0.8807582726582509,
+   "loss_to_win_ratio": 0.8666666666666667
+  },
+  "20": {
+   "tp_first": 0.5707282481346735,
+   "geometry": 0.5714285714285714,
+   "decided": 32434,
+   "expectancy_usd_per_oz": -0.8788158665412117,
+   "loss_to_win_ratio": 1.3333333333333333
+  },
+  "30": {
+   "tp_first": 0.6621446630079546,
+   "geometry": 0.6666666666666666,
+   "decided": 32434,
+   "expectancy_usd_per_oz": -1.0577947158968275,
+   "loss_to_win_ratio": 2.0
+  },
+  "50": {
+   "tp_first": 0.7684220262687304,
+   "geometry": 0.7692307692307693,
+   "decided": 32434,
+   "expectancy_usd_per_oz": -0.906872843787312,
+   "loss_to_win_ratio": 3.3333333333333335
+  },
+  "75": {
+   "tp_first": 0.8269450183477751,
+   "geometry": 0.8333333333333334,
+   "decided": 32429,
+   "expectancy_usd_per_oz": -1.4292528999550242,
+   "loss_to_win_ratio": 5.0
+  },
+  "100": {
+   "tp_first": 0.8651873951146746,
+   "geometry": 0.8695652173913043,
+   "decided": 32178,
+   "expectancy_usd_per_oz": -1.3577541130672088,
+   "loss_to_win_ratio": 6.666666666666667
+  },
+  "135": {
+   "tp_first": 0.9000190077931952,
+   "geometry": 0.9,
+   "decided": 31566,
+   "expectancy_usd_per_oz": -0.8514533822755032,
+   "loss_to_win_ratio": 9.0
+  },
+  "150": {
+   "tp_first": 0.9140842813651658,
+   "geometry": 0.9090909090909091,
+   "decided": 31205,
+   "expectancy_usd_per_oz": -0.030398126002422754,
+   "loss_to_win_ratio": 10.0
+  }
+ },
+ "no_stop": {
+  "1 day": {
+   "touched_15": 0.6506420008519442,
+   "n": 32866,
+   "adverse_before_touch_median": 7.325991781306723,
+   "adverse_before_touch_p90": 24.792265440613846,
+   "adverse_before_touch_max": 148.76180245319554,
+   "misses_end_median": -23.44042061908849,
+   "misses_end_p10": -66.70511483701033
+  },
+  "1 week": {
+   "touched_15": 0.8455040705147824,
+   "n": 32674,
+   "adverse_before_touch_median": 11.0366571330174,
+   "adverse_before_touch_p90": 48.36486074118446,
+   "adverse_before_touch_max": 276.30487514306304,
+   "misses_end_median": -75.82376171249123,
+   "misses_end_p10": -173.17294176494553
+  },
+  "2 weeks": {
+   "touched_15": 0.8896220016032559,
+   "n": 32434,
+   "adverse_before_touch_median": 12.057716927095177,
+   "adverse_before_touch_p90": 62.09508574939193,
+   "adverse_before_touch_max": 324.0565834325544,
+   "misses_end_median": -120.07650554310482,
+   "misses_end_p10": -221.45267237317236
+  }
+ }
+}

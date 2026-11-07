@@ -1,0 +1,46 @@
+{
+  "id": "B24-CONFIRM-FWD",
+  "title": "Engine signal + a completed $15 confirmation close, measured live from the first price the site could act on: +$15 / +$20 before -$13",
+  "status": "REGISTERED 2026-11-07 before any of its code was written; NOT STARTED. It starts with the first site run that carries its recorder, which needs the operator's separate approval to deploy. Until then nothing is recorded.",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-07 (chat, 'APPROVE OPTION A, REGISTER FORWARD TEST & INVESTIGATE EXECUTION-PRICE ACCURACY'): \"I authorize preparation of a registered forward test for: Engine signal + completed $15 confirmation ... Register the methodology, thresholds, evaluation period and success criteria before the test starts.\" Deployment of the recorder is NOT approved by this: the operator wrote \"Do not merge or deploy without my explicit approval\".",
+  "partitions": ["live forward only: engine signals whose bar closes after the first site run that carries the recorder; nothing earlier, no backfill"],
+  "created_utc": "2026-11-07",
+  "source_of_hypothesis": "B19 (registered 2026-11-07) measured the engine signal + $15 confirmation close at +$15 before -$13: 12 of 20 on 2020-22 development data (95% 39-78%), 13 of 23 on 2026 data (37-74%), 5 of 7 at +$20 on 2023-24 validation; the PR #90 audit (research/PR90_FINAL_AUDIT.md) found the figure fragile: entered one 15m bar later the 2020-22 trades won 6 of 20. It is a lead, not an edge, and only new data can decide it.",
+  "rule": {
+    "stream": "every SIGNAL event of the frozen treatment engine on the site's 15m, 30m, 1h and 4h payloads (the alerts' own source), BUY and SELL; one per idea: a signal in the same direction within 4 hours and $15 of an earlier recorded signal is folded into it (counted, not tested)",
+    "trigger_price_and_time": "the signal bar's close and its close time (UTC, seconds)",
+    "confirmation": "on the site's 15m bars that open after the trigger close: the first completed 15m CLOSE at least $15 beyond the trigger price in the signal's direction, before price trades $13 against the trigger price (a bar's high / low) or a 15m BOS / MSS / CHoCH prints the other way; a bar that does both is INVALIDATED; none within 96 bars is EXPIRED. A touch never confirms. Each 15m bar is examined once, by the first run that has it (quantum/confirm_panel.py's state machine): a decision, once recorded, is never changed; a later revision of a bar by the data feed is flagged and not applied",
+    "entries_recorded": {
+      "A_close": "the confirming 15m close (the theoretical entry)",
+      "B_executable": "PRIMARY: the first price the site could act on: the newest price of the first site run that has the confirming bar (the 5m forming bar's last price at that run's download, else the newest closed 5m close), with its timestamp; latency = that timestamp minus the confirming bar's close"
+    },
+    "costs_recorded": "the engine's round-trip cost model at the confirming bar (spread by session + 2 x 0.20 slippage + commission, payload dashboard.checks.cost_pts) and the operator's measured $0.26; slippage = (B price - A price) x direction (positive = worse). No broker bid / ask reaches the pipeline (the optional MT5 feed is not connected); if it is connected later its spread at the run is recorded beside it, never instead",
+    "exits": "for each entry and each target (+$15, +$20) and each stop: S13 = -$13 (primary), S10 = -$10, SATR = 3 x ATR14 of the 15m bars at the confirmation, SSTR = beyond the most extreme price since the trigger by 0.2 ATR (B19's definitions; SATR / SSTR outside $5-40 are recorded as not applicable). Resolved on the site's 5m bars from the first 5m bar that opens after the entry time: a bar opening beyond a level fills at the open; a bar touching both levels counts as the stop; no level within 48 hours: TIMEOUT at the last close",
+    "excursions": "MFE / MAE from each entry up to its exit and over a fixed 24 hours",
+    "records": "every trigger (folded, invalidated, expired, confirmed) is written once to <store>/research_forward/B24-CONFIRM-FWD.json when it finishes, with its timestamps, prices, costs, flags and results; rows are appended, never edited; the workflow copies the file to forward-ledger every run"
+  },
+  "primary_test": {
+    "outcome": "B_executable entry, +$15 before -$13 (S13), net of the operator's $0.26; break-even (13 + 0.26) / 28 = 47.4%",
+    "hypotheses": "H-ALL (BUY and SELL pooled), H-BUY, H-SELL, each tested independently on its own decided results",
+    "looks": "only when the hypothesis's decided results (TP or SL / AMBIGUOUS, in the order they resolved; TIMEOUT counts as not TP) first reach 30, 50, 75 and 100",
+    "proven": "at a look, the Wilson lower bound with z = 2.24 is above 47.4% (21/30, 32/50, 46/75, 59/100) AND the mean net result per trade after $0.26 is positive",
+    "not_proven": "H-ALL not proven by 100 decided results or by 2029-12-31, whichever comes first; H-BUY / H-SELL end with H-ALL",
+    "between_looks": "reports show PRELIMINARY counts and rates with 95% intervals, never a verdict"
+  },
+  "error_rates_stated_in_advance": "Simulated before the start (independent trades, half BUY): with no edge (true rate 47.4% on both sides) the chance that ANY of the three hypotheses is declared proven is 4.8% (H-ALL alone 3.0%). If the true rate is 55% / 58% / 60% / 65% on both sides, H-ALL is proven 31% / 52% / 67% / 93% of the time, a single direction 11% / 20% / 28% / 51%. NOT PROVEN means not confirmed, not proven absent.",
+  "expected_pace": "2026 data showed 23 confirmed engine signals in 8 months (about 3 a month); at that pace 30 decided results take about 10 months and 100 about 3 years, hence the 2029-12-31 deadline. The pace is uncertain: 2020-22 showed about 7 a year.",
+  "secondary_reported_not_decisive": [
+    "A_close outcomes beside B_executable, and the difference",
+    "+$20 before -$13; the S10 / SATR / SSTR stops",
+    "latency (median, 90th percentile), slippage, the cost model at each confirmation",
+    "MFE / MAE per entry; invalidated, expired and folded counts; by direction, timeframe and session",
+    "at a verdict: random 5m entries in the same directions over the same weeks through the same confirmation"
+  ],
+  "weekly_report": "after each Friday New York close: total triggers, BUY / SELL, confirmed / invalidated / expired / folded, +$15 and +$20 rates with 95% intervals, stop rate, average MFE / MAE, average latency and slippage, costs, expectancy, profit factor, maximum drawdown (R), sample sizes; every figure labelled PRELIMINARY unless a look has decided",
+  "unchanged": "the engine and every freeze key; the phone alerts (this test sends nothing); the plans; B9-GRAB-FWD; B15-ENGINE-FWD; the above-60% mode",
+  "decision": {
+    "if_proven": "Report it with the secondary checks and propose, never adopt automatically, an alert for this stream. A proven rate is an average: any single trade can lose.",
+    "if_not_proven": "The lead is closed; recorded in research/trials.jsonl and the write-up. No re-run with changed distances, timeframes or filters on the same data."
+  }
+}

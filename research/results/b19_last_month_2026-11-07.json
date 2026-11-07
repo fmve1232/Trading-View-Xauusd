@@ -1,0 +1,1087 @@
+{
+ "window": [
+  "2026-10-07",
+  "2026-11-06 21:45:00+00:00"
+ ],
+ "rules": "research/registrations/B19.json, unchanged",
+ "baseline": {
+  "random BUY +15 before -13": {
+   "entries": 2093,
+   "tp_first": 0.3755375059722886
+  },
+  "random SELL +15 before -13": {
+   "entries": 2094,
+   "tp_first": 0.5296084049665711
+  },
+  "random BUY +20 before -13": {
+   "entries": 2087,
+   "tp_first": 0.3076185912793484
+  },
+  "random SELL +20 before -13": {
+   "entries": 2093,
+   "tp_first": 0.44816053511705684
+  }
+ },
+ "configs": {
+  "ENG none S13 T15": {
+   "trades": 10,
+   "open": 0,
+   "tp_first": 0.2,
+   "sl_first": 0.8,
+   "net_usd_per_oz": -8.190000000000085,
+   "t": -2.191762519624148,
+   "profit_factor": 0.2578832910474773,
+   "usd_at_0p10_lot": -819.0000000000084,
+   "triggers": 10,
+   "confirmed": 0,
+   "invalidated": 0,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG none S13 T20": {
+   "trades": 10,
+   "open": 0,
+   "tp_first": 0.1,
+   "sl_first": 0.9,
+   "net_usd_per_oz": -10.490000000000043,
+   "t": -3.1765911800870903,
+   "profit_factor": 0.1549182308869739,
+   "usd_at_0p10_lot": -1049.0000000000043,
+   "triggers": 10,
+   "confirmed": 0,
+   "invalidated": 0,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG as alerted 13/13": {
+   "trades": 10,
+   "open": 0,
+   "tp_first": 0.2,
+   "sl_first": 0.8,
+   "net_usd_per_oz": -8.590000000000071,
+   "t": -2.4754643476481695,
+   "profit_factor": 0.22163827473722153,
+   "usd_at_0p10_lot": -859.000000000007,
+   "triggers": 10,
+   "confirmed": 0,
+   "invalidated": 0,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X15F0 S13 T15": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.770000000000348,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.70000000000348,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X15F0 S13 T20": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.770000000000348,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.70000000000348,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X20F0 S13 T15": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.769999999999905,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.69999999999905,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X20F0 S13 T20": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.769999999999905,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.69999999999905,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X15F1 S13 T15": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.770000000000348,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.70000000000348,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X15F1 S13 T20": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.770000000000348,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.70000000000348,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X20F1 S13 T15": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.769999999999905,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.69999999999905,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "ENG X20F1 S13 T20": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.769999999999905,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -137.69999999999905,
+   "triggers": 10,
+   "confirmed": 1,
+   "invalidated": 9,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR none S13 T15": {
+   "trades": 18,
+   "open": 0,
+   "tp_first": 0.3333333333333333,
+   "sl_first": 0.6666666666666666,
+   "net_usd_per_oz": -4.436666666666635,
+   "t": -1.3858923164355375,
+   "profit_factor": 0.5167029774872948,
+   "usd_at_0p10_lot": -798.5999999999942,
+   "triggers": 18,
+   "confirmed": 0,
+   "invalidated": 0,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR none S13 T20": {
+   "trades": 18,
+   "open": 0,
+   "tp_first": 0.1111111111111111,
+   "sl_first": 0.8888888888888888,
+   "net_usd_per_oz": -10.103333333333333,
+   "t": -4.016730725744586,
+   "profit_factor": 0.17456427015250456,
+   "usd_at_0p10_lot": -1818.6000000000001,
+   "triggers": 18,
+   "confirmed": 0,
+   "invalidated": 0,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR as alerted 13/13": {
+   "trades": 18,
+   "open": 0,
+   "tp_first": 0.3333333333333333,
+   "sl_first": 0.6666666666666666,
+   "net_usd_per_oz": -5.103333333333362,
+   "t": -1.716766798270814,
+   "profit_factor": 0.444081336238196,
+   "usd_at_0p10_lot": -918.6000000000051,
+   "triggers": 18,
+   "confirmed": 0,
+   "invalidated": 0,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X15F0 S13 T15": {
+   "trades": 2,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.869999999999722,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -277.39999999999446,
+   "triggers": 18,
+   "confirmed": 2,
+   "invalidated": 16,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X15F0 S13 T20": {
+   "trades": 2,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.869999999999722,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -277.39999999999446,
+   "triggers": 18,
+   "confirmed": 2,
+   "invalidated": 16,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X20F0 S13 T15": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.96999999999982,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -139.6999999999982,
+   "triggers": 18,
+   "confirmed": 1,
+   "invalidated": 17,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X20F0 S13 T20": {
+   "trades": 1,
+   "open": 0,
+   "tp_first": 0.0,
+   "sl_first": 1.0,
+   "net_usd_per_oz": -13.96999999999982,
+   "t": null,
+   "profit_factor": 0.0,
+   "usd_at_0p10_lot": -139.6999999999982,
+   "triggers": 18,
+   "confirmed": 1,
+   "invalidated": 17,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X15F1 S13 T15": {
+   "trades": 0,
+   "open": 0,
+   "tp_first": null,
+   "sl_first": null,
+   "net_usd_per_oz": null,
+   "t": null,
+   "profit_factor": null,
+   "usd_at_0p10_lot": null,
+   "triggers": 18,
+   "confirmed": 0,
+   "invalidated": 18,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X15F1 S13 T20": {
+   "trades": 0,
+   "open": 0,
+   "tp_first": null,
+   "sl_first": null,
+   "net_usd_per_oz": null,
+   "t": null,
+   "profit_factor": null,
+   "usd_at_0p10_lot": null,
+   "triggers": 18,
+   "confirmed": 0,
+   "invalidated": 18,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X20F1 S13 T15": {
+   "trades": 0,
+   "open": 0,
+   "tp_first": null,
+   "sl_first": null,
+   "net_usd_per_oz": null,
+   "t": null,
+   "profit_factor": null,
+   "usd_at_0p10_lot": null,
+   "triggers": 18,
+   "confirmed": 0,
+   "invalidated": 18,
+   "pending": 0,
+   "expired": 0
+  },
+  "STR X20F1 S13 T20": {
+   "trades": 0,
+   "open": 0,
+   "tp_first": null,
+   "sl_first": null,
+   "net_usd_per_oz": null,
+   "t": null,
+   "profit_factor": null,
+   "usd_at_0p10_lot": null,
+   "triggers": 18,
+   "confirmed": 0,
+   "invalidated": 18,
+   "pending": 0,
+   "expired": 0
+  }
+ },
+ "trades": {
+  "ENG none S13 T15": [
+   {
+    "trigger": "4h SELL Wed 07 Oct 15:00 MT5 at 4087.42",
+    "confirmed": "Wed 07 Oct 15:00",
+    "entry": 4087.42,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Wed 07 Oct 17:00 MT5 at 4103.93",
+    "confirmed": "Wed 07 Oct 17:00",
+    "entry": 4103.93,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Wed 07 Oct 22:00 MT5 at 4100.53",
+    "confirmed": "Wed 07 Oct 22:00",
+    "entry": 4100.53,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 15:00",
+    "entry": 4099.72,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   },
+   {
+    "trigger": "15m SELL Wed 14 Oct 18:15 MT5 at 4076.62",
+    "confirmed": "Wed 14 Oct 18:15",
+    "entry": 4076.62,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Wed 14 Oct 23:00 MT5 at 4105.49",
+    "confirmed": "Wed 14 Oct 23:00",
+    "entry": 4105.49,
+    "result": "SL",
+    "net_usd_per_oz": -13.97
+   },
+   {
+    "trigger": "1h SELL Fri 23 Oct 10:00 MT5 at 4011.56",
+    "confirmed": "Fri 23 Oct 10:00",
+    "entry": 4011.56,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Mon 26 Oct 10:00 MT5 at 4010.06",
+    "confirmed": "Mon 26 Oct 10:00",
+    "entry": 4010.06,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Tue 27 Oct 10:00 MT5 at 3997.60",
+    "confirmed": "Tue 27 Oct 10:00",
+    "entry": 3997.6,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Tue 03 Nov 20:00 MT5 at 3932.81",
+    "confirmed": "Tue 03 Nov 20:00",
+    "entry": 3932.81,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   }
+  ],
+  "ENG none S13 T20": [
+   {
+    "trigger": "4h SELL Wed 07 Oct 15:00 MT5 at 4087.42",
+    "confirmed": "Wed 07 Oct 15:00",
+    "entry": 4087.42,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Wed 07 Oct 17:00 MT5 at 4103.93",
+    "confirmed": "Wed 07 Oct 17:00",
+    "entry": 4103.93,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Wed 07 Oct 22:00 MT5 at 4100.53",
+    "confirmed": "Wed 07 Oct 22:00",
+    "entry": 4100.53,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 15:00",
+    "entry": 4099.72,
+    "result": "TP",
+    "net_usd_per_oz": 19.23
+   },
+   {
+    "trigger": "15m SELL Wed 14 Oct 18:15 MT5 at 4076.62",
+    "confirmed": "Wed 14 Oct 18:15",
+    "entry": 4076.62,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Wed 14 Oct 23:00 MT5 at 4105.49",
+    "confirmed": "Wed 14 Oct 23:00",
+    "entry": 4105.49,
+    "result": "SL",
+    "net_usd_per_oz": -13.97
+   },
+   {
+    "trigger": "1h SELL Fri 23 Oct 10:00 MT5 at 4011.56",
+    "confirmed": "Fri 23 Oct 10:00",
+    "entry": 4011.56,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Mon 26 Oct 10:00 MT5 at 4010.06",
+    "confirmed": "Mon 26 Oct 10:00",
+    "entry": 4010.06,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Tue 27 Oct 10:00 MT5 at 3997.60",
+    "confirmed": "Tue 27 Oct 10:00",
+    "entry": 3997.6,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Tue 03 Nov 20:00 MT5 at 3932.81",
+    "confirmed": "Tue 03 Nov 20:00",
+    "entry": 3932.81,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG as alerted 13/13": [
+   {
+    "trigger": "4h SELL Wed 07 Oct 15:00 MT5 at 4087.42",
+    "confirmed": "Wed 07 Oct 15:00",
+    "entry": 4087.42,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Wed 07 Oct 17:00 MT5 at 4103.93",
+    "confirmed": "Wed 07 Oct 17:00",
+    "entry": 4103.93,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Wed 07 Oct 22:00 MT5 at 4100.53",
+    "confirmed": "Wed 07 Oct 22:00",
+    "entry": 4100.53,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 15:00",
+    "entry": 4099.72,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   },
+   {
+    "trigger": "15m SELL Wed 14 Oct 18:15 MT5 at 4076.62",
+    "confirmed": "Wed 14 Oct 18:15",
+    "entry": 4076.62,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Wed 14 Oct 23:00 MT5 at 4105.49",
+    "confirmed": "Wed 14 Oct 23:00",
+    "entry": 4105.49,
+    "result": "SL",
+    "net_usd_per_oz": -13.97
+   },
+   {
+    "trigger": "1h SELL Fri 23 Oct 10:00 MT5 at 4011.56",
+    "confirmed": "Fri 23 Oct 10:00",
+    "entry": 4011.56,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Mon 26 Oct 10:00 MT5 at 4010.06",
+    "confirmed": "Mon 26 Oct 10:00",
+    "entry": 4010.06,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Tue 27 Oct 10:00 MT5 at 3997.60",
+    "confirmed": "Tue 27 Oct 10:00",
+    "entry": 3997.6,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "4h SELL Tue 03 Nov 20:00 MT5 at 3932.81",
+    "confirmed": "Tue 03 Nov 20:00",
+    "entry": 3932.81,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   }
+  ],
+  "ENG X15F0 S13 T15": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 15:15",
+    "entry": 4083.07,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG X15F0 S13 T20": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 15:15",
+    "entry": 4083.07,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG X20F0 S13 T15": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 18:15",
+    "entry": 4076.62,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG X20F0 S13 T20": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 18:15",
+    "entry": 4076.62,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG X15F1 S13 T15": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 17:15",
+    "entry": 4083.99,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG X15F1 S13 T20": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 17:15",
+    "entry": 4083.99,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG X20F1 S13 T15": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 18:15",
+    "entry": 4076.62,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "ENG X20F1 S13 T20": [
+   {
+    "trigger": "4h SELL Wed 14 Oct 15:00 MT5 at 4099.72",
+    "confirmed": "Wed 14 Oct 18:15",
+    "entry": 4076.62,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "STR none S13 T15": [
+   {
+    "trigger": "15m SELL Wed 07 Oct 14:30 MT5 at 4082.09",
+    "confirmed": "Wed 07 Oct 14:30",
+    "entry": 4082.09,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   },
+   {
+    "trigger": "15m SELL Wed 07 Oct 18:45 MT5 at 4109.08",
+    "confirmed": "Wed 07 Oct 18:45",
+    "entry": 4109.08,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Thu 08 Oct 18:00 MT5 at 4112.00",
+    "confirmed": "Thu 08 Oct 18:00",
+    "entry": 4112.0,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Thu 08 Oct 22:00 MT5 at 4131.92",
+    "confirmed": "Thu 08 Oct 22:00",
+    "entry": 4131.92,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   },
+   {
+    "trigger": "30m BUY Fri 09 Oct 20:00 MT5 at 4195.44",
+    "confirmed": "Fri 09 Oct 20:00",
+    "entry": 4195.44,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   },
+   {
+    "trigger": "30m SELL Mon 12 Oct 12:30 MT5 at 4179.04",
+    "confirmed": "Mon 12 Oct 12:30",
+    "entry": 4179.04,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   },
+   {
+    "trigger": "1h SELL Tue 13 Oct 20:00 MT5 at 4148.36",
+    "confirmed": "Tue 13 Oct 20:00",
+    "entry": 4148.36,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Wed 14 Oct 17:15 MT5 at 4083.99",
+    "confirmed": "Wed 14 Oct 17:15",
+    "entry": 4083.99,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Fri 16 Oct 22:00 MT5 at 4168.17",
+    "confirmed": "Fri 16 Oct 22:00",
+    "entry": 4168.17,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Tue 20 Oct 10:15 MT5 at 4124.60",
+    "confirmed": "Tue 20 Oct 10:15",
+    "entry": 4124.6,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Tue 20 Oct 15:00 MT5 at 4118.81",
+    "confirmed": "Tue 20 Oct 15:00",
+    "entry": 4118.81,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Tue 20 Oct 21:30 MT5 at 4123.05",
+    "confirmed": "Tue 20 Oct 21:30",
+    "entry": 4123.05,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   },
+   {
+    "trigger": "30m SELL Wed 28 Oct 13:30 MT5 at 4047.53",
+    "confirmed": "Wed 28 Oct 13:30",
+    "entry": 4047.53,
+    "result": "TP",
+    "net_usd_per_oz": 14.23
+   },
+   {
+    "trigger": "15m SELL Thu 29 Oct 20:30 MT5 at 4007.50",
+    "confirmed": "Thu 29 Oct 20:30",
+    "entry": 4007.5,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Mon 02 Nov 10:30 MT5 at 3894.12",
+    "confirmed": "Mon 02 Nov 10:30",
+    "entry": 3894.12,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Tue 03 Nov 23:00 MT5 at 3921.43",
+    "confirmed": "Tue 03 Nov 23:00",
+    "entry": 3921.43,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Thu 05 Nov 11:30 MT5 at 4129.92",
+    "confirmed": "Thu 05 Nov 11:30",
+    "entry": 4129.92,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Fri 06 Nov 11:00 MT5 at 4075.20",
+    "confirmed": "Fri 06 Nov 11:00",
+    "entry": 4075.2,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "STR none S13 T20": [
+   {
+    "trigger": "15m SELL Wed 07 Oct 14:30 MT5 at 4082.09",
+    "confirmed": "Wed 07 Oct 14:30",
+    "entry": 4082.09,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Wed 07 Oct 18:45 MT5 at 4109.08",
+    "confirmed": "Wed 07 Oct 18:45",
+    "entry": 4109.08,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Thu 08 Oct 18:00 MT5 at 4112.00",
+    "confirmed": "Thu 08 Oct 18:00",
+    "entry": 4112.0,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Thu 08 Oct 22:00 MT5 at 4131.92",
+    "confirmed": "Thu 08 Oct 22:00",
+    "entry": 4131.92,
+    "result": "TP",
+    "net_usd_per_oz": 19.23
+   },
+   {
+    "trigger": "30m BUY Fri 09 Oct 20:00 MT5 at 4195.44",
+    "confirmed": "Fri 09 Oct 20:00",
+    "entry": 4195.44,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Mon 12 Oct 12:30 MT5 at 4179.04",
+    "confirmed": "Mon 12 Oct 12:30",
+    "entry": 4179.04,
+    "result": "TP",
+    "net_usd_per_oz": 19.23
+   },
+   {
+    "trigger": "1h SELL Tue 13 Oct 20:00 MT5 at 4148.36",
+    "confirmed": "Tue 13 Oct 20:00",
+    "entry": 4148.36,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Wed 14 Oct 17:15 MT5 at 4083.99",
+    "confirmed": "Wed 14 Oct 17:15",
+    "entry": 4083.99,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Fri 16 Oct 22:00 MT5 at 4168.17",
+    "confirmed": "Fri 16 Oct 22:00",
+    "entry": 4168.17,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Tue 20 Oct 10:15 MT5 at 4124.60",
+    "confirmed": "Tue 20 Oct 10:15",
+    "entry": 4124.6,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Tue 20 Oct 15:00 MT5 at 4118.81",
+    "confirmed": "Tue 20 Oct 15:00",
+    "entry": 4118.81,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Tue 20 Oct 21:30 MT5 at 4123.05",
+    "confirmed": "Tue 20 Oct 21:30",
+    "entry": 4123.05,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Wed 28 Oct 13:30 MT5 at 4047.53",
+    "confirmed": "Wed 28 Oct 13:30",
+    "entry": 4047.53,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Thu 29 Oct 20:30 MT5 at 4007.50",
+    "confirmed": "Thu 29 Oct 20:30",
+    "entry": 4007.5,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Mon 02 Nov 10:30 MT5 at 3894.12",
+    "confirmed": "Mon 02 Nov 10:30",
+    "entry": 3894.12,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Tue 03 Nov 23:00 MT5 at 3921.43",
+    "confirmed": "Tue 03 Nov 23:00",
+    "entry": 3921.43,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Thu 05 Nov 11:30 MT5 at 4129.92",
+    "confirmed": "Thu 05 Nov 11:30",
+    "entry": 4129.92,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Fri 06 Nov 11:00 MT5 at 4075.20",
+    "confirmed": "Fri 06 Nov 11:00",
+    "entry": 4075.2,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "STR as alerted 13/13": [
+   {
+    "trigger": "15m SELL Wed 07 Oct 14:30 MT5 at 4082.09",
+    "confirmed": "Wed 07 Oct 14:30",
+    "entry": 4082.09,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   },
+   {
+    "trigger": "15m SELL Wed 07 Oct 18:45 MT5 at 4109.08",
+    "confirmed": "Wed 07 Oct 18:45",
+    "entry": 4109.08,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "1h SELL Thu 08 Oct 18:00 MT5 at 4112.00",
+    "confirmed": "Thu 08 Oct 18:00",
+    "entry": 4112.0,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Thu 08 Oct 22:00 MT5 at 4131.92",
+    "confirmed": "Thu 08 Oct 22:00",
+    "entry": 4131.92,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   },
+   {
+    "trigger": "30m BUY Fri 09 Oct 20:00 MT5 at 4195.44",
+    "confirmed": "Fri 09 Oct 20:00",
+    "entry": 4195.44,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   },
+   {
+    "trigger": "30m SELL Mon 12 Oct 12:30 MT5 at 4179.04",
+    "confirmed": "Mon 12 Oct 12:30",
+    "entry": 4179.04,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   },
+   {
+    "trigger": "1h SELL Tue 13 Oct 20:00 MT5 at 4148.36",
+    "confirmed": "Tue 13 Oct 20:00",
+    "entry": 4148.36,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Wed 14 Oct 17:15 MT5 at 4083.99",
+    "confirmed": "Wed 14 Oct 17:15",
+    "entry": 4083.99,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Fri 16 Oct 22:00 MT5 at 4168.17",
+    "confirmed": "Fri 16 Oct 22:00",
+    "entry": 4168.17,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Tue 20 Oct 10:15 MT5 at 4124.60",
+    "confirmed": "Tue 20 Oct 10:15",
+    "entry": 4124.6,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Tue 20 Oct 15:00 MT5 at 4118.81",
+    "confirmed": "Tue 20 Oct 15:00",
+    "entry": 4118.81,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Tue 20 Oct 21:30 MT5 at 4123.05",
+    "confirmed": "Tue 20 Oct 21:30",
+    "entry": 4123.05,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   },
+   {
+    "trigger": "30m SELL Wed 28 Oct 13:30 MT5 at 4047.53",
+    "confirmed": "Wed 28 Oct 13:30",
+    "entry": 4047.53,
+    "result": "TP",
+    "net_usd_per_oz": 12.23
+   },
+   {
+    "trigger": "15m SELL Thu 29 Oct 20:30 MT5 at 4007.50",
+    "confirmed": "Thu 29 Oct 20:30",
+    "entry": 4007.5,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m SELL Mon 02 Nov 10:30 MT5 at 3894.12",
+    "confirmed": "Mon 02 Nov 10:30",
+    "entry": 3894.12,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "30m SELL Tue 03 Nov 23:00 MT5 at 3921.43",
+    "confirmed": "Tue 03 Nov 23:00",
+    "entry": 3921.43,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Thu 05 Nov 11:30 MT5 at 4129.92",
+    "confirmed": "Thu 05 Nov 11:30",
+    "entry": 4129.92,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   },
+   {
+    "trigger": "15m BUY Fri 06 Nov 11:00 MT5 at 4075.20",
+    "confirmed": "Fri 06 Nov 11:00",
+    "entry": 4075.2,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "STR X15F0 S13 T15": [
+   {
+    "trigger": "30m BUY Fri 09 Oct 20:00 MT5 at 4195.44",
+    "confirmed": "Mon 12 Oct 04:00",
+    "entry": 4212.27,
+    "result": "SL",
+    "net_usd_per_oz": -13.97
+   },
+   {
+    "trigger": "30m SELL Mon 12 Oct 12:30 MT5 at 4179.04",
+    "confirmed": "Mon 12 Oct 14:30",
+    "entry": 4163.32,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "STR X15F0 S13 T20": [
+   {
+    "trigger": "30m BUY Fri 09 Oct 20:00 MT5 at 4195.44",
+    "confirmed": "Mon 12 Oct 04:00",
+    "entry": 4212.27,
+    "result": "SL",
+    "net_usd_per_oz": -13.97
+   },
+   {
+    "trigger": "30m SELL Mon 12 Oct 12:30 MT5 at 4179.04",
+    "confirmed": "Mon 12 Oct 14:30",
+    "entry": 4163.32,
+    "result": "SL",
+    "net_usd_per_oz": -13.77
+   }
+  ],
+  "STR X20F0 S13 T15": [
+   {
+    "trigger": "30m SELL Mon 12 Oct 12:30 MT5 at 4179.04",
+    "confirmed": "Tue 13 Oct 03:00",
+    "entry": 4154.79,
+    "result": "SL",
+    "net_usd_per_oz": -13.97
+   }
+  ],
+  "STR X20F0 S13 T20": [
+   {
+    "trigger": "30m SELL Mon 12 Oct 12:30 MT5 at 4179.04",
+    "confirmed": "Tue 13 Oct 03:00",
+    "entry": 4154.79,
+    "result": "SL",
+    "net_usd_per_oz": -13.97
+   }
+  ],
+  "STR X15F1 S13 T15": [],
+  "STR X15F1 S13 T20": [],
+  "STR X20F1 S13 T15": [],
+  "STR X20F1 S13 T20": []
+ },
+ "pending": [],
+ "note": "exploratory and descriptive; one month; the engine runs on the research Market (no macro / volume inputs), as in B19; distances at $4,000 scaled by price / 4000"
+}

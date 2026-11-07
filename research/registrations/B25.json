@@ -1,0 +1,40 @@
+{
+  "id": "B25",
+  "title": "Execution timing: does the price you can actually get after a $15 confirmation keep the odds, and does an earlier, executable entry do better than the 15m close?",
+  "status": "APPROVED by the operator 2026-11-07; written and committed before any of its code; descriptive research, no production change",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-07 (chat): \"INVESTIGATE THE 15-MINUTE EXECUTION DELAY ... Compare: A. Entry at confirmation candle close. B. Entry at the first available executable price after confirmation. C. Entry after a subsequent retest. D. Entry after a smaller-timeframe confirmation (5M). E. Entry using a live price trigger immediately after the confirmation condition becomes satisfied ... Do not assume that a theoretically confirmed candle-close price was executable\"; and \"Investigate whether an early trigger combined with a timely executable confirmation can outperform the current 15-minute-close approach\".",
+  "partitions": ["development"],
+  "unsealed_data_also_used": "2026 'recent' (2026-03-01 on, after the holdout, never used to choose a rule) and the live store's 5m bars (2026-09-01 to the end of the research history); no validation or holdout bar is read",
+  "created_utc": "2026-11-07",
+  "source_of_hypothesis": "PR #90 audit: the engine's confirmed trades (20, 2020-22) won 60% entered at the confirming close and 30% entered one 15m bar later; grabs and breakouts did not fall. The site publishes a median 7.0 minutes after a 15m close (90% within 8.4, 95% within 22.4, worst 67.7; 476 closes, 1-7 Nov 2026, from the site workflow's run history).",
+  "populations": "the B19 / B21 triggers, one per idea (REPEAT rule): ENG (engine signals 15m-4h), GRAB, BREAK, SWEEP, BREAKOUT, and N2 (random 15m closes, both directions, as B21); ALL = GRAB + BREAK + SWEEP + BREAKOUT pooled",
+  "data": {
+    "P1": "development 15m bars, scored 2020-04-01 -> 2023-01-24 (primary)",
+    "P2": "2026 15m bars, scored 2026-03-01 -> end (replication of the direction only)",
+    "P3": "the live store's 5m bars 2026-09-01 -> end, with the same 15m triggers and confirmations (the only intrabar data available; descriptive)"
+  },
+  "entry_models": {
+    "A": "the confirming 15m close (B19 E1)",
+    "B0": "the next 15m bar's open (an instant reaction at the close) [P1, P2]",
+    "B15 / B30 / B60": "15 / 30 / 60 minutes after the confirming close: the close of the 1st / 2nd / 4th 15m bar after it [P1, P2]",
+    "B5 / B10 / B25": "the 5m close 5 / 10 / 25 minutes after the confirming close [P3]; B10 = the site's median latency (7.0 min) rounded up to the next 5m close, B25 its 95th percentile",
+    "C": "retest: a limit at the confirmation level (trigger price + $15 in the direction), valid for 8 15m bars after the confirmation (B19 E2); filled at the level or at a bar's open beyond it; unfilled = missed",
+    "D": "5m confirmation [P3]: the first completed 5m close $15 beyond the trigger price before price trades $13 against it (5m high / low) or an opposite 15m structure break; entry at that 5m close",
+    "E": "a stop order at the trigger price + $15 placed at the trigger close, filled when price trades there (at the level, or at a bar's open if it opens beyond) before the invalidation; a bar touching both the invalidation and the level counts as filled and stopped (the worst case) [15m in P1 / P2, 5m in P3]"
+  },
+  "exits": "for every model: stop -$13 and targets +$15 / +$20 from that model's own entry; a bar opening beyond a level fills at the open; a bar touching both counts as the stop; in a fill bar of C / E only the stop can be hit (the order inside the bar is unknown); 48-hour time stop; distances scaled by price / 4000 in P1 (as all studies), literal $ in P2 / P3 at about $4,000",
+  "metrics": "per model and population: triggers, entries, fill rate and missed opportunities (C: unfilled while A reached +$15 first), false confirmations (D / E entered but A invalidated or expired), latency against A (minutes; negative = earlier), entry deterioration against A ((entry - A entry) x direction, $; positive = worse), +$15 / +$20 before -$13 with Wilson 95%, MFE / MAE, expectancy after the model cost and after $0.26, profit factor, by direction, session and regime",
+  "primary_tests": {
+    "population_and_data": "ALL, P1",
+    "tests": "paired against A on the triggers both entered: mean net $ per oz (model cost) of B0, B15, C and E minus A, with a day-clustered bootstrap (2,000 resamples, seed 25) one-sided p in the direction of the difference; Holm over the four",
+    "better_or_worse": "a model differs from A only if its Holm-adjusted p < 0.05 on P1 AND the difference has the same sign on P2"
+  },
+  "secondary_reported_not_decisive": ["ENG (small samples)", "each type alone", "B30 / B60", "P3's B5 / B10 / B25 / D / E", "+$20"],
+  "decision": {
+    "if_a_model_beats_A": "Propose, never adopt, adding it as a secondary arm of B24-CONFIRM-FWD (a registered change needing the operator's approval). No alert changes.",
+    "if_delay_hurts": "Report the measured cost of the site's latency; the B24 primary already measures from the executable price.",
+    "otherwise": "Report the comparisons; recorded in research/trials.jsonl."
+  },
+  "unchanged": "production alerts, the engine, config.py, the freeze key, B9 / B15, B19-B23 results"
+}

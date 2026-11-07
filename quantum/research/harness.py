@@ -230,6 +230,11 @@ def pbo_cscv(perf: np.ndarray, groups: int = 8) -> dict:
             "oos_mean_of_is_best": float(ob.mean()), "p_oos_loss_of_is_best": float((ob < 0).mean())}
 
 
+def seeded_rng(seed: int) -> np.random.Generator:
+    """The one place research code gets random numbers (tests/test_integrity.py allows them only here): always seeded."""
+    return np.random.default_rng(seed)
+
+
 def stationary_bootstrap_idx(n: int, mean_block: float, rng: np.random.Generator) -> np.ndarray:
     idx = np.empty(n, dtype=int)
     p = 1.0 / mean_block
