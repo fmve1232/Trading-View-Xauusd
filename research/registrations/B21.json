@@ -1,0 +1,39 @@
+{
+  "id": "B21",
+  "title": "Liquidity and breakout alerts WITH confirmation (no session filter): after the confirmed alert, does price move +$15 / +$20 in the alert's direction (first, before -$13; and at any time in the day)?",
+  "status": "APPROVED by the operator 2026-11-07; development runs once after this commit; validation opens once, after the development results are committed, only for configurations passing the development test; the holdout only for one passing development AND validation",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-07 (chat): \"It's not about any session it should the price movement where liquidity & price breakout should be notified with confirmation as after alert it should move $15 to $20 in the direction of alert notified\"; earlier the same day: \"Strictly follow my rules\" (the 2026-11-07 brief: register before implementation, no look-ahead, no selection on recent winners, direction never reversed, logs preserved, B15 unchanged, independent validation, no production change before approval).",
+  "partitions": ["development", "validation", "holdout"],
+  "created_utc": "2026-11-07T04:00:00Z",
+  "source_of_hypothesis": "The operator's request: the site's liquidity and breakout alerts, but sent only after the market confirms the alert's direction. B16 measured the alerts WITHOUT confirmation (sweeps 46.6% of 5,918, breakouts 46.1% of 6,729 at +$15 before -$13, random 46.2%); B10 the liquidity grabs / breaks (49.4% of 913 / 50.3% of 895 at +/-13). B19 measured confirmation only on engine signals and engine structure triggers (with a session filter in the trigger). The combination asked for here has not been tested.",
+  "unchanged": "Production alerts, the engine, config.py, the website freeze key, B9-GRAB-FWD, B15-ENGINE-FWD, B19, B20. Research code only (quantum/research/b21.py), never imported by production.",
+  "data": "Twelve Data XAU/USD 15min and 1h research files; development 2020-01-24 -> 2023-01-24 scored from 2020-04-01; validation 2023-01-24 -> 2024-07-01 (opened before by B13-1 and B19); holdout 2024-07-01 -> 2026-01-01 (never opened). Distances $ at $4,000 scaled by price / 4000; model costs in $ per oz.",
+  "alerts_stage_a": {
+    "GRAB": "the site's liquidity GRAB: the engine's SWEEP of a previous day / week / month high or low (or equal highs / lows) with the close back inside; once per pool per day (quantum.research.b10.liquidity_events, as B10)",
+    "BREAK": "the site's liquidity BREAK: a 15m close beyond a previous day / week high or low it had not closed beyond on the bar before; once per pool per day (b10.liquidity_events, as B10)",
+    "SWEEP": "the site's SETUP sweep: a wick through a previous day / week / month, today's, last-4h or last-1h high / low at an order block, value-area edge or POC, closing back (quantum.notify.setup_events, as B16)",
+    "BREAKOUT": "the site's SETUP breakout of the same levels beyond the value area (notify.setup_events, as B16)",
+    "direction": "as the alert: a sweep / grab of a high = SELL, of a low = BUY; a break / breakout above = BUY, below = SELL",
+    "no_session_filter": "no session, kill-zone or time-of-day condition anywhere (operator)",
+    "repeat_rule": "within each alert type, an alert in the same direction within 4 hours and $15 (scaled) of an earlier kept one is the same idea and dropped (the live rule A1)",
+    "alert_price": "P0 = the alert bar's 15m close"
+  },
+  "stage_b_confirmation": "Exactly B19's state machine with filter F0 (research/registrations/B19.json): on the 15m bars after the alert, CONFIRMED_X when a bar CLOSES beyond P0 + d x X (X = 15 or 20) before price reaches P0 - d x 13 or an opposite BOS / MSS / CHoCH appears (a bar doing both counts as invalidated); a touch never confirms; EXPIRED after 96 bars. No session or cost filter.",
+  "measures": {
+    "first": "from the entry: +T before -13 (T = 15 primary, 20 secondary) on the next 192 15m bars; a bar touching both levels is AMBIGUOUS and counted as a loss; gaps fill at the open; timeouts at the close (quantum.research.b19.plan_and_exit, E1, S13)",
+    "at_any_time": "the operator's literal criterion: did price reach +T in the alert's direction at any time in the next 96 15m bars, ignoring any stop (reported beside the random-entry rate of the same measure)",
+    "entries": "UNCONFIRMED: at the alert close (P0). CONFIRMED_15 / CONFIRMED_20: at the confirming close."
+  },
+  "nulls": "N1: random entries at every 15m close (same measures). N2: the same pipeline on random triggers (every 8th 15m bar, both directions), as B19.",
+  "primary_test": {
+    "hypotheses": "H1-H8: {GRAB, BREAK, SWEEP, BREAKOUT} x {CONFIRMED_15, CONFIRMED_20}, measure 'first' at T = 15",
+    "pass": "n >= 50 trades, mean net $ per trade > 0 with Holm-adjusted one-sided p <= 0.05 over H1-H8, above N2 for the same confirmation at one-sided 0.05 (Welch), profit factor >= 1.1"
+  },
+  "validation_opening": "once, after the development results are committed, for the hypotheses that pass; pass there: mean net > 0 with one-sided t >= 1.645 and above N2 at 0.05",
+  "holdout_opening": "only for a configuration passing development AND validation; otherwise sealed",
+  "decision": {
+    "if_pass_all": "Proposed as a live forward test of 'confirmed' liquidity / breakout alerts (registered separately) with the exact rule and measured odds; no production change before the operator approves.",
+    "if_not": "Recorded in research/trials.jsonl, B21_RESULTS.md and STRATEGY_CATALOGUE.md; no re-run with changed thresholds, levels, windows or targets on the same data."
+  }
+}
