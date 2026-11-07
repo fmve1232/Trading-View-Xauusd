@@ -90,6 +90,19 @@ def _fmt(x, off=0.0):
 
 
 # ---------------- MT5 vs the site: clocks, the price now, and how late an alert is ----------------
+def json_safe(x):
+    """A copy with every NaN / infinite float replaced by None. index.json carries this report, and the browser's JSON.parse
+    rejects NaN: the validation block's empty "today" / "this week" (rate = NaN when nothing was decided) made the whole
+    alerts block unreadable on most days (found 2026-11-07). The state file keeps its own values."""
+    if isinstance(x, float):
+        return x if math.isfinite(x) else None
+    if isinstance(x, dict):
+        return {k: json_safe(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [json_safe(v) for v in x]
+    return x
+
+
 def _env_float(k: str, d: float) -> float:
     try:
         v = float(os.environ.get(k, "") or d)
@@ -1892,4 +1905,4 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     if vpath and pl_cfg:
         with open(vpath, "w") as f:
             json.dump(vlog, f)
-    return report
+    return json_safe(report)
