@@ -56,7 +56,7 @@ def run(rd: str, part: str, log=print) -> dict:
     out = {"registration": REG, "part": part, "train": [str(idx[tr_bars[0]]), str(idx[tr_bars[-1]])],
            "test": [str(idx[te_bars[0]]), str(idx[te_bars[-1]])], "results": {}}
     for T in T_ALL:
-        def lab(bars):
+        def lab(bars, T=T):
             rb = b13.race(m15, t_close[bars], df["close"].to_numpy(float)[bars], np.ones(len(bars), int), T, b22.S, nbars=b22.NBARS)
             rs = b13.race(m15, t_close[bars], df["close"].to_numpy(float)[bars], -np.ones(len(bars), int), T, b22.S, nbars=b22.NBARS)
             return np.concatenate([rb["win"], rs["win"]]).astype(int), np.concatenate([rb["win"] | rb["loss"], rs["win"] | rs["loss"]])
