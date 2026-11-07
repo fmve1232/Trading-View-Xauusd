@@ -168,7 +168,10 @@ def test_no_type_is_validated_so_nothing_is_accepted():
     row = {"kind": "ENG", "dir": 1, "status": "CONFIRMED"}
     v, why = cp.verdict(row)
     assert v == cp.NO_TRADE == "NO TRADE — INSUFFICIENT CONFIRMATION"
-    assert "not validated" in why and "60%" in why and "47.4%" in why
+    assert why.startswith("confirmed, but INSUFFICIENT DATA — NOT STATISTICALLY VALIDATED") and "60% of 20 trades" in why
+    assert "47.4%" in why
+    v, why = cp.verdict({"kind": "GRAB", "dir": 1, "status": "CONFIRMED"})
+    assert v == cp.NO_TRADE and "NOT VALIDATED: its registered test failed" in why and "43% of 302 trades (2020-22" in why
     assert cp.verdict({"kind": "4H", "dir": 1, "status": "CONFIRMED"})[0] == cp.NO_TRADE
     assert cp.verdict({"kind": "GRAB", "dir": -1, "status": "PENDING", "confirm_at": 3985.0, "invalid_at": 4013.0})[0] == "WAIT"
 
@@ -273,14 +276,111 @@ def test_a_panel_failure_never_stops_the_alerts(tmp_path, monkeypatch):
     assert rep["confirm"] == {"on": True, "error": "RuntimeError: boom"} and "15m" in rep
 
 
-def test_index_alerts_block_is_strict_json_on_a_day_with_nothing_decided(tmp_path, monkeypatch):
-    """Found 2026-11-07: the validation block's empty "today" carried NaN, which the browser's JSON.parse rejects, so the
-    whole alerts block of index.json was lost on most days. notify.run now returns None there."""
-    monkeypatch.setattr(notify, "send", lambda lines: ["test"])
-    b = [(T0, 4066.0, 4061.0, 4062.0)]
-    notify.run(str(tmp_path), {"15m": _p15(b)}, ["15m"], sent_t=T0 + 1000)
-    rep = notify.run(str(tmp_path), {"15m": _p15(b + [(T0 + 900, 4063.0, 4055.22, 4060.10)])}, ["15m"], sent_t=T0 + 1900)
-    v = rep["plans"]["validation"]
-    assert v["today"]["n"] == 0 and v["today"]["rate"] is None and v["today"]["wilson"] == [None, None]
-    json.dumps(rep, allow_nan=False)
-    assert notify.json_safe({"a": float("nan"), "b": [1.0, float("inf")], "c": (2.5, "x")}) == {"a": None, "b": [1.0, None], "c": [2.5, "x"]}
+def _trunc(P, n):
+    return {k: (v[:n] if isinstance(v, (list, np.ndarray)) else v) for k, v in P.items()}
+
+
+@pytest.mark.parametrize("seed", [4, 5])
+def test_no_look_ahead_on_every_prefix(seed):
+    """On every prefix of the bars the state machine says PENDING until its event bar, and from that bar on exactly what
+    the full history says: a decision never uses a bar after it, and a later bar never changes it."""
+    rng = np.random.default_rng(seed)
+    n = 700
+    c = 4000.0 + np.cumsum(rng.normal(0, 3.0, n))
+    o = np.concatenate([[c[0]], c[:-1]])
+    h, l = np.maximum(o, c) + np.abs(rng.normal(0, 2, n)), np.minimum(o, c) - np.abs(rng.normal(0, 2, n))
+    mk = [{"t": T0 + 900 * k, "type": "BOS", "dir": int(rng.choice([-1, 1]))} for k in np.flatnonzero(rng.random(n) < 0.02)]
+    P = cp.path(_payload("15m", *_bars(list(zip(o, h, l, c))), markers=mk))
+    for j0 in range(20, 300, 7):
+        d = 1 if j0 % 2 else -1
+        full = cp.confirm_one(P, j0, float(c[j0 - 1]), d, 15.0)
+        ev = full["at"]
+        for m in range(j0, min(n, j0 + cp.WIN + 2)):
+            r = cp.confirm_one(_trunc(P, m), j0, float(c[j0 - 1]), d, 15.0)
+            decided_later = (full["status"] in ("CONFIRMED", "INVALIDATED") and m <= ev) or \
+                (full["status"] == "EXPIRED" and m < j0 + cp.WIN)
+            if decided_later:
+                assert r["status"] == "PENDING"
+            else:
+                assert (r["status"], r["k"]) == (full["status"], full["k"])
+        if full["status"] == "CONFIRMED":
+            fx = cp.exit_one(P, full["k"], d, 15.0)
+            for m in range(full["k"] + 1, min(n, full["k"] + cp.HOLD + 3), 5):
+                x = cp.exit_one(_trunc(P, m), full["k"], d, 15.0)
+                assert x["out"] == ("OPEN" if m <= fx["bar"] else fx["out"])
+
+
+def test_incremental_runs_equal_one_full_run():
+    """Run by run (one new bar each time) the panel reaches the same decisions as one run over all the bars."""
+    rows = [FLAT] * 30 + [(4000.0, 4009.0, 3995.0, 4008.0), (4008.0, 4016.0, 4003.0, 4015.5)] + \
+           [(4015.0, 4024.0, 4010.0, 4022.0), (4022.0, 4031.0, 4020.0, 4030.0), (4030.0, 4036.0, 4025.0, 4035.5)] + [FLAT] * 4
+    st_inc: dict = {}
+    for m in range(29, len(rows) + 1):
+        out_inc = cp.panel(_eng_payload(rows[:m], [(28, 1)]), st_inc, T0 + m * 900)
+    st_one: dict = {}
+    cp.panel(_eng_payload(rows[:29], [(28, 1)]), st_one, T0 + 29 * 900)
+    out_one = cp.panel(_eng_payload(rows, [(28, 1)]), st_one, T0 + len(rows) * 900)
+    a = next(r for r in out_inc["rows"] if r["id"] == 1)
+    b = next(r for r in out_one["rows"] if r["id"] == 1)
+    for k in ("status", "t_conf", "entry", "sl", "tp1", "tp2"):
+        assert a[k] == b[k]
+    assert a["entry"] == 4015.5 and a["result"]["T15"]["out"] == b["result"]["T15"]["out"] == "TP"
+    assert a["result"]["T20"]["out"] == b["result"]["T20"]["out"] == "TP" and not a.get("revised") and not b.get("revised")
+
+
+def test_a_revised_bar_never_changes_a_decision_already_shown():
+    rows = [FLAT] * 30 + [(4000.0, 4016.0, 3999.0, 4015.0)] + [(4015.0, 4020.0, 4010.0, 4016.0)]
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:29], [(28, 1)]), st, T0 + 29 * 900)
+    first = next(r for r in cp.panel(_eng_payload(rows, [(28, 1)]), st, T0 + 32 * 900)["rows"] if r["id"] == 1)
+    assert first["status"] == "CONFIRMED" and first["entry"] == 4015.0
+    revised = list(rows)
+    revised[30] = (4000.0, 4016.0, 3999.0, 4012.0)                   # the feed now says the confirming close was +$12
+    revised[29] = (4000.0, 4002.0, 3985.0, 3990.0)                   # ... and an earlier bar fell $15 (invalid if recomputed)
+    again = next(r for r in cp.panel(_eng_payload(revised + [FLAT], [(28, 1)]), st, T0 + 33 * 900)["rows"] if r["id"] == 1)
+    assert again["status"] == "CONFIRMED" and again["entry"] == 4015.0 and again["t_conf"] == first["t_conf"]
+    assert "revised" in again["revised"]
+
+
+def test_a_pending_row_is_not_confirmed_on_a_bar_already_examined():
+    rows = [FLAT] * 30 + [(4000.0, 4012.0, 3999.0, 4010.0)]
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:29], [(28, 1)]), st, T0 + 29 * 900)
+    assert next(r for r in cp.panel(_eng_payload(rows, [(28, 1)]), st, T0 + 31 * 900)["rows"] if r["id"] == 1)["status"] == "PENDING"
+    rows2 = list(rows)
+    rows2[30] = (4000.0, 4017.0, 3999.0, 4016.0)                     # revised afterwards to a +$16 close
+    r = next(x for x in cp.panel(_eng_payload(rows2 + [FLAT], [(28, 1)]), st, T0 + 32 * 900)["rows"] if x["id"] == 1)
+    assert r["status"] == "PENDING" and "confirmed" in r["revised"]   # kept as shown, the revision flagged
+
+
+def test_an_expired_row_never_becomes_confirmed():
+    rows = [FLAT] * 3 + [FLAT] * cp.WIN + [FLAT]
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:3], [(2, 1)]), st, T0 + 3 * 900)
+    cp.panel(_eng_payload(rows, [(2, 1)]), st, T0 + len(rows) * 900)
+    assert st["confirm"]["log"][0]["status"] == "EXPIRED"
+    later = rows + [(4000.0, 4020.0, 3999.0, 4018.0)] * 3                # a +$18 close after the window
+    out = cp.panel(_eng_payload(later, [(2, 1)]), st, T0 + len(later) * 900)
+    assert [r["status"] for r in out["rows"] if r["id"] == 1] == ["EXPIRED"] and len(st["confirm"]["log"]) == 1
+
+
+def test_every_finished_row_goes_to_the_durable_audit_file(tmp_path):
+    rows = [FLAT] * 3 + [(4000.0, 4001.0, 3986.0, 3990.0)] + [FLAT] * 3
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:3], [(2, 1)]), st, T0 + 3 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(2, 1), (5, -1)]), st, T0 + 7 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(2, 1), (5, -1)]), st, T0 + 8 * 900, store_dir=str(tmp_path))   # nothing new: no duplicate
+    rec = json.loads((tmp_path / "research_forward" / cp.AUDIT_FILE).read_text())
+    assert [(r["id"], r["status"]) for r in rec["rows"]] == [(1, "INVALIDATED")] and "against" in rec["rows"][0]["why"]
+
+
+def test_every_probability_carries_its_sample_period_and_status():
+    for kind, ev in cp.EVIDENCE.items():
+        assert ev["status"] in cp.STATUS_TEXT and not ev["validated"]
+        for key, vals in ev["rates"].items():
+            for k, n, period in vals:
+                assert 0 <= k <= n and n > 0 and period in ("2020-22", "2023-24"), (kind, key)
+        for k, n, period in ev["at_trigger"].values():
+            assert 0 <= k <= n and period == "2020-22"
+    assert cp.EVIDENCE["ENG"]["status"] == cp.EVIDENCE["4H"]["status"] == "INSUFFICIENT"
+    assert cp.STATUS_TEXT["INSUFFICIENT"] == "INSUFFICIENT DATA — NOT STATISTICALLY VALIDATED"

@@ -1855,7 +1855,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     from . import confirm_panel  # the confirmation panel: website only, never sent
     if confirm_panel.on():
         try:
-            report["confirm"] = confirm_panel.panel(payloads, state, t_send)
+            report["confirm"] = confirm_panel.panel(payloads, state, t_send, store_dir=store_dir)
         except Exception as e:  # noqa: BLE001  (a panel failure must never stop the alerts)
             report["confirm"] = {"on": True, "error": f"{type(e).__name__}: {e}"}
     first = next((payloads[tf] for tf in tfs if payloads.get(tf) and not payloads[tf]["meta"]["synthetic"]), None)

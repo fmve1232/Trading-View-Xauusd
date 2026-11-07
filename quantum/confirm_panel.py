@@ -30,6 +30,7 @@ Display only: nothing here reaches the phone, the plans, the B9 / B15 tests or t
 """
 from __future__ import annotations
 
+import json
 import math
 import os
 from bisect import bisect_left
@@ -54,6 +55,11 @@ MODEL_COST = (0.77, 0.97)              # the research cost model, $ per oz (spre
 RSI_BUY, RSI_SELL, RANGE_ATR, GAP_ATR = 55.0, 45.0, 2.5, 0.5     # B19 F1's momentum and calm checks (score only)
 SESSIONS_LIQUID = ("London", "London+NY", "New York")
 NO_TRADE = "NO TRADE — INSUFFICIENT CONFIRMATION"
+INSUFFICIENT = "INSUFFICIENT DATA — NOT STATISTICALLY VALIDATED"
+STATUS_TEXT = {"VALIDATED": "VALIDATED out of sample", "FAILED": "NOT VALIDATED: its registered test failed",
+               "INSUFFICIENT": INSUFFICIENT}
+LIVE_MIN_N = 30                        # a live record is shown as a rate only from 30 decided results (notify.MIN_N)
+AUDIT_FILE = "CONFIRM-LIVE.json"       # <store>/research_forward/: every finished row, kept; copied to forward-ledger
 
 # Measured rates (k reached the target first, n trades), copied from the committed results and checked against them by
 # tests/test_confirm_panel.py. Development = 2020-01-24 -> 2023-01-24 (scored from 2020-04-01); validation = 2023-01-24 ->
@@ -62,36 +68,39 @@ _DEV, _VAL = "2020-22", "2023-24"
 EVIDENCE = {
     "ENG": {"label": "engine signal", "study": "B19", "results": "research/results/b19_development_2026-11-07.json",
             "verdict": "INSUFFICIENT: too few confirmed signals (20 in 2020-22, 7 in 2023-24)", "validated": False,
+            "status": "INSUFFICIENT",
             "triggers": 64, "confirmed": {"X15": 20, "X20": 19},
             "rates": {"X15 T15": [[12, 20, _DEV]], "X15 T20": [[10, 20, _DEV], [5, 7, _VAL]],
                       "X20 T15": [[9, 19, _DEV]], "X20 T20": [[8, 19, _DEV], [3, 5, _VAL]]},
-            "at_trigger": {"T15": [25, 64, _DEV], "T20": [23, 64, _DEV]}, "hold_min": {"T15": 124, "T20": 181}, "any_time": None},
+            "at_trigger": {"T15": [25, 64, _DEV], "T20": [23, 64, _DEV]}, "hold_min": {"T15": 124, "T20": 181},
+            "any_time": {"T15": 0.75, "T20": 0.65}},          # research/results/excursions_development_2026-11-07.json
     "GRAB": {"label": "15m liquidity grab", "study": "B21", "results": "research/results/b21_development_2026-11-07.json",
-             "verdict": "FAIL (B21 H1 / H2)", "validated": False, "triggers": 855, "confirmed": {"X15": 302, "X20": 238},
+             "verdict": "FAIL (B21 H1 / H2)", "validated": False, "status": "FAILED", "triggers": 855, "confirmed": {"X15": 302, "X20": 238},
              "rates": {"X15 T15": [[131, 302, _DEV]], "X15 T20": [[106, 302, _DEV]],
                        "X20 T15": [[118, 238, _DEV]], "X20 T20": [[94, 238, _DEV]]},
              "at_trigger": {"T15": [404, 855, _DEV], "T20": [339, 855, _DEV]}, "hold_min": {"T15": 271, "T20": 348},
              "any_time": {"T15": 0.699, "T20": 0.553}},
     "BREAK": {"label": "15m liquidity break", "study": "B21", "results": "research/results/b21_development_2026-11-07.json",
-              "verdict": "FAIL (B21 H3 / H4)", "validated": False, "triggers": 781, "confirmed": {"X15": 277, "X20": 210},
+              "verdict": "FAIL (B21 H3 / H4)", "validated": False, "status": "FAILED", "triggers": 781, "confirmed": {"X15": 277, "X20": 210},
               "rates": {"X15 T15": [[121, 277, _DEV]], "X15 T20": [[108, 277, _DEV]],
                         "X20 T15": [[101, 210, _DEV]], "X20 T20": [[90, 210, _DEV]]},
               "at_trigger": {"T15": [363, 781, _DEV], "T20": [313, 781, _DEV]}, "hold_min": {"T15": 217, "T20": 279},
               "any_time": {"T15": 0.668, "T20": 0.585}},
     "SWEEP": {"label": "15m sweep setup", "study": "B21", "results": "research/results/b21_development_2026-11-07.json",
-              "verdict": "FAIL (B21 H5 / H6)", "validated": False, "triggers": 2928, "confirmed": {"X15": 949, "X20": 757},
+              "verdict": "FAIL (B21 H5 / H6)", "validated": False, "status": "FAILED", "triggers": 2928, "confirmed": {"X15": 949, "X20": 757},
               "rates": {"X15 T15": [[437, 949, _DEV]], "X15 T20": [[363, 949, _DEV]],
                         "X20 T15": [[351, 757, _DEV]], "X20 T20": [[289, 757, _DEV]]},
               "at_trigger": {"T15": [1358, 2928, _DEV], "T20": [1172, 2928, _DEV]}, "hold_min": {"T15": 249, "T20": 332},
               "any_time": {"T15": 0.670, "T20": 0.550}},
     "BREAKOUT": {"label": "15m breakout setup", "study": "B21", "results": "research/results/b21_development_2026-11-07.json",
-                 "verdict": "FAIL (B21 H7 / H8)", "validated": False, "triggers": 2882, "confirmed": {"X15": 958, "X20": 763},
+                 "verdict": "FAIL (B21 H7 / H8)", "validated": False, "status": "FAILED", "triggers": 2882, "confirmed": {"X15": 958, "X20": 763},
                  "rates": {"X15 T15": [[464, 958, _DEV]], "X15 T20": [[389, 958, _DEV]],
                            "X20 T15": [[364, 763, _DEV]], "X20 T20": [[306, 763, _DEV]]},
                  "at_trigger": {"T15": [1333, 2882, _DEV], "T20": [1139, 2882, _DEV]}, "hold_min": {"T15": 221, "T20": 305},
                  "any_time": {"T15": 0.690, "T20": 0.590}},
     "4H": {"label": "4h candle breakout (all four)", "study": "B18", "results": "research/results/b18_development_2026-11-06.json",
-           "verdict": "FAIL at the trigger (B18); after a $15 confirmation: not measured", "validated": False, "triggers": 319,
+           "verdict": "FAIL at the trigger (B18); after a $15 confirmation: not measured", "validated": False,
+           "status": "INSUFFICIENT", "triggers": 319,
            "confirmed": None, "rates": {}, "at_trigger": {"T15": [146, 319, _DEV]}, "hold_min": None, "any_time": None},
 }
 RANDOM = {"label": "random triggers, same pipeline (B21 N2)", "confirmed_share": 5263 / 16384,
@@ -150,12 +159,13 @@ def path(p15: dict) -> dict:
             "rsi": rsi, "ema20": ema20, "sweep_dir": sweep_dir}
 
 
-def confirm_one(P: dict, j0: int, p0: float, d: int, X: float, s: float = 1.0) -> dict:
+def confirm_one(P: dict, j0: int, p0: float, d: int, X: float, s: float = 1.0, start: int | None = None) -> dict:
     """Stage B on the 15m bars j0 .. j0 + 95: CONFIRMED at bar k (the first close >= X beyond p0), INVALIDATED (price:
     $13 against on a bar's high / low; structure: an opposite BOS / MSS / CHoCH at a bar's close), EXPIRED, or PENDING
-    while the window is still open. s scales the $ distances (p0 / 4000 in the research test, 1 live)."""
+    while the window is still open. s scales the $ distances (p0 / 4000 in the research test, 1 live). start: the first
+    bar to examine (live: the first bar not examined by an earlier run; the bars before it had no event)."""
     n = len(P["t"])
-    for b in range(j0, min(j0 + WIN, n)):
+    for b in range(j0 if start is None else max(j0, start), min(j0 + WIN, n)):
         adv = (p0 - P["l"][b]) if d > 0 else (P["h"][b] - p0)
         inv_p = adv >= INV_USD * s - EPS
         inv_s = bool(P["dn"][b] if d > 0 else P["up"][b])
@@ -168,15 +178,16 @@ def confirm_one(P: dict, j0: int, p0: float, d: int, X: float, s: float = 1.0) -
     return {"status": "PENDING", "k": -1, "at": n - 1, "why": ""}
 
 
-def exit_one(P: dict, k: int, d: int, T: float, s: float = 1.0, entry: float | None = None) -> dict:
+def exit_one(P: dict, k: int, d: int, T: float, s: float = 1.0, entry: float | None = None, start: int | None = None,
+             mfe0: float = 0.0, mae0: float = 0.0) -> dict:
     """The trade entered at bar k's close (or at `entry`): TP / SL / AMBIGUOUS / TIMEOUT as B19's exit, OPEN while bars are missing.
     mfe / mae: the largest move for / against the entry ($) on the trade's bars, the exit bar included but capped at the
     level that closed the trade (a bar touching both levels counts the target and the stop); the last bar while OPEN."""
     n = len(P["t"])
     e = float(P["c"][k]) if entry is None else float(entry)      # entry: a price other than bar k's close (research only)
     tp, sl = e + d * T * s, e - d * SL_USD * s
-    mfe = mae = 0.0
-    for b in range(k + 1, min(k + 1 + HOLD, n)):
+    mfe, mae = float(mfe0), float(mae0)                           # carried from the bars an earlier run examined
+    for b in range(k + 1 if start is None else max(k + 1, start), min(k + 1 + HOLD, n)):
         o, h, lo_ = P["o"][b], P["h"][b], P["l"][b]
         o_sl, o_tp = (o - sl) * d <= 0, (o - tp) * d >= 0
         hit_sl = (lo_ <= sl) if d > 0 else (h >= sl)
@@ -274,37 +285,77 @@ CHECK_TEXT = {"trend": "1h, 4h and daily trend all agree", "structure": "a 15m s
 
 
 # ---------------- one row ----------------
+def _at(t: list, ts) -> int | None:
+    """Index of the bar opening at ts, or None."""
+    if ts is None:
+        return None
+    k = bisect_left(t, int(ts))
+    return k if k < len(t) and t[k] == int(ts) else None
+
+
 def evaluate(P: dict, row: dict, votes: list, s: float = 1.0) -> dict:
-    """Recompute a tracked trigger's state from the 15m bars (closed bars only: the result can only move forward)."""
+    """Advance a tracked trigger on the 15m bars that no earlier run examined (each closed bar is examined once, as a live
+    state machine would). A decision already shown (confirmation, entry, invalidation, expiry, an exit) never changes.
+    If the feed has revised a bar an earlier run examined, so that a full recomputation would decide differently, the
+    row keeps what was shown and carries `revised` (the research parity holds whenever no bar is revised)."""
     t = P["t"]
+    n = len(t)
     j0 = bisect_left(t, row["t_close"])
     d, p0 = row["dir"], row["p0"]
     out = {"confirm_at": round(p0 + d * X_USD["X15"] * s, 2), "invalid_at": round(p0 - d * INV_USD * s, 2),
            "confirm20_at": round(p0 + d * X_USD["X20"] * s, 2)}
-    if j0 >= len(t):
+    if j0 >= n:
         return {**out, "status": "PENDING", "bars": 0}
-    c15, c20 = confirm_one(P, j0, p0, d, X_USD["X15"], s), confirm_one(P, j0, p0, d, X_USD["X20"], s)
-    out["status"], out["bars"] = c15["status"], min(len(t), j0 + WIN) - j0
-    if c15["status"] == "INVALIDATED":
-        out["why"] = ("price traded $13 against first" if c15["why"] == "price" else "an opposite 15m structure break came first")
-        out["t_done"] = t[c15["at"]] + 900
-    elif c15["status"] == "EXPIRED":
-        out["why"], out["t_done"] = "no 15m close $15 beyond within 96 bars", t[c15["at"]] + 900
-    out["x20"] = {"status": c20["status"], **({"t": t[c20["k"]] + 900, "px": round(float(P["c"][c20["k"]]), 2)}
-                                            if c20["status"] == "CONFIRMED" else {})}
-    k = c15["k"]
-    if c15["status"] != "CONFIRMED":
-        out["checks"] = checks(P, row, j0, min(len(t) - 1, max(j0, c15["at"])), votes) if c15["status"] == "PENDING" else None
-        return out
-    e = float(P["c"][k])
-    out.update(t_conf=t[k] + 900, entry=round(e, 2), sl=round(e - d * SL_USD * s, 2),
-               tp1=round(e + d * TP_USD["T15"] * s, 2), tp2=round(e + d * TP_USD["T20"] * s, 2),
-               rr1=TP_USD["T15"] / SL_USD, rr2=TP_USD["T20"] / SL_USD, checks=checks(P, row, j0, k, votes))
+    nxt = t[-1] + 900                                             # the open of the first bar no run has examined yet
+    if row.get("status") != "CONFIRMED":                          # stage B still open (final rows are in the log)
+        js = j0 if row.get("scan_t") is None else bisect_left(t, row["scan_t"])
+        c15 = confirm_one(P, j0, p0, d, X_USD["X15"], s, start=js)
+        full = confirm_one(P, j0, p0, d, X_USD["X15"], s)
+        if (full["status"], full["k"]) != (c15["status"], c15["k"]) and full["status"] != "PENDING":
+            out["revised"] = (f"the feed revised a bar an earlier run examined: recomputed from the start it would read "
+                              f"{full['status'].lower()}; the row keeps what was shown")
+        out["status"], out["bars"] = c15["status"], min(n, j0 + WIN) - j0
+        out["scan_t"] = nxt if c15["status"] == "PENDING" else None
+        if c15["status"] == "INVALIDATED":
+            out["why"] = ("price traded $13 against first" if c15["why"] == "price" else "an opposite 15m structure break came first")
+            out["t_done"] = t[c15["at"]] + 900
+        elif c15["status"] == "EXPIRED":
+            out["why"], out["t_done"] = "no 15m close $15 beyond within 96 bars", t[c15["at"]] + 900
+        if c15["status"] != "CONFIRMED":
+            out["checks"] = checks(P, row, j0, min(n - 1, max(j0, c15["at"])), votes) if c15["status"] == "PENDING" else None
+            return out
+        k = c15["k"]
+        e = float(P["c"][k])
+        out.update(t_conf=t[k] + 900, entry=round(e, 2), entry_px=e, sl=round(e - d * SL_USD * s, 2),
+                   tp1=round(e + d * TP_USD["T15"] * s, 2), tp2=round(e + d * TP_USD["T20"] * s, 2),
+                   rr1=TP_USD["T15"] / SL_USD, rr2=TP_USD["T20"] / SL_USD, checks=checks(P, row, j0, k, votes))
+        prev_res: dict = {}
+    else:                                                         # confirmed earlier: the entry stays as shown
+        k = _at(t, row["t_conf"] - 900)
+        if k is None:
+            return {"revised": "the confirming bar is no longer in the feed; the row keeps what was shown"}
+        e = float(row["entry_px"])
+        if abs(float(P["c"][k]) - e) > 1e-9:
+            out["revised"] = "the feed revised the confirming bar after the entry was shown; the entry stays as shown"
+        prev_res = dict(row.get("result") or {})
+    x20 = row.get("x20") or {}
+    if x20.get("status") in (None, "PENDING"):                    # the $20 close, tracked beside it the same way
+        c20 = confirm_one(P, j0, p0, d, X_USD["X20"], s, start=j0 if x20.get("scan_t") is None else bisect_left(t, x20["scan_t"]))
+        x20 = {"status": c20["status"], "scan_t": nxt if c20["status"] == "PENDING" else None,
+               **({"t": t[c20["k"]] + 900, "px": round(float(P["c"][c20["k"]]), 2)} if c20["status"] == "CONFIRMED" else {})}
+    out["x20"] = x20
     res = {}
     for nm, T in TP_USD.items():
-        x = exit_one(P, k, d, T, s)
-        res[nm] = {"out": x["out"], "usd": _r(x["usd"]), "mfe": _r(x["mfe"]), "mae": _r(x["mae"]),
-                   "t": t[x["bar"]] + 900 if x["out"] != "OPEN" else None}
+        pr = prev_res.get(nm) or {}
+        if pr.get("out") not in (None, "OPEN"):
+            res[nm] = pr                                           # an exit already shown never changes
+            continue
+        st0 = bisect_left(t, pr["scan_t"]) if pr.get("scan_t") is not None else None
+        x = exit_one(P, k, d, T, s, entry=e, start=st0, mfe0=pr.get("mfe_px") or 0.0, mae0=pr.get("mae_px") or 0.0)
+        res[nm] = {"out": x["out"], "usd": _r(x["usd"]), "mfe": _r(x["mfe"]), "mae": _r(x["mae"]), "mfe_px": x["mfe"],
+                   "mae_px": x["mae"], "t": t[x["bar"]] + 900 if x["out"] != "OPEN" else None,
+                   "scan_t": nxt if x["out"] == "OPEN" else None}
+    out["status"] = "CONFIRMED"
     out["result"] = res
     if all(r["out"] != "OPEN" for r in res.values()):
         out["t_done"] = max(r["t"] for r in res.values())
@@ -319,13 +370,14 @@ def verdict(row: dict) -> tuple[str, str]:
         return "NO TRADE", row.get("why", st.lower())
     if ev.get("validated"):
         return "TRADE", "confirmed; this type has a validated out-of-sample success rate above break-even"
+    label = STATUS_TEXT[ev.get("status", "INSUFFICIENT")]
     r = ev.get("rates", {}).get("X15 T15")
     if r:
         m = rate(*r[-1][:2])
-        why = (f"confirmed, but this type is not validated: +$15 first {m['p']:.0%} of {m['n']} ({r[-1][2]}, 95% "
-               f"{m['lo']:.0%}-{m['hi']:.0%}) against a break-even of {break_even(15.0):.1%}; {ev['verdict']}")
+        why = (f"confirmed, but {label}: +$15 before -$13 after a $15 confirmation was {m['p']:.0%} of {m['n']} trades "
+               f"({r[-1][2]}, 95% {m['lo']:.0%}-{m['hi']:.0%}) against a break-even of {break_even(15.0):.1%}; {ev['verdict']}")
     else:
-        why = f"confirmed, but this type's rate after confirmation was never measured; {ev.get('verdict', '')}"
+        why = f"confirmed, but {label}: this type's rate after a confirmation was never measured; {ev.get('verdict', '')}"
     return NO_TRADE, why
 
 
@@ -335,15 +387,17 @@ def _key_t(key: str) -> tuple[str, int]:
     return tf, int(t)
 
 
-def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0) -> dict:
-    """Update state["confirm"] (rows being tracked, the log of finished ones) and return the site block."""
+def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0, store_dir: str | None = None) -> dict:
+    """Update state["confirm"] (rows being tracked, the log of finished ones) and return the site block. With store_dir,
+    every row that finished in this run is appended to <store>/research_forward/CONFIRM-LIVE.json (never trimmed)."""
     p15 = _ok(payloads.get("15m"))
     x15 = [rate(*v["rates"]["X15 T15"][-1][:2])["p"] for v in EVIDENCE.values() if v["rates"].get("X15 T15")]
     rnd = RANDOM["rates"]["X15 T15"]
     base = {"on": True, "rule": "research/registrations/B19.json (F0, E1, S13), run live by quantum/confirm_panel.py",
             "evidence": EVIDENCE, "random": RANDOM, "break_even": {"T15": break_even(15.0), "T20": break_even(20.0)},
             "op_cost": OP_COST, "model_cost": list(MODEL_COST), "check_text": CHECK_TEXT, "no_trade": NO_TRADE,
-            "x_usd": X_USD, "tp_usd": TP_USD, "sl_usd": SL_USD, "inv_usd": INV_USD, "win_bars": WIN, "hold_bars": HOLD}
+            "x_usd": X_USD, "tp_usd": TP_USD, "sl_usd": SL_USD, "inv_usd": INV_USD, "win_bars": WIN, "hold_bars": HOLD,
+            "status_text": STATUS_TEXT, "insufficient": INSUFFICIENT, "live_min_n": LIVE_MIN_N}
     sub = (f"No signal type has a validated success rate above break-even ({break_even(15.0):.1%} for +$15 before -$13 at "
            f"your ${OP_COST:.2f} cost). Measured after a $15 confirmation: +$15 first {min(x15):.0%}-{max(x15):.0%} for the "
            f"alert types, {rnd[0] / rnd[1]:.0%} for random triggers.")
@@ -386,6 +440,8 @@ def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0) -> dict:
         (done if r.get("t_done") is not None else keep).append(r)
     log = (log + done)[-LOG_MAX:]
     st["rows"], st["log"] = keep[-200:], log
+    if store_dir and done:
+        audit(store_dir, done, st["started"])
     st["seen"] = {k: v for k, v in seen.items() if _key_t(k)[1] >= starts.get(_key_t(k)[0], t0)}
     for tf, p in ((tf, _ok(payloads.get(tf))) for tf in ENG_TFS):
         if p is not None:
@@ -400,6 +456,21 @@ def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0) -> dict:
     return {**base, "headline": head, "sub": sub, "pending": pend, "running": running, "rows": shown[:20],
             "record": record(log, st["started"]), "started_utc": st["started"], "price_now": pn["px"] if pn else None,
             "t": t_now}
+
+
+def audit(store_dir: str, done: list[dict], started: int) -> None:
+    """Append the rows that finished in this run to the durable audit file (accepted and rejected alike)."""
+    path = os.path.join(store_dir, "research_forward", AUDIT_FILE)
+    rec = {"rule": "research/registrations/B19.json (F0, E1, S13), run live by quantum/confirm_panel.py",
+           "started_utc": started, "rows": []}
+    if os.path.exists(path):
+        with open(path) as f:
+            rec = json.load(f)
+    have = {r["key"] for r in rec["rows"]}
+    rec["rows"] += [notify.json_safe({k: v for k, v in r.items() if k not in ("checks",)}) for r in done if r["key"] not in have]
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(rec, f, indent=1)
 
 
 def record(log: list[dict], started: int) -> dict:
