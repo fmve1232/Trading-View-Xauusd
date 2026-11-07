@@ -36,3 +36,11 @@ def test_reached_at_any_time_ignores_the_stop_and_needs_a_full_day():
 def test_validation_opens_only_for_hypotheses_that_passed(tmp_path):
     with pytest.raises(SystemExit, match="passed development"):
         b21.main(["--rd", str(tmp_path), "--part", "validation", "--out", str(tmp_path / "o.json")])
+
+
+def test_the_any_time_rate_counts_entries_that_never_reach_the_target():
+    closes = [4000.0] * 4 + [4016.0] + [4000.0] * 200
+    m = _m15(closes)
+    t = np.array([int(m.index[3].timestamp()) + 900, int(m.index[10].timestamp()) + 900])
+    r = b21.reached_any(m, t, np.array([4000.0, 4000.0]), np.array([1, 1]), 15.0)
+    assert r.tolist() == [1.0, 0.0] and np.nanmean(r) == 0.5          # not 1.0: the miss stays in the denominator

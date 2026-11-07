@@ -114,7 +114,8 @@ def run(rd: str, part: str = "development", only: list[str] | None = None, log=p
            "alerts": {k: len(v["d"]) for k, v in fams.items()}, "random": {}, "results": {}, "primary": {}}
     for T in T_ALL:
         first = b13.random_rates(m15, m15.index, c, srows, T, b13.S_STOP)
-        anyt = b13.random_rates(m15, m15.index, c, srows, T, NODAY)
+        tc = ta.epoch_s(m15.index).astype(np.int64)[srows] + 900          # "at any time": reached / all complete windows
+        anyt = {nm: float(np.nanmean(reached_any(m15, tc, c[srows], np.full(len(srows), sg), T))) for nm, sg in (("long", 1), ("short", -1))}
         out["random"][f"T{T:g}"] = {"first_long": first["long"], "first_short": first["short"],
                                     "any_time_long": anyt["long"], "any_time_short": anyt["short"]}
     nets = {}
