@@ -1,0 +1,877 @@
+{
+ "what": "master instruction section 9: excursions and the other unreported metrics (descriptive, development only)",
+ "window": [
+  "2020-01-24 02:00:00+00:00",
+  "2023-01-24 01:45:00+00:00"
+ ],
+ "scored_from": "2020-04-01 00:00:00+00:00",
+ "plan": "entry E1, stop S13, ties = loss",
+ "scale": "distances and excursions in $ at $4,000 (price / 4000)",
+ "results": {
+  "ENG none T15": {
+   "trades": 64,
+   "triggers": 64,
+   "confirmed": null,
+   "tp_first": 0.390625,
+   "tp_first_ci95": [
+    0.2805556911069803,
+    0.5130808221570375
+   ],
+   "stop_first": 0.609375,
+   "of_which_ambiguous": 0.0,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 24,
+    "tp_first": 0.4166666666666667
+   },
+   "sell": {
+    "n": 40,
+    "tp_first": 0.375
+   },
+   "avg_mfe_usd": 9.224072795171692,
+   "median_mfe_usd": 11.241613756439165,
+   "avg_mae_usd": 9.757120537251556,
+   "median_mae_usd": 12.999999999999874,
+   "fixed96_avg_favourable_usd": 35.653225220190066,
+   "fixed96_avg_adverse_usd": 36.02916930420018,
+   "fixed96_reached_target_share": 0.625,
+   "avg_win_usd": 14.213999999999967,
+   "avg_loss_usd": -14.302178738223224,
+   "realised_reward_risk": 0.9938345940267411,
+   "expectancy_usd_per_oz": -3.163046418604792,
+   "profit_factor": 0.6370734577094495,
+   "max_drawdown_r": 21.33269006082359,
+   "avg_cost_usd_per_oz": 0.7825,
+   "avg_hold_min": 181.171875
+  },
+  "ENG none T20": {
+   "trades": 64,
+   "triggers": 64,
+   "confirmed": null,
+   "tp_first": 0.359375,
+   "tp_first_ci95": [
+    0.25288402217722405,
+    0.4817914948765132
+   ],
+   "stop_first": 0.640625,
+   "of_which_ambiguous": 0.0,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 24,
+    "tp_first": 0.4166666666666667
+   },
+   "sell": {
+    "n": 40,
+    "tp_first": 0.325
+   },
+   "avg_mfe_usd": 11.065998268415102,
+   "median_mfe_usd": 11.241613756439165,
+   "avg_mae_usd": 10.264560985643929,
+   "median_mae_usd": 12.99999999999988,
+   "fixed96_avg_favourable_usd": 35.653225220190066,
+   "fixed96_avg_adverse_usd": 36.02916930420018,
+   "fixed96_reached_target_share": 0.5625,
+   "avg_win_usd": 19.22130434782611,
+   "avg_loss_usd": -14.281096848553805,
+   "realised_reward_risk": 1.3459263354671935,
+   "expectancy_usd_per_oz": -2.2411714186047726,
+   "profit_factor": 0.755031846725499,
+   "max_drawdown_r": 20.859648319416742,
+   "avg_cost_usd_per_oz": 0.7825,
+   "avg_hold_min": 217.96875
+  },
+  "ENG X15F0 T15": {
+   "trades": 20,
+   "triggers": 64,
+   "confirmed": 20,
+   "tp_first": 0.6,
+   "tp_first_ci95": [
+    0.3865814992347542,
+    0.7811934687282198
+   ],
+   "stop_first": 0.4,
+   "of_which_ambiguous": 0.0,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 8,
+    "tp_first": 0.75
+   },
+   "sell": {
+    "n": 12,
+    "tp_first": 0.5
+   },
+   "avg_mfe_usd": 11.653945277411776,
+   "median_mfe_usd": 14.999999999999805,
+   "avg_mae_usd": 7.181169988270916,
+   "median_mae_usd": 6.646839648885588,
+   "fixed96_avg_favourable_usd": 38.165420059169534,
+   "fixed96_avg_adverse_usd": 46.04754918662321,
+   "fixed96_reached_target_share": 0.75,
+   "avg_win_usd": 14.213333333333246,
+   "avg_loss_usd": -13.894999999999992,
+   "realised_reward_risk": 1.0229099196353546,
+   "expectancy_usd_per_oz": 2.9699999999999505,
+   "profit_factor": 1.534364879453032,
+   "max_drawdown_r": 4.283076923076922,
+   "avg_cost_usd_per_oz": 0.8300000000000001,
+   "avg_hold_min": 123.75
+  },
+  "ENG X15F0 T20": {
+   "trades": 20,
+   "triggers": 64,
+   "confirmed": 20,
+   "tp_first": 0.5,
+   "tp_first_ci95": [
+    0.2992980068701797,
+    0.7007019931298203
+   ],
+   "stop_first": 0.5,
+   "of_which_ambiguous": 0.0,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 8,
+    "tp_first": 0.75
+   },
+   "sell": {
+    "n": 12,
+    "tp_first": 0.3333333333333333
+   },
+   "avg_mfe_usd": 14.31701501867243,
+   "median_mfe_usd": 18.997787200365853,
+   "avg_mae_usd": 7.817112005837515,
+   "median_mae_usd": 10.58683659769613,
+   "fixed96_avg_favourable_usd": 38.165420059169534,
+   "fixed96_avg_adverse_usd": 46.04754918662321,
+   "fixed96_reached_target_share": 0.65,
+   "avg_win_usd": 19.210000000000004,
+   "avg_loss_usd": -13.869999999999967,
+   "realised_reward_risk": 1.3850036049026713,
+   "expectancy_usd_per_oz": 2.670000000000018,
+   "profit_factor": 1.3850036049026713,
+   "max_drawdown_r": 5.342307692307677,
+   "avg_cost_usd_per_oz": 0.8300000000000001,
+   "avg_hold_min": 180.75
+  },
+  "GRAB none T15": {
+   "trades": 855,
+   "triggers": 855,
+   "confirmed": null,
+   "tp_first": 0.47251461988304094,
+   "tp_first_ci95": [
+    0.43924825275163687,
+    0.5060268623304636
+   ],
+   "stop_first": 0.5274853801169591,
+   "of_which_ambiguous": 0.0023391812865497076,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 392,
+    "tp_first": 0.5102040816326531
+   },
+   "sell": {
+    "n": 463,
+    "tp_first": 0.4406047516198704
+   },
+   "avg_mfe_usd": 9.93807504675826,
+   "median_mfe_usd": 13.20350092287842,
+   "avg_mae_usd": 9.386565560385948,
+   "median_mae_usd": 12.99999999999977,
+   "fixed96_avg_favourable_usd": 30.018147207882762,
+   "fixed96_avg_adverse_usd": 30.437100869986693,
+   "fixed96_reached_target_share": 0.6666666666666666,
+   "avg_win_usd": 14.22016731233487,
+   "avg_loss_usd": -13.946688688851237,
+   "realised_reward_risk": 1.019608856954142,
+   "expectancy_usd_per_oz": -0.6374374321504336,
+   "profit_factor": 0.9133525015731117,
+   "max_drawdown_r": 47.44448008059081,
+   "avg_cost_usd_per_oz": 0.8556140350877193,
+   "avg_hold_min": 278.719298245614
+  },
+  "GRAB none T20": {
+   "trades": 855,
+   "triggers": 855,
+   "confirmed": null,
+   "tp_first": 0.39649122807017545,
+   "tp_first_ci95": [
+    0.36423568508840165,
+    0.42967272702929526
+   ],
+   "stop_first": 0.6035087719298246,
+   "of_which_ambiguous": 0.0011695906432748538,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 392,
+    "tp_first": 0.41836734693877553
+   },
+   "sell": {
+    "n": 463,
+    "tp_first": 0.3779697624190065
+   },
+   "avg_mfe_usd": 12.063756439784179,
+   "median_mfe_usd": 13.20350092287842,
+   "avg_mae_usd": 10.074055854722587,
+   "median_mae_usd": 12.999999999999835,
+   "fixed96_avg_favourable_usd": 30.018147207882762,
+   "fixed96_avg_adverse_usd": 30.437100869986693,
+   "fixed96_reached_target_share": 0.5567251461988304,
+   "avg_win_usd": 19.19318283724665,
+   "avg_loss_usd": -13.93785186063649,
+   "realised_reward_risk": 1.3770545869735027,
+   "expectancy_usd_per_oz": -0.8016872260372117,
+   "profit_factor": 0.9046928391163128,
+   "max_drawdown_r": 59.46956205820566,
+   "avg_cost_usd_per_oz": 0.8556140350877193,
+   "avg_hold_min": 378.35087719298247
+  },
+  "GRAB X15F0 T15": {
+   "trades": 302,
+   "triggers": 855,
+   "confirmed": 302,
+   "tp_first": 0.4337748344370861,
+   "tp_first_ci95": [
+    0.37905775362310923,
+    0.4901555304544922
+   ],
+   "stop_first": 0.5662251655629139,
+   "of_which_ambiguous": 0.0,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 152,
+    "tp_first": 0.4407894736842105
+   },
+   "sell": {
+    "n": 150,
+    "tp_first": 0.4266666666666667
+   },
+   "avg_mfe_usd": 9.40905562843885,
+   "median_mfe_usd": 11.00980511652358,
+   "avg_mae_usd": 9.688248704924376,
+   "median_mae_usd": 12.999999999999812,
+   "fixed96_avg_favourable_usd": 30.892790204463363,
+   "fixed96_avg_adverse_usd": 27.848052515902324,
+   "fixed96_reached_target_share": 0.6986754966887417,
+   "avg_win_usd": 14.173511450381703,
+   "avg_loss_usd": -13.824970760233922,
+   "realised_reward_risk": 1.0252109531508249,
+   "expectancy_usd_per_oz": -1.6799337748344287,
+   "profit_factor": 0.785395525513205,
+   "max_drawdown_r": 44.9761538461537,
+   "avg_cost_usd_per_oz": 0.8256291390728475,
+   "avg_hold_min": 271.1423841059603
+  },
+  "GRAB X15F0 T20": {
+   "trades": 302,
+   "triggers": 855,
+   "confirmed": 302,
+   "tp_first": 0.3509933774834437,
+   "tp_first_ci95": [
+    0.2993420469925525,
+    0.4063878421820507
+   ],
+   "stop_first": 0.6456953642384106,
+   "of_which_ambiguous": 0.0,
+   "neither_in_192_bars": 0.0033112582781456954,
+   "buy": {
+    "n": 152,
+    "tp_first": 0.3684210526315789
+   },
+   "sell": {
+    "n": 150,
+    "tp_first": 0.3333333333333333
+   },
+   "avg_mfe_usd": 11.40212386120501,
+   "median_mfe_usd": 11.00980511652358,
+   "avg_mae_usd": 10.266552371529993,
+   "median_mae_usd": 12.99999999999986,
+   "fixed96_avg_favourable_usd": 30.892790204463363,
+   "fixed96_avg_adverse_usd": 27.848052515902324,
+   "fixed96_reached_target_share": 0.5529801324503312,
+   "avg_win_usd": 19.121588003313878,
+   "avg_loss_usd": -13.823333333333334,
+   "realised_reward_risk": 1.3832834340473024,
+   "expectancy_usd_per_oz": -2.1507949789583285,
+   "profit_factor": 0.7590324484259556,
+   "max_drawdown_r": 59.867879375051395,
+   "avg_cost_usd_per_oz": 0.8256291390728475,
+   "avg_hold_min": 347.83112582781456
+  },
+  "BREAK none T15": {
+   "trades": 781,
+   "triggers": 781,
+   "confirmed": null,
+   "tp_first": 0.4647887323943662,
+   "tp_first_ci95": [
+    0.4300669086701758,
+    0.4998552439153969
+   ],
+   "stop_first": 0.5352112676056338,
+   "of_which_ambiguous": 0.006402048655569782,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 425,
+    "tp_first": 0.47058823529411764
+   },
+   "sell": {
+    "n": 356,
+    "tp_first": 0.45786516853932585
+   },
+   "avg_mfe_usd": 9.884381594482893,
+   "median_mfe_usd": 13.237579621072253,
+   "avg_mae_usd": 9.208996329119035,
+   "median_mae_usd": 12.999999999999774,
+   "fixed96_avg_favourable_usd": 30.246823152393286,
+   "fixed96_avg_adverse_usd": 30.17089985547908,
+   "fixed96_reached_target_share": 0.618437900128041,
+   "avg_win_usd": 14.192679564917684,
+   "avg_loss_usd": -13.976140731983541,
+   "realised_reward_risk": 1.0154934639745439,
+   "expectancy_usd_per_oz": -0.8835904531421244,
+   "profit_factor": 0.8818759029252619,
+   "max_drawdown_r": 76.8910138868562,
+   "avg_cost_usd_per_oz": 0.8562996158770806,
+   "avg_hold_min": 254.30857874519847
+  },
+  "BREAK none T20": {
+   "trades": 781,
+   "triggers": 781,
+   "confirmed": null,
+   "tp_first": 0.4007682458386684,
+   "tp_first_ci95": [
+    0.3669657362900708,
+    0.4355421482692704
+   ],
+   "stop_first": 0.5979513444302177,
+   "of_which_ambiguous": 0.0038412291933418692,
+   "neither_in_192_bars": 0.0012804097311139564,
+   "buy": {
+    "n": 425,
+    "tp_first": 0.4117647058823529
+   },
+   "sell": {
+    "n": 356,
+    "tp_first": 0.38764044943820225
+   },
+   "avg_mfe_usd": 12.085875866014588,
+   "median_mfe_usd": 13.237579621072253,
+   "avg_mae_usd": 9.770989180813336,
+   "median_mae_usd": 12.999999999999819,
+   "fixed96_avg_favourable_usd": 30.246823152393286,
+   "fixed96_avg_adverse_usd": 30.17089985547908,
+   "fixed96_reached_target_share": 0.5403329065300896,
+   "avg_win_usd": 19.22023555346739,
+   "avg_loss_usd": -13.965646308285052,
+   "realised_reward_risk": 1.3762510612963954,
+   "expectancy_usd_per_oz": -0.6233071218698588,
+   "profit_factor": 0.9253593859680259,
+   "max_drawdown_r": 83.83532964073298,
+   "avg_cost_usd_per_oz": 0.8562996158770806,
+   "avg_hold_min": 323.4314980793854
+  },
+  "BREAK X15F0 T15": {
+   "trades": 277,
+   "triggers": 781,
+   "confirmed": 277,
+   "tp_first": 0.4368231046931408,
+   "tp_first_ci95": [
+    0.37967218440751577,
+    0.4957023413501161
+   ],
+   "stop_first": 0.5631768953068592,
+   "of_which_ambiguous": 0.0036101083032490976,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 155,
+    "tp_first": 0.41935483870967744
+   },
+   "sell": {
+    "n": 122,
+    "tp_first": 0.45901639344262296
+   },
+   "avg_mfe_usd": 9.488283541075246,
+   "median_mfe_usd": 11.254483798753572,
+   "avg_mae_usd": 9.411179627866908,
+   "median_mae_usd": 12.99999999999979,
+   "fixed96_avg_favourable_usd": 34.33313789098503,
+   "fixed96_avg_adverse_usd": 31.89435413092996,
+   "fixed96_reached_target_share": 0.6714801444043321,
+   "avg_win_usd": 14.175454545454562,
+   "avg_loss_usd": -13.835354169321048,
+   "realised_reward_risk": 1.0245819783123198,
+   "expectancy_usd_per_oz": -1.5995857415670807,
+   "profit_factor": 0.7947078165114789,
+   "max_drawdown_r": 44.75384615384604,
+   "avg_cost_usd_per_oz": 0.8277617328519855,
+   "avg_hold_min": 217.4187725631769
+  },
+  "BREAK X15F0 T20": {
+   "trades": 277,
+   "triggers": 781,
+   "confirmed": 277,
+   "tp_first": 0.3898916967509025,
+   "tp_first_ci95": [
+    0.3343361575372543,
+    0.44845944449747566
+   ],
+   "stop_first": 0.6101083032490975,
+   "of_which_ambiguous": 0.0036101083032490976,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 155,
+    "tp_first": 0.36774193548387096
+   },
+   "sell": {
+    "n": 122,
+    "tp_first": 0.4180327868852459
+   },
+   "avg_mfe_usd": 11.55973673280845,
+   "median_mfe_usd": 11.254483798753572,
+   "avg_mae_usd": 9.90947425869721,
+   "median_mae_usd": 12.999999999999828,
+   "fixed96_avg_favourable_usd": 34.33313789098503,
+   "fixed96_avg_adverse_usd": 31.89435413092996,
+   "fixed96_reached_target_share": 0.5848375451263538,
+   "avg_win_usd": 19.193410412814384,
+   "avg_loss_usd": -13.842902771354261,
+   "realised_reward_risk": 1.3865163058525678,
+   "expectancy_usd_per_oz": -0.9623185695845351,
+   "profit_factor": 0.8860577575862564,
+   "max_drawdown_r": 34.88859041661902,
+   "avg_cost_usd_per_oz": 0.8277617328519855,
+   "avg_hold_min": 278.82671480144404
+  },
+  "SWEEP none T15": {
+   "trades": 2928,
+   "triggers": 2928,
+   "confirmed": null,
+   "tp_first": 0.46379781420765026,
+   "tp_first_ci95": [
+    0.4457939687488618,
+    0.4818965278304135
+   ],
+   "stop_first": 0.5362021857923497,
+   "of_which_ambiguous": 0.0030737704918032786,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 1419,
+    "tp_first": 0.4686398872445384
+   },
+   "sell": {
+    "n": 1509,
+    "tp_first": 0.4592445328031809
+   },
+   "avg_mfe_usd": 10.052520147995,
+   "median_mfe_usd": 13.251726206013348,
+   "avg_mae_usd": 9.386468322947817,
+   "median_mae_usd": 12.999999999999783,
+   "fixed96_avg_favourable_usd": 28.947370855823564,
+   "fixed96_avg_adverse_usd": 29.006185299114097,
+   "fixed96_reached_target_share": 0.6465163934426229,
+   "avg_win_usd": 14.206223266318394,
+   "avg_loss_usd": -13.915779707225548,
+   "realised_reward_risk": 1.0208715260807153,
+   "expectancy_usd_per_oz": -0.8728561969548264,
+   "profit_factor": 0.8830213582277779,
+   "max_drawdown_r": 211.05351429934618,
+   "avg_cost_usd_per_oz": 0.8682240437158469,
+   "avg_hold_min": 341.890368852459
+  },
+  "SWEEP none T20": {
+   "trades": 2928,
+   "triggers": 2928,
+   "confirmed": null,
+   "tp_first": 0.40027322404371585,
+   "tp_first_ci95": [
+    0.38266834278115014,
+    0.4181394402485513
+   ],
+   "stop_first": 0.5997267759562842,
+   "of_which_ambiguous": 0.0017076502732240437,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 1419,
+    "tp_first": 0.40169133192389006
+   },
+   "sell": {
+    "n": 1509,
+    "tp_first": 0.39893969516235916
+   },
+   "avg_mfe_usd": 12.216917202801055,
+   "median_mfe_usd": 13.251726206013348,
+   "avg_mae_usd": 10.02840675118844,
+   "median_mae_usd": 12.999999999999833,
+   "fixed96_avg_favourable_usd": 28.947370855823564,
+   "fixed96_avg_adverse_usd": 29.006185299114097,
+   "fixed96_reached_target_share": 0.5508879781420765,
+   "avg_win_usd": 19.244801846299787,
+   "avg_loss_usd": -13.923218958344105,
+   "realised_reward_risk": 1.3822092365190082,
+   "expectancy_usd_per_oz": -0.646948335720252,
+   "profit_factor": 0.92252233781337,
+   "max_drawdown_r": 180.96975350287818,
+   "avg_cost_usd_per_oz": 0.8682240437158469,
+   "avg_hold_min": 422.6280737704918
+  },
+  "SWEEP X15F0 T15": {
+   "trades": 949,
+   "triggers": 2928,
+   "confirmed": 949,
+   "tp_first": 0.46048472075869334,
+   "tp_first_ci95": [
+    0.428995556878107,
+    0.4922925028500502
+   ],
+   "stop_first": 0.5395152792413066,
+   "of_which_ambiguous": 0.005268703898840885,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 476,
+    "tp_first": 0.49369747899159666
+   },
+   "sell": {
+    "n": 473,
+    "tp_first": 0.427061310782241
+   },
+   "avg_mfe_usd": 9.979666164720937,
+   "median_mfe_usd": 12.624167544901857,
+   "avg_mae_usd": 9.34325722131469,
+   "median_mae_usd": 12.999999999999792,
+   "fixed96_avg_favourable_usd": 31.169890730674304,
+   "fixed96_avg_adverse_usd": 29.27493495873617,
+   "fixed96_reached_target_share": 0.6701791359325606,
+   "avg_win_usd": 14.31043411445671,
+   "avg_loss_usd": -13.843158059261334,
+   "realised_reward_risk": 1.0337550184137902,
+   "expectancy_usd_per_oz": -0.8788590287926461,
+   "profit_factor": 0.8823260606383327,
+   "max_drawdown_r": 66.6287738575338,
+   "avg_cost_usd_per_oz": 0.8210010537407797,
+   "avg_hold_min": 248.67755532139094
+  },
+  "SWEEP X15F0 T20": {
+   "trades": 949,
+   "triggers": 2928,
+   "confirmed": 949,
+   "tp_first": 0.38250790305584825,
+   "tp_first_ci95": [
+    0.3521195272559959,
+    0.41384363700239185
+   ],
+   "stop_first": 0.6143308746048473,
+   "of_which_ambiguous": 0.005268703898840885,
+   "neither_in_192_bars": 0.003161222339304531,
+   "buy": {
+    "n": 476,
+    "tp_first": 0.42016806722689076
+   },
+   "sell": {
+    "n": 473,
+    "tp_first": 0.34460887949260044
+   },
+   "avg_mfe_usd": 12.112235671603564,
+   "median_mfe_usd": 12.624167544901857,
+   "avg_mae_usd": 10.041539252650923,
+   "median_mae_usd": 12.999999999999844,
+   "fixed96_avg_favourable_usd": 31.169890730674304,
+   "fixed96_avg_adverse_usd": 29.27493495873617,
+   "fixed96_reached_target_share": 0.5489989462592202,
+   "avg_win_usd": 19.253691123606064,
+   "avg_loss_usd": -13.841452703845288,
+   "realised_reward_risk": 1.3910166465588691,
+   "expectancy_usd_per_oz": -1.0776775290853353,
+   "profit_factor": 0.8732625945806965,
+   "max_drawdown_r": 89.0604596232296,
+   "avg_cost_usd_per_oz": 0.8210010537407797,
+   "avg_hold_min": 332.05479452054794
+  },
+  "BREAKOUT none T15": {
+   "trades": 2882,
+   "triggers": 2882,
+   "confirmed": null,
+   "tp_first": 0.4625260235947259,
+   "tp_first_ci95": [
+    0.44438475061772686,
+    0.48076706278655723
+   ],
+   "stop_first": 0.5374739764052742,
+   "of_which_ambiguous": 0.0034698126301179735,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 1451,
+    "tp_first": 0.4672639558924879
+   },
+   "sell": {
+    "n": 1431,
+    "tp_first": 0.45772187281621246
+   },
+   "avg_mfe_usd": 9.867672798131514,
+   "median_mfe_usd": 12.78877867211243,
+   "avg_mae_usd": 9.424062875864182,
+   "median_mae_usd": 12.999999999999778,
+   "fixed96_avg_favourable_usd": 31.593387239784587,
+   "fixed96_avg_adverse_usd": 30.127093665434018,
+   "fixed96_reached_target_share": 0.657529493407356,
+   "avg_win_usd": 14.228659853264858,
+   "avg_loss_usd": -13.88245367861476,
+   "realised_reward_risk": 1.0249383994115833,
+   "expectancy_usd_per_oz": -0.88033211789459,
+   "profit_factor": 0.882016066117263,
+   "max_drawdown_r": 218.18773326715035,
+   "avg_cost_usd_per_oz": 0.839326856349757,
+   "avg_hold_min": 289.2782789729355
+  },
+  "BREAKOUT none T20": {
+   "trades": 2882,
+   "triggers": 2882,
+   "confirmed": null,
+   "tp_first": 0.3952116585704372,
+   "tp_first_ci95": [
+    0.3775133289431703,
+    0.41318896409473543
+   ],
+   "stop_first": 0.6040943789035392,
+   "of_which_ambiguous": 0.0024288688410825814,
+   "neither_in_192_bars": 0.0006939625260235947,
+   "buy": {
+    "n": 1451,
+    "tp_first": 0.3990351481736733
+   },
+   "sell": {
+    "n": 1431,
+    "tp_first": 0.3913347309573725
+   },
+   "avg_mfe_usd": 12.020625496692064,
+   "median_mfe_usd": 12.78877867211243,
+   "avg_mae_usd": 10.027440972991405,
+   "median_mae_usd": 12.999999999999831,
+   "fixed96_avg_favourable_usd": 31.593387239784587,
+   "fixed96_avg_adverse_usd": 30.127093665434018,
+   "fixed96_reached_target_share": 0.5593337959750173,
+   "avg_win_usd": 19.22255796878512,
+   "avg_loss_usd": -13.875118625559006,
+   "realised_reward_risk": 1.3853977387534353,
+   "expectancy_usd_per_oz": -0.7830466902528621,
+   "profit_factor": 0.906632274499952,
+   "max_drawdown_r": 202.40178272828192,
+   "avg_cost_usd_per_oz": 0.839326856349757,
+   "avg_hold_min": 364.37196391394866
+  },
+  "BREAKOUT X15F0 T15": {
+   "trades": 958,
+   "triggers": 2882,
+   "confirmed": 958,
+   "tp_first": 0.48434237995824636,
+   "tp_first_ci95": [
+    0.4528218579431836,
+    0.5159879706174479
+   ],
+   "stop_first": 0.5156576200417536,
+   "of_which_ambiguous": 0.006263048016701462,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 491,
+    "tp_first": 0.48268839103869654
+   },
+   "sell": {
+    "n": 467,
+    "tp_first": 0.4860813704496788
+   },
+   "avg_mfe_usd": 10.058856802160696,
+   "median_mfe_usd": 14.242932696140596,
+   "avg_mae_usd": 9.29151145029813,
+   "median_mae_usd": 12.999999999999762,
+   "fixed96_avg_favourable_usd": 34.5790906976008,
+   "fixed96_avg_adverse_usd": 30.816764723057688,
+   "fixed96_reached_target_share": 0.6931106471816284,
+   "avg_win_usd": 14.396254677110592,
+   "avg_loss_usd": -13.851329370855652,
+   "realised_reward_risk": 1.039341011369025,
+   "expectancy_usd_per_oz": -0.16982728499308608,
+   "profit_factor": 0.976223136184671,
+   "max_drawdown_r": 32.94416449940159,
+   "avg_cost_usd_per_oz": 0.8196868475991648,
+   "avg_hold_min": 221.3204592901879
+  },
+  "BREAKOUT X15F0 T20": {
+   "trades": 958,
+   "triggers": 2882,
+   "confirmed": 958,
+   "tp_first": 0.40605427974947805,
+   "tp_first_ci95": [
+    0.375391501474859,
+    0.4374674698889296
+   ],
+   "stop_first": 0.592901878914405,
+   "of_which_ambiguous": 0.007306889352818371,
+   "neither_in_192_bars": 0.0010438413361169101,
+   "buy": {
+    "n": 491,
+    "tp_first": 0.40529531568228105
+   },
+   "sell": {
+    "n": 467,
+    "tp_first": 0.4068522483940043
+   },
+   "avg_mfe_usd": 12.253501046978645,
+   "median_mfe_usd": 14.242932696140596,
+   "avg_mae_usd": 10.075266034383777,
+   "median_mae_usd": 12.999999999999828,
+   "fixed96_avg_favourable_usd": 34.5790906976008,
+   "fixed96_avg_adverse_usd": 30.816764723057688,
+   "fixed96_reached_target_share": 0.5908141962421712,
+   "avg_win_usd": 19.337239475150266,
+   "avg_loss_usd": -13.868370781614964,
+   "realised_reward_risk": 1.3943411075210996,
+   "expectancy_usd_per_oz": -0.350429236585276,
+   "profit_factor": 0.9573820984739945,
+   "max_drawdown_r": 42.27677762389551,
+   "avg_cost_usd_per_oz": 0.8196868475991648,
+   "avg_hold_min": 305.1670146137787
+  },
+  "N2 none T15": {
+   "trades": 16384,
+   "triggers": 16384,
+   "confirmed": null,
+   "tp_first": 0.46270751953125,
+   "tp_first_ci95": [
+    0.4550823665777544,
+    0.47035015587701073
+   ],
+   "stop_first": 0.53729248046875,
+   "of_which_ambiguous": 0.0028076171875,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 8192,
+    "tp_first": 0.4659423828125
+   },
+   "sell": {
+    "n": 8192,
+    "tp_first": 0.45947265625
+   },
+   "avg_mfe_usd": 10.015259570775369,
+   "median_mfe_usd": 13.11657702451403,
+   "avg_mae_usd": 9.392531395639669,
+   "median_mae_usd": 12.999999999999785,
+   "fixed96_avg_favourable_usd": 29.41536803547742,
+   "fixed96_avg_adverse_usd": 29.41536803547742,
+   "fixed96_reached_target_share": 0.6495361328125,
+   "avg_win_usd": 14.218249989815627,
+   "avg_loss_usd": -13.919945553841062,
+   "realised_reward_risk": 1.0214300001979715,
+   "expectancy_usd_per_oz": -0.9001908897504036,
+   "profit_factor": 0.8796388539703306,
+   "max_drawdown_r": 1137.6496978057962,
+   "avg_cost_usd_per_oz": 0.8544482421874999,
+   "avg_hold_min": 343.59649658203125
+  },
+  "N2 none T20": {
+   "trades": 16384,
+   "triggers": 16384,
+   "confirmed": null,
+   "tp_first": 0.392333984375,
+   "tp_first_ci95": [
+    0.38488355210839303,
+    0.39983489242549514
+   ],
+   "stop_first": 0.6072998046875,
+   "of_which_ambiguous": 0.00225830078125,
+   "neither_in_192_bars": 0.0003662109375,
+   "buy": {
+    "n": 8192,
+    "tp_first": 0.3966064453125
+   },
+   "sell": {
+    "n": 8192,
+    "tp_first": 0.3880615234375
+   },
+   "avg_mfe_usd": 12.16115873378613,
+   "median_mfe_usd": 13.11657702451403,
+   "avg_mae_usd": 10.070373537548317,
+   "median_mae_usd": 12.99999999999984,
+   "fixed96_avg_favourable_usd": 29.41536803547742,
+   "fixed96_avg_adverse_usd": 29.41536803547742,
+   "fixed96_reached_target_share": 0.54644775390625,
+   "avg_win_usd": 19.228158976741398,
+   "avg_loss_usd": -13.92948308534981,
+   "realised_reward_risk": 1.3803928587245577,
+   "expectancy_usd_per_oz": -0.9125181351929097,
+   "profit_factor": 0.8921510115872544,
+   "max_drawdown_r": 1158.5642816004477,
+   "avg_cost_usd_per_oz": 0.8544482421874999,
+   "avg_hold_min": 428.29193115234375
+  },
+  "N2 X15F0 T15": {
+   "trades": 5263,
+   "triggers": 16384,
+   "confirmed": 5263,
+   "tp_first": 0.4533536006080182,
+   "tp_first_ci95": [
+    0.4399430768948645,
+    0.4668321689838503
+   ],
+   "stop_first": 0.5466463993919818,
+   "of_which_ambiguous": 0.0036101083032490976,
+   "neither_in_192_bars": 0.0,
+   "buy": {
+    "n": 2695,
+    "tp_first": 0.4582560296846011
+   },
+   "sell": {
+    "n": 2568,
+    "tp_first": 0.44820872274143303
+   },
+   "avg_mfe_usd": 9.801519344645774,
+   "median_mfe_usd": 12.27335647892195,
+   "avg_mae_usd": 9.461571461095197,
+   "median_mae_usd": 12.999999999999794,
+   "fixed96_avg_favourable_usd": 31.648563257781152,
+   "fixed96_avg_adverse_usd": 30.21447421026736,
+   "fixed96_reached_target_share": 0.6617898536956108,
+   "avg_win_usd": 14.294315429534013,
+   "avg_loss_usd": -13.860762709657413,
+   "realised_reward_risk": 1.0312791387428142,
+   "expectancy_usd_per_oz": -1.0965566598548784,
+   "profit_factor": 0.8552770333821184,
+   "max_drawdown_r": 453.6571823955658,
+   "avg_cost_usd_per_oz": 0.8246836405092152,
+   "avg_hold_min": 250.39426182785485
+  },
+  "N2 X15F0 T20": {
+   "trades": 5263,
+   "triggers": 16384,
+   "confirmed": 5263,
+   "tp_first": 0.38229146874406233,
+   "tp_first_ci95": [
+    0.3692531659419358,
+    0.39550147691698
+   ],
+   "stop_first": 0.6158084742542276,
+   "of_which_ambiguous": 0.0038001140034201026,
+   "neither_in_192_bars": 0.0019000570017100513,
+   "buy": {
+    "n": 2695,
+    "tp_first": 0.3877551020408163
+   },
+   "sell": {
+    "n": 2568,
+    "tp_first": 0.3765576323987539
+   },
+   "avg_mfe_usd": 11.894591861849948,
+   "median_mfe_usd": 12.27335647892195,
+   "avg_mae_usd": 10.150263204413951,
+   "median_mae_usd": 12.999999999999847,
+   "fixed96_avg_favourable_usd": 31.648563257781152,
+   "fixed96_avg_adverse_usd": 30.21447421026736,
+   "fixed96_reached_target_share": 0.555386661599848,
+   "avg_win_usd": 19.249517336025054,
+   "avg_loss_usd": -13.893646459991185,
+   "realised_reward_risk": 1.3854906551319621,
+   "expectancy_usd_per_oz": -1.1603237931576622,
+   "profit_factor": 0.8643820131677962,
+   "max_drawdown_r": 484.1374848950225,
+   "avg_cost_usd_per_oz": 0.8246836405092152,
+   "avg_hold_min": 328.093292798784
+  }
+ },
+ "utc": "2026-11-07T08:55:18.649883+00:00"
+}

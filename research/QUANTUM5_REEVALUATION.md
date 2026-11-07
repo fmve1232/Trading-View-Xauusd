@@ -198,8 +198,45 @@ are reported separately.
 | Maximum drawdown | 17.7 R / 7.4 R | Not resampled (failed validation) |
 | Monte Carlo, 100 trades at 1% risk | 98% / 92% chance of a ~10 R drawdown | — |
 | Out-of-sample accuracy | 45.8% (2023–24), 47.3% (2026) | 52.8%, not distinguishable from 46% |
-| Average favourable / adverse excursion | Not measured in these studies | Not measured |
+| Average favourable / adverse excursion | 2020–22, +$15 / −$13: +$9.22 / −$9.76 during the trade; in the next 24 h +$35.7 / −$36.0 (section 8a) | Not measured (the validation partition is read once; not reopened for this) |
 | Costs | Included (model $0.77–0.97 per oz) | Included |
+
+### 8a. Excursions, reward / risk and drawdown for every trigger type (section 9's missing rows)
+
+`research/tools/excursions.py` → `research/results/excursions_development_2026-11-07.json`. Descriptive, development
+data only (2020-04 → 2023-01), the registered populations and plan (entry at the close, stop −$13, ties = loss, model
+costs $0.78–0.85 per oz). Every trade is resolved twice, by `b19.py` and by the live panel's own exit function; the
+script stops if any trade differs. It found one real difference on the first run: the live time-stop price was rounded
+to cents. That is fixed and covered by a test.
+
+| Trigger | Trades | +$15 first (95%) | +$20 first | Stop first | Neither in 48 h | +$15: BUY / SELL | Best / worst move during the trade | Best / worst move in the next 24 h | +$15 reached in 24 h, stop ignored | Realised reward / risk (+$15 / +$20) | Expectancy $/oz | Profit factor | Max drawdown |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Engine signal, one per idea, at the trigger | 64 | 39.1% (28%–51%) | 35.9% | 60.9% | 0.0% | 42% / 38% | +$9.2 / −$9.8 | +$36 / −$36 | 62% | 0.99 / 1.35 | -3.16 | 0.64 | 21.3 R |
+| Engine signal, one per idea, after a $15 close | 20 | 60.0% (39%–78%) | 50.0% | 40.0% | 0.0% | 75% / 50% | +$11.7 / −$7.2 | +$38 / −$46 | 75% | 1.02 / 1.39 | +2.97 | 1.53 | 4.3 R |
+| Liquidity grab, at the trigger | 855 | 47.3% (44%–51%) | 39.6% | 52.7% | 0.0% | 51% / 44% | +$9.9 / −$9.4 | +$30 / −$30 | 67% | 1.02 / 1.38 | -0.64 | 0.91 | 47.4 R |
+| Liquidity grab, after a $15 close | 302 | 43.4% (38%–49%) | 35.1% | 56.6% | 0.0% | 44% / 43% | +$9.4 / −$9.7 | +$31 / −$28 | 70% | 1.03 / 1.38 | -1.68 | 0.79 | 45.0 R |
+| Liquidity break, at the trigger | 781 | 46.5% (43%–50%) | 40.1% | 53.5% | 0.0% | 47% / 46% | +$9.9 / −$9.2 | +$30 / −$30 | 62% | 1.02 / 1.38 | -0.88 | 0.88 | 76.9 R |
+| Liquidity break, after a $15 close | 277 | 43.7% (38%–50%) | 39.0% | 56.3% | 0.0% | 42% / 46% | +$9.5 / −$9.4 | +$34 / −$32 | 67% | 1.02 / 1.39 | -1.60 | 0.79 | 44.8 R |
+| Sweep setup, at the trigger | 2,928 | 46.4% (45%–48%) | 40.0% | 53.6% | 0.0% | 47% / 46% | +$10.1 / −$9.4 | +$29 / −$29 | 65% | 1.02 / 1.38 | -0.87 | 0.88 | 211.1 R |
+| Sweep setup, after a $15 close | 949 | 46.0% (43%–49%) | 38.3% | 54.0% | 0.0% | 49% / 43% | +$10.0 / −$9.3 | +$31 / −$29 | 67% | 1.03 / 1.39 | -0.88 | 0.88 | 66.6 R |
+| Breakout setup, at the trigger | 2,882 | 46.3% (44%–48%) | 39.5% | 53.7% | 0.0% | 47% / 46% | +$9.9 / −$9.4 | +$32 / −$30 | 66% | 1.02 / 1.39 | -0.88 | 0.88 | 218.2 R |
+| Breakout setup, after a $15 close | 958 | 48.4% (45%–52%) | 40.6% | 51.6% | 0.0% | 48% / 49% | +$10.1 / −$9.3 | +$35 / −$31 | 69% | 1.04 / 1.39 | -0.17 | 0.98 | 32.9 R |
+| Random triggers, at the trigger | 16,384 | 46.3% (46%–47%) | 39.2% | 53.7% | 0.0% | 47% / 46% | +$10.0 / −$9.4 | +$29 / −$29 | 65% | 1.02 / 1.38 | -0.90 | 0.88 | 1137.6 R |
+| Random triggers, after a $15 close | 5,263 | 45.3% (44%–47%) | 38.2% | 54.7% | 0.0% | 46% / 45% | +$9.8 / −$9.5 | +$32 / −$30 | 66% | 1.03 / 1.39 | -1.10 | 0.86 | 453.7 R |
+
+**How to read it:**
+
+1. **The move after any entry is about $30 each way within 24 hours.** For every trigger type and for random entries
+   alike, the best move in the trade's direction and the worst move against it are both about $28–36 (the 20-trade
+   engine row: +$38 / −$46). That is why "+$15 at any time" happens 62–75% of the time while "+$15 before −$13"
+   happens only 39–48% (60% on 20 engine trades). The confirmed move and the reversal are the same size.
+2. **Realised reward / risk is the geometry:** about 1.02 at +$15 (average win $14.2 against an average loss $13.9
+   after costs) and 1.38 at +$20. No entry rule changes it, because the exits are fixed distances.
+3. **Expectancy is negative for every type with more than 20 trades.** The one positive row (engine signal after a $15
+   close, +$2.97 per oz) has 20 trades and a 95% interval of 39–78%. In validation (2023–24) the same rule had 7
+   trades, too few to test, and B19 recorded it as INSUFFICIENT.
+4. **Maximum drawdown** is in R (multiples of the −$13 stop) over the whole period, so it grows with the number of
+   trades. It is not shown as a percentage of an account because that needs a position size, which you set yourself.
 
 ## 9. Old versus new
 
