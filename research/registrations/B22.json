@@ -1,0 +1,51 @@
+{
+  "id": "B22",
+  "title": "Every confirmation family together in calibrated machine-learning models (logistic, naive Bayes, random forest, gradient boosting, XGBoost, LightGBM, ensemble; HMM regimes; Platt / isotonic calibration): the highest out-of-sample probability of +$15 / +$20 before -$13, and whether 90% is reachable",
+  "status": "APPROVED by the operator 2026-11-07 (master instruction); development walk-forward runs once after this commit; validation opens once, after the development results are committed, for the single model the declared rule selects; the holdout only if that model passes validation",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-07, MASTER INSTRUCTION (QUANTUM 5 XAUUSD - complete strategy re-evaluation): section 4 \"Investigate whether 90% is realistically achievable under the required $15-$20 movement condition ... walk-forward validation ... Monte Carlo ... confidence intervals ... If 90% cannot be demonstrated, report the actual achievable success rate\"; section 6 \"Evaluate the suitability of XGBoost and LightGBM, Random Forest, Hidden Markov Models for market regimes, Bayesian probability models, logistic regression, ensemble learning, ATR-based dynamic thresholds ... change-point detection, Platt scaling or isotonic probability calibration ... Every model must demonstrate measurable improvement against the existing baseline\".",
+  "partitions": ["development", "validation", "holdout"],
+  "created_utc": "2026-11-07T05:00:00Z",
+  "unchanged": "Production alerts, the engine, config.py, the website freeze key, B9 / B15 live tests, B19-B21. Research code only (quantum/research/b22.py; the HMM lives inside it and uses only the forward filter), never imported by production. xgboost / lightgbm / hmmlearn are research-only installs, not production dependencies.",
+  "data": "Twelve Data XAU/USD 15min and 1h research files. Development 2020-01-24 -> 2023-01-24 (features from 2020-04-01). No volume, macro or cross-asset series exist in these files for 2020-2024 (B7 tested macro separately on daily data: no effect); the report says so.",
+  "rows": "Every 15m close of the partition, twice: as a BUY and as a SELL (direction is a feature; the label is direction-specific). Entry = that close (executable at the next tick; costs charged).",
+  "labels": "y15: +15 before -13 (scaled to $4,000) on the next 96 15m bars, ties a loss unless the bar opened beyond the target (quantum.research.b13.race); y20 the same at +20. Undecided rows (neither in 96 bars) dropped.",
+  "features": {
+    "trend": "close vs EMA20 / EMA100 / EMA200 (ATR units), EMA20 and EMA100 slopes over 4 bars (ATR units); 1h and 4h EMA20 vs EMA100 sign and daily EMA20 vs EMA50 sign on the last CLOSED bar of each",
+    "vwap_bands": "close vs the engine's session VWAP (ATR units); Bollinger(20, 2) %B and width / ATR",
+    "momentum": "RSI14; MACD(12, 26, 9) histogram / ATR; returns over 1, 4, 16 bars (ATR units)",
+    "volatility": "ATR14 / price; ATR14 percentile over the last 2,880 bars (30 days); bar range / ATR",
+    "candle_runs": "body / ATR, upper and lower wick / ATR, run length and run size (as B20)",
+    "structure_liquidity": "bars since the last bullish and the last bearish BOS / MSS / CHoCH on 15m (capped 96); an engine SWEEP at this bar (by direction); the site's liquidity GRAB / BREAK at this bar (b10.liquidity_events); the engine's open FVG flag",
+    "levels": "distance to PDH, PDL, PWH, PWL (ATR units); position within today's range so far",
+    "engine": "the engine's bull and bear scores, trade quality, regime label (one-hot), session quality, an engine SIGNAL at this bar (by direction)",
+    "time": "hour of day (sin / cos), weekday, London / New York / overlap flags",
+    "regime_hmm": "a 3-state Gaussian HMM on 1h log returns and |returns|, fitted on each training window only; its FILTERED (forward-only) state probabilities on the last closed 1h bar; no smoothing, so no look-ahead",
+    "change_point": "a CUSUM statistic of 1h returns over the last 24 closed 1h bars (sigma-scaled)",
+    "direction_interactions": "every signed feature multiplied by the row's direction (so 'trend agrees' is learnable by every model)"
+  },
+  "models": {
+    "LR": "logistic regression, L2, C = 1.0, standardised",
+    "NB": "Gaussian naive Bayes (the Bayesian baseline)",
+    "RF": "random forest, 300 trees, min_samples_leaf 200, max_features sqrt",
+    "HGB": "scikit-learn histogram gradient boosting, 300 iterations, learning rate 0.05, max_leaf_nodes 31, min_samples_leaf 200",
+    "XGB": "XGBoost, 400 trees, depth 4, learning rate 0.05, subsample 0.8, colsample 0.8",
+    "LGBM": "LightGBM, 400 trees, 31 leaves, learning rate 0.05, min_child_samples 200, subsample 0.8, colsample 0.8",
+    "ENS": "the mean of the LR, RF, HGB, XGB and LGBM probabilities",
+    "calibration": "each model also with isotonic calibration and with Platt (sigmoid) calibration fitted on the last 20% (in time) of its training window; the raw version is kept too",
+    "baseline": "the base rate (the training window's mean label) and the existing engine: the engine SIGNAL rows only"
+  },
+  "protocol": {
+    "walk_forward": "development: expanding window by calendar quarter; the first test quarter is 2021-01; each training set ends 96 bars (one trading day) before its test quarter (purge + embargo); out-of-sample predictions for 2021-01 -> 2023-01",
+    "metrics": "per model and calibration: AUC, log loss, Brier vs the base-rate Brier, a reliability table by decile; precision (+T first) at the top 10%, 5%, 1%, 0.5% and 0.1% of predicted probabilities within each test quarter, with the day-clustered 95% interval; net $ per oz after model costs at each; the highest out-of-sample precision at any threshold with >= 30 trades; BUY and SELL separately; by session; by regime",
+    "selection": "the single model + calibration with the lowest walk-forward log loss at T = 15 is frozen (its T = 20 twin is reported beside it)",
+    "development_pass": "the frozen model's top-5% bucket: day-clustered lower 95% bound of precision above the break-even (13 + cost) / 28 AND above the base rate; otherwise FAIL and validation stays closed",
+    "validation": "once, only after a development pass: train on all development rows, score every validation row; pass = the same rule on the top 5% (threshold fixed from development, not re-chosen)",
+    "holdout": "only after a validation pass; same rule",
+    "ninety_percent": "reported for every model: the highest observed precision with >= 30 out-of-sample trades, its interval, and the analytic drift that 90% at +15 / -13 would require given gold's measured 15m volatility"
+  },
+  "decision": {
+    "if_pass_all": "Propose the frozen model as a live forward test (registered separately), shown as a CALIBRATED probability with its interval; no production change before the operator approves.",
+    "if_not": "Recorded in research/trials.jsonl, B22_RESULTS.md and the catalogue; no re-run with changed features, models, hyper-parameters, windows or targets on the same data."
+  }
+}
