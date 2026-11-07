@@ -116,6 +116,16 @@ def test_exit_gap_at_the_open_and_the_ambiguous_bar():
     assert cp.exit_one(_P(base + [(4015.0, 4020.0, 4010.0, 4016.0)]), 1, 1, 15.0)["out"] == "OPEN"
 
 
+def test_time_stop_exits_at_the_unrounded_close_as_b19():
+    """Found on 2020-22 history by research/tools/excursions.py: the time stop's price was rounded to cents."""
+    base = [FLAT, (4000.0, 4016.0, 3999.0, 4015.123)]                         # confirmed at 4015.123
+    drift = [(4015.0, 4016.0, 4014.0, 4015.0 + 0.0037 * k) for k in range(cp.HOLD)]
+    x = cp.exit_one(_P(base + drift), 1, 1, 20.0)
+    assert x["out"] == "TIMEOUT" and x["bar"] == 1 + cp.HOLD
+    assert x["usd"] == pytest.approx(4015.0 + 0.0037 * (cp.HOLD - 1) - 4015.123, abs=1e-9)
+    assert cp.exit_one(_P(base + drift[:-1]), 1, 1, 20.0)["out"] == "OPEN"
+
+
 # ---------------- the evidence is the committed measurement ----------------
 def _kn(s):
     n = s["trades"]

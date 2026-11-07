@@ -1984,30 +1984,43 @@ function renderConfirm() {
     CONFIRMED: (r) => `<b class="bull">$15 CONFIRMED</b> · 15m close ${px(r.entry)} at ${tfmt(r.t_conf)}` +
       (r.x20 && r.x20.status === "CONFIRMED" ? ` · $20 close ${px(r.x20.px)} at ${tfmt(r.x20.t)}` : ""),
   };
-  const items = (C.rows || []).map((r) => {
-    const flags = [r.backfill ? "rebuilt from the chart when the panel started" : "", r.late ? '<b class="warn">appeared after its bar was already processed (repaint or late data)</b>' : "",
-      r.vanished ? '<b class="warn">no longer on the chart (kept as first seen)</b>' : "", r.repeats ? `+${r.repeats} later trigger(s) of the same idea folded in` : ""].filter(Boolean);
+  const flagsOf = (r) => [r.backfill ? "rebuilt from the chart when the panel started" : "", r.late ? '<b class="warn">appeared after its bar was already processed (repaint or late data)</b>' : "",
+    r.vanished ? '<b class="warn">no longer on the chart (kept as first seen)</b>' : "", r.repeats ? `+${r.repeats} later trigger(s) of the same idea folded in` : ""].filter(Boolean);
+  const head = (r) => `#${r.id} ${esc(CF_KIND[r.kind] || r.kind)} ${esc(r.tf)} ${side(r.dir)} <span class="dim">at ${px(r.p0)} · ${tfmt(r.t_close)}</span>`;
+  const block = (r, full) => {
+    const flags = flagsOf(r);
     const ck = r.checks || null, ckn = ck ? Object.values(ck).filter(Boolean).length : null, ckt = ck ? Object.keys(ck).length : null;
     const ckTip = ck ? Object.entries(ck).map(([k, v]) => `${v ? "✓" : "✗"} ${(C.check_text || {})[k] || k}`).join("\n") : "";
+    const res = r.status === "CONFIRMED" ? ["T15", "T20"].map((T) => { const x = (r.result || {})[T] || {}, o = OUT[x.out] || ["", esc(x.out || "—")];
+      return `<div>${T === "T15" ? "+$15" : "+$20"} result</div><div><b class="${o[0]}">${o[1]}</b>${isNum(x.usd) ? ` ${usd(x.usd)}` : ""} <span class="dim">· best ${usd(x.mfe)} · worst ${isNum(x.mae) ? "−$" + f(x.mae, 2) : "—"}</span></div>`; }).join("") : "";
     const plan = r.status === "CONFIRMED" ? `<div class="kv">
-        <div>Entry</div><div><b>${px(r.entry)}</b> <span class="dim">(the confirming close; set SL / TP as distances from your fill)</span></div>
+        <div>Entry</div><div><b>${px(r.entry)}</b>${full ? ' <span class="dim">(the confirming close; set SL / TP as distances from your fill)</span>' : ""}</div>
         <div>SL</div><div>${px(r.sl)} <span class="dim">−$${f(C.sl_usd, 0)}</span></div>
-        <div>TP1 / TP2</div><div>${px(r.tp1)} <span class="dim">+$15, R:R ${f(r.rr1, 2)}</span> · ${px(r.tp2)} <span class="dim">+$20, R:R ${f(r.rr2, 2)}</span></div>
-        ${["T15", "T20"].map((T) => { const x = (r.result || {})[T] || {}, o = OUT[x.out] || ["", esc(x.out || "—")];
-          return `<div>${T === "T15" ? "+$15" : "+$20"} result</div><div><b class="${o[0]}">${o[1]}</b>${isNum(x.usd) ? ` ${usd(x.usd)}` : ""} <span class="dim">· best ${usd(x.mfe)} · worst ${isNum(x.mae) ? "−$" + f(x.mae, 2) : "—"}</span></div>`; }).join("")}
-      </div>` : "";
-    const showP = r.status === "CONFIRMED" || r.status === "PENDING";
+        <div>TP1</div><div>${px(r.tp1)} <span class="dim">+$15 · R:R ${f(r.rr1, 2)}</span></div>
+        <div>TP2</div><div>${px(r.tp2)} <span class="dim">+$20 · R:R ${f(r.rr2, 2)}</span></div>${res}</div>` : "";
+    const ev_ = ev(r.kind);
+    const vwhy = r.status === "CONFIRMED" ? (ev_.validated ? esc(r.reason || "") : `this type is not validated: ${esc(ev_.verdict || "")}`) : "";
+    const hold = ev_.hold_min && isNum(ev_.hold_min.T15) ? ` · typical hold ${f(ev_.hold_min.T15 / 60, 1)} h` : "";
     return `<div class="cf-item cf-${esc((r.status || "").toLowerCase())}">
-      <div class="cf-top">#${r.id} ${esc(CF_KIND[r.kind] || r.kind)} ${esc(r.tf)} ${side(r.dir)} <span class="dim">at ${px(r.p0)} · ${tfmt(r.t_close)}</span></div>
+      <div class="cf-top">${head(r)}</div>
       <div class="dim">${esc(r.what || "")}</div>
       <div class="cf-stage">${(STAGE[r.status] || ((x) => esc(x.status || "")))(r)}</div>
       ${plan}
-      ${showP ? `<div class="cf-prob"><b>Measured probability</b> after a $15 confirmation: +$15 first ${prob(r.kind, "X15 T15")} · +$20 first ${prob(r.kind, "X15 T20")}${ev(r.kind).validated ? "" : ' · <span class="warn">not validated</span>'}</div>` : ""}
-      ${ck ? `<div class="dim" title="${esc(ckTip)}">Confidence score ${ckn} / ${ckt} checks <span class="warn">(a count, not a probability; B19 measured no gain from these checks)</span></div>` : ""}
-      <div class="cf-verdict"><b class="${r.verdict === "TRADE" ? "bull" : r.verdict === "WAIT" ? "" : "warn"}">${esc(r.verdict || "")}</b> <span class="dim">${esc(r.reason || "")}</span></div>
+      ${full ? `<div class="cf-prob"><b>Measured probability</b> after a $15 confirmation: +$15 first ${prob(r.kind, "X15 T15")} · +$20 first ${prob(r.kind, "X15 T20")}${ev_.validated ? "" : ' · <span class="warn">not validated</span>'}${hold}</div>` : ""}
+      ${full && ck ? `<div class="dim" title="${esc(ckTip)}">Confidence score ${ckn} / ${ckt} checks <span class="warn">(a count, not a probability; B19 measured no gain from these checks)</span></div>` : ""}
+      <div class="cf-verdict"><b class="${r.verdict === "TRADE" ? "bull" : r.verdict === "WAIT" ? "" : "warn"}">${esc(r.verdict || "")}</b>${vwhy ? ` <span class="dim">${vwhy}</span>` : ""}</div>
       ${flags.length ? `<div class="dim">${flags.join(" · ")}</div>` : ""}
     </div>`;
-  }).join("");
+  };
+  const rows = C.rows || [];
+  const live = rows.filter((r) => r.status === "PENDING" || (r.status === "CONFIRMED" && !r.t_done));
+  const doneConf = rows.filter((r) => r.status === "CONFIRMED" && r.t_done).slice(0, 6);
+  const rejected = rows.filter((r) => r.status !== "PENDING" && r.status !== "CONFIRMED");
+  const stName = (r) => (r.status === "INVALIDATED" ? "invalidated" : r.status === "EXPIRED" ? "expired" : String(r.status || "").toLowerCase());
+  const rejLines = rejected.map((r) => `<li>${head(r)} · <b>${esc(stName(r))}</b>: ${esc(r.why || "")}${r.repeats ? ` <span class="dim">(+${r.repeats} folded)</span>` : ""}</li>`).join("");
+  const items = (live.length ? `<h4>Now</h4>${live.map((r) => block(r, true)).join("")}` : '<p class="muted">Nothing waiting for confirmation or running now.</p>') +
+    (doneConf.length ? `<h4>Confirmed in the last 3 days</h4>${doneConf.map((r) => block(r, false)).join("")}` : "") +
+    (rejected.length ? `<details class="cf-ev"><summary class="dim">Why no entry was taken: ${rejected.length} trigger(s) invalidated or expired</summary><ul class="cf-rej">${rejLines}</ul></details>` : "");
   const R = C.random || {}, rnd = (key) => (R.rates || {})[key];
   const evRows = Object.entries(C.evidence || {}).map(([k, v]) => {
     const conf = v.confirmed && v.triggers ? `${pct((100 * v.confirmed.X15) / v.triggers, 0)} of ${Number(v.triggers).toLocaleString("en-US")}` : "—";
@@ -2020,7 +2033,7 @@ function renderConfirm() {
   const be = C.break_even || {};
   el.innerHTML = `<div class="cf-head ${accepted ? "bull" : "warn"}">${esc(C.headline)}</div>
     <p class="cf-sub">${esc(C.sub || "")} ${isNum(C.pending) ? `Now: ${C.pending} waiting for confirmation, ${C.running} confirmed and running.` : ""}</p>
-    ${items || '<p class="muted">No trigger in the last 3 days.</p>'}
+    ${rows.length ? items : '<p class="muted">No trigger in the last 3 days.</p>'}
     <details class="cf-ev"><summary class="dim">What each trigger type measured (2020–22, one per idea; validation where it was run)</summary>
       <div class="scroll"><table class="t yt"><tr><th>Type</th><th>Confirmed</th><th>+$15 first after confirmation</th><th>+$20 first</th><th>+$15 first at the trigger</th><th>Verdict</th></tr>${evRows}${rndRow}</table></div>
       <p class="note">Break-even at your $${f(C.op_cost, 2)} per oz: ${pct(100 * (be.T15 || 0), 1)} for +$15 before −$13, ${pct(100 * (be.T20 || 0), 1)} for +$20 (research cost model $${f((C.model_cost || [])[0], 2)}–${f((C.model_cost || [])[1], 2)}). A rate counts as validated only when a registered out-of-sample test passed: none has.</p>

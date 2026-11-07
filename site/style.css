@@ -584,3 +584,6 @@ footer a { color: var(--muted); }
 #cf .cf-ev { margin-top: 8px; }
 #cf .cf-ev summary { cursor: pointer; }
 #cf table.yt td, #cf table.yt th { white-space: normal; }
+#cf h4 { margin: 10px 0 2px; font-size: 13px; }
+#cf .cf-rej { margin: 6px 0; padding-left: 18px; font-size: 12px; }
+#cf .cf-rej li { margin: 3px 0; overflow-wrap: anywhere; }

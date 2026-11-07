@@ -195,7 +195,9 @@ def exit_one(P: dict, k: int, d: int, T: float, s: float = 1.0, entry: float | N
         mfe, mae = max(mfe, fav), max(mae, adv)          # max(x, nan) keeps x: a missing bar adds nothing
     if k + 1 + HOLD <= n:
         b = k + HOLD
-        return {"out": "TIMEOUT", "bar": b, "px": _r(P["c"][b]), "usd": _r((P["c"][b] - e) * d), "mfe": float(mfe), "mae": float(mae)}
+        px = float(P["c"][b])                           # unrounded, as B19 (the display rounds); None if the bar is missing
+        ok = math.isfinite(px)
+        return {"out": "TIMEOUT", "bar": b, "px": px if ok else None, "usd": (px - e) * d if ok else None, "mfe": float(mfe), "mae": float(mae)}
     return {"out": "OPEN", "bar": n - 1, "px": None, "usd": None, "mfe": float(mfe), "mae": float(mae)}
 
 
