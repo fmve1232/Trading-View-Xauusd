@@ -1,0 +1,95 @@
+{
+ "id": "B9-GRAB-FWD",
+ "trades": [
+  {
+   "tf": "15m",
+   "t": 1793835900,
+   "t_close": 1793836800,
+   "dir": -1,
+   "pools": [
+    "PDH"
+   ],
+   "levels": [
+    4070.46
+   ],
+   "wick": 4071.33,
+   "entry": 4065.17,
+   "tp": 4052.17,
+   "sl": 4078.17,
+   "src": "twelvedata:XAU/USD",
+   "status": "SL",
+   "mfe": 3.27,
+   "mae": 14.63,
+   "id": 1,
+   "alert": {
+    "t": 1793837098,
+    "px": 4065.31,
+    "t_px": 1793837057,
+    "live": true
+   },
+   "t_res": 1793838000,
+   "bars": 5
+  },
+  {
+   "tf": "15m",
+   "t": 1793927700,
+   "t_close": 1793928600,
+   "dir": -1,
+   "pools": [
+    "PWH"
+   ],
+   "levels": [
+    4081.97
+   ],
+   "wick": 4094.17,
+   "entry": 4066.37,
+   "tp": 4053.37,
+   "sl": 4079.37,
+   "src": "twelvedata:XAU/USD",
+   "status": "TP",
+   "mfe": 13.36,
+   "mae": 11.43,
+   "id": 2,
+   "alert": {
+    "t": 1793928999,
+    "px": 4069.83,
+    "t_px": 1793928925,
+    "live": true
+   },
+   "t_res": 1793934300,
+   "bars": 20
+  },
+  {
+   "tf": "15m",
+   "t": 1793930400,
+   "t_close": 1793931300,
+   "dir": 1,
+   "pools": [
+    "PDL"
+   ],
+   "levels": [
+    4058.44
+   ],
+   "wick": 4057.86,
+   "entry": 4069.63,
+   "tp": 4082.63,
+   "sl": 4056.63,
+   "src": "twelvedata:XAU/USD",
+   "status": "SL",
+   "mfe": 2.86,
+   "mae": 16.62,
+   "id": 3,
+   "alert": {
+    "t": 1793931695,
+    "px": 4067.67,
+    "t_px": 1793931622,
+    "live": true
+   },
+   "t_res": 1793934300,
+   "bars": 11
+  }
+ ],
+ "checks": [],
+ "verdict": null,
+ "started_utc": 1793836045
+}
