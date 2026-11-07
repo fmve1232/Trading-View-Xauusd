@@ -44,13 +44,15 @@ def test_the_1h_trend_uses_only_closed_bars():
 
 
 def test_body_session_and_day_move():
-    m = _m15([4000, 4004, 4010], start="2026-03-03 15:00")       # London + New York overlap (the engine: 15:00-17:00 UTC in winter)
+    closes = [4000 + (i % 3) for i in range(18)] + [4004, 4010]
+    m = _m15(closes, start="2026-03-03 12:15")                   # the last bars open at 16:45 and 17:00 UTC
     F = b20.features(m, _h1(np.linspace(3900, 4000, 400)))
-    assert set(F["session"]) == {"London + New York"}
-    atr = F["last_candle_body"].iloc[2]
-    assert atr > 0
-    first_open = m["open"].iloc[0]                                 # same New York trading day
-    assert F["day_move"].iloc[2] == pytest.approx((4010 - first_open) / (4010 / 4000))
+    assert F["session"].iloc[-2] == "London + New York" and F["session"].iloc[-1] == "New York only"   # winter: 15-17 UTC overlap
+    from quantum import ta
+    atr = ta.atr(m["high"].to_numpy(float), m["low"].to_numpy(float), m["close"].to_numpy(float), 14)
+    assert F["last_candle_body"].iloc[-1] == pytest.approx(abs(4010 - 4004) / atr[-1])
+    first_open = m["open"].iloc[0]                                 # the same New York trading day
+    assert F["day_move"].iloc[-1] == pytest.approx((4010 - first_open) / (4010 / 4000))
 
 
 def test_bins():
