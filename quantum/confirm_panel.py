@@ -179,15 +179,17 @@ def confirm_one(P: dict, j0: int, p0: float, d: int, X: float, s: float = 1.0, s
 
 
 def exit_one(P: dict, k: int, d: int, T: float, s: float = 1.0, entry: float | None = None, start: int | None = None,
-             mfe0: float = 0.0, mae0: float = 0.0) -> dict:
+             mfe0: float = 0.0, mae0: float = 0.0, stop: float | None = None, hold: int | None = None) -> dict:
     """The trade entered at bar k's close (or at `entry`): TP / SL / AMBIGUOUS / TIMEOUT as B19's exit, OPEN while bars are missing.
     mfe / mae: the largest move for / against the entry ($) on the trade's bars, the exit bar included but capped at the
     level that closed the trade (a bar touching both levels counts the target and the stop); the last bar while OPEN."""
     n = len(P["t"])
     e = float(P["c"][k]) if entry is None else float(entry)      # entry: a price other than bar k's close (research only)
-    tp, sl = e + d * T * s, e - d * SL_USD * s
+    stop_px = SL_USD if stop is None else float(stop)               # B24 also tracks other stop distances
+    hold = HOLD if hold is None else int(hold)                      # bars of the path given (5m paths: 576 = 48 h)
+    tp, sl = e + d * T * s, e - d * stop_px * s
     mfe, mae = float(mfe0), float(mae0)                           # carried from the bars an earlier run examined
-    for b in range(k + 1 if start is None else max(k + 1, start), min(k + 1 + HOLD, n)):
+    for b in range(k + 1 if start is None else max(k + 1, start), min(k + 1 + hold, n)):
         o, h, lo_ = P["o"][b], P["h"][b], P["l"][b]
         o_sl, o_tp = (o - sl) * d <= 0, (o - tp) * d >= 0
         hit_sl = (lo_ <= sl) if d > 0 else (h >= sl)
@@ -197,15 +199,15 @@ def exit_one(P: dict, k: int, d: int, T: float, s: float = 1.0, entry: float | N
             out = "SL" if o_sl else "TP" if o_tp else "AMBIGUOUS" if (hit_sl and hit_tp) else "TP" if hit_tp else "SL"
             px = o if (o_sl or o_tp) else (tp if out == "TP" else sl)
             if out == "TP":                     # the exit bar counts up to the level that closed the trade
-                mfe, mae = max(mfe, abs(px - e)), max(mae, min(adv, SL_USD * s))
+                mfe, mae = max(mfe, abs(px - e)), max(mae, min(adv, stop_px * s))
             elif out == "SL":
                 mfe, mae = max(mfe, min(fav, T * s)), max(mae, abs(px - e))
             else:
-                mfe, mae = max(mfe, T * s), max(mae, SL_USD * s)
+                mfe, mae = max(mfe, T * s), max(mae, stop_px * s)
             return {"out": out, "bar": b, "px": float(px), "usd": float((px - e) * d), "mfe": float(mfe), "mae": float(mae)}
         mfe, mae = max(mfe, fav), max(mae, adv)          # max(x, nan) keeps x: a missing bar adds nothing
-    if k + 1 + HOLD <= n:
-        b = k + HOLD
+    if k + 1 + hold <= n:
+        b = k + hold
         px = float(P["c"][b])                           # unrounded, as B19 (the display rounds); None if the bar is missing
         ok = math.isfinite(px)
         return {"out": "TIMEOUT", "bar": b, "px": px if ok else None, "usd": (px - e) * d if ok else None, "mfe": float(mfe), "mae": float(mae)}

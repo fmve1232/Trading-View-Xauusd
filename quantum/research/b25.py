@@ -276,7 +276,7 @@ def paired(rows: list[dict], name: str, ref: str = "A", key: str = "T15", n_boot
     sums = np.array([sum(by[dd]) for dd in days])
     cnts = np.array([len(by[dd]) for dd in days])
     diff = float(sums.sum() / cnts.sum())
-    rng = np.random.default_rng(seed)
+    rng = H.seeded_rng(seed)
     idx = rng.integers(0, len(days), size=(n_boot, len(days)))
     boot = sums[idx].sum(1) / cnts[idx].sum(1)
     p = float(np.mean(boot <= 0)) if diff > 0 else float(np.mean(boot >= 0))
