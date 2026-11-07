@@ -358,3 +358,30 @@ stream it trades.**
 - the R:R rejection and the trigger-only entry;
 - the REPEAT rule, the statistics helpers and the partition seals;
 - the holdout gate and the undefined profit factor.
+
+## 10. The last month (2026-10-07 → 2026-11-06; exploratory, operator request 2026-11-07)
+
+**Tool:** `research/tools/b19_last_month.py`, the B19 rules unchanged on the site's own 15m / 1h store.
+
+**Results:** `research/results/b19_last_month_2026-11-07.json`. 23 configurations, logged as `B19-month`.
+
+**The month:** gold opened at 4,168, made 4,216 (12 Oct) and 3,866 (1 Nov), and closed at 4,069.
+
+| Stream (stop −$13) | Ideas | Confirmed | Trades | TP first at +$15 | TP first at +$20 | Net $ / oz at +$15 |
+|---|---|---|---|---|---|---|
+| Random entries, BUY (every 15m close) | — | — | 2,093 | 37.6% | 30.8% | — |
+| Random entries, SELL | — | — | 2,094 | 53.0% | 44.8% | — |
+| Engine signals, entry at the signal (all 10 were SELLs) | 10 | — | 10 | 20% | 10% | −8.19 |
+| Structure triggers, entry at the trigger | 18 | — | 18 | 33% | 11% | −4.44 |
+| Engine + $15 confirmation | 10 | 1 (9 invalidated) | 1 | 0 of 1 | 0 of 1 | −13.77 |
+| Structure + $15 confirmation | 18 | 2 (16 invalidated) | 2 | 0 of 2 | 0 of 2 | −13.87 |
+| Structure + $20 confirmation | 18 | 1 | 1 | 0 of 1 | 0 of 1 | −13.97 |
+| Either + filters (F1) | — | 0 | 0 | — | — | — |
+
+**What the month shows:**
+
+- **Nothing reached TP first more often than random.**
+- **"Sell everything" did best,** because the month fell. That is hindsight, not a rule: in 2023–24 the BUYs won.
+- **The confirmation step kept almost every trade out.** Price went −$13 against 25 of 28 triggers before a 15m candle
+  closed +$15 beyond them. That avoided 8 of the engine's 10 losing ideas, but the 1–2 trades it did take lost.
+- **Waiting for pending triggers:** none was pending at the 6 Nov close.
