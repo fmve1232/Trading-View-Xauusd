@@ -112,7 +112,12 @@ $("#toolbar").onclick = (e) => {
 async function getJSON(u) {
   const r = await fetch(u + (u.includes("?") ? "&" : "?") + "v=" + Date.now(), { cache: "no-store" });
   if (!r.ok) throw new Error(u + " -> HTTP " + r.status);
-  return r.json();
+  const txt = await r.text();
+  try { return JSON.parse(txt); } catch (e) {
+    // A file written with a bare NaN / Infinity (Python's json default) is not JSON; read those as null rather than
+    // losing the whole file (index.json's alerts block was unreadable on days with nothing decided, found 2026-11-07).
+    return JSON.parse(txt.replace(/([:,\[]\s*)-?(?:NaN|Infinity)(?=\s*[,\]}])/g, "$1null"));   // no look-behind: old Safari
+  }
 }
 async function load() {
   document.querySelectorAll("#tf-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tf === S.tf));
@@ -1946,6 +1951,84 @@ function renderStrip() {
    published in index.json -> alerts.plans): open trades with the live distance to TP / SL, and the results so far.
    The TP-first figure is geometry, SL / (TP + SL), measured on 139,754 entries; no signal tested beats it. */
 const TF_SEC = { "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400 };
+/* ---------- Two-stage confirmation (quantum/confirm_panel.py; display only, never sent to the phone) ----------
+   Every live trigger type through B19's stages: the trigger, then a 15m CLOSE $15 beyond it before price trades $13
+   against it or an opposite structure break, then the plan (entry at that close, SL -$13, TP1 +$15, TP2 +$20). The
+   probability shown is the measured rate of that trigger type with its 95% interval; the score is a count of checks,
+   never a probability. A confirmed row is accepted only when its type has a validated out-of-sample edge: none has. */
+const CF_KIND = { ENG: "Engine signal", GRAB: "Liquidity grab", BREAK: "Liquidity break", SWEEP: "Sweep setup", BREAKOUT: "Breakout setup", "4H": "4h breakout (all 4)" };
+function cfWilson(k, n) {
+  if (!(n > 0)) return [NaN, NaN];
+  const z = 1.959964, p = k / n, den = 1 + (z * z) / n, mid = (p + (z * z) / (2 * n)) / den;
+  const half = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / den;
+  return [Math.max(0, mid - half), Math.min(1, mid + half)];
+}
+function renderConfirm() {
+  const el = $("#cf"), st = $("#cf-state"); if (!el) return;
+  const C = S.index && S.index.alerts && S.index.alerts.confirm;
+  if (!C) { el.innerHTML = `<span class="muted">The confirmation panel appears after the next engine run.</span>`; if (st) { st.textContent = "—"; st.className = "pill"; } return; }
+  if (C.error) { el.innerHTML = `<span class="muted">Panel unavailable this run (${esc(C.error)}). Alerts are not affected.</span>`; if (st) { st.textContent = "—"; st.className = "pill"; } return; }
+  const accepted = C.headline !== C.no_trade;
+  if (st) { st.textContent = accepted ? "TRADE" : "NO TRADE"; st.className = "pill " + (accepted ? "bull" : "warn"); }
+  const side = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
+  const rt = (v) => { if (!v) return "not measured"; const [lo, hi] = cfWilson(v[0], v[1]); return `${pct((100 * v[0]) / v[1], 0)} of ${Number(v[1]).toLocaleString("en-US")} (${esc(v[2])}, 95% ${pct(100 * lo, 0)}–${pct(100 * hi, 0)})`; };
+  const ev = (k) => (C.evidence || {})[k] || {};
+  const prob = (k, key) => { const rs = (ev(k).rates || {})[key]; return rs && rs.length ? rs.map(rt).join("; ") : "not measured after a confirmation"; };
+  const OUT = { TP: ["bull", "target first"], SL: ["bear", "stop first"], AMBIGUOUS: ["warn", "target and stop in one bar (counted as the stop)"], TIMEOUT: ["", "neither in 192 bars"], OPEN: ["", "open"] };
+  const usd = (x) => (isNum(x) ? (x < 0 ? "−$" : "+$") + Math.abs(x).toFixed(2) : "—");
+  const STAGE = {
+    PENDING: (r) => `<b>CONFIRMATION PENDING</b> · needs a 15m close at ${px(r.confirm_at)} before ${px(r.invalid_at)} (${r.bars || 0} of ${C.win_bars} bars)`,
+    INVALIDATED: (r) => `<b class="bear">INVALIDATED</b> · ${esc(r.why || "")}${r.t_done ? ` (${tfmt(r.t_done)})` : ""}`,
+    EXPIRED: (r) => `<b>EXPIRED</b> · ${esc(r.why || "")}`,
+    STALE: (r) => `<b>NOT FINISHED</b> · ${esc(r.why || "")}`,
+    CONFIRMED: (r) => `<b class="bull">$15 CONFIRMED</b> · 15m close ${px(r.entry)} at ${tfmt(r.t_conf)}` +
+      (r.x20 && r.x20.status === "CONFIRMED" ? ` · $20 close ${px(r.x20.px)} at ${tfmt(r.x20.t)}` : ""),
+  };
+  const items = (C.rows || []).map((r) => {
+    const flags = [r.backfill ? "rebuilt from the chart when the panel started" : "", r.late ? '<b class="warn">appeared after its bar was already processed (repaint or late data)</b>' : "",
+      r.vanished ? '<b class="warn">no longer on the chart (kept as first seen)</b>' : "", r.repeats ? `+${r.repeats} later trigger(s) of the same idea folded in` : ""].filter(Boolean);
+    const ck = r.checks || null, ckn = ck ? Object.values(ck).filter(Boolean).length : null, ckt = ck ? Object.keys(ck).length : null;
+    const ckTip = ck ? Object.entries(ck).map(([k, v]) => `${v ? "✓" : "✗"} ${(C.check_text || {})[k] || k}`).join("\n") : "";
+    const plan = r.status === "CONFIRMED" ? `<div class="kv">
+        <div>Entry</div><div><b>${px(r.entry)}</b> <span class="dim">(the confirming close; set SL / TP as distances from your fill)</span></div>
+        <div>SL</div><div>${px(r.sl)} <span class="dim">−$${f(C.sl_usd, 0)}</span></div>
+        <div>TP1 / TP2</div><div>${px(r.tp1)} <span class="dim">+$15, R:R ${f(r.rr1, 2)}</span> · ${px(r.tp2)} <span class="dim">+$20, R:R ${f(r.rr2, 2)}</span></div>
+        ${["T15", "T20"].map((T) => { const x = (r.result || {})[T] || {}, o = OUT[x.out] || ["", esc(x.out || "—")];
+          return `<div>${T === "T15" ? "+$15" : "+$20"} result</div><div><b class="${o[0]}">${o[1]}</b>${isNum(x.usd) ? ` ${usd(x.usd)}` : ""} <span class="dim">· best ${usd(x.mfe)} · worst ${isNum(x.mae) ? "−$" + f(x.mae, 2) : "—"}</span></div>`; }).join("")}
+      </div>` : "";
+    const showP = r.status === "CONFIRMED" || r.status === "PENDING";
+    return `<div class="cf-item cf-${esc((r.status || "").toLowerCase())}">
+      <div class="cf-top">#${r.id} ${esc(CF_KIND[r.kind] || r.kind)} ${esc(r.tf)} ${side(r.dir)} <span class="dim">at ${px(r.p0)} · ${tfmt(r.t_close)}</span></div>
+      <div class="dim">${esc(r.what || "")}</div>
+      <div class="cf-stage">${(STAGE[r.status] || ((x) => esc(x.status || "")))(r)}</div>
+      ${plan}
+      ${showP ? `<div class="cf-prob"><b>Measured probability</b> after a $15 confirmation: +$15 first ${prob(r.kind, "X15 T15")} · +$20 first ${prob(r.kind, "X15 T20")}${ev(r.kind).validated ? "" : ' · <span class="warn">not validated</span>'}</div>` : ""}
+      ${ck ? `<div class="dim" title="${esc(ckTip)}">Confidence score ${ckn} / ${ckt} checks <span class="warn">(a count, not a probability; B19 measured no gain from these checks)</span></div>` : ""}
+      <div class="cf-verdict"><b class="${r.verdict === "TRADE" ? "bull" : r.verdict === "WAIT" ? "" : "warn"}">${esc(r.verdict || "")}</b> <span class="dim">${esc(r.reason || "")}</span></div>
+      ${flags.length ? `<div class="dim">${flags.join(" · ")}</div>` : ""}
+    </div>`;
+  }).join("");
+  const R = C.random || {}, rnd = (key) => (R.rates || {})[key];
+  const evRows = Object.entries(C.evidence || {}).map(([k, v]) => {
+    const conf = v.confirmed && v.triggers ? `${pct((100 * v.confirmed.X15) / v.triggers, 0)} of ${Number(v.triggers).toLocaleString("en-US")}` : "—";
+    const at = (v.at_trigger || {}).T15;
+    return `<tr><td>${esc(CF_KIND[k] || k)} <span class="dim">${esc(v.study)}</span></td><td>${conf}</td><td>${prob(k, "X15 T15")}</td><td>${prob(k, "X15 T20")}</td><td>${at ? rt(at) : "—"}</td><td>${esc(v.verdict)}</td></tr>`;
+  }).join("");
+  const rr = rnd("X15 T15"), rr20 = rnd("X15 T20"), ra = (R.at_trigger || {}).T15;
+  const rndRow = rr ? `<tr><td>Random triggers <span class="dim">B21 N2</span></td><td>${pct(100 * (R.confirmed_share || 0), 0)}</td><td>${rt([rr[0], rr[1], "2020-22"])}</td><td>${rt([rr20[0], rr20[1], "2020-22"])}</td><td>${ra ? rt([ra[0], ra[1], "2020-22"]) : "—"}</td><td>the baseline</td></tr>` : "";
+  const rec = C.record || {}, recRows = Object.entries(rec).map(([k, g]) => `<tr><td>${esc(CF_KIND[k] || k)}</td><td>${g.confirmed} of ${g.triggers}</td><td>${g.T15[1] ? `${g.T15[0]} of ${g.T15[1]}` : "—"}</td><td>${g.T20[1] ? `${g.T20[0]} of ${g.T20[1]}` : "—"}</td><td>${g.invalidated} / ${g.expired}</td></tr>`).join("");
+  const be = C.break_even || {};
+  el.innerHTML = `<div class="cf-head ${accepted ? "bull" : "warn"}">${esc(C.headline)}</div>
+    <p class="cf-sub">${esc(C.sub || "")} ${isNum(C.pending) ? `Now: ${C.pending} waiting for confirmation, ${C.running} confirmed and running.` : ""}</p>
+    ${items || '<p class="muted">No trigger in the last 3 days.</p>'}
+    <details class="cf-ev"><summary class="dim">What each trigger type measured (2020–22, one per idea; validation where it was run)</summary>
+      <div class="scroll"><table class="t yt"><tr><th>Type</th><th>Confirmed</th><th>+$15 first after confirmation</th><th>+$20 first</th><th>+$15 first at the trigger</th><th>Verdict</th></tr>${evRows}${rndRow}</table></div>
+      <p class="note">Break-even at your $${f(C.op_cost, 2)} per oz: ${pct(100 * (be.T15 || 0), 1)} for +$15 before −$13, ${pct(100 * (be.T20 || 0), 1)} for +$20 (research cost model $${f((C.model_cost || [])[0], 2)}–${f((C.model_cost || [])[1], 2)}). A rate counts as validated only when a registered out-of-sample test passed: none has.</p>
+    </details>
+    ${recRows ? `<details class="cf-ev"><summary class="dim">Live record since ${tfmt(C.started_utc)} (descriptive, no verdict)</summary><div class="scroll"><table class="t yt"><tr><th>Type</th><th>Confirmed</th><th>+$15 first</th><th>+$20 first</th><th>Invalid / expired</th></tr>${recRows}</table></div></details>` : ""}
+    <p class="note">Rule: ${esc(C.rule || "")}. A touch never confirms: only a 15m close does, and a bar that touches −$13 and closes beyond counts as invalid. The direction is never reversed. Volume: the spot feed has none (COMEX order flow tested in B5: no information). Prices are the site's feed${S.mt5 ? " shifted by your MT5 offset" : ""}. Nothing here is sent to the phone.</p>`;
+}
+
 function renderPlanAlerts() {
   const el = $("#pa"), st = $("#pa-state"); if (!el) return;
   const A = S.index && S.index.alerts, P = A && A.plans;
@@ -2166,7 +2249,7 @@ function validationHtml(V) {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderPlanAlerts); safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderPlanAlerts); safe(renderConfirm); safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

@@ -570,3 +570,17 @@ footer a { color: var(--muted); }
 .h5card .pill.bear { color: var(--bear); border-color: color-mix(in srgb, var(--bear) 45%, transparent); }
 .h5card .note-h5 { font-size: 12px; color: var(--muted); border-left: 2px solid var(--warn); padding-left: 8px; }
 .h5card .note-h5 b { color: var(--warn); }
+
+/* Two-stage confirmation card (quantum/confirm_panel.py) */
+#cf .cf-head { font-weight: 700; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--bg-2); }
+#cf .cf-head.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 8%, transparent); }
+#cf .cf-head.bull { color: var(--bull); border-color: color-mix(in srgb, var(--bull) 40%, transparent); }
+#cf .cf-sub { font-size: 12px; color: var(--muted); margin: 6px 0 8px; }
+#cf .cf-item { border-top: 1px solid var(--line); padding: 8px 0; font-size: 12.5px; overflow-wrap: anywhere; }
+#cf .cf-item > div { margin: 2px 0; }
+#cf .cf-top { font-weight: 600; }
+#cf .cf-prob { font-size: 12px; }
+#cf .cf-item .kv { margin: 4px 0; font-size: 12px; }
+#cf .cf-ev { margin-top: 8px; }
+#cf .cf-ev summary { cursor: pointer; }
+#cf table.yt td, #cf table.yt th { white-space: normal; }

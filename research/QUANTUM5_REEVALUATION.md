@@ -158,8 +158,10 @@ NO TRADE — INSUFFICIENT CONFIRMATION
 (no signal type has a validated success rate above break-even; measured base: +$15 first 46%, +$20 first 39%)
 ```
 
-**Proposed dashboard panel.** It would come from the B19 state machine running live on 15m closes for every alert
-type. It is not implemented in production yet: it is a production change, so it waits for the operator's go-ahead.
+**The dashboard panel is now built** (`quantum/confirm_panel.py`, the website card "Two-stage confirmation"; on PR #90,
+live once the PR is merged). It runs the B19 state machine on the site's 15m closes for every live alert type. It is
+website only: the phone alerts, the plans, the B9 / B15 tests and the freeze key are unchanged, and a test runs the
+alerts with the panel on and off and requires identical sends. Section 10 has the details.
 
 | Field | Content |
 |---|---|
@@ -233,12 +235,22 @@ are reported separately.
 
 All are on PR #90.
 
-**Production: unchanged, for two reasons.**
-1. No method produced an independently validated improvement to implement.
-2. The operator's rule: no production change before the findings are approved.
+**Implemented on this PR (website only; merged only on the operator's approval):**
 
-**What can be implemented on approval** (display and alerts only; the freeze key is unaffected):
-1. The acceptance framework and confirmation panel in section 7, with validated probabilities shown as the measured
-   rates.
-2. Alerts limited to confirmed signals, labelled with their measured odds.
-3. Correcting the "above 60%" mode, whose basis was the inflated count.
+| File | What it does |
+|---|---|
+| `quantum/confirm_panel.py` | The acceptance framework and confirmation engine of sections 3, 5 and 7, live: every trigger type → CONFIRMATION PENDING → $15 CONFIRMED (the first 15m close $15 beyond, before −$13 or an opposite structure break; $20 tracked beside it) / INVALIDATED / EXPIRED → entry at the confirming close, SL −$13, TP1 +$15, TP2 +$20, R:R 1.15 / 1.54, each resolved as in B19. Verdict per row: WAIT, NO TRADE (with the reason), or TRADE only for a type with a registered out-of-sample pass. None has one, so the card reads **NO TRADE — INSUFFICIENT CONFIRMATION**. |
+| `site/app.js`, `index.html`, `style.css` | The card: direction, trigger price and time, confirmation price and timeframe (15m), structure justification, entry, SL, TP1 / TP2, R:R, the measured probability with its 95% interval (kept apart from the confidence score, which is labelled as a count of checks), holding time, costs and break-even, result with best / worst excursion, and why each other entry was rejected (invalidated, expired, folded into the same idea). |
+| `quantum/notify.py` | Calls the panel (a failure there cannot stop the alerts), and returns its report without NaN (the bug below). |
+| `tests/test_confirm_panel.py` | 18 tests: the live functions equal `b19.py` trade for trade on random paths; touch / same-bar / structure / gap / ambiguous / expiry / SELL edge cases; the shown rates equal the committed results; nothing is accepted without validation; repeat folding, repaint and vanish flags; phone output identical with the panel on or off; strict JSON. |
+| `research/tools/excursions.py` | Section 9's missing metrics on 2020–22, using the panel's own exit function; it stops if live and research outcomes differ on any trade. |
+
+**A production bug found while building it (fixed on this PR):** since the validation report was added
+(`ef6620013`), its empty "today" / "this week" blocks carried NaN. The browser's JSON parser rejects NaN, so on any
+day with nothing decided the site could not read the alerts block of `index.json` and every alert card stayed empty.
+Reproduced with the production code on a copy of the live store; fixed in `notify.run` (NaN → null) and, for older
+files, in the site's loader.
+
+**Still waiting for the operator's approval (not done):**
+1. Phone alerts only after a confirmation, labelled with their measured odds.
+2. Correcting the "above 60%" mode, whose basis was the inflated count.
