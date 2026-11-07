@@ -363,7 +363,7 @@ stream it trades.**
 
 **Tool:** `research/tools/b19_last_month.py`, the B19 rules unchanged on the site's own 15m / 1h store.
 
-**Results:** `research/results/b19_last_month_2026-11-07.json`. 23 configurations, logged as `B19-month`.
+**Results:** `research/results/b19_last_month_2026-11-07.json`. 22 configurations, logged as `B19-month`.
 
 **The month:** gold opened at 4,168, made 4,216 (12 Oct) and 3,866 (1 Nov), and closed at 4,069.
 
