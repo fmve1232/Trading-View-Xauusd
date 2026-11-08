@@ -4,7 +4,9 @@
  "status": "APPROVED by the operator 2026-11-08; written and committed before any of its code; research only, isolated branch",
  "approved_by_operator": true,
  "approval": "Operator, 2026-11-08 (chat, Phase C): \"TRACK B - DYNAMIC TP/SL DISCOVERY ... Register the full experiment space before execution ... Identify the best strategy by net expectancy and risk-adjusted performance, not by highest historical win rate.\"",
- "partitions": ["development"],
+ "partitions": [
+  "development"
+ ],
  "unsealed_data_also_used": "2026 (from 2026-01-01, scored from 2026-03-01) and the live store's 5m bars (Sep-Nov 2026), only to CHECK frozen candidates and the 15m resolution bounds; validation and holdout are not read",
  "created_utc": "2026-11-08",
  "trade": "B26's execution model with TP != SL: decision at a 15m close, fill at the next open (BUY at the ask, SELL at the bid, plus entry slippage); TP = fill +- TP*k, SL = fill -+ SL*k (k = price / 4000 in development, 1 in 2026); a BUY's levels trigger on the bid, a SELL's on the ask; a bar opening beyond the stop fills at the open less slippage, beyond the target at the target; a bar reaching both levels is AMBIGUOUS; 192 bars (2 trading days) at most; closure exits; ENG costs primary, GROSS / OP / ADV beside",
@@ -22,5 +24,25 @@
  "frozen_for_2026": "Per study (V, M, C, E): every INFORMATIVE configuration (at most 20), the 5 best by development lower bound with >= 300 trades and the 5 best with 30-299; G: the 5 pairs with the best expectancy per unit risk; checked on 2026 (Holm across all frozen)",
  "leaderboards": "B: Track B frozen candidates. C: the best risk-adjusted across Tracks A (B27 + B28) and B, ranked by development expectancy per unit risk, then lower bound; Track A's leaderboard is kept separate. Each names the best high-probability, net-profit, risk-adjusted, low-drawdown, BUY, SELL and 5m-execution setups, with 'none qualifies' where none does.",
  "decision": "None here. A TRADEABLE candidate that holds on 2026 is proposed as one hypothesis for the sealed validation period (operator approval). The report states the highest defensible TP-first rate for each bracket and its gap to 90%.",
- "unchanged": "Production, web.8, the frozen Pine files, alerts, PR #90, PR #91"
+ "unchanged": "Production, web.8, the frozen Pine files, alerts, PR #90, PR #91",
+ "amendments": [
+  {
+   "date": "2026-11-08",
+   "before_any_real_result": true,
+   "change": "V's primary test. The registered comparison (expectancy per unit risk above the fixed-dollar bracket closest in median size) is biased by the size mismatch: a smaller bracket pays the same cost over less risk. On synthetic random walks (research/tools/phasec_null_check.py) it flagged 2 of 50 configurations (ATR 0.5x/0.5x, median $3.30, against TP3/SL3). Replaced by: H0 = the GROSS (pre-cost) expectancy of the ATR bracket's independent series is <= 0 (one-sided one-sample t-test), which is zero for any bracket without directional information; BH over V; INFORMATIVE also needs >= 300 trades; TRADEABLE also needs positive ENG expectancy and the lower bound above break-even. The closest-fixed comparison is reported as description only.",
+   "found_by": "the Phase C null check, before the real run"
+  },
+  {
+   "date": "2026-11-08",
+   "before_any_real_result": true,
+   "change": "V's test, second correction. A one-direction gross-expectancy test is confounded by the period's realised drift (a random walk's realised path trends; the null check flagged 4 of 50 with amendment 1). Replaced by: H0 = the POOLED (BUY and SELL, same entries) gross expectancy of the ATR bracket's independent series is <= 0, one-sided one-sample t-test per bracket (drift cancels to first order because a SELL is the mirror of a BUY); BH over the 25 brackets; both direction rows carry their bracket's verdict; INFORMATIVE also needs >= 300 trades per direction; TRADEABLE also needs positive ENG expectancy and the lower bound above break-even.",
+   "found_by": "the Phase C null check, before the real run"
+  },
+  {
+   "date": "2026-11-08",
+   "before_any_real_result": true,
+   "change": "V's test, third correction, and a disclosure for every GROSS figure. The GROSS scenario fills a stop exactly at its level; on a discretely moving price a real stop fills at the first price beyond it. Omitting that overshoot favours brackets whose stop is hit more often (TP > SL): on a path-consistent synthetic random walk (1-minute steps aggregated to 15m bars) the pooled gross of TP15/SL5 was +$0.26 per oz, matching the overshoot arithmetic 0.58 sigma x (P(SL) - P(TP)). ENG charges $0.20 stop slippage, more than gold's tick-level overshoot, so ENG is conservative. V's test becomes: H0 = the pooled (BUY and SELL) ENG expectancy of the ATR bracket's independent series is <= 0, one-sided one-sample t-test per bracket, BH over the 25 brackets; TRADEABLE also needs >= 300 trades per direction and the lower bound above break-even. GROSS rates are reported as an upper reference, with this caveat. The null check now uses path-consistent synthetic bars (1-minute steps aggregated), because independent-noise wicks are not a valid null for exit geometry.",
+   "found_by": "the Phase C null check and a martingale check, before the real run"
+  }
+ ]
 }

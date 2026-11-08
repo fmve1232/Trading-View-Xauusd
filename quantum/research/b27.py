@@ -555,9 +555,9 @@ def stop_fill(P: b26.Path, i: int, level: float, d: int, s: float, si: float, k:
     return None, math.nan
 
 
-def entry_trades(P: b26.Path, trig: list[tuple], costs: dict, horizon: int = 192) -> dict:
+def entry_trades(P: b26.Path, trig: list[tuple], costs: dict, horizon: int = 192, xs=CONF_X) -> dict:
     """trig: (i, d, k, level or nan). For every mode, the list of trades (one per filled trigger) as dicts."""
-    out = {m: [] for m in entry_modes()}
+    out = {m: [] for m in entry_modes(xs)}
     out["_funnel"] = []                                           # (d, {X: status}) per trigger, aligned with trig
 
     def cost_at(j, k):
@@ -579,9 +579,9 @@ def entry_trades(P: b26.Path, trig: list[tuple], costs: dict, horizon: int = 192
         f = i + 1
         s, si, so, cm = cost_at(f, k)
         run_and_book("IMM", i, d, k, f, P.o[f] + d * (s / 2 + si), s, so, cm, si)
-        conf = confirm_scan(P, i, d, k)
-        out["_funnel"].append((d, {x: conf[x][0] for x in CONF_X}))
-        for x in CONF_X:
+        conf = confirm_scan(P, i, d, k, xs)
+        out["_funnel"].append((d, {x: conf[x][0] for x in xs}))
+        for x in xs:
             st, j = conf[x]
             if st != "CONFIRMED" or j + 1 >= P.n or P.t[j + 1] - P.t[j] != P.bar:
                 continue
@@ -591,7 +591,7 @@ def entry_trades(P: b26.Path, trig: list[tuple], costs: dict, horizon: int = 192
             if jb is not None:
                 s, si, so, cm = cost_at(jb, k)
                 run_and_book(f"RETEST_{x}", i, d, k, jb, fl, s, so, cm, 0.0, fill_bar=jb)
-        for x in CONF_X:
+        for x in xs:
             s, si, so, cm = cost_at(f, k)
             jb, fl = stop_fill(P, i, P.c[i] + d * x * k, d, s, si, k)
             if jb is not None:
@@ -604,8 +604,8 @@ def entry_trades(P: b26.Path, trig: list[tuple], costs: dict, horizon: int = 192
     return out
 
 
-def entry_modes() -> list[str]:
-    return ["IMM", *[f"CONF_{x}" for x in CONF_X], *[f"RETEST_{x}" for x in CONF_X], *[f"STOP_{x}" for x in CONF_X], "LIMIT"]
+def entry_modes(xs=CONF_X) -> list[str]:
+    return ["IMM", *[f"CONF_{x}" for x in xs], *[f"RETEST_{x}" for x in xs], *[f"STOP_{x}" for x in xs], "LIMIT"]
 
 
 def triggers(F: pd.DataFrame, L: pd.DataFrame, fam: str, k_of: np.ndarray) -> list[tuple]:
