@@ -1,0 +1,65 @@
+{
+ "id": "B27",
+ "title": "Maximum achievable TP-first probability for +$15 / -$15: a registered discovery framework over every testable factor, entry mechanism, confirmation distance, regime and probability model, selected on development data only and checked, frozen, on 2026",
+ "status": "APPROVED by the operator 2026-11-08; written and committed before any of its code; research only, isolated branch, no production change",
+ "approved_by_operator": true,
+ "approval": "Operator, 2026-11-08 (chat, MAXIMUM ACHIEVABLE TP-FIRST PROBABILITY OPTIMIZATION): \"discover the market conditions, indicator combinations, entry mechanisms, confirmation requirements, and execution parameters that produce the highest statistically defensible probability of reaching TP before SL ... Keep validation and holdout sealed until the approved validation phase. Register new studies before running them. Preserve append-only research logs.\"",
+ "partitions": [
+  "development"
+ ],
+ "unsealed_data_also_used": "2026 (2026-01-01 on, scored from 2026-03-01; after the sealed holdout) and the live store's 5m bars (2026-09-10 .. 2026-11-06), only to CHECK candidates frozen on development. No validation (2023-01-24 .. 2024-07-01) or holdout (2024-07-01 .. 2026-01-01) bar is read. Nothing is selected on 2026.",
+ "created_utc": "2026-11-08",
+ "trade": "B26's trade exactly: decision at a 15m close, fill at the next open (BUY at the ask, SELL at the bid), TP / SL +-$15 from the actual fill (k = price / 4000 in development), triggers on the exit side, same-bar = stop, gap rules, 2-day limit, closure exits. Primary cost scenario ENG (the engine model); GROSS and OP reported beside it. Labels come from quantum.research.b26 (registration B26).",
+ "success_measure": {
+  "primary": "Decided TP-first rate r = TP / (TP + SL + AMBIGUOUS) on the candidate's independent-trade series (non-overlapping: the next entry only after the previous trade exited), with a Wilson 95% interval",
+  "also": "TP-first among all trades (closure / time exits counted as not TP), net expectancy per oz and per 0.50 lot (ASSUMED 100 oz), profit factor, maximum drawdown, longest losing run, trades per week, holding time, cost, MFE / MAE, the share of 'neither' outcomes",
+  "sample_sizes": "Raw (all entries, overlapping) and effective (independent trades; distinct trading days) are both reported"
+ },
+ "baselines": {
+  "matched_random": "For each candidate: the B26 all-bar decided rate (same scenario, same direction), post-stratified to the candidate's own mix of session (ASIA / LONDON / OVERLAP / NY / OFF) and calendar month. This is 'random entry with the same direction, session and market period'.",
+  "break_even": "From the candidate's own average net win and loss (ENG: about 50.6%)"
+ },
+ "features": {
+  "rule": "Every feature at a decision bar uses only bars closed at or before it (15m) and higher-timeframe bars closed by then. Tested by recomputing on truncated data.",
+  "from_B22": "quantum.research.b22.base_features: the production engine's own outputs (score, trade quality, session quality, regime, signals, sweeps, structure), EMA 20 / 100 / 200 distance and slope, 1h / 4h / 1D trend votes, Bollinger %B and width, RSI, MACD histogram, returns over 1 / 4 / 16 bars, wick skew, candle runs, distance to PDH / PDL / PWH / PWL, position in the day's range, ATR level and rank, hour, weekday, sessions, FVG flag. Its 'VWAP' distance is the engine's no-volume fallback, the session's average price: reported as SESSION MEAN, never as VWAP.",
+  "added_in_B27": "ADX and DI+ - DI-, ATR14 / ATR100 (expansion / contraction), Bollinger width rank (500 bars), consecutive same-direction closes, displacement candle, new FVG (>= 0.3 ATR) and price inside an unfilled FVG, order-block retest (the last opposite candle before a displacement), equal highs / lows near price (confirmed pivots within 0.15 ATR), position in the Asian range and the London break of it, PDH / PDL sweep-and-reclaim, failed 20-bar breakout, premium / discount in the 96-bar range, structure flip (CHoCH-like) within 8 bars, EMA 20 pullback in the 1h trend, volatility expansion after contraction, minutes to / since a dated CPI / NFP / FOMC release",
+  "markov": "3-state Gaussian HMM on 1h returns, forward-filtered, parameters fitted on each training window only (as B22)",
+  "not_testable": "True VWAP, volume profile / POC and relative volume (Twelve Data has no volume; tick volume is not traded volume); intraday DXY / 10Y / EURUSD / silver / S&P (no 2020-22 bars are held); PCE (no dated list). These are reported as NOT TESTED, never substituted."
+ },
+ "studies": {
+  "S1_conditions": "Each feature on its own: continuous features in quintiles (edges from development), flags as present / absent, each in the trade's favour (signed features multiplied by the direction), BUY and SELL separately. Immediate entry.",
+  "S2_entries": {
+   "triggers": "EVERY_HOUR (every 4th eligible bar, both directions), ENG_SIGNAL, SWEEP, GRAB, BREAK (the engine's), BOS (the engine's BOS / MSS / CHoCH), FVG (new), DISPLACEMENT, EMA_PULLBACK, VOL_EXPANSION, ASIA_BREAKOUT, FAILED_BREAKOUT, PD_SWEEP (each with its direction)",
+   "modes": {
+    "IMM": "fill at the next open",
+    "CONF_X": "the first 15m close >= X beyond the trigger close in the trade's direction, within 96 bars, before the original stop (trigger -+ $15) is touched; fill at the next open; TP / SL recalculated +-$15 from that fill. X in {3, 5, 7, 10, 12, 15, 20}",
+    "RETEST_X": "after CONF_X, a limit at the confirmation level for 8 bars (fills when the ask / bid reaches it; at the open if it gaps through); TP / SL from the fill; unfilled = no trade",
+    "STOP_X": "a stop order at trigger +- X placed at the trigger (breakout continuation): fills when the ask / bid trades through it (plus slippage), before the original stop; on the fill bar a touch of the new stop counts as the stop and the target is not credited",
+    "LIMIT": "a structure limit for 8 bars at the family's own level, only on the adverse side 0.5 .. 14 away: FVG midpoint, half the displacement body, the Asian range edge, the swept PDH / PDL, the failed breakout level; same fill-bar rule as STOP"
+   },
+   "reported_per_configuration": "triggers, fill rate, invalidated / expired / missed, independent trades, r with interval, per-trade and per-trigger expectancy (an unfilled trigger = 0), MFE / MAE, minutes to TP, false entries (stop first), cost"
+  },
+  "S3_probability_models": {
+   "target": "TP first (1) vs not (0) under ENG; the outcome mix TP / SL / neither is reported for selected sets",
+   "models": "LR (logistic, standardised, pooled with the direction as a feature), HGB (sklearn histogram gradient boosting, pooled), LGBM (pooled), LGBM_SEP (separate BUY and SELL models), ENS (mean of LR, HGB, LGBM)",
+   "validation": "Quarterly walk-forward inside development: train on everything before the test quarter (first test quarter 2021-01), purge training rows whose trade had not exited by the test start, 1-day embargo; isotonic calibration on the last 20% of each training window",
+   "selection": "Top q% by calibrated probability, q in {50, 20, 10, 5, 2, 1, 0.5}, the threshold taken from the training window's own predictions, BUY and SELL reported separately",
+   "metrics": "AUC, Brier vs the constant forecast, reliability by decile, r and expectancy of each top-q set on independent trades",
+   "frozen": "Each model refitted on all development with the same calibration; thresholds fixed from development; applied unchanged to 2026"
+  },
+  "S4_feature_ranking": "Univariate AUC of each signed feature; LGBM permutation importance on the walk-forward test quarters (AUC drop, 3 repeats); family ablation (refit without each family, walk-forward AUC change)",
+  "S5_regimes": "STRONG_BULL / STRONG_BEAR (ADX >= 25, DI side and 1h trend agree), WEAK_BULL / WEAK_BEAR (18 <= ADX < 25), SIDEWAYS (ADX < 18), EXPANSION (ATR14 / ATR100 >= 1.3), CONTRACTION (<= 0.75), REVERSAL (structure flip within 8 bars), NEWS (-30 min .. +2 h of a dated release), POST_NEWS (+2 .. +6 h), LIQUIDITY (an engine sweep / grab within 4 bars). Multi-label; BUY and SELL each.",
+  "S6_intermarket_2026_descriptive": "DXY, US 10-year yield, EURUSD, silver futures and the S&P 500 (live store 60m): the signed 4-hour change in quintiles vs gold BUY / SELL r, on 2026 only, DESCRIPTIVE: never used to select, because no 2020-22 bars exist to develop it on"
+ },
+ "selection_rules": {
+  "test": "One-sided exact binomial test of the candidate's decided TP count against its matched random rate; Benjamini-Hochberg q = 0.05 within each study (S1, S2, S3, S5)",
+  "INFORMATIVE_dev": "BH-significant, Wilson lower bound above the matched random rate, at least 300 independent trades",
+  "TRADEABLE_dev": "INFORMATIVE, Wilson lower bound above the candidate's own break-even, and positive ENG expectancy",
+  "frozen_for_2026": "Every INFORMATIVE candidate (at most 40, by development Wilson lower bound), the 10 best by development Wilson lower bound among those with >= 300 independent trades whether or not they pass, and the 10 best among 30 .. 299 (the low-frequency board)",
+  "check_2026": "The same statistics on 2026 (15m; and 5m exits on the store window for immediate-entry candidates), one-sided binomial against the 2026 matched random rate, Holm across all frozen candidates; and against break-even",
+  "leaderboards": "Ranked by development statistical quality (Wilson lower bound, then expectancy), with the 2026 check beside it, never ranked by 2026. Columns: BUY / SELL / combined r, interval, independent trades, trades per week, expectancy, profit factor, maximum drawdown (and its Monte Carlo 95th percentile from 2,000 trade-order shuffles, harness.seeded_rng), holding time, cost, regimes, 2026 result. Pareto frontier of r vs frequency vs expectancy vs drawdown for S2 and S3."
+ },
+ "multiple_testing_accounting": "Every configuration is appended to research/trials.jsonl (with the 1,383 earlier lines) and counted; the report states how many were tested and how many would pass by chance at the BH rate.",
+ "decision": "No strategy is approved by B27. A TRADEABLE candidate that also holds on 2026 is proposed for a separate validation registration (sealed 2023-01 .. 2024-07), which needs the operator's approval, then a forward shadow test. If nothing passes, the report says so and quantifies the gap to 70 / 80 / 90%.",
+ "unchanged": "Production engine and config, web.8 and its freeze key, the frozen Pine reference, the developed Pine line, phone alerts, PR #90, PR #91; research code is never imported by production."
+}
