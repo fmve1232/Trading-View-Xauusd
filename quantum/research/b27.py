@@ -1198,17 +1198,23 @@ def write(out: dict, dir_: str, trials: str | None) -> None:
     if frames:
         pd.concat(frames).to_csv(os.path.join(dir_, "b27_frozen_trades.csv.gz"), index=False, float_format="%.4f", compression="gzip")
     if trials:
-        for key in ("S1", "S2", "S3", "S5"):
-            for c_ in out[key]:
-                dv = c_["dev"]
-                H.log_trial(trials, {"phase": REG, "partition": "development", "id": f"B27 {c_['id']}", "n": dv["n_decided"],
-                                     "success": dv["r"], "ci95": dv["ci95"], "net_usd_per_oz": dv["exp_oz"],
-                                     "verdict": "TRADEABLE" if c_["tradeable"] else ("INFORMATIVE" if c_["informative"] else "NO")})
-        for c_ in out["frozen"]:
-            y_ = c_.get("y2026") or {}
-            H.log_trial(trials, {"phase": REG, "partition": "unsealed 2026 (frozen check)", "id": f"B27 {c_['id']}",
-                                 "n": y_.get("n_decided"), "success": y_.get("r"), "ci95": y_.get("ci95"), "net_usd_per_oz": y_.get("exp_oz"),
-                                 "holm_p": c_.get("y2026_holm_p"), "verdict": "HOLDS" if c_.get("holds_2026") else "DOES NOT HOLD"})
+        log_trials(out, trials)
+
+
+def log_trials(out: dict, trials: str) -> None:
+    """One trial line per tested configuration (development) and per frozen candidate (2026 check). Works on the
+    in-memory result or on b27_summary.json read back."""
+    for key in ("S1", "S2", "S3", "S5"):
+        for c_ in out[key]:
+            dv = c_["dev"]
+            H.log_trial(trials, {"phase": REG, "partition": "development", "id": f"B27 {c_['id']}", "n": dv["n_decided"],
+                                 "success": dv["r"], "ci95": dv["ci95"], "net_usd_per_oz": dv["exp_oz"],
+                                 "verdict": "TRADEABLE" if c_["tradeable"] else ("INFORMATIVE" if c_["informative"] else "NO")})
+    for c_ in out["frozen"]:
+        y_ = c_.get("y2026") or {}
+        H.log_trial(trials, {"phase": REG, "partition": "unsealed 2026 (frozen check)", "id": f"B27 {c_['id']}",
+                             "n": y_.get("n_decided"), "success": y_.get("r"), "ci95": y_.get("ci95"), "net_usd_per_oz": y_.get("exp_oz"),
+                             "holm_p": c_.get("y2026_holm_p"), "verdict": "HOLDS" if c_.get("holds_2026") else "DOES NOT HOLD"})
 
 
 def _clean(x):
