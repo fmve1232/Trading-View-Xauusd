@@ -1,0 +1,71 @@
+{
+ "id": "B26",
+ "title": "Phase A baseline for the operator's exact trade: XAUUSD, 0.50 lot, +$15 take-profit against a -$15 stop, entered at every eligible bar, BUY and SELL measured separately, with bid / ask execution and costs",
+ "status": "APPROVED by the operator 2026-11-08; written and committed before any of its code; descriptive research on an isolated branch, no production change",
+ "approved_by_operator": true,
+ "approval": "Operator, 2026-11-08 (chat, NEXT EXECUTION ORDER - PHASE 2): \"You are authorized to: 1. Register a new research study for symmetric XAUUSD TP +$15 / SL -$15. 2. Use the existing website Python engine as the research environment ... PHASE A - Establish baseline ... Test BUY and SELL independently ... Test the exact symmetric +-$15 model independently. Do not reuse the results of the earlier +$15/-$13 experiments as proof.\"",
+ "partitions": [
+  "development"
+ ],
+ "unsealed_data_also_used": "2026 'recent' (2026-03-01 on, after the sealed holdout) and the live store's 5m bars (September 2026 to 2026-11-06). No validation (2023-01-24 .. 2024-07-01) or holdout (2024-07-01 .. 2026-01-01) bar is read; they stay sealed for Phase F.",
+ "created_utc": "2026-11-08",
+ "what_this_is": "A baseline, not a strategy. Every eligible bar is an entry, in both directions, with no filter. It measures what the market gives a +-$15 bracket before any rule is applied: the number every later model must beat, BUY and SELL separately, by session, weekday, volatility, trend and news. No parameter is chosen from it and no pass / fail is declared.",
+ "data": {
+  "P1_development": "Twelve Data XAU/USD 15m (research-data branch, read through quantum.research.history.load: market-shut prints removed), 2020-04-01 .. 2023-01-24 (the harness development partition, scored from b13.SCORE_FROM). Distances and costs scaled by k = price / 4000 at the decision bar, results reported in 4000-equivalent dollars, as every earlier study.",
+  "P2_recent": "Twelve Data XAU/USD 15m, 2026-03-01 .. end of the research history (2026-11-02). Literal dollars (k = 1).",
+  "P3_store_5m": "The live store's Twelve Data XAU/USD 5m bars (market-data branch), cleaned as the site does (quantum.data.sources.trading_week_only, repair_reopen), September 2026 .. 2026-11-06. Literal dollars. This is the execution timeframe; it is two months long.",
+  "context": "Higher-timeframe context from Twelve Data 1h bars (research history, extended by the live store's 60m after 2026-11-02): 4h and 1D built on the New York 17:00 session (sources.resample_ny_session, daily_ny_session).",
+  "repair": "repair_reopen is applied to the execution bars of every population (the stale first print after a closure becomes the bar's close), so a carried quote cannot fake a gap fill.",
+  "volume": "Not used. Twelve Data XAU/USD has no volume; tick volume is not traded volume."
+ },
+ "entries": {
+  "decision": "At the close of every bar i in the scored window, both BUY and SELL.",
+  "fill": "At the open of bar i+1, the first price after the decision. BUY at the ask, SELL at the bid, plus the scenario's entry slippage against the trade.",
+  "eligible_only_if": [
+   "bar i+1 starts exactly one bar after bar i (no daily break or weekend between the decision and the fill)",
+   "no market closure (a gap of more than 2 hours between bars) starts within 60 minutes after the decision",
+   "the decision bar is at or after the population's scoring start"
+  ]
+ },
+ "exits": {
+  "levels": "From the actual fill: BUY TP = fill + 15k, SL = fill - 15k; SELL TP = fill - 15k, SL = fill + 15k.",
+  "triggers": "A BUY's TP and SL trigger on the bid (mid - s/2), a SELL's on the ask (mid + s/2). Bars are mid prices; s is the scenario spread at the entry, held for the trade.",
+  "path": "From bar i+1 (its open, high and low) forward, on the population's own bars (5m for P3, 15m for P1 / P2).",
+  "gap": "If a bar opens beyond the stop, the stop fills at that open (bid / ask) less the exit slippage. If it opens beyond the target, the target fills at the target (a limit order; the better open price is not credited).",
+  "same_bar": "A bar that reaches both levels counts as the stop (AMBIGUOUS, reported separately).",
+  "time_limit": "2 trading days (576 5m bars / 192 15m bars): exit at that bar's close (TIMEOUT).",
+  "closure": "A trade still open at the last bar before a closure longer than 2 hours (the weekend, a holiday) exits at that bar's close (CLOSURE). The daily one-hour break is held through, with the gap rule at the reopen.",
+  "exit_slippage": "Applied to stop, TIMEOUT and CLOSURE exits (market or stop orders), not to target fills (limit orders)."
+ },
+ "cost_scenarios": {
+  "GROSS": "spread 0, slippage 0, commission 0: the bracket on mid prices",
+  "OP": "the operator's $0.26 per oz, taken as all-in spread (no slippage, no commission); unverified against the broker",
+  "ENG (primary)": "the frozen engine model's components (quantum.research.harness.cost_pts): spread 0.30 in London / New York / kill zones and 0.50 off session, 0.20 slippage on the entry and on non-target exits, commission 7 USD per lot round trip (0.07 per oz)",
+  "ADV": "adverse: twice the ENG spread, 0.40 slippage per side, the same commission",
+  "money": "Per 0.50 lot assuming a 100 oz contract (50 oz): USD per oz x 50. Labelled ASSUMED until the broker's XAUUSD specification is received; no monetary figure is approved before then."
+ },
+ "per_trade_record": [
+  "decision time and price, fill time and price, direction, TP, SL",
+  "first level reached (TP / SL / AMBIGUOUS / TIMEOUT / CLOSURE), gap flag, exit time and price, minutes to the outcome",
+  "MFE and MAE from the fill to the exit (dollars, on the trigger side's prices)",
+  "spread, entry slippage, exit slippage, commission, gross and net P/L per oz and per 0.50 lot (ENG); outcome and net P/L under GROSS, OP and ADV",
+  "session (ASIA / LONDON / OVERLAP / NY / OFF from quantum.sessions.calendar), New York trading weekday, volatility tercile, trend state, news window, price direction at +1h and +4h"
+ ],
+ "regimes": {
+  "volatility": "ATR(14) of the last completed 1h bar divided by its close, ranked against the trailing 90 calendar days of the same series: LOW (bottom third), MID, HIGH (top third). Trailing window only.",
+  "trend": "Three votes from completed bars only: 1D close vs EMA50 of 1D closes; 4h EMA20 vs EMA50; 1h EMA20 vs EMA50. UP = all three up, DOWN = all three down, MIXED otherwise. Reported as WITH (BUY in UP, SELL in DOWN), AGAINST and MIXED.",
+  "news": "Entry from 30 minutes before to 120 minutes after a dated CPI / NFP / FOMC release (quantum.research.b8_news.DATES for 2020 .. 2023-01; quantum.news_calendar from 2026-10-28). Between 2023-02 and 2026-10-27 no dated list is held: those trades are NOT DATED, not 'no news'."
+ },
+ "statistics": {
+  "all_bar_population": "Every eligible entry. Rates with a 95% interval from a day-clustered bootstrap (2,000 resamples of New York trading days, harness.seeded_rng(26)): entries hours apart overlap and are not independent.",
+  "sequential_series": "Per direction, non-overlapping: the next decision is the bar on which the previous trade exited. This is the independent-trade count; Wilson 95% intervals; expectancy, profit factor, maximum drawdown and the longest losing run on it.",
+  "references": "For each scenario: the rate a driftless market gives this bracket after the spread and entry slippage, mean over trades of (15k - s - slip_in) / 30k; and the break-even rate from the average net win and loss.",
+  "prediction_scorecard": "Directional accuracy (price beyond the fill in the trade's direction at +1h and +4h) and the Brier score of the constant base-rate forecast, which any model must beat.",
+  "execution_scorecard": "TP-first, SL-first, AMBIGUOUS, gap fills, TIMEOUT / CLOSURE, minutes to the outcome, MAE / MFE, entry slippage vs the decision close.",
+  "profitability_scorecard": "Gross, costs, net, expectancy per oz and per 0.50 lot (ASSUMED 100 oz), profit factor, maximum drawdown, longest losing run.",
+  "resolution_check": "On the P3 window: decisions at 15m closes resolved on 15m bars and on 5m bars, to measure what 15m resolution does to P1 / P2.",
+  "sanity_check_not_a_test": "The GROSS TP-first rate with no drift should be near 50%; a departure is drift or a labeller error and is investigated, not used."
+ },
+ "decision": "None. This registration declares no hypothesis and selects nothing. Its outputs are the reference rates for Phases C-F; any regime that looks different here becomes its own registered hypothesis before it is tested on validation.",
+ "unchanged": "Production engine, config, web.8 and its freeze key, the frozen Pine reference, the developed Pine line, phone alerts, PR #90 and PR #91. Research code is never imported by production (tests/test_integrity.py)."
+}
