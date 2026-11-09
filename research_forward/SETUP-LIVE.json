@@ -64,6 +64,138 @@
    "mae": 14.569999999999709,
    "bars": 9,
    "path": "5m"
+  },
+  {
+   "id": 1,
+   "tf": "15m",
+   "t": 1793995200,
+   "t_dec": 1793996100,
+   "dir": 1,
+   "entry": 4064.24,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HL",
+     4061.41
+    ]
+   ],
+   "zones": [
+    "POC 4063.21"
+   ],
+   "sl": 4051.24,
+   "tp": 4079.24,
+   "t_alert": 1793996498,
+   "result": "TP",
+   "t_res": 1794184200,
+   "mfe": 22.5600000000004,
+   "mae": 9.379999999999654,
+   "bars": 40,
+   "path": "5m"
+  },
+  {
+   "id": 2,
+   "tf": "15m",
+   "t": 1794001500,
+   "t_dec": 1794002400,
+   "dir": -1,
+   "entry": 4068.69,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HH",
+     4069.18
+    ]
+   ],
+   "zones": [
+    "value-area high 4071.11"
+   ],
+   "sl": 4081.69,
+   "tp": 4053.69,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794002570,
+   "result": "SL",
+   "t_res": 1794184200,
+   "mfe": 13.829999999999927,
+   "mae": 18.110000000000127,
+   "bars": 19,
+   "path": "5m"
+  },
+  {
+   "id": 5,
+   "tf": "15m",
+   "t": 1794178800,
+   "t_dec": 1794179700,
+   "dir": -1,
+   "entry": 4069.43,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HH",
+     4070.34
+    ]
+   ],
+   "zones": [
+    "value-area high 4069.61"
+   ],
+   "sl": 4082.43,
+   "tp": 4054.43,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794179948,
+   "result": "SL",
+   "t_res": 1794184200,
+   "mfe": 14.569999999999709,
+   "mae": 17.370000000000346,
+   "bars": 16,
+   "path": "5m"
+  },
+  {
+   "id": 6,
+   "tf": "15m",
+   "t": 1794179700,
+   "t_dec": 1794180600,
+   "dir": -1,
+   "entry": 4068.09,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "TDH",
+     4071.66
+    ]
+   ],
+   "zones": [
+    "value-area high 4074.64"
+   ],
+   "sl": 4081.09,
+   "tp": 4053.09,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794180964,
+   "result": "SL",
+   "t_res": 1794184200,
+   "mfe": 13.230000000000018,
+   "mae": 18.710000000000036,
+   "bars": 13,
+   "path": "5m"
   }
  ],
  "live": {
@@ -72,8 +204,8 @@
    0
   ],
   "SWEEP": [
-   1,
-   0
+   5,
+   1
   ]
  }
 }
