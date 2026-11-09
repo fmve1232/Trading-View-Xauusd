@@ -253,3 +253,22 @@ def test_a_cache_written_before_a2_is_fetched_again(tmp_path):
     finally:
         C.fetch_hour = old
     assert len(calls) == 24 and meta.get("cached") is None
+
+
+def test_the_real_download_path_uses_the_http_session(monkeypatch):
+    """Amendment A3 defect fix: _session() (the HTTP session) was shadowed by the session-label helper, so every real
+    download raised TypeError. The other tests inject `get` and could not see it; this one takes the default path."""
+    import requests
+    monkeypatch.setattr(C.time, "sleep", lambda s: None)
+    seen = []
+
+    def fake_get(self, url, timeout=None):
+        seen.append((url, self.headers.get("User-Agent")))
+        return _Resp(404)
+    monkeypatch.setattr(requests.Session, "get", fake_get)
+    monkeypatch.setattr(C, "_local", C.threading.local())
+    assert isinstance(C._session(), requests.Session)
+    assert C.fetch_hour(pd.Timestamp("2021-03-01 10:00", tz="UTC")) == b""
+    assert seen and seen[0][0].endswith("/XAUUSD/2021/02/01/10h_ticks.bi5") and "quantum" in seen[0][1]
+    assert list(C._session_of(pd.DatetimeIndex(["2021-01-04 03:00", "2021-01-04 08:00", "2021-01-04 13:00", "2021-01-04 22:00"],
+                                                tz="UTC"))) == ["ASIA", "LONDON", "NY", "OFF"]

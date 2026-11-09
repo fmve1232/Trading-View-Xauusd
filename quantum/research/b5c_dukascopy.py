@@ -172,7 +172,12 @@ def fetch_hour(t: pd.Timestamp, get=None) -> bytes | None:
 
 
 def day_hours(day: pd.Timestamp) -> list[pd.Timestamp]:
-    return [] if day.dayofweek == 5 else [day + pd.Timedelta(hours=h) for h in range(24)]
+    """The day's hour files, Saturdays excepted. Amendment A3: never an hour inside the sealed validation / holdout span
+    (before A3 the boundary day 2023-01-24 fetched 22 sealed hours and discarded them unread; results are unchanged)."""
+    if day.day_of_week == 5:
+        return []
+    hrs = [day + pd.Timedelta(hours=h) for h in range(24)]
+    return [t for t in hrs if not (H.VAL[0] <= t < H.HOLD[1])]
 
 
 def load_day(day: pd.Timestamp, cache: str, pool: ThreadPoolExecutor, get=None) -> tuple[pd.DataFrame | None, dict]:
@@ -292,7 +297,9 @@ class IntegrityError(RuntimeError):
         self.report = report
 
 
-def _session(idx: pd.DatetimeIndex) -> np.ndarray:
+def _session_of(idx: pd.DatetimeIndex) -> np.ndarray:
+    """UTC session label per bar (amendment A2's alignment report). Named apart from _session(), the HTTP session:
+    the two shared one name until amendment A3, which made every real download fail (TypeError)."""
     h = idx.hour
     return np.select([(h >= a) & (h < b) for _, a, b in SESSIONS_UTC], [nm for nm, _, _ in SESSIONS_UTC], "OFF")
 
@@ -327,7 +334,7 @@ def integrity_report(raw: pd.DataFrame, m15: pd.DataFrame, scale: float) -> dict
     mid_l, mid_f = j["mid_last"] / scale, j["mid_first"] / scale
     basis_c, basis_o = mid_l - m15["close"], mid_f - m15["open"]
     dm, ds = mid_l.diff(), m15["close"].diff()
-    sess = _session(idx)
+    sess = _session_of(idx)
     allm = np.ones(len(idx), bool)
     lag = {"overall": _lag_corr(dm, ds, allm), "by_session": {nm: _lag_corr(dm, ds, sess == nm) for nm, _, _ in SESSIONS_UTC},
            "by_year": {int(y): _lag_corr(dm, ds, idx.year == y) for y in sorted(set(idx.year))}}

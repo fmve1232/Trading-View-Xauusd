@@ -1,5 +1,7 @@
 # MT5 M1 history: the preferred route to lower-timeframe data (prepared 2026-11-09, not yet available)
 
+> **Superseded for Phase D (2026-11-09) by `PHASE_D_DATA_REQUIREMENTS.md` §3.** The Phase D validator reads UTF-16 exports, supports the common `NY+7` server convention (Europe/Athens is an hour wrong for about three weeks a year when the broker follows the US daylight-saving dates), checks the clock per week, drops sealed rows, and treats `<SPREAD>` as a sensitivity, not the primary cost (`PHASE_D_PLAN.md` §2.2). The text below is kept as written.
+
 **Why it is needed.**
 - **Small brackets are only bounded, not measured.** Phase C's 15m bars cannot order the high and low inside a bar. Brackets with a $3–$7 leg are therefore INCONCLUSIVE (B29), as are stop entries of $10 or more (B28).
 - **5m covers too little time.** The live store has only Sep–Nov 2026.

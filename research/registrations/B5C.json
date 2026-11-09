@@ -80,6 +80,13 @@
    "before_any_data": true,
    "change": "integrity gates and quarantine (b5c_dukascopy.integrity_report / quarantine; hour_bars now counts duplicate ms, crossed quotes, the longest silence and out-of-hour ticks, which are dropped instead of clamped into the hour's last bar; caches written before A2 are fetched again). Tests: test_hour_bars_integrity_counts_and_no_clamping, test_integrity_report_passes_aligned_data_and_reports_every_figure, test_a_bad_day_is_quarantined_not_shifted, test_a_session_clock_offset_stops_the_run, test_a_cache_written_before_a2_is_fetched_again",
    "requested_by": "operator, 2026-11-09 (final quality gates A)"
+  },
+  {
+   "id": "A3",
+   "date": "2026-11-09",
+   "before_any_data": true,
+   "change": "DEFECT FIX (Phase D audit, signal-neutral): b5c_dukascopy defined _session twice; the A2 session-label helper _session(idx) replaced the HTTP-session helper _session(), so every real download (fetch_hour, research_data) raised TypeError. The label helper is renamed _session_of; test_the_real_download_path_uses_the_http_session takes the default download path (the earlier tests injected `get` and could not see it). Also: day_hours never returns an hour inside the sealed validation / holdout span (the boundary day 2023-01-24 used to fetch 22 sealed hours and discard them unread). Features, labels, tests, thresholds and outputs are unchanged. The day cache is shared with Phase D's extractor (quantum/research/d_dukascopy.py), which writes B5c's own day files with b5c_dukascopy.hour_bars, so one download serves both (test_extraction_writes_b5c_compatible_days_and_resumes).",
+   "requested_by": "Phase D audit (D0), 2026-11-09"
   }
  ],
  "unchanged": "production engine, quantum/config.py, web.8, the frozen Pine files, the alerts, PRs #90 / #91, the production API key"

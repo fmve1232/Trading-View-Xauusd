@@ -1,0 +1,8 @@
+# Phase D on the operator's computer (Python 3.11 recommended). These are the versions the synthetic tests passed on;
+# the same versions make LightGBM / random-forest results reproducible bit for bit.
+numpy==2.4.6
+pandas==3.1.0
+scipy==1.17.1
+scikit-learn==1.9.1
+lightgbm==4.7.0
+requests==2.34.2
