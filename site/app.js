@@ -112,7 +112,12 @@ $("#toolbar").onclick = (e) => {
 async function getJSON(u) {
   const r = await fetch(u + (u.includes("?") ? "&" : "?") + "v=" + Date.now(), { cache: "no-store" });
   if (!r.ok) throw new Error(u + " -> HTTP " + r.status);
-  return r.json();
+  const txt = await r.text();
+  try { return JSON.parse(txt); } catch (e) {
+    // A file written with a bare NaN / Infinity (Python's json default) is not JSON; read those as null rather than
+    // losing the whole file (index.json's alerts block was unreadable on days with nothing decided, found 2026-11-07).
+    return JSON.parse(txt.replace(/([:,\[]\s*)-?(?:NaN|Infinity)(?=\s*[,\]}])/g, "$1null"));   // no look-behind: old Safari
+  }
 }
 async function load() {
   document.querySelectorAll("#tf-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tf === S.tf));
