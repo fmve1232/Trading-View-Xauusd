@@ -291,13 +291,23 @@ def diagnostics(s28, s29, p29, pc):
                        num(v["auc_calendar_only"], 4), num(v["auc_calendar_only_decided"], 4), v["distinct_p_test"],
                        pct(sh.get("SELL top1%")), pct(sh.get("SELL top10%")), pct(s6.get("SELL top1%"))]))
         print("\nNeither share and AUCs on the walk-forward test rows; 'Calendar-only' = the training window's TP rate per UTC weekday x hour.")
+        print("\n### P(TP first), P(SL first) and P(neither) by entry weekday (walk-forward test rows, worst case)\n")
+        print(row(["Bracket", "Entry day", "n", "P(TP first)", "P(SL first)", "P(neither: closure / 2-day limit)", "P(TP | decided)"]))
+        print(row(["---"] * 7))
+        for g, v in C.items():
+            for day in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sun"):
+                w = v["by_weekday_test"].get(day)
+                if w:
+                    sl = 1 - w["tp"] - w["neither"]
+                    print(row([g, day, w["n"], pct(w["tp"]), pct(sl), pct(w["neither"]), pct(w["tp"] / (w["tp"] + sl))]))
         fri = {g: v["by_weekday_test"].get("Fri", {}) for g, v in C.items()}
         print("\n| Bracket | Friday entries ending without TP or SL | Monday–Thursday (mean) |\n| --- | --- | --- |")
         for g, v in C.items():
             mt = [v["by_weekday_test"][d]["neither"] for d in ("Mon", "Tue", "Wed", "Thu") if d in v["by_weekday_test"]]
             print(row([g, pct(fri[g].get("neither")), pct(sum(mt) / len(mt) if mt else None)]))
-    ge = os.path.join(os.path.dirname(p29), "b29_grid_extra.csv.gz")
-    if os.path.exists(ge):
+    ge = next((x for x in (os.path.join(os.path.dirname(p29), "b29_grid_extra.csv.gz"),
+                           os.path.join(os.path.dirname(os.path.dirname(p29)), "b29", "b29_grid_extra.csv.gz")) if os.path.exists(x)), None)
+    if ge:
         x = pd.read_csv(ge)
         print("\n## Grid stability per pair (2020–22, ENG; `b29_grid_extra.csv.gz` has every pair)\n")
         print(f"- Months per pair: {int(x['months'].median())}. Share of profitable months: median {pct(x['share_months_positive'].median())}, "

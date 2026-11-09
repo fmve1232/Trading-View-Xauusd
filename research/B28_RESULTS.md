@@ -62,7 +62,7 @@
 Pooled descriptively (trades weighted); each configuration was tested on its own.
 
 **What the table shows:**
-- **Waiting for confirmation does not raise the hit rate.** Every mode stays within about 1 point of its random rate, except the large stop entries (next section).
+- **Waiting for confirmation does not raise the hit rate.** No mode is more than 0.4 points above its random rate. Every mode is within 2.4 points below it, except stop entries of $10 or more (next section).
 - **Confirmation lowers the loss per signal only by skipping trades.**
   - At $20, only 29–39% of triggers ever fill, so the loss per trigger is smaller.
   - The loss per trade taken is the same or worse.
