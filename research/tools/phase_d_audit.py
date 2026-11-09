@@ -83,7 +83,7 @@ def audit(out: str, log: str) -> dict:
     with open(os.path.join(out, "data_report.json")) as fh:
         rep = json.load(fh)
     have_study = os.path.exists(os.path.join(out, "study.json"))
-    dev_ok = rep.get("DEV", {}).get("status") == "PASS"
+    dev_ok = str(rep.get("DEV", {}).get("status", "")).startswith("PASS")
     checks["gates"] = {"pass": dev_ok == have_study, "dev_status": rep.get("DEV", {}).get("status"), "study_written": have_study}
     if not have_study:
         checks["verdict"] = "INSUFFICIENT DATA — RESEARCH INCOMPLETE (data gate)"

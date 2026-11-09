@@ -181,3 +181,21 @@ def test_the_appendix_is_generated_only_from_an_audited_run(run_dir, tmp_path):
     st["strategies"][-1]["dev"]["exp_oz"] = 5.0
     (work / "study.json").write_text(json.dumps(st))
     assert REP.main([str(work), "--log", log, "--md", str(tmp_path / "x.md")]) == 1 and not (tmp_path / "x.md").exists()
+
+
+def test_the_price_only_family_runs_and_audits(tmp_path, monkeypatch):
+    """Amendment A2's price-only command on synthetic populations: sets BASELINE and A only, its own family, audited."""
+    from quantum.research import d_price as DP
+    dev, y26 = _m15("2021-01-04", "2021-04-17", 1), _m15("2026-01-05", "2026-03-14", 2)
+    pops = {"DEV": {"m15": dev, "h1": _h1(dev), "score_from": pd.Timestamp("2021-01-11", tz="UTC"), "scale": True},
+            "Y2026": {"m15": y26, "h1": _h1(y26), "score_from": pd.Timestamp("2026-01-19", tz="UTC"), "scale": False}}
+    monkeypatch.setattr(R, "populations", lambda *a, **k: pops)
+    fast = {"wf_start": "2021-03-01", "min_train": 2500, "months": 1, "algos": ("LR",)}
+    monkeypatch.setattr(S, "run", functools.partial(S.run, **fast))
+    log = str(tmp_path / "log.jsonl")
+    shutil.copy(os.path.join(os.path.dirname(__file__), "..", "research", "phase_d_trials.jsonl"), log)
+    out = tmp_path / "out"
+    assert DP.main(["--rd", "x", "--out", str(out), "--log", log, "--skip-questions"]) == 0
+    st = json.loads((out / "study.json").read_text())
+    assert {s["set"] for s in st["strategies"]} == {"BASELINE", "A"} and st["family_id"] == "D3-P" and "D3-P" in st["verdict"]
+    assert AUD.audit(str(out), log)["pass"]

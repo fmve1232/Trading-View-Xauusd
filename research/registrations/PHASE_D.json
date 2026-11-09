@@ -207,6 +207,18 @@
     "tests/test_research_phase_d_clock.py",
     "tests/test_research_phase_d_run.py"
    ]
+  },
+  {
+   "id": "A2",
+   "date": "2026-11-09",
+   "before_any_data": true,
+   "change": "PRICE-ONLY FAMILY D3-P, run now on real data while order flow is unobtainable: this session's network policy denies datafeed.dukascopy.com (and Yahoo / FRED / CFTC), Dukascopy refuses GitHub's runners (xcheck-dukascopy run 2), and the operator has not run the laptop extraction. Sets BASELINE and A, the four algorithms, the four rules, on the benchmark labels and Phase C's populations (development walk-forward; the frozen set applied once to 2026): 2 x 4 x 4 = 32 strategies, their own BH (q = 0.10) and Reality Check, C1-C6 unchanged; the descriptive questions for BASELINE and A (LR, LGBM) at 15 minutes. Not run in D3-P: B and D (order flow), C (no intraday intermarket history for development: Yahoo 60m series begin 2023-10 / 2024-05), the one-minute measurements and the dynamic track. The full registered run stays pending and will be its own family; D3-P results are reported separately and never merged into it. A D3-P verdict answers H-D3 only; it cannot answer H-D1 / H-D2 (order flow).",
+   "code": [
+    "quantum/research/d_price.py"
+   ],
+   "tests": [
+    "tests/test_research_phase_d_run.py::test_the_price_only_family_runs_and_audits"
+   ]
   }
  ]
 }
