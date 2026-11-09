@@ -1,0 +1,73 @@
+{
+ "id": "B5C",
+ "title": "B5c: order flow on Dukascopy's spot-gold top of book (quote-based), development data only; an independent experiment",
+ "status": "REGISTERED 2026-11-09, NOT RUN. Design declared in code at df1c7c1cb (2026-11-01) before any Dukascopy data was obtained; amendment A1 (timestamp check) added 2026-11-09, still before any Dukascopy data. Runs on the operator's own Windows laptop.",
+ "approved_by_operator": true,
+ "approval": "Operator, 2026-11-09 (chat, Phase C final instruction): \"Prepare B5c as an independent, registered Dukascopy tick-order-flow experiment. Do not mix its results with the completed Phase C studies. Document data provenance, timestamp alignment, bid/ask, spread and execution assumptions. Do not fabricate order flow from OHLC data.\"",
+ "independence": [
+  "B5c is not part of Phase C (B26-B29). Its results are written to research/results/b5c/ and logged under phase \"B5c\" only.",
+  "Nothing from B5c is pooled with, compared against for selection, or used to re-rank any Phase C configuration; Phase C's verdicts are final as reported.",
+  "If B5c produces a candidate, it goes forward as its own registered hypothesis (validation needs the operator's approval)."
+ ],
+ "partitions": [
+  "development"
+ ],
+ "sealed": "validation 2023-01 -> 2024-07 and holdout 2024-07 -> 2026-01 are not read",
+ "code": {
+  "module": "quantum/research/b5c_dukascopy.py",
+  "tests": "tests/test_research_b5c_dukascopy.py (9 tests on synthetic .bi5 files and a mocked server)",
+  "machinery": "quantum/research/b5_orderflow.study (unchanged; the same as B5's COMEX study, for comparability)",
+  "command": "py -m quantum.research.b5c_dukascopy   (from the repository folder on the operator's laptop)"
+ },
+ "data_provenance": {
+  "source": "Dukascopy Bank SA public datafeed, https://datafeed.dukascopy.com/datafeed/XAUUSD/{YYYY}/{MM0}/{DD}/{HH}h_ticks.bi5 (MM0 = month - 1, zero-based); one LZMA-compressed file per UTC hour",
+  "record": "20 bytes, big-endian: ms since the hour (uint32), ask (uint32, integer price units), bid (uint32), ask volume (float32), bid volume (float32)",
+  "what_it_is": "the best bid and offer on Dukascopy's own SWFX marketplace, with the liquidity DISPLAYED at each; every record is a quote update",
+  "what_it_is_not": "not traded volume, not trades, not an aggressor side, not the operator's broker's book, not the whole market's depth. Dukascopy's volume fields are indicative displayed liquidity (units unverified; every feature that uses them divides by their own mean, so the unit cancels)",
+  "coverage": "every hour of the development partition except Saturdays, 2020-01-24 -> 2023-01-24 (about 22,000 hourly files)",
+  "terms": "Dukascopy restricts redistribution: raw ticks are never committed or published. Only 15-minute sums are cached on the laptop; only aggregate results are sent back",
+  "access": "Dukascopy refuses GitHub's servers, so the run is on the operator's laptop; no API key and no account are needed",
+  "spot_paths": "the research-data branch (Twelve Data XAU/USD 15m), the same development paths as B2-B5 and Phase C; the production API key is not used (the files are downloaded from GitHub)"
+ },
+ "timestamp_alignment": {
+  "dukascopy": "file hour in UTC; tick time = hour start + ms; bars are 15-minute UTC bins labelled by their OPEN time",
+  "spot": "Twelve Data 15m bars, UTC, labelled by open time (the research store's convention)",
+  "availability": "a feature of bar t uses only ticks inside bar t or earlier; it is known at bar t's close (the decision time)",
+  "checks_before_any_test": [
+   "units: the price scale (a power of ten) is detected from the median ratio of Dukascopy's last mid to the spot close; the run stops if the median gap exceeds 0.5%",
+   "clock (amendment A1): the correlation of 15-minute mid changes with spot close changes must peak at lag 0 of -2..+2 bars and be at least 0.8; otherwise the run stops",
+   "the alignment figures are written into the results file"
+  ],
+  "mt5": "MT5 server time is NOT used by B5c. If the operator's MT5 M1 export is added later it is converted to UTC with the broker's stated offset and checked the same way (research/MT5_M1_IMPORT.md)"
+ },
+ "bid_ask_and_spread": {
+  "measured": "Dukascopy's SWFX best bid / ask per tick; feature `spread` = mean ask - bid over the bar's ticks, in dollars",
+  "use": "the spread is a feature only; it is SWFX's spread, not the operator's broker's",
+  "execution_costs": "the trade race and its costs are B5's (harness cost model per session on the spot path), unchanged, so B5c and B5 are comparable; no Dukascopy price is used as an execution price"
+ },
+ "features": {
+  "ofi15, ofi60": "Cont, Kukanov and Stoikov (2014) order-flow imbalance on Dukascopy's best bid / offer, summed over 1 or 4 bars, divided by the mean displayed depth; QUOTE-based (book updates), not trade-based",
+  "qimb15, qlast": "queue imbalance (bid volume - ask volume) / (bid volume + ask volume): bar mean and last tick (Gould and Bonart 2016)",
+  "timb15, timb60": "(up-ticks - down-ticks) / (up + down) of the mid over 1 or 4 bars (a tick rule on quotes, not on trades)",
+  "ntr_z": "log quote-update count, z-scored over the previous 2,000 bars (activity, not volume)",
+  "spread": "as above",
+  "never": "nothing is derived from OHLC bars; no volume, delta or aggressor proxy is built from candles"
+ },
+ "trade_and_tests": {
+  "trade": "B5's: decision at a 15m close on the spot path, -$10 stop with +$10 / +$15 / +$20 targets, B2's race and costs, one position at a time",
+  "Q1_direction": "30 rules (ofi15, ofi60, qimb15, qlast, timb15 at their trailing 90th percentile; follow or fade; 3 targets) + logistic regression on the 8 features (6-block purged walk-forward, top decile; 3 trials) = 33 trials",
+  "decision_rule": "B2's five-part rule for every trial, as in B5: (1) Wilson lower bound above break-even, (2) t > 3 with net > 0, (3) z > 2 against a random entry with the same long / short mix, (4) Benjamini-Hochberg at q = 0.10 across the 33 trials, (5) White's Reality Check p < 0.05 across the 33; a model trial also needs an out-of-fold AUC of at least 0.55. PASS needs all five",
+  "Q2_execution": "descriptive: the next 15 / 60 minutes' spot move by ofi15 decile"
+ },
+ "outputs": "b5c_results.json (aggregate figures only) and b5c_trials.jsonl on the laptop; sent back and committed under research/results/b5c/, trials appended to research/trials.jsonl with phase \"B5c\"",
+ "prior_evidence": "B5 (COMEX GC trades with aggressor side, Databento, 2020-22): 18 trials, all rejected, model AUC 0.50; its book measures (OFI, queue imbalance, spread) were dropped for cost. B5c tests exactly those book measures, on a different (OTC spot) venue",
+ "amendments": [
+  {
+   "id": "A1",
+   "date": "2026-11-09",
+   "before_any_data": true,
+   "change": "timestamp alignment check: the run stops unless 15-minute mid changes correlate with the spot path's at lag 0 best (of -2..+2 bars) with r >= 0.8 (b5c_dukascopy.lag_check; test_lag_check_detects_a_shifted_clock)"
+  }
+ ],
+ "unchanged": "production engine, quantum/config.py, web.8, the frozen Pine files, the alerts, PRs #90 / #91, the production API key"
+}

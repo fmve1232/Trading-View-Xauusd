@@ -220,6 +220,18 @@ This turns ordinary bar volume into a signed-flow estimate. It is coarse, but it
 available if Databento's quote is above budget. 8 tests on synthetic `.bi5` files and a mocked server
 (`tests/test_research_b5c_dukascopy.py`).
 
+**Update 2026-11-09: registered as an independent experiment** (`research/registrations/B5C.json`, operator
+instruction at the end of Phase C).
+- **Why it still matters.** B5 ran on COMEX trades (aggressor side), but its book measures were dropped for cost. B5c tests exactly those top-of-book measures on spot gold.
+- **What the registration documents:**
+  - data provenance (Dukascopy SWFX top of book, record format, coverage, terms);
+  - timestamp alignment (UTC hour files, bars by open time);
+  - bid / ask and spread (a feature only; the execution costs are B5's model);
+  - that every feature is quote-based, and none is derived from OHLC.
+- **Amendment A1, before any data: a clock check.** The run stops unless 15-minute mid changes correlate best at lag 0 (r ≥ 0.8). Test: `test_lag_check_detects_a_shifted_clock`, so 9 tests in all.
+- **Not run.** Its results will not be mixed with Phase C (B26–B29).
+- **Lower-timeframe history:** `research/MT5_M1_IMPORT.md`.
+
 ## 6. What the operator needs to provide
 
 **For B5 as declared (§5):**

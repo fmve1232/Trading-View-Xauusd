@@ -165,6 +165,20 @@ def test_main_end_to_end_with_a_mocked_dukascopy(tmp_path, monkeypatch):
 
 
 def test_declared_constants():
+    assert C.LAGS == (-2, -1, 0, 1, 2) and C.LAG_MIN_CORR == 0.8
     assert C.INSTRUMENT == "XAUUSD" and C.RULE_FEATURES == ("ofi15", "ofi60", "qimb15", "qlast", "timb15") and len(C.MODEL_FEATURES) == 8
     assert set(C.DIRECTIONAL) == set(C.MODEL_FEATURES) - {"ntr_z", "spread"} and C.Q2 == "ofi15" and C.ALIGN_MAX == 0.005
     assert [m.name for m in C.MODELS] == ["LOGIT"]
+
+
+def test_lag_check_detects_a_shifted_clock():
+    """Amendment A1: aligned bars peak at lag 0; a one-bar clock offset is detected and would stop the run."""
+    idx = pd.date_range("2021-01-04", periods=3000, freq="15min", tz="UTC")
+    m15 = _spot(idx)
+    raw = pd.DataFrame({"mid_last": m15["close"] * 1000}, index=idx)
+    ok = C.lag_check(raw, m15, 1000.0)
+    assert ok["best_lag_bars"] == 0 and ok["corr_by_lag_bars"][0] > 0.99
+    shifted = raw.copy()
+    shifted.index = shifted.index + pd.Timedelta(minutes=15)                  # Dukascopy clock one bar late
+    bad = C.lag_check(shifted, m15, 1000.0)
+    assert bad["best_lag_bars"] != 0 and bad["corr_by_lag_bars"][0] < C.LAG_MIN_CORR

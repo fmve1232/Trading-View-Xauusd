@@ -28,6 +28,9 @@ FEATURES per 15-minute bar (UTC open time; built from ticks inside the bar or ea
     spread         mean ask - bid over the bar's ticks
   Units are checked against the spot paths before anything is tested: the price scale (a power of ten) is detected
   from the median ratio of Dukascopy's last mid to the spot close. The run stops if the median gap exceeds 0.5%.
+  Timestamps (amendment A1, 2026-11-09, before any Dukascopy data): the run also stops unless the correlation of
+  15-minute mid changes with the spot close changes peaks at lag 0 (of -2..+2 bars) and is at least 0.8.
+  Registration: research/registrations/B5C.json.
 Q1 DIRECTION (decides): B5's machinery (quantum/research/b5_orderflow.study), unchanged.
   - Rules: ofi15, ofi60, qimb15, qlast and timb15 at their trailing 90th percentile; follow (CONT) or fade (REV);
     +$10 / +$15 / +$20 against -$10. 5 x 2 x 3 = 30 trials.
@@ -70,6 +73,8 @@ DIRECTIONAL = ("ofi15", "ofi60", "qimb15", "qlast", "timb15", "timb60")
 Q2 = "ofi15"
 MODELS = (B.Logit,)
 ALIGN_MAX = 0.005
+LAGS = (-2, -1, 0, 1, 2)          # bars; amendment A1 (2026-11-09, before any Dukascopy data): timestamp alignment check
+LAG_MIN_CORR = 0.8
 WORKERS, RETRIES, TIMEOUT = 6, 5, 30
 SUM_COLS = ["n", "ofi", "depth", "qsum", "qn", "qlast", "up", "down", "spread_sum", "mid_last"]
 UA = {"User-Agent": "Mozilla/5.0 (research; quantum b5c)"}
@@ -240,16 +245,32 @@ def price_scale(raw: pd.DataFrame, m15: pd.DataFrame) -> tuple[float, float, flo
     return scale, float(gap.median()), float((gap / j["close"]).median())
 
 
+def lag_check(raw: pd.DataFrame, m15: pd.DataFrame, scale: float) -> dict:
+    """Timestamp alignment (amendment A1): the correlation of 15-minute changes of Dukascopy's last mid with the spot
+    path's close changes, with Dukascopy shifted by k bars (k in LAGS). Aligned bars peak at k = 0."""
+    mid = (raw["mid_last"] / scale).reindex(m15.index)
+    dm, ds = mid.diff(), m15["close"].diff()
+    corr = {}
+    for k in LAGS:
+        j = pd.concat([dm.shift(k), ds], axis=1).dropna()
+        corr[k] = float(j.iloc[:, 0].corr(j.iloc[:, 1])) if len(j) > 100 else math.nan
+    ok = {k: v for k, v in corr.items() if not math.isnan(v)}
+    return {"corr_by_lag_bars": corr, "best_lag_bars": max(ok, key=ok.get) if ok else None}
+
+
 def run(spot_dir: str, raw: pd.DataFrame, meta: dict) -> dict:
     m15 = H.partition(history.load(spot_dir, "XAU/USD", "15min"), "development")
     scale, gap_usd, gap_rel = price_scale(raw, m15)
     if gap_rel > ALIGN_MAX:
         raise RuntimeError(f"Dukascopy and the spot paths disagree by a median {gap_rel:.2%} (${gap_usd:.2f}); stopping")
+    lag = lag_check(raw, m15, scale)
+    if lag["best_lag_bars"] != 0 or not lag["corr_by_lag_bars"][0] >= LAG_MIN_CORR:
+        raise RuntimeError(f"Dukascopy bars are not aligned with the spot paths ({lag}); stopping")
     res = B.study(finish_features(raw, scale), m15, models=MODELS, rules=RULE_FEATURES, inputs=MODEL_FEATURES,
                   directional=DIRECTIONAL, q2=Q2)
     res.update({"set": "B5c", "partition": "development", "source": f"Dukascopy {INSTRUMENT} ticks (top of book)",
                 "from": H.DEV[0].isoformat(), "to": H.DEV[1].isoformat(), "cost_usd": 0.0, "trades": None,
-                "price_units_per_usd": scale, "median_gap_usd": gap_usd, "median_gap_rel": gap_rel, **meta})
+                "price_units_per_usd": scale, "median_gap_usd": gap_usd, "median_gap_rel": gap_rel, "alignment": lag, **meta})
     return res
 
 
