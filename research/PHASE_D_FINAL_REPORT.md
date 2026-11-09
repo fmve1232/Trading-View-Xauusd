@@ -10,6 +10,25 @@
 - Phase C's verdict stands: **NO QUALIFIED STRATEGY**.
 - Quantum continues to report **NO TRADE** with the base rate.
 
+## What has been run on real data (2026-11-09)
+
+**Family D3-P (amendment A2): the price-only sets on Phase C's populations.**
+- **Result: NO QUALIFIED STRATEGY.**
+  - 0 of 32 strategies pass BH; the Reality Check gives p = 1.00.
+  - Every strategy loses after costs: −$0.22 to −$1.38 per oz.
+  - P(drawdown ≥ 15R in 250 trades) is 52–94%.
+- **The probabilities are calibrated but carry no direction:** TP-vs-SL AUC is 0.48–0.50.
+- **Volatility and structure make the tree models worse.**
+- **The size of the next move is predictable, its direction is not.**
+- **Audit:** the D4 audit passed all eight checks.
+- **Details:** `PHASE_D_MODEL_COMPARISON.md`, `PHASE_D_APPENDIX_D3P.md`, `results/phase_d/d3p/`.
+
+**Still not run:** order flow (B, D), intermarket (C), the one-minute measurements and the dynamic track. The order-flow and one-minute data are not reachable from this project's cloud environments:
+- the session's network policy denies Dukascopy;
+- Dukascopy refuses GitHub's runners.
+
+The development period also has no intraday intermarket history.
+
 ## What has been completed (D0–D2)
 
 **1. Phase C is frozen and unchanged.** 74 files are hash-pinned, and the first 3,808 lines of the trial log are pinned.

@@ -80,6 +80,7 @@ changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` 
 | `PHASE_D_DATA_REQUIREMENTS.md` | **Exactly what Phase D needs**: Dukascopy file format and commands, MT5 M1 export format and validator, broker specification template, where D3 runs |
 | `PHASE_D_B5C_RESULTS.md`, `PHASE_D_M1_RESULTS.md`, `PHASE_D_MODEL_COMPARISON.md`, `PHASE_D_RISK_REPORT.md`, `PHASE_D_FINAL_REPORT.md` | **INSUFFICIENT DATA — RESEARCH INCOMPLETE** (no data received; no result, nothing estimated) |
 | `tools/phase_d_audit.py`, `tools/phase_d_reports.py` | Phase D's D4 audit (every figure recomputed from the trade files; hashes, BH, partitions, gates) and the appendix generator (writes `PHASE_D_APPENDIX.md` only after the audit passes) |
+| `PHASE_D_APPENDIX_D3P.md`, `results/phase_d/d3p/` | **Phase D family D3-P** (price-only, real data, 2026-11-09): NO QUALIFIED STRATEGY. 0 of 32 pass BH, Reality Check p = 1.00, every strategy −$0.22 to −$1.38 / oz after costs; calibrated probabilities with no direction (TP-vs-SL AUC 0.48–0.50); the D4 audit passed all eight checks |
 | `phase_d_trials.jsonl` | Phase D's append-only, hash-chained trial log (`quantum/research/d_log.py`); starts with the registration record |
 | `STRATEGY_CATALOGUE.md` | **Every strategy tested (B1–B20) in one table**: procedure, indicators, literature, best measured result vs random, verdict; the arithmetic of TP-first at −$13; B20's calibration tables; indicator coverage; verified literature |
 

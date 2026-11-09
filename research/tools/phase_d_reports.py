@@ -93,6 +93,8 @@ def strategy_section(st: dict, title: str) -> list[str]:
 
 def m1_section(m1: dict) -> list[str]:
     L = ["## 5. One-minute measurements (all-bar base rates, not selected strategies)\n"]
+    if "not_run" in m1:
+        return [*L, f"NOT RUN: {m1['not_run']}\n"]
     for src, v in m1.items():
         L.append(f"### {src} ({v.get('source')}, {v.get('minutes')} minutes)\n")
         L.append("| Direction | B26 15m TP-first | 1m TP-first | B26 AMBIGUOUS resolved TP at 1m | Exp $/oz 15m model spread | Exp $/oz 1m real spread |")

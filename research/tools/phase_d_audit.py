@@ -98,9 +98,11 @@ def audit(out: str, log: str) -> dict:
         for k, v in dyn.items():
             if isinstance(v, dict) and "strategies" in v:
                 families[k] = (v, os.path.join(out, "trades", "dynamic", k.replace("/", "_")), "trial-dynamic", f"{k} ")
+    family = study.get("family_id")                     # None = the full registered run; "D3-P" = amendment A2's family
+    checks["family"] = family or "full run"
     trial_ids = {}
     for r in recs:
-        if r["kind"] in ("trial", "trial-dynamic"):
+        if r["kind"] in ("trial", "trial-dynamic") and r.get("family") == family:
             trial_ids.setdefault((r["kind"], r["id"]), []).append(r)
     fig_bad, file_bad, part_bad, bh_bad, missing, dup, cols_bad = [], [], [], [], [], [], []
     expected = set()

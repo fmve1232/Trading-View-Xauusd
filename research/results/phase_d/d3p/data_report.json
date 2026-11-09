@@ -1,0 +1,21 @@
+{
+ "mode": "price-only (amendment A2, family D3-P): no Dukascopy gate applies; the spot paths are Phase C's",
+ "DEV": {
+  "status": "PASS (price data present)",
+  "bars_15m": 70173,
+  "first": "2020-01-24 02:00:00+00:00",
+  "last": "2023-01-24 01:45:00+00:00",
+  "score_from": "2020-04-01 00:00:00+00:00",
+  "data_hash_15m": "ba2d1575ca24880b",
+  "bars_1h": 17566
+ },
+ "Y2026": {
+  "status": "PASS (price data present)",
+  "bars_15m": 20512,
+  "first": "2026-01-01 00:00:00+00:00",
+  "last": "2026-11-09 21:45:00+00:00",
+  "score_from": "2026-03-01 00:00:00+00:00",
+  "data_hash_15m": "dcc13f712da85435",
+  "bars_1h": 5128
+ }
+}

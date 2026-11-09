@@ -1,0 +1,45 @@
+{
+ "checks": {
+  "log": {
+   "pass": true,
+   "chain": "37 records, chain intact",
+   "registration_matches": true
+  },
+  "gates": {
+   "pass": true,
+   "dev_status": "PASS (price data present)",
+   "study_written": true
+  },
+  "family": "D3-P",
+  "trials": {
+   "pass": true,
+   "missing": [],
+   "duplicated": [],
+   "orphaned": []
+  },
+  "files": {
+   "pass": true,
+   "hash_mismatch_or_missing": [],
+   "price_columns": []
+  },
+  "figures": {
+   "pass": true,
+   "mismatches": [],
+   "count": 0
+  },
+  "bh": {
+   "pass": true,
+   "mismatches": []
+  },
+  "partitions": {
+   "pass": true,
+   "violations": []
+  },
+  "verdict": {
+   "pass": true,
+   "verdict": "NO QUALIFIED STRATEGY (family D3-P: price-only sets; order flow not yet tested)",
+   "qualified": []
+  }
+ },
+ "pass": true
+}

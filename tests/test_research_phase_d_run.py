@@ -22,6 +22,22 @@ from quantum.research import d_study as S
 from quantum.research import harness as H
 
 
+def _prefix():
+    """The committed log's registration / amendment prefix (later records belong to real runs)."""
+    out = []
+    with open(os.path.join(os.path.dirname(__file__), "..", "research", "phase_d_trials.jsonl"), "rb") as fh:
+        for ln in fh:
+            if json.loads(ln)["kind"] not in ("registration", "amendment"):
+                break
+            out.append(ln)
+    return out
+
+
+def _seed(path):
+    with open(path, "wb") as fh:
+        fh.write(b"".join(_prefix()))
+
+
 def _m15(start, end, seed):
     g = H.seeded_rng(seed)
     idx = pd.date_range(start, end, freq="15min", tz="UTC", inclusive="left")
@@ -80,7 +96,7 @@ def run_dir(tmp_path_factory):
     q = S.questions
     mp.setattr(S, "questions", lambda *a, **k: q(*a, **{**k, **fast, "sets": ("BASELINE", "B"), "algos": ("LR",)}))
     out, log = tmp / "out", str(tmp / "phase_d_trials.jsonl")
-    shutil.copy(os.path.join(os.path.dirname(__file__), "..", "research", "phase_d_trials.jsonl"), log)   # the committed chain continues
+    _seed(log)                                                                 # the committed chain continues
     code = R.main(["--rd", "unused", "--store", "none", "--cache", cache, "--out", str(out), "--log", log, "--algos", "LR"])
     mp.undo()
     return out, log, code
@@ -110,8 +126,7 @@ def test_every_trial_is_logged_on_an_intact_chain(run_dir):
     with open(log) as fh:
         recs = [json.loads(x) for x in fh]
     kinds = [r["kind"] for r in recs]
-    with open(os.path.join(os.path.dirname(__file__), "..", "research", "phase_d_trials.jsonl")) as fh:
-        seed = sum(1 for _ in fh)                                              # the committed registration / amendment records
+    seed = len(_prefix())                                                      # the committed registration / amendment records
     assert kinds[0] == "registration" and set(kinds[:seed]) <= {"registration", "amendment"}
     assert kinds[seed] == "data_report" and kinds.count("trial") == 8 and kinds[-1] == "descriptive"
     assert kinds.count("trial-dynamic") == 1 * 3 * 1 * 4
@@ -193,9 +208,14 @@ def test_the_price_only_family_runs_and_audits(tmp_path, monkeypatch):
     fast = {"wf_start": "2021-03-01", "min_train": 2500, "months": 1, "algos": ("LR",)}
     monkeypatch.setattr(S, "run", functools.partial(S.run, **fast))
     log = str(tmp_path / "log.jsonl")
-    shutil.copy(os.path.join(os.path.dirname(__file__), "..", "research", "phase_d_trials.jsonl"), log)
+    _seed(log)
     out = tmp_path / "out"
     assert DP.main(["--rd", "x", "--out", str(out), "--log", log, "--skip-questions"]) == 0
     st = json.loads((out / "study.json").read_text())
     assert {s["set"] for s in st["strategies"]} == {"BASELINE", "A"} and st["family_id"] == "D3-P" and "D3-P" in st["verdict"]
     assert AUD.audit(str(out), log)["pass"]
+
+
+def test_the_appendix_reports_not_run_sections():
+    assert REP.m1_section({"not_run": "no one-minute data"}) == ["## 5. One-minute measurements (all-bar base rates, not selected strategies)\n",
+                                                                 "NOT RUN: no one-minute data\n"]
