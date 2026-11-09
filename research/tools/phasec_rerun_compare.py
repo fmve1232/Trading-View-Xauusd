@@ -68,12 +68,21 @@ def main(argv=None) -> int:
     g_old = [{"id": e["id"], "dev": e["ENG"]} for e in o29["G"]]
     g_new = [{"id": e["id"], "dev": e["ENG"]} for e in n29["G"]]
     bad += check(g_old, g_new, "B29 G (ENG)")
+    for sc in ("GROSS", "OP", "ADV"):
+        bad += check([{"id": e["id"], "dev": e[sc]} for e in o29["G"]], [{"id": e["id"], "dev": e[sc]} for e in n29["G"]], f"B29 G ({sc})")
     bad += sum(check(o29[k], n29[k], f"B29 {k}") for k in ("V", "M", "E"))
     s4o, s4n = o27["S4"], n27["S4"]
     s4_bad = [k for k in ("univariate_auc", "permutation_auc_drop") for f in s4o[k] if not _eq(s4o[k][f], s4n[k].get(f))]
     s4_bad += [f for f in s4o["ablation"] if not _eq(s4o["ablation"][f]["change"], s4n["ablation"][f]["change"])]
     print(f"- B27 S4 (feature ranking, FEATURE_AUDIT.md): {'identical' if not s4_bad else f'DIFFERENT: {s4_bad[:5]}'}")
     bad += len(s4_bad)
+    for lab, mo, mn in (("B27 S3", o27["S3_models"], n27["S3_models"]), ("B29 C", o29["C_models"], n29["C_models"])):
+        diff = [m for m in mo if not (_eq(mo[m]["auc"], mn[m]["auc"]) and _eq(mo[m]["brier"], mn[m]["brier"]))]
+        print(f"- {lab} model AUC and Brier ({len(mo)} models): {'identical' if not diff else f'DIFFERENT: {diff}'}")
+        bad += len(diff)
+    r5 = o29.get("resolution_5m") == n29.get("resolution_5m")
+    print(f"- B29 5m resolution check: {'identical' if r5 else 'DIFFERENT'}")
+    bad += 0 if r5 else 1
     print(f"\nNon-model differences: {bad}.\n")
     print("## Model studies: as run (calibrated threshold) against corrected (raw score)\n")
     for lab, old, new in (("B27 S3", o27["S3"], n27["S3"]), ("B29 C", o29["C"], n29["C"])):

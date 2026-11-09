@@ -175,7 +175,9 @@ def markdown(out: dict, s27: dict | None = None, s29: dict | None = None, asrun2
         for m, v in blk.items():
             L.append(f"| {m} | {v['test_rows']} | {v['distinct_raw_test']} | {v['distinct_calibrated_test']} | {v['auc_calibrated']:.4f} | "
                      f"{v['auc_raw']:.4f} | {v['brier_calibrated']:.4f} |")
-    L.append(f"\nCounts that differ from the corrected studies' own n_raw: {mismatches}.")
+    L.append(f"\nCounts that differ from the corrected studies' own n_raw: {mismatches}. Rows whose study n_raw is '—' are not "
+             "registered configurations (B29 C registered q of 50 / 20 / 10 / 5 / 2 / 1%; the audit also computed 0.5%); they are "
+             "descriptive only. The 2026 columns are filled for frozen candidates (the only ones the registrations check on 2026).")
     return "\n".join(L)
 
 

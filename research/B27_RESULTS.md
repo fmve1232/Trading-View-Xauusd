@@ -23,10 +23,10 @@ The full set of result files:
 - **The trial log is append-only:** the corrected S3 configurations and frozen 2026 checks are added under phase "B27-fix".
 
 **1. The S3 "top q" model selections were not q.**
-- **What went wrong.** The threshold was a quantile of isotonic-calibrated probabilities, a step function. "≥ threshold" admitted the whole top step, so the "top 1%" figures below describe much larger selections: ⟪B27_ASRUN_SHARES⟫.
-- **The fix.** Rank on the raw model score (the same order, no ties); each training window's own (1 − q) quantile is still the threshold.
-- **The corrected selections select about q:** ⟪B27_FIX_SHARES⟫.
-- **The corrected results:** ⟪B27_FIX_S3⟫
+- **What went wrong.** The threshold was a quantile of isotonic-calibrated probabilities, a step function. "≥ threshold" admitted the whole top step, so the "top 1%" figures below describe much larger selections: as run, a nominal top 1% took 15.2%–48.9% of the walk-forward test rows.
+- **The fix.** Rank on the raw model score: the same order, without the calibration plateaus; 0 rows sit exactly at any threshold (appendix A2). Each training window's own (1 − q) quantile is still the threshold.
+- **The corrected selections select about q:** q = 0.5%: 0.53%–0.76%; q = 1%: 1.03%–1.41%; q = 5%: 4.71%–6.29%; q = 10%: 9.68%–11.35%.
+- **The corrected results:** 0 of 70 BH-significant; the smallest p is 0.0275 (S3 HGB top20% SELL: 51.8% on 1089 decided against 48.8%; BH threshold about 0.0007). 11 of 70 selections have positive mean net expectancy; 0 have a 95% interval above zero. The highest lower bound is -0.55 $ / oz (1110 trades, mean +0.33).
 - **Superseded statements.** "Its best top-1% selection was 51.7% SELL (LGBM, 895 trades)", and the "isotonic plateau" note, describe the defective selection. The model AUCs (0.498–0.524) and Brier scores are unchanged: they never depended on the threshold.
 
 **2. The break-even comparator was too low.**
@@ -37,7 +37,7 @@ The full set of result files:
 **3. What does not change.**
 - **Reproduction is exact.** The corrected re-run reproduces S1, S2, S5 and the S4 feature ranking exactly (`PHASE_C_APPENDIX.md` A1).
 - **No configuration passes:** 0 BH-significant, 0 INFORMATIVE, 0 TRADEABLE.
-- **Frozen candidates:** ⟪B27_FIX_FROZEN⟫
+- **Frozen candidates:** 20 frozen in the corrected re-run (20 as run); entering: S3 HGB top20% SELL, S2 FVG RETEST_10 SELL, S1 sg_d_pdh Q3 BUY, S2 EMA_PULLBACK CONF_20 SELL, S1 nd_sess_q Q4 SELL; leaving: S3 LGBM top0.5% SELL, S3 LGBM top2% SELL, S3 LGBM top1% SELL, S3 LGBM top10% SELL, S3 LGBM top5% SELL. None holds on 2026 (smallest Holm p 1.000).
 - **Stop-entry resolution.** Phase C's fill-bar check shows that the STOP_10..STOP_20 entries below are INCONCLUSIVE at 15m (worst case). Their best case is still at random (`B28_RESULTS.md`).
 
 ## The answer

@@ -44,8 +44,9 @@ def asrun_range(blk: dict, s_old: dict, study: str, idf, q: float) -> str:
     return f"{pct(min(sh), 1)}–{pct(max(sh), 1)}" if sh else "—"
 
 
-def net_line(blk: dict) -> str:
-    rows = [w["series"] for v in blk.values() for w in v["walk_forward"].values() if w.get("series") and w["series"].get("exp_oz") is not None]
+def net_line(blk: dict, registered_q: tuple | None = None) -> str:
+    rows = [w["series"] for v in blk.values() for w in v["walk_forward"].values() if w.get("series") and w["series"].get("exp_oz") is not None
+            and (registered_q is None or any(abs(w["q"] - q) < 1e-12 for q in registered_q))]
     lo_pos = [r for r in rows if r["exp_ci95"][0] is not None and r["exp_ci95"][0] > 0]
     pos = [r for r in rows if r["exp_oz"] > 0]
     best = max(rows, key=lambda r: r["exp_ci95"][0] if r["exp_ci95"][0] is not None else -9)
@@ -53,11 +54,30 @@ def net_line(blk: dict) -> str:
             f"The highest lower bound is {best['exp_ci95'][0]:+.2f} $ / oz ({best['trades']} trades, mean {best['exp_oz']:+.2f})")
 
 
+C_QS = (0.50, 0.20, 0.10, 0.05, 0.02, 0.01)       # B29 C's registered q (b29.QS_C); the audit also computed 0.5%
+
+
+def unregistered(blk: dict) -> str:
+    """The audit's q = 0.5% rows for B29 C are outside the registered set: reported, never counted as findings."""
+    rows = [(g, k, w["series"]) for g, v in blk.items() for k, w in v["walk_forward"].items() if abs(w["q"] - 0.005) < 1e-12]
+    hit = [(g, k, r) for g, k, r in rows if r["exp_ci95"][0] is not None and r["exp_ci95"][0] > 0]
+    if not hit:
+        return f"The audit's {len(rows)} unregistered q = 0.5% rows: none has an expectancy interval above zero."
+    g, k, r = hit[0]
+    return (f"Outside the registered set (C registered q of 50 / 20 / 10 / 5 / 2 / 1%), the audit's q = 0.5% rows include {len(hit)} with an "
+            f"expectancy interval above zero: {g} {k} ({r['decided']} decided trades, {pct(r['r'])} against {pct(r['matched_random'])}, "
+            f"{r['exp_oz']:+.2f} $ / oz, 95% {r['exp_ci95'][0]:+.2f} to {r['exp_ci95'][1]:+.2f}, p {r['p_vs_random']:.3f} before any correction). "
+            "It is not a finding: it was not registered, it has fewer than 300 trades, its p does not survive any correction over the audit's rows, "
+            "and its registered 1% and 2% neighbours were frozen and lost money on 2026")
+
+
 def topq_line(blk: dict, s_old: dict, study: str, idf, qs=(0.01, 0.05, 0.10)) -> str:
     ties = sum(w["ties_at_threshold"] for v in blk.values() for w in v["walk_forward"].values())
-    dist = all(v["distinct_raw_test"] == v["test_rows"] for v in blk.values())
+    dup = {m: v["test_rows"] - v["distinct_raw_test"] for m, v in blk.items() if v["distinct_raw_test"] < v["test_rows"]}
+    dtxt = ("every raw score distinct on the test rows" if not dup else
+            "raw scores distinct on the test rows except " + ", ".join(f"{m} ({n} repeated values of {blk[m]['test_rows']:,})" for m, n in dup.items()))
     return (f"realised walk-forward shares {share_range(blk, qs)} (as run, q = 1% took {asrun_range(blk, s_old, study, idf, 0.01)}); "
-            f"rows tied at a threshold: {ties}; raw scores {'all distinct' if dist else 'NOT all distinct'} on the test rows (A2)")
+            f"rows tied exactly at a threshold: {ties}; {dtxt} (A2)")
 
 
 def perf_line(s: dict, study: str) -> str:
@@ -92,12 +112,12 @@ def main() -> int:
     rc = [c for c in cand if c.get("risk")]
     risk = [c["risk"]["iid"]["10000"] for c in rc]
     low = [c for c in rc if c["risk"]["iid"]["10000"] <= 0.05]
-    low_txt = "; ".join(f"{c['id']}: 2026 expectancy {c['y2026'].get('exp_oz', float('nan')):+.2f} per oz, BH q {c['dev_bh_q']:.3f}, "
-                        f"Holm p {c['y2026_holm_p']:.3f}" for c in low)
+    low_txt = "; ".join(f"{c['id']}: {c['dev']['decided']} decided development trades, 2026 expectancy "
+                        f"{c['y2026'].get('exp_oz', float('nan')):+.2f} per oz, BH q {c['dev_bh_q']:.3f}, Holm p {c['y2026_holm_p']:.3f}" for c in low)
     risk_line = (f"**Across the {len(risk)} candidates with at least 30 development trades,** P(drawdown ≥ $10,000 within 250 trades at 0.50 lot) "
-                 f"runs from {pct(min(risk), 0)} to {pct(max(risk), 0)} (median {pct(sorted(risk)[len(risk) // 2], 0)}); "
-                 f"{len(low)} are at or below 5%" + (f" ({low_txt})." if low else ".")
-                 + " A low drawdown figure is not evidence of an edge: it is mostly a small or slowly losing stake (A4).")
+                 f"runs from {pct(min(risk), 1)} to {pct(max(risk), 0)} (median {pct(sorted(risk)[len(risk) // 2], 0)}). "
+                 f"{len(low)} {'is' if len(low) == 1 else 'are'} at or below 5%" + (f" ({low_txt})" if low else "")
+                 + ". A low drawdown figure alone is not evidence of an edge: it fails C1–C3 (A4).")
     with open("research/PHASE_C_APPENDIX.md") as fh:
         app = fh.read()
     m_ = re.search(r"## Named bests.*?(?=\n## |\Z)", app, re.DOTALL)
@@ -117,7 +137,8 @@ def main() -> int:
         "B27_S3_LINE": perf_line(s27, "S3") + ". " + net_line(aud["B27_S3"]) + ".",
         "B27_REPRO": repro27,
         "B27_TOPQ": topq_line(aud["B27_S3"], s27o, "S3", id27), "B29_TOPQ": topq_line(aud["B29_C"], s29o, "C", id29),
-        "B27_PERF": perf_line(s27, "S3"), "B27_NET": net_line(aud["B27_S3"]), "B29_NET": net_line(aud["B29_C"]),
+        "B27_PERF": perf_line(s27, "S3"), "B27_NET": net_line(aud["B27_S3"]),
+        "B29_NET": net_line(aud["B29_C"], C_QS) + ". " + unregistered(aud["B29_C"]),
         "NAMED_BESTS": tab, "RISK_LINE": risk_line, "B27_FROZEN_N": str(len(fz27)),
         "B27_ASRUN_SHARES": f"as run, a nominal top 1% took {asrun_range(aud['B27_S3'], s27o, 'S3', id27, 0.01)} of the walk-forward test rows",
         "B27_FIX_SHARES": share_range(aud["B27_S3"], (0.005, 0.01, 0.05, 0.10)),

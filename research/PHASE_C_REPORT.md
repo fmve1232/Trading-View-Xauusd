@@ -15,9 +15,17 @@
 
 ## Final verdict: NO QUALIFIED STRATEGY
 
-**None of the ⟪N_CAND⟫ shortlisted candidates passes the six acceptance criteria** (appendix A4). No candidate passes even C2 (beats its matched random rate) or C3 (survives multiple-testing correction). Candidates passing each criterion:
+**None of the 65 shortlisted candidates passes the six acceptance criteria** (appendix A4). No candidate passes even C2 (beats its matched random rate) or C3 (survives multiple-testing correction). Candidates passing each criterion:
 
-⟪CRIT_TABLE⟫
+| Criterion | Candidates passing |
+|---|---|
+| C1 positive expectancy | 8 of 65 |
+| C2 beats matched random | 0 of 65 |
+| C3 multiple testing | 0 of 65 |
+| C4 stable | 2 of 65 |
+| C5 sample | 40 of 65 |
+| C6 drawdown ruin | 1 of 65 |
+| **All six (QUALIFIES)** | **0 of 65** |
 
 **Nothing is proposed for the sealed validation period.** The 90% TP-first rate exists only as stop-loss geometry, and it loses money (§4).
 
@@ -88,13 +96,21 @@ log       research/trials.jsonl, append-only (every configuration, every 2026 ch
 
 ## 3. Track A: +$15 / −$15 (B27 corrected, B28)
 
-⟪TRACK_A_TABLE⟫
+| Study | Configurations | BH | INFORMATIVE | TRADEABLE |
+|---|---|---|---|---|
+| B27 S1 (corrected re-run) | 518 | 0 | 0 | 0 |
+| B27 S2 (corrected re-run) | 582 | 0 | 0 | 0 |
+| B27 S3 (corrected re-run) | 70 | 0 | 0 | 0 |
+| B27 S5 (corrected re-run) | 22 | 0 | 0 | 0 |
+| B28 (8 new families) | 320 | 0 | 0 | 0 |
+
+Frozen and checked on 2026: B27 20 (hold: 0; smallest Holm p 1.000), B28 10 (hold: 0).
 
 - **Confirmation distance never raises the hit rate:**
   - $0, 3, 5, 7, 8, 10, 12, 15, 20, by close, retest, stop or structure limit, across 21 families;
   - no mode is more than 0.4 points above random.
 - **Stop entries of $10 or more are INCONCLUSIVE at 15m.** Their best case is still at random (`B28_RESULTS.md`).
-- **The models (B27 S3, corrected):** ⟪B27_S3_LINE⟫
+- **The models (B27 S3, corrected):** 0 of 70 BH-significant; the smallest p is 0.0275 (S3 HGB top20% SELL: 51.8% on 1089 decided against 48.8%; BH threshold about 0.0007). 11 of 70 selections have positive mean net expectancy; 0 have a 95% interval above zero. The highest lower bound is -0.55 $ / oz (1110 trades, mean +0.33).
 
 ## 4. Track B: dynamic TP / SL (B29 corrected)
 
@@ -129,10 +145,10 @@ Both studies were re-run in full from the same data and seeds.
 
 | Check | B27 S3 (5 models, ±$15) | B29 C (LightGBM, 7 brackets) |
 |---|---|---|
-| 1. Computation reproducible | ⟪B27_REPRO⟫ | every study the fix does not touch is identical (G 202 × 4 scenarios, V 50, M 14, E 294, 5m resolution); every model's AUC and Brier identical (A1) |
-| 2. Top-q counts and ties | ⟪B27_TOPQ⟫ | ⟪B29_TOPQ⟫ |
-| 3. Against the matched random | ⟪B27_PERF⟫ | 0 of 84 BH-significant; the smallest p is 0.0018 (+$15 / −$10 top 20% SELL: 41.4% on 1,499 decided against 37.7%; BH threshold about 0.0006) |
-| 4. Net after costs | ⟪B27_NET⟫ | ⟪B29_NET⟫ |
+| 1. Computation reproducible | S1 518, S2 582 and S5 22 configurations: identical; S3's five AUCs and Brier scores: identical; the S4 ranking (univariate AUC, permutation, ablation): identical (A1) | every study the fix does not touch is identical (G 202 × 4 scenarios, V 50, M 14, E 294, 5m resolution); every model's AUC and Brier identical (A1) |
+| 2. Top-q counts and ties | realised walk-forward shares q = 1%: 1.03%–1.41%; q = 5%: 4.71%–6.29%; q = 10%: 9.68%–11.35% (as run, q = 1% took 15.2%–48.9%); rows tied exactly at a threshold: 0; raw scores distinct on the test rows except HGB (30 repeated values of 94,235) (A2) | realised walk-forward shares q = 1%: 0.97%–1.50%; q = 5%: 4.58%–5.80%; q = 10%: 9.28%–10.96% (as run, q = 1% took 21.2%–65.5%); rows tied exactly at a threshold: 0; every raw score distinct on the test rows (A2) |
+| 3. Against the matched random | 0 of 70 BH-significant; the smallest p is 0.0275 (S3 HGB top20% SELL: 51.8% on 1089 decided against 48.8%; BH threshold about 0.0007) | 0 of 84 BH-significant; the smallest p is 0.0018 (+$15 / −$10 top 20% SELL: 41.4% on 1,499 decided against 37.7%; BH threshold about 0.0006) |
+| 4. Net after costs | 11 of 70 selections have positive mean net expectancy; 0 have a 95% interval above zero. The highest lower bound is -0.55 $ / oz (1110 trades, mean +0.33) | 12 of 84 selections have positive mean net expectancy; 0 have a 95% interval above zero. The highest lower bound is -0.46 $ / oz (1518 trades, mean +0.16). Outside the registered set (C registered q of 50 / 20 / 10 / 5 / 2 / 1%), the audit's q = 0.5% rows include 1 with an expectancy interval above zero: TP10/SL15 BUY 0.5% (68 decided trades, 72.1% against 58.0%, +2.77 $ / oz, 95% +0.13 to +5.40, p 0.012 before any correction). It is not a finding: it was not registered, it has fewer than 300 trades, its p does not survive any correction over the audit's rows, and its registered 1% and 2% neighbours were frozen and lost money on 2026 |
 
 - **Matching AUCs prove reproducibility, not profitability.** The models' AUC (0.50–0.53) is the calendar:
   - on decided trades only, it is 0.496–0.506;
@@ -173,7 +189,20 @@ Both studies were re-run in full from the same data and seeds.
 
 Every row shows development and 2026 figures side by side. **No row is a validated strategy.**
 
-⟪NAMED_BESTS⟫
+**Named bests** (development, frozen; each with its 2026 check)
+
+| Category | Candidate | Dev r | Dev exp/oz | 2026 r | Holds 2026 |
+| --- | --- | --- | --- | --- | --- |
+| Highest TP-first (n >= 300) | V ATR 0.5x/3x BUY | 82.2% (n 11605) | -0.75 | 81.4% (n 3198) | no |
+| Highest TP-first with positive dev expectancy (n >= 300) | S2 PD_SWEEP LIMIT BUY | 54.5% (n 303) | +1.17 | 36.0% (n 114) | no |
+| Best net profit per trade (n >= 300) | S2 PD_SWEEP LIMIT BUY | 54.5% (n 303) | +1.17 | 36.0% (n 114) | no |
+| Best risk-adjusted (n >= 300) | S2 PD_SWEEP LIMIT BUY | 54.5% (n 303) | +1.17 | 36.0% (n 114) | no |
+| Lowest drawdown (n >= 300, dev expectancy > 0; lowest Monte Carlo 95th-percentile drawdown per 100 trades) | S3 HGB top20% SELL | 51.8% (n 1089) | +0.33 | 49.7% (n 911) | no |
+| Best BUY (risk-adjusted) | S2 PD_SWEEP LIMIT BUY | 54.5% (n 303) | +1.17 | 36.0% (n 114) | no |
+| Best SELL (risk-adjusted) | S2 EMA_PULLBACK CONF_15 SELL | 54.0% (n 359) | +0.97 | 48.5% (n 237) | no |
+| Best 5m-execution setup | none qualifies: no 5m history for development (the store's Sep–Nov 2026 5m bars only check the 15m resolution; see the resolution table) |  |  |  |  |
+
+TRADEABLE on development: 0. Holding on 2026: 0. Validated strategies: 0.
 
 ## 8. Every shortlisted candidate and the acceptance criteria (appendix A4)
 
@@ -217,7 +246,7 @@ Every row shows development and 2026 figures side by side. **No row is a validat
 | Cost stress | ADV − ENG added to every trade |
 | 2026 | the 2026 trades |
 
-⟪RISK_LINE⟫
+**Across the 65 candidates with at least 30 development trades,** P(drawdown ≥ $10,000 within 250 trades at 0.50 lot) runs from 0.1% to 99% (median 65%). 1 is at or below 5% (E ENG_SIGNAL TP5/SL10 SELL: 40 decided development trades, 2026 expectancy -1.44 per oz, BH q 0.999, Holm p 1.000). A low drawdown figure alone is not evidence of an edge: it fails C1–C3 (A4).
 
 **Sizing for any future validated edge:**
 1. **Size from the validation lower bound, never from development.**
@@ -234,11 +263,11 @@ Every row shows development and 2026 figures side by side. **No row is a validat
 |---|---|
 | `results/b26/b26_trades_P1/P2/P3.csv.gz` | B26's ±$15 baseline, every eligible bar, all cost scenarios, with session / volatility / trend context |
 | `results/b27/b27_frozen_trades.csv.gz` | B27 as run: 20 frozen candidates (development, 2026, 2026 on 5m) |
-| `results/b27_fix/b27_frozen_trades.csv.gz` | B27 corrected: ⟪B27_FROZEN_N⟫ frozen candidates |
+| `results/b27_fix/b27_frozen_trades.csv.gz` | B27 corrected: 20 frozen candidates |
 | `results/b28/b28_frozen_trades.csv.gz` | B28: 10 frozen candidates |
 | `results/b29/b29_frozen_trades.csv.gz` | B29 as run: 30 frozen candidates |
 | `results/b29_fix/b29_frozen_trades.csv.gz` | B29 corrected: 35 frozen candidates |
-| `results/b2*/…csv.gz`, `results/b29/b29_grid.csv`, `b29_grid_extra.csv.gz` | every configuration's statistics |
+| `results/b27/b27_S1/S2/S3/S5.csv.gz`, `results/b27_fix/b27_S3.csv.gz`, `results/b28/b28_configs.csv.gz`, `results/b29/b29_V/M/C/E.csv.gz`, `results/b29_fix/b29_C.csv.gz`, `results/b29/b29_grid.csv`, `b29_grid_extra.csv.gz` | every configuration's statistics |
 | `results/phasec/candidates.csv` | every shortlisted candidate's statistics and criteria |
 
 **Columns:** candidate, period, fill / exit time (UTC), outcome (TP / SL / AMBIGUOUS / TIMEOUT / CLOSURE), net $ per oz (4,000-equivalent in development), cost, minutes, session, direction, and net $ at 0.50 lot (ASSUMED 100 oz).

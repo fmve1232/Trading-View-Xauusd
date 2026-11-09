@@ -142,6 +142,8 @@ Pooled descriptively (trades weighted); each configuration was tested on its own
 | SWEEP_DISPLACEMENT RETEST_8 SELL | 58.3% (72) | 47.9% | +2.23 | 46.7% (15) | 52.0% | −0.82 |
 | NY_ORB LIMIT BUY | 54.0% (161) | 48.4% | +1.17 | 40.0% (40) | 43.0% | −2.72 |
 
+**Every candidate's full statistics are in `PHASE_C_APPENDIX.md` A4:** TP / SL / neither shares, expectancy with its interval, matched random, BH q, Holm p, per-year and regime results, drawdown, risk of ruin, and the six acceptance criteria. All ten fail.
+
 **Holm p = 1.000 for all ten; none holds.** Every one fell to within 1 point of its 2026 random rate, or below it. This is the pattern of selection noise, not of an edge that decays.
 
 ## Checks
