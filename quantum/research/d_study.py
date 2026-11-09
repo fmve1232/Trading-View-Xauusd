@@ -377,10 +377,11 @@ def run(F: pd.DataFrame, L: pd.DataFrame, of_cols: list[str], im_cols: list[str]
             wfs[(name, algo)] = wf
             res["sets"][name][algo] = {"metrics": metrics(L, wf["P"]), "folds": wf["folds"]}
             for rule, _ in RULES:
-                t = series(L, selected(L, wf, rule))
+                rows = selected(L, wf, rule)
+                t = series(L, rows)
                 st = strategy_stats(t, rates, weeks)
                 res["strategies"].append({"id": f"{name}/{algo}/{rule}", "set": name, "algo": algo, "rule": rule, "dev": st,
-                                          "_daily": daily_r(t, days)})
+                                          "_daily": daily_r(t, days), "_rows_dev": rows})
     for (name, algo), wf in wfs.items():
         if name != "BASELINE" and ("BASELINE", algo) in wfs:
             res["incremental"][f"{name}/{algo}"] = incremental(L, wfs[("BASELINE", algo)]["P"], wf["P"])
@@ -402,7 +403,8 @@ def run(F: pd.DataFrame, L: pd.DataFrame, of_cols: list[str], im_cols: list[str]
         for s in frozen:
             FM = final_fit(F, L, res["sets"][s["set"]]["columns"], s["algo"])
             ap = apply_frozen(FM, Fy, Ly)
-            s["y2026"] = strategy_stats(series(Ly, selected(Ly, ap, s["rule"])), rates_y, weeks_y)
+            s["_rows_y2026"] = selected(Ly, ap, s["rule"])
+            s["y2026"] = strategy_stats(series(Ly, s["_rows_y2026"]), rates_y, weeks_y)
         holm = b27.holm([s["y2026"].get("p_vs_random", 1.0) for s in frozen])
         for s, hp in zip(frozen, holm, strict=True):
             s["y2026_holm_p"] = hp

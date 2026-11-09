@@ -77,6 +77,16 @@ Its test is B5's machinery: 30 rules and 3 models, a −$10 stop with +$10 / +$1
 - **News.** News timestamps are dated only for 2020-01-24 → 2023-01-25 and from 2026-10-28 (`b26.DATED`). January–October 2026 stays **NOT DATED**; nothing is back-filled.
 - **Isolation and randomness.** Research code must stay invisible to production, and `np.random` is forbidden anywhere under `quantum/` (`test_integrity`). Phase D modules are flat `quantum/research/d_*.py` and draw randomness only from `harness.seeded_rng`.
 
+### 2.4 Second audit pass (2026-11-09, before any data): Phase D amendment A1
+
+Re-reading Phase D's own code against the brief found three gaps, all fixed before any data. They are recorded as amendment A1 in `PHASE_D.json`, and the log carries the new registration hash.
+
+| # | Gap | Fix |
+|---|---|---|
+| D-1 | **No trade-level files.** `d_run` defined `write_trades` but never called it, so the registered run would have written none (deliverable 9). | Every strategy, whatever its result, writes its independent trades (development, plus 2026 for frozen ones) in price-free columns. Each file's SHA-256 goes into its trial record. |
+| D-2 | **Lag 0 is not proof of a correct clock** (the brief, A.2). B5c's 15-minute lags by session and year pass a clock that is a few minutes off or wrong in a few weeks. A new test shows B5c's gate still peaks at lag 0 with Dukascopy 3 minutes late. | `quantum/research/d_clock.py`: per-ISO-week lags (misaligned weeks quarantined; more than 2% of weeks stops the run); a minute-offset check on the one-minute mid; an MT5 cross-check at the minute level; a count of ticks whose millisecond stamp runs backwards (new extraction column `ms_backwards`). Rules are tie-aware: sparse quotes make neighbouring offsets indistinguishable, and a tie is never resolved by shifting. |
+| D-3 | **No D4 tooling.** Nothing re-derived the reported figures. | `research/tools/phase_d_audit.py` recomputes every strategy's n, decided, TP-first rate, Wilson interval, expectancy and PF from its trade file. It also checks the hashes against the log, recomputes BH, and checks partitions, gates and the verdict. `research/tools/phase_d_reports.py` writes `PHASE_D_APPENDIX.md` from the outputs only, and only after the audit passes. |
+
 ## 3. Separation and governance
 
 **Four tracks, kept apart.** Each has its own multiple-testing family:
@@ -95,7 +105,7 @@ Its test is B5's machinery: 30 rules and 3 models, a −$10 stop with +$10 / +$1
 |---|---|---|
 | A — extraction | `quantum/research/d_dukascopy.py`: 15-minute sums for the ten families (`PD_COLS`), one-minute bid / ask (`M1_COLS`), intermarket mid bars; sealed-period guard; B5c-compatible day files; resumable | `tests/test_research_phase_d_data.py` |
 | A — features | `quantum/research/d_features.py` (`FAMILIES_OF`: families 1–10 → 27 columns plus a missing flag); no look-ahead | the same file (`order_flow` on truncated data equals the full run) |
-| A — alignment | B5c A1 / A2 gates per period, plus order-flow coverage ≥ 90% (`d_run.data_stage`) | `tests/test_research_phase_d_run.py` (a failed gate → INSUFFICIENT DATA) |
+| A — alignment | B5c A1 / A2 gates per period, plus order-flow coverage ≥ 90% and Phase D A1 (`d_clock`: per week, minute offset, MT5, backwards stamps) | `tests/test_research_phase_d_clock.py` (each check catches what the lag-0 gate misses); `tests/test_research_phase_d_run.py` (a failed gate → INSUFFICIENT DATA) |
 | B — M1 | `research/tools/mt5_m1_check.py` (validator); `quantum/research/d_m1.py` (bid / ask race at one minute, stop entries, worst / best bounds); `d_run.m1_study` | `tests/test_mt5_m1_check.py`; the M1 race agrees **exactly** with B26 on every trade whose 15-minute bars are unambiguous |
 | C — benchmark | unchanged B26 through `b27.labels`; ENG primary; the one-minute race measures the real spread separately | as above |
 | D — incremental value | `quantum/research/d_study.py`: Baseline / A / B / C / D on identical folds; log-loss gain per New York day with a stationary bootstrap; AUC, Brier, ECE, reliability next to net expectancy, PF, drawdown, frequency and CIs | `tests/test_research_phase_d_study.py`: a planted order-flow edge is found (ΔLL 0.057, CI [0.040, 0.074]); two nulls are not (p 0.37, 1.0) |
@@ -104,7 +114,8 @@ Its test is B5's machinery: 30 rules and 3 models, a −$10 stop with +$10 / +$1
 | Acceptance | `d_study.criteria` (C1–C6), BH q = 0.10, White's Reality Check, Holm on 2026 | every criterion is shown necessary |
 | Broker | `research/broker/BROKER_SPEC_TEMPLATE.json`, `quantum/research/d_broker.py` (refuses missing / ASSUMED values; separates $ / oz from account P&L) | the same study test file |
 | Log | `quantum/research/d_log.py` (seq + SHA-256 chain; refuses to append to a broken chain) | the same study test file |
-| Run | `quantum/research/d_run.py`: one resumable command on the operator's computer | the end-to-end test on a synthetic cache written by the real extractor |
+| Run | `quantum/research/d_run.py`: one command on the operator's computer; refuses to overwrite an earlier run | the end-to-end test on a synthetic cache written by the real extractor |
+| D4 audit / appendix | `research/tools/phase_d_audit.py`, `research/tools/phase_d_reports.py` | the same end-to-end test: the audit passes on genuine output and catches a removed trade, an edited figure and a flipped BH flag; no appendix without a passed audit |
 
 ## 5. Execution sequence
 
@@ -114,7 +125,7 @@ Its test is B5's machinery: 30 rules and 3 models, a −$10 stop with +$10 / +$1
 | D1 | B5c / order-flow preparation and synthetic tests only | **done** (defect B5c-1 fixed; extractor, features, race and study all tested) |
 | D2 | MT5 M1 preparation and exact export instructions | **done** (`PHASE_D_DATA_REQUIREMENTS.md` §3; validator v2) |
 | D3 | The controlled run once data exist: `d_dukascopy` (development, then 2026), then `d_run` | **waiting on Dukascopy data** (and optionally MT5 M1 and the broker specification) |
-| D4 | Independent statistical audit of D3's outputs: reproduce every figure from the committed outputs, recompute BH / Reality Check / Holm, check the log chain and coverage | after D3 |
+| D4 | Independent statistical audit of D3's outputs (`tools/phase_d_audit.py`, built and tested): reproduce every figure from the trade files, recompute BH, check the log chain, hashes, partitions and gates; then a manual review of costs, labels, robustness and drawdown | after D3 |
 | D5 | Final recommendation: QUALIFIES FOR FURTHER VALIDATION, NO QUALIFIED STRATEGY, or INSUFFICIENT DATA — RESEARCH INCOMPLETE | after D4. If nothing qualifies, Quantum keeps reporting NO TRADE. |
 
 ## 6. Compute estimates

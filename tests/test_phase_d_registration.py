@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 
+from quantum.research import d_clock as K
 from quantum.research import d_dukascopy as DD
 from quantum.research import d_features as DF
 from quantum.research import d_log as LOG
@@ -52,3 +53,11 @@ def test_registered_constants_are_the_code_constants():
     assert len(R.GRID) == 16 and R.STOP_X == (3, 5, 7, 10) and R.STOP_WINDOW_S == 3600
     assert (R.ENG_SI, R.ENG_SO, R.ENG_CM) == (0.20, 0.20, 0.07)
     assert set(r["acceptance"]) >= {"C1", "C2", "C3", "C4", "C5", "C6", "qualifies"}
+
+
+def test_amendment_a1_constants():
+    r = _reg()
+    assert "A1" in [a["id"] for a in r["amendments"]] and r["amendments"][0]["before_any_data"]
+    assert (K.LAGS_BARS, K.WEEK_MIN_BARS, K.MAX_MISALIGNED_WEEKS) == ((-2, -1, 0, 1, 2), 200, 0.02)
+    assert (K.MINUTE_OFFSETS, K.MAX_TIE_SPAN, K.TIE_EPS, K.MAX_BACKWARDS) == (tuple(range(-5, 6)), 3, 0.001, 0.001)
+    assert K.MT5_LAGS_MIN == tuple(range(-5, 6)) and "ms_backwards" in DD.PD_COLS

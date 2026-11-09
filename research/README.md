@@ -79,6 +79,7 @@ changed. The engine (web.7), its freeze key `5e4630924d663fc5:60bb01794d03c9ac` 
 | `registrations/PHASE_D.json` | **Phase D registration**: hypotheses H-D1–H-D7, data and alignment gates, the ten order-flow families, labels (benchmark B26 unchanged; dynamic ATR family; descriptive), models, costs, tests, acceptance C1–C6 |
 | `PHASE_D_DATA_REQUIREMENTS.md` | **Exactly what Phase D needs**: Dukascopy file format and commands, MT5 M1 export format and validator, broker specification template, where D3 runs |
 | `PHASE_D_B5C_RESULTS.md`, `PHASE_D_M1_RESULTS.md`, `PHASE_D_MODEL_COMPARISON.md`, `PHASE_D_RISK_REPORT.md`, `PHASE_D_FINAL_REPORT.md` | **INSUFFICIENT DATA — RESEARCH INCOMPLETE** (no data received; no result, nothing estimated) |
+| `tools/phase_d_audit.py`, `tools/phase_d_reports.py` | Phase D's D4 audit (every figure recomputed from the trade files; hashes, BH, partitions, gates) and the appendix generator (writes `PHASE_D_APPENDIX.md` only after the audit passes) |
 | `phase_d_trials.jsonl` | Phase D's append-only, hash-chained trial log (`quantum/research/d_log.py`); starts with the registration record |
 | `STRATEGY_CATALOGUE.md` | **Every strategy tested (B1–B20) in one table**: procedure, indicators, literature, best measured result vs random, verdict; the arithmetic of TP-first at −$13; B20's calibration tables; indicator coverage; verified literature |
 

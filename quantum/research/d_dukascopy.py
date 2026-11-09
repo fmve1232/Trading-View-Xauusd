@@ -40,7 +40,7 @@ SEALED = (H.VAL[0], H.HOLD[1])                    # validation + holdout: never 
 MIN_MS, HALF_MS, L5_MS = 60_000, 450_000, 600_000   # a minute; half a bar; the last five minutes start at 10:00
 PD_COLS = ["spread_min", "spread_max", "spread_first", "spread_last", "spread_sq", "bid_up", "bid_dn", "ask_up", "ask_dn",
            "bv_sum", "av_sum", "path_abs", "rv", "mid_hi", "mid_lo", "flips", "run_max", "n_h1", "n_l5", "ofi_l5",
-           "sw_up", "sw_dn", "sec_active"]
+           "sw_up", "sw_dn", "sec_active", "ms_backwards"]          # ms_backwards: Phase D amendment A1 (d_clock)
 M1_COLS = ["bid_o", "bid_h", "bid_l", "bid_c", "ask_o", "ask_h", "ask_l", "ask_c", "n"]
 MID_COLS = ["mid_first", "mid_last", "mid_hi", "mid_lo", "n"]
 INTERMARKET = {"EURUSD": "EURUSD", "XAGUSD": "XAGUSD", "USDX": "DOLLARIDXUSD", "USTBOND": "USTBONDTRUSD"}
@@ -103,6 +103,9 @@ def pd_sums(ticks: np.ndarray, hour_start: pd.Timestamp) -> pd.DataFrame:
     s["spread_first"], s["spread_last"] = gk["sp"].first(), gk["sp"].last()
     s["mid_hi"], s["mid_lo"] = gk["mid"].max(), gk["mid"].min()
     s["sec_active"] = pd.DataFrame({"k": k, "sec": ms // 1000}).groupby("k")["sec"].nunique().astype(float)
+    ms0 = ticks[ticks[:, 0] < C.HOUR_MS, 0]                       # file order, before the sort: stamps that run backwards
+    back = pd.Series(np.r_[0.0, (np.diff(ms0) < 0).astype(float)]).groupby((ms0 // C.BAR_MS).astype(int)).sum()
+    s["ms_backwards"] = back.reindex(s.index).fillna(0.0)
     nz = dm != 0                                                 # direction runs: consecutive non-zero mid changes
     sgn, kk = np.sign(dm[nz]), k[nz]
     if len(sgn):

@@ -6,9 +6,15 @@
  "registered_on_branch": "claude/research-phase-d (from claude/research-phase-c at c0496c13c)",
  "approved_by_operator": false,
  "approval_note": "Development and the unsealed 2026 period need no approval (harness.partition). Validation and holdout stay sealed; opening validation would need a separate amendment with approved_by_operator true, written on the operator's explicit instruction, never self-approved.",
- "partitions": ["development", "unsealed 2026"],
- "sealed": {"validation": "2023-01-24 02:00 -> 2024-07-01 00:00 UTC", "holdout": "2024-07-01 00:00 -> 2026-01-01 00:00 UTC",
-            "rule": "never downloaded (d_dukascopy.check_span / hours_of refuse it before any request; b5c_dukascopy.day_hours skips it), never kept from an MT5 export (mt5_m1_check.partition_guard drops and only counts those rows), never scored"},
+ "partitions": [
+  "development",
+  "unsealed 2026"
+ ],
+ "sealed": {
+  "validation": "2023-01-24 02:00 -> 2024-07-01 00:00 UTC",
+  "holdout": "2024-07-01 00:00 -> 2026-01-01 00:00 UTC",
+  "rule": "never downloaded (d_dukascopy.check_span / hours_of refuse it before any request; b5c_dukascopy.day_hours skips it), never kept from an MT5 export (mt5_m1_check.partition_guard drops and only counts those rows), never scored"
+ },
  "preserves": {
   "phase_c": "frozen evidence: research/PHASE_C_FROZEN.sha256 pins 74 files (reports, results, registrations B26-B29 and the code that produced them); tests/test_phase_c_frozen.py fails on any change, and on any change to the first 3,808 lines of research/trials.jsonl. Phase C's verdict NO QUALIFIED STRATEGY stands and is not revisited by parameter changes.",
   "benchmark": "B26 unchanged (quantum/research/b26.py, pinned): BUY +15 TP vs -15 SL, SELL -15 TP vs +15 SL, from the fill, bid / ask execution, 192 bars, closures, AMBIGUOUS = stop; k = price / 4000 in development, 1 in 2026; ENG costs primary. Phase D builds its labels through b27.labels, i.e. the same function and populations as Phase C (b27.load_pops conventions), so the benchmark reproduces Phase C exactly.",
@@ -26,40 +32,93 @@
   "prior": "Every price-only family in Phase B and C failed; the models' AUC came from the calendar (closures), not direction (research/PHASE_C_REPORT.md). The prior for any edge is therefore low; correlation is not taken as prediction, and prediction is not taken as profit."
  },
  "data": {
-  "dukascopy": {"what": "SWFX (Dukascopy's ECN) best bid and best offer with the volume displayed at each, at every change; datafeed hour files <SYM>/<YYYY>/<MM-1>/<DD>/<HH>h_ticks.bi5 (LZMA, records >3I2f: ms in hour, ask, bid, ask volume, bid volume; prices in integer units, scale detected against the spot paths)",
-                "is_not": "order-book depth beyond the best level, traded volume, trade sign or CME data. Volumes are indicative displayed liquidity on one venue. Feature names say quote, never trade or depth.",
-                "periods": "development 2020-01-24 02:00 -> 2023-01-24 02:00 UTC; 2026-01-01 00:00 UTC -> the last complete UTC day",
-                "where": "downloaded and reduced on the operator's computer (Dukascopy refuses GitHub's servers and its terms restrict redistribution); raw ticks are never committed or uploaded; the per-bar sums stay in the local cache",
-                "extractor": "python -m quantum.research.d_dukascopy --period development | y2026 [--stage intermarket]"},
-  "intermarket": {"source": "Dukascopy datafeed, same format: EURUSD, XAGUSD, DOLLARIDXUSD (US dollar index CFD), USTBONDTRUSD (US T-bond CFD: a price, an inverse proxy of long yields, NOT the 10-year yield)",
-                  "availability": "probed (one hour each) before download; an instrument not served is reported unavailable and set C / D run without it, never with a substitute",
-                  "not_available": "COMEX GC order flow (paid; B5 used Databento once), intraday DXY / US10Y history outside 2026, historical news timestamps outside the dated lists (b8_news, news_calendar): 2026-01 -> 2026-10 news is NOT DATED and stays so; nothing is fabricated"},
+  "dukascopy": {
+   "what": "SWFX (Dukascopy's ECN) best bid and best offer with the volume displayed at each, at every change; datafeed hour files <SYM>/<YYYY>/<MM-1>/<DD>/<HH>h_ticks.bi5 (LZMA, records >3I2f: ms in hour, ask, bid, ask volume, bid volume; prices in integer units, scale detected against the spot paths)",
+   "is_not": "order-book depth beyond the best level, traded volume, trade sign or CME data. Volumes are indicative displayed liquidity on one venue. Feature names say quote, never trade or depth.",
+   "periods": "development 2020-01-24 02:00 -> 2023-01-24 02:00 UTC; 2026-01-01 00:00 UTC -> the last complete UTC day",
+   "where": "downloaded and reduced on the operator's computer (Dukascopy refuses GitHub's servers and its terms restrict redistribution); raw ticks are never committed or uploaded; the per-bar sums stay in the local cache",
+   "extractor": "python -m quantum.research.d_dukascopy --period development | y2026 [--stage intermarket]"
+  },
+  "intermarket": {
+   "source": "Dukascopy datafeed, same format: EURUSD, XAGUSD, DOLLARIDXUSD (US dollar index CFD), USTBONDTRUSD (US T-bond CFD: a price, an inverse proxy of long yields, NOT the 10-year yield)",
+   "availability": "probed (one hour each) before download; an instrument not served is reported unavailable and set C / D run without it, never with a substitute",
+   "not_available": "COMEX GC order flow (paid; B5 used Databento once), intraday DXY / US10Y history outside 2026, historical news timestamps outside the dated lists (b8_news, news_calendar): 2026-01 -> 2026-10 news is NOT DATED and stays so; nothing is fabricated"
+  },
   "spot_paths": "Twelve Data XAU/USD 15m / 1h on the research-data branch (+ the live store for late 2026), exactly Phase C's populations",
-  "mt5_m1": {"format": "MT5 View -> Symbols -> Bars -> M1 -> Export Bars: <DATE> <TIME> <OPEN> <HIGH> <LOW> <CLOSE> <TICKVOL> <VOL> <SPREAD>, server time, BID prices, spread in points (research/PHASE_D_DATA_REQUIREMENTS.md section 3)",
-             "validator": "research/tools/mt5_m1_check.py (Phase D version): encoding, separator, explicit dates, server zone incl. NY+7, partition guard, per-week clock, discontinuities, scale changes, coverage, broker identification; USABLE only with a passed clock check",
-             "status": "not received; no observation is invented or substituted"},
-  "broker": {"template": "research/broker/BROKER_SPEC_TEMPLATE.json", "validator": "python -m quantum.research.d_broker <file> (refuses missing / ASSUMED values)", "status": "not received"}
+  "mt5_m1": {
+   "format": "MT5 View -> Symbols -> Bars -> M1 -> Export Bars: <DATE> <TIME> <OPEN> <HIGH> <LOW> <CLOSE> <TICKVOL> <VOL> <SPREAD>, server time, BID prices, spread in points (research/PHASE_D_DATA_REQUIREMENTS.md section 3)",
+   "validator": "research/tools/mt5_m1_check.py (Phase D version): encoding, separator, explicit dates, server zone incl. NY+7, partition guard, per-week clock, discontinuities, scale changes, coverage, broker identification; USABLE only with a passed clock check",
+   "status": "not received; no observation is invented or substituted"
+  },
+  "broker": {
+   "template": "research/broker/BROKER_SPEC_TEMPLATE.json",
+   "validator": "python -m quantum.research.d_broker <file> (refuses missing / ASSUMED values)",
+   "status": "not received"
+  }
  },
  "timestamp_alignment": {
   "dukascopy": "B5c amendments A1 / A2, unchanged and applied per period (development and 2026 separately): lag correlation of 15-minute mid changes vs the spot closes at -2..+2 bars, overall, by session and by year; best lag must be 0 with r(0) >= 0.8; weekly open / close edges; basis by session; duplicate ms, crossed quotes, out-of-hour ticks, stale bars; days with median |basis| > 0.5% or r < 0.5 are quarantined (set missing), never shifted; the run stops if > 5% of days are quarantined, crossed quotes > 1%, out-of-hour > 0.1%, or the weekly edges differ by > 15 minutes",
   "coverage": "the run stops (INSUFFICIENT DATA) if fewer than 90% of a period's scored spot bars have Dukascopy ticks (d_run.MIN_OF_COVERAGE)",
   "mt5": "per-ISO-week lag check at -4..+4 hours (>= 200 overlapping 15m bars per week); any misaligned week makes the file NOT USABLE; --suggest-zone is information for the operator, never applied",
-  "never": "timestamps are never shifted to improve alignment or results"
+  "never": "timestamps are never shifted to improve alignment or results",
+  "phase_d_a1": "beyond the lag-0 gate (quantum/research/d_clock.py): 15-minute lags -2..+2 per ISO week (>= 200 bars; a week is misaligned when lag 0 is not among the tied best, within 0.001 of the maximum correlation; misaligned weeks are quarantined, and more than 2% of weeks stops the run); the one-minute mid read at the spot close shifted by -5..+5 minutes (0 must be among the tied best, the tied set within +-3 minutes); with an MT5 export, one-minute bid changes Dukascopy vs broker at -5..+5 minutes overall and per week (same rules); ticks whose millisecond stamp runs backwards inside an hour file at most 0.1% of ticks"
  },
  "features": {
-  "order_flow": {"code": "quantum/research/d_features.order_flow (row i uses ticks of bar i and earlier: known at its close)",
-                 "families": {"1 spread dynamics": ["nd_of_spread", "nd_of_spread_z", "nd_of_spread_sd"],
-                              "2 quote intensity": ["nd_of_ntr_z", "nd_of_sec_active"],
-                              "3 mid direction changes": ["nd_of_flip_rate"],
-                              "4 bid- vs ask-side pressure": ["sg_of_side_moves", "sg_of_side_vol"],
-                              "5 short-term imbalance": ["sg_of_ofi15", "sg_of_ofi60", "sg_of_qimb15", "sg_of_qlast", "sg_of_ofi_l5"],
-                              "6 price move per quote": ["sg_of_move_per_quote", "nd_of_efficiency"],
-                              "7 quote acceleration": ["nd_of_accel_in_bar", "nd_of_accel_60"],
-                              "8 spread expansion / contraction": ["nd_of_spread_chg", "nd_of_spread_range", "sg_of_spread_net"],
-                              "9 directional persistence": ["sg_of_timb15", "sg_of_timb60", "sg_of_run_signed"],
-                              "10 volatility-conditioned": ["nd_of_rv", "nd_of_rv_ratio", "sg_of_ofi15_vadj"],
-                              "missing indicator": ["nd_of_missing"]},
-                 "sums": "d_dukascopy.PD_COLS plus B5c's SUM_COLS, per 15-minute bar"},
+  "order_flow": {
+   "code": "quantum/research/d_features.order_flow (row i uses ticks of bar i and earlier: known at its close)",
+   "families": {
+    "1 spread dynamics": [
+     "nd_of_spread",
+     "nd_of_spread_z",
+     "nd_of_spread_sd"
+    ],
+    "2 quote intensity": [
+     "nd_of_ntr_z",
+     "nd_of_sec_active"
+    ],
+    "3 mid direction changes": [
+     "nd_of_flip_rate"
+    ],
+    "4 bid- vs ask-side pressure": [
+     "sg_of_side_moves",
+     "sg_of_side_vol"
+    ],
+    "5 short-term imbalance": [
+     "sg_of_ofi15",
+     "sg_of_ofi60",
+     "sg_of_qimb15",
+     "sg_of_qlast",
+     "sg_of_ofi_l5"
+    ],
+    "6 price move per quote": [
+     "sg_of_move_per_quote",
+     "nd_of_efficiency"
+    ],
+    "7 quote acceleration": [
+     "nd_of_accel_in_bar",
+     "nd_of_accel_60"
+    ],
+    "8 spread expansion / contraction": [
+     "nd_of_spread_chg",
+     "nd_of_spread_range",
+     "sg_of_spread_net"
+    ],
+    "9 directional persistence": [
+     "sg_of_timb15",
+     "sg_of_timb60",
+     "sg_of_run_signed"
+    ],
+    "10 volatility-conditioned": [
+     "nd_of_rv",
+     "nd_of_rv_ratio",
+     "sg_of_ofi15_vadj"
+    ],
+    "missing indicator": [
+     "nd_of_missing"
+    ]
+   },
+   "sums": "d_dukascopy.PD_COLS plus B5c's SUM_COLS, per 15-minute bar"
+  },
   "baseline": "B27's audited features (research/FEATURE_AUDIT.md) of families TIME_NEWS and MOMENTUM (b27.FAMILY_OF): time, session, news proximity where dated, returns, wicks, runs",
   "A": "Baseline + B27 families VOLATILITY, TREND, STRUCTURE_SMC, LIQUIDITY",
   "B": "Baseline + every order-flow column",
@@ -71,25 +130,36 @@
  "labels": {
   "benchmark": "B26's outcome, three classes: TP / SL (AMBIGUOUS counts as SL) / NEITHER (TIMEOUT or CLOSURE); OPEN excluded (d_study.y3)",
   "dynamic": "a separate family: TP / SL = (1.0, 1.0), (1.5, 1.0), (1.0, 1.5) x the 15-minute ATR(14) at the decision, resolved on Dukascopy one-minute bid / ask with B26's rules and ENG slippage / commission (d_run.dynamic_labels); not run without one-minute data for both periods",
-  "descriptive": {"FAV5 / FAV10 / FAV15 / FAV20": "the trigger side reaches +$X (x k) from the fill within 16 bars (no race)",
-                  "ADV_FIRST5 / 10 / 15 / 20": "the +-$X race from the same fill: favourable first / adverse first / neither; on one-minute bid / ask when available, else 15 minutes worst case, flagged INCONCLUSIVE when AMBIGUOUS > 2%",
-                  "time": "median minutes to TP and to SL by quintile of P(TP), and for every strategy",
-                  "delay": "the paired net change from entering one bar later, split by order flow with / against the trade"},
+  "descriptive": {
+   "FAV5 / FAV10 / FAV15 / FAV20": "the trigger side reaches +$X (x k) from the fill within 16 bars (no race)",
+   "ADV_FIRST5 / 10 / 15 / 20": "the +-$X race from the same fill: favourable first / adverse first / neither; on one-minute bid / ask when available, else 15 minutes worst case, flagged INCONCLUSIVE when AMBIGUOUS > 2%",
+   "time": "median minutes to TP and to SL by quintile of P(TP), and for every strategy",
+   "delay": "the paired net change from entering one bar later, split by order flow with / against the trade"
+  },
   "never": "outcome definitions are not changed after results; no losing trade is removed; OPEN trades are the only exclusion"
  },
  "models": {
-  "algorithms": {"LR": "StandardScaler + LogisticRegression(C=1, max_iter=2000)", "RF": "RandomForest(300 trees, min_samples_leaf 200, sqrt features)",
-                 "LGBM": "LightGBM(400 trees, 31 leaves, lr 0.05, min_child_samples 200, subsample 0.8)", "GB": "sklearn HistGradientBoosting(300, lr 0.05, 31 leaves, min_samples_leaf 200)",
-                 "source": "b22.make, unchanged from Phase B / C; no hyper-parameter is searched"},
+  "algorithms": {
+   "LR": "StandardScaler + LogisticRegression(C=1, max_iter=2000)",
+   "RF": "RandomForest(300 trees, min_samples_leaf 200, sqrt features)",
+   "LGBM": "LightGBM(400 trees, 31 leaves, lr 0.05, min_child_samples 200, subsample 0.8)",
+   "GB": "sklearn HistGradientBoosting(300, lr 0.05, 31 leaves, min_samples_leaf 200)",
+   "source": "b22.make, unchanged from Phase B / C; no hyper-parameter is searched"
+  },
   "output": "multinomial P(TP), P(SL), P(NEITHER) (sum to 1), E[net] = P(TP) W + P(SL) L + P(NEITHER) N (USD / oz, ENG) with W / L / N from the fit rows of the same direction; uncertainty: Wilson intervals per reliability bin, block-bootstrap intervals for every strategy figure",
   "calibration": "one temperature per fit, from the training window's own last 20% (b27.split_fit_cal); never from a test, 2026 or sealed row",
   "walk_forward": "quarterly folds from 2021-01-01; a training row must have exited one day before the fold; the same folds and rows for every set and algorithm; final models refit on all development and applied ONCE to 2026",
-  "rules": {"EV0": "E[net] > 0", "Q10 / Q05 / Q02": "top 10 / 5 / 2% of E[net], thresholds per direction from the training window's calibration rows"},
+  "rules": {
+   "EV0": "E[net] > 0",
+   "Q10 / Q05 / Q02": "top 10 / 5 / 2% of E[net], thresholds per direction from the training window's calibration rows"
+  },
   "positions": "one per direction at a time (b27.seq_rows): every counted trade is independent of the one before"
  },
- "costs": {"primary": "ENG: spread 0.30 in session / 0.50 off session, slippage 0.20 in and 0.20 out on stops, commission 0.07 (USD / oz, x k in development)",
-           "also": "GROSS, OP and ADV are carried by the labels (B26) for sensitivity; the one-minute race uses the real Dukascopy spread with ENG slippage and commission",
-           "account": "account-currency P&L only from a VALIDATED broker specification (d_broker), reported next to, never instead of, USD / oz; the balance is never an optimisation input"},
+ "costs": {
+  "primary": "ENG: spread 0.30 in session / 0.50 off session, slippage 0.20 in and 0.20 out on stops, commission 0.07 (USD / oz, x k in development)",
+  "also": "GROSS, OP and ADV are carried by the labels (B26) for sensitivity; the one-minute race uses the real Dukascopy spread with ENG slippage and commission",
+  "account": "account-currency P&L only from a VALIDATED broker specification (d_broker), reported next to, never instead of, USD / oz; the balance is never an optimisation input"
+ },
  "tests": {
   "incremental": "per set vs Baseline, same algorithm and rows: mean daily out-of-sample log-loss improvement, stationary bootstrap (mean block 5 days, 2,000 draws), one-sided p; reported with the AUCs, never instead of the net figures",
   "family_benchmark": "every (set, algorithm, rule) strategy on the +-$15 labels: up to 5 x 4 x 4 = 80; BH at q = 0.10 on the one-sided binomial p against matched random (direction x session x month, b27.base_rates); White's Reality Check (1,000 stationary-bootstrap draws, mean block 10) on daily net R against no trade",
@@ -108,10 +178,35 @@
   "90_percent": "a win rate is never optimised at the expense of expectancy or drawdown: a rule is judged on net expectancy, drawdown and frequency, and its win rate is reported against its own break-even"
  },
  "null_and_synthetic": "the pipeline is tested only on synthetic data (tests/test_research_phase_d_*.py): a planted order-flow edge must be found and two nulls must not be; synthetic results are never reported as findings and synthetic order flow is never used in place of quotes",
- "outputs": {"local (operator's computer)": "phase_d_out/: data_report.json, study.json, questions.json, m1.json, dynamic.json (aggregate figures), trades/*.csv (independent trades: times, direction, outcome, net USD / oz, minutes, session; no prices), and phase_d_trials.jsonl (hash-chained)",
-             "committed": "those files once received (no Dukascopy or MT5 price is in them), research/PHASE_D_*.md filled from them by a script, every trial appended to research/phase_d_trials.jsonl"},
- "compute": {"download": "about 22,000 development + 5,500 2026 hour files (2-4 GB transferred, ~200-400 MB cached as sums and minute bars), 30-90 minutes on a home connection at 6 workers, resumable; intermarket 4 x as many, optional, a few hours",
-             "study": "20 benchmark walk-forwards (5 sets x 4 algorithms, 8 quarterly folds) + 18 dynamic + 48 descriptive; about 2-4 hours on a 4-core laptop (RF and GB dominate), resumable by stage",
-             "m1": "about 2.3 million one-minute races per period, 5-15 minutes"},
- "amendments": []
+ "outputs": {
+  "local (operator's computer)": "phase_d_out/: data_report.json, study.json, questions.json, m1.json, dynamic.json (aggregate figures), trades/*.csv (independent trades: times, direction, outcome, net USD / oz, minutes, session; no prices), and phase_d_trials.jsonl (hash-chained)",
+  "committed": "those files once received (no Dukascopy or MT5 price is in them), research/PHASE_D_*.md filled from them by a script, every trial appended to research/phase_d_trials.jsonl",
+  "trade_files": "phase_d_out/trades/benchmark/<set>_<algo>_<rule>__dev.csv and __2026.csv (frozen only), trades/dynamic/ATR<tp>_<sl>/...: the independent trades of EVERY strategy, whatever its result, price-free columns only (d_run.TRADE_COLS); each file's SHA-256 is in its trial record",
+  "audit_d4": "research/tools/phase_d_audit.py: chain and registration hash; one trial record per strategy; file hashes; every figure recomputed from the trade files; BH recomputed; partitions; gates and verdict",
+  "appendix": "research/tools/phase_d_reports.py: PHASE_D_APPENDIX.md generated from the outputs only, written only when the D4 audit passes"
+ },
+ "compute": {
+  "download": "about 22,000 development + 5,500 2026 hour files (2-4 GB transferred, ~200-400 MB cached as sums and minute bars), 30-90 minutes on a home connection at 6 workers, resumable; intermarket 4 x as many, optional, a few hours",
+  "study": "20 benchmark walk-forwards (5 sets x 4 algorithms, 8 quarterly folds) + 18 dynamic + 48 descriptive; about 2-4 hours on a 4-core laptop (RF and GB dominate), resumable by stage",
+  "m1": "about 2.3 million one-minute races per period, 5-15 minutes"
+ },
+ "amendments": [
+  {
+   "id": "A1",
+   "date": "2026-11-09",
+   "before_any_data": true,
+   "change": "Timestamp verification beyond B5c's lag-0 gate (the operator's brief: lag 0 alone is not proof): per-week 15-minute lags, a minute-offset check on Dukascopy's one-minute mid, the MT5 cross-check, and a backwards-timestamp count (new extraction column ms_backwards), with tie-aware rules (a tie is not a shift; nothing is ever shifted). Trade-level files for every strategy, hashed into the log; the D4 audit tool and the generated appendix. The defect behind part of this: d_run defined write_trades but never called it, so the registered run would have written no trade-level files.",
+   "code": [
+    "quantum/research/d_clock.py",
+    "quantum/research/d_run.py",
+    "quantum/research/d_dukascopy.py",
+    "research/tools/phase_d_audit.py",
+    "research/tools/phase_d_reports.py"
+   ],
+   "tests": [
+    "tests/test_research_phase_d_clock.py",
+    "tests/test_research_phase_d_run.py"
+   ]
+  }
+ ]
 }

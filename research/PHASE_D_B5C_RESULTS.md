@@ -10,7 +10,8 @@
 - weekly open / close edges;
 - missing, duplicate-ms, crossed, out-of-hour and stale ticks;
 - quarantined days;
-- the order-flow coverage of the scored bars.
+- the order-flow coverage of the scored bars;
+- Phase D amendment A1: lags per ISO week, the minute-offset check, the MT5 cross-check if supplied, and ticks with backwards timestamps.
 
 Any gate failure is reported here and stops the study.
 

@@ -28,7 +28,9 @@
 - the study (finds a planted edge; finds nothing in two nulls);
 - the broker validator (refuses assumed values);
 - the hash-chained trial log;
-- the one-command run.
+- the one-command run;
+- trade-level files for every strategy, the D4 audit tool and the generated appendix (amendment A1);
+- timestamp verification beyond lag 0 (amendment A1).
 
 ## The decision rule (registered)
 

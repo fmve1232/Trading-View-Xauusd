@@ -29,6 +29,7 @@ from .. import ta
 from ..data import sources
 from . import b5c_dukascopy as C
 from . import b26, b27, history
+from . import d_clock as CK
 from . import d_dukascopy as DD
 from . import d_features as DF
 from . import d_log as LOG
@@ -105,8 +106,9 @@ def read_cache(cache: str, kind: str, start: pd.Timestamp, end: pd.Timestamp, co
     return out[(out.index >= start) & (out.index < end)]
 
 
-def data_stage(P: dict, cache: str) -> dict:
-    """Integrity, scale and coverage per period. Returns the report; P gains raw / dext / m1 / scale / quarantined."""
+def data_stage(P: dict, cache: str, mt5: pd.DataFrame | None = None) -> dict:
+    """Integrity, scale, coverage and the clock (B5c A1 / A2 and Phase D A1, d_clock) per period. Returns the report;
+    P gains raw / dext / m1 / scale, with quarantined days and weeks set missing (never shifted)."""
     rep = {}
     for name, p in P.items():
         m15 = p["m15"]
@@ -134,10 +136,16 @@ def data_stage(P: dict, cache: str) -> dict:
             fails.append(f"order-flow coverage {cov:.1%} < {MIN_OF_COVERAGE:.0%}")
         if len(dext) < 0.99 * len(raw):
             fails.append("Phase D sums missing for some bars (re-run d_dukascopy)")
+        m1 = read_cache(cache, "m1", lo, hi, DD.M1_COLS)
+        mt = mt5[(mt5.index >= lo) & (mt5.index < hi)] if mt5 is not None else None
+        clock = CK.audit(raw, dext, m1, m15, scale, mt if mt is not None and len(mt) else None)
+        r["clock_a1"] = clock
+        fails += clock["failures"]
         r["failures"] = fails
         r["status"] = "PASS" if not fails else "FAIL"
-        p.update({"raw": C.quarantine(raw, integ["quarantined_days"]), "dext": dext, "scale": scale,
-                  "m1": read_cache(cache, "m1", lo, hi, DD.M1_COLS)})
+        qw = clock["quarantine_weeks"]
+        p.update({"raw": CK.quarantine_weeks(C.quarantine(raw, integ["quarantined_days"]), qw),
+                  "dext": CK.quarantine_weeks(dext, qw), "scale": scale, "m1": CK.quarantine_weeks(m1, qw)})
         rep[name] = r
     inter = {}
     root = os.path.join(cache, "inter")
@@ -269,10 +277,24 @@ def write_json(obj, path: str) -> str:
         return hashlib.sha256(fh.read()).hexdigest()
 
 
-def write_trades(L: pd.DataFrame, rows: np.ndarray, path: str) -> int:
+def write_trades(L: pd.DataFrame, rows: np.ndarray, path: str) -> dict:
+    """The strategy's independent trades (S.series), price-free columns only. Returns {file, n, sha256}."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     t = S.series(L, rows)
     t[[c for c in TRADE_COLS if c in t.columns]].to_csv(path, index=False)
-    return len(t)
+    with open(path, "rb") as fh:
+        return {"file": path, "n": len(t), "sha256": hashlib.sha256(fh.read()).hexdigest()}
+
+
+def trade_files(res: dict, L: pd.DataFrame, Ly: pd.DataFrame | None, root: str) -> dict:
+    """Every strategy's trade lists (development; 2026 for the frozen ones), whatever its result."""
+    out = {}
+    for s in res["strategies"]:
+        base = os.path.join(root, s["id"].replace("/", "_"))
+        out[s["id"]] = {"dev": write_trades(L, s["_rows_dev"], base + "__dev.csv")}
+        if Ly is not None and "_rows_y2026" in s:
+            out[s["id"]]["y2026"] = write_trades(Ly, s["_rows_y2026"], base + "__2026.csv")
+    return out
 
 
 def main(argv=None) -> int:
@@ -288,11 +310,17 @@ def main(argv=None) -> int:
     ap.add_argument("--algos", default=",".join(S.ALGOS))
     a = ap.parse_args(argv)
     os.makedirs(os.path.join(a.out, "trades"), exist_ok=True)
+    if os.path.exists(os.path.join(a.out, "study.json")):
+        raise SystemExit(f"{a.out} already holds a run: the registered run is made once; use a new --out to re-run and log it")
     rd = C.research_data(a.cache) if a.rd == "auto" else a.rd
     md = None if a.store == "none" else (market_data(a.cache) if a.store == "auto" else a.store)
     st5, st60 = (os.path.join(md, "XAU_USD_5m"), os.path.join(md, "XAU_USD_60m")) if md else (None, None)
     P = populations(rd, st5, st60)
-    rep = data_stage(P, a.cache)
+    mt = None
+    if a.mt5:
+        mt = pd.read_csv(a.mt5, index_col=0)
+        mt.index = pd.DatetimeIndex(pd.to_datetime(mt.index, utc=True))
+    rep = data_stage(P, a.cache, mt)
     inter = rep.pop("_inter")
     h = write_json(rep, os.path.join(a.out, "data_report.json"))
     LOG.append(a.log, {"phase": "D", "kind": "data_report", "id": "D3-data", "sha256": h,
@@ -312,9 +340,11 @@ def main(argv=None) -> int:
     res = S.run(Fd, Ld, of_cols, im_cols, Fy, Ly, algos=tuple(a.algos.split(",")))
     if Ly is None:
         res["verdict"] = "INSUFFICIENT DATA — RESEARCH INCOMPLETE (no usable 2026 order flow: C1 cannot be assessed)"
+    tf = trade_files(res, Ld, Ly, os.path.join(a.out, "trades", "benchmark"))
     h = write_json(res, os.path.join(a.out, "study.json"))
     for s in res["strategies"]:
         LOG.append(a.log, LOG.sanitize({"phase": "D", "kind": "trial", "id": s["id"], "partition": "development (walk-forward)",
+                                        "trades": {k: {"n": v["n"], "sha256": v["sha256"]} for k, v in tf[s["id"]].items()},
                                         "n": s["dev"].get("n_trades"), "r": s["dev"].get("r"), "ci95": s["dev"].get("ci95"),
                                         "matched_random": s["dev"].get("matched_random"), "exp_oz": s["dev"].get("exp_oz"),
                                         "p_vs_random": s["dev"].get("p_vs_random"), "bh_q010": s["bh_q010"],
@@ -329,9 +359,7 @@ def main(argv=None) -> int:
             L_ = Ld if name == "DEV" else Ly
             if L_ is not None:
                 m1[f"{name}/dukascopy"] = m1_study(M.from_dukascopy(p["m1"], p["scale"]), L_, p["m15"])
-    if a.mt5:
-        mt = pd.read_csv(a.mt5, index_col=0)
-        mt.index = pd.DatetimeIndex(pd.to_datetime(mt.index, utc=True))
+    if mt is not None:
         path = M.from_mt5(mt, a.mt5_point)
         for name, L_ in (("DEV", Ld), ("Y2026", Ly)):
             if L_ is not None:
@@ -345,8 +373,10 @@ def main(argv=None) -> int:
             Ly_ = dynamic_labels(Ly, P["Y2026"]["m15"], py_, mt, ms)
             r_ = S.run(Fd, Ld_, of_cols, im_cols, Fy, Ly_, sets=DYN_SETS, algos=DYN_ALGOS)
             dyn[f"ATR{mt}/{ms}"] = r_
+            tfd = trade_files(r_, Ld_, Ly_, os.path.join(a.out, "trades", "dynamic", f"ATR{mt}_{ms}"))
             for s_ in r_["strategies"]:
                 LOG.append(a.log, LOG.sanitize({"phase": "D", "kind": "trial-dynamic", "id": f"ATR{mt}/{ms} {s_['id']}",
+                                                "trades": {k: {"n": v["n"], "sha256": v["sha256"]} for k, v in tfd[s_["id"]].items()},
                                                 "n": s_["dev"].get("n_trades"), "exp_oz": s_["dev"].get("exp_oz"),
                                                 "p_vs_random": s_["dev"].get("p_vs_random"), "criteria": s_["criteria"]}))
     else:

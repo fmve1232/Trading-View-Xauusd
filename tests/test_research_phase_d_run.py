@@ -6,6 +6,8 @@ import functools
 import json
 import lzma
 import os
+import shutil
+import sys
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -78,6 +80,7 @@ def run_dir(tmp_path_factory):
     q = S.questions
     mp.setattr(S, "questions", lambda *a, **k: q(*a, **{**k, **fast, "sets": ("BASELINE", "B"), "algos": ("LR",)}))
     out, log = tmp / "out", str(tmp / "phase_d_trials.jsonl")
+    shutil.copy(os.path.join(os.path.dirname(__file__), "..", "research", "phase_d_trials.jsonl"), log)   # the committed chain continues
     code = R.main(["--rd", "unused", "--store", "none", "--cache", cache, "--out", str(out), "--log", log, "--algos", "LR"])
     mp.undo()
     return out, log, code
@@ -107,7 +110,10 @@ def test_every_trial_is_logged_on_an_intact_chain(run_dir):
     with open(log) as fh:
         recs = [json.loads(x) for x in fh]
     kinds = [r["kind"] for r in recs]
-    assert kinds[0] == "data_report" and kinds.count("trial") == 8 and kinds[-1] == "descriptive"
+    with open(os.path.join(os.path.dirname(__file__), "..", "research", "phase_d_trials.jsonl")) as fh:
+        seed = sum(1 for _ in fh)                                              # the committed registration / amendment records
+    assert kinds[0] == "registration" and set(kinds[:seed]) <= {"registration", "amendment"}
+    assert kinds[seed] == "data_report" and kinds.count("trial") == 8 and kinds[-1] == "descriptive"
     assert kinds.count("trial-dynamic") == 1 * 3 * 1 * 4
 
 
@@ -121,3 +127,57 @@ def test_a_failed_gate_stops_the_run_as_insufficient_data(tmp_path, monkeypatch)
         rec = json.loads(fh.readline())
     assert rec["status"] == {"DEV": "NO DATA"}
     assert not os.path.exists(tmp_path / "o" / "study.json")
+
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "research", "tools"))
+import phase_d_audit as AUD
+
+
+def test_trade_files_are_written_for_every_strategy_without_prices(run_dir):
+    out, _, _ = run_dir
+    files = sorted((out / "trades" / "benchmark").glob("*__dev.csv"))
+    assert len(files) == 8
+    import pandas as pd
+    for f in files:
+        cols = set(pd.read_csv(f, nrows=1).columns)
+        assert cols <= set(R.TRADE_COLS) and not cols & {"fill_px", "exit_px", "tp_px", "sl_px", "decision_px", "fill_mid"}
+    assert (out / "trades" / "dynamic" / "ATR1.0_1.0").is_dir()
+    rep = json.loads((out / "data_report.json").read_text())
+    assert rep["DEV"]["clock_a1"]["failures"] == [] and rep["DEV"]["clock_a1"]["weekly"]["weeks_checked"] >= 10
+
+
+def test_the_d4_audit_reproduces_every_figure_and_catches_tampering(run_dir, tmp_path):
+    out, log, _ = run_dir
+    res = AUD.audit(str(out), log)
+    assert res["pass"], {k: v for k, v in res["checks"].items() if isinstance(v, dict) and not v["pass"]}
+    work = tmp_path / "copy"
+    shutil.copytree(out, work)
+    f = min((work / "trades" / "benchmark").glob("*__dev.csv"))
+    lines = f.read_text().splitlines()
+    if len(lines) > 2:
+        f.write_text("\n".join(lines[:-1]) + "\n")                          # a losing (or any) trade removed
+        assert not AUD.audit(str(work), log)["checks"]["files"]["pass"]
+    st = json.loads((work / "study.json").read_text())
+    st["strategies"][-1]["dev"]["exp_oz"] = 99.0                              # a figure edited (another strategy than the file)
+    st["strategies"][-1]["bh_q010"] = not st["strategies"][-1]["bh_q010"]
+    (work / "study.json").write_text(json.dumps(st))
+    bad = AUD.audit(str(work), log)["checks"]
+    assert not bad["figures"]["pass"] and not bad["bh"]["pass"]
+
+
+import phase_d_reports as REP
+
+
+def test_the_appendix_is_generated_only_from_an_audited_run(run_dir, tmp_path):
+    out, log, _ = run_dir
+    md = tmp_path / "APPENDIX.md"
+    assert REP.main([str(out), "--log", log, "--md", str(md)]) == 0
+    txt = md.read_text()
+    assert "study.json`: " in txt and "B/LR/EV0" in txt and "Incremental value" in txt and "One-minute measurements" in txt
+    work = tmp_path / "bad"
+    import shutil as _sh
+    _sh.copytree(out, work)
+    st = json.loads((work / "study.json").read_text())
+    st["strategies"][-1]["dev"]["exp_oz"] = 5.0
+    (work / "study.json").write_text(json.dumps(st))
+    assert REP.main([str(work), "--log", log, "--md", str(tmp_path / "x.md")]) == 1 and not (tmp_path / "x.md").exists()
