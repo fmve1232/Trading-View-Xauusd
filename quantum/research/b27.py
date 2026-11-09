@@ -34,6 +34,12 @@ CONF_X = (3, 5, 7, 10, 12, 15, 20)
 CONF_WIN = 96
 FILL_WIN = 8
 QS = (0.50, 0.20, 0.10, 0.05, 0.02, 0.01, 0.005)
+# What the "top q" thresholds and selections are computed on. "raw" (Phase C audit fix, 2026-11-09): the uncalibrated
+# model score, whose training-window quantile really selects about q (isotonic calibration is monotone, so the order is
+# the same). "calibrated" reproduces the B27 (acca0426f) and B29 (9a86c684c) runs: there the threshold was a quantile of
+# isotonic-calibrated probabilities, a step function with ~20 levels per window, so ">= threshold" admitted the whole
+# top step (e.g. 42% of test rows for a nominal top 1%; research/results/phasec/phasec_c_diag.json).
+SELECT_ON = "raw"
 MIN_N = 300
 LOW_N = 30
 DIRS = {1: "BUY", -1: "SELL"}
@@ -359,6 +365,20 @@ def mc_dd(net: np.ndarray, n: int = 2000) -> float:
     return float(np.quantile([max_dd(rng.permutation(net)) for _ in range(n)], 0.95))
 
 
+def break_even_decided(out: np.ndarray, net: np.ndarray) -> float:
+    """The decided TP-first rate at which the series' expectancy is zero, holding its timeouts / closures as measured:
+    r* = (-L - (n_neither / n_decided) * N) / (W - L), W / L / N = mean net of TP / stop / neither trades."""
+    tp, st = out == "TP", np.isin(out, ["SL", "AMBIGUOUS"])
+    ne = np.isin(out, ["TIMEOUT", "CLOSURE"])
+    if not tp.any() or not st.any():
+        return math.nan
+    W, L = float(net[tp].mean()), float(net[st].mean())
+    if W == L:
+        return math.nan
+    N = float(net[ne].mean()) if ne.any() else 0.0
+    return (-L - (ne.sum() / (tp.sum() + st.sum())) * N) / (W - L)
+
+
 def stats_of(out: np.ndarray, net: np.ndarray, minutes: np.ndarray, cost: np.ndarray | None, d: np.ndarray, sess: np.ndarray,
              ym: np.ndarray, days: np.ndarray, rates: dict, weeks: float, mc: bool = False, seq: dict | None = None) -> dict:
     """Statistics of an independent-trade series (already non-overlapping); the series itself is kept under _seq."""
@@ -366,11 +386,17 @@ def stats_of(out: np.ndarray, net: np.ndarray, minutes: np.ndarray, cost: np.nda
     lo, hi = H.wilson(k, n) if n else (math.nan, math.nan)
     b = matched(rates, d, sess, ym)
     w, z = net[out == "TP"], net[out != "TP"]
+    # break_even: the TP share of ALL trades (stops, timeouts and closures together) at which the expectancy is zero.
+    # It is NOT the comparator of the decided rate r = TP / (TP + SL) when timeouts / closures are common (it is too low
+    # there). break_even_decided is: the decided rate at which the expectancy is zero, with the timeouts and closures
+    # held at their measured share and mean, so r > break_even_decided exactly when exp_oz > 0. Phase C audit, 2026-11-09.
     be = float(-z.mean() / (w.mean() - z.mean())) if len(w) and len(z) and w.mean() != z.mean() else math.nan
+    be_d = break_even_decided(out, net)
     wins, losses = net[net > 0].sum(), net[net < 0].sum()
     res = {"n_trades": len(out), "n_decided": n, "tp": k, "r": k / n if n else math.nan, "ci95": [lo, hi],
            "tp_all": float((out == "TP").mean()) if len(out) else math.nan, "neither": float(np.isin(out, ["TIMEOUT", "CLOSURE"]).mean()) if len(out) else math.nan,
            "matched_random": b, "p_vs_random": binom_p(k, n, b) if n and not math.isnan(b) else 1.0, "break_even": be,
+           "break_even_decided": be_d,
            "exp_oz": float(net.mean()) if len(net) else math.nan, "exp_050lot_ASSUMED": float(net.mean() * b26.LOT_OZ) if len(net) else math.nan,
            "pf": float(wins / -losses) if losses < 0 else math.nan, "max_dd_050lot_ASSUMED": max_dd(net * b26.LOT_OZ),
            "minutes_median": float(np.median(minutes)) if len(minutes) else math.nan,
@@ -745,7 +771,7 @@ def walk_forward(F: pd.DataFrame, L: pd.DataFrame, h1: pd.DataFrame, models=MODE
     d = L["d"].to_numpy()
     tc = ta.epoch_s(F.index).astype(np.int64) + 900
     end = pd.Timestamp(int(t_fill.max()), unit="s", tz="UTC") + pd.Timedelta(seconds=1)
-    res = {m: {"p": np.full(len(L), np.nan), "thr": {}} for m in models}
+    res = {m: {"p": np.full(len(L), np.nan), "raw": np.full(len(L), np.nan), "thr": {}} for m in models}
     names = None
     for qs, qe in b22.quarters(start, end):
         s0, s1 = int(qs.timestamp()), int(qe.timestamp())
@@ -763,17 +789,22 @@ def walk_forward(F: pd.DataFrame, L: pd.DataFrame, h1: pd.DataFrame, models=MODE
         p_cal, p_te = fm.predict(X[cal_m], d[cal_m]), fm.predict(X[te], d[te])
         for m in models:
             res[m]["p"][te] = isotonic(p_cal[m], y[cal_m], p_te[m])
-            pc = isotonic(p_cal[m], y[cal_m], p_cal[m])
-            for dd in (1, -1):
-                for q in QS:
-                    res[m]["thr"].setdefault((dd, q), []).append((s0, float(np.quantile(pc[d[cal_m] == dd], 1 - q))))
+            res[m]["raw"][te] = p_te[m]
+            for (dd, q), v in thresholds(p_cal[m], y[cal_m], d[cal_m]).items():
+                res[m]["thr"].setdefault((dd, q), []).append((s0, v))
         log(f"[B27] walk-forward {qs.date()}: test {int(te.sum())}, fit {int(fit_m.sum())}, calibrate {int(cal_m.sum())}")
     return {"res": res, "names": names}
 
 
+def thresholds(p_cal: np.ndarray, y_cal: np.ndarray, d_cal: np.ndarray, qs=QS) -> dict:
+    """The (direction, q) thresholds from a window's calibration rows, on the score SELECT_ON names."""
+    sc = p_cal if SELECT_ON == "raw" else isotonic(p_cal, y_cal, p_cal)
+    return {(dd, q): float(np.quantile(sc[d_cal == dd], 1 - q)) for dd in (1, -1) for q in qs}
+
+
 def wf_selections(L: pd.DataFrame, wf: dict, model: str) -> dict:
-    """Rows selected for each (direction, q): calibrated test probability >= its own training window's threshold."""
-    p = wf["res"][model]["p"]
+    """Rows selected for each (direction, q): the test score (SELECT_ON) >= its own training window's threshold."""
+    p = wf["res"][model]["raw" if SELECT_ON == "raw" else "p"]
     t_fill = L["fill_utc"].to_numpy()
     d = L["d"].to_numpy()
     sel = {}
@@ -812,15 +843,18 @@ def final_models(F: pd.DataFrame, L: pd.DataFrame, h1: pd.DataFrame, models=MODE
     fit_m, cal_m = split_fit_cal(L["fill_utc"].to_numpy(), L["exit_utc"].to_numpy(), (L["outcome"] != "OPEN").to_numpy())
     fm = Fitted(X[fit_m], y[fit_m], d[fit_m], models)
     p_cal = fm.predict(X[cal_m], d[cal_m])
-    thr = {m: {(dd, q): float(np.quantile(isotonic(p_cal[m], y[cal_m], p_cal[m])[d[cal_m] == dd], 1 - q))
-               for dd in (1, -1) for q in QS} for m in models}
+    thr = {m: thresholds(p_cal[m], y[cal_m], d[cal_m]) for m in models}
     return {"fitted": fm, "p_cal": p_cal, "y_cal": y[cal_m], "thr": thr, "h1": h1}
 
 
-def apply_final(FM: dict, F: pd.DataFrame, L: pd.DataFrame, h1_apply: pd.DataFrame) -> dict:
+def apply_final(FM: dict, F: pd.DataFrame, L: pd.DataFrame, h1_apply: pd.DataFrame, scores: bool = False) -> dict:
+    """Calibrated probabilities of the final models on new rows; with scores=True, the score that is compared with
+    FM["thr"] (raw or calibrated, per SELECT_ON)."""
     tc = ta.epoch_s(F.index).astype(np.int64) + 900
     X, _ = design(F, L, hmm_block(FM["h1"], h1_apply, tc))
     raw = FM["fitted"].predict(X, L["d"].to_numpy())
+    if scores and SELECT_ON == "raw":
+        return raw
     return {m: isotonic(FM["p_cal"][m], FM["y_cal"], p) for m, p in raw.items()}
 
 
@@ -911,7 +945,7 @@ def flag(cands: list[dict]) -> None:
         n = s.get("n_decided", 0)
         c_["bh"] = bool(ok)
         c_["informative"] = bool(ok and n >= MIN_N and s["ci95"][0] > s["matched_random"])
-        c_["tradeable"] = bool(c_["informative"] and s["ci95"][0] > s["break_even"] and s["exp_oz"] > 0)
+        c_["tradeable"] = bool(c_["informative"] and s["ci95"][0] > s["break_even_decided"] and s["exp_oz"] > 0)
 
 
 def frozen_set(cands: list[dict]) -> list[dict]:
@@ -931,7 +965,7 @@ def frozen_set(cands: list[dict]) -> list[dict]:
     return out
 
 
-SUMMARY_KEYS = ("n_raw", "n_trades", "n_decided", "r", "ci95", "matched_random", "p_vs_random", "break_even", "exp_oz",
+SUMMARY_KEYS = ("n_raw", "n_trades", "n_decided", "r", "ci95", "matched_random", "p_vs_random", "break_even", "break_even_decided", "exp_oz",
                 "exp_050lot_ASSUMED", "pf", "max_dd_050lot_ASSUMED", "mc_dd95_050lot_ASSUMED", "minutes_median", "cost_oz",
                 "per_week", "days", "tp_all", "neither", "n_triggers", "n_filled", "fill_rate", "exp_per_trigger_oz", "mfe_mean",
                 "mae_mean", "minutes_tp_median", "false_entries")
@@ -1074,7 +1108,7 @@ def run(a, log=print) -> dict:
     # ---- freeze on development, check on 2026 ----
     frozen = frozen_set(s1 + s2 + s3 + s5)
     FM = final_models(D["F"], D["Lp"], D["h1"])
-    pY = apply_final(FM, Y["F"], Y["Lp"], Y["h1"])
+    pY = apply_final(FM, Y["F"], Y["Lp"], Y["h1"], scores=True)
     pos15 = {k_: j for j, k_ in enumerate(zip(Y["Lp"]["dec_i"].astype(int), Y["Lp"]["d"].astype(int), strict=True))}
     key5 = list(zip(Y["L5p"]["dec_i"].astype(int), Y["L5p"]["d"].astype(int), strict=True))
     map5 = np.asarray([pos15.get(k_, -1) for k_ in key5])
@@ -1107,7 +1141,7 @@ def run(a, log=print) -> dict:
         y_ = c_["y2026"]
         c_["y2026_holm_p"] = ph
         c_["holds_2026"] = bool(ph < 0.05 and y_.get("n_decided", 0) and y_["ci95"][0] > y_["matched_random"])
-        c_["above_break_even_2026"] = bool(y_.get("n_decided", 0) and y_["ci95"][0] > y_["break_even"])
+        c_["above_break_even_2026"] = bool(y_.get("n_decided", 0) and y_["ci95"][0] > y_["break_even_decided"])
     _ = map5
 
     def pack(c_):

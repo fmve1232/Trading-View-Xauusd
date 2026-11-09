@@ -329,7 +329,7 @@ def flag_v(V: list[dict]) -> None:
         st = c["stats"]
         c["bh"] = bool(ok)
         c["informative"] = bool(ok and st.get("n_decided", 0) >= b27.MIN_N)          # V: profitable without any entry signal
-        c["tradeable"] = bool(c["informative"] and st["ci95"][0] > st["break_even"])
+        c["tradeable"] = bool(c["informative"] and st["ci95"][0] > st["break_even_decided"] and st["exp_oz"] > 0)
 
 
 def trigger_rows(L: pd.DataFrame, P_: dict, fam: str, d: int) -> np.ndarray:
@@ -490,7 +490,7 @@ def run(a, log=print) -> dict:
         elif c["study"] == "C":
             if g not in FM:
                 FM[g] = b27.final_models(D["F"], L, D["h1"], ("LGBM",))
-                FM[g]["py"] = b27.apply_final(FM[g], Y["F"], Ly, Y["h1"])["LGBM"]
+                FM[g]["py"] = b27.apply_final(FM[g], Y["F"], Ly, Y["h1"], scores=True)["LGBM"]
             rows_d = c["rows"]
             rows_y = np.flatnonzero((Ly["d"] == d).to_numpy() & (FM[g]["py"] >= FM[g]["thr"]["LGBM"][(d, c["q"])]))
         else:
@@ -507,7 +507,7 @@ def run(a, log=print) -> dict:
         y_ = c["y2026"]
         c["y2026_holm_p"] = ph
         c["holds_2026"] = bool(ph < 0.05 and y_.get("n_decided", 0) and y_["ci95"][0] > y_["matched_random"])
-        c["above_break_even_2026"] = bool(y_.get("n_decided", 0) and y_["ci95"][0] > y_["break_even"])
+        c["above_break_even_2026"] = bool(y_.get("n_decided", 0) and y_["ci95"][0] > y_["break_even_decided"])
 
     out["resolution_5m"] = resolution_5m(Y, T[("Y2026", "ENG")])
     out["counts"] = {s_: {"tested": len(v), "bh": sum(c["bh"] for c in v), "informative": sum(c["informative"] for c in v),

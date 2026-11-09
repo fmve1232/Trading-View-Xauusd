@@ -1,0 +1,4851 @@
+{
+ "pooled": {
+  "LIMIT": {
+   "n_worst": 9368,
+   "r_worst": 0.4860162254483348,
+   "n_best": 9370,
+   "r_best": 0.4938100320170758,
+   "random_worst_series": 0.4777779337038747,
+   "fill_bar_stop_share": 0.014453125,
+   "inconclusive": false
+  },
+  "RETEST X<15": {
+   "n_worst": 74648,
+   "r_worst": 0.48354945879326977,
+   "n_best": 74809,
+   "r_best": 0.49211993209373206,
+   "random_worst_series": 0.483186013389269,
+   "fill_bar_stop_share": 0.009808381806562029,
+   "inconclusive": false
+  },
+  "RETEST X>=15": {
+   "n_worst": 20083,
+   "r_worst": 0.48050590051287156,
+   "n_best": 20173,
+   "r_best": 0.4935805284290884,
+   "random_worst_series": 0.48634809154286884,
+   "fill_bar_stop_share": 0.018597678329045197,
+   "inconclusive": false
+  },
+  "RETEST_10": {
+   "n_worst": 13844,
+   "r_worst": 0.4846865067899451,
+   "n_best": 13888,
+   "r_best": 0.4955357142857143,
+   "random_worst_series": 0.4842768889634699,
+   "fill_bar_stop_share": 0.010682922413012644,
+   "inconclusive": false
+  },
+  "RETEST_12": {
+   "n_worst": 9944,
+   "r_worst": 0.4836082059533387,
+   "n_best": 9978,
+   "r_best": 0.4932852275005011,
+   "random_worst_series": 0.4847118078909794,
+   "fill_bar_stop_share": 0.011234721510649198,
+   "inconclusive": false
+  },
+  "RETEST_15": {
+   "n_worst": 11049,
+   "r_worst": 0.4766947235043895,
+   "n_best": 11093,
+   "r_best": 0.4915712611556838,
+   "random_worst_series": 0.48556463135956446,
+   "fill_bar_stop_share": 0.015644694891376883,
+   "inconclusive": false
+  },
+  "RETEST_20": {
+   "n_worst": 9034,
+   "r_worst": 0.4851671463360638,
+   "n_best": 9080,
+   "r_best": 0.4960352422907489,
+   "random_worst_series": 0.4873062995974771,
+   "fill_bar_stop_share": 0.02215571537052754,
+   "inconclusive": false
+  },
+  "RETEST_3": {
+   "n_worst": 18427,
+   "r_worst": 0.4808161936289141,
+   "n_best": 18455,
+   "r_best": 0.48783527499322676,
+   "random_worst_series": 0.4814022092012017,
+   "fill_bar_stop_share": 0.009766267968835729,
+   "inconclusive": false
+  },
+  "RETEST_5": {
+   "n_worst": 16951,
+   "r_worst": 0.4852811043596248,
+   "n_best": 16982,
+   "r_best": 0.4924037215875633,
+   "random_worst_series": 0.48283800836949264,
+   "fill_bar_stop_share": 0.009495361600854825,
+   "inconclusive": false
+  },
+  "RETEST_7": {
+   "n_worst": 12204,
+   "r_worst": 0.48525073746312686,
+   "n_best": 12228,
+   "r_best": 0.4949296696107295,
+   "random_worst_series": 0.48347104932431106,
+   "fill_bar_stop_share": 0.008383375943873,
+   "inconclusive": false
+  },
+  "RETEST_8": {
+   "n_worst": 3278,
+   "r_worst": 0.47864551555826723,
+   "n_best": 3278,
+   "r_best": 0.4862721171446004,
+   "random_worst_series": 0.4847162245967898,
+   "fill_bar_stop_share": 0.008434370057986295,
+   "inconclusive": false
+  },
+  "STOP X<15": {
+   "n_worst": 94328,
+   "r_worst": 0.46337248749045884,
+   "n_best": 93954,
+   "r_best": 0.47860655214253783,
+   "random_worst_series": 0.48253207288829536,
+   "fill_bar_stop_share": 0.0266487497900366,
+   "inconclusive": false
+  },
+  "STOP X>=15": {
+   "n_worst": 24853,
+   "r_worst": 0.4000724258640808,
+   "n_best": 24318,
+   "r_best": 0.46969323135126245,
+   "random_worst_series": 0.48615641101078716,
+   "fill_bar_stop_share": 0.12334340503186048,
+   "inconclusive": true
+  },
+  "STOP_10": {
+   "n_worst": 17007,
+   "r_worst": 0.45610630916681366,
+   "n_best": 16878,
+   "r_best": 0.4797369356558834,
+   "random_worst_series": 0.4835291836886266,
+   "fill_bar_stop_share": 0.0422594513140983,
+   "inconclusive": true
+  },
+  "STOP_12": {
+   "n_worst": 11682,
+   "r_worst": 0.43905153227187127,
+   "n_best": 11545,
+   "r_best": 0.47388479861411864,
+   "random_worst_series": 0.48495061543315293,
+   "fill_bar_stop_share": 0.058054563169860345,
+   "inconclusive": true
+  },
+  "STOP_15": {
+   "n_worst": 13675,
+   "r_worst": 0.40782449725776965,
+   "n_best": 13395,
+   "r_best": 0.47465472191116087,
+   "random_worst_series": 0.4855254663668238,
+   "fill_bar_stop_share": 0.10532199138448116,
+   "inconclusive": true
+  },
+  "STOP_20": {
+   "n_worst": 11178,
+   "r_worst": 0.39058865628913936,
+   "n_best": 10923,
+   "r_best": 0.4636088986542159,
+   "random_worst_series": 0.48692829936346144,
+   "fill_bar_stop_share": 0.14524787910922587,
+   "inconclusive": true
+  },
+  "STOP_3": {
+   "n_worst": 24286,
+   "r_worst": 0.47274149715885694,
+   "n_best": 24280,
+   "r_best": 0.47977759472817133,
+   "random_worst_series": 0.48108051163971843,
+   "fill_bar_stop_share": 0.011132098841890134,
+   "inconclusive": false
+  },
+  "STOP_5": {
+   "n_worst": 21884,
+   "r_worst": 0.4692469384024858,
+   "n_best": 21840,
+   "r_best": 0.47870879120879123,
+   "random_worst_series": 0.48197618464317105,
+   "fill_bar_stop_share": 0.01526426254531578,
+   "inconclusive": false
+  },
+  "STOP_7": {
+   "n_worst": 14956,
+   "r_worst": 0.46382722653115804,
+   "n_best": 14902,
+   "r_best": 0.4751711179707422,
+   "random_worst_series": 0.48249927555345673,
+   "fill_bar_stop_share": 0.021476828768158172,
+   "inconclusive": false
+  },
+  "STOP_8": {
+   "n_worst": 4513,
+   "r_worst": 0.47329935741192114,
+   "n_best": 4509,
+   "r_best": 0.49101796407185627,
+   "random_worst_series": 0.4831296608317472,
+   "fill_bar_stop_share": 0.032866479925303456,
+   "inconclusive": false
+  }
+ },
+ "per_config": {
+  "EVERY_HOUR RETEST_3 BUY": {
+   "n_worst": 2209,
+   "r_worst": 0.4870982344952467,
+   "n_best": 2215,
+   "r_best": 0.4966139954853273,
+   "random": 0.47883947492200435,
+   "fill_bar_stop_share": 0.008760037543018042
+  },
+  "EVERY_HOUR RETEST_3 SELL": {
+   "n_worst": 2163,
+   "r_worst": 0.4812760055478502,
+   "n_best": 2173,
+   "r_best": 0.4873446847676024,
+   "random": 0.48409208085546435,
+   "fill_bar_stop_share": 0.007697834342604947
+  },
+  "EVERY_HOUR RETEST_5 BUY": {
+   "n_worst": 2043,
+   "r_worst": 0.48164464023494863,
+   "n_best": 2045,
+   "r_best": 0.49144254278728605,
+   "random": 0.4797417601053829,
+   "fill_bar_stop_share": 0.007294199374782911
+  },
+  "EVERY_HOUR RETEST_5 SELL": {
+   "n_worst": 2017,
+   "r_worst": 0.47892910262766486,
+   "n_best": 2030,
+   "r_best": 0.483743842364532,
+   "random": 0.4846726341199832,
+   "fill_bar_stop_share": 0.009638280984238575
+  },
+  "EVERY_HOUR RETEST_7 BUY": {
+   "n_worst": 1931,
+   "r_worst": 0.4857586742620404,
+   "n_best": 1934,
+   "r_best": 0.49431230610134436,
+   "random": 0.47918056985694707,
+   "fill_bar_stop_share": 0.008556688058386813
+  },
+  "EVERY_HOUR RETEST_7 SELL": {
+   "n_worst": 1883,
+   "r_worst": 0.48274030801911844,
+   "n_best": 1899,
+   "r_best": 0.4907846234860453,
+   "random": 0.4853882601071419,
+   "fill_bar_stop_share": 0.006900012545477356
+  },
+  "EVERY_HOUR RETEST_10 BUY": {
+   "n_worst": 1689,
+   "r_worst": 0.4896388395500296,
+   "n_best": 1698,
+   "r_best": 0.4988221436984688,
+   "random": 0.4800871541289136,
+   "fill_bar_stop_share": 0.011371712864250177
+  },
+  "EVERY_HOUR RETEST_10 SELL": {
+   "n_worst": 1626,
+   "r_worst": 0.47724477244772445,
+   "n_best": 1640,
+   "r_best": 0.48841463414634145,
+   "random": 0.4844413810471575,
+   "fill_bar_stop_share": 0.008005822416302766
+  },
+  "EVERY_HOUR RETEST_12 BUY": {
+   "n_worst": 1566,
+   "r_worst": 0.4929757343550447,
+   "n_best": 1567,
+   "r_best": 0.4990427568602425,
+   "random": 0.48239746285694174,
+   "fill_bar_stop_share": 0.011398176291793313
+  },
+  "EVERY_HOUR RETEST_12 SELL": {
+   "n_worst": 1505,
+   "r_worst": 0.4883720930232558,
+   "n_best": 1521,
+   "r_best": 0.49769888231426695,
+   "random": 0.4858720785135008,
+   "fill_bar_stop_share": 0.011449766166747298
+  },
+  "EVERY_HOUR RETEST_15 BUY": {
+   "n_worst": 1340,
+   "r_worst": 0.49328358208955225,
+   "n_best": 1346,
+   "r_best": 0.5059435364041605,
+   "random": 0.48361934986362753,
+   "fill_bar_stop_share": 0.012618841832324978
+  },
+  "EVERY_HOUR RETEST_15 SELL": {
+   "n_worst": 1302,
+   "r_worst": 0.4715821812596006,
+   "n_best": 1315,
+   "r_best": 0.488212927756654,
+   "random": 0.4888989005524449,
+   "fill_bar_stop_share": 0.015412844036697248
+  },
+  "EVERY_HOUR RETEST_20 BUY": {
+   "n_worst": 1098,
+   "r_worst": 0.49089253187613846,
+   "n_best": 1103,
+   "r_best": 0.4986400725294651,
+   "random": 0.4840707343240454,
+   "fill_bar_stop_share": 0.015142086704003318
+  },
+  "EVERY_HOUR RETEST_20 SELL": {
+   "n_worst": 1010,
+   "r_worst": 0.4910891089108911,
+   "n_best": 1022,
+   "r_best": 0.50293542074364,
+   "random": 0.4913680620935518,
+   "fill_bar_stop_share": 0.025005532197388804
+  },
+  "EVERY_HOUR STOP_3 BUY": {
+   "n_worst": 2656,
+   "r_worst": 0.47816265060240964,
+   "n_best": 2649,
+   "r_best": 0.48471121177802945,
+   "random": 0.4760620273559069,
+   "fill_bar_stop_share": 0.008387767220902613
+  },
+  "EVERY_HOUR STOP_3 SELL": {
+   "n_worst": 2669,
+   "r_worst": 0.4698388909704009,
+   "n_best": 2673,
+   "r_best": 0.47624392068836513,
+   "random": 0.48198425531486994,
+   "fill_bar_stop_share": 0.008455718736092568
+  },
+  "EVERY_HOUR STOP_5 BUY": {
+   "n_worst": 2416,
+   "r_worst": 0.4644039735099338,
+   "n_best": 2405,
+   "r_best": 0.47484407484407487,
+   "random": 0.4762862348663177,
+   "fill_bar_stop_share": 0.011376847699717654
+  },
+  "EVERY_HOUR STOP_5 SELL": {
+   "n_worst": 2425,
+   "r_worst": 0.4531958762886598,
+   "n_best": 2420,
+   "r_best": 0.4615702479338843,
+   "random": 0.4827521433425942,
+   "fill_bar_stop_share": 0.013341115650796298
+  },
+  "EVERY_HOUR STOP_7 BUY": {
+   "n_worst": 2166,
+   "r_worst": 0.4649122807017544,
+   "n_best": 2157,
+   "r_best": 0.47844228094575797,
+   "random": 0.4778824230563029,
+   "fill_bar_stop_share": 0.016792071939805468
+  },
+  "EVERY_HOUR STOP_7 SELL": {
+   "n_worst": 2183,
+   "r_worst": 0.44754924415941366,
+   "n_best": 2172,
+   "r_best": 0.4604051565377532,
+   "random": 0.4852501338422844,
+   "fill_bar_stop_share": 0.0203722566904343
+  },
+  "EVERY_HOUR STOP_10 BUY": {
+   "n_worst": 1850,
+   "r_worst": 0.45135135135135135,
+   "n_best": 1831,
+   "r_best": 0.4767886400873839,
+   "random": 0.4783576156139864,
+   "fill_bar_stop_share": 0.031045406546990496
+  },
+  "EVERY_HOUR STOP_10 SELL": {
+   "n_worst": 1867,
+   "r_worst": 0.4327798607391537,
+   "n_best": 1848,
+   "r_best": 0.45725108225108224,
+   "random": 0.4869684860473215,
+   "fill_bar_stop_share": 0.04479846038704159
+  },
+  "EVERY_HOUR STOP_12 BUY": {
+   "n_worst": 1645,
+   "r_worst": 0.4340425531914894,
+   "n_best": 1625,
+   "r_best": 0.4646153846153846,
+   "random": 0.48186875567677784,
+   "fill_bar_stop_share": 0.04476234425473004
+  },
+  "EVERY_HOUR STOP_12 SELL": {
+   "n_worst": 1673,
+   "r_worst": 0.42857142857142855,
+   "n_best": 1648,
+   "r_best": 0.45995145631067963,
+   "random": 0.48747435647070636,
+   "fill_bar_stop_share": 0.06485160084131807
+  },
+  "EVERY_HOUR STOP_15 BUY": {
+   "n_worst": 1434,
+   "r_worst": 0.40446304044630405,
+   "n_best": 1390,
+   "r_best": 0.4676258992805755,
+   "random": 0.48177284030540307,
+   "fill_bar_stop_share": 0.07871643745907007
+  },
+  "EVERY_HOUR STOP_15 SELL": {
+   "n_worst": 1442,
+   "r_worst": 0.40221914008321774,
+   "n_best": 1394,
+   "r_best": 0.4648493543758967,
+   "random": 0.4853168139317974,
+   "fill_bar_stop_share": 0.1068308181096108
+  },
+  "EVERY_HOUR STOP_20 BUY": {
+   "n_worst": 1162,
+   "r_worst": 0.40017211703958694,
+   "n_best": 1130,
+   "r_best": 0.4469026548672566,
+   "random": 0.48460036643963833,
+   "fill_bar_stop_share": 0.10861903236142262
+  },
+  "EVERY_HOUR STOP_20 SELL": {
+   "n_worst": 1147,
+   "r_worst": 0.3783783783783784,
+   "n_best": 1090,
+   "r_best": 0.4614678899082569,
+   "random": 0.4877129925137006,
+   "fill_bar_stop_share": 0.16150371087447563
+  },
+  "ENG_SIGNAL RETEST_3 BUY": {
+   "n_worst": 3,
+   "r_worst": 0.3333333333333333,
+   "n_best": 3,
+   "r_best": 0.3333333333333333,
+   "random": 0.5429689895461605,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_3 SELL": {
+   "n_worst": 13,
+   "r_worst": 0.38461538461538464,
+   "n_best": 13,
+   "r_best": 0.38461538461538464,
+   "random": 0.5155593733455219,
+   "fill_bar_stop_share": 0.07142857142857142
+  },
+  "ENG_SIGNAL RETEST_5 BUY": {
+   "n_worst": 6,
+   "r_worst": 0.5,
+   "n_best": 6,
+   "r_best": 0.5,
+   "random": 0.5465377897402689,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_5 SELL": {
+   "n_worst": 14,
+   "r_worst": 0.42857142857142855,
+   "n_best": 14,
+   "r_best": 0.5,
+   "random": 0.5183909838722698,
+   "fill_bar_stop_share": 0.02631578947368421
+  },
+  "ENG_SIGNAL RETEST_7 BUY": {
+   "n_worst": 5,
+   "r_worst": 0.6,
+   "n_best": 5,
+   "r_best": 0.6,
+   "random": 0.534826239408068,
+   "fill_bar_stop_share": 0.14285714285714285
+  },
+  "ENG_SIGNAL RETEST_7 SELL": {
+   "n_worst": 14,
+   "r_worst": 0.5,
+   "n_best": 14,
+   "r_best": 0.5714285714285714,
+   "random": 0.5237542295767613,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_10 BUY": {
+   "n_worst": 3,
+   "r_worst": 0.6666666666666666,
+   "n_best": 3,
+   "r_best": 0.6666666666666666,
+   "random": 0.62289749283287,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_10 SELL": {
+   "n_worst": 11,
+   "r_worst": 0.36363636363636365,
+   "n_best": 11,
+   "r_best": 0.45454545454545453,
+   "random": 0.4951836123120133,
+   "fill_bar_stop_share": 0.06451612903225806
+  },
+  "ENG_SIGNAL RETEST_12 BUY": {
+   "n_worst": 2,
+   "r_worst": 0.5,
+   "n_best": 2,
+   "r_best": 0.5,
+   "random": 0.62289749283287,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_12 SELL": {
+   "n_worst": 7,
+   "r_worst": 0.5714285714285714,
+   "n_best": 7,
+   "r_best": 0.7142857142857143,
+   "random": 0.5302191356254872,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_15 BUY": {
+   "n_worst": 3,
+   "r_worst": 1.0,
+   "n_best": 3,
+   "r_best": 1.0,
+   "random": 0.6493857346091473,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_15 SELL": {
+   "n_worst": 7,
+   "r_worst": 0.42857142857142855,
+   "n_best": 7,
+   "r_best": 0.5714285714285714,
+   "random": 0.5241674914060869,
+   "fill_bar_stop_share": 0.041666666666666664
+  },
+  "ENG_SIGNAL RETEST_20 BUY": {
+   "n_worst": 2,
+   "r_worst": 1.0,
+   "n_best": 2,
+   "r_best": 1.0,
+   "random": 0.5611572535991141,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL RETEST_20 SELL": {
+   "n_worst": 5,
+   "r_worst": 0.6,
+   "n_best": 5,
+   "r_best": 0.6,
+   "random": 0.5141314311999625,
+   "fill_bar_stop_share": 0.0625
+  },
+  "ENG_SIGNAL STOP_3 BUY": {
+   "n_worst": 6,
+   "r_worst": 0.5,
+   "n_best": 6,
+   "r_best": 0.5,
+   "random": 0.5512053015511647,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL STOP_3 SELL": {
+   "n_worst": 16,
+   "r_worst": 0.375,
+   "n_best": 17,
+   "r_best": 0.4117647058823529,
+   "random": 0.5078751815708745,
+   "fill_bar_stop_share": 0.0196078431372549
+  },
+  "ENG_SIGNAL STOP_5 BUY": {
+   "n_worst": 6,
+   "r_worst": 0.5,
+   "n_best": 6,
+   "r_best": 0.5,
+   "random": 0.5606758480643738,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL STOP_5 SELL": {
+   "n_worst": 16,
+   "r_worst": 0.375,
+   "n_best": 16,
+   "r_best": 0.375,
+   "random": 0.5071787600387472,
+   "fill_bar_stop_share": 0.02040816326530612
+  },
+  "ENG_SIGNAL STOP_7 BUY": {
+   "n_worst": 6,
+   "r_worst": 0.5,
+   "n_best": 6,
+   "r_best": 0.5,
+   "random": 0.5559217640943165,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL STOP_7 SELL": {
+   "n_worst": 15,
+   "r_worst": 0.4,
+   "n_best": 15,
+   "r_best": 0.4,
+   "random": 0.5100230884185113,
+   "fill_bar_stop_share": 0.02127659574468085
+  },
+  "ENG_SIGNAL STOP_10 BUY": {
+   "n_worst": 4,
+   "r_worst": 0.5,
+   "n_best": 4,
+   "r_best": 0.5,
+   "random": 0.5789960850933497,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL STOP_10 SELL": {
+   "n_worst": 13,
+   "r_worst": 0.46153846153846156,
+   "n_best": 13,
+   "r_best": 0.46153846153846156,
+   "random": 0.492259813268586,
+   "fill_bar_stop_share": 0.0975609756097561
+  },
+  "ENG_SIGNAL STOP_12 BUY": {
+   "n_worst": 3,
+   "r_worst": 0.3333333333333333,
+   "n_best": 3,
+   "r_best": 0.3333333333333333,
+   "random": 0.5789960850933497,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENG_SIGNAL STOP_12 SELL": {
+   "n_worst": 13,
+   "r_worst": 0.38461538461538464,
+   "n_best": 13,
+   "r_best": 0.46153846153846156,
+   "random": 0.5103988144625969,
+   "fill_bar_stop_share": 0.1794871794871795
+  },
+  "ENG_SIGNAL STOP_15 BUY": {
+   "n_worst": 2,
+   "r_worst": 0.5,
+   "n_best": 2,
+   "r_best": 1.0,
+   "random": 0.6713829683961956,
+   "fill_bar_stop_share": 0.2
+  },
+  "ENG_SIGNAL STOP_15 SELL": {
+   "n_worst": 11,
+   "r_worst": 0.45454545454545453,
+   "n_best": 10,
+   "r_best": 0.6,
+   "random": 0.5130680771072517,
+   "fill_bar_stop_share": 0.2
+  },
+  "ENG_SIGNAL STOP_20 BUY": {
+   "n_worst": 2,
+   "r_worst": 0.0,
+   "n_best": 2,
+   "r_best": 1.0,
+   "random": 0.6713829683961956,
+   "fill_bar_stop_share": 0.75
+  },
+  "ENG_SIGNAL STOP_20 SELL": {
+   "n_worst": 7,
+   "r_worst": 0.2857142857142857,
+   "n_best": 7,
+   "r_best": 0.42857142857142855,
+   "random": 0.4990194862580816,
+   "fill_bar_stop_share": 0.2857142857142857
+  },
+  "SWEEP RETEST_3 BUY": {
+   "n_worst": 361,
+   "r_worst": 0.5207756232686981,
+   "n_best": 360,
+   "r_best": 0.5305555555555556,
+   "random": 0.46443123464597613,
+   "fill_bar_stop_share": 0.011752136752136752
+  },
+  "SWEEP RETEST_3 SELL": {
+   "n_worst": 389,
+   "r_worst": 0.4524421593830334,
+   "n_best": 393,
+   "r_best": 0.46055979643765904,
+   "random": 0.4693238636108077,
+   "fill_bar_stop_share": 0.014642549526270457
+  },
+  "SWEEP RETEST_5 BUY": {
+   "n_worst": 339,
+   "r_worst": 0.5162241887905604,
+   "n_best": 338,
+   "r_best": 0.5266272189349113,
+   "random": 0.463159906053008,
+   "fill_bar_stop_share": 0.005875440658049354
+  },
+  "SWEEP RETEST_5 SELL": {
+   "n_worst": 369,
+   "r_worst": 0.4905149051490515,
+   "n_best": 372,
+   "r_best": 0.49731182795698925,
+   "random": 0.47045721566074955,
+   "fill_bar_stop_share": 0.014787430683918669
+  },
+  "SWEEP RETEST_7 BUY": {
+   "n_worst": 324,
+   "r_worst": 0.5061728395061729,
+   "n_best": 324,
+   "r_best": 0.5123456790123457,
+   "random": 0.4663772377714209,
+   "fill_bar_stop_share": 0.005945303210463734
+  },
+  "SWEEP RETEST_7 SELL": {
+   "n_worst": 342,
+   "r_worst": 0.49122807017543857,
+   "n_best": 343,
+   "r_best": 0.5072886297376094,
+   "random": 0.46749508626013986,
+   "fill_bar_stop_share": 0.00708502024291498
+  },
+  "SWEEP RETEST_10 BUY": {
+   "n_worst": 290,
+   "r_worst": 0.503448275862069,
+   "n_best": 290,
+   "r_best": 0.5137931034482759,
+   "random": 0.47067117863514857,
+   "fill_bar_stop_share": 0.0038461538461538464
+  },
+  "SWEEP RETEST_10 SELL": {
+   "n_worst": 308,
+   "r_worst": 0.5162337662337663,
+   "n_best": 309,
+   "r_best": 0.5275080906148867,
+   "random": 0.47243223626779396,
+   "fill_bar_stop_share": 0.004662004662004662
+  },
+  "SWEEP RETEST_12 BUY": {
+   "n_worst": 272,
+   "r_worst": 0.4852941176470588,
+   "n_best": 272,
+   "r_best": 0.4889705882352941,
+   "random": 0.47154753787436166,
+   "fill_bar_stop_share": 0.004120879120879121
+  },
+  "SWEEP RETEST_12 SELL": {
+   "n_worst": 276,
+   "r_worst": 0.532608695652174,
+   "n_best": 277,
+   "r_best": 0.5415162454873647,
+   "random": 0.4721933992800148,
+   "fill_bar_stop_share": 0.008641975308641974
+  },
+  "SWEEP RETEST_15 BUY": {
+   "n_worst": 236,
+   "r_worst": 0.5084745762711864,
+   "n_best": 236,
+   "r_best": 0.5127118644067796,
+   "random": 0.47266223179209044,
+   "fill_bar_stop_share": 0.004893964110929853
+  },
+  "SWEEP RETEST_15 SELL": {
+   "n_worst": 234,
+   "r_worst": 0.5512820512820513,
+   "n_best": 234,
+   "r_best": 0.5555555555555556,
+   "random": 0.47335355770301224,
+   "fill_bar_stop_share": 0.006756756756756757
+  },
+  "SWEEP RETEST_20 BUY": {
+   "n_worst": 186,
+   "r_worst": 0.5967741935483871,
+   "n_best": 186,
+   "r_best": 0.5967741935483871,
+   "random": 0.4682599949285349,
+   "fill_bar_stop_share": 0.0017985611510791368
+  },
+  "SWEEP RETEST_20 SELL": {
+   "n_worst": 208,
+   "r_worst": 0.4855769230769231,
+   "n_best": 211,
+   "r_best": 0.4976303317535545,
+   "random": 0.48172525546357525,
+   "fill_bar_stop_share": 0.029411764705882353
+  },
+  "SWEEP STOP_3 BUY": {
+   "n_worst": 492,
+   "r_worst": 0.5020325203252033,
+   "n_best": 491,
+   "r_best": 0.5091649694501018,
+   "random": 0.4669786324522673,
+   "fill_bar_stop_share": 0.013513513513513514
+  },
+  "SWEEP STOP_3 SELL": {
+   "n_worst": 539,
+   "r_worst": 0.4452690166975881,
+   "n_best": 535,
+   "r_best": 0.45607476635514016,
+   "random": 0.47102557549349117,
+   "fill_bar_stop_share": 0.009798270893371758
+  },
+  "SWEEP STOP_5 BUY": {
+   "n_worst": 441,
+   "r_worst": 0.4875283446712018,
+   "n_best": 438,
+   "r_best": 0.4977168949771689,
+   "random": 0.466756320185033,
+   "fill_bar_stop_share": 0.014263074484944533
+  },
+  "SWEEP STOP_5 SELL": {
+   "n_worst": 498,
+   "r_worst": 0.4457831325301205,
+   "n_best": 496,
+   "r_best": 0.4657258064516129,
+   "random": 0.4706281588527097,
+   "fill_bar_stop_share": 0.018122977346278317
+  },
+  "SWEEP STOP_7 BUY": {
+   "n_worst": 419,
+   "r_worst": 0.477326968973747,
+   "n_best": 417,
+   "r_best": 0.4844124700239808,
+   "random": 0.4669854587466135,
+   "fill_bar_stop_share": 0.02608695652173913
+  },
+  "SWEEP STOP_7 SELL": {
+   "n_worst": 438,
+   "r_worst": 0.4520547945205479,
+   "n_best": 434,
+   "r_best": 0.47235023041474655,
+   "random": 0.46999716790623525,
+   "fill_bar_stop_share": 0.027066569129480616
+  },
+  "SWEEP STOP_10 BUY": {
+   "n_worst": 372,
+   "r_worst": 0.478494623655914,
+   "n_best": 366,
+   "r_best": 0.4972677595628415,
+   "random": 0.466194536221559,
+   "fill_bar_stop_share": 0.043816942551119765
+  },
+  "SWEEP STOP_10 SELL": {
+   "n_worst": 386,
+   "r_worst": 0.4689119170984456,
+   "n_best": 380,
+   "r_best": 0.5,
+   "random": 0.4688739269323411,
+   "fill_bar_stop_share": 0.05619834710743802
+  },
+  "SWEEP STOP_12 BUY": {
+   "n_worst": 344,
+   "r_worst": 0.45348837209302323,
+   "n_best": 337,
+   "r_best": 0.4896142433234421,
+   "random": 0.46980349005329003,
+   "fill_bar_stop_share": 0.06444906444906445
+  },
+  "SWEEP STOP_12 SELL": {
+   "n_worst": 353,
+   "r_worst": 0.46742209631728043,
+   "n_best": 345,
+   "r_best": 0.5130434782608696,
+   "random": 0.4732259552695688,
+   "fill_bar_stop_share": 0.06976744186046512
+  },
+  "SWEEP STOP_15 BUY": {
+   "n_worst": 305,
+   "r_worst": 0.43278688524590164,
+   "n_best": 298,
+   "r_best": 0.4966442953020134,
+   "random": 0.4689303020001408,
+   "fill_bar_stop_share": 0.09551886792452831
+  },
+  "SWEEP STOP_15 SELL": {
+   "n_worst": 295,
+   "r_worst": 0.41694915254237286,
+   "n_best": 287,
+   "r_best": 0.49825783972125437,
+   "random": 0.47457329608594107,
+   "fill_bar_stop_share": 0.13807106598984772
+  },
+  "SWEEP STOP_20 BUY": {
+   "n_worst": 242,
+   "r_worst": 0.47107438016528924,
+   "n_best": 233,
+   "r_best": 0.5236051502145923,
+   "random": 0.46766891282729456,
+   "fill_bar_stop_share": 0.13559322033898305
+  },
+  "SWEEP STOP_20 SELL": {
+   "n_worst": 253,
+   "r_worst": 0.3557312252964427,
+   "n_best": 243,
+   "r_best": 0.4403292181069959,
+   "random": 0.47536159696955205,
+   "fill_bar_stop_share": 0.16963226571767498
+  },
+  "GRAB RETEST_3 BUY": {
+   "n_worst": 220,
+   "r_worst": 0.4863636363636364,
+   "n_best": 220,
+   "r_best": 0.5,
+   "random": 0.45972784727046123,
+   "fill_bar_stop_share": 0.02040816326530612
+  },
+  "GRAB RETEST_3 SELL": {
+   "n_worst": 238,
+   "r_worst": 0.4369747899159664,
+   "n_best": 239,
+   "r_best": 0.4435146443514644,
+   "random": 0.4729827212726514,
+   "fill_bar_stop_share": 0.015037593984962405
+  },
+  "GRAB RETEST_5 BUY": {
+   "n_worst": 192,
+   "r_worst": 0.4895833333333333,
+   "n_best": 192,
+   "r_best": 0.5,
+   "random": 0.461313077723994,
+   "fill_bar_stop_share": 0.014084507042253521
+  },
+  "GRAB RETEST_5 SELL": {
+   "n_worst": 216,
+   "r_worst": 0.48148148148148145,
+   "n_best": 216,
+   "r_best": 0.48148148148148145,
+   "random": 0.4691690446664318,
+   "fill_bar_stop_share": 0.008403361344537815
+  },
+  "GRAB RETEST_7 BUY": {
+   "n_worst": 186,
+   "r_worst": 0.4946236559139785,
+   "n_best": 186,
+   "r_best": 0.5,
+   "random": 0.4678907893647579,
+   "fill_bar_stop_share": 0.009708737864077669
+  },
+  "GRAB RETEST_7 SELL": {
+   "n_worst": 191,
+   "r_worst": 0.49214659685863876,
+   "n_best": 191,
+   "r_best": 0.4973821989528796,
+   "random": 0.4734162744007851,
+   "fill_bar_stop_share": 0.01809954751131222
+  },
+  "GRAB RETEST_10 BUY": {
+   "n_worst": 164,
+   "r_worst": 0.4695121951219512,
+   "n_best": 164,
+   "r_best": 0.4817073170731707,
+   "random": 0.47151140831826405,
+   "fill_bar_stop_share": 0.005494505494505495
+  },
+  "GRAB RETEST_10 SELL": {
+   "n_worst": 176,
+   "r_worst": 0.48863636363636365,
+   "n_best": 176,
+   "r_best": 0.5056818181818182,
+   "random": 0.48249025771580983,
+   "fill_bar_stop_share": 0.010256410256410256
+  },
+  "GRAB RETEST_12 BUY": {
+   "n_worst": 151,
+   "r_worst": 0.44370860927152317,
+   "n_best": 151,
+   "r_best": 0.4503311258278146,
+   "random": 0.46649721296195823,
+   "fill_bar_stop_share": 0.005847953216374269
+  },
+  "GRAB RETEST_12 SELL": {
+   "n_worst": 157,
+   "r_worst": 0.5159235668789809,
+   "n_best": 158,
+   "r_best": 0.5189873417721519,
+   "random": 0.47428541466656315,
+   "fill_bar_stop_share": 0.011299435028248588
+  },
+  "GRAB RETEST_15 BUY": {
+   "n_worst": 136,
+   "r_worst": 0.47794117647058826,
+   "n_best": 136,
+   "r_best": 0.4852941176470588,
+   "random": 0.466425967204097,
+   "fill_bar_stop_share": 0.013245033112582781
+  },
+  "GRAB RETEST_15 SELL": {
+   "n_worst": 134,
+   "r_worst": 0.5746268656716418,
+   "n_best": 134,
+   "r_best": 0.5746268656716418,
+   "random": 0.478230271335648,
+   "fill_bar_stop_share": 0.012658227848101266
+  },
+  "GRAB RETEST_20 BUY": {
+   "n_worst": 114,
+   "r_worst": 0.5526315789473685,
+   "n_best": 114,
+   "r_best": 0.5526315789473685,
+   "random": 0.46831187483224296,
+   "fill_bar_stop_share": 0.007751937984496124
+  },
+  "GRAB RETEST_20 SELL": {
+   "n_worst": 119,
+   "r_worst": 0.4789915966386555,
+   "n_best": 119,
+   "r_best": 0.48739495798319327,
+   "random": 0.48015126497040383,
+   "fill_bar_stop_share": 0.03759398496240601
+  },
+  "GRAB STOP_3 BUY": {
+   "n_worst": 317,
+   "r_worst": 0.4921135646687697,
+   "n_best": 317,
+   "r_best": 0.4952681388012618,
+   "random": 0.4669363803164465,
+   "fill_bar_stop_share": 0.02247191011235955
+  },
+  "GRAB STOP_3 SELL": {
+   "n_worst": 358,
+   "r_worst": 0.4329608938547486,
+   "n_best": 358,
+   "r_best": 0.44692737430167595,
+   "random": 0.4742427582641807,
+   "fill_bar_stop_share": 0.02493765586034913
+  },
+  "GRAB STOP_5 BUY": {
+   "n_worst": 289,
+   "r_worst": 0.48788927335640137,
+   "n_best": 289,
+   "r_best": 0.49480968858131485,
+   "random": 0.4659133452020998,
+   "fill_bar_stop_share": 0.018404907975460124
+  },
+  "GRAB STOP_5 SELL": {
+   "n_worst": 313,
+   "r_worst": 0.4440894568690096,
+   "n_best": 314,
+   "r_best": 0.46178343949044587,
+   "random": 0.47628590074063026,
+   "fill_bar_stop_share": 0.028089887640449437
+  },
+  "GRAB STOP_7 BUY": {
+   "n_worst": 258,
+   "r_worst": 0.49224806201550386,
+   "n_best": 258,
+   "r_best": 0.49612403100775193,
+   "random": 0.4645745220801682,
+   "fill_bar_stop_share": 0.030716723549488054
+  },
+  "GRAB STOP_7 SELL": {
+   "n_worst": 275,
+   "r_worst": 0.4690909090909091,
+   "n_best": 275,
+   "r_best": 0.4909090909090909,
+   "random": 0.4728718434611025,
+   "fill_bar_stop_share": 0.02875399361022364
+  },
+  "GRAB STOP_10 BUY": {
+   "n_worst": 219,
+   "r_worst": 0.5159817351598174,
+   "n_best": 219,
+   "r_best": 0.5251141552511416,
+   "random": 0.46617758433465495,
+   "fill_bar_stop_share": 0.04780876494023904
+  },
+  "GRAB STOP_10 SELL": {
+   "n_worst": 245,
+   "r_worst": 0.46938775510204084,
+   "n_best": 244,
+   "r_best": 0.48770491803278687,
+   "random": 0.47498695332468305,
+   "fill_bar_stop_share": 0.07272727272727272
+  },
+  "GRAB STOP_12 BUY": {
+   "n_worst": 209,
+   "r_worst": 0.47368421052631576,
+   "n_best": 208,
+   "r_best": 0.5,
+   "random": 0.46784657130486657,
+   "fill_bar_stop_share": 0.06722689075630252
+  },
+  "GRAB STOP_12 SELL": {
+   "n_worst": 229,
+   "r_worst": 0.44541484716157204,
+   "n_best": 228,
+   "r_best": 0.4868421052631579,
+   "random": 0.4785568298063022,
+   "fill_bar_stop_share": 0.09375
+  },
+  "GRAB STOP_15 BUY": {
+   "n_worst": 195,
+   "r_worst": 0.41025641025641024,
+   "n_best": 193,
+   "r_best": 0.47668393782383417,
+   "random": 0.4676910802938281,
+   "fill_bar_stop_share": 0.1050228310502283
+  },
+  "GRAB STOP_15 SELL": {
+   "n_worst": 195,
+   "r_worst": 0.40512820512820513,
+   "n_best": 194,
+   "r_best": 0.4793814432989691,
+   "random": 0.4793451986367324,
+   "fill_bar_stop_share": 0.16444444444444445
+  },
+  "GRAB STOP_20 BUY": {
+   "n_worst": 153,
+   "r_worst": 0.43137254901960786,
+   "n_best": 153,
+   "r_best": 0.5032679738562091,
+   "random": 0.4738338990940482,
+   "fill_bar_stop_share": 0.12429378531073447
+  },
+  "GRAB STOP_20 SELL": {
+   "n_worst": 165,
+   "r_worst": 0.38181818181818183,
+   "n_best": 162,
+   "r_best": 0.4691358024691358,
+   "random": 0.48136952456683874,
+   "fill_bar_stop_share": 0.20967741935483872
+  },
+  "BREAK RETEST_3 BUY": {
+   "n_worst": 223,
+   "r_worst": 0.4484304932735426,
+   "n_best": 223,
+   "r_best": 0.452914798206278,
+   "random": 0.4876343498908875,
+   "fill_bar_stop_share": 0.03065134099616858
+  },
+  "BREAK RETEST_3 SELL": {
+   "n_worst": 174,
+   "r_worst": 0.5172413793103449,
+   "n_best": 174,
+   "r_best": 0.5632183908045977,
+   "random": 0.502908515245373,
+   "fill_bar_stop_share": 0.031746031746031744
+  },
+  "BREAK RETEST_5 BUY": {
+   "n_worst": 208,
+   "r_worst": 0.5048076923076923,
+   "n_best": 208,
+   "r_best": 0.5336538461538461,
+   "random": 0.49395211249258353,
+   "fill_bar_stop_share": 0.029288702928870293
+  },
+  "BREAK RETEST_5 SELL": {
+   "n_worst": 167,
+   "r_worst": 0.5269461077844312,
+   "n_best": 167,
+   "r_best": 0.5508982035928144,
+   "random": 0.5055840648742616,
+   "fill_bar_stop_share": 0.028409090909090908
+  },
+  "BREAK RETEST_7 BUY": {
+   "n_worst": 193,
+   "r_worst": 0.49740932642487046,
+   "n_best": 193,
+   "r_best": 0.5233160621761658,
+   "random": 0.49537740079305204,
+   "fill_bar_stop_share": 0.02586206896551724
+  },
+  "BREAK RETEST_7 SELL": {
+   "n_worst": 154,
+   "r_worst": 0.5,
+   "n_best": 154,
+   "r_best": 0.538961038961039,
+   "random": 0.5022627711058685,
+   "fill_bar_stop_share": 0.03048780487804878
+  },
+  "BREAK RETEST_10 BUY": {
+   "n_worst": 182,
+   "r_worst": 0.45604395604395603,
+   "n_best": 182,
+   "r_best": 0.4725274725274725,
+   "random": 0.4915980988571724,
+   "fill_bar_stop_share": 0.029411764705882353
+  },
+  "BREAK RETEST_10 SELL": {
+   "n_worst": 147,
+   "r_worst": 0.5238095238095238,
+   "n_best": 147,
+   "r_best": 0.54421768707483,
+   "random": 0.5023527370460732,
+   "fill_bar_stop_share": 0.025806451612903226
+  },
+  "BREAK RETEST_12 BUY": {
+   "n_worst": 163,
+   "r_worst": 0.4539877300613497,
+   "n_best": 163,
+   "r_best": 0.4662576687116564,
+   "random": 0.4836120007211171,
+   "fill_bar_stop_share": 0.015706806282722512
+  },
+  "BREAK RETEST_12 SELL": {
+   "n_worst": 130,
+   "r_worst": 0.49230769230769234,
+   "n_best": 130,
+   "r_best": 0.5230769230769231,
+   "random": 0.49931288552024344,
+   "fill_bar_stop_share": 0.014388489208633094
+  },
+  "BREAK RETEST_15 BUY": {
+   "n_worst": 130,
+   "r_worst": 0.4461538461538462,
+   "n_best": 130,
+   "r_best": 0.4461538461538462,
+   "random": 0.48913545210443754,
+   "fill_bar_stop_share": 0.02
+  },
+  "BREAK RETEST_15 SELL": {
+   "n_worst": 121,
+   "r_worst": 0.4793388429752066,
+   "n_best": 121,
+   "r_best": 0.5041322314049587,
+   "random": 0.5066753593620348,
+   "fill_bar_stop_share": 0.031496062992125984
+  },
+  "BREAK RETEST_20 BUY": {
+   "n_worst": 112,
+   "r_worst": 0.4375,
+   "n_best": 112,
+   "r_best": 0.4375,
+   "random": 0.4852340310438085,
+   "fill_bar_stop_share": 0.024193548387096774
+  },
+  "BREAK RETEST_20 SELL": {
+   "n_worst": 96,
+   "r_worst": 0.5104166666666666,
+   "n_best": 96,
+   "r_best": 0.5208333333333334,
+   "random": 0.5070140364823854,
+   "fill_bar_stop_share": 0.08
+  },
+  "BREAK STOP_3 BUY": {
+   "n_worst": 317,
+   "r_worst": 0.48264984227129337,
+   "n_best": 317,
+   "r_best": 0.48580441640378547,
+   "random": 0.49612181329688165,
+   "fill_bar_stop_share": 0.013192612137203167
+  },
+  "BREAK STOP_3 SELL": {
+   "n_worst": 260,
+   "r_worst": 0.5115384615384615,
+   "n_best": 260,
+   "r_best": 0.5230769230769231,
+   "random": 0.49955824838999097,
+   "fill_bar_stop_share": 0.030201342281879196
+  },
+  "BREAK STOP_5 BUY": {
+   "n_worst": 282,
+   "r_worst": 0.5070921985815603,
+   "n_best": 282,
+   "r_best": 0.5106382978723404,
+   "random": 0.495344610191327,
+   "fill_bar_stop_share": 0.020710059171597635
+  },
+  "BREAK STOP_5 SELL": {
+   "n_worst": 228,
+   "r_worst": 0.5175438596491229,
+   "n_best": 228,
+   "r_best": 0.5263157894736842,
+   "random": 0.49986290681318607,
+   "fill_bar_stop_share": 0.026717557251908396
+  },
+  "BREAK STOP_7 BUY": {
+   "n_worst": 253,
+   "r_worst": 0.49407114624505927,
+   "n_best": 253,
+   "r_best": 0.4980237154150198,
+   "random": 0.49603814630622495,
+   "fill_bar_stop_share": 0.016181229773462782
+  },
+  "BREAK STOP_7 SELL": {
+   "n_worst": 207,
+   "r_worst": 0.5217391304347826,
+   "n_best": 207,
+   "r_best": 0.5362318840579711,
+   "random": 0.5051551844977189,
+   "fill_bar_stop_share": 0.046610169491525424
+  },
+  "BREAK STOP_10 BUY": {
+   "n_worst": 220,
+   "r_worst": 0.4909090909090909,
+   "n_best": 219,
+   "r_best": 0.5205479452054794,
+   "random": 0.4973031518508019,
+   "fill_bar_stop_share": 0.045283018867924525
+  },
+  "BREAK STOP_10 SELL": {
+   "n_worst": 195,
+   "r_worst": 0.49230769230769234,
+   "n_best": 195,
+   "r_best": 0.5025641025641026,
+   "random": 0.5054376108715912,
+   "fill_bar_stop_share": 0.05504587155963303
+  },
+  "BREAK STOP_12 BUY": {
+   "n_worst": 205,
+   "r_worst": 0.44390243902439025,
+   "n_best": 204,
+   "r_best": 0.4950980392156863,
+   "random": 0.4969492606127108,
+   "fill_bar_stop_share": 0.056451612903225805
+  },
+  "BREAK STOP_12 SELL": {
+   "n_worst": 183,
+   "r_worst": 0.4371584699453552,
+   "n_best": 184,
+   "r_best": 0.4891304347826087,
+   "random": 0.5036708586768482,
+   "fill_bar_stop_share": 0.08737864077669903
+  },
+  "BREAK STOP_15 BUY": {
+   "n_worst": 180,
+   "r_worst": 0.36666666666666664,
+   "n_best": 179,
+   "r_best": 0.441340782122905,
+   "random": 0.4947172583058023,
+   "fill_bar_stop_share": 0.09954751131221719
+  },
+  "BREAK STOP_15 SELL": {
+   "n_worst": 161,
+   "r_worst": 0.43478260869565216,
+   "n_best": 160,
+   "r_best": 0.5,
+   "random": 0.5046507626607952,
+   "fill_bar_stop_share": 0.1956521739130435
+  },
+  "BREAK STOP_20 BUY": {
+   "n_worst": 158,
+   "r_worst": 0.35443037974683544,
+   "n_best": 158,
+   "r_best": 0.4240506329113924,
+   "random": 0.48950823477796895,
+   "fill_bar_stop_share": 0.14285714285714285
+  },
+  "BREAK STOP_20 SELL": {
+   "n_worst": 138,
+   "r_worst": 0.42028985507246375,
+   "n_best": 138,
+   "r_best": 0.4927536231884058,
+   "random": 0.5127678423819018,
+   "fill_bar_stop_share": 0.19230769230769232
+  },
+  "BOS RETEST_3 BUY": {
+   "n_worst": 348,
+   "r_worst": 0.4540229885057471,
+   "n_best": 348,
+   "r_best": 0.45689655172413796,
+   "random": 0.47735240117255445,
+   "fill_bar_stop_share": 0.009111617312072893
+  },
+  "BOS RETEST_3 SELL": {
+   "n_worst": 332,
+   "r_worst": 0.463855421686747,
+   "n_best": 332,
+   "r_best": 0.463855421686747,
+   "random": 0.48597902123830833,
+   "fill_bar_stop_share": 0.002386634844868735
+  },
+  "BOS RETEST_5 BUY": {
+   "n_worst": 337,
+   "r_worst": 0.486646884272997,
+   "n_best": 337,
+   "r_best": 0.486646884272997,
+   "random": 0.4772564398615051,
+   "fill_bar_stop_share": 0.012224938875305624
+  },
+  "BOS RETEST_5 SELL": {
+   "n_worst": 293,
+   "r_worst": 0.4709897610921502,
+   "n_best": 293,
+   "r_best": 0.47440273037542663,
+   "random": 0.4906084615480987,
+   "fill_bar_stop_share": 0.007957559681697613
+  },
+  "BOS RETEST_7 BUY": {
+   "n_worst": 301,
+   "r_worst": 0.48172757475083056,
+   "n_best": 301,
+   "r_best": 0.4850498338870432,
+   "random": 0.4759750408087135,
+   "fill_bar_stop_share": 0.0027548209366391185
+  },
+  "BOS RETEST_7 SELL": {
+   "n_worst": 281,
+   "r_worst": 0.46619217081850534,
+   "n_best": 281,
+   "r_best": 0.47686832740213525,
+   "random": 0.48926284951135113,
+   "fill_bar_stop_share": 0.011299435028248588
+  },
+  "BOS RETEST_10 BUY": {
+   "n_worst": 274,
+   "r_worst": 0.5036496350364964,
+   "n_best": 274,
+   "r_best": 0.5036496350364964,
+   "random": 0.4783341401782526,
+   "fill_bar_stop_share": 0.009259259259259259
+  },
+  "BOS RETEST_10 SELL": {
+   "n_worst": 245,
+   "r_worst": 0.4448979591836735,
+   "n_best": 245,
+   "r_best": 0.46122448979591835,
+   "random": 0.4928300903402387,
+   "fill_bar_stop_share": 0.013157894736842105
+  },
+  "BOS RETEST_12 BUY": {
+   "n_worst": 262,
+   "r_worst": 0.5,
+   "n_best": 262,
+   "r_best": 0.5038167938931297,
+   "random": 0.48594328484024496,
+   "fill_bar_stop_share": 0.006211180124223602
+  },
+  "BOS RETEST_12 SELL": {
+   "n_worst": 225,
+   "r_worst": 0.43555555555555553,
+   "n_best": 226,
+   "r_best": 0.43805309734513276,
+   "random": 0.48766798499441155,
+   "fill_bar_stop_share": 0.02197802197802198
+  },
+  "BOS RETEST_15 BUY": {
+   "n_worst": 221,
+   "r_worst": 0.4434389140271493,
+   "n_best": 221,
+   "r_best": 0.4479638009049774,
+   "random": 0.4863269920562573,
+   "fill_bar_stop_share": 0.003663003663003663
+  },
+  "BOS RETEST_15 SELL": {
+   "n_worst": 180,
+   "r_worst": 0.42777777777777776,
+   "n_best": 181,
+   "r_best": 0.44751381215469616,
+   "random": 0.49241626005657924,
+   "fill_bar_stop_share": 0.017937219730941704
+  },
+  "BOS RETEST_20 BUY": {
+   "n_worst": 193,
+   "r_worst": 0.5440414507772021,
+   "n_best": 193,
+   "r_best": 0.5595854922279793,
+   "random": 0.48221021768197064,
+   "fill_bar_stop_share": 0.008438818565400843
+  },
+  "BOS RETEST_20 SELL": {
+   "n_worst": 145,
+   "r_worst": 0.4413793103448276,
+   "n_best": 146,
+   "r_best": 0.4589041095890411,
+   "random": 0.4965780369921015,
+   "fill_bar_stop_share": 0.03932584269662921
+  },
+  "BOS STOP_3 BUY": {
+   "n_worst": 471,
+   "r_worst": 0.49469214437367304,
+   "n_best": 471,
+   "r_best": 0.4968152866242038,
+   "random": 0.47635744937555574,
+   "fill_bar_stop_share": 0.006430868167202572
+  },
+  "BOS STOP_3 SELL": {
+   "n_worst": 446,
+   "r_worst": 0.4439461883408072,
+   "n_best": 446,
+   "r_best": 0.4461883408071749,
+   "random": 0.48434768887647917,
+   "fill_bar_stop_share": 0.003472222222222222
+  },
+  "BOS STOP_5 BUY": {
+   "n_worst": 430,
+   "r_worst": 0.5069767441860465,
+   "n_best": 430,
+   "r_best": 0.5093023255813953,
+   "random": 0.4755832169581338,
+   "fill_bar_stop_share": 0.008928571428571428
+  },
+  "BOS STOP_5 SELL": {
+   "n_worst": 394,
+   "r_worst": 0.45685279187817257,
+   "n_best": 393,
+   "r_best": 0.4631043256997455,
+   "random": 0.4865322607012705,
+   "fill_bar_stop_share": 0.005952380952380952
+  },
+  "BOS STOP_7 BUY": {
+   "n_worst": 384,
+   "r_worst": 0.5078125,
+   "n_best": 384,
+   "r_best": 0.5104166666666666,
+   "random": 0.47509806234682217,
+   "fill_bar_stop_share": 0.005917159763313609
+  },
+  "BOS STOP_7 SELL": {
+   "n_worst": 357,
+   "r_worst": 0.44537815126050423,
+   "n_best": 355,
+   "r_best": 0.4563380281690141,
+   "random": 0.4847844122794901,
+   "fill_bar_stop_share": 0.021739130434782608
+  },
+  "BOS STOP_10 BUY": {
+   "n_worst": 341,
+   "r_worst": 0.49560117302052786,
+   "n_best": 340,
+   "r_best": 0.5058823529411764,
+   "random": 0.47916209547747807,
+   "fill_bar_stop_share": 0.023148148148148147
+  },
+  "BOS STOP_10 SELL": {
+   "n_worst": 319,
+   "r_worst": 0.42946708463949845,
+   "n_best": 318,
+   "r_best": 0.4528301886792453,
+   "random": 0.48679343837357447,
+   "fill_bar_stop_share": 0.0675
+  },
+  "BOS STOP_12 BUY": {
+   "n_worst": 308,
+   "r_worst": 0.4707792207792208,
+   "n_best": 308,
+   "r_best": 0.4837662337662338,
+   "random": 0.4798990731878985,
+   "fill_bar_stop_share": 0.03015075376884422
+  },
+  "BOS STOP_12 SELL": {
+   "n_worst": 285,
+   "r_worst": 0.4,
+   "n_best": 284,
+   "r_best": 0.43661971830985913,
+   "random": 0.4904281866403622,
+   "fill_bar_stop_share": 0.0718232044198895
+  },
+  "BOS STOP_15 BUY": {
+   "n_worst": 283,
+   "r_worst": 0.4275618374558304,
+   "n_best": 280,
+   "r_best": 0.4642857142857143,
+   "random": 0.4844341425836433,
+   "fill_bar_stop_share": 0.07713498622589532
+  },
+  "BOS STOP_15 SELL": {
+   "n_worst": 265,
+   "r_worst": 0.35471698113207545,
+   "n_best": 265,
+   "r_best": 0.41132075471698115,
+   "random": 0.49000869090191757,
+   "fill_bar_stop_share": 0.10559006211180125
+  },
+  "BOS STOP_20 BUY": {
+   "n_worst": 231,
+   "r_worst": 0.45021645021645024,
+   "n_best": 228,
+   "r_best": 0.5219298245614035,
+   "random": 0.478451348135975,
+   "fill_bar_stop_share": 0.1456953642384106
+  },
+  "BOS STOP_20 SELL": {
+   "n_worst": 201,
+   "r_worst": 0.3283582089552239,
+   "n_best": 200,
+   "r_best": 0.395,
+   "random": 0.4954443621983942,
+   "fill_bar_stop_share": 0.1746031746031746
+  },
+  "FVG RETEST_3 BUY": {
+   "n_worst": 1066,
+   "r_worst": 0.47842401500938087,
+   "n_best": 1068,
+   "r_best": 0.4850187265917603,
+   "random": 0.4833677338374972,
+   "fill_bar_stop_share": 0.01330603889457523
+  },
+  "FVG RETEST_3 SELL": {
+   "n_worst": 1015,
+   "r_worst": 0.4807881773399015,
+   "n_best": 1018,
+   "r_best": 0.48821218074656186,
+   "random": 0.48486323448388363,
+   "fill_bar_stop_share": 0.009449694274596998
+  },
+  "FVG RETEST_5 BUY": {
+   "n_worst": 984,
+   "r_worst": 0.4725609756097561,
+   "n_best": 985,
+   "r_best": 0.4812182741116751,
+   "random": 0.4827559078311624,
+   "fill_bar_stop_share": 0.011817670230725942
+  },
+  "FVG RETEST_5 SELL": {
+   "n_worst": 934,
+   "r_worst": 0.493576017130621,
+   "n_best": 936,
+   "r_best": 0.49893162393162394,
+   "random": 0.4876217059397448,
+   "fill_bar_stop_share": 0.006802721088435374
+  },
+  "FVG RETEST_7 BUY": {
+   "n_worst": 903,
+   "r_worst": 0.4850498338870432,
+   "n_best": 903,
+   "r_best": 0.49612403100775193,
+   "random": 0.4833750023179855,
+   "fill_bar_stop_share": 0.012315270935960592
+  },
+  "FVG RETEST_7 SELL": {
+   "n_worst": 848,
+   "r_worst": 0.5023584905660378,
+   "n_best": 851,
+   "r_best": 0.5123384253819037,
+   "random": 0.4901369803977311,
+   "fill_bar_stop_share": 0.008124576844955992
+  },
+  "FVG RETEST_10 BUY": {
+   "n_worst": 795,
+   "r_worst": 0.4817610062893082,
+   "n_best": 796,
+   "r_best": 0.4962311557788945,
+   "random": 0.480657638312596,
+   "fill_bar_stop_share": 0.01520387007601935
+  },
+  "FVG RETEST_10 SELL": {
+   "n_worst": 750,
+   "r_worst": 0.5133333333333333,
+   "n_best": 752,
+   "r_best": 0.523936170212766,
+   "random": 0.4906248675389557,
+   "fill_bar_stop_share": 0.0069498069498069494
+  },
+  "FVG RETEST_12 BUY": {
+   "n_worst": 744,
+   "r_worst": 0.47043010752688175,
+   "n_best": 747,
+   "r_best": 0.4859437751004016,
+   "random": 0.48131232796004714,
+   "fill_bar_stop_share": 0.009658246656760773
+  },
+  "FVG RETEST_12 SELL": {
+   "n_worst": 693,
+   "r_worst": 0.5180375180375181,
+   "n_best": 696,
+   "r_best": 0.5301724137931034,
+   "random": 0.4902505785397583,
+   "fill_bar_stop_share": 0.011725293132328308
+  },
+  "FVG RETEST_15 BUY": {
+   "n_worst": 645,
+   "r_worst": 0.4604651162790698,
+   "n_best": 646,
+   "r_best": 0.47832817337461303,
+   "random": 0.48190911573940953,
+   "fill_bar_stop_share": 0.02181208053691275
+  },
+  "FVG RETEST_15 SELL": {
+   "n_worst": 612,
+   "r_worst": 0.477124183006536,
+   "n_best": 615,
+   "r_best": 0.4975609756097561,
+   "random": 0.49269927917614853,
+   "fill_bar_stop_share": 0.02
+  },
+  "FVG RETEST_20 BUY": {
+   "n_worst": 524,
+   "r_worst": 0.46564885496183206,
+   "n_best": 525,
+   "r_best": 0.47619047619047616,
+   "random": 0.48416178937608156,
+   "fill_bar_stop_share": 0.014522821576763486
+  },
+  "FVG RETEST_20 SELL": {
+   "n_worst": 508,
+   "r_worst": 0.46653543307086615,
+   "n_best": 510,
+   "r_best": 0.48627450980392156,
+   "random": 0.4947506808033132,
+   "fill_bar_stop_share": 0.030892448512585814
+  },
+  "FVG STOP_3 BUY": {
+   "n_worst": 1301,
+   "r_worst": 0.46963873943120676,
+   "n_best": 1307,
+   "r_best": 0.4751338944146901,
+   "random": 0.4828384527405672,
+   "fill_bar_stop_share": 0.009362621534029529
+  },
+  "FVG STOP_3 SELL": {
+   "n_worst": 1335,
+   "r_worst": 0.46441947565543074,
+   "n_best": 1344,
+   "r_best": 0.4732142857142857,
+   "random": 0.482386632324262,
+   "fill_bar_stop_share": 0.018376722817764167
+  },
+  "FVG STOP_5 BUY": {
+   "n_worst": 1162,
+   "r_worst": 0.463855421686747,
+   "n_best": 1165,
+   "r_best": 0.4678111587982833,
+   "random": 0.4835324504434495,
+   "fill_bar_stop_share": 0.010483870967741936
+  },
+  "FVG STOP_5 SELL": {
+   "n_worst": 1170,
+   "r_worst": 0.4666666666666667,
+   "n_best": 1170,
+   "r_best": 0.4777777777777778,
+   "random": 0.48323302613838587,
+   "fill_bar_stop_share": 0.025032369443245578
+  },
+  "FVG STOP_7 BUY": {
+   "n_worst": 1046,
+   "r_worst": 0.4694072657743786,
+   "n_best": 1045,
+   "r_best": 0.47751196172248805,
+   "random": 0.48408705994904994,
+   "fill_bar_stop_share": 0.02054488610987048
+  },
+  "FVG STOP_7 SELL": {
+   "n_worst": 1035,
+   "r_worst": 0.47632850241545893,
+   "n_best": 1035,
+   "r_best": 0.4859903381642512,
+   "random": 0.4839111269162651,
+   "fill_bar_stop_share": 0.03318903318903319
+  },
+  "FVG STOP_10 BUY": {
+   "n_worst": 877,
+   "r_worst": 0.4709236031927024,
+   "n_best": 874,
+   "r_best": 0.4862700228832952,
+   "random": 0.48055739720275203,
+   "fill_bar_stop_share": 0.03421461897356143
+  },
+  "FVG STOP_10 SELL": {
+   "n_worst": 856,
+   "r_worst": 0.4672897196261682,
+   "n_best": 853,
+   "r_best": 0.488862837045721,
+   "random": 0.48812079353532783,
+   "fill_bar_stop_share": 0.05412946428571429
+  },
+  "FVG STOP_12 BUY": {
+   "n_worst": 788,
+   "r_worst": 0.4593908629441624,
+   "n_best": 784,
+   "r_best": 0.48214285714285715,
+   "random": 0.48183721679675146,
+   "fill_bar_stop_share": 0.04333145751266179
+  },
+  "FVG STOP_12 SELL": {
+   "n_worst": 784,
+   "r_worst": 0.4604591836734694,
+   "n_best": 776,
+   "r_best": 0.49355670103092786,
+   "random": 0.4870908043214978,
+   "fill_bar_stop_share": 0.08201701093560146
+  },
+  "FVG STOP_15 BUY": {
+   "n_worst": 715,
+   "r_worst": 0.427972027972028,
+   "n_best": 700,
+   "r_best": 0.4785714285714286,
+   "random": 0.48313060781915046,
+   "fill_bar_stop_share": 0.09466327827191867
+  },
+  "FVG STOP_15 SELL": {
+   "n_worst": 709,
+   "r_worst": 0.4005641748942172,
+   "n_best": 691,
+   "r_best": 0.4717800289435601,
+   "random": 0.48922166100888886,
+   "fill_bar_stop_share": 0.1506849315068493
+  },
+  "FVG STOP_20 BUY": {
+   "n_worst": 580,
+   "r_worst": 0.39827586206896554,
+   "n_best": 569,
+   "r_best": 0.45518453427065025,
+   "random": 0.4827846831145839,
+   "fill_bar_stop_share": 0.1273006134969325
+  },
+  "FVG STOP_20 SELL": {
+   "n_worst": 595,
+   "r_worst": 0.3764705882352941,
+   "n_best": 572,
+   "r_best": 0.47027972027972026,
+   "random": 0.4920717857475245,
+   "fill_bar_stop_share": 0.199836867862969
+  },
+  "FVG LIMIT BUY": {
+   "n_worst": 1160,
+   "r_worst": 0.48879310344827587,
+   "n_best": 1160,
+   "r_best": 0.5,
+   "random": 0.4785479013312356,
+   "fill_bar_stop_share": 0.012078510317060896
+  },
+  "FVG LIMIT SELL": {
+   "n_worst": 1090,
+   "r_worst": 0.48073394495412847,
+   "n_best": 1090,
+   "r_best": 0.48807339449541287,
+   "random": 0.48479123987346623,
+   "fill_bar_stop_share": 0.007743362831858407
+  },
+  "DISPLACEMENT RETEST_3 BUY": {
+   "n_worst": 305,
+   "r_worst": 0.4786885245901639,
+   "n_best": 305,
+   "r_best": 0.4852459016393443,
+   "random": 0.4775898179133326,
+   "fill_bar_stop_share": 0.020348837209302327
+  },
+  "DISPLACEMENT RETEST_3 SELL": {
+   "n_worst": 310,
+   "r_worst": 0.5096774193548387,
+   "n_best": 310,
+   "r_best": 0.5193548387096775,
+   "random": 0.4923970624999361,
+   "fill_bar_stop_share": 0.01729106628242075
+  },
+  "DISPLACEMENT RETEST_5 BUY": {
+   "n_worst": 273,
+   "r_worst": 0.4908424908424908,
+   "n_best": 273,
+   "r_best": 0.5054945054945055,
+   "random": 0.4810619736587866,
+   "fill_bar_stop_share": 0.016129032258064516
+  },
+  "DISPLACEMENT RETEST_5 SELL": {
+   "n_worst": 290,
+   "r_worst": 0.5310344827586206,
+   "n_best": 290,
+   "r_best": 0.5413793103448276,
+   "random": 0.49416291740458634,
+   "fill_bar_stop_share": 0.018633540372670808
+  },
+  "DISPLACEMENT RETEST_7 BUY": {
+   "n_worst": 255,
+   "r_worst": 0.48627450980392156,
+   "n_best": 255,
+   "r_best": 0.49411764705882355,
+   "random": 0.4805148826790362,
+   "fill_bar_stop_share": 0.013937282229965157
+  },
+  "DISPLACEMENT RETEST_7 SELL": {
+   "n_worst": 269,
+   "r_worst": 0.5315985130111525,
+   "n_best": 270,
+   "r_best": 0.5481481481481482,
+   "random": 0.4945231026989437,
+   "fill_bar_stop_share": 0.013605442176870748
+  },
+  "DISPLACEMENT RETEST_10 BUY": {
+   "n_worst": 233,
+   "r_worst": 0.44206008583690987,
+   "n_best": 233,
+   "r_best": 0.45064377682403434,
+   "random": 0.4744561067785309,
+   "fill_bar_stop_share": 0.0196078431372549
+  },
+  "DISPLACEMENT RETEST_10 SELL": {
+   "n_worst": 245,
+   "r_worst": 0.5224489795918368,
+   "n_best": 246,
+   "r_best": 0.5447154471544715,
+   "random": 0.4934019866351671,
+   "fill_bar_stop_share": 0.007547169811320755
+  },
+  "DISPLACEMENT RETEST_12 BUY": {
+   "n_worst": 221,
+   "r_worst": 0.43891402714932126,
+   "n_best": 221,
+   "r_best": 0.45248868778280543,
+   "random": 0.47567702629187214,
+   "fill_bar_stop_share": 0.004032258064516129
+  },
+  "DISPLACEMENT RETEST_12 SELL": {
+   "n_worst": 235,
+   "r_worst": 0.46382978723404256,
+   "n_best": 235,
+   "r_best": 0.4765957446808511,
+   "random": 0.49234926017966174,
+   "fill_bar_stop_share": 0.019305019305019305
+  },
+  "DISPLACEMENT RETEST_15 BUY": {
+   "n_worst": 187,
+   "r_worst": 0.47593582887700536,
+   "n_best": 187,
+   "r_best": 0.4919786096256685,
+   "random": 0.4809863866481343,
+   "fill_bar_stop_share": 0.014285714285714285
+  },
+  "DISPLACEMENT RETEST_15 SELL": {
+   "n_worst": 205,
+   "r_worst": 0.43902439024390244,
+   "n_best": 206,
+   "r_best": 0.46116504854368934,
+   "random": 0.48941488668624195,
+   "fill_bar_stop_share": 0.03404255319148936
+  },
+  "DISPLACEMENT RETEST_20 BUY": {
+   "n_worst": 158,
+   "r_worst": 0.46835443037974683,
+   "n_best": 158,
+   "r_best": 0.47468354430379744,
+   "random": 0.48683465404328313,
+   "fill_bar_stop_share": 0.022988505747126436
+  },
+  "DISPLACEMENT RETEST_20 SELL": {
+   "n_worst": 180,
+   "r_worst": 0.4444444444444444,
+   "n_best": 181,
+   "r_best": 0.4585635359116022,
+   "random": 0.4893545365859115,
+   "fill_bar_stop_share": 0.035175879396984924
+  },
+  "DISPLACEMENT STOP_3 BUY": {
+   "n_worst": 432,
+   "r_worst": 0.4861111111111111,
+   "n_best": 433,
+   "r_best": 0.4942263279445728,
+   "random": 0.4803139099260411,
+   "fill_bar_stop_share": 0.027079303675048357
+  },
+  "DISPLACEMENT STOP_3 SELL": {
+   "n_worst": 490,
+   "r_worst": 0.47959183673469385,
+   "n_best": 492,
+   "r_best": 0.4959349593495935,
+   "random": 0.49241382003450845,
+   "fill_bar_stop_share": 0.046263345195729534
+  },
+  "DISPLACEMENT STOP_5 BUY": {
+   "n_worst": 384,
+   "r_worst": 0.4973958333333333,
+   "n_best": 384,
+   "r_best": 0.5052083333333334,
+   "random": 0.482544896157116,
+   "fill_bar_stop_share": 0.04148471615720524
+  },
+  "DISPLACEMENT STOP_5 SELL": {
+   "n_worst": 432,
+   "r_worst": 0.4722222222222222,
+   "n_best": 435,
+   "r_best": 0.5011494252873563,
+   "random": 0.49468150500709684,
+   "fill_bar_stop_share": 0.0496031746031746
+  },
+  "DISPLACEMENT STOP_7 BUY": {
+   "n_worst": 340,
+   "r_worst": 0.4852941176470588,
+   "n_best": 340,
+   "r_best": 0.49411764705882355,
+   "random": 0.4790934200521858,
+   "fill_bar_stop_share": 0.0412621359223301
+  },
+  "DISPLACEMENT STOP_7 SELL": {
+   "n_worst": 384,
+   "r_worst": 0.4713541666666667,
+   "n_best": 384,
+   "r_best": 0.5052083333333334,
+   "random": 0.49493381272479786,
+   "fill_bar_stop_share": 0.05543237250554324
+  },
+  "DISPLACEMENT STOP_10 BUY": {
+   "n_worst": 300,
+   "r_worst": 0.48,
+   "n_best": 298,
+   "r_best": 0.5033557046979866,
+   "random": 0.4802805046924659,
+   "fill_bar_stop_share": 0.04709141274238227
+  },
+  "DISPLACEMENT STOP_10 SELL": {
+   "n_worst": 330,
+   "r_worst": 0.44545454545454544,
+   "n_best": 329,
+   "r_best": 0.48936170212765956,
+   "random": 0.49577610017456536,
+   "fill_bar_stop_share": 0.09718670076726342
+  },
+  "DISPLACEMENT STOP_12 BUY": {
+   "n_worst": 278,
+   "r_worst": 0.4460431654676259,
+   "n_best": 274,
+   "r_best": 0.5072992700729927,
+   "random": 0.4793997659656564,
+   "fill_bar_stop_share": 0.07598784194528875
+  },
+  "DISPLACEMENT STOP_12 SELL": {
+   "n_worst": 309,
+   "r_worst": 0.3851132686084142,
+   "n_best": 308,
+   "r_best": 0.4512987012987013,
+   "random": 0.4967427046940961,
+   "fill_bar_stop_share": 0.1329639889196676
+  },
+  "DISPLACEMENT STOP_15 BUY": {
+   "n_worst": 251,
+   "r_worst": 0.3784860557768924,
+   "n_best": 248,
+   "r_best": 0.49193548387096775,
+   "random": 0.4809455590242775,
+   "fill_bar_stop_share": 0.15719063545150502
+  },
+  "DISPLACEMENT STOP_15 SELL": {
+   "n_worst": 287,
+   "r_worst": 0.3554006968641115,
+   "n_best": 274,
+   "r_best": 0.48175182481751827,
+   "random": 0.4980047128527585,
+   "fill_bar_stop_share": 0.23708206686930092
+  },
+  "DISPLACEMENT STOP_20 BUY": {
+   "n_worst": 209,
+   "r_worst": 0.3492822966507177,
+   "n_best": 207,
+   "r_best": 0.463768115942029,
+   "random": 0.4834612809538747,
+   "fill_bar_stop_share": 0.18548387096774194
+  },
+  "DISPLACEMENT STOP_20 SELL": {
+   "n_worst": 245,
+   "r_worst": 0.3510204081632653,
+   "n_best": 243,
+   "r_best": 0.45267489711934156,
+   "random": 0.497045818638689,
+   "fill_bar_stop_share": 0.24555160142348753
+  },
+  "DISPLACEMENT LIMIT BUY": {
+   "n_worst": 341,
+   "r_worst": 0.4604105571847507,
+   "n_best": 342,
+   "r_best": 0.48830409356725146,
+   "random": 0.4713096948104766,
+   "fill_bar_stop_share": 0.02617801047120419
+  },
+  "DISPLACEMENT LIMIT SELL": {
+   "n_worst": 373,
+   "r_worst": 0.48257372654155495,
+   "n_best": 373,
+   "r_best": 0.48525469168900803,
+   "random": 0.4888469390448422,
+   "fill_bar_stop_share": 0.016826923076923076
+  },
+  "EMA_PULLBACK RETEST_3 BUY": {
+   "n_worst": 690,
+   "r_worst": 0.46956521739130436,
+   "n_best": 694,
+   "r_best": 0.4812680115273775,
+   "random": 0.4971413586137365,
+   "fill_bar_stop_share": 0.006186909801367633
+  },
+  "EMA_PULLBACK RETEST_3 SELL": {
+   "n_worst": 588,
+   "r_worst": 0.4846938775510204,
+   "n_best": 589,
+   "r_best": 0.48896434634974534,
+   "random": 0.5040861792063228,
+   "fill_bar_stop_share": 0.006993006993006993
+  },
+  "EMA_PULLBACK RETEST_5 BUY": {
+   "n_worst": 618,
+   "r_worst": 0.46116504854368934,
+   "n_best": 621,
+   "r_best": 0.4718196457326892,
+   "random": 0.49582625938129393,
+   "fill_bar_stop_share": 0.009565857247976454
+  },
+  "EMA_PULLBACK RETEST_5 SELL": {
+   "n_worst": 544,
+   "r_worst": 0.49816176470588236,
+   "n_best": 547,
+   "r_best": 0.5027422303473492,
+   "random": 0.5081896687717535,
+   "fill_bar_stop_share": 0.008318739054290718
+  },
+  "EMA_PULLBACK RETEST_7 BUY": {
+   "n_worst": 564,
+   "r_worst": 0.4627659574468085,
+   "n_best": 565,
+   "r_best": 0.4743362831858407,
+   "random": 0.4972123232907952,
+   "fill_bar_stop_share": 0.012751953928424516
+  },
+  "EMA_PULLBACK RETEST_7 SELL": {
+   "n_worst": 467,
+   "r_worst": 0.48822269807280516,
+   "n_best": 468,
+   "r_best": 0.5021367521367521,
+   "random": 0.5103214190427828,
+   "fill_bar_stop_share": 0.008559919436052367
+  },
+  "EMA_PULLBACK RETEST_10 BUY": {
+   "n_worst": 505,
+   "r_worst": 0.4752475247524752,
+   "n_best": 506,
+   "r_best": 0.4841897233201581,
+   "random": 0.49639433313434794,
+   "fill_bar_stop_share": 0.012283894449499545
+  },
+  "EMA_PULLBACK RETEST_10 SELL": {
+   "n_worst": 395,
+   "r_worst": 0.4911392405063291,
+   "n_best": 398,
+   "r_best": 0.507537688442211,
+   "random": 0.5151145131137113,
+   "fill_bar_stop_share": 0.013937282229965157
+  },
+  "EMA_PULLBACK RETEST_12 BUY": {
+   "n_worst": 476,
+   "r_worst": 0.46008403361344535,
+   "n_best": 476,
+   "r_best": 0.47478991596638653,
+   "random": 0.498835632384022,
+   "fill_bar_stop_share": 0.009121459433509362
+  },
+  "EMA_PULLBACK RETEST_12 SELL": {
+   "n_worst": 370,
+   "r_worst": 0.5135135135135135,
+   "n_best": 373,
+   "r_best": 0.5254691689008043,
+   "random": 0.5163879188192925,
+   "fill_bar_stop_share": 0.02059202059202059
+  },
+  "EMA_PULLBACK RETEST_15 BUY": {
+   "n_worst": 408,
+   "r_worst": 0.46568627450980393,
+   "n_best": 410,
+   "r_best": 0.48048780487804876,
+   "random": 0.49512079555790206,
+   "fill_bar_stop_share": 0.014195583596214511
+  },
+  "EMA_PULLBACK RETEST_15 SELL": {
+   "n_worst": 322,
+   "r_worst": 0.5279503105590062,
+   "n_best": 325,
+   "r_best": 0.5538461538461539,
+   "random": 0.5127116843968407,
+   "fill_bar_stop_share": 0.029871977240398292
+  },
+  "EMA_PULLBACK RETEST_20 BUY": {
+   "n_worst": 323,
+   "r_worst": 0.49226006191950467,
+   "n_best": 325,
+   "r_best": 0.5015384615384615,
+   "random": 0.49745258312721347,
+   "fill_bar_stop_share": 0.02612671456564337
+  },
+  "EMA_PULLBACK RETEST_20 SELL": {
+   "n_worst": 271,
+   "r_worst": 0.5387453874538746,
+   "n_best": 275,
+   "r_best": 0.5490909090909091,
+   "random": 0.5151552695046944,
+   "fill_bar_stop_share": 0.05985915492957746
+  },
+  "EMA_PULLBACK STOP_3 BUY": {
+   "n_worst": 832,
+   "r_worst": 0.4567307692307692,
+   "n_best": 828,
+   "r_best": 0.4613526570048309,
+   "random": 0.49721005786372635,
+   "fill_bar_stop_share": 0.00784313725490196
+  },
+  "EMA_PULLBACK STOP_3 SELL": {
+   "n_worst": 741,
+   "r_worst": 0.45614035087719296,
+   "n_best": 740,
+   "r_best": 0.4608108108108108,
+   "random": 0.5049509702994252,
+   "fill_bar_stop_share": 0.006977393245883338
+  },
+  "EMA_PULLBACK STOP_5 BUY": {
+   "n_worst": 738,
+   "r_worst": 0.45934959349593496,
+   "n_best": 736,
+   "r_best": 0.46195652173913043,
+   "random": 0.49648930618142545,
+   "fill_bar_stop_share": 0.010696582311505349
+  },
+  "EMA_PULLBACK STOP_5 SELL": {
+   "n_worst": 667,
+   "r_worst": 0.4572713643178411,
+   "n_best": 664,
+   "r_best": 0.46536144578313254,
+   "random": 0.509807757579757,
+   "fill_bar_stop_share": 0.012962377489724945
+  },
+  "EMA_PULLBACK STOP_7 BUY": {
+   "n_worst": 666,
+   "r_worst": 0.4444444444444444,
+   "n_best": 667,
+   "r_best": 0.4452773613193403,
+   "random": 0.4960450926882041,
+   "fill_bar_stop_share": 0.015129473377945884
+  },
+  "EMA_PULLBACK STOP_7 SELL": {
+   "n_worst": 575,
+   "r_worst": 0.4591304347826087,
+   "n_best": 572,
+   "r_best": 0.46503496503496505,
+   "random": 0.5110294859950342,
+   "fill_bar_stop_share": 0.02312344361437211
+  },
+  "EMA_PULLBACK STOP_10 BUY": {
+   "n_worst": 557,
+   "r_worst": 0.4380610412926391,
+   "n_best": 549,
+   "r_best": 0.45719489981785066,
+   "random": 0.4954778136001394,
+   "fill_bar_stop_share": 0.02782433791485082
+  },
+  "EMA_PULLBACK STOP_10 SELL": {
+   "n_worst": 493,
+   "r_worst": 0.44421906693711966,
+   "n_best": 487,
+   "r_best": 0.459958932238193,
+   "random": 0.5116157751857615,
+   "fill_bar_stop_share": 0.043243243243243246
+  },
+  "EMA_PULLBACK STOP_12 BUY": {
+   "n_worst": 503,
+   "r_worst": 0.4274353876739563,
+   "n_best": 499,
+   "r_best": 0.4589178356713427,
+   "random": 0.49646852593858803,
+   "fill_bar_stop_share": 0.03943044906900329
+  },
+  "EMA_PULLBACK STOP_12 SELL": {
+   "n_worst": 441,
+   "r_worst": 0.4444444444444444,
+   "n_best": 435,
+   "r_best": 0.4666666666666667,
+   "random": 0.5141944531016134,
+   "fill_bar_stop_share": 0.06442831215970962
+  },
+  "EMA_PULLBACK STOP_15 BUY": {
+   "n_worst": 458,
+   "r_worst": 0.3951965065502183,
+   "n_best": 445,
+   "r_best": 0.43820224719101125,
+   "random": 0.4958587998273322,
+   "fill_bar_stop_share": 0.06919549812421842
+  },
+  "EMA_PULLBACK STOP_15 SELL": {
+   "n_worst": 391,
+   "r_worst": 0.45012787723785164,
+   "n_best": 379,
+   "r_best": 0.5013192612137203,
+   "random": 0.5158420766899412,
+   "fill_bar_stop_share": 0.12537917087967643
+  },
+  "EMA_PULLBACK STOP_20 BUY": {
+   "n_worst": 359,
+   "r_worst": 0.3955431754874652,
+   "n_best": 353,
+   "r_best": 0.4447592067988669,
+   "random": 0.4946866114438955,
+   "fill_bar_stop_share": 0.11767755313634007
+  },
+  "EMA_PULLBACK STOP_20 SELL": {
+   "n_worst": 303,
+   "r_worst": 0.44884488448844884,
+   "n_best": 291,
+   "r_best": 0.5189003436426117,
+   "random": 0.516439944661578,
+   "fill_bar_stop_share": 0.15636363636363637
+  },
+  "VOL_EXPANSION RETEST_3 BUY": {
+   "n_worst": 357,
+   "r_worst": 0.47619047619047616,
+   "n_best": 357,
+   "r_best": 0.4789915966386555,
+   "random": 0.4713391270688628,
+   "fill_bar_stop_share": 0.007766990291262136
+  },
+  "VOL_EXPANSION RETEST_3 SELL": {
+   "n_worst": 368,
+   "r_worst": 0.4592391304347826,
+   "n_best": 368,
+   "r_best": 0.46467391304347827,
+   "random": 0.48404281750960587,
+   "fill_bar_stop_share": 0.012704174228675136
+  },
+  "VOL_EXPANSION RETEST_5 BUY": {
+   "n_worst": 320,
+   "r_worst": 0.4625,
+   "n_best": 321,
+   "r_best": 0.46417445482866043,
+   "random": 0.4785943436167891,
+   "fill_bar_stop_share": 0.006276150627615063
+  },
+  "VOL_EXPANSION RETEST_5 SELL": {
+   "n_worst": 317,
+   "r_worst": 0.4794952681388013,
+   "n_best": 317,
+   "r_best": 0.48580441640378547,
+   "random": 0.4903525624656468,
+   "fill_bar_stop_share": 0.012371134020618556
+  },
+  "VOL_EXPANSION RETEST_7 BUY": {
+   "n_worst": 297,
+   "r_worst": 0.45454545454545453,
+   "n_best": 297,
+   "r_best": 0.45791245791245794,
+   "random": 0.4767092782373759,
+   "fill_bar_stop_share": 0.0045662100456621
+  },
+  "VOL_EXPANSION RETEST_7 SELL": {
+   "n_worst": 300,
+   "r_worst": 0.46,
+   "n_best": 300,
+   "r_best": 0.47,
+   "random": 0.4908466844131134,
+   "fill_bar_stop_share": 0.008869179600886918
+  },
+  "VOL_EXPANSION RETEST_10 BUY": {
+   "n_worst": 267,
+   "r_worst": 0.45692883895131087,
+   "n_best": 267,
+   "r_best": 0.4606741573033708,
+   "random": 0.4767620255517426,
+   "fill_bar_stop_share": 0.01507537688442211
+  },
+  "VOL_EXPANSION RETEST_10 SELL": {
+   "n_worst": 255,
+   "r_worst": 0.43137254901960786,
+   "n_best": 255,
+   "r_best": 0.44313725490196076,
+   "random": 0.49196223387603766,
+   "fill_bar_stop_share": 0.015625
+  },
+  "VOL_EXPANSION RETEST_12 BUY": {
+   "n_worst": 250,
+   "r_worst": 0.436,
+   "n_best": 250,
+   "r_best": 0.452,
+   "random": 0.47468780450057607,
+   "fill_bar_stop_share": 0.008021390374331552
+  },
+  "VOL_EXPANSION RETEST_12 SELL": {
+   "n_worst": 220,
+   "r_worst": 0.44545454545454544,
+   "n_best": 220,
+   "r_best": 0.45454545454545453,
+   "random": 0.48915967325765497,
+   "fill_bar_stop_share": 0.011799410029498525
+  },
+  "VOL_EXPANSION RETEST_15 BUY": {
+   "n_worst": 217,
+   "r_worst": 0.45622119815668205,
+   "n_best": 217,
+   "r_best": 0.47465437788018433,
+   "random": 0.47586089342209775,
+   "fill_bar_stop_share": 0.012307692307692308
+  },
+  "VOL_EXPANSION RETEST_15 SELL": {
+   "n_worst": 202,
+   "r_worst": 0.4504950495049505,
+   "n_best": 205,
+   "r_best": 0.4682926829268293,
+   "random": 0.4890499907096789,
+   "fill_bar_stop_share": 0.019417475728155338
+  },
+  "VOL_EXPANSION RETEST_20 BUY": {
+   "n_worst": 181,
+   "r_worst": 0.4585635359116022,
+   "n_best": 183,
+   "r_best": 0.47540983606557374,
+   "random": 0.4780173731105768,
+   "fill_bar_stop_share": 0.007434944237918215
+  },
+  "VOL_EXPANSION RETEST_20 SELL": {
+   "n_worst": 147,
+   "r_worst": 0.42857142857142855,
+   "n_best": 148,
+   "r_best": 0.4594594594594595,
+   "random": 0.49263804774868314,
+   "fill_bar_stop_share": 0.03829787234042553
+  },
+  "VOL_EXPANSION STOP_3 BUY": {
+   "n_worst": 446,
+   "r_worst": 0.49327354260089684,
+   "n_best": 446,
+   "r_best": 0.49551569506726456,
+   "random": 0.4760940540717266,
+   "fill_bar_stop_share": 0.0079155672823219
+  },
+  "VOL_EXPANSION STOP_3 SELL": {
+   "n_worst": 450,
+   "r_worst": 0.46,
+   "n_best": 449,
+   "r_best": 0.46770601336302897,
+   "random": 0.48276788643449936,
+   "fill_bar_stop_share": 0.01310615989515072
+  },
+  "VOL_EXPANSION STOP_5 BUY": {
+   "n_worst": 402,
+   "r_worst": 0.47761194029850745,
+   "n_best": 402,
+   "r_best": 0.47761194029850745,
+   "random": 0.47449906837509154,
+   "fill_bar_stop_share": 0.013119533527696793
+  },
+  "VOL_EXPANSION STOP_5 SELL": {
+   "n_worst": 398,
+   "r_worst": 0.45979899497487436,
+   "n_best": 396,
+   "r_best": 0.4671717171717172,
+   "random": 0.4868617440162114,
+   "fill_bar_stop_share": 0.01624815361890694
+  },
+  "VOL_EXPANSION STOP_7 BUY": {
+   "n_worst": 368,
+   "r_worst": 0.46467391304347827,
+   "n_best": 367,
+   "r_best": 0.46866485013623976,
+   "random": 0.4767573694864353,
+   "fill_bar_stop_share": 0.02073365231259968
+  },
+  "VOL_EXPANSION STOP_7 SELL": {
+   "n_worst": 358,
+   "r_worst": 0.44972067039106145,
+   "n_best": 356,
+   "r_best": 0.46629213483146065,
+   "random": 0.49124938181414624,
+   "fill_bar_stop_share": 0.02280130293159609
+  },
+  "VOL_EXPANSION STOP_10 BUY": {
+   "n_worst": 326,
+   "r_worst": 0.44171779141104295,
+   "n_best": 323,
+   "r_best": 0.4674922600619195,
+   "random": 0.47816481134583555,
+   "fill_bar_stop_share": 0.04
+  },
+  "VOL_EXPANSION STOP_10 SELL": {
+   "n_worst": 307,
+   "r_worst": 0.4234527687296417,
+   "n_best": 303,
+   "r_best": 0.44554455445544555,
+   "random": 0.49314626280334994,
+   "fill_bar_stop_share": 0.04807692307692308
+  },
+  "VOL_EXPANSION STOP_12 BUY": {
+   "n_worst": 293,
+   "r_worst": 0.4232081911262799,
+   "n_best": 290,
+   "r_best": 0.45517241379310347,
+   "random": 0.47686726786732836,
+   "fill_bar_stop_share": 0.05148514851485148
+  },
+  "VOL_EXPANSION STOP_12 SELL": {
+   "n_worst": 275,
+   "r_worst": 0.41818181818181815,
+   "n_best": 270,
+   "r_best": 0.46296296296296297,
+   "random": 0.49180927485086806,
+   "fill_bar_stop_share": 0.08125
+  },
+  "VOL_EXPANSION STOP_15 BUY": {
+   "n_worst": 265,
+   "r_worst": 0.4037735849056604,
+   "n_best": 260,
+   "r_best": 0.45,
+   "random": 0.473744912151504,
+   "fill_bar_stop_share": 0.09050772626931568
+  },
+  "VOL_EXPANSION STOP_15 SELL": {
+   "n_worst": 247,
+   "r_worst": 0.4048582995951417,
+   "n_best": 242,
+   "r_best": 0.4669421487603306,
+   "random": 0.49205731509805467,
+   "fill_bar_stop_share": 0.12903225806451613
+  },
+  "VOL_EXPANSION STOP_20 BUY": {
+   "n_worst": 219,
+   "r_worst": 0.3744292237442922,
+   "n_best": 216,
+   "r_best": 0.4166666666666667,
+   "random": 0.47749076823534087,
+   "fill_bar_stop_share": 0.13259668508287292
+  },
+  "VOL_EXPANSION STOP_20 SELL": {
+   "n_worst": 203,
+   "r_worst": 0.35960591133004927,
+   "n_best": 201,
+   "r_best": 0.39800995024875624,
+   "random": 0.49111253678754185,
+   "fill_bar_stop_share": 0.17548746518105848
+  },
+  "ASIA_BREAKOUT RETEST_3 BUY": {
+   "n_worst": 175,
+   "r_worst": 0.44571428571428573,
+   "n_best": 175,
+   "r_best": 0.4514285714285714,
+   "random": 0.47009101799646097,
+   "fill_bar_stop_share": 0.005649717514124294
+  },
+  "ASIA_BREAKOUT RETEST_3 SELL": {
+   "n_worst": 134,
+   "r_worst": 0.5970149253731343,
+   "n_best": 134,
+   "r_best": 0.5970149253731343,
+   "random": 0.5020876790126001,
+   "fill_bar_stop_share": 0.007142857142857143
+  },
+  "ASIA_BREAKOUT RETEST_5 BUY": {
+   "n_worst": 151,
+   "r_worst": 0.44370860927152317,
+   "n_best": 151,
+   "r_best": 0.4503311258278146,
+   "random": 0.4722188666364237,
+   "fill_bar_stop_share": 0.006535947712418301
+  },
+  "ASIA_BREAKOUT RETEST_5 SELL": {
+   "n_worst": 121,
+   "r_worst": 0.5950413223140496,
+   "n_best": 121,
+   "r_best": 0.6033057851239669,
+   "random": 0.5033579534720622,
+   "fill_bar_stop_share": 0.024390243902439025
+  },
+  "ASIA_BREAKOUT RETEST_7 BUY": {
+   "n_worst": 130,
+   "r_worst": 0.4230769230769231,
+   "n_best": 130,
+   "r_best": 0.45384615384615384,
+   "random": 0.46698208948954695,
+   "fill_bar_stop_share": 0.015037593984962405
+  },
+  "ASIA_BREAKOUT RETEST_7 SELL": {
+   "n_worst": 117,
+   "r_worst": 0.5811965811965812,
+   "n_best": 117,
+   "r_best": 0.5982905982905983,
+   "random": 0.5068974701057679,
+   "fill_bar_stop_share": 0.025423728813559324
+  },
+  "ASIA_BREAKOUT RETEST_10 BUY": {
+   "n_worst": 120,
+   "r_worst": 0.45,
+   "n_best": 120,
+   "r_best": 0.475,
+   "random": 0.47784148241041163,
+   "fill_bar_stop_share": 0.024193548387096774
+  },
+  "ASIA_BREAKOUT RETEST_10 SELL": {
+   "n_worst": 107,
+   "r_worst": 0.514018691588785,
+   "n_best": 107,
+   "r_best": 0.5420560747663551,
+   "random": 0.5075773626727474,
+   "fill_bar_stop_share": 0.06422018348623854
+  },
+  "ASIA_BREAKOUT RETEST_12 BUY": {
+   "n_worst": 102,
+   "r_worst": 0.5098039215686274,
+   "n_best": 102,
+   "r_best": 0.5392156862745098,
+   "random": 0.4747457972809879,
+   "fill_bar_stop_share": 0.009433962264150943
+  },
+  "ASIA_BREAKOUT RETEST_12 SELL": {
+   "n_worst": 106,
+   "r_worst": 0.46226415094339623,
+   "n_best": 106,
+   "r_best": 0.4811320754716981,
+   "random": 0.5053833540923673,
+   "fill_bar_stop_share": 0.037383177570093455
+  },
+  "ASIA_BREAKOUT RETEST_15 BUY": {
+   "n_worst": 84,
+   "r_worst": 0.44047619047619047,
+   "n_best": 84,
+   "r_best": 0.47619047619047616,
+   "random": 0.47352090795224916,
+   "fill_bar_stop_share": 0.010752688172043012
+  },
+  "ASIA_BREAKOUT RETEST_15 SELL": {
+   "n_worst": 87,
+   "r_worst": 0.42528735632183906,
+   "n_best": 87,
+   "r_best": 0.4482758620689655,
+   "random": 0.5043355267410599,
+   "fill_bar_stop_share": 0.07777777777777778
+  },
+  "ASIA_BREAKOUT RETEST_20 BUY": {
+   "n_worst": 73,
+   "r_worst": 0.4246575342465753,
+   "n_best": 73,
+   "r_best": 0.4383561643835616,
+   "random": 0.4841297789093787,
+   "fill_bar_stop_share": 0.0379746835443038
+  },
+  "ASIA_BREAKOUT RETEST_20 SELL": {
+   "n_worst": 73,
+   "r_worst": 0.3972602739726027,
+   "n_best": 73,
+   "r_best": 0.3972602739726027,
+   "random": 0.4976291688472935,
+   "fill_bar_stop_share": 0.0
+  },
+  "ASIA_BREAKOUT STOP_3 BUY": {
+   "n_worst": 239,
+   "r_worst": 0.4435146443514644,
+   "n_best": 239,
+   "r_best": 0.4435146443514644,
+   "random": 0.4696118841420557,
+   "fill_bar_stop_share": 0.00823045267489712
+  },
+  "ASIA_BREAKOUT STOP_3 SELL": {
+   "n_worst": 215,
+   "r_worst": 0.5209302325581395,
+   "n_best": 215,
+   "r_best": 0.5255813953488372,
+   "random": 0.5017418450673575,
+   "fill_bar_stop_share": 0.01809954751131222
+  },
+  "ASIA_BREAKOUT STOP_5 BUY": {
+   "n_worst": 212,
+   "r_worst": 0.45754716981132076,
+   "n_best": 212,
+   "r_best": 0.45754716981132076,
+   "random": 0.47032843683053566,
+   "fill_bar_stop_share": 0.0
+  },
+  "ASIA_BREAKOUT STOP_5 SELL": {
+   "n_worst": 190,
+   "r_worst": 0.5263157894736842,
+   "n_best": 190,
+   "r_best": 0.5421052631578948,
+   "random": 0.5010277848126402,
+   "fill_bar_stop_share": 0.04145077720207254
+  },
+  "ASIA_BREAKOUT STOP_7 BUY": {
+   "n_worst": 189,
+   "r_worst": 0.4497354497354497,
+   "n_best": 189,
+   "r_best": 0.4497354497354497,
+   "random": 0.4718771755933719,
+   "fill_bar_stop_share": 0.0
+  },
+  "ASIA_BREAKOUT STOP_7 SELL": {
+   "n_worst": 172,
+   "r_worst": 0.5,
+   "n_best": 172,
+   "r_best": 0.5116279069767442,
+   "random": 0.5017799096602867,
+   "fill_bar_stop_share": 0.04046242774566474
+  },
+  "ASIA_BREAKOUT STOP_10 BUY": {
+   "n_worst": 163,
+   "r_worst": 0.4601226993865031,
+   "n_best": 164,
+   "r_best": 0.47560975609756095,
+   "random": 0.4718820059416651,
+   "fill_bar_stop_share": 0.03592814371257485
+  },
+  "ASIA_BREAKOUT STOP_10 SELL": {
+   "n_worst": 152,
+   "r_worst": 0.4868421052631579,
+   "n_best": 152,
+   "r_best": 0.5131578947368421,
+   "random": 0.5036749169226737,
+   "fill_bar_stop_share": 0.09868421052631579
+  },
+  "ASIA_BREAKOUT STOP_12 BUY": {
+   "n_worst": 144,
+   "r_worst": 0.4791666666666667,
+   "n_best": 145,
+   "r_best": 0.5172413793103449,
+   "random": 0.47506959733339565,
+   "fill_bar_stop_share": 0.06
+  },
+  "ASIA_BREAKOUT STOP_12 SELL": {
+   "n_worst": 143,
+   "r_worst": 0.4755244755244755,
+   "n_best": 143,
+   "r_best": 0.5034965034965035,
+   "random": 0.5055154946412092,
+   "fill_bar_stop_share": 0.09090909090909091
+  },
+  "ASIA_BREAKOUT STOP_15 BUY": {
+   "n_worst": 120,
+   "r_worst": 0.425,
+   "n_best": 120,
+   "r_best": 0.5,
+   "random": 0.4749493448801173,
+   "fill_bar_stop_share": 0.11023622047244094
+  },
+  "ASIA_BREAKOUT STOP_15 SELL": {
+   "n_worst": 136,
+   "r_worst": 0.3897058823529412,
+   "n_best": 136,
+   "r_best": 0.4632352941176471,
+   "random": 0.5023169193050422,
+   "fill_bar_stop_share": 0.19708029197080293
+  },
+  "ASIA_BREAKOUT STOP_20 BUY": {
+   "n_worst": 106,
+   "r_worst": 0.41509433962264153,
+   "n_best": 104,
+   "r_best": 0.4807692307692308,
+   "random": 0.48005687924050006,
+   "fill_bar_stop_share": 0.12612612612612611
+  },
+  "ASIA_BREAKOUT STOP_20 SELL": {
+   "n_worst": 118,
+   "r_worst": 0.3728813559322034,
+   "n_best": 118,
+   "r_best": 0.4745762711864407,
+   "random": 0.5096333813355843,
+   "fill_bar_stop_share": 0.2033898305084746
+  },
+  "ASIA_BREAKOUT LIMIT BUY": {
+   "n_worst": 198,
+   "r_worst": 0.4797979797979798,
+   "n_best": 198,
+   "r_best": 0.48484848484848486,
+   "random": 0.460990484095075,
+   "fill_bar_stop_share": 0.0049504950495049506
+  },
+  "ASIA_BREAKOUT LIMIT SELL": {
+   "n_worst": 177,
+   "r_worst": 0.5254237288135594,
+   "n_best": 177,
+   "r_best": 0.5254237288135594,
+   "random": 0.5061386061755211,
+   "fill_bar_stop_share": 0.005434782608695652
+  },
+  "FAILED_BREAKOUT RETEST_3 BUY": {
+   "n_worst": 992,
+   "r_worst": 0.49798387096774194,
+   "n_best": 992,
+   "r_best": 0.5050403225806451,
+   "random": 0.4734520915393781,
+   "fill_bar_stop_share": 0.010707635009310988
+  },
+  "FAILED_BREAKOUT RETEST_3 SELL": {
+   "n_worst": 1023,
+   "r_worst": 0.46920821114369504,
+   "n_best": 1022,
+   "r_best": 0.47162426614481406,
+   "random": 0.4826665364517448,
+   "fill_bar_stop_share": 0.007849978194505015
+  },
+  "FAILED_BREAKOUT RETEST_5 BUY": {
+   "n_worst": 934,
+   "r_worst": 0.49785867237687365,
+   "n_best": 932,
+   "r_best": 0.5,
+   "random": 0.47258898527534715,
+   "fill_bar_stop_share": 0.008555611474584801
+  },
+  "FAILED_BREAKOUT RETEST_5 SELL": {
+   "n_worst": 964,
+   "r_worst": 0.4699170124481328,
+   "n_best": 966,
+   "r_best": 0.4730848861283644,
+   "random": 0.48226170129987317,
+   "fill_bar_stop_share": 0.007692307692307693
+  },
+  "FAILED_BREAKOUT RETEST_7 BUY": {
+   "n_worst": 851,
+   "r_worst": 0.4900117508813161,
+   "n_best": 851,
+   "r_best": 0.4935370152761457,
+   "random": 0.47230030610142576,
+   "fill_bar_stop_share": 0.004476776720761052
+  },
+  "FAILED_BREAKOUT RETEST_7 SELL": {
+   "n_worst": 871,
+   "r_worst": 0.45579793340987373,
+   "n_best": 870,
+   "r_best": 0.46206896551724136,
+   "random": 0.48489987021984393,
+   "fill_bar_stop_share": 0.005646817248459959
+  },
+  "FAILED_BREAKOUT RETEST_10 BUY": {
+   "n_worst": 760,
+   "r_worst": 0.48289473684210527,
+   "n_best": 764,
+   "r_best": 0.4869109947643979,
+   "random": 0.4736434542190503,
+   "fill_bar_stop_share": 0.011003236245954692
+  },
+  "FAILED_BREAKOUT RETEST_10 SELL": {
+   "n_worst": 753,
+   "r_worst": 0.4594953519256308,
+   "n_best": 755,
+   "r_best": 0.4688741721854305,
+   "random": 0.4850883991375951,
+   "fill_bar_stop_share": 0.007738095238095238
+  },
+  "FAILED_BREAKOUT RETEST_12 BUY": {
+   "n_worst": 691,
+   "r_worst": 0.47756874095513746,
+   "n_best": 692,
+   "r_best": 0.48121387283236994,
+   "random": 0.47388882289284595,
+   "fill_bar_stop_share": 0.015331010452961672
+  },
+  "FAILED_BREAKOUT RETEST_12 SELL": {
+   "n_worst": 699,
+   "r_worst": 0.46494992846924177,
+   "n_best": 704,
+   "r_best": 0.47301136363636365,
+   "random": 0.4861596679075329,
+   "fill_bar_stop_share": 0.005886200130804447
+  },
+  "FAILED_BREAKOUT RETEST_15 BUY": {
+   "n_worst": 607,
+   "r_worst": 0.48599670510708404,
+   "n_best": 609,
+   "r_best": 0.49261083743842365,
+   "random": 0.4780339807597217,
+   "fill_bar_stop_share": 0.011933174224343675
+  },
+  "FAILED_BREAKOUT RETEST_15 SELL": {
+   "n_worst": 604,
+   "r_worst": 0.46192052980132453,
+   "n_best": 609,
+   "r_best": 0.47126436781609193,
+   "random": 0.4868189312299907,
+   "fill_bar_stop_share": 0.011135857461024499
+  },
+  "FAILED_BREAKOUT RETEST_20 BUY": {
+   "n_worst": 480,
+   "r_worst": 0.4875,
+   "n_best": 481,
+   "r_best": 0.49480249480249483,
+   "random": 0.48058601593536715,
+   "fill_bar_stop_share": 0.010516252390057362
+  },
+  "FAILED_BREAKOUT RETEST_20 SELL": {
+   "n_worst": 458,
+   "r_worst": 0.4890829694323144,
+   "n_best": 464,
+   "r_best": 0.5021551724137931,
+   "random": 0.48800755515461847,
+   "fill_bar_stop_share": 0.016205910390848427
+  },
+  "FAILED_BREAKOUT STOP_3 BUY": {
+   "n_worst": 1261,
+   "r_worst": 0.47977795400475814,
+   "n_best": 1252,
+   "r_best": 0.48881789137380194,
+   "random": 0.4704447921869375,
+   "fill_bar_stop_share": 0.01603206412825651
+  },
+  "FAILED_BREAKOUT STOP_3 SELL": {
+   "n_worst": 1300,
+   "r_worst": 0.4646153846153846,
+   "n_best": 1302,
+   "r_best": 0.4715821812596006,
+   "random": 0.4796461096810988,
+   "fill_bar_stop_share": 0.010944340212632896
+  },
+  "FAILED_BREAKOUT STOP_5 BUY": {
+   "n_worst": 1176,
+   "r_worst": 0.47534013605442177,
+   "n_best": 1170,
+   "r_best": 0.48376068376068376,
+   "random": 0.47333077260008216,
+   "fill_bar_stop_share": 0.019535569480280134
+  },
+  "FAILED_BREAKOUT STOP_5 SELL": {
+   "n_worst": 1197,
+   "r_worst": 0.4569757727652464,
+   "n_best": 1193,
+   "r_best": 0.4652137468566639,
+   "random": 0.4814427081484807,
+   "fill_bar_stop_share": 0.012829403606102635
+  },
+  "FAILED_BREAKOUT STOP_7 BUY": {
+   "n_worst": 1079,
+   "r_worst": 0.4643188137164041,
+   "n_best": 1073,
+   "r_best": 0.4743709226467847,
+   "random": 0.47187992232058606,
+   "fill_bar_stop_share": 0.023809523809523808
+  },
+  "FAILED_BREAKOUT STOP_7 SELL": {
+   "n_worst": 1108,
+   "r_worst": 0.4404332129963899,
+   "n_best": 1100,
+   "r_best": 0.45636363636363636,
+   "random": 0.4820643994918214,
+   "fill_bar_stop_share": 0.022997316979685704
+  },
+  "FAILED_BREAKOUT STOP_10 BUY": {
+   "n_worst": 939,
+   "r_worst": 0.43769968051118213,
+   "n_best": 929,
+   "r_best": 0.465016146393972,
+   "random": 0.47119479950899207,
+   "fill_bar_stop_share": 0.0377974801679888
+  },
+  "FAILED_BREAKOUT STOP_10 SELL": {
+   "n_worst": 975,
+   "r_worst": 0.4112820512820513,
+   "n_best": 958,
+   "r_best": 0.44154488517745305,
+   "random": 0.48524590633615,
+   "fill_bar_stop_share": 0.045234958278436536
+  },
+  "FAILED_BREAKOUT STOP_12 BUY": {
+   "n_worst": 836,
+   "r_worst": 0.44019138755980863,
+   "n_best": 828,
+   "r_best": 0.4722222222222222,
+   "random": 0.47392029386823575,
+   "fill_bar_stop_share": 0.04925602873268343
+  },
+  "FAILED_BREAKOUT STOP_12 SELL": {
+   "n_worst": 879,
+   "r_worst": 0.40955631399317405,
+   "n_best": 860,
+   "r_best": 0.45,
+   "random": 0.48676586593212584,
+   "fill_bar_stop_share": 0.0678451982799809
+  },
+  "FAILED_BREAKOUT STOP_15 BUY": {
+   "n_worst": 738,
+   "r_worst": 0.4281842818428184,
+   "n_best": 724,
+   "r_best": 0.47928176795580113,
+   "random": 0.47370739363153475,
+   "fill_bar_stop_share": 0.08459743290548424
+  },
+  "FAILED_BREAKOUT STOP_15 SELL": {
+   "n_worst": 757,
+   "r_worst": 0.40158520475561427,
+   "n_best": 739,
+   "r_best": 0.46414073071718537,
+   "random": 0.48697347263546764,
+   "fill_bar_stop_share": 0.10563002680965147
+  },
+  "FAILED_BREAKOUT STOP_20 BUY": {
+   "n_worst": 617,
+   "r_worst": 0.4051863857374392,
+   "n_best": 600,
+   "r_best": 0.4633333333333333,
+   "random": 0.4807876328315443,
+   "fill_bar_stop_share": 0.11284599006387509
+  },
+  "FAILED_BREAKOUT STOP_20 SELL": {
+   "n_worst": 610,
+   "r_worst": 0.3704918032786885,
+   "n_best": 587,
+   "r_best": 0.44122657580919933,
+   "random": 0.4853932484976529,
+   "fill_bar_stop_share": 0.15374241402562375
+  },
+  "FAILED_BREAKOUT LIMIT BUY": {
+   "n_worst": 976,
+   "r_worst": 0.4887295081967213,
+   "n_best": 973,
+   "r_best": 0.49743062692702983,
+   "random": 0.47125745922540824,
+   "fill_bar_stop_share": 0.024469067405355493
+  },
+  "FAILED_BREAKOUT LIMIT SELL": {
+   "n_worst": 1024,
+   "r_worst": 0.498046875,
+   "n_best": 1025,
+   "r_best": 0.5024390243902439,
+   "random": 0.47553117946915197,
+   "fill_bar_stop_share": 0.01350210970464135
+  },
+  "PD_SWEEP RETEST_3 BUY": {
+   "n_worst": 286,
+   "r_worst": 0.5244755244755245,
+   "n_best": 285,
+   "r_best": 0.5333333333333333,
+   "random": 0.4673423759836025,
+   "fill_bar_stop_share": 0.01272984441301273
+  },
+  "PD_SWEEP RETEST_3 SELL": {
+   "n_worst": 303,
+   "r_worst": 0.47854785478547857,
+   "n_best": 303,
+   "r_best": 0.47854785478547857,
+   "random": 0.47306003489847903,
+   "fill_bar_stop_share": 0.01566265060240964
+  },
+  "PD_SWEEP RETEST_5 BUY": {
+   "n_worst": 279,
+   "r_worst": 0.5232974910394266,
+   "n_best": 278,
+   "r_best": 0.5323741007194245,
+   "random": 0.4685334862208887,
+   "fill_bar_stop_share": 0.004724409448818898
+  },
+  "PD_SWEEP RETEST_5 SELL": {
+   "n_worst": 280,
+   "r_worst": 0.5,
+   "n_best": 281,
+   "r_best": 0.505338078291815,
+   "random": 0.4734397494561136,
+   "fill_bar_stop_share": 0.017082785808147174
+  },
+  "PD_SWEEP RETEST_7 BUY": {
+   "n_worst": 258,
+   "r_worst": 0.5077519379844961,
+   "n_best": 258,
+   "r_best": 0.5116279069767442,
+   "random": 0.4732539557752511,
+   "fill_bar_stop_share": 0.00315955766192733
+  },
+  "PD_SWEEP RETEST_7 SELL": {
+   "n_worst": 269,
+   "r_worst": 0.5092936802973977,
+   "n_best": 268,
+   "r_best": 0.5223880597014925,
+   "random": 0.47281403214739426,
+   "fill_bar_stop_share": 0.005698005698005698
+  },
+  "PD_SWEEP RETEST_10 BUY": {
+   "n_worst": 231,
+   "r_worst": 0.5064935064935064,
+   "n_best": 231,
+   "r_best": 0.5151515151515151,
+   "random": 0.4780709681395051,
+   "fill_bar_stop_share": 0.003316749585406302
+  },
+  "PD_SWEEP RETEST_10 SELL": {
+   "n_worst": 241,
+   "r_worst": 0.5477178423236515,
+   "n_best": 242,
+   "r_best": 0.5537190082644629,
+   "random": 0.47947890985291475,
+   "fill_bar_stop_share": 0.00322061191626409
+  },
+  "PD_SWEEP RETEST_12 BUY": {
+   "n_worst": 214,
+   "r_worst": 0.46261682242990654,
+   "n_best": 213,
+   "r_best": 0.4694835680751174,
+   "random": 0.47628830985159504,
+   "fill_bar_stop_share": 0.005415162454873646
+  },
+  "PD_SWEEP RETEST_12 SELL": {
+   "n_worst": 207,
+   "r_worst": 0.5652173913043478,
+   "n_best": 207,
+   "r_best": 0.5700483091787439,
+   "random": 0.48022529339208075,
+   "fill_bar_stop_share": 0.008680555555555556
+  },
+  "PD_SWEEP RETEST_15 BUY": {
+   "n_worst": 181,
+   "r_worst": 0.49171270718232046,
+   "n_best": 181,
+   "r_best": 0.5027624309392266,
+   "random": 0.4740139683908443,
+   "fill_bar_stop_share": 0.006578947368421052
+  },
+  "PD_SWEEP RETEST_15 SELL": {
+   "n_worst": 182,
+   "r_worst": 0.5604395604395604,
+   "n_best": 182,
+   "r_best": 0.5659340659340659,
+   "random": 0.4797987343587874,
+   "fill_bar_stop_share": 0.005836575875486381
+  },
+  "PD_SWEEP RETEST_20 BUY": {
+   "n_worst": 152,
+   "r_worst": 0.5789473684210527,
+   "n_best": 152,
+   "r_best": 0.5789473684210527,
+   "random": 0.4694655010936465,
+   "fill_bar_stop_share": 0.004694835680751174
+  },
+  "PD_SWEEP RETEST_20 SELL": {
+   "n_worst": 160,
+   "r_worst": 0.46875,
+   "n_best": 162,
+   "r_best": 0.48148148148148145,
+   "random": 0.48971754635910697,
+   "fill_bar_stop_share": 0.03044496487119438
+  },
+  "PD_SWEEP STOP_3 BUY": {
+   "n_worst": 389,
+   "r_worst": 0.5141388174807198,
+   "n_best": 389,
+   "r_best": 0.5218508997429306,
+   "random": 0.4704447350190903,
+   "fill_bar_stop_share": 0.012512030798845043
+  },
+  "PD_SWEEP STOP_3 SELL": {
+   "n_worst": 409,
+   "r_worst": 0.4621026894865526,
+   "n_best": 405,
+   "r_best": 0.4691358024691358,
+   "random": 0.4765085303922092,
+   "fill_bar_stop_share": 0.009060955518945634
+  },
+  "PD_SWEEP STOP_5 BUY": {
+   "n_worst": 363,
+   "r_worst": 0.48760330578512395,
+   "n_best": 360,
+   "r_best": 0.5,
+   "random": 0.47068521242667843,
+   "fill_bar_stop_share": 0.015957446808510637
+  },
+  "PD_SWEEP STOP_5 SELL": {
+   "n_worst": 389,
+   "r_worst": 0.455012853470437,
+   "n_best": 384,
+   "r_best": 0.4713541666666667,
+   "random": 0.475020460042877,
+   "fill_bar_stop_share": 0.017415215398716773
+  },
+  "PD_SWEEP STOP_7 BUY": {
+   "n_worst": 334,
+   "r_worst": 0.4820359281437126,
+   "n_best": 332,
+   "r_best": 0.4939759036144578,
+   "random": 0.47178249601564454,
+   "fill_bar_stop_share": 0.03154205607476635
+  },
+  "PD_SWEEP STOP_7 SELL": {
+   "n_worst": 341,
+   "r_worst": 0.46920821114369504,
+   "n_best": 337,
+   "r_best": 0.4807121661721068,
+   "random": 0.47466076852031913,
+   "fill_bar_stop_share": 0.023858921161825725
+  },
+  "PD_SWEEP STOP_10 BUY": {
+   "n_worst": 292,
+   "r_worst": 0.5034246575342466,
+   "n_best": 287,
+   "r_best": 0.5261324041811847,
+   "random": 0.4722223402875264,
+   "fill_bar_stop_share": 0.0392156862745098
+  },
+  "PD_SWEEP STOP_10 SELL": {
+   "n_worst": 298,
+   "r_worst": 0.4865771812080537,
+   "n_best": 295,
+   "r_best": 0.5084745762711864,
+   "random": 0.4729089534231363,
+   "fill_bar_stop_share": 0.0492379835873388
+  },
+  "PD_SWEEP STOP_12 BUY": {
+   "n_worst": 281,
+   "r_worst": 0.4483985765124555,
+   "n_best": 274,
+   "r_best": 0.49635036496350365,
+   "random": 0.47583091421803314,
+   "fill_bar_stop_share": 0.05255878284923928
+  },
+  "PD_SWEEP STOP_12 SELL": {
+   "n_worst": 278,
+   "r_worst": 0.4784172661870504,
+   "n_best": 272,
+   "r_best": 0.5183823529411765,
+   "random": 0.4772873188787775,
+   "fill_bar_stop_share": 0.05949367088607595
+  },
+  "PD_SWEEP STOP_15 BUY": {
+   "n_worst": 253,
+   "r_worst": 0.42292490118577075,
+   "n_best": 248,
+   "r_best": 0.49193548387096775,
+   "random": 0.47203171135054733,
+   "fill_bar_stop_share": 0.1035548686244204
+  },
+  "PD_SWEEP STOP_15 SELL": {
+   "n_worst": 224,
+   "r_worst": 0.4419642857142857,
+   "n_best": 218,
+   "r_best": 0.5091743119266054,
+   "random": 0.47985144148018183,
+   "fill_bar_stop_share": 0.09185185185185185
+  },
+  "PD_SWEEP STOP_20 BUY": {
+   "n_worst": 202,
+   "r_worst": 0.4158415841584158,
+   "n_best": 193,
+   "r_best": 0.48186528497409326,
+   "random": 0.4726087056587209,
+   "fill_bar_stop_share": 0.15111940298507462
+  },
+  "PD_SWEEP STOP_20 SELL": {
+   "n_worst": 198,
+   "r_worst": 0.35353535353535354,
+   "n_best": 193,
+   "r_best": 0.43005181347150256,
+   "random": 0.48108995575007624,
+   "fill_bar_stop_share": 0.11971830985915492
+  },
+  "PD_SWEEP LIMIT BUY": {
+   "n_worst": 303,
+   "r_worst": 0.5445544554455446,
+   "n_best": 302,
+   "r_best": 0.5529801324503312,
+   "random": 0.46787213849370707,
+   "fill_bar_stop_share": 0.015852047556142668
+  },
+  "PD_SWEEP LIMIT SELL": {
+   "n_worst": 307,
+   "r_worst": 0.4527687296416938,
+   "n_best": 309,
+   "r_best": 0.459546925566343,
+   "random": 0.47557366630848436,
+   "fill_bar_stop_share": 0.012345679012345678
+  },
+  "LONDON_ORB RETEST_3 BUY": {
+   "n_worst": 199,
+   "r_worst": 0.4221105527638191,
+   "n_best": 199,
+   "r_best": 0.4321608040201005,
+   "random": 0.4656600392791619,
+   "fill_bar_stop_share": 0.0049504950495049506
+  },
+  "LONDON_ORB RETEST_3 SELL": {
+   "n_worst": 192,
+   "r_worst": 0.4739583333333333,
+   "n_best": 192,
+   "r_best": 0.4739583333333333,
+   "random": 0.4975510893802937,
+   "fill_bar_stop_share": 0.009852216748768473
+  },
+  "LONDON_ORB RETEST_5 BUY": {
+   "n_worst": 179,
+   "r_worst": 0.441340782122905,
+   "n_best": 179,
+   "r_best": 0.44692737430167595,
+   "random": 0.47128488886891856,
+   "fill_bar_stop_share": 0.00546448087431694
+  },
+  "LONDON_ORB RETEST_5 SELL": {
+   "n_worst": 165,
+   "r_worst": 0.4666666666666667,
+   "n_best": 165,
+   "r_best": 0.4666666666666667,
+   "random": 0.5002632349685171,
+   "fill_bar_stop_share": 0.011428571428571429
+  },
+  "LONDON_ORB RETEST_8 BUY": {
+   "n_worst": 147,
+   "r_worst": 0.3741496598639456,
+   "n_best": 147,
+   "r_best": 0.38095238095238093,
+   "random": 0.47261158834435957,
+   "fill_bar_stop_share": 0.006756756756756757
+  },
+  "LONDON_ORB RETEST_8 SELL": {
+   "n_worst": 143,
+   "r_worst": 0.5104895104895105,
+   "n_best": 143,
+   "r_best": 0.5174825174825175,
+   "random": 0.5025689925706812,
+   "fill_bar_stop_share": 0.01910828025477707
+  },
+  "LONDON_ORB RETEST_10 BUY": {
+   "n_worst": 137,
+   "r_worst": 0.41605839416058393,
+   "n_best": 137,
+   "r_best": 0.41605839416058393,
+   "random": 0.47787677805493123,
+   "fill_bar_stop_share": 0.021739130434782608
+  },
+  "LONDON_ORB RETEST_10 SELL": {
+   "n_worst": 133,
+   "r_worst": 0.518796992481203,
+   "n_best": 133,
+   "r_best": 0.5338345864661654,
+   "random": 0.5058063692309798,
+   "fill_bar_stop_share": 0.02097902097902098
+  },
+  "LONDON_ORB RETEST_15 BUY": {
+   "n_worst": 108,
+   "r_worst": 0.4166666666666667,
+   "n_best": 108,
+   "r_best": 0.4351851851851852,
+   "random": 0.4774239414568878,
+   "fill_bar_stop_share": 0.017543859649122806
+  },
+  "LONDON_ORB RETEST_15 SELL": {
+   "n_worst": 96,
+   "r_worst": 0.3958333333333333,
+   "n_best": 96,
+   "r_best": 0.4375,
+   "random": 0.501858362406974,
+   "fill_bar_stop_share": 0.0392156862745098
+  },
+  "LONDON_ORB RETEST_20 BUY": {
+   "n_worst": 77,
+   "r_worst": 0.4155844155844156,
+   "n_best": 77,
+   "r_best": 0.4155844155844156,
+   "random": 0.482287643519386,
+   "fill_bar_stop_share": 0.04819277108433735
+  },
+  "LONDON_ORB RETEST_20 SELL": {
+   "n_worst": 84,
+   "r_worst": 0.42857142857142855,
+   "n_best": 84,
+   "r_best": 0.42857142857142855,
+   "random": 0.5009599128239397,
+   "fill_bar_stop_share": 0.0
+  },
+  "LONDON_ORB STOP_3 BUY": {
+   "n_worst": 268,
+   "r_worst": 0.43656716417910446,
+   "n_best": 268,
+   "r_best": 0.43656716417910446,
+   "random": 0.46413863809400846,
+   "fill_bar_stop_share": 0.0
+  },
+  "LONDON_ORB STOP_3 SELL": {
+   "n_worst": 266,
+   "r_worst": 0.4774436090225564,
+   "n_best": 266,
+   "r_best": 0.4849624060150376,
+   "random": 0.4988139958039352,
+   "fill_bar_stop_share": 0.01079136690647482
+  },
+  "LONDON_ORB STOP_5 BUY": {
+   "n_worst": 240,
+   "r_worst": 0.4375,
+   "n_best": 240,
+   "r_best": 0.4375,
+   "random": 0.46694950368951815,
+   "fill_bar_stop_share": 0.004081632653061225
+  },
+  "LONDON_ORB STOP_5 SELL": {
+   "n_worst": 244,
+   "r_worst": 0.47540983606557374,
+   "n_best": 244,
+   "r_best": 0.48360655737704916,
+   "random": 0.4990320200280705,
+   "fill_bar_stop_share": 0.019762845849802372
+  },
+  "LONDON_ORB STOP_8 BUY": {
+   "n_worst": 206,
+   "r_worst": 0.41262135922330095,
+   "n_best": 206,
+   "r_best": 0.42718446601941745,
+   "random": 0.4696122593713105,
+   "fill_bar_stop_share": 0.02857142857142857
+  },
+  "LONDON_ORB STOP_8 SELL": {
+   "n_worst": 200,
+   "r_worst": 0.485,
+   "n_best": 200,
+   "r_best": 0.505,
+   "random": 0.4988707823058399,
+   "fill_bar_stop_share": 0.03773584905660377
+  },
+  "LONDON_ORB STOP_10 BUY": {
+   "n_worst": 185,
+   "r_worst": 0.41621621621621624,
+   "n_best": 185,
+   "r_best": 0.43243243243243246,
+   "random": 0.47088064178686534,
+   "fill_bar_stop_share": 0.031746031746031744
+  },
+  "LONDON_ORB STOP_10 SELL": {
+   "n_worst": 185,
+   "r_worst": 0.4756756756756757,
+   "n_best": 184,
+   "r_best": 0.5054347826086957,
+   "random": 0.49930494467679604,
+   "fill_bar_stop_share": 0.07253886010362694
+  },
+  "LONDON_ORB STOP_15 BUY": {
+   "n_worst": 145,
+   "r_worst": 0.4,
+   "n_best": 144,
+   "r_best": 0.4444444444444444,
+   "random": 0.4754297622985391,
+   "fill_bar_stop_share": 0.08
+  },
+  "LONDON_ORB STOP_15 SELL": {
+   "n_worst": 150,
+   "r_worst": 0.4066666666666667,
+   "n_best": 150,
+   "r_best": 0.44666666666666666,
+   "random": 0.5010935680956469,
+   "fill_bar_stop_share": 0.11180124223602485
+  },
+  "LONDON_ORB STOP_20 BUY": {
+   "n_worst": 113,
+   "r_worst": 0.40707964601769914,
+   "n_best": 113,
+   "r_best": 0.45132743362831856,
+   "random": 0.48149870619647867,
+   "fill_bar_stop_share": 0.10743801652892562
+  },
+  "LONDON_ORB STOP_20 SELL": {
+   "n_worst": 130,
+   "r_worst": 0.34615384615384615,
+   "n_best": 129,
+   "r_best": 0.4573643410852713,
+   "random": 0.4985981073313078,
+   "fill_bar_stop_share": 0.22058823529411764
+  },
+  "LONDON_ORB LIMIT BUY": {
+   "n_worst": 198,
+   "r_worst": 0.4494949494949495,
+   "n_best": 198,
+   "r_best": 0.4494949494949495,
+   "random": 0.46152133647789706,
+   "fill_bar_stop_share": 0.0
+  },
+  "LONDON_ORB LIMIT SELL": {
+   "n_worst": 196,
+   "r_worst": 0.5102040816326531,
+   "n_best": 196,
+   "r_best": 0.5102040816326531,
+   "random": 0.4992315416191291,
+   "fill_bar_stop_share": 0.009852216748768473
+  },
+  "NY_ORB RETEST_3 BUY": {
+   "n_worst": 155,
+   "r_worst": 0.535483870967742,
+   "n_best": 155,
+   "r_best": 0.535483870967742,
+   "random": 0.4829258727083448,
+   "fill_bar_stop_share": 0.027624309392265192
+  },
+  "NY_ORB RETEST_3 SELL": {
+   "n_worst": 149,
+   "r_worst": 0.4161073825503356,
+   "n_best": 149,
+   "r_best": 0.4161073825503356,
+   "random": 0.4797596511178415,
+   "fill_bar_stop_share": 0.012269938650306749
+  },
+  "NY_ORB RETEST_5 BUY": {
+   "n_worst": 147,
+   "r_worst": 0.5374149659863946,
+   "n_best": 147,
+   "r_best": 0.5374149659863946,
+   "random": 0.4873752193680931,
+   "fill_bar_stop_share": 0.01764705882352941
+  },
+  "NY_ORB RETEST_5 SELL": {
+   "n_worst": 131,
+   "r_worst": 0.3893129770992366,
+   "n_best": 131,
+   "r_best": 0.3893129770992366,
+   "random": 0.4910341339453339,
+   "fill_bar_stop_share": 0.013605442176870748
+  },
+  "NY_ORB RETEST_8 BUY": {
+   "n_worst": 137,
+   "r_worst": 0.5328467153284672,
+   "n_best": 137,
+   "r_best": 0.5328467153284672,
+   "random": 0.49766758352707485,
+   "fill_bar_stop_share": 0.006578947368421052
+  },
+  "NY_ORB RETEST_8 SELL": {
+   "n_worst": 123,
+   "r_worst": 0.43089430894308944,
+   "n_best": 123,
+   "r_best": 0.43089430894308944,
+   "random": 0.4813307526225756,
+   "fill_bar_stop_share": 0.021897810218978103
+  },
+  "NY_ORB RETEST_10 BUY": {
+   "n_worst": 119,
+   "r_worst": 0.5210084033613446,
+   "n_best": 119,
+   "r_best": 0.5210084033613446,
+   "random": 0.49433877875801824,
+   "fill_bar_stop_share": 0.007462686567164179
+  },
+  "NY_ORB RETEST_10 SELL": {
+   "n_worst": 111,
+   "r_worst": 0.4954954954954955,
+   "n_best": 111,
+   "r_best": 0.5045045045045045,
+   "random": 0.48111855562295,
+   "fill_bar_stop_share": 0.024390243902439025
+  },
+  "NY_ORB RETEST_15 BUY": {
+   "n_worst": 105,
+   "r_worst": 0.4666666666666667,
+   "n_best": 106,
+   "r_best": 0.4716981132075472,
+   "random": 0.48555693803922517,
+   "fill_bar_stop_share": 0.008771929824561403
+  },
+  "NY_ORB RETEST_15 SELL": {
+   "n_worst": 96,
+   "r_worst": 0.5,
+   "n_best": 96,
+   "r_best": 0.5104166666666666,
+   "random": 0.4808808538909898,
+   "fill_bar_stop_share": 0.009615384615384616
+  },
+  "NY_ORB RETEST_20 BUY": {
+   "n_worst": 82,
+   "r_worst": 0.43902439024390244,
+   "n_best": 82,
+   "r_best": 0.43902439024390244,
+   "random": 0.495609231673324,
+   "fill_bar_stop_share": 0.0
+  },
+  "NY_ORB RETEST_20 SELL": {
+   "n_worst": 81,
+   "r_worst": 0.4567901234567901,
+   "n_best": 81,
+   "r_best": 0.4691358024691358,
+   "random": 0.47538768100051265,
+   "fill_bar_stop_share": 0.0
+  },
+  "NY_ORB STOP_3 BUY": {
+   "n_worst": 214,
+   "r_worst": 0.5560747663551402,
+   "n_best": 214,
+   "r_best": 0.5560747663551402,
+   "random": 0.4837702291620053,
+   "fill_bar_stop_share": 0.012244897959183673
+  },
+  "NY_ORB STOP_3 SELL": {
+   "n_worst": 236,
+   "r_worst": 0.4533898305084746,
+   "n_best": 236,
+   "r_best": 0.4576271186440678,
+   "random": 0.48913010314950844,
+   "fill_bar_stop_share": 0.027777777777777776
+  },
+  "NY_ORB STOP_5 BUY": {
+   "n_worst": 196,
+   "r_worst": 0.4897959183673469,
+   "n_best": 196,
+   "r_best": 0.4897959183673469,
+   "random": 0.48417296694030043,
+   "fill_bar_stop_share": 0.004424778761061947
+  },
+  "NY_ORB STOP_5 SELL": {
+   "n_worst": 213,
+   "r_worst": 0.43661971830985913,
+   "n_best": 213,
+   "r_best": 0.4460093896713615,
+   "random": 0.48388295065371406,
+   "fill_bar_stop_share": 0.026200873362445413
+  },
+  "NY_ORB STOP_8 BUY": {
+   "n_worst": 174,
+   "r_worst": 0.4942528735632184,
+   "n_best": 174,
+   "r_best": 0.5057471264367817,
+   "random": 0.4918363986380632,
+   "fill_bar_stop_share": 0.02564102564102564
+  },
+  "NY_ORB STOP_8 SELL": {
+   "n_worst": 181,
+   "r_worst": 0.44751381215469616,
+   "n_best": 181,
+   "r_best": 0.46408839779005523,
+   "random": 0.48390327269959416,
+   "fill_bar_stop_share": 0.030303030303030304
+  },
+  "NY_ORB STOP_10 BUY": {
+   "n_worst": 154,
+   "r_worst": 0.5,
+   "n_best": 154,
+   "r_best": 0.5194805194805194,
+   "random": 0.4972897613267748,
+   "fill_bar_stop_share": 0.028901734104046242
+  },
+  "NY_ORB STOP_10 SELL": {
+   "n_worst": 163,
+   "r_worst": 0.4723926380368098,
+   "n_best": 163,
+   "r_best": 0.4785276073619632,
+   "random": 0.48374562684920824,
+   "fill_bar_stop_share": 0.03932584269662921
+  },
+  "NY_ORB STOP_15 BUY": {
+   "n_worst": 130,
+   "r_worst": 0.4076923076923077,
+   "n_best": 130,
+   "r_best": 0.4846153846153846,
+   "random": 0.4946586238423035,
+   "fill_bar_stop_share": 0.1103448275862069
+  },
+  "NY_ORB STOP_15 SELL": {
+   "n_worst": 126,
+   "r_worst": 0.3492063492063492,
+   "n_best": 126,
+   "r_best": 0.49206349206349204,
+   "random": 0.4825657649264617,
+   "fill_bar_stop_share": 0.21323529411764705
+  },
+  "NY_ORB STOP_20 BUY": {
+   "n_worst": 104,
+   "r_worst": 0.49038461538461536,
+   "n_best": 104,
+   "r_best": 0.5288461538461539,
+   "random": 0.4985259125797454,
+   "fill_bar_stop_share": 0.07017543859649122
+  },
+  "NY_ORB STOP_20 SELL": {
+   "n_worst": 109,
+   "r_worst": 0.3577981651376147,
+   "n_best": 106,
+   "r_best": 0.49056603773584906,
+   "random": 0.48268343824951737,
+   "fill_bar_stop_share": 0.22123893805309736
+  },
+  "NY_ORB LIMIT BUY": {
+   "n_worst": 161,
+   "r_worst": 0.5403726708074534,
+   "n_best": 161,
+   "r_best": 0.5403726708074534,
+   "random": 0.48374970969657366,
+   "fill_bar_stop_share": 0.00558659217877095
+  },
+  "NY_ORB LIMIT SELL": {
+   "n_worst": 177,
+   "r_worst": 0.4971751412429379,
+   "n_best": 177,
+   "r_best": 0.4971751412429379,
+   "random": 0.4850061616995801,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENGULF_LEVEL RETEST_3 BUY": {
+   "n_worst": 399,
+   "r_worst": 0.48370927318295737,
+   "n_best": 399,
+   "r_best": 0.48621553884711777,
+   "random": 0.47401447805334673,
+   "fill_bar_stop_share": 0.0074487895716946
+  },
+  "ENGULF_LEVEL RETEST_3 SELL": {
+   "n_worst": 423,
+   "r_worst": 0.48226950354609927,
+   "n_best": 424,
+   "r_best": 0.49292452830188677,
+   "random": 0.48579198998099926,
+   "fill_bar_stop_share": 0.0053475935828877
+  },
+  "ENGULF_LEVEL RETEST_5 BUY": {
+   "n_worst": 353,
+   "r_worst": 0.48441926345609065,
+   "n_best": 354,
+   "r_best": 0.4887005649717514,
+   "random": 0.474730269493587,
+   "fill_bar_stop_share": 0.0
+  },
+  "ENGULF_LEVEL RETEST_5 SELL": {
+   "n_worst": 408,
+   "r_worst": 0.48284313725490197,
+   "n_best": 411,
+   "r_best": 0.49148418491484186,
+   "random": 0.48429889688768724,
+   "fill_bar_stop_share": 0.00558659217877095
+  },
+  "ENGULF_LEVEL RETEST_8 BUY": {
+   "n_worst": 306,
+   "r_worst": 0.4869281045751634,
+   "n_best": 306,
+   "r_best": 0.4934640522875817,
+   "random": 0.4798165672087822,
+   "fill_bar_stop_share": 0.004796163069544364
+  },
+  "ENGULF_LEVEL RETEST_8 SELL": {
+   "n_worst": 358,
+   "r_worst": 0.49162011173184356,
+   "n_best": 358,
+   "r_best": 0.49162011173184356,
+   "random": 0.4805340149959695,
+   "fill_bar_stop_share": 0.006550218340611353
+  },
+  "ENGULF_LEVEL RETEST_10 BUY": {
+   "n_worst": 287,
+   "r_worst": 0.519163763066202,
+   "n_best": 287,
+   "r_best": 0.5261324041811847,
+   "random": 0.48199232387131047,
+   "fill_bar_stop_share": 0.0076726342710997444
+  },
+  "ENGULF_LEVEL RETEST_10 SELL": {
+   "n_worst": 335,
+   "r_worst": 0.4716417910447761,
+   "n_best": 338,
+   "r_best": 0.48520710059171596,
+   "random": 0.48669738056419926,
+   "fill_bar_stop_share": 0.0022988505747126436
+  },
+  "ENGULF_LEVEL RETEST_15 BUY": {
+   "n_worst": 235,
+   "r_worst": 0.5191489361702127,
+   "n_best": 235,
+   "r_best": 0.5276595744680851,
+   "random": 0.4809249278762398,
+   "fill_bar_stop_share": 0.021806853582554516
+  },
+  "ENGULF_LEVEL RETEST_15 SELL": {
+   "n_worst": 264,
+   "r_worst": 0.4696969696969697,
+   "n_best": 264,
+   "r_best": 0.5,
+   "random": 0.48322889599103586,
+   "fill_bar_stop_share": 0.017045454545454544
+  },
+  "ENGULF_LEVEL RETEST_20 BUY": {
+   "n_worst": 207,
+   "r_worst": 0.45893719806763283,
+   "n_best": 208,
+   "r_best": 0.47115384615384615,
+   "random": 0.4803920933315103,
+   "fill_bar_stop_share": 0.013888888888888888
+  },
+  "ENGULF_LEVEL RETEST_20 SELL": {
+   "n_worst": 223,
+   "r_worst": 0.515695067264574,
+   "n_best": 223,
+   "r_best": 0.5246636771300448,
+   "random": 0.480998250804876,
+   "fill_bar_stop_share": 0.026143790849673203
+  },
+  "ENGULF_LEVEL STOP_3 BUY": {
+   "n_worst": 545,
+   "r_worst": 0.47155963302752296,
+   "n_best": 546,
+   "r_best": 0.47985347985347987,
+   "random": 0.47449928863187135,
+   "fill_bar_stop_share": 0.010624169986719787
+  },
+  "ENGULF_LEVEL STOP_3 SELL": {
+   "n_worst": 602,
+   "r_worst": 0.49169435215946844,
+   "n_best": 602,
+   "r_best": 0.5033222591362126,
+   "random": 0.48603092935909536,
+   "fill_bar_stop_share": 0.00984009840098401
+  },
+  "ENGULF_LEVEL STOP_5 BUY": {
+   "n_worst": 487,
+   "r_worst": 0.48459958932238195,
+   "n_best": 488,
+   "r_best": 0.48975409836065575,
+   "random": 0.47425286083701,
+   "fill_bar_stop_share": 0.020771513353115726
+  },
+  "ENGULF_LEVEL STOP_5 SELL": {
+   "n_worst": 537,
+   "r_worst": 0.4860335195530726,
+   "n_best": 534,
+   "r_best": 0.5093632958801498,
+   "random": 0.4884002506386297,
+   "fill_bar_stop_share": 0.017639077340569877
+  },
+  "ENGULF_LEVEL STOP_8 BUY": {
+   "n_worst": 412,
+   "r_worst": 0.5,
+   "n_best": 412,
+   "r_best": 0.5097087378640777,
+   "random": 0.4796401129050791,
+   "fill_bar_stop_share": 0.02268760907504363
+  },
+  "ENGULF_LEVEL STOP_8 SELL": {
+   "n_worst": 476,
+   "r_worst": 0.4831932773109244,
+   "n_best": 474,
+   "r_best": 0.5126582278481012,
+   "random": 0.48708236179489167,
+   "fill_bar_stop_share": 0.03421461897356143
+  },
+  "ENGULF_LEVEL STOP_10 BUY": {
+   "n_worst": 376,
+   "r_worst": 0.5026595744680851,
+   "n_best": 375,
+   "r_best": 0.5173333333333333,
+   "random": 0.47838154516130726,
+   "fill_bar_stop_share": 0.03759398496240601
+  },
+  "ENGULF_LEVEL STOP_10 SELL": {
+   "n_worst": 445,
+   "r_worst": 0.45393258426966293,
+   "n_best": 441,
+   "r_best": 0.4875283446712018,
+   "random": 0.48849886512420815,
+   "fill_bar_stop_share": 0.06622516556291391
+  },
+  "ENGULF_LEVEL STOP_15 BUY": {
+   "n_worst": 293,
+   "r_worst": 0.4641638225255973,
+   "n_best": 293,
+   "r_best": 0.5085324232081911,
+   "random": 0.4865732512264224,
+   "fill_bar_stop_share": 0.08018867924528301
+  },
+  "ENGULF_LEVEL STOP_15 SELL": {
+   "n_worst": 358,
+   "r_worst": 0.41620111731843573,
+   "n_best": 349,
+   "r_best": 0.49570200573065903,
+   "random": 0.4894603518898546,
+   "fill_bar_stop_share": 0.1396761133603239
+  },
+  "ENGULF_LEVEL STOP_20 BUY": {
+   "n_worst": 248,
+   "r_worst": 0.4435483870967742,
+   "n_best": 247,
+   "r_best": 0.4898785425101215,
+   "random": 0.48328133314846355,
+   "fill_bar_stop_share": 0.09090909090909091
+  },
+  "ENGULF_LEVEL STOP_20 SELL": {
+   "n_worst": 276,
+   "r_worst": 0.427536231884058,
+   "n_best": 272,
+   "r_best": 0.5073529411764706,
+   "random": 0.4894921179738413,
+   "fill_bar_stop_share": 0.1529126213592233
+  },
+  "ENGULF_LEVEL LIMIT BUY": {
+   "n_worst": 497,
+   "r_worst": 0.4949698189134809,
+   "n_best": 497,
+   "r_best": 0.5010060362173038,
+   "random": 0.4687707650537626,
+   "fill_bar_stop_share": 0.012747875354107648
+  },
+  "ENGULF_LEVEL LIMIT SELL": {
+   "n_worst": 556,
+   "r_worst": 0.4766187050359712,
+   "n_best": 557,
+   "r_best": 0.48114901256732495,
+   "random": 0.4856325414445837,
+   "fill_bar_stop_share": 0.011826544021024968
+  },
+  "PINBAR_LEVEL RETEST_3 BUY": {
+   "n_worst": 316,
+   "r_worst": 0.44936708860759494,
+   "n_best": 316,
+   "r_best": 0.45569620253164556,
+   "random": 0.4647862900977608,
+   "fill_bar_stop_share": 0.012953367875647668
+  },
+  "PINBAR_LEVEL RETEST_3 SELL": {
+   "n_worst": 261,
+   "r_worst": 0.4559386973180077,
+   "n_best": 260,
+   "r_best": 0.46153846153846156,
+   "random": 0.48288369428759975,
+   "fill_bar_stop_share": 0.009202453987730062
+  },
+  "PINBAR_LEVEL RETEST_5 BUY": {
+   "n_worst": 281,
+   "r_worst": 0.46619217081850534,
+   "n_best": 281,
+   "r_best": 0.4697508896797153,
+   "random": 0.4680781901230082,
+   "fill_bar_stop_share": 0.005698005698005698
+  },
+  "PINBAR_LEVEL RETEST_5 SELL": {
+   "n_worst": 228,
+   "r_worst": 0.45614035087719296,
+   "n_best": 228,
+   "r_best": 0.4692982456140351,
+   "random": 0.4930542672445039,
+   "fill_bar_stop_share": 0.017123287671232876
+  },
+  "PINBAR_LEVEL RETEST_8 BUY": {
+   "n_worst": 240,
+   "r_worst": 0.4583333333333333,
+   "n_best": 240,
+   "r_best": 0.4625,
+   "random": 0.46931699476864847,
+   "fill_bar_stop_share": 0.006756756756756757
+  },
+  "PINBAR_LEVEL RETEST_8 SELL": {
+   "n_worst": 197,
+   "r_worst": 0.4213197969543147,
+   "n_best": 197,
+   "r_best": 0.4213197969543147,
+   "random": 0.4891389387642903,
+   "fill_bar_stop_share": 0.004132231404958678
+  },
+  "PINBAR_LEVEL RETEST_10 BUY": {
+   "n_worst": 228,
+   "r_worst": 0.4780701754385965,
+   "n_best": 229,
+   "r_best": 0.48034934497816595,
+   "random": 0.47185133950434655,
+   "fill_bar_stop_share": 0.014134275618374558
+  },
+  "PINBAR_LEVEL RETEST_10 SELL": {
+   "n_worst": 178,
+   "r_worst": 0.42696629213483145,
+   "n_best": 178,
+   "r_best": 0.42696629213483145,
+   "random": 0.4866396373107508,
+   "fill_bar_stop_share": 0.018779342723004695
+  },
+  "PINBAR_LEVEL RETEST_15 BUY": {
+   "n_worst": 165,
+   "r_worst": 0.5333333333333333,
+   "n_best": 165,
+   "r_best": 0.5454545454545454,
+   "random": 0.478839855805731,
+   "fill_bar_stop_share": 0.00975609756097561
+  },
+  "PINBAR_LEVEL RETEST_15 SELL": {
+   "n_worst": 137,
+   "r_worst": 0.45255474452554745,
+   "n_best": 138,
+   "r_best": 0.45652173913043476,
+   "random": 0.48344169080304883,
+   "fill_bar_stop_share": 0.011560693641618497
+  },
+  "PINBAR_LEVEL RETEST_20 BUY": {
+   "n_worst": 148,
+   "r_worst": 0.49324324324324326,
+   "n_best": 149,
+   "r_best": 0.5033557046979866,
+   "random": 0.48346045241992436,
+   "fill_bar_stop_share": 0.0
+  },
+  "PINBAR_LEVEL RETEST_20 SELL": {
+   "n_worst": 109,
+   "r_worst": 0.4954128440366973,
+   "n_best": 109,
+   "r_best": 0.5137614678899083,
+   "random": 0.4898703324431246,
+   "fill_bar_stop_share": 0.006993006993006993
+  },
+  "PINBAR_LEVEL STOP_3 BUY": {
+   "n_worst": 438,
+   "r_worst": 0.4726027397260274,
+   "n_best": 438,
+   "r_best": 0.4817351598173516,
+   "random": 0.4691830029229748,
+   "fill_bar_stop_share": 0.016363636363636365
+  },
+  "PINBAR_LEVEL STOP_3 SELL": {
+   "n_worst": 361,
+   "r_worst": 0.4404432132963989,
+   "n_best": 359,
+   "r_best": 0.45125348189415043,
+   "random": 0.4835395823073395,
+   "fill_bar_stop_share": 0.013015184381778741
+  },
+  "PINBAR_LEVEL STOP_5 BUY": {
+   "n_worst": 395,
+   "r_worst": 0.4810126582278481,
+   "n_best": 392,
+   "r_best": 0.4923469387755102,
+   "random": 0.471655112641763,
+   "fill_bar_stop_share": 0.016
+  },
+  "PINBAR_LEVEL STOP_5 SELL": {
+   "n_worst": 326,
+   "r_worst": 0.43558282208588955,
+   "n_best": 325,
+   "r_best": 0.4461538461538462,
+   "random": 0.48781642038100137,
+   "fill_bar_stop_share": 0.021844660194174758
+  },
+  "PINBAR_LEVEL STOP_8 BUY": {
+   "n_worst": 349,
+   "r_worst": 0.46131805157593125,
+   "n_best": 348,
+   "r_best": 0.47701149425287354,
+   "random": 0.4691323437657397,
+   "fill_bar_stop_share": 0.034324942791762014
+  },
+  "PINBAR_LEVEL STOP_8 SELL": {
+   "n_worst": 275,
+   "r_worst": 0.43636363636363634,
+   "n_best": 274,
+   "r_best": 0.45255474452554745,
+   "random": 0.4910130381232479,
+   "fill_bar_stop_share": 0.02631578947368421
+  },
+  "PINBAR_LEVEL STOP_10 BUY": {
+   "n_worst": 315,
+   "r_worst": 0.4634920634920635,
+   "n_best": 315,
+   "r_best": 0.48253968253968255,
+   "random": 0.47087688562379876,
+   "fill_bar_stop_share": 0.030612244897959183
+  },
+  "PINBAR_LEVEL STOP_10 SELL": {
+   "n_worst": 252,
+   "r_worst": 0.4087301587301587,
+   "n_best": 252,
+   "r_best": 0.43253968253968256,
+   "random": 0.4927114581417058,
+   "fill_bar_stop_share": 0.050793650793650794
+  },
+  "PINBAR_LEVEL STOP_15 BUY": {
+   "n_worst": 248,
+   "r_worst": 0.45564516129032256,
+   "n_best": 248,
+   "r_best": 0.5201612903225806,
+   "random": 0.4748929700906159,
+   "fill_bar_stop_share": 0.10223642172523961
+  },
+  "PINBAR_LEVEL STOP_15 SELL": {
+   "n_worst": 200,
+   "r_worst": 0.405,
+   "n_best": 198,
+   "r_best": 0.4393939393939394,
+   "random": 0.4926205344114591,
+   "fill_bar_stop_share": 0.132
+  },
+  "PINBAR_LEVEL STOP_20 BUY": {
+   "n_worst": 205,
+   "r_worst": 0.4146341463414634,
+   "n_best": 204,
+   "r_best": 0.5,
+   "random": 0.4810238936137461,
+   "fill_bar_stop_share": 0.13026819923371646
+  },
+  "PINBAR_LEVEL STOP_20 SELL": {
+   "n_worst": 161,
+   "r_worst": 0.37888198757763975,
+   "n_best": 161,
+   "r_best": 0.42857142857142855,
+   "random": 0.4861420092798105,
+   "fill_bar_stop_share": 0.21153846153846154
+  },
+  "PINBAR_LEVEL LIMIT BUY": {
+   "n_worst": 406,
+   "r_worst": 0.4802955665024631,
+   "n_best": 405,
+   "r_best": 0.4839506172839506,
+   "random": 0.46909869641164204,
+   "fill_bar_stop_share": 0.026923076923076925
+  },
+  "PINBAR_LEVEL LIMIT SELL": {
+   "n_worst": 362,
+   "r_worst": 0.48066298342541436,
+   "n_best": 362,
+   "r_best": 0.4861878453038674,
+   "random": 0.47703366925156215,
+   "fill_bar_stop_share": 0.014925373134328358
+  },
+  "CHOCH_RETEST RETEST_3 BUY": {
+   "n_worst": 200,
+   "r_worst": 0.455,
+   "n_best": 200,
+   "r_best": 0.46,
+   "random": 0.47231388623908405,
+   "fill_bar_stop_share": 0.014084507042253521
+  },
+  "CHOCH_RETEST RETEST_3 SELL": {
+   "n_worst": 199,
+   "r_worst": 0.47738693467336685,
+   "n_best": 199,
+   "r_best": 0.47738693467336685,
+   "random": 0.48956468355957417,
+   "fill_bar_stop_share": 0.0
+  },
+  "CHOCH_RETEST RETEST_5 BUY": {
+   "n_worst": 180,
+   "r_worst": 0.4722222222222222,
+   "n_best": 180,
+   "r_best": 0.4722222222222222,
+   "random": 0.47373847284916903,
+   "fill_bar_stop_share": 0.005263157894736842
+  },
+  "CHOCH_RETEST RETEST_5 SELL": {
+   "n_worst": 180,
+   "r_worst": 0.45555555555555555,
+   "n_best": 180,
+   "r_best": 0.46111111111111114,
+   "random": 0.49109289125701083,
+   "fill_bar_stop_share": 0.009950248756218905
+  },
+  "CHOCH_RETEST RETEST_8 BUY": {
+   "n_worst": 165,
+   "r_worst": 0.5151515151515151,
+   "n_best": 165,
+   "r_best": 0.5151515151515151,
+   "random": 0.4812806057499646,
+   "fill_bar_stop_share": 0.005780346820809248
+  },
+  "CHOCH_RETEST RETEST_8 SELL": {
+   "n_worst": 159,
+   "r_worst": 0.4339622641509434,
+   "n_best": 159,
+   "r_best": 0.44025157232704404,
+   "random": 0.48930191612119195,
+   "fill_bar_stop_share": 0.011428571428571429
+  },
+  "CHOCH_RETEST RETEST_10 BUY": {
+   "n_worst": 155,
+   "r_worst": 0.5161290322580645,
+   "n_best": 155,
+   "r_best": 0.5161290322580645,
+   "random": 0.48198242475983344,
+   "fill_bar_stop_share": 0.006172839506172839
+  },
+  "CHOCH_RETEST RETEST_10 SELL": {
+   "n_worst": 152,
+   "r_worst": 0.4473684210526316,
+   "n_best": 152,
+   "r_best": 0.45394736842105265,
+   "random": 0.4909878147459768,
+   "fill_bar_stop_share": 0.024539877300613498
+  },
+  "CHOCH_RETEST RETEST_15 BUY": {
+   "n_worst": 130,
+   "r_worst": 0.4153846153846154,
+   "n_best": 130,
+   "r_best": 0.4230769230769231,
+   "random": 0.4879794326423948,
+   "fill_bar_stop_share": 0.0
+  },
+  "CHOCH_RETEST RETEST_15 SELL": {
+   "n_worst": 101,
+   "r_worst": 0.39603960396039606,
+   "n_best": 101,
+   "r_best": 0.42574257425742573,
+   "random": 0.49286132819986794,
+   "fill_bar_stop_share": 0.018018018018018018
+  },
+  "CHOCH_RETEST RETEST_20 BUY": {
+   "n_worst": 110,
+   "r_worst": 0.509090909090909,
+   "n_best": 110,
+   "r_best": 0.5272727272727272,
+   "random": 0.48027598144079825,
+   "fill_bar_stop_share": 0.008547008547008548
+  },
+  "CHOCH_RETEST RETEST_20 SELL": {
+   "n_worst": 83,
+   "r_worst": 0.4819277108433735,
+   "n_best": 83,
+   "r_best": 0.4939759036144578,
+   "random": 0.49582243811431265,
+   "fill_bar_stop_share": 0.011235955056179775
+  },
+  "CHOCH_RETEST STOP_3 BUY": {
+   "n_worst": 275,
+   "r_worst": 0.4763636363636364,
+   "n_best": 275,
+   "r_best": 0.48,
+   "random": 0.4732683683345871,
+   "fill_bar_stop_share": 0.009966777408637873
+  },
+  "CHOCH_RETEST STOP_3 SELL": {
+   "n_worst": 266,
+   "r_worst": 0.45112781954887216,
+   "n_best": 266,
+   "r_best": 0.4548872180451128,
+   "random": 0.4882478702243902,
+   "fill_bar_stop_share": 0.0
+  },
+  "CHOCH_RETEST STOP_5 BUY": {
+   "n_worst": 247,
+   "r_worst": 0.5020242914979757,
+   "n_best": 247,
+   "r_best": 0.5060728744939271,
+   "random": 0.4716393969604334,
+   "fill_bar_stop_share": 0.01486988847583643
+  },
+  "CHOCH_RETEST STOP_5 SELL": {
+   "n_worst": 242,
+   "r_worst": 0.45041322314049587,
+   "n_best": 241,
+   "r_best": 0.4605809128630705,
+   "random": 0.48710262185242675,
+   "fill_bar_stop_share": 0.007434944237918215
+  },
+  "CHOCH_RETEST STOP_8 BUY": {
+   "n_worst": 217,
+   "r_worst": 0.4976958525345622,
+   "n_best": 217,
+   "r_best": 0.5161290322580645,
+   "random": 0.4758680711110415,
+   "fill_bar_stop_share": 0.017241379310344827
+  },
+  "CHOCH_RETEST STOP_8 SELL": {
+   "n_worst": 213,
+   "r_worst": 0.4225352112676056,
+   "n_best": 212,
+   "r_best": 0.4386792452830189,
+   "random": 0.4851597602571356,
+   "fill_bar_stop_share": 0.021551724137931036
+  },
+  "CHOCH_RETEST STOP_10 BUY": {
+   "n_worst": 195,
+   "r_worst": 0.5076923076923077,
+   "n_best": 195,
+   "r_best": 0.5282051282051282,
+   "random": 0.47868149722745695,
+   "fill_bar_stop_share": 0.028846153846153848
+  },
+  "CHOCH_RETEST STOP_10 SELL": {
+   "n_worst": 197,
+   "r_worst": 0.43147208121827413,
+   "n_best": 197,
+   "r_best": 0.4517766497461929,
+   "random": 0.48669720494580243,
+   "fill_bar_stop_share": 0.06635071090047394
+  },
+  "CHOCH_RETEST STOP_15 BUY": {
+   "n_worst": 174,
+   "r_worst": 0.41954022988505746,
+   "n_best": 174,
+   "r_best": 0.4540229885057471,
+   "random": 0.48751670770375,
+   "fill_bar_stop_share": 0.08152173913043478
+  },
+  "CHOCH_RETEST STOP_15 SELL": {
+   "n_worst": 162,
+   "r_worst": 0.345679012345679,
+   "n_best": 162,
+   "r_best": 0.41975308641975306,
+   "random": 0.48807209970993715,
+   "fill_bar_stop_share": 0.10404624277456648
+  },
+  "CHOCH_RETEST STOP_20 BUY": {
+   "n_worst": 138,
+   "r_worst": 0.43478260869565216,
+   "n_best": 137,
+   "r_best": 0.5109489051094891,
+   "random": 0.48303621714114064,
+   "fill_bar_stop_share": 0.13513513513513514
+  },
+  "CHOCH_RETEST STOP_20 SELL": {
+   "n_worst": 123,
+   "r_worst": 0.35772357723577236,
+   "n_best": 123,
+   "r_best": 0.43089430894308944,
+   "random": 0.5016953443161534,
+   "fill_bar_stop_share": 0.1590909090909091
+  },
+  "CHOCH_RETEST LIMIT BUY": {
+   "n_worst": 100,
+   "r_worst": 0.5,
+   "n_best": 100,
+   "r_best": 0.5,
+   "random": 0.48562415586916685,
+   "fill_bar_stop_share": 0.009259259259259259
+  },
+  "CHOCH_RETEST LIMIT SELL": {
+   "n_worst": 86,
+   "r_worst": 0.5,
+   "n_best": 86,
+   "r_best": 0.5,
+   "random": 0.4809159296711924,
+   "fill_bar_stop_share": 0.0
+  },
+  "OB_RETEST RETEST_3 BUY": {
+   "n_worst": 296,
+   "r_worst": 0.47297297297297297,
+   "n_best": 296,
+   "r_best": 0.47635135135135137,
+   "random": 0.47763782371859187,
+   "fill_bar_stop_share": 0.017964071856287425
+  },
+  "OB_RETEST RETEST_3 SELL": {
+   "n_worst": 300,
+   "r_worst": 0.5133333333333333,
+   "n_best": 300,
+   "r_best": 0.5233333333333333,
+   "random": 0.49094021529506204,
+   "fill_bar_stop_share": 0.01791044776119403
+  },
+  "OB_RETEST RETEST_5 BUY": {
+   "n_worst": 264,
+   "r_worst": 0.48863636363636365,
+   "n_best": 264,
+   "r_best": 0.5,
+   "random": 0.481494924163069,
+   "fill_bar_stop_share": 0.013289036544850499
+  },
+  "OB_RETEST RETEST_5 SELL": {
+   "n_worst": 280,
+   "r_worst": 0.5321428571428571,
+   "n_best": 280,
+   "r_best": 0.5428571428571428,
+   "random": 0.49277879803434793,
+   "fill_bar_stop_share": 0.01935483870967742
+  },
+  "OB_RETEST RETEST_8 BUY": {
+   "n_worst": 242,
+   "r_worst": 0.45454545454545453,
+   "n_best": 242,
+   "r_best": 0.45867768595041325,
+   "random": 0.481434061328771,
+   "fill_bar_stop_share": 0.015037593984962405
+  },
+  "OB_RETEST RETEST_8 SELL": {
+   "n_worst": 251,
+   "r_worst": 0.5139442231075697,
+   "n_best": 251,
+   "r_best": 0.5298804780876494,
+   "random": 0.495008170053324,
+   "fill_bar_stop_share": 0.007246376811594203
+  },
+  "OB_RETEST RETEST_10 BUY": {
+   "n_worst": 227,
+   "r_worst": 0.44493392070484583,
+   "n_best": 227,
+   "r_best": 0.44933920704845814,
+   "random": 0.47517243831011685,
+   "fill_bar_stop_share": 0.020161290322580645
+  },
+  "OB_RETEST RETEST_10 SELL": {
+   "n_worst": 233,
+   "r_worst": 0.5236051502145923,
+   "n_best": 234,
+   "r_best": 0.5470085470085471,
+   "random": 0.49219721572654784,
+   "fill_bar_stop_share": 0.007905138339920948
+  },
+  "OB_RETEST RETEST_15 BUY": {
+   "n_worst": 179,
+   "r_worst": 0.4860335195530726,
+   "n_best": 179,
+   "r_best": 0.5027932960893855,
+   "random": 0.4807229796323286,
+   "fill_bar_stop_share": 0.014925373134328358
+  },
+  "OB_RETEST RETEST_15 SELL": {
+   "n_worst": 194,
+   "r_worst": 0.44329896907216493,
+   "n_best": 195,
+   "r_best": 0.4666666666666667,
+   "random": 0.4882176373864333,
+   "fill_bar_stop_share": 0.036036036036036036
+  },
+  "OB_RETEST RETEST_20 BUY": {
+   "n_worst": 154,
+   "r_worst": 0.474025974025974,
+   "n_best": 154,
+   "r_best": 0.4805194805194805,
+   "random": 0.48633142740435853,
+   "fill_bar_stop_share": 0.023668639053254437
+  },
+  "OB_RETEST RETEST_20 SELL": {
+   "n_worst": 172,
+   "r_worst": 0.4476744186046512,
+   "n_best": 173,
+   "r_best": 0.4624277456647399,
+   "random": 0.4881330167390015,
+   "fill_bar_stop_share": 0.03684210526315789
+  },
+  "OB_RETEST STOP_3 BUY": {
+   "n_worst": 421,
+   "r_worst": 0.4821852731591449,
+   "n_best": 422,
+   "r_best": 0.490521327014218,
+   "random": 0.47945922117886103,
+   "fill_bar_stop_share": 0.025896414342629483
+  },
+  "OB_RETEST STOP_3 SELL": {
+   "n_worst": 466,
+   "r_worst": 0.47639484978540775,
+   "n_best": 467,
+   "r_best": 0.49036402569593146,
+   "random": 0.4914043940830987,
+   "fill_bar_stop_share": 0.043151969981238276
+  },
+  "OB_RETEST STOP_5 BUY": {
+   "n_worst": 374,
+   "r_worst": 0.4946524064171123,
+   "n_best": 374,
+   "r_best": 0.5026737967914439,
+   "random": 0.48173924221862174,
+   "fill_bar_stop_share": 0.036036036036036036
+  },
+  "OB_RETEST STOP_5 SELL": {
+   "n_worst": 411,
+   "r_worst": 0.4744525547445255,
+   "n_best": 413,
+   "r_best": 0.5012106537530266,
+   "random": 0.4942465469810904,
+   "fill_bar_stop_share": 0.04384133611691023
+  },
+  "OB_RETEST STOP_8 BUY": {
+   "n_worst": 314,
+   "r_worst": 0.5,
+   "n_best": 315,
+   "r_best": 0.5079365079365079,
+   "random": 0.4784807951020893,
+   "fill_bar_stop_share": 0.026525198938992044
+  },
+  "OB_RETEST STOP_8 SELL": {
+   "n_worst": 345,
+   "r_worst": 0.4666666666666667,
+   "n_best": 345,
+   "r_best": 0.4985507246376812,
+   "random": 0.4949212017097489,
+   "fill_bar_stop_share": 0.05665024630541872
+  },
+  "OB_RETEST STOP_10 BUY": {
+   "n_worst": 291,
+   "r_worst": 0.48109965635738833,
+   "n_best": 289,
+   "r_best": 0.5051903114186851,
+   "random": 0.4799993799263176,
+   "fill_bar_stop_share": 0.045714285714285714
+  },
+  "OB_RETEST STOP_10 SELL": {
+   "n_worst": 314,
+   "r_worst": 0.4426751592356688,
+   "n_best": 313,
+   "r_best": 0.48242811501597443,
+   "random": 0.4960039971255312,
+   "fill_bar_stop_share": 0.0918918918918919
+  },
+  "OB_RETEST STOP_15 BUY": {
+   "n_worst": 243,
+   "r_worst": 0.3868312757201646,
+   "n_best": 240,
+   "r_best": 0.5,
+   "random": 0.4814863677112774,
+   "fill_bar_stop_share": 0.15517241379310345
+  },
+  "OB_RETEST STOP_15 SELL": {
+   "n_worst": 270,
+   "r_worst": 0.3592592592592593,
+   "n_best": 258,
+   "r_best": 0.4883720930232558,
+   "random": 0.4962367246813698,
+   "fill_bar_stop_share": 0.2347266881028939
+  },
+  "OB_RETEST STOP_20 BUY": {
+   "n_worst": 202,
+   "r_worst": 0.35148514851485146,
+   "n_best": 200,
+   "r_best": 0.47,
+   "random": 0.48374996018934446,
+   "fill_bar_stop_share": 0.19166666666666668
+  },
+  "OB_RETEST STOP_20 SELL": {
+   "n_worst": 232,
+   "r_worst": 0.34913793103448276,
+   "n_best": 230,
+   "r_best": 0.45217391304347826,
+   "random": 0.4945881815781573,
+   "fill_bar_stop_share": 0.24436090225563908
+  },
+  "OB_RETEST LIMIT BUY": {
+   "n_worst": 205,
+   "r_worst": 0.4878048780487805,
+   "n_best": 205,
+   "r_best": 0.5024390243902439,
+   "random": 0.4691293248164897,
+   "fill_bar_stop_share": 0.021929824561403508
+  },
+  "OB_RETEST LIMIT SELL": {
+   "n_worst": 210,
+   "r_worst": 0.4666666666666667,
+   "n_best": 210,
+   "r_best": 0.5,
+   "random": 0.4866243686791989,
+   "fill_bar_stop_share": 0.016877637130801686
+  },
+  "SWEEP_DISPLACEMENT RETEST_3 BUY": {
+   "n_worst": 83,
+   "r_worst": 0.5421686746987951,
+   "n_best": 83,
+   "r_best": 0.5662650602409639,
+   "random": 0.45742201983173814,
+   "fill_bar_stop_share": 0.022222222222222223
+  },
+  "SWEEP_DISPLACEMENT RETEST_3 SELL": {
+   "n_worst": 86,
+   "r_worst": 0.5116279069767442,
+   "n_best": 86,
+   "r_best": 0.5232558139534884,
+   "random": 0.4714294366209645,
+   "fill_bar_stop_share": 0.021739130434782608
+  },
+  "SWEEP_DISPLACEMENT RETEST_5 BUY": {
+   "n_worst": 70,
+   "r_worst": 0.5285714285714286,
+   "n_best": 70,
+   "r_best": 0.5571428571428572,
+   "random": 0.46401612026920436,
+   "fill_bar_stop_share": 0.025974025974025976
+  },
+  "SWEEP_DISPLACEMENT RETEST_5 SELL": {
+   "n_worst": 77,
+   "r_worst": 0.5324675324675324,
+   "n_best": 77,
+   "r_best": 0.5454545454545454,
+   "random": 0.471960767885547,
+   "fill_bar_stop_share": 0.024096385542168676
+  },
+  "SWEEP_DISPLACEMENT RETEST_8 BUY": {
+   "n_worst": 64,
+   "r_worst": 0.421875,
+   "n_best": 64,
+   "r_best": 0.453125,
+   "random": 0.4716055739458832,
+   "fill_bar_stop_share": 0.014925373134328358
+  },
+  "SWEEP_DISPLACEMENT RETEST_8 SELL": {
+   "n_worst": 72,
+   "r_worst": 0.5833333333333334,
+   "n_best": 72,
+   "r_best": 0.6111111111111112,
+   "random": 0.47874125433714315,
+   "fill_bar_stop_share": 0.0
+  },
+  "SWEEP_DISPLACEMENT RETEST_10 BUY": {
+   "n_worst": 64,
+   "r_worst": 0.421875,
+   "n_best": 64,
+   "r_best": 0.453125,
+   "random": 0.4639511856561664,
+   "fill_bar_stop_share": 0.028985507246376812
+  },
+  "SWEEP_DISPLACEMENT RETEST_10 SELL": {
+   "n_worst": 73,
+   "r_worst": 0.547945205479452,
+   "n_best": 73,
+   "r_best": 0.589041095890411,
+   "random": 0.47715964587543735,
+   "fill_bar_stop_share": 0.012658227848101266
+  },
+  "SWEEP_DISPLACEMENT RETEST_15 BUY": {
+   "n_worst": 59,
+   "r_worst": 0.4576271186440678,
+   "n_best": 59,
+   "r_best": 0.4745762711864407,
+   "random": 0.47825103057145546,
+   "fill_bar_stop_share": 0.03278688524590164
+  },
+  "SWEEP_DISPLACEMENT RETEST_15 SELL": {
+   "n_worst": 66,
+   "r_worst": 0.42424242424242425,
+   "n_best": 66,
+   "r_best": 0.45454545454545453,
+   "random": 0.46947511857419066,
+   "fill_bar_stop_share": 0.05405405405405406
+  },
+  "SWEEP_DISPLACEMENT RETEST_20 BUY": {
+   "n_worst": 44,
+   "r_worst": 0.5227272727272727,
+   "n_best": 44,
+   "r_best": 0.5454545454545454,
+   "random": 0.4832463164280164,
+   "fill_bar_stop_share": 0.04081632653061224
+  },
+  "SWEEP_DISPLACEMENT RETEST_20 SELL": {
+   "n_worst": 53,
+   "r_worst": 0.37735849056603776,
+   "n_best": 53,
+   "r_best": 0.37735849056603776,
+   "random": 0.4717847095204854,
+   "fill_bar_stop_share": 0.05263157894736842
+  },
+  "SWEEP_DISPLACEMENT STOP_3 BUY": {
+   "n_worst": 120,
+   "r_worst": 0.5166666666666667,
+   "n_best": 120,
+   "r_best": 0.5416666666666666,
+   "random": 0.47014306110722337,
+   "fill_bar_stop_share": 0.022556390977443608
+  },
+  "SWEEP_DISPLACEMENT STOP_3 SELL": {
+   "n_worst": 135,
+   "r_worst": 0.48148148148148145,
+   "n_best": 134,
+   "r_best": 0.4925373134328358,
+   "random": 0.47538318644128114,
+   "fill_bar_stop_share": 0.039735099337748346
+  },
+  "SWEEP_DISPLACEMENT STOP_5 BUY": {
+   "n_worst": 108,
+   "r_worst": 0.5277777777777778,
+   "n_best": 108,
+   "r_best": 0.5370370370370371,
+   "random": 0.4674650121547545,
+   "fill_bar_stop_share": 0.049586776859504134
+  },
+  "SWEEP_DISPLACEMENT STOP_5 SELL": {
+   "n_worst": 123,
+   "r_worst": 0.45528455284552843,
+   "n_best": 123,
+   "r_best": 0.4959349593495935,
+   "random": 0.4764972213881103,
+   "fill_bar_stop_share": 0.057971014492753624
+  },
+  "SWEEP_DISPLACEMENT STOP_8 BUY": {
+   "n_worst": 89,
+   "r_worst": 0.5168539325842697,
+   "n_best": 90,
+   "r_best": 0.5222222222222223,
+   "random": 0.4619642526198773,
+   "fill_bar_stop_share": 0.0297029702970297
+  },
+  "SWEEP_DISPLACEMENT STOP_8 SELL": {
+   "n_worst": 96,
+   "r_worst": 0.4895833333333333,
+   "n_best": 96,
+   "r_best": 0.5520833333333334,
+   "random": 0.4689200162752071,
+   "fill_bar_stop_share": 0.08928571428571429
+  },
+  "SWEEP_DISPLACEMENT STOP_10 BUY": {
+   "n_worst": 83,
+   "r_worst": 0.4578313253012048,
+   "n_best": 83,
+   "r_best": 0.4939759036144578,
+   "random": 0.46220364678023146,
+   "fill_bar_stop_share": 0.043010752688172046
+  },
+  "SWEEP_DISPLACEMENT STOP_10 SELL": {
+   "n_worst": 89,
+   "r_worst": 0.43820224719101125,
+   "n_best": 89,
+   "r_best": 0.5056179775280899,
+   "random": 0.4686113339335135,
+   "fill_bar_stop_share": 0.12745098039215685
+  },
+  "SWEEP_DISPLACEMENT STOP_15 BUY": {
+   "n_worst": 73,
+   "r_worst": 0.3835616438356164,
+   "n_best": 73,
+   "r_best": 0.5342465753424658,
+   "random": 0.46611848963221836,
+   "fill_bar_stop_share": 0.2077922077922078
+  },
+  "SWEEP_DISPLACEMENT STOP_15 SELL": {
+   "n_worst": 78,
+   "r_worst": 0.32051282051282054,
+   "n_best": 73,
+   "r_best": 0.4657534246575342,
+   "random": 0.4828692771898218,
+   "fill_bar_stop_share": 0.25
+  },
+  "SWEEP_DISPLACEMENT STOP_20 BUY": {
+   "n_worst": 63,
+   "r_worst": 0.3333333333333333,
+   "n_best": 63,
+   "r_best": 0.49206349206349204,
+   "random": 0.4645143165483284,
+   "fill_bar_stop_share": 0.21212121212121213
+  },
+  "SWEEP_DISPLACEMENT STOP_20 SELL": {
+   "n_worst": 66,
+   "r_worst": 0.2878787878787879,
+   "n_best": 66,
+   "r_best": 0.36363636363636365,
+   "random": 0.47998695141225617,
+   "fill_bar_stop_share": 0.2631578947368421
+  },
+  "SWEEP_DISPLACEMENT LIMIT BUY": {
+   "n_worst": 89,
+   "r_worst": 0.3707865168539326,
+   "n_best": 90,
+   "r_best": 0.4,
+   "random": 0.46705285958130943,
+   "fill_bar_stop_share": 0.041666666666666664
+  },
+  "SWEEP_DISPLACEMENT LIMIT SELL": {
+   "n_worst": 98,
+   "r_worst": 0.4387755102040816,
+   "n_best": 98,
+   "r_best": 0.4387755102040816,
+   "random": 0.49134428803007835,
+   "fill_bar_stop_share": 0.0
+  },
+  "SUPERTREND RETEST_3 BUY": {
+   "n_worst": 457,
+   "r_worst": 0.49452954048140046,
+   "n_best": 457,
+   "r_best": 0.5032822757111597,
+   "random": 0.4752366191815652,
+   "fill_bar_stop_share": 0.01609657947686117
+  },
+  "SUPERTREND RETEST_3 SELL": {
+   "n_worst": 427,
+   "r_worst": 0.4918032786885246,
+   "n_best": 427,
+   "r_best": 0.5035128805620609,
+   "random": 0.4921631817646136,
+   "fill_bar_stop_share": 0.012578616352201259
+  },
+  "SUPERTREND RETEST_5 BUY": {
+   "n_worst": 409,
+   "r_worst": 0.4938875305623472,
+   "n_best": 409,
+   "r_best": 0.5036674816625917,
+   "random": 0.4748550754998272,
+   "fill_bar_stop_share": 0.013636363636363636
+  },
+  "SUPERTREND RETEST_5 SELL": {
+   "n_worst": 389,
+   "r_worst": 0.4910025706940874,
+   "n_best": 389,
+   "r_best": 0.5012853470437018,
+   "random": 0.49334179960386776,
+   "fill_bar_stop_share": 0.011494252873563218
+  },
+  "SUPERTREND RETEST_8 BUY": {
+   "n_worst": 335,
+   "r_worst": 0.5014925373134328,
+   "n_best": 335,
+   "r_best": 0.5194029850746269,
+   "random": 0.48181664914094546,
+   "fill_bar_stop_share": 0.005420054200542005
+  },
+  "SUPERTREND RETEST_8 SELL": {
+   "n_worst": 339,
+   "r_worst": 0.49262536873156343,
+   "n_best": 339,
+   "r_best": 0.504424778761062,
+   "random": 0.49645361070439264,
+   "fill_bar_stop_share": 0.010443864229765013
+  },
+  "SUPERTREND RETEST_10 BUY": {
+   "n_worst": 320,
+   "r_worst": 0.48125,
+   "n_best": 320,
+   "r_best": 0.49375,
+   "random": 0.47350247402481166,
+   "fill_bar_stop_share": 0.008571428571428572
+  },
+  "SUPERTREND RETEST_10 SELL": {
+   "n_worst": 320,
+   "r_worst": 0.509375,
+   "n_best": 320,
+   "r_best": 0.528125,
+   "random": 0.4977826217504173,
+   "fill_bar_stop_share": 0.013774104683195593
+  },
+  "SUPERTREND RETEST_15 BUY": {
+   "n_worst": 268,
+   "r_worst": 0.503731343283582,
+   "n_best": 269,
+   "r_best": 0.5204460966542751,
+   "random": 0.47337568789630824,
+   "fill_bar_stop_share": 0.0231023102310231
+  },
+  "SUPERTREND RETEST_15 SELL": {
+   "n_worst": 259,
+   "r_worst": 0.44015444015444016,
+   "n_best": 259,
+   "r_best": 0.4555984555984556,
+   "random": 0.49582408256237703,
+   "fill_bar_stop_share": 0.027586206896551724
+  },
+  "SUPERTREND RETEST_20 BUY": {
+   "n_worst": 217,
+   "r_worst": 0.4930875576036866,
+   "n_best": 217,
+   "r_best": 0.5069124423963134,
+   "random": 0.48055651536818816,
+   "fill_bar_stop_share": 0.02390438247011952
+  },
+  "SUPERTREND RETEST_20 SELL": {
+   "n_worst": 214,
+   "r_worst": 0.48130841121495327,
+   "n_best": 214,
+   "r_best": 0.4953271028037383,
+   "random": 0.4985870553745413,
+   "fill_bar_stop_share": 0.02074688796680498
+  },
+  "SUPERTREND STOP_3 BUY": {
+   "n_worst": 636,
+   "r_worst": 0.4779874213836478,
+   "n_best": 636,
+   "r_best": 0.4827044025157233,
+   "random": 0.47759029110069184,
+   "fill_bar_stop_share": 0.012658227848101266
+  },
+  "SUPERTREND STOP_3 SELL": {
+   "n_worst": 650,
+   "r_worst": 0.46153846153846156,
+   "n_best": 650,
+   "r_best": 0.46615384615384614,
+   "random": 0.48712857673947385,
+   "fill_bar_stop_share": 0.019204389574759947
+  },
+  "SUPERTREND STOP_5 BUY": {
+   "n_worst": 568,
+   "r_worst": 0.49119718309859156,
+   "n_best": 569,
+   "r_best": 0.4938488576449912,
+   "random": 0.47647814761074464,
+   "fill_bar_stop_share": 0.012738853503184714
+  },
+  "SUPERTREND STOP_5 SELL": {
+   "n_worst": 555,
+   "r_worst": 0.47387387387387386,
+   "n_best": 555,
+   "r_best": 0.4810810810810811,
+   "random": 0.49090811523659184,
+   "fill_bar_stop_share": 0.022292993630573247
+  },
+  "SUPERTREND STOP_8 BUY": {
+   "n_worst": 487,
+   "r_worst": 0.5010266940451745,
+   "n_best": 487,
+   "r_best": 0.5133470225872689,
+   "random": 0.4772318645028561,
+   "fill_bar_stop_share": 0.027675276752767528
+  },
+  "SUPERTREND STOP_8 SELL": {
+   "n_worst": 479,
+   "r_worst": 0.453027139874739,
+   "n_best": 478,
+   "r_best": 0.4665271966527197,
+   "random": 0.4933797596131627,
+   "fill_bar_stop_share": 0.040515653775322284
+  },
+  "SUPERTREND STOP_10 BUY": {
+   "n_worst": 442,
+   "r_worst": 0.48642533936651583,
+   "n_best": 440,
+   "r_best": 0.5113636363636364,
+   "random": 0.4789093442168112,
+   "fill_bar_stop_share": 0.04285714285714286
+  },
+  "SUPERTREND STOP_10 SELL": {
+   "n_worst": 425,
+   "r_worst": 0.47294117647058825,
+   "n_best": 425,
+   "r_best": 0.49411764705882355,
+   "random": 0.49327581020006156,
+   "fill_bar_stop_share": 0.05510204081632653
+  },
+  "SUPERTREND STOP_15 BUY": {
+   "n_worst": 362,
+   "r_worst": 0.4530386740331492,
+   "n_best": 359,
+   "r_best": 0.5125348189415042,
+   "random": 0.4797700046985399,
+   "fill_bar_stop_share": 0.11056511056511056
+  },
+  "SUPERTREND STOP_15 SELL": {
+   "n_worst": 344,
+   "r_worst": 0.3866279069767442,
+   "n_best": 342,
+   "r_best": 0.4619883040935672,
+   "random": 0.4974493177420837,
+   "fill_bar_stop_share": 0.1450381679389313
+  },
+  "SUPERTREND STOP_20 BUY": {
+   "n_worst": 291,
+   "r_worst": 0.44329896907216493,
+   "n_best": 287,
+   "r_best": 0.5121951219512195,
+   "random": 0.48130515634864546,
+   "fill_bar_stop_share": 0.12835820895522387
+  },
+  "SUPERTREND STOP_20 SELL": {
+   "n_worst": 294,
+   "r_worst": 0.35034013605442177,
+   "n_best": 290,
+   "r_best": 0.46551724137931033,
+   "random": 0.4971768612108423,
+   "fill_bar_stop_share": 0.2245508982035928
+  },
+  "SUPERTREND LIMIT BUY": {
+   "n_worst": 43,
+   "r_worst": 0.46511627906976744,
+   "n_best": 44,
+   "r_best": 0.5,
+   "random": 0.45882421937993195,
+   "fill_bar_stop_share": 0.022222222222222223
+  },
+  "SUPERTREND LIMIT SELL": {
+   "n_worst": 35,
+   "r_worst": 0.42857142857142855,
+   "n_best": 35,
+   "r_best": 0.42857142857142855,
+   "random": 0.4824227837762219,
+   "fill_bar_stop_share": 0.0
+  }
+ }
+}

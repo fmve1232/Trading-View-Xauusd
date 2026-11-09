@@ -282,7 +282,7 @@ def run(a, log=print) -> dict:
         y_ = c_["y2026"]
         c_["y2026_holm_p"] = ph
         c_["holds_2026"] = bool(ph < 0.05 and y_.get("n_decided", 0) and y_["ci95"][0] > y_["matched_random"])
-        c_["above_break_even_2026"] = bool(y_.get("n_decided", 0) and y_["ci95"][0] > y_["break_even"])
+        c_["above_break_even_2026"] = bool(y_.get("n_decided", 0) and y_["ci95"][0] > y_["break_even_decided"])
     out["counts"] = {"tested": len(cands), "bh": sum(c_["bh"] for c_ in cands), "informative": sum(c_["informative"] for c_ in cands),
                      "tradeable": sum(c_["tradeable"] for c_ in cands)}
     out["combinations"] = "none tested: no single hypothesis (B27 or B28) is INFORMATIVE" if not any(c_["informative"] for c_ in cands) else "see report"

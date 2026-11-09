@@ -123,9 +123,55 @@ def test_multiple_testing_helpers():
 def test_selection_rules_need_significance_size_and_the_matched_rate():
     def cand(k, n, b, be=0.506, e=0.1):
         lo, hi = H.wilson(k, n)
-        return {"id": f"{k}/{n}", "stats": {"n_decided": n, "ci95": [lo, hi], "matched_random": b, "break_even": be, "exp_oz": e,
+        return {"id": f"{k}/{n}", "stats": {"n_decided": n, "ci95": [lo, hi], "matched_random": b, "break_even": be, "break_even_decided": be, "exp_oz": e,
                                             "p_vs_random": b27.binom_p(k, n, b)}}
     cs = [cand(200, 330, 0.48), cand(60, 100, 0.48), cand(170, 330, 0.48), cand(330, 600, 0.48, e=-0.1)]
     b27.flag(cs)
     assert [c["informative"] for c in cs] == [True, False, False, True]               # 100 trades is too few; 51.5% is not enough
     assert [c["tradeable"] for c in cs] == [True, False, False, False]                 # negative expectancy is not tradeable
+
+
+def test_break_even_decided_is_the_decided_rate_of_zero_expectancy():
+    """Phase C audit: break_even (TP share of all trades) is too low as the comparator of the decided rate when timeouts /
+    closures are common; break_even_decided is exact: r > break_even_decided iff the series' expectancy > 0."""
+    W, L, N = 14.4, -15.8, -2.0
+    out = np.array(["TP"] * 40 + ["SL"] * 50 + ["CLOSURE"] * 10)
+    net = np.r_[np.full(40, W), np.full(50, L), np.full(10, N)]
+    assert b27.break_even_decided(out, net) == pytest.approx((-L - (10 / 90) * N) / (W - L))
+    st = b27.stats_of(out, net, np.full(100, 60.0), None, np.ones(100, int), np.array(["NY"] * 100), np.array(["2021-01"] * 100),
+                      np.array(["2021-01-04"] * 100), {}, 1.0)
+    assert st["break_even"] < st["break_even_decided"] - 0.04          # the old field is about 4.7 points too low here
+    for k in range(1, 90):
+        o = np.array(["TP"] * k + ["SL"] * (90 - k) + ["TIMEOUT"] * 10)
+        x = np.r_[np.full(k, W), np.full(90 - k, L), np.full(10, N)]
+        assert (k / 90 > b27.break_even_decided(o, x)) == (x.mean() > 0)
+    assert math.isnan(b27.break_even_decided(np.array(["TP", "CLOSURE"]), np.array([1.0, -1.0])))
+
+
+def test_top_q_selection_selects_about_q_on_raw_scores():
+    """Phase C audit: a quantile threshold of isotonic-calibrated probabilities admits a whole step (share >> q); on the
+    raw score (the same order, no ties) the training-window quantile selects about q."""
+    rng = np.random.default_rng(3)
+    n = 20000
+    d = np.where(np.arange(n) % 2 == 0, 1, -1)
+    raw = rng.uniform(0, 1, n)
+    y = (rng.uniform(0, 1, n) < 0.45 + 0.02 * raw).astype(int)           # almost no information: isotonic collapses to few steps
+    cal, te = np.arange(n) < n // 2, np.arange(n) >= n // 2
+    old = b27.SELECT_ON
+    try:
+        shares = {}
+        for mode in ("calibrated", "raw"):
+            b27.SELECT_ON = mode
+            thr = b27.thresholds(raw[cal], y[cal], d[cal])
+            sc = raw[te] if mode == "raw" else b27.isotonic(raw[cal], y[cal], raw[te])
+            shares[mode] = float((sc[d[te] == -1] >= thr[(-1, 0.01)]).mean())
+        assert shares["raw"] == pytest.approx(0.01, abs=0.005)
+        assert shares["calibrated"] > 0.05                               # the defect the fix removes
+        L = pd.DataFrame({"fill_utc": np.arange(n), "d": d})
+        wf = {"res": {"M": {"p": np.where(te, b27.isotonic(raw[cal], y[cal], raw), np.nan), "raw": np.where(te, raw, np.nan),
+                            "thr": {(-1, 0.01): [(n // 2, b27.thresholds(raw[cal], y[cal], d[cal])[(-1, 0.01)])]}}}}
+        b27.SELECT_ON = "raw"
+        rows = b27.wf_selections(L, wf, "M")[(-1, 0.01)]
+        assert len(rows) / (te & (d == -1)).sum() == pytest.approx(0.01, abs=0.005)
+    finally:
+        b27.SELECT_ON = old
