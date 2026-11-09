@@ -596,11 +596,83 @@
    "mae": 3.5700000000006185,
    "bars": 11,
    "path": "5m"
+  },
+  {
+   "id": 18,
+   "tf": "15m",
+   "t": 1794230100,
+   "t_dec": 1794231000,
+   "dir": 1,
+   "entry": 4125.56,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "4HH",
+     4125.02
+    ],
+    [
+     "1HH",
+     4123.71
+    ]
+   ],
+   "zones": [
+    "above value-area high 4111.36"
+   ],
+   "sl": 4112.56,
+   "tp": 4140.56,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794231319,
+   "result": "SL",
+   "t_res": 1794242700,
+   "mfe": 4.449999999999818,
+   "mae": 16.19000000000051,
+   "bars": 40,
+   "path": "5m"
+  },
+  {
+   "id": 19,
+   "tf": "15m",
+   "t": 1794231900,
+   "t_dec": 1794232800,
+   "dir": 1,
+   "entry": 4125.24,
+   "kind": "4H BREAKOUT",
+   "levels": [
+    [
+     "PDH",
+     4106.97
+    ]
+   ],
+   "zones": [],
+   "sl": 4112.24,
+   "tp": 4140.24,
+   "checks": {
+    "major": true,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": true,
+   "phone": false,
+   "t_alert": 1794233164,
+   "result": "SL",
+   "t_res": 1794242700,
+   "mfe": 4.770000000000437,
+   "mae": 15.86999999999989,
+   "bars": 34,
+   "path": "5m"
   }
  ],
  "live": {
   "4H BREAKOUT": [
-   3,
+   4,
    0
   ],
   "SWEEP": [
@@ -608,8 +680,12 @@
    1
   ],
   "BREAKOUT": [
-   8,
+   9,
    5
+  ],
+  "4H CONFIRMED": [
+   1,
+   0
   ]
  }
 }
