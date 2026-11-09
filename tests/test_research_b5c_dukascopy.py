@@ -145,7 +145,7 @@ def test_main_end_to_end_with_a_mocked_dukascopy(tmp_path, monkeypatch):
             mid = close[bar] * 1000
             for j in range(int(g.integers(3, 10))):           # tick counts vary, as in real data
                 half = int(g.integers(100, 400))
-                rows.append((q * 900_000 + j * 90_000 + 1, int(mid + half + g.integers(-300, 300)), int(mid - half + g.integers(-300, 300)),
+                rows.append((q * 900_000 + j * 90_000 + 1, int(mid + half + g.integers(-80, 80)), int(mid - half + g.integers(-80, 80)),
                              float(g.uniform(1, 9)), float(g.uniform(1, 9))))
         return _bi5(rows) if rows else b""
     monkeypatch.setattr(C, "fetch_hour", fake_fetch)
@@ -157,6 +157,7 @@ def test_main_end_to_end_with_a_mocked_dukascopy(tmp_path, monkeypatch):
     kinds = [t["kind"] for t in r["trials"]]
     assert kinds.count("rule") == 30 and kinds.count("model") == 3 and r["family"]["trials"] == 33
     assert "by_ofi15_decile" in r["execution"] and r["failed_days"] == 0
+    assert r["integrity"]["failures"] == [] and r["integrity"]["best_lag_bars"] == 0 and (tmp_path / "r_integrity.json").exists()
     lines = [json.loads(x) for x in trials.read_text().splitlines()]
     assert len(lines) == 33 and all(x["phase"] == "B5c" and x["partition"] == "development" for x in lines)
     assert len(os.listdir(cache / "days")) > 40
@@ -182,3 +183,73 @@ def test_lag_check_detects_a_shifted_clock():
     shifted.index = shifted.index + pd.Timedelta(minutes=15)                  # Dukascopy clock one bar late
     bad = C.lag_check(shifted, m15, 1000.0)
     assert bad["best_lag_bars"] != 0 and bad["corr_by_lag_bars"][0] < C.LAG_MIN_CORR
+
+
+def test_hour_bars_integrity_counts_and_no_clamping():
+    """Amendment A2: a tick stamped past its hour is counted and dropped (never clamped into the last bar); duplicate
+    milliseconds, crossed quotes and the longest silence in a bar are counted."""
+    rows = [(1_000, 2_000_500, 2_000_000, 1.0, 1.0), (1_000, 2_000_600, 2_000_100, 1.0, 1.0),       # duplicate ms
+            (400_000, 2_000_000, 2_000_000, 1.0, 1.0),                                              # crossed (ask <= bid)
+            (2_800_000, 2_001_000, 2_000_500, 1.0, 1.0), (3_700_000, 2_005_000, 2_004_500, 1.0, 1.0)]  # the last: outside the hour
+    b = C.hour_bars(C.parse_bi5(_bi5(rows)), pd.Timestamp("2021-01-04 10:00", tz="UTC"))
+    assert b["n"].sum() == 4 and b["out_of_hour"].sum() == 1 and b["dup_ms"].sum() == 1 and b["crossed"].sum() == 1
+    assert b.loc[pd.Timestamp("2021-01-04 10:45", tz="UTC"), "n"] == 1                       # the 3.7m-ms tick is not here
+    first = b.loc[pd.Timestamp("2021-01-04 10:00", tz="UTC")]
+    assert first["max_gap_s"] == pytest.approx(500.0) and first["mid_first"] == pytest.approx(2_000_250)
+
+
+def _aligned(n_days=60, seed=11):
+    idx = pd.date_range("2021-01-04", periods=96 * n_days, freq="15min", tz="UTC")
+    idx = idx[idx.day_of_week != 5]
+    m15 = _spot(idx, seed)
+    raw = pd.DataFrame({"n": 20.0, "mid_last": m15["close"] * 1000, "mid_first": m15["open"] * 1000, "dup_ms": 0.0, "crossed": 0.0,
+                        "max_gap_s": 60.0, "out_of_hour": 0.0}, index=idx)
+    return raw, m15
+
+
+def test_integrity_report_passes_aligned_data_and_reports_every_figure():
+    raw, m15 = _aligned()
+    r = C.integrity_report(raw, m15, 1000.0)
+    assert r["failures"] == [] and r["best_lag_bars"] == 0 and r["offset_minutes"] == 0 and r["quarantined_days"] == []
+    assert set(r["lags"]["by_session"]) == {"ASIA", "LONDON", "NY", "OFF"} and r["lags"]["by_year"][2021]["best_lag_bars"] == 0
+    assert abs(r["basis_close_usd"]["p50"]) < 1e-9 and r["timestamps"]["weekly_open"]["median_min"] == 0
+    assert r["missing"]["spot_bars_without_ticks"] == 0 and r["ticks"]["crossed_share"] == 0
+
+
+def test_a_bad_day_is_quarantined_not_shifted():
+    raw, m15 = _aligned()
+    bad = raw.index.normalize() == pd.Timestamp("2021-01-20", tz="UTC")
+    raw.loc[bad, "mid_last"] *= 1.02                                                         # a 2% basis for one day
+    r = C.integrity_report(raw, m15, 1000.0)
+    assert r["quarantined_days"] == ["2021-01-20"] and r["failures"] == []
+    q = C.quarantine(raw, r["quarantined_days"])
+    assert q.loc[bad].isna().all().all() and (q.loc[~bad, "mid_last"] == raw.loc[~bad, "mid_last"]).all()
+
+
+def test_a_session_clock_offset_stops_the_run():
+    raw, m15 = _aligned()
+    asia = (raw.index.hour < 7)
+    shifted = raw["mid_last"].shift(1)                                                       # Asian bars one bar late
+    raw.loc[asia, "mid_last"] = shifted[asia]
+    r = C.integrity_report(raw, m15, 1000.0)
+    assert any("by_session ASIA" in f for f in r["failures"])
+
+
+def test_a_cache_written_before_a2_is_fetched_again(tmp_path):
+    day = pd.Timestamp("2021-01-04", tz="UTC")
+    os.makedirs(tmp_path / "days")
+    pd.DataFrame({"n": [1.0]}, index=[day]).to_csv(tmp_path / "days" / "2021-01-04.csv", index_label="bar")
+    calls = []
+
+    def fake(t, get=None):
+        calls.append(t)
+        return b""
+    import concurrent.futures as cf
+    old = C.fetch_hour
+    C.fetch_hour = fake
+    try:
+        with cf.ThreadPoolExecutor(2) as pool:
+            _df, meta = C.load_day(day, str(tmp_path), pool)
+    finally:
+        C.fetch_hour = old
+    assert len(calls) == 24 and meta.get("cached") is None

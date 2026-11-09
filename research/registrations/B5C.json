@@ -1,7 +1,7 @@
 {
  "id": "B5C",
  "title": "B5c: order flow on Dukascopy's spot-gold top of book (quote-based), development data only; an independent experiment",
- "status": "REGISTERED 2026-11-09, NOT RUN. Design declared in code at df1c7c1cb (2026-11-01) before any Dukascopy data was obtained; amendment A1 (timestamp check) added 2026-11-09, still before any Dukascopy data. Runs on the operator's own Windows laptop.",
+ "status": "REGISTERED 2026-11-09, NOT RUN. Design declared in code at df1c7c1cb (2026-11-01) before any Dukascopy data was obtained; amendments A1 (clock check) and A2 (integrity gates and quarantine) added 2026-11-09, still before any Dukascopy data. Runs on the operator's own Windows laptop.",
  "approved_by_operator": true,
  "approval": "Operator, 2026-11-09 (chat, Phase C final instruction): \"Prepare B5c as an independent, registered Dukascopy tick-order-flow experiment. Do not mix its results with the completed Phase C studies. Document data provenance, timestamp alignment, bid/ask, spread and execution assumptions. Do not fabricate order flow from OHLC data.\"",
  "independence": [
@@ -15,7 +15,7 @@
  "sealed": "validation 2023-01 -> 2024-07 and holdout 2024-07 -> 2026-01 are not read",
  "code": {
   "module": "quantum/research/b5c_dukascopy.py",
-  "tests": "tests/test_research_b5c_dukascopy.py (9 tests on synthetic .bi5 files and a mocked server)",
+  "tests": "tests/test_research_b5c_dukascopy.py (14 tests on synthetic .bi5 files and a mocked server)",
   "machinery": "quantum/research/b5_orderflow.study (unchanged; the same as B5's COMEX study, for comparability)",
   "command": "py -m quantum.research.b5c_dukascopy   (from the repository folder on the operator's laptop)"
  },
@@ -35,8 +35,14 @@
   "availability": "a feature of bar t uses only ticks inside bar t or earlier; it is known at bar t's close (the decision time)",
   "checks_before_any_test": [
    "units: the price scale (a power of ten) is detected from the median ratio of Dukascopy's last mid to the spot close; the run stops if the median gap exceeds 0.5%",
-   "clock (amendment A1): the correlation of 15-minute mid changes with spot close changes must peak at lag 0 of -2..+2 bars and be at least 0.8; otherwise the run stops",
-   "the alignment figures are written into the results file"
+   "clock, overall (A1): the correlation of 15-minute mid changes with spot close changes is reported at every lag of -2..+2 bars; the best lag must be 0 and r(0) >= 0.8",
+   "clock, by session (UTC hours ASIA 0-7, LONDON 7-12, NY 12-21, OFF 21-24) and by year (A2): every group with >= 500 bars must also peak at lag 0",
+   "offset: the best lag in bars and in minutes (15 x lag) is reported; a non-zero offset STOPS the run. Timestamps are never shifted to improve alignment",
+   "time zone (A2): weekly opens and closes (the first / last bar around a gap of more than 24 hours) of the two sources are matched; the median difference must be within 15 minutes",
+   "basis (A2): the distribution (p01..p99) of Dukascopy's last mid minus the spot close and first mid minus the spot open, overall and by session",
+   "missing, duplicate and stale ticks (A2): spot bars without Dukascopy ticks (overall and by session); ticks sharing a millisecond; crossed quotes (ask <= bid, stop above 1%); ticks stamped outside their hour file (counted and dropped, never clamped; stop above 0.1%); bars with a silence longer than 5 minutes",
+   "quarantine (A2): a day whose median |basis| exceeds 0.5% of the price, or whose 15-minute change correlation is below 0.5 (>= 20 bars), is quarantined: its bars are set to missing, never shifted or filled; the run stops if more than 5% of days are quarantined",
+   "every figure is written to b5c_results_integrity.json, also when the run stops (exit code 3, no test run)"
   ],
   "mt5": "MT5 server time is NOT used by B5c. If the operator's MT5 M1 export is added later it is converted to UTC with the broker's stated offset and checked the same way (research/MT5_M1_IMPORT.md)"
  },
@@ -67,6 +73,13 @@
    "date": "2026-11-09",
    "before_any_data": true,
    "change": "timestamp alignment check: the run stops unless 15-minute mid changes correlate with the spot path's at lag 0 best (of -2..+2 bars) with r >= 0.8 (b5c_dukascopy.lag_check; test_lag_check_detects_a_shifted_clock)"
+  },
+  {
+   "id": "A2",
+   "date": "2026-11-09",
+   "before_any_data": true,
+   "change": "integrity gates and quarantine (b5c_dukascopy.integrity_report / quarantine; hour_bars now counts duplicate ms, crossed quotes, the longest silence and out-of-hour ticks, which are dropped instead of clamped into the hour's last bar; caches written before A2 are fetched again). Tests: test_hour_bars_integrity_counts_and_no_clamping, test_integrity_report_passes_aligned_data_and_reports_every_figure, test_a_bad_day_is_quarantined_not_shifted, test_a_session_clock_offset_stops_the_run, test_a_cache_written_before_a2_is_fetched_again",
+   "requested_by": "operator, 2026-11-09 (final quality gates A)"
   }
  ],
  "unchanged": "production engine, quantum/config.py, web.8, the frozen Pine files, the alerts, PRs #90 / #91, the production API key"

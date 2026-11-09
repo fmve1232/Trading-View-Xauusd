@@ -36,6 +36,14 @@ from quantum.research import harness as H
 RUNS = (("B27", "research/results/b27_fix"), ("B28", "research/results/b28"), ("B29", "research/results/b29_fix"))
 LOT_OZ = 50
 RUIN_USD, RUIN_N, RUIN_PATHS = 10_000.0, 250, 2000
+# Risk audit assumptions (every money figure depends on them; NONE is a verified broker outcome)
+ACCOUNT_USD = 100_000.0           # ASSUMED starting balance, account currency USD
+CONTRACT_OZ = 100                 # ASSUMED contract size of 1.00 lot (broker specification not supplied)
+LOT = 0.50                        # the operator's size: 0.50 lot = 50 oz = $50 per $1 move (ASSUMED contract)
+THRESHOLDS = (2_500.0, 5_000.0, 10_000.0)   # 2.5% / 5% / 10% of the ASSUMED balance
+BLOCK = 10                        # block bootstrap: circular blocks of 10 consecutive trades
+OUTER, INNER = 200, 200           # nested bootstrap for the 95% interval of each breach probability
+ADV_EXTRA = {"spread_in": 0.30, "spread_off": 0.50, "slip_in": 0.20, "slip_out": 0.20}   # ADV minus ENG, $ per oz
 
 
 def bh_q(ps: list[float]) -> list[float]:
@@ -106,6 +114,86 @@ def period_stats(x: pd.DataFrame, ctx: dict, rng) -> dict:
             "exp_ci95": [mu - 1.96 * se, mu + 1.96 * se] if n > 1 else [None, None], "exp_050lot": mu * LOT_OZ,
             "pf": float(wins / -losses) if losses < 0 else None, "by_year": by_year, "by_session": by_sess, "by_vol_tercile": by_vol,
             "p_dd_10k_in_250": ruin, "vol_context_matched": float((vt != "NA").mean()) if n else None}
+
+
+def _max_dd(paths: np.ndarray) -> np.ndarray:
+    """Peak-to-trough drawdown of cumulative P&L paths (rows), the start (0) counting as a peak."""
+    cum = paths.cumsum(axis=1)
+    return (np.maximum.accumulate(np.maximum(cum, 0.0), axis=1) - cum).max(axis=1)
+
+
+def _breach(pool: np.ndarray, rng, n_paths: int = RUIN_PATHS, block: int | None = None) -> np.ndarray:
+    """Max drawdowns of n_paths sequences of RUIN_N trades drawn from pool (iid, or circular blocks)."""
+    if block:
+        starts = rng.integers(0, len(pool), size=(n_paths, math.ceil(RUIN_N / block)))
+        ix = (starts[:, :, None] + np.arange(block)[None, None, :]).reshape(n_paths, -1)[:, :RUIN_N] % len(pool)
+        return _max_dd(pool[ix])
+    return _max_dd(rng.choice(pool, size=(n_paths, RUIN_N), replace=True))
+
+
+def risk_audit(x_dev: pd.DataFrame, x_y: pd.DataFrame, ctx: dict, rng) -> dict:
+    """Drawdown risk at 0.50 lot (ASSUMED 100 oz): breach probabilities of 2.5k / 5k / 10k within 250 trades under
+    seven scenarios. The 95% interval of the iid figure comes from a nested bootstrap (outer resample of the trade pool)."""
+    usd = LOT * CONTRACT_OZ
+    dev = x_dev.sort_values("fill_t")
+    net = dev["net"].to_numpy(float) * usd
+    if len(net) < 30:
+        return {}
+    out = {"trades_dev": len(net), "expected_pnl_250": float(net.mean() * RUIN_N)}
+    dd = _breach(net, rng)
+    out["iid"] = {f"{int(t)}": float((dd >= t).mean()) for t in THRESHOLDS}
+    ci = {f"{int(t)}": [] for t in THRESHOLDS}
+    for _ in range(OUTER):
+        pool = rng.choice(net, size=len(net), replace=True)
+        d_ = _breach(pool, rng, INNER)
+        for t in THRESHOLDS:
+            ci[f"{int(t)}"].append((d_ >= t).mean())
+    out["iid_ci95"] = {k: [float(np.quantile(v, 0.025)), float(np.quantile(v, 0.975))] for k, v in ci.items()}
+    out["block"] = float((_breach(net, rng, block=BLOCK) >= RUIN_USD).mean())
+    out["chronological_maxdd_first250"] = float(_max_dd(net[None, :RUIN_N])[0])
+    out["chronological_maxdd_all"] = float(_max_dd(net[None, :])[0])
+    vt = np.asarray([ctx.get(t, "NA") for t in dev["fill_t"]])
+    for v in ("HIGH", "LOW"):
+        pool = net[vt == v]
+        out[f"vol_{v}"] = float((_breach(pool, rng) >= RUIN_USD).mean()) if len(pool) >= 30 else None
+    sp = np.where(dev["session"].to_numpy() == "OFF", ADV_EXTRA["spread_off"], ADV_EXTRA["spread_in"])
+    extra = (sp + ADV_EXTRA["slip_in"] + np.where(dev["outcome"].to_numpy() == "TP", 0.0, ADV_EXTRA["slip_out"])) * usd
+    out["cost_stress"] = float((_breach(net - extra, rng) >= RUIN_USD).mean())
+    ny = x_y["net"].to_numpy(float) * usd if len(x_y) else np.zeros(0)
+    out["y2026"] = float((_breach(ny, rng) >= RUIN_USD).mean()) if len(ny) >= 30 else None
+    return out
+
+
+def markdown_risk(rows: list[dict]) -> str:
+    L = ["### Risk audit: assumptions (identical for every candidate; NOT verified broker outcomes)\n",
+         "| Item | Value |", "|---|---|",
+         f"| Starting balance / currency | ${ACCOUNT_USD:,.0f} USD (ASSUMED) |",
+         f"| Contract size | {CONTRACT_OZ} oz per 1.00 lot (ASSUMED; broker specification not supplied) |",
+         f"| Position | fixed {LOT:.2f} lot = {LOT * CONTRACT_OZ:.0f} oz = ${LOT * CONTRACT_OZ:.0f} per $1 move (ASSUMED contract) |",
+         "| Spread (ENG) | $0.30 per oz in session, $0.50 off session (modelled, not measured) |",
+         "| Slippage (ENG) | $0.20 per oz on entry; $0.20 per oz on every exit except a filled target |",
+         "| Commission (ENG) | $0.07 per oz ($7 per 1.00 lot, ASSUMED) |",
+         "| Cost stress | ADV − ENG added per trade: + one more spread, + $0.20 entry and + $0.20 exit slippage |",
+         "| Concurrency | one position at a time (the independent series); no pyramiding, no compounding, no other exposure |",
+         f"| Drawdown | peak-to-trough of cumulative P&L from the start; over {RUIN_N} trades |",
+         (f"| Simulation | {RUIN_PATHS:,} bootstrap paths per scenario; 95% interval of the iid figure from a nested bootstrap "
+          f"({OUTER} outer resamples of the trade pool x {INNER} paths); block bootstrap = circular blocks of {BLOCK} trades |"),
+         "| Thresholds | $2,500 / $5,000 / $10,000 = 2.5% / 5% / 10% of the ASSUMED balance (the 10% figure is the ruin line) |",
+         "\n### Risk audit: probability of a drawdown within 250 trades at 0.50 lot (ASSUMED 100 oz)\n",
+         ("| Run | Candidate | Dev trades | Expected P&L / 250 trades | P(DD >= $2.5k) (95%) | P(DD >= $5k) (95%) | P(DD >= $10k) (95%) | "
+          "Block bootstrap $10k | Actual max DD, first 250 / all | HIGH vol only $10k | LOW vol only $10k | Cost stress $10k | 2026 trades $10k |"),
+         "|" + "---|" * 13]
+    for r in rows:
+        a = r.get("risk") or {}
+        if not a:
+            L.append(f"| {r['run']} | {r['id']} | < 30 | — | — | — | — | — | — | — | — | — | — |")
+            continue
+        def pc(k, a=a):
+            return f"{_p(a['iid'][k], 0)} ({_p(a['iid_ci95'][k][0], 0)}–{_p(a['iid_ci95'][k][1], 0)})"
+        L.append(f"| {r['run']} | {r['id']} | {a['trades_dev']} | {_n(a['expected_pnl_250'], 0)} | {pc('2500')} | {pc('5000')} | {pc('10000')} | "
+                 f"{_p(a['block'], 0)} | {_n(a['chronological_maxdd_first250'], 0, False)} / {_n(a['chronological_maxdd_all'], 0, False)} | "
+                 f"{_p(a.get('vol_HIGH'), 0)} | {_p(a.get('vol_LOW'), 0)} | {_p(a['cost_stress'], 0)} | {_p(a.get('y2026'), 0)} |")
+    return "\n".join(L)
 
 
 def _r(o):
@@ -203,6 +291,8 @@ def main(argv=None) -> int:
                 ref = c.get("dev" if per == "DEV" else "y2026") or {}
                 if ref.get("n_decided") is not None and len(x):
                     assert rec[key]["decided"] == ref["n_decided"], (run, c["id"], per, rec[key]["decided"], ref["n_decided"])
+            rec["risk"] = risk_audit(t[(t["candidate"] == c["id"]) & (t["period"] == "DEV")],
+                                     t[(t["candidate"] == c["id"]) & (t["period"] == "Y2026")], ctx, rng)
             rec["criteria"] = criteria(rec)
             rows.append(rec)
     os.makedirs(a.out_dir, exist_ok=True)
@@ -219,7 +309,7 @@ def main(argv=None) -> int:
             **r["criteria"]} for r in rows]
     pd.DataFrame(flat).to_csv(os.path.join(a.out_dir, "candidates.csv"), index=False, float_format="%.4f")
     with open(os.path.join(a.out_dir, "candidates.md"), "w") as fh:
-        fh.write(markdown(rows) + "\n")
+        fh.write(markdown(rows) + "\n\n" + markdown_risk(rows) + "\n")
     n_q = sum(r["criteria"]["QUALIFIES"] for r in rows)
     print(json.dumps({"candidates": len(rows), "qualifying": n_q,
                       "criteria_passed": {k: sum(r["criteria"][k] for r in rows) for k in rows[0]["criteria"]}}, indent=1))

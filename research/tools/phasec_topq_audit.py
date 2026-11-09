@@ -28,7 +28,19 @@ sys.path.insert(0, ".")
 from quantum.research import b27, b28, b29
 
 
-def wf_counts(L: pd.DataFrame, wf: dict, model: str) -> dict:
+def series_of(L: pd.DataFrame, rows: np.ndarray, rates: dict, weeks: float) -> dict:
+    """The selection's independent trade series: decided TP-first with Wilson 95%, matched random, net expectancy per oz
+    (ENG) with a t 95% interval, and the number of trades."""
+    st = b27.series_stats(L, rows, rates, weeks)
+    net = np.asarray((st.get("_seq") or {}).get("net", []), float)
+    n = len(net)
+    se = float(net.std(ddof=1) / np.sqrt(n)) if n > 1 else float("nan")
+    return {"trades": n, "decided": st.get("n_decided"), "r": st.get("r"), "ci95": st.get("ci95"), "matched_random": st.get("matched_random"),
+            "p_vs_random": st.get("p_vs_random"), "exp_oz": float(net.mean()) if n else None,
+            "exp_ci95": [float(net.mean() - 1.96 * se), float(net.mean() + 1.96 * se)] if n > 1 else [None, None]}
+
+
+def wf_counts(L: pd.DataFrame, wf: dict, model: str, rates: dict | None = None, weeks: float | None = None) -> dict:
     t_fill, d = L["fill_utc"].to_numpy(), L["d"].to_numpy()
     raw = wf["res"][model]["raw"]
     sel_code = b27.wf_selections(L, wf, model)
@@ -43,7 +55,8 @@ def wf_counts(L: pd.DataFrame, wf: dict, model: str) -> dict:
             ti += int((raw[m] == v).sum())
         assert se == len(sel_code[(dd, q)]), (model, dd, q, se, len(sel_code[(dd, q)]))
         out[f"{b27.DIRS[dd]} {q * 100:g}%"] = {"q": q, "dir": b27.DIRS[dd], "eligible": el, "selected": se, "share": se / el if el else None,
-                                               "ties_at_threshold": ti, "quarters": len(lst)}
+                                               "ties_at_threshold": ti, "quarters": len(lst),
+                                               "series": series_of(L, sel_code[(dd, q)], rates, weeks) if rates is not None else None}
     return out
 
 
@@ -58,7 +71,7 @@ def final_counts(FM: dict, scores: dict, Ly: pd.DataFrame, model: str) -> dict:
     return out
 
 
-def block(label: str, F, L, h1, FY, Ly, h1y, models) -> dict:
+def block(label: str, F, L, h1, FY, Ly, h1y, models, rates: dict, weeks: float) -> dict:
     wf = b27.walk_forward(F, L, h1, models, log=lambda *_: None)
     FM = b27.final_models(F, L, h1, models)
     sc = b27.apply_final(FM, FY, Ly, h1y, scores=True)
@@ -68,7 +81,7 @@ def block(label: str, F, L, h1, FY, Ly, h1y, models) -> dict:
     for m in models:
         raw, p = wf["res"][m]["raw"], wf["res"][m]["p"]
         te = ~np.isnan(raw)
-        res[m] = {"walk_forward": wf_counts(L, wf, m), "y2026": final_counts(FM, sc, Ly, m),
+        res[m] = {"walk_forward": wf_counts(L, wf, m, rates, weeks), "y2026": final_counts(FM, sc, Ly, m),
                   "distinct_raw_test": len(np.unique(raw[te])), "distinct_calibrated_test": len(np.unique(p[te])),
                   "test_rows": int(te.sum()), "auc_calibrated": b27.auc(y, p), "auc_raw": b27.auc(y, raw),
                   "brier_calibrated": float(np.mean((p[te] - y[te]) ** 2)),
@@ -80,6 +93,12 @@ def block(label: str, F, L, h1, FY, Ly, h1y, models) -> dict:
 
 def _pct(x):
     return "—" if x is None else f"{100 * x:.2f}%"
+
+
+def _f(x, d=2, sign=False):
+    if x is None or (isinstance(x, float) and np.isnan(x)):
+        return "—"
+    return f"{x:+.{d}f}" if sign else f"{x:.{d}f}"
 
 
 def markdown(out: dict, s27: dict | None = None, s29: dict | None = None, asrun27: dict | None = None, asrun29: dict | None = None) -> str:
@@ -100,6 +119,7 @@ def markdown(out: dict, s27: dict | None = None, s29: dict | None = None, asrun2
         L.append("| Model / bracket | Dir | Requested q | WF eligible | WF selected | WF share | Ties at threshold | Study n_raw (corrected) | "
                  "As-run n_raw (calibrated threshold) | As-run share | 2026 eligible | 2026 selected | 2026 share |")
         L.append("|" + "---|" * 13)
+        perf = []
         for m, v in blk.items():
             for k, w in v["walk_forward"].items():
                 y = v["y2026"].get(k, {})
@@ -110,6 +130,16 @@ def markdown(out: dict, s27: dict | None = None, s29: dict | None = None, asrun2
                 L.append(f"| {m} | {w['dir']} | {100 * w['q']:g}% | {w['eligible']} | {w['selected']} | {_pct(w['share'])} | {w['ties_at_threshold']} | "
                          f"{'—' if nr is None else nr} | {'—' if no is None else no} | {_pct(no / w['eligible'] if no is not None and w['eligible'] else None)} | "
                          f"{y.get('eligible')} | {y.get('selected')} | {_pct(y.get('share'))} |")
+                sr = w.get("series") or {}
+                if sr:
+                    perf.append(f"| {m} | {w['dir']} | {100 * w['q']:g}% | {sr['trades']} | {sr['decided']} | {_pct(sr['r'])} "
+                                f"({_pct((sr['ci95'] or [None])[0])}–{_pct((sr['ci95'] or [None, None])[1])}) | {_pct(sr['matched_random'])} | "
+                                f"{_f(sr['p_vs_random'], 4)} | {_f(sr['exp_oz'], 2, True)} ({_f(sr['exp_ci95'][0], 2, True)} to {_f(sr['exp_ci95'][1], 2, True)}) |")
+        if perf:
+            L.append(f"\n#### {label}: predictive performance and net profitability of every corrected selection (walk-forward, independent series)\n")
+            L.append("| Model / bracket | Dir | Requested q | Trades | Decided | TP-first (Wilson 95%) | Matched random | p vs random | Net exp / oz (t 95%) |")
+            L.append("|---|---|---|---|---|---|---|---|---|")
+            L.extend(perf)
         L.append("\n| Model / bracket | WF test rows | Distinct raw scores | Distinct calibrated values | AUC calibrated | AUC raw | Brier calibrated |")
         L.append("|---|---|---|---|---|---|---|")
         for m, v in blk.items():
@@ -143,14 +173,17 @@ def main(argv=None) -> int:
     for P_ in (D, Y):
         b27.prepare(P_, print)
     out = {"select_on": b27.SELECT_ON, "qs": list(b27.QS)}
-    out["B27_S3"] = block("B27", D["F"], D["Lp"], D["h1"], Y["F"], Y["Lp"], Y["h1"], b27.MODELS)   # B27's features (no B28 events)
+    out["B27_S3"] = block("B27", D["F"], D["Lp"], D["h1"], Y["F"], Y["Lp"], Y["h1"], b27.MODELS,   # B27's features (no B28 events)
+                          D["rates"], D["weeks"])
     for P_ in (D, Y):
         P_["F"] = pd.concat([P_["F"], b28.new_events(P_["m15"], P_["F"])], axis=1)
     TD = b29.tables(D, "ENG", fixed=b29.MODEL_BRACKETS)
     TY = b29.tables(Y, "ENG", fixed=b29.MODEL_BRACKETS)
     out["B29_C"] = {}
+    wD = b27.weeks_of(TD[b29.MODEL_BRACKETS[0]])
     for g in b29.MODEL_BRACKETS:
-        out["B29_C"][b29.gname(g)] = block(f"B29 {b29.gname(g)}", D["F"], TD[g], D["h1"], Y["F"], TY[g], Y["h1"], ("LGBM",))["LGBM"]
+        out["B29_C"][b29.gname(g)] = block(f"B29 {b29.gname(g)}", D["F"], TD[g], D["h1"], Y["F"], TY[g], Y["h1"], ("LGBM",),
+                                           b27.base_rates(TD[g]), wD)["LGBM"]
     with open(a.out, "w") as fh:
         json.dump(b27._clean(out), fh, indent=1)
     return 0
