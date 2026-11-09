@@ -4,7 +4,8 @@
 |---|---|
 | Registration | `research/registrations/B29.json`, committed `ffc0b6857` before any code. Three amendments to study V's test, committed in `9a86c684c`, were all found by the null check before any real result. |
 | Code, tests and the null check | `quantum/research/b29.py`, `tests/test_research_b29.py`, `research/tools/phasec_null_check.py`; committed `9a86c684c` before any real result |
-| Results | `research/results/b29/` (listed below) |
+| Results as run | `research/results/b29/` (code `9a86c684c`; kept unchanged as the record) |
+| Corrected re-run | `research/results/b29_fix/` (code `627b2d2a3`: top-q selection on the raw score and the consistent break-even; started from the same data and seeds). **The figures below are from the corrected re-run**; every study the fix does not touch reproduces the as-run result exactly (§ Checks) |
 | Diagnostics (after the run, descriptive) | `research/tools/b29_grid_extra.py` (monthly and regime results for every pair), `research/tools/phasec_c_diagnostic.py` (where the model AUC comes from), `research/tools/phasec_breakeven_audit.py`; outputs in `research/results/b29/` and `research/results/phasec/` |
 | Tables | `research/tools/phasec_tables.py` (appendix of `PHASE_C_REPORT.md`), `research/tools/phasec_risk.py` |
 
@@ -13,7 +14,8 @@
 - `b29_grid.csv`: every pair × direction × cost scenario;
 - `b29_grid_extra.csv.gz`;
 - `b29_V/M/C/E.csv.gz`;
-- `b29_frozen_trades.csv.gz`: every trade of the 30 frozen candidates, development and 2026.
+- `b29_frozen_trades.csv.gz`: every trade of the 30 frozen candidates as run, development and 2026;
+- `research/results/b29_fix/`: the corrected re-run's summary, `b29_C.csv.gz` and the 35 frozen candidates' trades.
 
 **Branch:** `claude/research-phase-c`. Research only. Production, web.8, the frozen Pine files, the alerts and PRs #90 / #91 are untouched.
 
@@ -36,8 +38,10 @@
    - The best is TSMOM20 at +$25 / −$25: 50.3% against a 48.8% direction-neutral random, p = 0.17, expectancy −$0.04 per oz.
    - The past trend did pick the month's eventual direction more often than not: the same-direction random is 1.7–3.9 points above the neutral one.
    - But its own trades realised the neutral rate, not the same-direction rate. **No momentum is usable at a 2-day trade horizon.**
-4. **A calibrated model per bracket (C, 7 brackets): 0 of 84 pass.**
-   - **The AUC rises with bracket size:** 0.504 → 0.534. The same model on a random walk rises the same way: 0.498 → 0.544.
+4. **A calibrated model per bracket (C, 7 brackets): 0 of 84 pass,** as run and in the corrected re-run.
+   - **Corrected top-q selections select about q** (appendix A2). The smallest p is 0.0018 (+$15 / −$10 top 20% SELL: 41.4% on 1,499 decided trades against 37.7% random, +$0.16 per oz), against a BH threshold of about 0.0006.
+   - **A true top 1% is a small sample:** 83–176 decided trades per bracket, below the registered 300.
+   - **The AUC rises with bracket size:** 0.504 → 0.534, identical in both runs. The same model on a random walk rises the same way: 0.498 → 0.544.
    - **The rise is closures, not direction.**
      - On decided trades only (TP against SL), the AUC is 0.496–0.506.
      - A forecast from weekday × hour alone scores higher than the model.
@@ -45,7 +49,9 @@
 5. **Every trigger family per bracket (E, 21 families × 7 brackets): 0 of 294 pass.**
    - The best lift is PD_SWEEP BUY at +$30 / −$20: 44.9% against 38.4% random (n = 312), p = 0.011 against a BH threshold of about 0.0002.
    - The random walk's best lift under the same framework is +5.3 points.
-6. **Frozen and checked on 2026: none of 30 holds** (Holm p = 1.000 for 29, 0.879 for one). Every grid candidate lost more on 2026 than on development.
+6. **Frozen and checked on 2026: none of 35 holds** (corrected re-run; Holm p = 1.000 for all 35). Every grid candidate lost more on 2026 than on development.
+   - The as-run frozen set was 30 (none held; Holm p 1.000 for 29, 0.879 for one).
+   - The correction adds 5 small-sample C candidates (fewer than 300 trades each), because true small tails now exist.
 
 ## The grid: rates against theory (2020–22, ENG)
 
@@ -140,11 +146,23 @@ All 14 rows are in the appendix. **0 BH.**
 - **The AUC is the calendar.** It rises with the share of trades ending without TP or SL (weekend / holiday closures, 2-day limit), and a random walk shows the same rise.
 - **Brier barely beats the constant forecast.** The best margin is 0.0029 at +$20 / −$20, and at +$5 / −$10 the model is worse than the constant.
 
-**"Top q" selections are not q.**
-- **What the threshold does.** The training window's threshold is a quantile of isotonic-calibrated probabilities. Isotonic output is a step function, so a threshold at a step admits the whole step.
-- **The effect.** The realised selected shares are far above the nominal q (appendix). That is why top 1% and top 50% give almost the same trades.
-- **It does not change the result:** every share selected is at the random rate.
-- **B27 saw the same effect on 2026** ("isotonic plateau"). Here it is measured in the walk-forward too.
+**"Top q" selections: the defect found in the audit, and the corrected re-run.**
+- **The defect (as run).** The training window's threshold was a quantile of isotonic-calibrated probabilities. Isotonic output is a step function, so a threshold at a step admitted the whole step: a nominal top 1% took 21–66% of the walk-forward test rows (`results/phasec/phasec_c_diag.json`). The small tails the registration names were never tested.
+- **The fix.** Rank and select on the raw model score: isotonic calibration is monotone, so the order is the same, and the raw score has no plateaus. The threshold is still each training window's own (1 − q) quantile of its calibration rows, fixed out of sample. Every row at or above it is selected, ties included, so the rule is deterministic. Probabilities, AUC, Brier and reliability still use the calibrated values.
+- **The audit (appendix A2).** For every bracket, direction and q it lists the eligible test rows, the selected rows, the realised share and the ties at the threshold, cross-checked against the study's own counts.
+- **The corrected result:**
+
+| Bracket / selection | Decided trades | TP-first | Matched random | p | Exp / oz |
+|---|---|---|---|---|---|
+| +15 / −10 top 20% SELL (smallest p) | 1,499 | 41.4% | 37.7% | 0.0018 | +0.16 |
+| +10 / −15 top 2% BUY | 203 | 64.5% | 57.8% | 0.029 | +1.01 |
+| +10 / −15 top 1% BUY | 112 | 67.0% | 58.0% | 0.033 | +1.57 |
+| +15 / −10 top 20% BUY | 1,511 | 37.7% | 35.5% | 0.043 | −0.72 |
+| +20 / −10 top 50% BUY | 2,179 | 30.8% | 29.2% | 0.046 | −0.82 |
+
+  - **0 of 84 are BH-significant** (threshold about 0.0006 for the smallest p).
+  - **12 have positive development expectancy,** 9 of them on fewer than 300 trades.
+  - **The two small BUY tails at +$10 / −$15 were frozen, and fell on 2026:** 54.2% on 24 trades and 57.1% on 63, against 53.5% / 52.9% random. They lost $1.62 and $0.87 per oz.
 
 ## E: every trigger family per bracket (immediate entry, each family's own direction)
 
@@ -162,10 +180,11 @@ All 14 rows are in the appendix. **0 BH.**
 - **The frozen E candidates fell on 2026**, e.g. PD_SWEEP +$5 / −$10 BUY: 64.0% → 56.4% against a 58.8% random.
 - **Registered ranking, noted for future registrations.** Ranking the frozen set by the absolute lower bound favours high-base-rate brackets (the +$5 / −$10 rows fill E's top-5) rather than the largest lift. A future registration should rank by lift over random. The lift leaders here were not frozen and were not checked on 2026, per the registration.
 
-## Frozen candidates on 2026 (30)
+## Frozen candidates on 2026 (35, corrected re-run)
 
-V 5, M 5, C 5, E 10, G 5; every one is in leaderboard B in the appendix of `PHASE_C_REPORT.md`.
-- **Holm p = 1.000 for 29 and 0.879 for one** (+$20 / −$30 BUY). None holds.
+V 5, M 5, C 10, E 10, G 5. Every one is in leaderboard B, with full statistics and the acceptance criteria, in `PHASE_C_APPENDIX.md` (A3, A4).
+- **Holm p = 1.000 for all 35.** None holds, and none has a 2026 lower bound above its break-even.
+- **As run, the frozen set was 30** (C 5). The corrected selection adds 5 C candidates from the low-frequency board; the other 30 are the same configurations with the same development figures.
 - **The 5 grid candidates (large-bracket BUYs) lost $2.0–2.4 per oz on 2026**, against −$0.14 to −$0.40 in development. Gold's 2026 drift ran the other way: the drift is not a forecast.
 
 ## Checks
@@ -177,7 +196,16 @@ V 5, M 5, C 5, E 10, G 5; every one is in leaderboard B in the appendix of `PHAS
   - **Before the real run**, on a path-consistent synthetic random walk, it flagged 0 of 442 V / M / C / E configurations.
   - **It found three biases in study V's registered test** (size mismatch, drift, stop overshoot). All three were corrected by amendment before any real result.
 - **Causality.** TSMOM uses only completed New York days. Every model feature is from closed bars.
-- **Every configuration is logged.** All 202 grid rows, 442 configurations and 30 frozen 2026 checks are in `research/trials.jsonl`.
+- **Every configuration is logged, append-only.**
+  - As run: 202 grid rows, 442 configurations and 30 frozen 2026 checks are in `research/trials.jsonl`.
+  - The corrected re-run appends its 84 C configurations and 35 frozen 2026 checks under phase "B29-fix". Nothing earlier is overwritten.
+- **Reproduction (appendix A1).** The corrected re-run reproduces every study the fix does not touch exactly:
+  - G: 202 rows under all four cost scenarios;
+  - V 50, M 14, E 294;
+  - the 5m resolution check;
+  - every C model's AUC and Brier.
+
+  The only differences are the C selections and what follows from them (the frozen set and the Holm set).
 - **Break-even comparator (audit, after the run).**
   - **The defect.** The summary's `break_even` is the break-even of the TP share of *all* trades. Beside the decided rate it is too low when closures are common: by 6.7–9.8 points for the M and large-grid candidates, whose closures run 13–20%.
   - **The fix.** The consistent `break_even_decided` was added afterwards, with a test, and the tier rules now use it.

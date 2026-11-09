@@ -15,6 +15,31 @@ The full set of result files:
 
 **Branch:** `claude/research-sym15`. Research only. Production, web.8, the frozen Pine files, the alerts and PRs #90 / #91 are untouched.
 
+## ⚠ CORRECTION (Phase C audit, 2026-11-09): read this first
+
+**After this report was written, the Phase C audit found two defects that affect B27.** Neither changes the verdict: **FAIL, no candidate.**
+- **The original results are preserved unchanged** in `research/results/b27/` (code `acca0426f`).
+- **A full corrected re-run** is in `research/results/b27_fix/` (code `627b2d2a3`, same data and seeds).
+- **The trial log is append-only:** the corrected S3 configurations and frozen 2026 checks are added under phase "B27-fix".
+
+**1. The S3 "top q" model selections were not q.**
+- **What went wrong.** The threshold was a quantile of isotonic-calibrated probabilities, a step function. "≥ threshold" admitted the whole top step, so the "top 1%" figures below describe much larger selections: ⟪B27_ASRUN_SHARES⟫.
+- **The fix.** Rank on the raw model score (the same order, no ties); each training window's own (1 − q) quantile is still the threshold.
+- **The corrected selections select about q:** ⟪B27_FIX_SHARES⟫.
+- **The corrected results:** ⟪B27_FIX_S3⟫
+- **Superseded statements.** "Its best top-1% selection was 51.7% SELL (LGBM, 895 trades)", and the "isotonic plateau" note, describe the defective selection. The model AUCs (0.498–0.524) and Brier scores are unchanged: they never depended on the threshold.
+
+**2. The break-even comparator was too low.**
+- **What went wrong.** The summary's `break_even` is the break-even of the TP share of *all* trades. Beside the decided rate it understates the comparator when closures are common: by 0–7 points for B27's candidates.
+- **The fix.** The consistent `break_even_decided` is now used by the tier rules.
+- **The statement "none cleared break-even" (2026) holds under both definitions** (`research/results/phasec/breakeven_audit.md`).
+
+**3. What does not change.**
+- **Reproduction is exact.** The corrected re-run reproduces S1, S2, S5 and the S4 feature ranking exactly (`PHASE_C_APPENDIX.md` A1).
+- **No configuration passes:** 0 BH-significant, 0 INFORMATIVE, 0 TRADEABLE.
+- **Frozen candidates:** ⟪B27_FIX_FROZEN⟫
+- **Stop-entry resolution.** Phase C's fill-bar check shows that the STOP_10..STOP_20 entries below are INCONCLUSIVE at 15m (worst case). Their best case is still at random (`B28_RESULTS.md`).
+
 ## The answer
 
 **On the data available, the highest TP-first rate for +$15 before −$15 that survives an honest test is the coin-flip rate.**

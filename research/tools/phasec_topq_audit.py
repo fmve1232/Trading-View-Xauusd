@@ -19,6 +19,7 @@ in the studies uses the isotonic-calibrated probability. Both AUCs are reported 
 """
 import argparse
 import json
+import os
 import sys
 
 import numpy as np
@@ -71,21 +72,34 @@ def final_counts(FM: dict, scores: dict, Ly: pd.DataFrame, model: str) -> dict:
     return out
 
 
-def block(label: str, F, L, h1, FY, Ly, h1y, models, rates: dict, weeks: float) -> dict:
+def save(out: dict, path: str) -> None:
+    with open(path + ".part", "w") as fh:
+        json.dump(b27._clean(out), fh, indent=1)
+    os.replace(path + ".part", path)
+
+
+def by_dir(L: pd.DataFrame) -> dict:
+    d = L["d"].to_numpy()
+    return {b27.DIRS[dd]: int((d == dd).sum()) for dd in (1, -1)}
+
+
+def block(label: str, F, L, h1, FY, Ly, h1y, models, rates: dict, weeks: float, with_2026: bool = True) -> dict:
     wf = b27.walk_forward(F, L, h1, models, log=lambda *_: None)
-    FM = b27.final_models(F, L, h1, models)
-    sc = b27.apply_final(FM, FY, Ly, h1y, scores=True)
-    cal = b27.apply_final(FM, FY, Ly, h1y)
+    if with_2026:
+        FM = b27.final_models(F, L, h1, models)
+        sc = b27.apply_final(FM, FY, Ly, h1y, scores=True)
+        cal = b27.apply_final(FM, FY, Ly, h1y)
     y = (L["outcome"] == "TP").to_numpy(int)
     res = {}
     for m in models:
         raw, p = wf["res"][m]["raw"], wf["res"][m]["p"]
         te = ~np.isnan(raw)
-        res[m] = {"walk_forward": wf_counts(L, wf, m, rates, weeks), "y2026": final_counts(FM, sc, Ly, m),
+        res[m] = {"walk_forward": wf_counts(L, wf, m, rates, weeks), "y2026": final_counts(FM, sc, Ly, m) if with_2026 else {},
                   "distinct_raw_test": len(np.unique(raw[te])), "distinct_calibrated_test": len(np.unique(p[te])),
                   "test_rows": int(te.sum()), "auc_calibrated": b27.auc(y, p), "auc_raw": b27.auc(y, raw),
                   "brier_calibrated": float(np.mean((p[te] - y[te]) ** 2)),
-                  "y2026_distinct_raw": len(np.unique(sc[m])), "y2026_distinct_calibrated": len(np.unique(cal[m]))}
+                  "y2026_distinct_raw": len(np.unique(sc[m])) if with_2026 else None,
+                  "y2026_distinct_calibrated": len(np.unique(cal[m])) if with_2026 else None}
         print(label, m, json.dumps({k: res[m][k] for k in ("test_rows", "distinct_raw_test", "distinct_calibrated_test", "auc_calibrated",
                                                            "auc_raw")}), flush=True)
     return res
@@ -103,6 +117,14 @@ def _f(x, d=2, sign=False):
 
 def markdown(out: dict, s27: dict | None = None, s29: dict | None = None, asrun27: dict | None = None, asrun29: dict | None = None) -> str:
     """Tables: requested q, eligible, selected, realised share, ties; the studies' own counts (n_raw) beside."""
+    def y26(s, cid):
+        if s is None:
+            return None
+        for c in s.get("frozen", []):
+            if c["id"] == cid:
+                return (c.get("y2026") or {}).get("n_raw")
+        return None
+
     def nraw(s, cid):
         if s is None:
             return None
@@ -113,8 +135,11 @@ def markdown(out: dict, s27: dict | None = None, s29: dict | None = None, asrun2
         return None
     L = []
     mismatches = 0
-    for label, blk, idf, s_new, s_old in (("B27 S3 (+-$15)", out["B27_S3"], lambda m, k: f"S3 {m} top{k.split()[1]} {k.split()[0]}", s27, asrun27),
-                                          ("B29 C (per bracket, LightGBM)", out["B29_C"], lambda g, k: f"C LGBM {g} top{k.split()[1]} {k.split()[0]}", s29, asrun29)):
+    for label, blk, idf, s_new, s_old, el26 in (
+            ("B27 S3 (+-$15)", out["B27_S3"], lambda m, k: f"S3 {m} top{k.split()[1]} {k.split()[0]}", s27, asrun27,
+             lambda m: out.get("B27_2026_eligible", {})),
+            ("B29 C (per bracket, LightGBM)", out["B29_C"], lambda g, k: f"C LGBM {g} top{k.split()[1]} {k.split()[0]}", s29, asrun29,
+             lambda g: out.get("B29_2026_eligible", {}).get(g, {}))):
         L.append(f"\n### {label}: walk-forward 2021-01 .. 2023-01 and 2026\n")
         L.append("| Model / bracket | Dir | Requested q | WF eligible | WF selected | WF share | Ties at threshold | Study n_raw (corrected) | "
                  "As-run n_raw (calibrated threshold) | As-run share | 2026 eligible | 2026 selected | 2026 share |")
@@ -127,9 +152,14 @@ def markdown(out: dict, s27: dict | None = None, s29: dict | None = None, asrun2
                 nr, no = nraw(s_new, cid), nraw(s_old, cid)
                 if nr is not None and nr != w["selected"]:
                     mismatches += 1
+                if not y:                                              # walk-forward-only audit: 2026 from the frozen candidates
+                    sel26, e26 = y26(s_new, cid), el26(m).get(w["dir"])
+                    y = {"eligible": e26 if sel26 is not None else None, "selected": sel26,
+                         "share": sel26 / e26 if sel26 is not None and e26 else None}
                 L.append(f"| {m} | {w['dir']} | {100 * w['q']:g}% | {w['eligible']} | {w['selected']} | {_pct(w['share'])} | {w['ties_at_threshold']} | "
                          f"{'—' if nr is None else nr} | {'—' if no is None else no} | {_pct(no / w['eligible'] if no is not None and w['eligible'] else None)} | "
-                         f"{y.get('eligible')} | {y.get('selected')} | {_pct(y.get('share'))} |")
+                         f"{y.get('eligible') if y.get('eligible') is not None else '—'} | {y.get('selected') if y.get('selected') is not None else '—'} | "
+                         f"{_pct(y.get('share'))} |")
                 sr = w.get("series") or {}
                 if sr:
                     perf.append(f"| {m} | {w['dir']} | {100 * w['q']:g}% | {sr['trades']} | {sr['decided']} | {_pct(sr['r'])} "
@@ -155,6 +185,8 @@ def main(argv=None) -> int:
     ap.add_argument("--store5")
     ap.add_argument("--store60")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--part", choices=("B27", "B29", "all"), default="all", help="compute one study only (merged into --out)")
+    ap.add_argument("--no-2026", action="store_true", help="walk-forward only (the 2026 check concerns frozen candidates only)")
     ap.add_argument("--markdown", nargs=4, metavar=("B27_FIX", "B29_FIX", "B27_ASRUN", "B29_ASRUN"),
                     help="render OUT (an existing audit JSON) against the four summaries instead of computing")
     a = ap.parse_args(argv)
@@ -173,19 +205,29 @@ def main(argv=None) -> int:
     for P_ in (D, Y):
         b27.prepare(P_, print)
     out = {"select_on": b27.SELECT_ON, "qs": list(b27.QS)}
-    out["B27_S3"] = block("B27", D["F"], D["Lp"], D["h1"], Y["F"], Y["Lp"], Y["h1"], b27.MODELS,   # B27's features (no B28 events)
-                          D["rates"], D["weeks"])
+    if os.path.exists(a.out):
+        with open(a.out) as fh:
+            out.update(json.load(fh))
+    if a.part in ("B27", "all"):
+        out["B27_2026_eligible"] = by_dir(Y["Lp"])
+        out["B27_S3"] = block("B27", D["F"], D["Lp"], D["h1"], Y["F"], Y["Lp"], Y["h1"], b27.MODELS,   # B27's features (no B28 events)
+                              D["rates"], D["weeks"], with_2026=not a.no_2026)
+        save(out, a.out)
+    if a.part == "B27":
+        return 0
     for P_ in (D, Y):
         P_["F"] = pd.concat([P_["F"], b28.new_events(P_["m15"], P_["F"])], axis=1)
     TD = b29.tables(D, "ENG", fixed=b29.MODEL_BRACKETS)
     TY = b29.tables(Y, "ENG", fixed=b29.MODEL_BRACKETS)
-    out["B29_C"] = {}
+    out.setdefault("B29_C", {})
+    out["B29_2026_eligible"] = {b29.gname(g): by_dir(TY[g]) for g in b29.MODEL_BRACKETS}
     wD = b27.weeks_of(TD[b29.MODEL_BRACKETS[0]])
     for g in b29.MODEL_BRACKETS:
+        if b29.gname(g) in out["B29_C"]:
+            continue                                                  # resume: a bracket already saved is not recomputed
         out["B29_C"][b29.gname(g)] = block(f"B29 {b29.gname(g)}", D["F"], TD[g], D["h1"], Y["F"], TY[g], Y["h1"], ("LGBM",),
-                                           b27.base_rates(TD[g]), wD)["LGBM"]
-    with open(a.out, "w") as fh:
-        json.dump(b27._clean(out), fh, indent=1)
+                                           b27.base_rates(TD[g]), wD, with_2026=not a.no_2026)["LGBM"]
+        save(out, a.out)
     return 0
 
 
