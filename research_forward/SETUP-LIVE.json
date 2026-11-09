@@ -196,6 +196,127 @@
    "mae": 18.710000000000036,
    "bars": 13,
    "path": "5m"
+  },
+  {
+   "id": 7,
+   "tf": "15m",
+   "t": 1794184200,
+   "t_dec": 1794185100,
+   "dir": 1,
+   "entry": 4100.41,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDH",
+     4076.64
+    ],
+    [
+     "4HH",
+     4078.14
+    ],
+    [
+     "1HH",
+     4074.37
+    ]
+   ],
+   "zones": [
+    "above value-area high 4070.72"
+   ],
+   "sl": 4087.41,
+   "tp": 4115.41,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794185395,
+   "result": "TP",
+   "t_res": 1794188400,
+   "mfe": 24.31999999999971,
+   "mae": 8.920000000000073,
+   "bars": 12,
+   "path": "5m"
+  },
+  {
+   "id": 8,
+   "tf": "15m",
+   "t": 1794185100,
+   "t_dec": 1794186000,
+   "dir": 1,
+   "entry": 4104.34,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDH",
+     4101.06
+    ]
+   ],
+   "zones": [
+    "above value-area high 4072.68"
+   ],
+   "sl": 4091.34,
+   "tp": 4119.34,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794186367,
+   "result": "TP",
+   "t_res": 1794188400,
+   "mfe": 20.389999999999418,
+   "mae": 3.2899999999999636,
+   "bars": 9,
+   "path": "5m"
+  },
+  {
+   "id": 9,
+   "tf": "15m",
+   "t": 1794186000,
+   "t_dec": 1794186900,
+   "dir": 1,
+   "entry": 4107.29,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "PDH",
+     4106.97
+    ],
+    [
+     "TDH",
+     4104.92
+    ],
+    [
+     "1HH",
+     4104.92
+    ]
+   ],
+   "zones": [
+    "above value-area high 4068.60"
+   ],
+   "sl": 4094.29,
+   "tp": 4122.29,
+   "checks": {
+    "major": true,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794187195,
+   "result": "TP",
+   "t_res": 1794188400,
+   "mfe": 17.4399999999996,
+   "mae": 5.300000000000182,
+   "bars": 6,
+   "path": "5m"
   }
  ],
  "live": {
@@ -206,6 +327,10 @@
   "SWEEP": [
    5,
    1
+  ],
+  "BREAKOUT": [
+   3,
+   3
   ]
  }
 }
