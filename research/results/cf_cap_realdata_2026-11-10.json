@@ -1,0 +1,186 @@
+{
+ "tool": "research/tools/cf_cap_realdata.py",
+ "amendment": "research/registrations/B24-CONFIRM-FWD-A1.json",
+ "chart_utc": [
+  1792364400,
+  1794293100
+ ],
+ "data_source": "twelvedata:XAU/USD",
+ "data_hash_15m": "22077e77003b81ba",
+ "triggers_scanned": 430,
+ "original_no_cap": {
+  "funnel": {
+   "setups": 200,
+   "BUY": 85,
+   "SELL": 115,
+   "confirmed": 72,
+   "invalidated_price": 98,
+   "invalidated_structure": 29,
+   "expired_window": 0,
+   "expired_overshoot": 0,
+   "pending": 1,
+   "stale": 0,
+   "unresolved": 2
+  },
+  "outcomes": {
+   "T15": {
+    "TP": 29,
+    "SL": 42,
+    "AMBIGUOUS": 0,
+    "TIMEOUT": 0,
+    "OPEN": 1,
+    "decided": 71,
+    "tp_rate": 0.4084507042253521,
+    "tp_rate_ci95": [
+     0.3016873019340681,
+     0.524612182411648
+    ],
+    "usd_per_oz_mean": -1.5633802816901408,
+    "usd_per_oz_after_026": -1.8233802816901408
+   },
+   "T20": {
+    "TP": 26,
+    "SL": 45,
+    "AMBIGUOUS": 0,
+    "TIMEOUT": 0,
+    "OPEN": 1,
+    "decided": 71,
+    "tp_rate": 0.36619718309859156,
+    "tp_rate_ci95": [
+     0.2637022126209394,
+     0.4824278029612611
+    ],
+    "usd_per_oz_mean": -0.9154929577464789,
+    "usd_per_oz_after_026": -1.1754929577464788
+   }
+  }
+ },
+ "capped_live_rule": {
+  "funnel": {
+   "setups": 200,
+   "BUY": 85,
+   "SELL": 115,
+   "confirmed": 49,
+   "invalidated_price": 98,
+   "invalidated_structure": 29,
+   "expired_window": 0,
+   "expired_overshoot": 23,
+   "pending": 1,
+   "stale": 0,
+   "unresolved": 2
+  },
+  "outcomes": {
+   "T15": {
+    "TP": 24,
+    "SL": 24,
+    "AMBIGUOUS": 0,
+    "TIMEOUT": 0,
+    "OPEN": 1,
+    "decided": 48,
+    "tp_rate": 0.5,
+    "tp_rate_ci95": [
+     0.36389330403275494,
+     0.636106695967245
+    ],
+    "usd_per_oz_mean": 1.0,
+    "usd_per_oz_after_026": 0.74
+   },
+   "T20": {
+    "TP": 21,
+    "SL": 27,
+    "AMBIGUOUS": 0,
+    "TIMEOUT": 0,
+    "OPEN": 1,
+    "decided": 48,
+    "tp_rate": 0.4375,
+    "tp_rate_ci95": [
+     0.3070126894862085,
+     0.5772498268573516
+    ],
+    "usd_per_oz_mean": 1.4375,
+    "usd_per_oz_after_026": 1.1775
+   }
+  }
+ },
+ "transitions": {
+  "CONFIRMED -> CONFIRMED": 49,
+  "CONFIRMED -> EXPIRED": 23,
+  "INVALIDATED -> INVALIDATED": 127,
+  "PENDING -> PENDING": 1
+ },
+ "removed_by_cap": {
+  "funnel": {
+   "setups": 23,
+   "BUY": 11,
+   "SELL": 12,
+   "confirmed": 23,
+   "invalidated_price": 0,
+   "invalidated_structure": 0,
+   "expired_window": 0,
+   "expired_overshoot": 0,
+   "pending": 0,
+   "stale": 0,
+   "unresolved": 0
+  },
+  "outcomes": {
+   "T15": {
+    "TP": 5,
+    "SL": 18,
+    "AMBIGUOUS": 0,
+    "TIMEOUT": 0,
+    "OPEN": 0,
+    "decided": 23,
+    "tp_rate": 0.21739130434782608,
+    "tp_rate_ci95": [
+     0.09663977965448592,
+     0.4190348318675122
+    ],
+    "usd_per_oz_mean": -6.913043478260869,
+    "usd_per_oz_after_026": -7.173043478260869
+   },
+   "T20": {
+    "TP": 5,
+    "SL": 18,
+    "AMBIGUOUS": 0,
+    "TIMEOUT": 0,
+    "OPEN": 0,
+    "decided": 23,
+    "tp_rate": 0.21739130434782608,
+    "tp_rate_ci95": [
+     0.09663977965448592,
+     0.4190348318675122
+    ],
+    "usd_per_oz_mean": -5.826086956521739,
+    "usd_per_oz_after_026": -6.086086956521739
+   }
+  },
+  "overshoot_usd": [
+   20.21,
+   20.39,
+   20.65,
+   20.65,
+   20.91,
+   20.92,
+   21.33,
+   21.45,
+   22.18,
+   22.66,
+   23.55,
+   23.65,
+   23.87,
+   24.36,
+   24.5,
+   25.7,
+   27.31,
+   27.73,
+   27.73,
+   30.22,
+   30.22,
+   45.31,
+   48.05
+  ]
+ },
+ "kept_confirmations": 49,
+ "kept_confirmations_identical": true,
+ "caveat": "descriptive: one window, overlapping triggers of six types on the same moves, and the window whose move distribution prompted the cap; no rule is selected from it; no trigger type is validated"
+}

@@ -1,0 +1,133 @@
+From c1d1e941b700ff565f5de3b9f48f0bf925e9e94d Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 7 Nov 2026 09:57:03 +0000
+Subject: [PATCH] Strict index.json: NaN / Infinity in the alerts report become
+ null (PR #90 option A)
+
+The validation block's empty "today" / "this week" figures carried NaN since
+ef6620013. The browser's JSON.parse rejects NaN, so the site lost the whole alerts
+block of index.json on days with nothing decided: every alert card stayed empty.
+notify.run now returns its report through notify.json_safe. site/app.js getJSON
+also reads bare NaN / Infinity as null, for files written before the fix.
+
+Infrastructure only: phone alerts, plans, the registered tests and the freeze key
+are unchanged. A replay of 3 days of real data gives identical phone messages
+(55 messages, 484 lines), report, state and store files; only NaN becomes null.
+Test: tests/test_index_json_strict.py.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Q9BUECqqTrTgQY1HRzyrvM
+---
+ docs/PLATFORM.md                |  1 +
+ quantum/notify.py               | 15 ++++++++++++-
+ site/app.js                     |  7 ++++++-
+ tests/test_index_json_strict.py | 37 +++++++++++++++++++++++++++++++++
+ 4 files changed, 58 insertions(+), 2 deletions(-)
+ create mode 100644 tests/test_index_json_strict.py
+
+diff --git a/docs/PLATFORM.md b/docs/PLATFORM.md
+index b7ad5ead3..b1a78ab64 100644
+--- a/docs/PLATFORM.md
++++ b/docs/PLATFORM.md
+@@ -206,6 +206,7 @@ configuration hash and therefore restarts the holdout — that is intended.
+ | web.8 + SETUP alerts (B16) | Operator request 2026-11-06 (level rules with sweeps, order blocks, volume profile, POC; +$15). Alerts and display only; keys unchanged. `notify.setup_levels` / `setup_events` apply the registered rules (`research/registrations/B16.json`) to the site's 15m bars with levels from the 15m / 1h / 4h payloads and the engine's order blocks (new chart arrays `ob_bull_lo` … in `report.py`) and volume profile (VAH / VAL / POC on GC volume). Each SETUP alert is its own notification: levels, zone, entry, SL −$13, TP1 +$13 (half), +$15, TP2 +$20, the MT5 line and the 3-year record (B16: 46.6% / 46.1% vs ~46% random, not an edge). Each setup is scored +$15 before −$13 in `research_forward/SETUP-LIVE.json` (descriptive; separate from B15). `SETUP_LEVELS=major` keeps day / week / month levels only; `ALERT_SETUPS=0` turns them off. Tests: `tests/test_setup_rules.py`, `tests/test_setup_live.py`. |
+ | web.8 + quality mode (B17) | Operator request 2026-11-06 ("quality rather than the quantity … all the confirmations"). Alerts and display only; keys unchanged. `notify.setup_checks` / `trend_votes` add B17's four confirmations to every setup (day / week / month level; the three trend votes from the 1h / 4h payloads; the engine's bull / bear on the bar; a London / New York close). **ALERT_MODE=quality (default):** the phone gets engine signals with their follow-ups, setups with all four confirmations (with their confirmations line and B17's record, 51.6% of 184, not proven), the trend-change warning, the registered tests' checks and the reports; liquidity, structure, H-setup lines and unconfirmed setups stay on the website and in the records. `ALERT_MODE=all` restores every alert. Tests: `tests/test_setup_live.py`. |
+ | web.8 + 4h breakout alerts (B18) | Operator request 2026-11-06 ("confirm movement of market at every 4 h candle"; chose the 4h candle breakout with all four confirmations). Alerts and display only; keys unchanged. `notify.h4_scan` / `h4_events` check every closed 4h candle of the site's 4h payload: a close beyond the previous 4h high / low, beyond a day / week / month level, trend 3 of 3 at the close, the engine's 4h bias, a London / New York close. In quality mode these confirmed 4h breakouts are the phone's setup alerts (with confirmations, plan, MT5 line and B18's record, 45.8% of 319, not an edge); the 15m setups stay on the website. Every 4h breakout is scored +$15 before −$13 in `research_forward/SETUP-LIVE.json`. Tests: `tests/test_setup_live.py`. |
++| web.8 + strict index.json (PR #90 option A) | Operator choice after the PR #90 audit (2026-11-07). Infrastructure only; alerts, plans, tests and keys unchanged. `notify.run` returns its report through `notify.json_safe` (NaN / Infinity → null). The validation block's empty "today" / "this week" carried NaN since `ef6620013`, and the browser's JSON.parse rejects NaN, so the site lost the whole alerts block of index.json on days with nothing decided. `site/app.js` `getJSON` also reads bare NaN / Infinity as null. Test: `tests/test_index_json_strict.py`. |
+ | web.8 + 15m setups back on the phone | Operator, 2026-11-06 ("Yes please" to sending the 15m setups with all four confirmations again). Alerts only; keys unchanged. In quality mode the phone gets 15m setups with all four B17 confirmations (51.6% of 184 at +$15, random 46.3%, not proven) beside the confirmed 4h breakouts; unconfirmed setups stay on the website. Tests: `tests/test_setup_live.py`. |
+ | web.8 + alerts above 60% only | Operator, 2026-11-06 ("ALERTS WITH MORE THAN 60% SUCCESSFUL TRADES ONLY"). Alerts only; keys unchanged. New default `ALERT_MODE=sixty` (`quality` and `all` still selectable): the phone gets only the engine's 15m signals with their plan follow-ups, the one stream above 60% on history (64.3% of 70, B10; 61.4% of 44, B13-1, not passed; live Sep–Nov 31.8% of 22), each with a RECORD line saying so; plus the B15 checks, the daily report and news. 30m / 1h / 4h signals (1h 40.0% of 25; 30m / 4h never measured), setups, 4h breakouts, the grab test's trades and the trend-change warning stay on the website. Plans still open and are scored on every alerted timeframe, so B15-ENGINE-FWD and B9-GRAB-FWD record as before. Tests: `tests/test_alert_sixty.py`; `tests/conftest.py` runs the older tests in `quality`. |
+ | web.8 fix: setup expiry in trading time | Found reviewing the 2026-11-06 daily report. Records only; keys unchanged. A live setup (15m setup or 4h breakout) was EXPIRED 24 h after its close by the clock, but B16–B18 measure one trading day of bars, and GitHub's backup cron runs on Sunday while gold is shut, so a Friday setup expired before Monday could decide it. Now it expires after one trading day of bars (288 5m or 96 15m), or after 7 days by the clock if the feed stops. The daily ENGINE line's unexplained gate share is labelled "reason unclear" (was "not logged"): the engine's log for that bar could not be split into BUY / SELL reasons. Tests: `tests/test_setup_live.py`. |
+diff --git a/quantum/notify.py b/quantum/notify.py
+index 4bf57dba5..10e4c7bca 100644
+--- a/quantum/notify.py
++++ b/quantum/notify.py
+@@ -90,6 +90,19 @@ def _fmt(x, off=0.0):
+ 
+ 
+ # ---------------- MT5 vs the site: clocks, the price now, and how late an alert is ----------------
++def json_safe(x):
++    """A copy with every NaN / infinite float replaced by None. index.json carries this report, and the browser's JSON.parse
++    rejects NaN: the validation block's empty "today" / "this week" (rate = NaN when nothing was decided) made the whole
++    alerts block unreadable on most days (found 2026-11-07). The state file keeps its own values."""
++    if isinstance(x, float):
++        return x if math.isfinite(x) else None
++    if isinstance(x, dict):
++        return {k: json_safe(v) for k, v in x.items()}
++    if isinstance(x, (list, tuple)):
++        return [json_safe(v) for v in x]
++    return x
++
++
+ def _env_float(k: str, d: float) -> float:
+     try:
+         v = float(os.environ.get(k, "") or d)
+@@ -1892,4 +1905,4 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
+     if vpath and pl_cfg:
+         with open(vpath, "w") as f:
+             json.dump(vlog, f)
+-    return report
++    return json_safe(report)
+diff --git a/site/app.js b/site/app.js
+index 0c2b58bd5..54ca925e5 100644
+--- a/site/app.js
++++ b/site/app.js
+@@ -112,7 +112,12 @@ $("#toolbar").onclick = (e) => {
+ async function getJSON(u) {
+   const r = await fetch(u + (u.includes("?") ? "&" : "?") + "v=" + Date.now(), { cache: "no-store" });
+   if (!r.ok) throw new Error(u + " -> HTTP " + r.status);
+-  return r.json();
++  const txt = await r.text();
++  try { return JSON.parse(txt); } catch (e) {
++    // A file written with a bare NaN / Infinity (Python's json default) is not JSON; read those as null rather than
++    // losing the whole file (index.json's alerts block was unreadable on days with nothing decided, found 2026-11-07).
++    return JSON.parse(txt.replace(/([:,\[]\s*)-?(?:NaN|Infinity)(?=\s*[,\]}])/g, "$1null"));   // no look-behind: old Safari
++  }
+ }
+ async function load() {
+   document.querySelectorAll("#tf-tabs button").forEach((b) => b.classList.toggle("active", b.dataset.tf === S.tf));
+diff --git a/tests/test_index_json_strict.py b/tests/test_index_json_strict.py
+new file mode 100644
+index 000000000..7e95f3e5b
+--- /dev/null
++++ b/tests/test_index_json_strict.py
+@@ -0,0 +1,37 @@
++"""index.json must be strict JSON (found 2026-11-07): the validation block's empty "today" / "this week" carried NaN, which
++the browser's JSON.parse rejects, so the site lost the whole alerts block on days with nothing decided. notify.run now
++returns its report through notify.json_safe (NaN / Infinity -> null); the state file keeps its own values."""
++import json
++import math
++
++from quantum import notify
++
++T0 = 1793973600                                   # 2026-11-06 14:00 UTC (Friday)
++
++
++def _p15(bars):
++    n = len(bars)
++    x = bars[-1][3]
++    ch = {"t": [b[0] for b in bars], "o": [b[3] for b in bars], "h": [b[1] for b in bars], "l": [b[2] for b in bars],
++          "c": [b[3] for b in bars], "pdh": [4147.6] * n, "pdl": [4058.44] * n, "pwh": [4081.97] * n, "pwl": [3871.19] * n,
++          "vpoc": [4059.0] * n, "vah": [4075.0] * n, "val": [4040.0] * n,
++          "ob_bull_lo": [None] * n, "ob_bull_hi": [None] * n, "ob_bear_lo": [None] * n, "ob_bear_hi": [None] * n}
++    mk = [{"t": bars[-1][0], "type": "SIGNAL", "dir": 1, "px": x, "tq": 60, "sl": x - 13, "tp1": x + 13, "tp2": x + 20, "tp3": x + 30}]
++    return {"meta": {"tf": "15m", "synthetic": False, "generated_utc": "2026-11-06T14:40:00+00:00", "price_source": "td"},
++            "markers": mk, "decisions": [], "news": None, "chart": ch}
++
++
++def test_json_safe_replaces_nan_and_infinity_only():
++    x = {"a": float("nan"), "b": [1.0, float("inf"), -float("inf")], "c": (2.5, "x", None, 0), "d": {"e": 3}}
++    assert notify.json_safe(x) == {"a": None, "b": [1.0, None, None], "c": [2.5, "x", None, 0], "d": {"e": 3}}
++    assert math.isnan(x["a"])                                       # the input is not modified
++
++
++def test_the_alerts_block_is_strict_json_on_a_day_with_nothing_decided(tmp_path, monkeypatch):
++    monkeypatch.setattr(notify, "send", lambda lines: ["test"])
++    b = [(T0, 4066.0, 4061.0, 4062.0)]
++    notify.run(str(tmp_path), {"15m": _p15(b)}, ["15m"], sent_t=T0 + 1000)
++    rep = notify.run(str(tmp_path), {"15m": _p15(b + [(T0 + 900, 4063.0, 4055.22, 4060.10)])}, ["15m"], sent_t=T0 + 1900)
++    today = rep["plans"]["validation"]["today"]
++    assert today["n"] == 0 and today["rate"] is None and today["wilson"] == [None, None]
++    json.dumps(rep, allow_nan=False)                                # what pipeline.py writes into index.json must parse
+-- 
+2.43.0
+

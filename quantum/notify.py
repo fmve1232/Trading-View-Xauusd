@@ -1852,6 +1852,18 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     report["liquidity"] = {"on": liq_on(), "near_usd": _env_float("LIQ_NEAR_USD", LIQ_NEAR_USD), "recent": state["liq_log"][::-1]}
     report["engine_status"] = {"gates": state.get("gates", {}), "last_signal": state.get("last_signal")}
     report["channels"] = channels()
+    from . import confirm_panel  # the confirmation panel: website only, never sent
+    if confirm_panel.on():
+        try:
+            report["confirm"] = confirm_panel.panel(payloads, state, t_send, store_dir=store_dir)
+        except Exception as e:  # noqa: BLE001  (a panel failure must never stop the alerts)
+            report["confirm"] = {"on": True, "error": f"{type(e).__name__}: {e}"}
+    from . import fwd_b24  # B24-CONFIRM-FWD: records only, never sent
+    if fwd_b24.on():
+        try:
+            report["b24"] = fwd_b24.run(payloads, state, t_send, store_dir)
+        except Exception as e:  # noqa: BLE001  (a recorder failure must never stop the alerts)
+            report["b24"] = {"id": fwd_b24.ID, "error": f"{type(e).__name__}: {e}"}
     first = next((payloads[tf] for tf in tfs if payloads.get(tf) and not payloads[tf]["meta"]["synthetic"]), None)
     if first is not None and pl_cfg:                       # validation: daily at the New York close, weekly at Friday's
         now_t = int(datetime.fromisoformat(first["meta"]["generated_utc"]).timestamp())

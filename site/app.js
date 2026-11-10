@@ -14,6 +14,7 @@ const S = {
   mt5: store.get("mt5", 0),
   tz: store.get("tz", "local"),
   account: store.get("account", null),
+  cfRisk: store.get("cf_risk", 1),          // the confirmation card's risk % (default 1%; display only)
   costProfile: store.get("cost_profile", "engine"),
   costCustom: store.get("cost_custom", null),
   hcp: store.get("hc_profile", { key: "A", tp: 10, sl: 10, lot: 0.5 }),   // high-confidence panel: profile and lot
@@ -1951,6 +1952,139 @@ function renderStrip() {
    published in index.json -> alerts.plans): open trades with the live distance to TP / SL, and the results so far.
    The TP-first figure is geometry, SL / (TP + SL), measured on 139,754 entries; no signal tested beats it. */
 const TF_SEC = { "5m": 300, "15m": 900, "30m": 1800, "1h": 3600, "4h": 14400 };
+/* ---------- Two-stage confirmation (quantum/confirm_panel.py; display only, never sent to the phone) ----------
+   Every live trigger type through B19's stages: the trigger, then a 15m CLOSE $15 beyond it before price trades $13
+   against it or an opposite structure break, then the plan (entry at that close, SL -$13, TP1 +$15, TP2 +$20). The
+   probability shown is the measured rate of that trigger type with its 95% interval; the score is a count of checks,
+   never a probability. A confirmed row is accepted only when its type has a validated out-of-sample edge: none has. */
+const CF_KIND = { ENG: "Engine signal", GRAB: "Liquidity grab", BREAK: "Liquidity break", SWEEP: "Sweep setup", BREAKOUT: "Breakout setup", "4H": "4h breakout (all 4)" };
+function cfWilson(k, n) {
+  if (!(n > 0)) return [NaN, NaN];
+  const z = 1.959964, p = k / n, den = 1 + (z * z) / n, mid = (p + (z * z) / (2 * n)) / den;
+  const half = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / den;
+  return [Math.max(0, mid - half), Math.min(1, mid + half)];
+}
+/* Sizing for a confirmed plan (display only): the lot that keeps the loss at the stop, costs included, within the
+   viewer's risk % of the viewer's balance; contract from the broker specification the viewer entered (UNVERIFIED
+   defaults otherwise). Costs: the research model's upper figure ($ per oz), so the ceiling holds; the operator's measured
+   round trip is shown beside it. Formulas: quantum/contract.py, mirrored in costs.js (lotsForRisk, tradeMoney). */
+function cfSizing(r) {
+  const C = S.index && S.index.alerts && S.index.alerts.confirm;
+  if (!C || !window.QCosts || !QCosts.lotsForRisk) return null;
+  const D = S.data, H = (D && D.hc) || {};
+  const { spec, check } = hcSpec(H);
+  const acct = S.account || ACCT_DEFAULT, risk = isNum(S.cfRisk) && S.cfRisk > 0 ? S.cfRisk : 1;
+  const costHi = (C.model_cost || [])[1], costOp = C.op_cost, sl = C.sl_usd;
+  const money = (v) => (isNum(v) ? `${v < 0 ? "−" : ""}${esc(spec.account_currency)} ${Math.abs(v).toFixed(2)}` : "—");
+  const riskIn = `<input class="cf-risk" type="number" min="0.1" max="5" step="0.1" value="${risk}" style="width:60px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:1px 4px;font:12px var(--mono)">`;
+  if (!check.ok || !isNum(costHi)) {
+    return { html: `<div>Size</div><div><span class="warn">not computed: ${esc(check.ok ? "no cost model in this build" : "broker specification invalid: " + check.errors.join("; "))}</span></div>` };
+  }
+  const lots = QCosts.lotsForRisk(spec, (acct * risk) / 100, sl, costHi);
+  const M1 = QCosts.tradeMoney(spec, lots, 15, sl, costHi), M2 = QCosts.tradeMoney(spec, lots, 20, sl, costHi);
+  const rrNet = (15 - costHi) / (sl + costHi);
+  const html = `<div>Size</div><div><b>${lots > 0 ? f(lots, 2) + " lot" : "below the minimum lot"}</b> <span class="dim">at ${riskIn}% of ${money(acct)} (the balance is set under "Your trade")</span></div>
+        <div>Max loss at SL</div><div>${lots > 0 ? money(M1.net_sl) : "—"} <span class="dim">(−$${f(sl, 0)} of price + costs)</span></div>
+        <div>At TP1 / TP2</div><div>${lots > 0 ? `${money(M1.net_tp)} / ${money(M2.net_tp)}` : "—"} <span class="dim">after costs · R:R after costs ${f(rrNet, 2)}</span></div>
+        <div>Costs</div><div>${lots > 0 ? money(M1.cost) : "—"} <span class="dim">round trip at $${f(costHi, 2)}/oz (research model, upper); at your measured $${f(costOp, 2)}/oz: ${lots > 0 ? money((M1.cost * costOp) / costHi) : "—"}</span></div>
+        <div>Contract</div><div>${f(spec.contract_size, 0)} oz per lot <b class="${S.spec ? "" : "warn"}">${esc(spec.status || "")}</b></div>`;
+  return { html, lots };
+}
+function renderConfirm() {
+  const el = $("#cf"), st = $("#cf-state"); if (!el) return;
+  const C = S.index && S.index.alerts && S.index.alerts.confirm;
+  if (!C) { el.innerHTML = `<span class="muted">No confirmation panel in this build: it is switched off (CONFIRM_PANEL=0) or has not run yet. Nothing here is a trade signal.</span>`; if (st) { st.textContent = "OFF"; st.className = "pill"; } return; }
+  if (C.error) { el.innerHTML = `<span class="muted">Panel unavailable this run (${esc(C.error)}). Alerts are not affected.</span>`; if (st) { st.textContent = "—"; st.className = "pill"; } return; }
+  const accepted = C.headline !== C.no_trade;
+  if (st) { st.textContent = accepted ? "TRADE" : "NO TRADE"; st.className = "pill " + (accepted ? "bull" : "warn"); }
+  const side = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
+  const rt = (v) => { if (!v) return "not measured"; const [lo, hi] = cfWilson(v[0], v[1]); return `${pct((100 * v[0]) / v[1], 0)} of ${Number(v[1]).toLocaleString("en-US")} trades (${esc(v[2])}, 95% ${pct(100 * lo, 0)}–${pct(100 * hi, 0)})`; };
+  const stLabel = (k) => { const st = ev(k).status || "INSUFFICIENT", txt = (C.status_text || {})[st] || st;
+    return `<b class="${st === "VALIDATED" ? "bull" : "warn"}">${esc(txt)}</b>`; };
+  const ev = (k) => (C.evidence || {})[k] || {};
+  const prob = (k, key) => { const rs = (ev(k).rates || {})[key]; return rs && rs.length ? rs.map(rt).join("; ") : "not measured after a confirmation"; };
+  const touch = (k) => { const a = ev(k).any_time, n = ((ev(k).confirmed || {}).X15) || 0; return a && isNum(a.T15) ? `${pct(100 * a.T15, 0)} reached +$15 and ${pct(100 * a.T20, 0)} reached +$20 within 24 h of ${n} trades (2020-22)` : "not measured"; };
+  const OUT = { TP: ["bull", "target first"], SL: ["bear", "stop first"], AMBIGUOUS: ["warn", "target and stop in one bar (counted as the stop)"], TIMEOUT: ["", "neither in 192 bars"], OPEN: ["", "open"] };
+  const usd = (x) => (isNum(x) ? (x < 0 ? "−$" : "+$") + Math.abs(x).toFixed(2) : "—");
+  const STAGE = {
+    PENDING: (r) => `<b>INITIAL SETUP</b> <span class="dim">(not a trade)</span> · confirmation pending: needs a 15m close between ${px(r.confirm_at)} and ${px(isNum(r.cap_at) ? r.cap_at : r.confirm20_at)} ($15–$${f(C.cap_usd || 20, 0)} beyond) before ${px(r.invalid_at)} (${r.bars || 0} of ${C.win_bars} bars)`,
+    INVALIDATED: (r) => `<b class="bear">INVALIDATED</b> → NO TRADE · ${esc(r.why || "")}${r.t_done ? ` (${tfmt(r.t_done)})` : ""}`,
+    EXPIRED: (r) => `<b>EXPIRED</b>${isNum(r.overshoot_usd) ? " (overshoot)" : ""} → NO TRADE · ${esc(r.why || "")}`,
+    STALE: (r) => `<b>NOT FINISHED</b> → ${r.t_conf ? "UNRESOLVED" : "NO TRADE"} · ${esc(r.why || "")}`,
+    CONFIRMED: (r) => `<b class="bull">CONFIRMED</b> ($15 close) · 15m close ${px(r.entry)} at ${tfmt(r.t_conf)}` +
+      (r.x20 && r.x20.status === "CONFIRMED" ? ` · <span class="dim">later close $20 beyond the trigger: ${px(r.x20.px)} at ${tfmt(r.x20.t)} (a milestone, not a confirmation)</span>` : ""),
+  };
+  const flagsOf = (r) => [r.backfill ? "rebuilt from the chart when the panel started" : "", r.late ? '<b class="warn">appeared after its bar was already processed (repaint or late data)</b>' : "",
+    r.vanished ? '<b class="warn">no longer on the chart (kept as first seen)</b>' : "", r.revised ? `<b class="warn">${esc(r.revised)}</b>` : "", r.repeats ? `+${r.repeats} later trigger(s) of the same idea folded in` : ""].filter(Boolean);
+  const head = (r) => `#${r.id} ${esc(CF_KIND[r.kind] || r.kind)} ${esc(r.tf)} ${side(r.dir)} <span class="dim">at ${px(r.p0)} · ${tfmt(r.t_close)}</span>`;
+  const block = (r, full) => {
+    const flags = flagsOf(r);
+    const ck = r.checks || null, ckn = ck ? Object.values(ck).filter(Boolean).length : null, ckt = ck ? Object.keys(ck).length : null;
+    const ckTip = ck ? Object.entries(ck).map(([k, v]) => `${v ? "✓" : "✗"} ${(C.check_text || {})[k] || k}`).join("\n") : "";
+    const res = r.status === "CONFIRMED" ? ["T15", "T20"].map((T) => { const x = (r.result || {})[T] || {}, o = OUT[x.out] || ["", esc(x.out || "—")];
+      return `<div>${T === "T15" ? "+$15" : "+$20"} result</div><div><b class="${o[0]}">${o[1]}</b>${isNum(x.usd) ? ` ${usd(x.usd)}` : ""} <span class="dim">· best ${usd(x.mfe)} · worst ${isNum(x.mae) ? "−$" + f(x.mae, 2) : "—"}</span></div>`; }).join("") : "";
+    const sz = r.status === "CONFIRMED" ? cfSizing(r) : null;
+    const plan = r.status === "CONFIRMED" ? `<div class="kv">
+        <div>Setup (trigger close)</div><div>${tfmt(r.t_close)} · ${px(r.p0)}</div>
+        <div>Confirmed</div><div>${tfmt(r.t_conf)} · moved <b>${usd(r.move_usd)}</b> from the trigger <span class="dim">(needed a 15m close $${f(C.x_usd.X15, 0)}–$${f(C.cap_usd || 20, 0)} beyond the trigger price)</span></div>
+        <div>Entry (reference)</div><div><b>${px(r.entry)}</b>${full ? ' <span class="dim">(the confirming 15m close; this page updates 3–66 min after a close, so your fill will differ: set SL / TP as distances from your own fill)</span>' : ""}</div>
+        <div>SL</div><div>${px(r.sl)} <span class="dim">−$${f(C.sl_usd, 0)}</span></div>
+        <div>TP1</div><div>${px(r.tp1)} <span class="dim">+$15 · R:R ${f(r.rr1, 2)}</span></div>
+        <div>TP2</div><div>${px(r.tp2)} <span class="dim">+$20 · R:R ${f(r.rr2, 2)}</span></div>${sz ? sz.html : ""}${res}</div>` : "";
+    const ev_ = ev(r.kind);
+    const vwhy = r.status === "CONFIRMED" ? (ev_.validated ? esc(r.reason || "") : `${stLabel(r.kind)} <span class="dim">(${esc(ev_.verdict || "")})</span>`) : "";
+    const hold = ev_.hold_min && isNum(ev_.hold_min.T15) ? ` · typical hold ${f(ev_.hold_min.T15 / 60, 1)} h` : "";
+    return `<div class="cf-item cf-${esc((r.status || "").toLowerCase())}">
+      <div class="cf-top">${head(r)}</div>
+      <div class="dim">${esc(r.what || "")}</div>
+      <div class="cf-stage">${(STAGE[r.status] || ((x) => esc(x.status || "")))(r)}</div>
+      ${plan}
+      ${full ? `<div class="cf-prob"><b>Target-before-stop probability</b> (the chance that decides profit), measured after a $15 confirmation: +$15 before −$13 ${prob(r.kind, "X15 T15")} · +$20 before −$13 ${prob(r.kind, "X15 T20")} · ${stLabel(r.kind)}${hold}</div>
+        <div class="dim">Target touch, stop ignored (not a profit measure): ${touch(r.kind)}</div>` : ""}
+      ${full && ck ? `<div class="dim" title="${esc(ckTip)}">Confidence score ${ckn} / ${ckt} checks <span class="warn">(a count of conditions met, not a probability and not validated; B19 measured no gain from these checks)</span></div>` : ""}
+      <div class="cf-verdict"><b class="${r.verdict === "TRADE" ? "bull" : r.verdict === "WAIT" ? "" : "warn"}">${esc(r.verdict || "")}</b>${vwhy ? ` · ${vwhy}` : ""}</div>
+      ${flags.length ? `<div class="dim">${flags.join(" · ")}</div>` : ""}
+    </div>`;
+  };
+  const rows = C.rows || [];
+  const live = rows.filter((r) => r.status === "PENDING" || (r.status === "CONFIRMED" && !r.t_done));
+  const doneConf = rows.filter((r) => r.status === "CONFIRMED" && r.t_done).slice(0, 6);
+  const rejected = rows.filter((r) => r.status !== "PENDING" && r.status !== "CONFIRMED");
+  const stName = (r) => (r.status === "STALE" ? (r.t_conf ? "CONFIRMED, NOT FINISHED → UNRESOLVED" : "NOT FINISHED → NO TRADE") : `${String(r.status || "")} → NO TRADE`);
+  const rejLines = rejected.map((r) => `<li>${head(r)} · <b class="${r.status === "INVALIDATED" ? "bear" : ""}">${esc(stName(r))}</b>: ${esc(r.why || "")}${r.repeats ? ` <span class="dim">(+${r.repeats} folded)</span>` : ""}</li>`).join("");
+  const items = (live.length ? `<h4>Now</h4>${live.map((r) => block(r, true)).join("")}` : '<p class="muted">Nothing waiting for confirmation or running now.</p>') +
+    (doneConf.length ? `<h4>Confirmed in the last 3 days</h4>${doneConf.map((r) => block(r, false)).join("")}` : "") +
+    (rejected.length ? `<details class="cf-ev"><summary class="dim">NO TRADE: ${rejected.length} trigger(s) INVALIDATED, EXPIRED or not finished (why)</summary><ul class="cf-rej">${rejLines}</ul></details>` : "");
+  const R = C.random || {}, rnd = (key) => (R.rates || {})[key];
+  const evRows = Object.entries(C.evidence || {}).map(([k, v]) => {
+    const conf = v.confirmed && v.triggers ? `${pct((100 * v.confirmed.X15) / v.triggers, 0)} of ${Number(v.triggers).toLocaleString("en-US")}` : "—";
+    const at = (v.at_trigger || {}).T15;
+    return `<tr><td>${esc(CF_KIND[k] || k)} <span class="dim">${esc(v.study)}</span></td><td>${conf}</td><td>${prob(k, "X15 T15")}</td><td>${prob(k, "X15 T20")}</td><td>${at ? rt(at) : "—"}</td><td>${touch(k)}</td><td>${stLabel(k)}<div>${esc(v.verdict)}</div></td></tr>`;
+  }).join("");
+  const rr = rnd("X15 T15"), rr20 = rnd("X15 T20"), ra = (R.at_trigger || {}).T15;
+  const rndRow = rr ? `<tr><td>Random triggers <span class="dim">B21 N2</span></td><td>${pct(100 * (R.confirmed_share || 0), 0)} of ${Number(16384).toLocaleString("en-US")}</td><td>${rt([rr[0], rr[1], "2020-22"])}</td><td>${rt([rr20[0], rr20[1], "2020-22"])}</td><td>${ra ? rt([ra[0], ra[1], "2020-22"]) : "—"}</td><td>66% (2020-22)</td><td>the baseline</td></tr>` : "";
+  const minN = C.live_min_n || 30;
+  const recCell = (g) => (g[1] ? `${g[0]} of ${g[1]}${g[1] < minN ? ` <span class="warn">${esc(C.insufficient || "")} (fewer than ${minN})</span>` : ` = ${pct((100 * g[0]) / g[1], 0)}`}` : "—");
+  const rec = C.record || {}, recRows = Object.entries(rec).map(([k, g]) => `<tr><td>${esc(CF_KIND[k] || k)}</td><td>${g.confirmed} of ${g.triggers}</td><td>${recCell(g.T15)}</td><td>${recCell(g.T20)}</td><td>${g.invalidated} / ${g.expired}</td></tr>`).join("");
+  const be = C.break_even || {};
+  const ageMin = isNum(C.t) ? (Date.now() / 1000 - C.t) / 60 : null;
+  const stale = ageMin !== null && ageMin > 45 && !marketClosed(new Date())
+    ? `<p class="warn"><b>OUT OF DATE</b>: this panel was built ${f(ageMin, 0)} min ago (the site updates every 15 min). Nothing below is live until the next update.</p>` : "";
+  const shadow = C.mode === "SHADOW" ? `<div class="cf-shadow"><b>SHADOW TEST: recording and testing only.</b> Not a trading recommendation. No signal type is validated; nothing here is sent to the phone or executed. Evidence comes only from the registered forward test (B24) after realistic costs.</div>` : "";
+  el.innerHTML = `${shadow}${stale}<div class="cf-head ${accepted ? "bull" : "warn"}">${esc(C.headline)}</div>
+    <p class="cf-sub">${esc(C.sub || "")} ${isNum(C.pending) ? `Now: ${C.pending} waiting for confirmation, ${C.running} confirmed and running.` : ""}</p>
+    <p class="note"><b>Stages:</b> INITIAL SETUP (a trigger; not a trade) → CONFIRMED (the first 15m close $${f((C.x_usd || {}).X15, 0)} beyond the trigger price, if it is no more than $${f(C.cap_usd || 20, 0)} beyond, before −$${f(C.inv_usd, 0)}) → plan. INVALIDATED or EXPIRED (incl. a first close beyond $${f(C.cap_usd || 20, 0)}: no chasing) = NO TRADE. Every row stays NO TRADE until its type passes an out-of-sample test above break-even; none has. Shadow / forward test only: nothing is executed or sent.</p>
+    ${rows.length ? items : '<p class="muted">No trigger in the last 3 days.</p>'}
+    <details class="cf-ev"><summary class="dim">What each trigger type measured with the original rule (no $${f(C.cap_usd || 20, 0)} cap; 2020–22, one per idea; validation where it was run)</summary>
+      <div class="scroll"><table class="t yt"><tr><th>Type</th><th>Triggers confirmed</th><th>+$15 before −$13, after a $15 close</th><th>+$20 before −$13, after a $15 close</th><th>+$15 before −$13, entered at the trigger</th><th>Touch, stop ignored</th><th>Validation status</th></tr>${evRows}${rndRow}</table></div>
+      <p class="note">Break-even at your $${f(C.op_cost, 2)} per oz: ${pct(100 * (be.T15 || 0), 1)} for +$15 before −$13, ${pct(100 * (be.T20 || 0), 1)} for +$20 (research cost model $${f((C.model_cost || [])[0], 2)}–${f((C.model_cost || [])[1], 2)}). A rate counts as validated only when a registered out-of-sample test passed: none has. These rates were measured before the $${f(C.cap_usd || 20, 0)} cap (amendment B24-CONFIRM-FWD-A1, 2026-11-10); the capped rule's history for engine signals is in research/CF_VALIDATION.md, and its live record starts with B24.</p>
+    </details>
+    ${recRows ? `<details class="cf-ev"><summary class="dim">Live record since ${tfmt(C.started_utc)} (descriptive, no verdict)</summary><div class="scroll"><table class="t yt"><tr><th>Type</th><th>Confirmed</th><th>+$15 before −$13</th><th>+$20 before −$13</th><th>Invalid / expired</th></tr>${recRows}</table></div></details>` : ""}
+    ${C.events ? `<p class="${C.events.ok ? "note" : "warn"}">Event log (${esc(C.events.file || "")}, append-only, hash-chained): ${esc(C.events.why || "")}${C.events.ok ? "" : ". New events are not being recorded until it is repaired."}</p>` : ""}
+    <p class="note">Rule: ${esc(C.rule || "")}. A touch never confirms: only a 15m close does, and a bar that touches −$13 and closes beyond counts as invalid. The direction is never reversed. Volume: the spot feed has none (COMEX order flow tested in B5: no information). Prices are the site's feed${S.mt5 ? " shifted by your MT5 offset" : ""}. Nothing here is sent to the phone.</p>`;
+  el.querySelectorAll(".cf-risk").forEach((x) => { x.onchange = (e) => { const v = Number(e.target.value); S.cfRisk = v > 0 && v <= 5 ? v : 1; store.set("cf_risk", S.cfRisk); renderConfirm(); }; });
+}
+
 function renderPlanAlerts() {
   const el = $("#pa"), st = $("#pa-state"); if (!el) return;
   const A = S.index && S.index.alerts, P = A && A.plans;
@@ -2171,7 +2305,7 @@ function validationHtml(V) {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderPlanAlerts); safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
+  safe(renderPlanAlerts); safe(renderConfirm); safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
 load();

@@ -1,0 +1,45 @@
+{
+  "id": "B20",
+  "title": "Run continuation calibration: once 15m candles are already running in one direction, how often does price reach +$15 / +$20 in THAT direction before -$13?",
+  "status": "APPROVED by the operator 2026-11-07; development runs once after this commit; validation opens once, after the development results are committed, only for candidates passing the development screen; the holdout opens only for a candidate passing development AND validation",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-07 (chat): \"Just give me the confirm price movement of minimum $15 to $20, in which markets first move to same direction and hit the TP first before reversing back. So dig out the calculation and calibration and the confirmation ... as there are many candles which goes in the same direction, as I already have shared the different screenshots ... List down all the strategies, list down all the procedures, calibrations, indicators, literature ... Strictly follow my rules.\" The rules are the operator's brief of 2026-11-07 (register before implementation, no look-ahead, no selection on recent winners, no reversal of direction, preserve all logs, keep B15 unchanged, independent validation, no production change before approval); that brief also approved testing on the 2023-24 validation data.",
+  "partitions": ["development", "validation", "holdout"],
+  "created_utc": "2026-11-07T02:30:00Z",
+  "source_of_hypothesis": "The operator's MT5 screenshots (30 Oct - 6 Nov 2026): long runs of same-direction 15m candles (3 Nov 02:00-10:15 down $55; 4 Nov 06:30-14:45 up $110; 5 Nov 00:00-08:15 up $80). Hypothesis: a run already under way continues +$15 / +$20 before a -$13 reversal more often than a random entry (short-horizon time-series momentum). Not chosen from those days' outcomes: every 15m close of the partition is an event, and the bins are fixed here.",
+  "unchanged": "Production alerts, the engine, config.py, the website freeze key, B9-GRAB-FWD, B15-ENGINE-FWD, B19. Research code only (quantum/research/b20.py), never imported by production.",
+  "data": {
+    "series": "Twelve Data XAU/USD 15min and 1h research files (as B10-B19)",
+    "development": "2020-01-24 -> 2023-01-24, scored from 2020-04-01",
+    "validation": "2023-01-24 -> 2024-07-01; opened before by B13-1 and B19 (stated in the report)",
+    "holdout": "2024-07-01 -> 2026-01-01; never opened",
+    "scaling": "Distances are dollars at $4,000 scaled by price / 4000; costs are the engine cost model in dollars per oz (as B13-B19)"
+  },
+  "event": {
+    "universe": "every 15m close i of the partition whose candle closed up or down (close_i != close_{i-1})",
+    "direction": "d = the direction of the last close-to-close change; the trade is always in d (continuation, never reversed)",
+    "outcome": "from close_i: +T before -13 in direction d on the next 96 15m bars (one trading day); T = 15 (primary) and 20; a bar touching both levels is a loss unless it opened beyond the target (quantum.research.b13.race); undecided after 96 bars excluded",
+    "base_rate": "random entries at every 15m close of the partition, long and short, the same race (b13.random_rates convention), matched to each bin's direction mix"
+  },
+  "features_at_close_i": {
+    "run_length": "k = consecutive closes in direction d ending at i; bins 1, 2, 3, 4, 5, 6+",
+    "run_size": "(close_i - close at the run's start) x d, $ at $4,000; bins <5, 5-10, 10-15, 15-20, 20-30, >=30",
+    "last_candle_body": "|close_i - open_i| / ATR14 (15m, Wilder); bins <0.5, 0.5-1.0, 1.0-1.5, 1.5-2.5, >=2.5",
+    "session": "at the bar: London only, London + New York overlap, New York only, Asia / off (quantum.sessions.calendar)",
+    "trend_1h": "EMA20 vs EMA100 of 1h closes on the last 1h bar CLOSED by close_i: agrees with d / disagrees",
+    "day_move": "(close_i - the New York trading day's first open) x d, $ at $4,000; bins <0, 0-10, 10-20, 20-40, >=40",
+    "no_lookahead": "every feature uses bars closed at or before close_i; the outcome starts at the first bar opening at or after it"
+  },
+  "combined_rule_declared": "CONFIRMED RUN: run_length >= 3 AND run_size >= 15 AND trend_1h agrees (the operator's 'market first moves $15 in the same direction with several candles'), traded in d",
+  "model": "Logistic regression (scikit-learn, L2, C = 1.0) on run_length, run_size, last_candle_body, session dummies, trend_1h, day_move and ATR14 / price; purged time-ordered 5-fold cross-validation (96-bar purge and embargo); reported: AUC, a reliability table of predicted vs observed by decile, and the top decile's success rate and net",
+  "significance": "Day-clustered: each New York trading day is one cluster (outcomes of neighbouring closes overlap). For a bin: mean(win - base) / cluster-robust standard error, one-sided normal p.",
+  "primary_test": {
+    "family": "every one-way bin of the six features plus the combined rule, at T = 15 and T = 20 (58 tests); Holm at one-sided alpha 0.05 on the day-clustered p",
+    "development_screen": "a bin or rule is a candidate when n >= 300 decided, the success rate exceeds the matched base by >= 2 points, its Holm-adjusted p <= 0.05 and its mean net after model cost > 0. At most three candidates (largest clustered z) go to validation; the model's top decile is a candidate too when it meets the same screen.",
+    "validation_pass": "success rate - 1.645 x day-clustered SE > the break-even (13 + cost) / (13 + T), AND clustered z >= 1.645 against the matched base"
+  },
+  "decision": {
+    "if_pass": "A candidate passing development, validation and the holdout is proposed as a live forward test (registered separately) with its exact entry rule and measured odds. No production change before the operator approves.",
+    "if_not": "Recorded in research/trials.jsonl and the write-up; no re-run with changed bins, windows or targets on the same data. The calibration tables are reported either way: they ARE the measured odds the operator asked for."
+  }
+}

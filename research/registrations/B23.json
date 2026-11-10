@@ -1,0 +1,27 @@
+{
+  "id": "B23",
+  "title": "The raw ensemble's extreme tail (B22 exploratory lead): do the top 0.5% of its scores reach +$15 before -$13 above break-even on data it has never seen?",
+  "status": "APPROVED by the operator 2026-11-07 (master instruction); the rule below is frozen BEFORE the validation data are read; validation runs once; the holdout opens once only if validation passes",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-07, MASTER INSTRUCTION section 4: \"Chronological in-sample and out-of-sample testing ... Do not label a signal 90% unless its underlying model has demonstrated that performance on independent out-of-sample data\"; final instruction: \"Find the combination ... that gives the best independently validated probability of achieving a $15-$20 XAUUSD move after entry\".",
+  "partitions": ["validation", "holdout"],
+  "created_utc": "2026-11-07T08:30:00Z",
+  "source_of_hypothesis": "B22 development walk-forward (research/results/b22_development_2026-11-07.json): the UNCALIBRATED ensemble (mean of LR, RF, HGB, XGB, LGBM probabilities) scored 2021-01 -> 2023-01 out of sample; with thresholds taken causally from each training window's held-out last 20%, its top 0.5% reached +$15 before -$13 in 62.2% of 471 rows (day-clustered 95% 49.2-75.2%, net +$3.49 / oz), its top 0.1% 75.8% of 149, its top 1% 54.9% of 892; RF and HGB alone showed the same pattern. This is the best of 105 tail measurements in B22 and B22's registered rule selected a different model (which failed), so the lead is exploratory and needs this separate test.",
+  "warning_stated_in_advance": "In B22, Platt calibration fitted on the most recent 20% of each training window REVERSED the raw ranking, i.e. in those slices the highest raw scores did badly: the relation may be unstable in time. A validation failure is the expected outcome under that reading.",
+  "unchanged": "Production alerts, the engine, config.py, the website freeze key, B9 / B15 live tests, B19-B22. Research code only.",
+  "rule_frozen": {
+    "features": "exactly B22's 55 features (quantum.research.b22.base_features, hmm_features, rows_for), computed on the continuous development + validation series (every feature uses only data closed at or before its bar)",
+    "model": "ENS raw: the mean of the raw probabilities of B22's LR, RF, HGB, XGB and LGBM with B22's hyper-parameters (quantum.research.b22.make)",
+    "training": "development rows whose label window ends before the validation start (2023-01-24) by at least 96 bars; split in time: the first 80% fit the models, the last 20% give the score distribution",
+    "hmm": "fitted on 1h bars closed before 2023-01-24 only; forward-filtered through validation",
+    "threshold": "the 99.5th percentile of the ensemble's scores on that last 20% (top 0.5%); secondary 99.9th (top 0.1%) and 99th (top 1%)",
+    "label": "+$15 before -$13 (scaled by price / 4000) on the next 96 15m bars from the row's close, ties a loss unless the bar opened beyond the target (b13.race); +$20 secondary",
+    "rows": "every validation 15m close as a BUY and as a SELL, from the validation start; undecided rows dropped"
+  },
+  "primary_test": "top 0.5% at +$15: the day-clustered lower 95% bound of the success rate above the break-even (13 + model cost) / 28 AND mean net $ per oz after model cost > 0",
+  "holdout": "Only if validation passes: the same frozen models and threshold (no refit) on 2024-07-01 -> 2026-01-01, same rule.",
+  "decision": {
+    "if_pass_both": "Report the measured rate with its interval as the validated probability of this narrow signal, and propose a live forward test (registered separately). No production change before the operator approves.",
+    "if_fail": "The lead is closed; recorded in research/trials.jsonl and B22_RESULTS.md; no re-run with another model, threshold, feature set or target."
+  }
+}

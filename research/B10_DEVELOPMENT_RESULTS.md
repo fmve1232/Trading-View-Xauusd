@@ -89,3 +89,10 @@ level. The change was made when a unit test exposed the ambiguity, before the st
   the frozen engine's cost model (`harness.cost_pts`: $0.77 / $0.97 per oz at $4,000). The operator's measured round
   trip is $0.26, which gives (13 + 0.26) / 26 = 51.0%.
 - B13 reports net results in dollars at $4,000 with both costs.
+
+## Erratum (2026-11-07, B19)
+
+- **What was counted:** the 15m signal figure (64.3% of 70) counts every SIGNAL. The engine often repeats one idea on consecutive bars.
+- **One per idea:** under the live REPEAT rule (same direction within 4 hours and $15), the 70 signals are **23 ideas, 52.2% of 23** on the same measure.
+- **Effect:** the lead was inflated by counting repeats as independent trades.
+- **Source:** `research/results/b19_b10_dedupe_2026-11-07.json`, `research/B19_RESULTS.md` section 5. The numbers above are left as they were.

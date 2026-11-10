@@ -1,0 +1,98 @@
+{
+ "source": "research/results/b19_validation_2026-11-07.json",
+ "sims": 10000,
+ "trades_per_sim": 100,
+ "seed": 19,
+ "strategies": {
+  "ENG 1 as alerted": {
+   "trades": 24,
+   "mean_r": -0.14448717948718307,
+   "median_max_dd_r": 19.127692307692485,
+   "p95_max_dd_r": 33.45538461538485,
+   "p_dd_ge_10r": 0.9114,
+   "p_dd_ge_5r": 0.9986,
+   "median_total_r": -14.14615384615422,
+   "p_total_below_0": 0.9382
+  },
+  "ENG X15F0 E1 S13 T20": {
+   "trades": 7,
+   "note": "too few trades to resample"
+  },
+  "ENG X15F1 E1 S13 T20": {
+   "trades": 1,
+   "note": "too few trades to resample"
+  },
+  "ENG X20F0 E1 S13 T20": {
+   "trades": 5,
+   "note": "too few trades to resample"
+  },
+  "ENG X20F1 E1 S13 T20": {
+   "trades": 1,
+   "note": "too few trades to resample"
+  },
+  "ENG none E1 S13 T20": {
+   "trades": 24,
+   "mean_r": -0.0034615384615441966,
+   "median_max_dd_r": 13.396153846153906,
+   "p95_max_dd_r": 26.86923076923092,
+   "p_dd_ge_10r": 0.7489,
+   "p_dd_ge_5r": 0.9926,
+   "median_total_r": 0.4615384615375633,
+   "p_total_below_0": 0.4851
+  },
+  "STR 1 as alerted": {
+   "trades": 187,
+   "mean_r": -0.0069981197968262765,
+   "median_max_dd_r": 11.016937568834901,
+   "p95_max_dd_r": 22.424228730292842,
+   "p_dd_ge_10r": 0.581,
+   "p_dd_ge_5r": 0.9733,
+   "median_total_r": -0.812201854027,
+   "p_total_below_0": 0.5243
+  },
+  "STR X15F0 E1 S13 T20": {
+   "trades": 49,
+   "mean_r": -0.2337046193791978,
+   "median_max_dd_r": 27.923064811119104,
+   "p95_max_dd_r": 45.39965930868006,
+   "p_dd_ge_10r": 0.9866,
+   "p_dd_ge_5r": 1.0,
+   "median_total_r": -22.658413090630866,
+   "p_total_below_0": 0.9694
+  },
+  "STR X15F1 E1 S13 T20": {
+   "trades": 12,
+   "mean_r": -0.42461538461538173,
+   "median_max_dd_r": 44.9999999999996,
+   "p95_max_dd_r": 61.709999999999624,
+   "p_dd_ge_10r": 0.9999,
+   "p_dd_ge_5r": 1.0,
+   "median_total_r": -42.4615384615382,
+   "p_total_below_0": 0.9997
+  },
+  "STR X20F0 E1 S13 T20": {
+   "trades": 36,
+   "mean_r": -0.07789462020577455,
+   "median_max_dd_r": 16.907035894214026,
+   "p95_max_dd_r": 32.70246138972778,
+   "p_dd_ge_10r": 0.8712,
+   "p_dd_ge_5r": 0.999,
+   "median_total_r": -7.52378515824268,
+   "p_total_below_0": 0.7101
+  },
+  "STR X20F1 E1 S13 T20": {
+   "trades": 9,
+   "note": "too few trades to resample"
+  },
+  "STR none E1 S13 T20": {
+   "trades": 187,
+   "mean_r": 0.07340148712801871,
+   "median_max_dd_r": 10.908414109399578,
+   "p95_max_dd_r": 22.556683925048574,
+   "p_dd_ge_10r": 0.582,
+   "p_dd_ge_5r": 0.9846,
+   "median_total_r": 7.07538118144161,
+   "p_total_below_0": 0.2833
+  }
+ }
+}
