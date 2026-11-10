@@ -703,16 +703,123 @@
    "mae": 13.039999999999964,
    "bars": 38,
    "path": "5m"
+  },
+  {
+   "id": 21,
+   "tf": "15m",
+   "t": 1794255300,
+   "t_dec": 1794256200,
+   "dir": -1,
+   "entry": 4147.4,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "PWH",
+     4147.6
+    ]
+   ],
+   "zones": [
+    "value-area high 4147.83"
+   ],
+   "sl": 4160.4,
+   "tp": 4132.4,
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794256516,
+   "result": "TP",
+   "t_res": 1794269700,
+   "mfe": 16.579999999999927,
+   "mae": 0.9400000000005093,
+   "bars": 34,
+   "path": "5m"
+  },
+  {
+   "id": 22,
+   "tf": "15m",
+   "t": 1794260700,
+   "t_dec": 1794261600,
+   "dir": 1,
+   "entry": 4141.35,
+   "kind": "4H BREAKOUT",
+   "levels": [
+    [
+     "PDH",
+     4106.97
+    ]
+   ],
+   "zones": [],
+   "sl": 4128.35,
+   "tp": 4156.35,
+   "checks": {
+    "major": true,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794265563,
+   "result": "SL",
+   "t_res": 1794270000,
+   "mfe": 5.449999999999818,
+   "mae": 13.720000000000255,
+   "bars": 17,
+   "path": "5m"
+  },
+  {
+   "id": 23,
+   "tf": "15m",
+   "t": 1794266100,
+   "t_dec": 1794267000,
+   "dir": -1,
+   "entry": 4143.88,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "TDH",
+     4145.7
+    ],
+    [
+     "1HH",
+     4145.08
+    ]
+   ],
+   "zones": [
+    "value-area high 4147.83"
+   ],
+   "sl": 4156.88,
+   "tp": 4128.88,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794267294,
+   "result": "TP",
+   "t_res": 1794270000,
+   "mfe": 16.25,
+   "mae": 0.18999999999959982,
+   "bars": 11,
+   "path": "5m"
   }
  ],
  "live": {
   "4H BREAKOUT": [
-   4,
+   5,
    0
   ],
   "SWEEP": [
-   7,
-   1
+   9,
+   3
   ],
   "BREAKOUT": [
    9,
