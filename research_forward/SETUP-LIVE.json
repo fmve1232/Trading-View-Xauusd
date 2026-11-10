@@ -1130,6 +1130,119 @@
    "mae": 0.2800000000002001,
    "bars": 14,
    "path": "5m"
+  },
+  {
+   "id": 32,
+   "tf": "15m",
+   "t": 1794303000,
+   "t_dec": 1794303900,
+   "dir": -1,
+   "entry": 4083.9,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDL",
+     4087.53
+    ]
+   ],
+   "zones": [
+    "below value-area low 4108.66"
+   ],
+   "sl": 4096.9,
+   "tp": 4068.9,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794304276,
+   "result": "TP",
+   "t_res": 1794317100,
+   "mfe": 15.740000000000236,
+   "mae": 4.269999999999982,
+   "bars": 45,
+   "path": "5m"
+  },
+  {
+   "id": 34,
+   "tf": "15m",
+   "t": 1794305700,
+   "t_dec": 1794306600,
+   "dir": -1,
+   "entry": 4077.87,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDL",
+     4081.3
+    ],
+    [
+     "4HL",
+     4082.13
+    ],
+    [
+     "1HL",
+     4082.13
+    ]
+   ],
+   "zones": [
+    "below value-area low 4100.84"
+   ],
+   "sl": 4090.87,
+   "tp": 4062.87,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794306873,
+   "result": "TP",
+   "t_res": 1794317400,
+   "mfe": 37.960000000000036,
+   "mae": 2.2600000000002183,
+   "bars": 37,
+   "path": "5m"
+  },
+  {
+   "id": 35,
+   "tf": "15m",
+   "t": 1794309300,
+   "t_dec": 1794310200,
+   "dir": -1,
+   "entry": 4072.95,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "1HL",
+     4073.14
+    ]
+   ],
+   "zones": [
+    "below value-area low 4102.01"
+   ],
+   "sl": 4085.95,
+   "tp": 4057.95,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794310507,
+   "result": "TP",
+   "t_res": 1794317400,
+   "mfe": 33.039999999999964,
+   "mae": 7.180000000000291,
+   "bars": 25,
+   "path": "5m"
   }
  ],
  "live": {
@@ -1142,8 +1255,8 @@
    7
   ],
   "BREAKOUT": [
-   10,
-   6
+   13,
+   9
   ],
   "4H CONFIRMED": [
    1,
