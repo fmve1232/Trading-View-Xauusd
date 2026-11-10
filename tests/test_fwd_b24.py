@@ -172,3 +172,21 @@ def test_the_phone_and_the_state_are_identical_with_the_recorder_on_or_off(tmp_p
         out[flag] = (sent, {k: v for k, v in rep.items() if k != "b24"}, {k: v for k, v in st.items() if k != "b24"})
         assert ("b24" in rep) == (flag == "1") and "error" not in rep.get("b24", {})
     assert out["0"] == out["1"]
+
+
+def test_amendment_a1_an_overshoot_of_the_20_cap_is_expired_and_never_confirmed(tmp_path):
+    """B24-CONFIRM-FWD-A1: the signal bar 40 closes at 4000; the first 15m close $15 beyond is $25 beyond: EXPIRED
+    (overshoot) with its move, never an entry, and counted apart in the weekly report."""
+    st: dict = {}
+    fb.run(_payloads(30, _close(29)), st, _close(29), str(tmp_path))
+    fb.run(_payloads(41, _close(40)), st, _close(40), str(tmp_path))
+    pl = _payloads(42, _close(41) + 420, forming_c=4025.5)
+    pl["15m"]["chart"]["c"][41] = 4025.0
+    pl["15m"]["chart"]["h"][41] = 4025.5
+    fb.run(pl, st, _close(41) + 420, str(tmp_path))
+    rec = json.loads((tmp_path / "research_forward" / fb.FILE).read_text())
+    r = rec["rows"][0]
+    assert r["stage"] == "EXPIRED" and r["why"] == "overshoot" and r["overshoot_usd"] == 25.0 and "A" not in r
+    assert fb.primary(r) is None
+    w = fb.weekly(rec["rows"], notify.trading_week(_close(40)), MON, "COLLECTING")["since_start"]
+    assert w["expired"] == 1 and w["expired_overshoot"] == 1 and w["confirmed"] == 0

@@ -75,5 +75,6 @@ The only change: the first 15m close at least $15 beyond the trigger price confi
 beyond. If it is more than $20 beyond, the setup is EXPIRED (overshoot), and it is never confirmed later.
 Everything else is unchanged: the −$13 invalidation (checked first), the trigger price (the trigger bar's close,
 never reset), 96 bars, entries, exits, looks, thresholds and the deadline. The capped and uncapped historical
-results are reported side by side in `research/CF_VALIDATION.md`; the cap was the operator's decision before either
-existed.
+results are reported side by side in `research/CF_VALIDATION.md` (2020-22 / 2023-24 / 2026) and
+`research/B24_A1_REALDATA.md` (the same 200 live setups of 2026-10-18 to 11-10); the cap was the operator's decision
+before either existed, and neither is used to choose a rule.

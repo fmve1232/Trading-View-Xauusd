@@ -19,6 +19,9 @@ Per period, for the engine-signal trigger (15m / 30m / 1h / 4h, REPEAT-pooled):
               measures nothing.
   timing      the confirmed plan entered one 15m bar later (the next close; start the bar after): the site shows a
               confirmation 3-66 min after the close, so the confirming close itself is not a fill a person can get.
+  capped      amendment B24-CONFIRM-FWD-A1 (operator, 2026-11-10): the same confirmations, but one whose confirming
+              close is more than $20 beyond the trigger price is EXPIRED (overshoot) instead. Reported beside the
+              original rule, never instead of it; the cap was the operator's decision before these figures existed.
   trades      price-free per-trade rows (entry time, direction, timeframe, outcome, net / gross / cost in the units
               below) so every figure can be recomputed, and the two out-of-sample periods pooled.
 Distances are $ at $4,000 scaled by s = P0 / 4000 in every period, as B19 registered them. B19 subtracts the cost
@@ -47,6 +50,7 @@ PARTS = ("development", "validation", "recent")
 LABEL = {"development": "development 2020-22 (in sample)", "validation": "validation 2023-24 (out of sample)",
          "recent": "2026 (out of sample)"}
 OP_COST = B.OP_COST
+CAP = 20.0                                # amendment A1: the confirming close at most $20 beyond (at $4,000 scale)
 
 
 def _ci_mean(x: np.ndarray) -> list:
@@ -155,6 +159,14 @@ def run_part(rd: str, part: str, log=print) -> dict:
     move = (P.c[C["k"][cf]] - A["p0"][cf]) * d[cf] / (A["p0"][cf] / 4000.0) if len(cf) else np.zeros(0)
     C1 = dict(C)                                         # the same confirmations, entered one 15m bar later
     C1["k"] = np.where(st == "CONFIRMED", C["k"] + 1, C["k"])
+    mv_all = np.full(len(d), np.nan)
+    mv_all[cf] = move
+    over = (st == "CONFIRMED") & (mv_all > CAP + 1e-9)    # amendment A1: an overshoot of the cap is EXPIRED
+    Cc = dict(C)
+    Cc["status"] = np.where(over, "EXPIRED", st).astype(object)
+    Cc1 = dict(Cc)
+    Cc1["k"] = np.where(Cc["status"] == "CONFIRMED", C["k"] + 1, C["k"])
+    stc = Cc["status"]
     funnel = {"setups": len(d), "confirmed": int((st == "CONFIRMED").sum()),
               "confirmed_share": float((st == "CONFIRMED").mean()) if len(d) else None,
               "confirmed_share_ci95": list(H.wilson(int((st == "CONFIRMED").sum()), len(d))) if len(d) else [None, None],
@@ -167,7 +179,12 @@ def run_part(rd: str, part: str, log=print) -> dict:
               "by_direction": {nm: {"setups": int((d == dd).sum()), "confirmed": int(((d == dd) & (st == "CONFIRMED")).sum())}
                                for dd, nm in ((1, "BUY"), (-1, "SELL"))},
               "by_timeframe": {k: {"setups": int((tf == k).sum()), "confirmed": int(((tf == k) & (st == "CONFIRMED")).sum())}
-                               for k in B.TFS}}
+                               for k in B.TFS},
+              "capped": {"confirmed": int((stc == "CONFIRMED").sum()), "expired_overshoot": int(over.sum()),
+                         "confirmed_share": float((stc == "CONFIRMED").mean()) if len(d) else None,
+                         "confirmed_share_ci95": list(H.wilson(int((stc == "CONFIRMED").sum()), len(d))) if len(d) else [None, None],
+                         "overshoot_moves": sorted(round(float(x), 2) for x in mv_all[over]),
+                         "by_direction": {nm: int(((d == dd) & (stc == "CONFIRMED")).sum()) for dd, nm in ((1, "BUY"), (-1, "SELL"))}}}
     out = {"part": part, "label": LABEL[part], "window": [str(m15.index[0]), str(m15.index[-1])], "scored_from": str(score_from),
            "data_hash_15m": H.data_hash(m15), "funnel": funnel, "plans": {},
            "scale_s": {"min": float(s_all.min()), "max": float(s_all.max()), "mean": float(s_all.mean())} if len(d) else None,
@@ -176,7 +193,8 @@ def run_part(rd: str, part: str, log=print) -> dict:
     for T in (15.0, 20.0):
         key = f"T{T:g}"
         for nm, CC, conf in (("after_confirmation", C, "X15F0"), ("at_trigger_no_confirmation", C0, "none"),
-                             ("after_confirmation_one_bar_later", C1, "X15F0")):
+                             ("after_confirmation_one_bar_later", C1, "X15F0"), ("after_capped_confirmation", Cc, "X15F0"),
+                             ("after_capped_confirmation_one_bar_later", Cc1, "X15F0")):
             T_ = B.plan_and_exit(P, A, CC, conf, "E1", "S13", T)
             ex = T_["execute"]
 
@@ -225,8 +243,10 @@ def _row(nm: str, a: dict) -> str:
             f"{_u(a['avg_win'])} / {_u(a['avg_loss'])} | {a['max_drawdown_r']:.1f} | {a['longest_losing_streak']} |")
 
 
-PLAN_NAME = {"after_confirmation": "after the $15 confirmation (entry at the confirming close)",
-             "after_confirmation_one_bar_later": "same, entered one 15m bar later",
+PLAN_NAME = {"after_capped_confirmation": "CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it",
+             "after_capped_confirmation_one_bar_later": "CAPPED, entered one 15m bar later",
+             "after_confirmation": "original (no cap): first close $15+ beyond, entry at it",
+             "after_confirmation_one_bar_later": "original, entered one 15m bar later",
              "at_trigger_no_confirmation": "at the trigger, no confirmation"}
 HDR = ("| Plan | Trades | TP / SL (incl. ambiguous) / timeout | Target first (95% CI) | Net $/oz, model cost (95% CI) | "
        "Net at your $0.26 | Net at 2x model cost | PF | Avg win / loss | Max DD (R) | Longest losing run |\n"
@@ -246,6 +266,8 @@ def markdown(res: dict) -> str:
          ""]
     po = res["pooled_out_of_sample"]["T15"]["after_confirmation"]
     po1 = res["pooled_out_of_sample"]["T15"]["after_confirmation_one_bar_later"]
+    pc = res["pooled_out_of_sample"]["T15"]["after_capped_confirmation"]
+    pc1 = res["pooled_out_of_sample"]["T15"]["after_capped_confirmation_one_bar_later"]
     pt = res["pooled_out_of_sample"]["T15"]["at_trigger_no_confirmation"]
     c26 = P["recent"]["plans"]["T15"]["after_confirmation"]["all"]["cost_model_mean"] or 0.0
     be_op, be_mod = _be(15.0, OP_COST), _be(15.0, c26)
@@ -256,7 +278,26 @@ def markdown(res: dict) -> str:
     d1 = a15["development"]["after_confirmation_one_bar_later"]["all"]
     ns = [a15[k]["after_confirmation"]["all"]["trades"] for k in PARTS]
     cap = {k: sum(t["cost"] > 0.15 * STOP + 1e-9 for t in a15[k]["after_confirmation"]["trades"]) for k in PARTS}
-    L += ["**NOT STATISTICALLY VALIDATED. No accuracy claim is made.** Out of sample (2023-24 validation and 2026 pooled), the",
+    capf = {k: P[k]["funnel"]["capped"] for k in PARTS}
+    import pandas as pd
+    months = (pd.Timestamp(P["recent"]["window"][1]) - pd.Timestamp(P["recent"]["scored_from"])).days / 30.44
+    pace = capf["recent"]["confirmed"] / months if months > 0 else float("nan")
+    L += ["**NOT STATISTICALLY VALIDATED under either rule. No accuracy claim is made.**", "",
+          ("**Live rule since amendment B24-CONFIRM-FWD-A1 (2026-11-10): the confirming close must be $15-$20 beyond the "
+           "trigger price; beyond $20 the setup is EXPIRED.** The cap was the operator's decision, made before any figure "
+           "below was computed; neither rule is chosen by these figures, and both are reported."), "",
+          (f"Capped, out of sample pooled: {pc['tp']} of {pc['trades']} trades reached +$15 before -$13 ({_p(pc['tp_rate'])}, 95% "
+           f"{_ci(pc['tp_rate_ci95'], True)}); net {_u(pc['net_model'])} $/oz at the model cost (95% {_ci(pc['net_model_ci95'])}); "
+           f"entered one 15m bar later {pc1['tp']} of {pc1['trades']}, {_u(pc1['net_model'])} $/oz. The cap removed "
+           + ", ".join(f"{capf[k]['expired_overshoot']} of {P[k]['funnel']['confirmed']}" for k in PARTS)
+           + " confirmations (2020-22, 2023-24, 2026) as overshoots."), "",
+          (f"Pace (B24's stream is these engine signals): 2026 gave {capf['recent']['confirmed']} capped confirmations in "
+           f"{months:.1f} scored months (about {pace:.1f} a month; {P['recent']['funnel']['confirmed']} under the original rule). "
+           f"At that pace B24's first look (30 decided results) comes about {30 / pace / 12:.1f} years after it starts and the "
+           f"last (100) about {100 / pace / 12:.1f} years after, so the registered 2029-12-31 deadline (unchanged by the "
+           "amendment) is likely to end the test before the last look. A slow test, not a weaker standard: fewer alerts "
+           "is the operator's stated priority."), "",
+          "Original rule (no cap), out of sample (2023-24 validation and 2026 pooled), the",
           (f"confirmed plan reached +$15 before -$13 in {po['tp']} of {po['trades']} trades ({_p(po['tp_rate'])}, 95% "
           f"{_ci(po['tp_rate_ci95'], True)}); break-even is {_p(be_op, 1)} at your $0.26 cost and about {_p(be_mod, 1)} at the"),
           (f"model cost. The interval includes break-even. Net {_u(po['net_model'])} $/oz per trade at the model cost (95% "
@@ -273,14 +314,15 @@ def markdown(res: dict) -> str:
           "\"NO TRADE — INSUFFICIENT CONFIRMATION\", and the registered B24 forward test decides it on new data.",
           ""]
     L += ["## Funnel (setups, confirmations, failed confirmations)", "",
-          ("| Period | Window scored | Setups | Confirmed (95% CI) | Invalidated: price -$13 / opposite structure | Expired | "
+          ("| Period | Window scored | Setups | Confirmed, original rule (95% CI) | Confirmed, capped / overshoot EXPIRED | Invalidated: price -$13 / opposite structure | Expired (window) | "
           "BUY confirmed / setups | SELL confirmed / setups | Mean move from the trigger at the confirming close ($) | Median 15m bars to confirm |"),
-          "|---|---|---|---|---|---|---|---|---|---|"]
+          "|---|---|---|---|---|---|---|---|---|---|---|"]
     for k in PARTS:
         f = P[k]["funnel"]
         b, se = f["by_direction"]["BUY"], f["by_direction"]["SELL"]
         L.append(f"| {P[k]['label']} | {P[k]['scored_from'][:10]} → {P[k]['window'][1][:10]} | {f['setups']} | {f['confirmed']} "
-                 f"({_p(f['confirmed_share'])}, {_ci(f['confirmed_share_ci95'], True)}) | {f['invalidated_price']} / "
+                 f"({_p(f['confirmed_share'])}, {_ci(f['confirmed_share_ci95'], True)}) | {f['capped']['confirmed']} / "
+                 f"{f['capped']['expired_overshoot']} | {f['invalidated_price']} / "
                  f"{f['invalidated_structure']} | {f['expired']} | {b['confirmed']} / {b['setups']} | {se['confirmed']} / {se['setups']} | "
                  f"{_u(f.get('confirmation_move_mean'))} | {f.get('bars_to_confirmation_median') or '—'} |")
     L += ["", "A failed confirmation is NO TRADE: nothing is entered, nothing is lost. The at-trigger rows below show what those",
@@ -289,8 +331,8 @@ def markdown(res: dict) -> str:
         L += [f"## Plan results: +${T[1:]} before -$13", ""]
         for k in PARTS:
             L += [f"**{P[k]['label']}**", "", HDR]
-            for nm in ("after_confirmation", "after_confirmation_one_bar_later", "at_trigger_no_confirmation"):
-                L.append(_row(PLAN_NAME[nm], P[k]["plans"][T][nm]["all"]))
+            for nm, label in PLAN_NAME.items():
+                L.append(_row(label, P[k]["plans"][T][nm]["all"]))
             L.append("")
         L += ["**Out of sample pooled (2023-24 validation + 2026)**", "",
               "| Plan | Trades | TP | Target first (95% CI) | Net $/oz (95% CI) | Net at $0.26 | Net at 2x cost | PF | Max DD (R) | Longest losing run |",
@@ -352,12 +394,14 @@ def markdown(res: dict) -> str:
     return "\n".join(L)
 
 
-def log_trials(res: dict, path: str) -> int:
+def log_trials(res: dict, path: str, only: str | None = None) -> int:
     """One record per period x plan x target in the append-only trial log (research/trials.jsonl), as B19 logged its runs."""
     n = 0
     for part, v in res["parts"].items():
         for T, blk in v["plans"].items():
             for nm, b in blk.items():
+                if only and only not in nm:
+                    continue
                 a = b["all"]
                 H.log_trial(path, {"phase": "CF-VALIDATION", "partition": part, "id": f"CF ENG X15F0 E1 S13 {T} {nm}",
                                    "note": ("re-analysis of B19's rule with the cost in the move's units; the one-bar-later "
@@ -376,6 +420,7 @@ def main(argv=None) -> int:
     ap.add_argument("--md", help="also write the Markdown write-up here")
     ap.add_argument("--from-json", action="store_true", help="only regenerate --md from an existing --out")
     ap.add_argument("--log", help="append one record per period / plan / target to this trial log (research/trials.jsonl)")
+    ap.add_argument("--log-only", help="log only the plans whose name contains this (e.g. capped: the others are logged)")
     a = ap.parse_args(argv)
     if not a.from_json and not a.rd:
         ap.error("--rd is required unless --from-json")
@@ -387,7 +432,7 @@ def main(argv=None) -> int:
                 fh.write(markdown(res))
             print(f"written {a.md}")
         if a.log:
-            print(f"logged {log_trials(res, a.log)} trial records to {a.log}")
+            print(f"logged {log_trials(res, a.log, a.log_only)} trial records to {a.log}")
         return 0
     res = {"rule": "quantum/confirm_panel.py = research/registrations/B19.json ENG X15F0 E1 S13 (T15 / T20)",
            "tool": "research/tools/cf_validation.py",
@@ -407,7 +452,7 @@ def main(argv=None) -> int:
             fh.write(markdown(res))
         print(f"written {a.md}")
     if a.log:
-        print(f"logged {log_trials(res, a.log)} trial records to {a.log}")
+        print(f"logged {log_trials(res, a.log, a.log_only)} trial records to {a.log}")
     return 0
 
 

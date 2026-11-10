@@ -6,7 +6,9 @@ that carries it: only engine signals whose bar closes after that run are recorde
 
 Per signal (BUY and SELL alike), each decision is written once, when it is made, and never edited:
   trigger      the signal bar's close and time; folded into an earlier one of the same idea (REPEAT rule) if any
-  stage B      confirm_panel's state machine on the 15m bars, each bar examined once: CONFIRMED / INVALIDATED / EXPIRED
+  stage B      confirm_panel's state machine on the 15m bars, each bar examined once: CONFIRMED / INVALIDATED / EXPIRED;
+               amendment A1 (research/registrations/B24-CONFIRM-FWD-A1.json): the first close $15 beyond confirms only
+               if it is no more than $20 beyond, otherwise EXPIRED (why "overshoot", with the move)
   entries      A = the confirming 15m close; B = the first price the site could act on: the newest price of the first
                run that has the confirming bar (5m forming bar at that run's download), with its time and the latency
   costs        the engine's round-trip cost model at that run (dashboard.checks.cost_pts) and the operator's $0.26;
@@ -105,7 +107,7 @@ def advance(row: dict, P15: dict, P5: dict | None, payloads: dict, t_now: int) -
             row.update(stage="DATA GAP", why=GAP_WHY, t_stage=t_now, t_stage_seen=t_now)
             return
         js = j0 if row.get("scan_t") is None else bisect_left(t, row["scan_t"])
-        c = cp.confirm_one(P15, j0, p0, d, 15.0, start=js)
+        c = cp.confirm_one(P15, j0, p0, d, 15.0, start=js, cap=cp.CAP_USD)              # amendment A1
         row["scan_t"] = t[-1] + 900
         if c["status"] == "PENDING":
             return
@@ -114,6 +116,8 @@ def advance(row: dict, P15: dict, P5: dict | None, payloads: dict, t_now: int) -
         row["t_stage_seen"] = t_now
         if c["status"] != "CONFIRMED":
             row["why"] = c["why"]
+            if c["why"] == "overshoot":
+                row["overshoot_usd"] = round(c["move"], 2)
             return
         k = c["k"]
         pn = notify.price_now(payloads, "15m") or {}
@@ -219,6 +223,7 @@ def weekly(rows: list[dict], week: str, started: int, status: str) -> dict:
         out = {"triggers": len(rs), "buy": sum(r["dir"] > 0 for r in rs), "sell": sum(r["dir"] < 0 for r in rs),
                "confirmed": len(conf), "invalidated": sum(r["stage"] == "INVALIDATED" for r in rs),
                "expired": sum(r["stage"] == "EXPIRED" for r in rs), "folded": sum(r["stage"] == "FOLDED" for r in rs),
+               "expired_overshoot": sum(r["stage"] == "EXPIRED" and r.get("why") == "overshoot" for r in rs),
                "data_gap": sum(r["stage"] == "DATA GAP" for r in rs)}
         for key in ("B T15 S13", "B T20 S13", "A T15 S13"):
             dec = [r["res"][key] for r in conf if (r.get("res") or {}).get(key, {}).get("out") in ("TP", "SL", "AMBIGUOUS", "TIMEOUT")]

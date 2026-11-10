@@ -400,9 +400,9 @@ def test_every_stage_event_is_recorded_once_in_order_with_its_bar_time(tmp_path)
     out = cp.panel(_eng_payload(rows, [(28, 1)]), st, T0 + 32 * 900, store_dir=str(tmp_path))
     cp.panel(_eng_payload(rows, [(28, 1)]), st, T0 + 33 * 900, store_dir=str(tmp_path))          # nothing new
     ev = _events(tmp_path)
-    assert [e["event"] for e in ev] == ["SETUP", "CONFIRMED", "X20_CONFIRMED", "EXIT_T15"]     # 4030.5 is also $20 beyond
+    assert [e["event"] for e in ev] == ["SETUP", "CONFIRMED", "X20_CLOSE", "EXIT_T15"]         # 4030.5: a later $20 close
     s, c, x20, x = ev
-    assert x20["confirmation_price"] == 4030.5 and x20["event_utc"] == T0 + 32 * 900
+    assert x20["close_price"] == 4030.5 and x20["event_utc"] == T0 + 32 * 900 and "milestone" in x20["note"]
     assert s["setup_id"] == c["setup_id"] == x["setup_id"] == f"CF-ENG-15m-{T0 + 28 * 900}-B" and s["panel_no"] == 1
     assert s["direction"] == "BUY" and s["tf"] == "15m" and len({e["event_id"] for e in ev}) == 4
     assert s["event_utc"] == T0 + 29 * 900 and s["trigger_price"] == rows[28][3] and s["confirm_at"] == rows[28][3] + 15
@@ -534,3 +534,70 @@ def test_the_headline_figure_is_never_shown_without_its_sample_and_status():
     sub = cp.panel({}, {}, T0)["sub"]
     assert "12 of 20 engine signal trades, 2020-22, 95% 39%-78%" in sub and "not a proven accuracy" in sub
     assert cp.STATUS_TEXT["INSUFFICIENT"] in sub and "No signal type has a validated success rate" in sub
+
+
+# ---------------- amendment B24-CONFIRM-FWD-A1: the confirming close must be $15 to $20 beyond ----------------
+@pytest.mark.parametrize("d", [1, -1])
+@pytest.mark.parametrize("p0", [4000.0, 4116.24, 3987.37])        # floating-point-hostile trigger prices as well
+@pytest.mark.parametrize("move, status", [(14.99, "PENDING"), (15.0, "CONFIRMED"), (17.5, "CONFIRMED"), (20.0, "CONFIRMED"),
+                                          (20.01, "EXPIRED"), (48.05, "EXPIRED")])
+def test_the_confirming_close_must_be_15_to_20_beyond_the_trigger_both_ways(d, p0, move, status):
+    """Exact bounds, to the cent, BUY and SELL alike: $15.00 and $20.00 confirm; $14.99 does not; $20.01 and beyond expire."""
+    c = round(p0 + d * move, 2)
+    bar = (p0, max(p0, c) + 0.01, min(p0, c) - 0.01, c)               # no -$13 touch on the way
+    P = _P([(p0, p0 + 1, p0 - 1, p0)] * 2 + [bar] + [(c, c + 0.5, c - 0.5, c)] * 3)
+    r = cp.confirm_one(P, 2, p0, d, 15.0, cap=cp.CAP_USD)
+    assert r["status"] == status, (d, p0, move, r)
+    if status == "CONFIRMED":
+        assert r["k"] == 2
+    if status == "EXPIRED":
+        assert r["why"] == "overshoot" and r["at"] == 2 and r["move"] == pytest.approx(move, abs=1e-6)
+    assert cp.confirm_one(P, 2, p0, d, 15.0)["status"] == ("CONFIRMED" if move >= 15 else "PENDING")   # B19's uncapped rule
+
+
+def test_an_overshoot_is_final_and_a_later_close_inside_the_band_never_confirms():
+    rows = [FLAT, FLAT, (4000.0, 4026.0, 3999.0, 4025.0), (4025.0, 4026.0, 4016.0, 4017.0), FLAT]
+    r = cp.confirm_one(_P(rows), 2, 4000.0, 1, 15.0, cap=cp.CAP_USD)
+    assert r["status"] == "EXPIRED" and r["why"] == "overshoot" and r["at"] == 2
+
+
+def test_a_wick_beyond_20_neither_confirms_nor_expires_only_closes_decide():
+    """Stated in the amendment before any capped result: closes decide. A wick to +$25 that closes at +$10 leaves the
+    setup open; a later close at +$18 (its wick at +$24) confirms."""
+    rows = [FLAT, FLAT, (4000.0, 4025.0, 3999.0, 4010.0), (4010.0, 4024.0, 4009.0, 4018.0)]
+    r = cp.confirm_one(_P(rows), 2, 4000.0, 1, 15.0, cap=cp.CAP_USD)
+    assert r["status"] == "CONFIRMED" and r["k"] == 3
+
+
+@pytest.mark.parametrize("d", [1, -1])
+def test_the_minus_13_touch_and_the_opposite_structure_break_are_checked_before_the_cap(d):
+    p0 = 4000.0
+    over = (p0, p0 + 26 if d > 0 else p0 + 13, p0 - 13 if d > 0 else p0 - 26, p0 + d * 25)       # touches -$13, closes +$25
+    r = cp.confirm_one(_P([FLAT, FLAT, over, FLAT]), 2, p0, d, 15.0, cap=cp.CAP_USD)
+    assert r["status"] == "INVALIDATED" and r["why"] == "price"
+    band = (p0, p0 + 18 if d > 0 else p0 + 1, p0 - 1 if d > 0 else p0 - 18, p0 + d * 17)
+    mk = [{"t": T0 + 2 * 900, "type": "CHoCH", "dir": -d}]
+    r = cp.confirm_one(_P([FLAT, FLAT, band, FLAT], mk), 2, p0, d, 15.0, cap=cp.CAP_USD)
+    assert r["status"] == "INVALIDATED" and r["why"] == "structure"
+
+
+@pytest.mark.parametrize("d", [1, -1])
+def test_the_panel_records_an_overshoot_as_expired_no_trade_once(tmp_path, d):
+    rows = [FLAT] * 29 + [(4000.0, 4000.0 + max(0, 24 * d) + 1, 4000.0 + min(0, 24 * d) - 1, 4000.0 + 23.4 * d)] + [FLAT] * 2
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:29], [(28, d)]), st, T0 + 29 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(28, d)]), st, T0 + 32 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(28, d)]), st, T0 + 33 * 900, store_dir=str(tmp_path))
+    r = (st["confirm"]["rows"] + st["confirm"]["log"])[0]
+    assert r["status"] == "EXPIRED" and r["verdict"] == "NO TRADE" and r["overshoot_usd"] == 23.4
+    assert "over the $20 cap" in r["why"] and r["t_done"] == T0 + 30 * 900 and r.get("entry") is None
+    assert r["cap_at"] == round(4000.0 + 20 * d, 2) and r["confirm_at"] == round(4000.0 + 15 * d, 2)
+    ev = _events(tmp_path)
+    assert [e["event"] for e in ev] == ["SETUP", "EXPIRED"] and ev[1]["outcome"] == "NO TRADE" and ev[1]["overshoot_usd"] == 23.4
+
+
+def test_the_panel_states_its_shadow_mode_and_the_amended_rule():
+    out = cp.panel({}, {}, T0)
+    assert out["mode"] == "SHADOW" and out["cap_usd"] == 20.0 and "B24-CONFIRM-FWD-A1" in out["rule"]
+    assert "original rule (no $20 cap)" in out["sub"]
+    assert not any(v["validated"] for v in cp.EVIDENCE.values())

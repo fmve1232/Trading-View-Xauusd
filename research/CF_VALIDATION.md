@@ -7,7 +7,15 @@ windows and filters are B19's, fixed before any of these periods was scored.
 
 ## Verdict
 
-**NOT STATISTICALLY VALIDATED. No accuracy claim is made.** Out of sample (2023-24 validation and 2026 pooled), the
+**NOT STATISTICALLY VALIDATED under either rule. No accuracy claim is made.**
+
+**Live rule since amendment B24-CONFIRM-FWD-A1 (2026-11-10): the confirming close must be $15-$20 beyond the trigger price; beyond $20 the setup is EXPIRED.** The cap was the operator's decision, made before any figure below was computed; neither rule is chosen by these figures, and both are reported.
+
+Capped, out of sample pooled: 9 of 14 trades reached +$15 before -$13 (64%, 95% 39%–84%); net +3.99 $/oz at the model cost (95% -3.31 to +11.28); entered one 15m bar later 8 of 14, +1.99 $/oz. The cap removed 11 of 20, 2 of 7, 14 of 23 confirmations (2020-22, 2023-24, 2026) as overshoots.
+
+Pace (B24's stream is these engine signals): 2026 gave 9 capped confirmations in 8.1 scored months (about 1.1 a month; 23 under the original rule). At that pace B24's first look (30 decided results) comes about 2.2 years after it starts and the last (100) about 7.5 years after, so the registered 2029-12-31 deadline (unchanged by the amendment) is likely to end the test before the last look. A slow test, not a weaker standard: fewer alerts is the operator's stated priority.
+
+Original rule (no cap), out of sample (2023-24 validation and 2026 pooled), the
 confirmed plan reached +$15 before -$13 in 18 of 30 trades (60%, 95% 42%–75%); break-even is 47.4% at your $0.26 cost and about 49.0% at the
 model cost. The interval includes break-even. Net +2.86 $/oz per trade at the model cost (95% -2.10 to +7.83): the interval includes zero.
 Entered one 15m bar later (what the site can actually deliver), the same trades gave 17 of 30 (57%) and +1.93 $/oz (95% -3.12 to +6.98).
@@ -18,11 +26,11 @@ Entering at the trigger without a confirmation had a negative mean after costs i
 
 ## Funnel (setups, confirmations, failed confirmations)
 
-| Period | Window scored | Setups | Confirmed (95% CI) | Invalidated: price -$13 / opposite structure | Expired | BUY confirmed / setups | SELL confirmed / setups | Mean move from the trigger at the confirming close ($) | Median 15m bars to confirm |
-|---|---|---|---|---|---|---|---|---|---|
-| development 2020-22 (in sample) | 2020-04-01 → 2023-01-24 | 64 | 20 (31%, 21%–43%) | 37 / 7 | 0 | 8 / 24 | 12 / 40 | +22.16 | 11.0 |
-| validation 2023-24 (out of sample) | 2023-04-01 → 2024-06-30 | 24 | 7 (29%, 15%–49%) | 12 / 5 | 0 | 7 / 18 | 0 / 6 | +20.17 | 8.0 |
-| 2026 (out of sample) | 2026-03-01 → 2026-11-02 | 55 | 23 (42%, 30%–55%) | 30 / 2 | 0 | 2 / 6 | 21 / 49 | +22.88 | 6.0 |
+| Period | Window scored | Setups | Confirmed, original rule (95% CI) | Confirmed, capped / overshoot EXPIRED | Invalidated: price -$13 / opposite structure | Expired (window) | BUY confirmed / setups | SELL confirmed / setups | Mean move from the trigger at the confirming close ($) | Median 15m bars to confirm |
+|---|---|---|---|---|---|---|---|---|---|---|
+| development 2020-22 (in sample) | 2020-04-01 → 2023-01-24 | 64 | 20 (31%, 21%–43%) | 9 / 11 | 37 / 7 | 0 | 8 / 24 | 12 / 40 | +22.16 | 11.0 |
+| validation 2023-24 (out of sample) | 2023-04-01 → 2024-06-30 | 24 | 7 (29%, 15%–49%) | 5 / 2 | 12 / 5 | 0 | 7 / 18 | 0 / 6 | +20.17 | 8.0 |
+| 2026 (out of sample) | 2026-03-01 → 2026-11-02 | 55 | 23 (42%, 30%–55%) | 9 / 14 | 30 / 2 | 0 | 2 / 6 | 21 / 49 | +22.88 | 6.0 |
 
 A failed confirmation is NO TRADE: nothing is entered, nothing is lost. The at-trigger rows below show what those
 setups would have cost if they had been traded without the confirmation.
@@ -33,33 +41,41 @@ setups would have cost if they had been traded without the confirmation.
 
 | Plan | Trades | TP / SL (incl. ambiguous) / timeout | Target first (95% CI) | Net $/oz, model cost (95% CI) | Net at your $0.26 | Net at 2x model cost | PF | Avg win / loss | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 20 | 12 / 8 / 0 | 60% (39%–78%) | +1.99 (-4.24 to +8.22) | +3.23 | +0.18 | 1.33 | +13.31 / -14.99 | 4.6 | 4 |
-| same, entered one 15m bar later | 20 | 6 / 14 / 0 | 30% (15%–52%) | -6.41 (-12.20 to -0.62) | -5.17 | -8.22 | 0.38 | +13.27 / -14.84 | 11.9 | 7 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 9 | 5 / 4 / 0 | 56% (27%–81%) | +0.69 (-9.07 to +10.44) | +1.99 | -1.18 | 1.10 | +13.28 / -15.06 | 2.3 | 2 |
+| CAPPED, entered one 15m bar later | 9 | 2 / 7 / 0 | 22% (6%–55%) | -8.65 (-16.71 to -0.58) | -7.34 | -10.52 | 0.25 | +13.12 / -14.86 | 6.0 | 3 |
+| original (no cap): first close $15+ beyond, entry at it | 20 | 12 / 8 / 0 | 60% (39%–78%) | +1.99 (-4.24 to +8.22) | +3.23 | +0.18 | 1.33 | +13.31 / -14.99 | 4.6 | 4 |
+| original, entered one 15m bar later | 20 | 6 / 14 / 0 | 30% (15%–52%) | -6.41 (-12.20 to -0.62) | -5.17 | -8.22 | 0.38 | +13.27 / -14.84 | 11.9 | 7 |
 | at the trigger, no confirmation | 64 | 25 / 39 / 0 | 39% (28%–51%) | -4.08 (-7.57 to -0.59) | -2.95 | -5.78 | 0.56 | +13.28 / -15.21 | 24.3 | 9 |
 
 **validation 2023-24 (out of sample)**
 
 | Plan | Trades | TP / SL (incl. ambiguous) / timeout | Target first (95% CI) | Net $/oz, model cost (95% CI) | Net at your $0.26 | Net at 2x model cost | PF | Avg win / loss | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 7 | 5 / 2 / 0 | 71% (36%–92%) | +5.39 (-4.60 to +15.37) | +6.53 | +3.78 | 2.32 | +13.28 / -14.34 | 1.1 | 1 |
-| same, entered one 15m bar later | 7 | 4 / 3 / 0 | 57% (25%–84%) | +1.39 (-9.61 to +12.39) | +2.53 | -0.22 | 1.22 | +13.30 / -14.49 | 2.2 | 2 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 5 | 3 / 2 / 0 | 60% (23%–88%) | +2.30 (-11.02 to +15.61) | +3.34 | +0.80 | 1.40 | +13.39 / -14.34 | 1.1 | 1 |
+| CAPPED, entered one 15m bar later | 5 | 2 / 3 / 0 | 40% (12%–77%) | -3.30 (-16.73 to +10.12) | -2.26 | -4.80 | 0.62 | +13.48 / -14.49 | 2.2 | 2 |
+| original (no cap): first close $15+ beyond, entry at it | 7 | 5 / 2 / 0 | 71% (36%–92%) | +5.39 (-4.60 to +15.37) | +6.53 | +3.78 | 2.32 | +13.28 / -14.34 | 1.1 | 1 |
+| original, entered one 15m bar later | 7 | 4 / 3 / 0 | 57% (25%–84%) | +1.39 (-9.61 to +12.39) | +2.53 | -0.22 | 1.22 | +13.30 / -14.49 | 2.2 | 2 |
 | at the trigger, no confirmation | 24 | 10 / 14 / 0 | 42% (24%–61%) | -2.86 (-8.50 to +2.79) | -1.83 | -4.38 | 0.66 | +13.49 / -14.53 | 7.9 | 7 |
 
 **2026 (out of sample)**
 
 | Plan | Trades | TP / SL (incl. ambiguous) / timeout | Target first (95% CI) | Net $/oz, model cost (95% CI) | Net at your $0.26 | Net at 2x model cost | PF | Avg win / loss | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 23 | 13 / 10 / 0 | 57% (37%–74%) | +2.10 (-3.71 to +7.90) | +2.59 | +1.36 | 1.35 | +14.28 / -13.74 | 3.2 | 3 |
-| same, entered one 15m bar later | 23 | 13 / 10 / 0 | 57% (37%–74%) | +2.10 (-3.71 to +7.90) | +2.59 | +1.36 | 1.35 | +14.28 / -13.75 | 5.3 | 5 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 9 | 6 / 3 / 0 | 67% (35%–88%) | +4.93 (-4.25 to +14.10) | +5.44 | +4.18 | 2.07 | +14.29 / -13.80 | 1.1 | 1 |
+| CAPPED, entered one 15m bar later | 9 | 6 / 3 / 0 | 67% (35%–88%) | +4.93 (-4.25 to +14.10) | +5.44 | +4.18 | 2.07 | +14.29 / -13.80 | 1.1 | 1 |
+| original (no cap): first close $15+ beyond, entry at it | 23 | 13 / 10 / 0 | 57% (37%–74%) | +2.10 (-3.71 to +7.90) | +2.59 | +1.36 | 1.35 | +14.28 / -13.74 | 3.2 | 3 |
+| original, entered one 15m bar later | 23 | 13 / 10 / 0 | 57% (37%–74%) | +2.10 (-3.71 to +7.90) | +2.59 | +1.36 | 1.35 | +14.28 / -13.75 | 5.3 | 5 |
 | at the trigger, no confirmation | 55 | 25 / 30 / 0 | 45% (33%–58%) | -0.99 (-4.71 to +2.73) | -0.51 | -1.71 | 0.87 | +14.29 / -13.72 | 9.9 | 4 |
 
 **Out of sample pooled (2023-24 validation + 2026)**
 
 | Plan | Trades | TP | Target first (95% CI) | Net $/oz (95% CI) | Net at $0.26 | Net at 2x cost | PF | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 30 | 18 | 60% (42%–75%) | +2.86 (-2.10 to +7.83) | +3.51 | +1.93 | 1.52 | 3.2 | 3 |
+| original (no cap): first close $15+ beyond, entry at it | 30 | 18 | 60% (42%–75%) | +2.86 (-2.10 to +7.83) | +3.51 | +1.93 | 1.52 | 3.2 | 3 |
 | at the trigger, no confirmation | 79 | 35 | 44% (34%–55%) | -1.56 (-4.65 to +1.53) | -0.91 | -2.52 | 0.80 | 9.9 | 7 |
-| same, entered one 15m bar later | 30 | 17 | 57% (39%–73%) | +1.93 (-3.12 to +6.98) | +2.58 | +0.99 | 1.32 | 5.3 | 5 |
+| original, entered one 15m bar later | 30 | 17 | 57% (39%–73%) | +1.93 (-3.12 to +6.98) | +2.58 | +0.99 | 1.32 | 5.3 | 5 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 14 | 9 | 64% (39%–84%) | +3.99 (-3.31 to +11.28) | +4.69 | +2.97 | 1.80 | 2.2 | 2 |
+| CAPPED, entered one 15m bar later | 14 | 8 | 57% (33%–79%) | +1.99 (-5.61 to +9.58) | +2.69 | +0.97 | 1.33 | 2.3 | 2 |
 
 Break-even target-first rate for +$15 before -$13: 47.4% at $0.26; 49.0% at $0.73 (the 2026 model cost).
 
@@ -69,33 +85,41 @@ Break-even target-first rate for +$15 before -$13: 47.4% at $0.26; 49.0% at $0.7
 
 | Plan | Trades | TP / SL (incl. ambiguous) / timeout | Target first (95% CI) | Net $/oz, model cost (95% CI) | Net at your $0.26 | Net at 2x model cost | PF | Avg win / loss | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 20 | 10 / 10 / 0 | 50% (30%–70%) | +1.69 (-5.78 to +9.16) | +2.93 | -0.12 | 1.23 | +18.31 / -14.92 | 5.8 | 5 |
-| same, entered one 15m bar later | 20 | 6 / 14 / 0 | 30% (15%–52%) | -4.91 (-11.73 to +1.91) | -3.67 | -6.72 | 0.53 | +18.27 / -14.84 | 10.4 | 7 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 9 | 4 / 5 / 0 | 44% (19%–73%) | -0.20 (-11.66 to +11.26) | +1.10 | -2.07 | 0.98 | +18.28 / -14.99 | 2.3 | 2 |
+| CAPPED, entered one 15m bar later | 9 | 2 / 7 / 0 | 22% (6%–55%) | -7.54 (-17.04 to +1.97) | -6.23 | -9.40 | 0.35 | +18.12 / -14.86 | 5.2 | 3 |
+| original (no cap): first close $15+ beyond, entry at it | 20 | 10 / 10 / 0 | 50% (30%–70%) | +1.69 (-5.78 to +9.16) | +2.93 | -0.12 | 1.23 | +18.31 / -14.92 | 5.8 | 5 |
+| original, entered one 15m bar later | 20 | 6 / 14 / 0 | 30% (15%–52%) | -4.91 (-11.73 to +1.91) | -3.67 | -6.72 | 0.53 | +18.27 / -14.84 | 10.4 | 7 |
 | at the trigger, no confirmation | 64 | 23 / 41 / 0 | 36% (25%–48%) | -3.16 (-7.18 to +0.86) | -2.02 | -4.86 | 0.68 | +18.30 / -15.20 | 22.5 | 9 |
 
 **validation 2023-24 (out of sample)**
 
 | Plan | Trades | TP / SL (incl. ambiguous) / timeout | Target first (95% CI) | Net $/oz, model cost (95% CI) | Net at your $0.26 | Net at 2x model cost | PF | Avg win / loss | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 7 | 5 / 2 / 0 | 71% (36%–92%) | +8.96 (-2.83 to +20.75) | +10.10 | +7.35 | 3.19 | +18.28 / -14.34 | 1.1 | 1 |
-| same, entered one 15m bar later | 7 | 4 / 3 / 0 | 57% (25%–84%) | +4.25 (-8.74 to +17.23) | +5.38 | +2.64 | 1.68 | +18.30 / -14.49 | 2.2 | 2 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 5 | 3 / 2 / 0 | 60% (23%–88%) | +5.30 (-10.42 to +21.01) | +6.34 | +3.80 | 1.92 | +18.39 / -14.34 | 1.1 | 1 |
+| CAPPED, entered one 15m bar later | 5 | 2 / 3 / 0 | 40% (12%–77%) | -1.30 (-17.13 to +14.52) | -0.26 | -2.80 | 0.85 | +18.48 / -14.49 | 2.2 | 2 |
+| original (no cap): first close $15+ beyond, entry at it | 7 | 5 / 2 / 0 | 71% (36%–92%) | +8.96 (-2.83 to +20.75) | +10.10 | +7.35 | 3.19 | +18.28 / -14.34 | 1.1 | 1 |
+| original, entered one 15m bar later | 7 | 4 / 3 / 0 | 57% (25%–84%) | +4.25 (-8.74 to +17.23) | +5.38 | +2.64 | 1.68 | +18.30 / -14.49 | 2.2 | 2 |
 | at the trigger, no confirmation | 24 | 10 / 14 / 0 | 42% (24%–61%) | -0.77 (-7.43 to +5.88) | +0.25 | -2.30 | 0.91 | +18.49 / -14.53 | 7.9 | 7 |
 
 **2026 (out of sample)**
 
 | Plan | Trades | TP / SL (incl. ambiguous) / timeout | Target first (95% CI) | Net $/oz, model cost (95% CI) | Net at your $0.26 | Net at 2x model cost | PF | Avg win / loss | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 23 | 10 / 13 / 0 | 43% (26%–63%) | +0.62 (-6.22 to +7.45) | +1.11 | -0.11 | 1.08 | +19.26 / -13.73 | 5.3 | 5 |
-| same, entered one 15m bar later | 23 | 11 / 12 / 0 | 48% (29%–67%) | +2.05 (-4.84 to +8.94) | +2.55 | +1.32 | 1.29 | +19.27 / -13.73 | 5.3 | 5 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 9 | 5 / 4 / 0 | 56% (27%–81%) | +4.59 (-6.78 to +15.96) | +5.10 | +3.85 | 1.75 | +19.27 / -13.75 | 2.1 | 2 |
+| CAPPED, entered one 15m bar later | 9 | 5 / 4 / 0 | 56% (27%–81%) | +4.59 (-6.78 to +15.96) | +5.10 | +3.85 | 1.75 | +19.27 / -13.75 | 2.1 | 2 |
+| original (no cap): first close $15+ beyond, entry at it | 23 | 10 / 13 / 0 | 43% (26%–63%) | +0.62 (-6.22 to +7.45) | +1.11 | -0.11 | 1.08 | +19.26 / -13.73 | 5.3 | 5 |
+| original, entered one 15m bar later | 23 | 11 / 12 / 0 | 48% (29%–67%) | +2.05 (-4.84 to +8.94) | +2.55 | +1.32 | 1.29 | +19.27 / -13.73 | 5.3 | 5 |
 | at the trigger, no confirmation | 55 | 24 / 31 / 0 | 44% (31%–57%) | +0.68 (-3.69 to +5.05) | +1.16 | -0.03 | 1.09 | +19.29 / -13.73 | 6.1 | 4 |
 
 **Out of sample pooled (2023-24 validation + 2026)**
 
 | Plan | Trades | TP | Target first (95% CI) | Net $/oz (95% CI) | Net at $0.26 | Net at 2x cost | PF | Max DD (R) | Longest losing run |
 |---|---|---|---|---|---|---|---|---|---|
-| after the $15 confirmation (entry at the confirming close) | 30 | 15 | 50% (33%–67%) | +2.56 (-3.40 to +8.52) | +3.21 | +1.63 | 1.37 | 5.3 | 5 |
+| original (no cap): first close $15+ beyond, entry at it | 30 | 15 | 50% (33%–67%) | +2.56 (-3.40 to +8.52) | +3.21 | +1.63 | 1.37 | 5.3 | 5 |
 | at the trigger, no confirmation | 79 | 34 | 43% (33%–54%) | +0.24 (-3.39 to +3.87) | +0.89 | -0.72 | 1.03 | 7.9 | 7 |
-| same, entered one 15m bar later | 30 | 15 | 50% (33%–67%) | +2.56 (-3.42 to +8.55) | +3.21 | +1.63 | 1.37 | 5.3 | 5 |
+| original, entered one 15m bar later | 30 | 15 | 50% (33%–67%) | +2.56 (-3.42 to +8.55) | +3.21 | +1.63 | 1.37 | 5.3 | 5 |
+| CAPPED (live rule, A1): confirming close $15-$20 beyond, entry at it | 14 | 8 | 57% (33%–79%) | +4.84 (-4.01 to +13.69) | +5.54 | +3.83 | 1.81 | 3.2 | 3 |
+| CAPPED, entered one 15m bar later | 14 | 7 | 50% (27%–73%) | +2.49 (-6.51 to +11.49) | +3.19 | +1.47 | 1.35 | 3.2 | 3 |
 
 Break-even target-first rate for +$20 before -$13: 40.2% at $0.26; 41.6% at $0.73 (the 2026 model cost).
 

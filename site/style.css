@@ -576,6 +576,7 @@ footer a { color: var(--muted); }
 #cf .cf-head.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 40%, transparent); background: color-mix(in srgb, var(--warn) 8%, transparent); }
 #cf .cf-head.bull { color: var(--bull); border-color: color-mix(in srgb, var(--bull) 40%, transparent); }
 #cf .cf-sub { font-size: 12px; color: var(--muted); margin: 6px 0 8px; }
+#cf .cf-shadow { font-size: 12px; padding: 7px 10px; margin-bottom: 8px; border-radius: 8px; border: 1px dashed var(--warn); color: var(--text); background: color-mix(in srgb, var(--warn) 6%, transparent); }
 #cf .cf-item { border-top: 1px solid var(--line); padding: 8px 0; font-size: 12.5px; overflow-wrap: anywhere; }
 #cf .cf-item > div { margin: 2px 0; }
 #cf .cf-top { font-weight: 600; }

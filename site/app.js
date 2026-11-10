@@ -2007,12 +2007,12 @@ function renderConfirm() {
   const OUT = { TP: ["bull", "target first"], SL: ["bear", "stop first"], AMBIGUOUS: ["warn", "target and stop in one bar (counted as the stop)"], TIMEOUT: ["", "neither in 192 bars"], OPEN: ["", "open"] };
   const usd = (x) => (isNum(x) ? (x < 0 ? "−$" : "+$") + Math.abs(x).toFixed(2) : "—");
   const STAGE = {
-    PENDING: (r) => `<b>INITIAL SETUP</b> <span class="dim">(not a trade)</span> · confirmation pending: needs a 15m close at ${px(r.confirm_at)} before ${px(r.invalid_at)} (${r.bars || 0} of ${C.win_bars} bars)`,
+    PENDING: (r) => `<b>INITIAL SETUP</b> <span class="dim">(not a trade)</span> · confirmation pending: needs a 15m close between ${px(r.confirm_at)} and ${px(isNum(r.cap_at) ? r.cap_at : r.confirm20_at)} ($15–$${f(C.cap_usd || 20, 0)} beyond) before ${px(r.invalid_at)} (${r.bars || 0} of ${C.win_bars} bars)`,
     INVALIDATED: (r) => `<b class="bear">INVALIDATED</b> → NO TRADE · ${esc(r.why || "")}${r.t_done ? ` (${tfmt(r.t_done)})` : ""}`,
-    EXPIRED: (r) => `<b>EXPIRED</b> → NO TRADE · ${esc(r.why || "")}`,
+    EXPIRED: (r) => `<b>EXPIRED</b>${isNum(r.overshoot_usd) ? " (overshoot)" : ""} → NO TRADE · ${esc(r.why || "")}`,
     STALE: (r) => `<b>NOT FINISHED</b> → ${r.t_conf ? "UNRESOLVED" : "NO TRADE"} · ${esc(r.why || "")}`,
     CONFIRMED: (r) => `<b class="bull">CONFIRMED</b> ($15 close) · 15m close ${px(r.entry)} at ${tfmt(r.t_conf)}` +
-      (r.x20 && r.x20.status === "CONFIRMED" ? ` · $20 close ${px(r.x20.px)} at ${tfmt(r.x20.t)}` : ""),
+      (r.x20 && r.x20.status === "CONFIRMED" ? ` · <span class="dim">later close $20 beyond the trigger: ${px(r.x20.px)} at ${tfmt(r.x20.t)} (a milestone, not a confirmation)</span>` : ""),
   };
   const flagsOf = (r) => [r.backfill ? "rebuilt from the chart when the panel started" : "", r.late ? '<b class="warn">appeared after its bar was already processed (repaint or late data)</b>' : "",
     r.vanished ? '<b class="warn">no longer on the chart (kept as first seen)</b>' : "", r.revised ? `<b class="warn">${esc(r.revised)}</b>` : "", r.repeats ? `+${r.repeats} later trigger(s) of the same idea folded in` : ""].filter(Boolean);
@@ -2070,13 +2070,14 @@ function renderConfirm() {
   const ageMin = isNum(C.t) ? (Date.now() / 1000 - C.t) / 60 : null;
   const stale = ageMin !== null && ageMin > 45 && !marketClosed(new Date())
     ? `<p class="warn"><b>OUT OF DATE</b>: this panel was built ${f(ageMin, 0)} min ago (the site updates every 15 min). Nothing below is live until the next update.</p>` : "";
-  el.innerHTML = `${stale}<div class="cf-head ${accepted ? "bull" : "warn"}">${esc(C.headline)}</div>
+  const shadow = C.mode === "SHADOW" ? `<div class="cf-shadow"><b>SHADOW TEST: recording and testing only.</b> Not a trading recommendation. No signal type is validated; nothing here is sent to the phone or executed. Evidence comes only from the registered forward test (B24) after realistic costs.</div>` : "";
+  el.innerHTML = `${shadow}${stale}<div class="cf-head ${accepted ? "bull" : "warn"}">${esc(C.headline)}</div>
     <p class="cf-sub">${esc(C.sub || "")} ${isNum(C.pending) ? `Now: ${C.pending} waiting for confirmation, ${C.running} confirmed and running.` : ""}</p>
-    <p class="note"><b>Stages:</b> INITIAL SETUP (a trigger; not a trade) → CONFIRMED (a 15m close $${f((C.x_usd || {}).X15, 0)} beyond the trigger price, before −$${f(C.inv_usd, 0)}) → plan. INVALIDATED or EXPIRED = NO TRADE. Every row stays NO TRADE until its type passes an out-of-sample test above break-even; none has. Shadow / forward test only: nothing is executed or sent.</p>
+    <p class="note"><b>Stages:</b> INITIAL SETUP (a trigger; not a trade) → CONFIRMED (the first 15m close $${f((C.x_usd || {}).X15, 0)} beyond the trigger price, if it is no more than $${f(C.cap_usd || 20, 0)} beyond, before −$${f(C.inv_usd, 0)}) → plan. INVALIDATED or EXPIRED (incl. a first close beyond $${f(C.cap_usd || 20, 0)}: no chasing) = NO TRADE. Every row stays NO TRADE until its type passes an out-of-sample test above break-even; none has. Shadow / forward test only: nothing is executed or sent.</p>
     ${rows.length ? items : '<p class="muted">No trigger in the last 3 days.</p>'}
-    <details class="cf-ev"><summary class="dim">What each trigger type measured (2020–22, one per idea; validation where it was run)</summary>
+    <details class="cf-ev"><summary class="dim">What each trigger type measured with the original rule (no $${f(C.cap_usd || 20, 0)} cap; 2020–22, one per idea; validation where it was run)</summary>
       <div class="scroll"><table class="t yt"><tr><th>Type</th><th>Triggers confirmed</th><th>+$15 before −$13, after a $15 close</th><th>+$20 before −$13, after a $15 close</th><th>+$15 before −$13, entered at the trigger</th><th>Touch, stop ignored</th><th>Validation status</th></tr>${evRows}${rndRow}</table></div>
-      <p class="note">Break-even at your $${f(C.op_cost, 2)} per oz: ${pct(100 * (be.T15 || 0), 1)} for +$15 before −$13, ${pct(100 * (be.T20 || 0), 1)} for +$20 (research cost model $${f((C.model_cost || [])[0], 2)}–${f((C.model_cost || [])[1], 2)}). A rate counts as validated only when a registered out-of-sample test passed: none has.</p>
+      <p class="note">Break-even at your $${f(C.op_cost, 2)} per oz: ${pct(100 * (be.T15 || 0), 1)} for +$15 before −$13, ${pct(100 * (be.T20 || 0), 1)} for +$20 (research cost model $${f((C.model_cost || [])[0], 2)}–${f((C.model_cost || [])[1], 2)}). A rate counts as validated only when a registered out-of-sample test passed: none has. These rates were measured before the $${f(C.cap_usd || 20, 0)} cap (amendment B24-CONFIRM-FWD-A1, 2026-11-10); the capped rule's history for engine signals is in research/CF_VALIDATION.md, and its live record starts with B24.</p>
     </details>
     ${recRows ? `<details class="cf-ev"><summary class="dim">Live record since ${tfmt(C.started_utc)} (descriptive, no verdict)</summary><div class="scroll"><table class="t yt"><tr><th>Type</th><th>Confirmed</th><th>+$15 before −$13</th><th>+$20 before −$13</th><th>Invalid / expired</th></tr>${recRows}</table></div></details>` : ""}
     ${C.events ? `<p class="${C.events.ok ? "note" : "warn"}">Event log (${esc(C.events.file || "")}, append-only, hash-chained): ${esc(C.events.why || "")}${C.events.ok ? "" : ". New events are not being recorded until it is repaired."}</p>` : ""}

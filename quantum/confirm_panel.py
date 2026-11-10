@@ -12,10 +12,13 @@ shows exactly what was measured:
      15m SWEEP or BREAKOUT setup (as B21 / B16), or a 4h candle breakout with all four confirmations (as B18). One per
      idea per type: the same direction within 4 hours and $15 of an earlier kept trigger of that type is folded into it
      (the live REPEAT rule).
-  B  CONFIRMATION on the 15m bars that open after the trigger's close: the first CLOSE at least $15 beyond the trigger
-     price in its own direction (X15; X20 = $20 is tracked beside it), before price trades $13 against the trigger price
-     (bar high / low) or a 15m BOS / MSS / CHoCH prints the other way. A touch never confirms; a bar that does both is
-     INVALIDATED; no such close within 96 bars is EXPIRED. The direction is never reversed.
+  B  CONFIRMATION on the 15m bars that open after the trigger's close (amendment B24-CONFIRM-FWD-A1, 2026-11-10): the
+     first CLOSE at least $15 beyond the trigger price in its own direction decides: CONFIRMED if it is no more than $20
+     beyond, EXPIRED (overshoot, final) if it is further. Before it, price trading $13 against the trigger price (bar
+     high / low) or a 15m BOS / MSS / CHoCH the other way INVALIDATES (checked first, so a bar that does both is
+     INVALIDATED). No such close within 96 bars is EXPIRED. A touch never confirms; an intrabar move beyond $20 alone
+     neither confirms nor expires. The trigger price is never reset; the direction is never reversed. A later close $20
+     beyond (X20) is tracked as a milestone after the confirmation, never as a confirmation.
   PLAN after an X15 confirmation: entry at the confirming close; SL -$13, TP1 +$15, TP2 +$20 from that entry, each
      target resolved on the 15m bars after it as in B19 (a gap fills at the open; a bar touching both levels is
      AMBIGUOUS and counts as a loss; time stop after 192 bars).
@@ -45,7 +48,8 @@ ENG_TFS = ("15m", "30m", "1h", "4h")
 STRUCT = ("BOS", "MSS", "CHoCH")
 WIN, HOLD = 96, 192                    # confirmation window and holding window, 15m bars (B19)
 INV_USD, SL_USD = 13.0, 13.0           # invalidation before confirmation; stop after it ($, B19 S13)
-X_USD = {"X15": 15.0, "X20": 20.0}     # confirmation closes
+X_USD = {"X15": 15.0, "X20": 20.0}     # the confirmation close ($15); X20 = a later $20 close, tracked as a milestone
+CAP_USD = 20.0                         # B24-A1: the confirming close at most $20 beyond the trigger price (inclusive)
 TP_USD = {"T15": 15.0, "T20": 20.0}    # targets from the entry
 REPEAT_SEC, REPEAT_USD = 4 * 3600, 15.0
 EPS = 1e-9
@@ -162,11 +166,15 @@ def path(p15: dict) -> dict:
             "rsi": rsi, "ema20": ema20, "sweep_dir": sweep_dir}
 
 
-def confirm_one(P: dict, j0: int, p0: float, d: int, X: float, s: float = 1.0, start: int | None = None) -> dict:
+def confirm_one(P: dict, j0: int, p0: float, d: int, X: float, s: float = 1.0, start: int | None = None,
+                cap: float | None = None) -> dict:
     """Stage B on the 15m bars j0 .. j0 + 95: CONFIRMED at bar k (the first close >= X beyond p0), INVALIDATED (price:
     $13 against on a bar's high / low; structure: an opposite BOS / MSS / CHoCH at a bar's close), EXPIRED, or PENDING
     while the window is still open. s scales the $ distances (p0 / 4000 in the research test, 1 live). start: the first
-    bar to examine (live: the first bar not examined by an earlier run; the bars before it had no event)."""
+    bar to examine (live: the first bar not examined by an earlier run; the bars before it had no event).
+    cap (B24-A1): when that first close is more than cap beyond p0 the setup is EXPIRED with why "overshoot" and the move
+    in `move` ($): final, so a later close back inside the band never confirms. cap=None is B19's uncapped rule (the
+    research parity tests use it)."""
     n = len(P["t"])
     for b in range(j0 if start is None else max(j0, start), min(j0 + WIN, n)):
         adv = (p0 - P["l"][b]) if d > 0 else (P["h"][b] - p0)
@@ -174,7 +182,10 @@ def confirm_one(P: dict, j0: int, p0: float, d: int, X: float, s: float = 1.0, s
         inv_s = bool(P["dn"][b] if d > 0 else P["up"][b])
         if inv_p or inv_s:
             return {"status": "INVALIDATED", "k": -1, "at": b, "why": "price" if inv_p else "structure"}
-        if (P["c"][b] - p0) * d >= X * s - EPS:
+        mv = (P["c"][b] - p0) * d
+        if mv >= X * s - EPS:
+            if cap is not None and mv > cap * s + EPS:
+                return {"status": "EXPIRED", "k": -1, "at": b, "why": "overshoot", "move": float(mv / s)}
             return {"status": "CONFIRMED", "k": b, "at": b, "why": ""}
     if j0 + WIN <= n:
         return {"status": "EXPIRED", "k": -1, "at": j0 + WIN - 1, "why": "no close beyond within 96 bars"}
@@ -308,14 +319,14 @@ def evaluate(P: dict, row: dict, votes: list, s: float = 1.0) -> dict:
     j0 = bisect_left(t, row["t_close"])
     d, p0 = row["dir"], row["p0"]
     out = {"confirm_at": round(p0 + d * X_USD["X15"] * s, 2), "invalid_at": round(p0 - d * INV_USD * s, 2),
-           "confirm20_at": round(p0 + d * X_USD["X20"] * s, 2)}
+           "cap_at": round(p0 + d * CAP_USD * s, 2), "confirm20_at": round(p0 + d * X_USD["X20"] * s, 2)}
     if j0 >= n:
         return {**out, "status": "PENDING", "bars": 0}
     nxt = t[-1] + 900                                             # the open of the first bar no run has examined yet
     if row.get("status") != "CONFIRMED":                          # stage B still open (final rows are in the log)
         js = j0 if row.get("scan_t") is None else bisect_left(t, row["scan_t"])
-        c15 = confirm_one(P, j0, p0, d, X_USD["X15"], s, start=js)
-        full = confirm_one(P, j0, p0, d, X_USD["X15"], s)
+        c15 = confirm_one(P, j0, p0, d, X_USD["X15"], s, start=js, cap=CAP_USD)
+        full = confirm_one(P, j0, p0, d, X_USD["X15"], s, cap=CAP_USD)
         if (full["status"], full["k"]) != (c15["status"], c15["k"]) and full["status"] != "PENDING":
             out["revised"] = (f"the feed revised a bar an earlier run examined: recomputed from the start it would read "
                               f"{full['status'].lower()}; the row keeps what was shown")
@@ -323,6 +334,11 @@ def evaluate(P: dict, row: dict, votes: list, s: float = 1.0) -> dict:
         out["scan_t"] = nxt if c15["status"] == "PENDING" else None
         if c15["status"] == "INVALIDATED":
             out["why"] = ("price traded $13 against first" if c15["why"] == "price" else "an opposite 15m structure break came first")
+            out["t_done"] = t[c15["at"]] + 900
+        elif c15["status"] == "EXPIRED" and c15["why"] == "overshoot":
+            out["overshoot_usd"] = round(c15["move"], 2)
+            out["why"] = (f"the first 15m close $15 beyond was ${c15['move']:.2f} beyond the trigger price: over the "
+                          f"${CAP_USD:.0f} cap, so no entry (no chasing)")
             out["t_done"] = t[c15["at"]] + 900
         elif c15["status"] == "EXPIRED":
             out["why"], out["t_done"] = "no 15m close $15 beyond within 96 bars", t[c15["at"]] + 900
@@ -401,7 +417,10 @@ def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0, store_dir: st
     p15 = _ok(payloads.get("15m"))
     x15 = [rate(*v["rates"]["X15 T15"][-1][:2])["p"] for v in EVIDENCE.values() if v["rates"].get("X15 T15")]
     rnd = RANDOM["rates"]["X15 T15"]
-    base = {"on": True, "rule": "research/registrations/B19.json (F0, E1, S13), run live by quantum/confirm_panel.py",
+    base = {"on": True, "mode": "SHADOW",
+            "rule": ("research/registrations/B19.json (F0, E1, S13) with the $15-$20 confirmation cap of "
+                     "research/registrations/B24-CONFIRM-FWD-A1.json, run live by quantum/confirm_panel.py"),
+            "cap_usd": CAP_USD,
             "evidence": EVIDENCE, "random": RANDOM, "break_even": {"T15": break_even(15.0), "T20": break_even(20.0)},
             "op_cost": OP_COST, "model_cost": list(MODEL_COST), "check_text": CHECK_TEXT, "no_trade": NO_TRADE,
             "x_usd": X_USD, "tp_usd": TP_USD, "sl_usd": SL_USD, "inv_usd": INV_USD, "win_bars": WIN, "hold_bars": HOLD,
@@ -410,7 +429,8 @@ def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0, store_dir: st
                      key=lambda kv: kv[1][0] / kv[1][1])
     tm = rate(*top[:2])
     sub = (f"No signal type has a validated success rate above break-even ({break_even(15.0):.1%} for +$15 before -$13 at "
-           f"your ${OP_COST:.2f} cost). Measured after a $15 confirmation: +$15 first {min(x15):.0%}-{max(x15):.0%} for the "
+           f"your ${OP_COST:.2f} cost). Measured with the original rule (no $20 cap) after a $15 confirmation: +$15 first "
+           f"{min(x15):.0%}-{max(x15):.0%} for the "
            f"alert types (the top figure is {top[0]} of {top[1]} {EVIDENCE[top_k]['label']} trades, {top[2]}, 95% "
            f"{tm['lo']:.0%}-{tm['hi']:.0%}: {STATUS_TEXT[EVIDENCE[top_k]['status']]}, not a proven accuracy), "
            f"{rnd[0] / rnd[1]:.0%} for random triggers.")
@@ -488,7 +508,8 @@ EXIT_REASON = {"TP": "target", "SL": "stop", "AMBIGUOUS": "target and stop in on
 
 def events_of(r: dict) -> list[dict]:
     """The stage events a row has reached, in order. Each carries the bar time at which it happened (never the run time):
-    SETUP (stage A), CONFIRMED / X20_CONFIRMED (stage B), INVALIDATED / EXPIRED (no trade), EXIT_T15 / EXIT_T20 (each
+    SETUP (stage A), CONFIRMED (stage B) and X20_CLOSE (a later close $20 beyond: a milestone, not a confirmation),
+    INVALIDATED / EXPIRED (no trade; an overshoot of the $20 cap is EXPIRED with its move), EXIT_T15 / EXIT_T20 (each
     target's result, P&L in $ of price per oz before costs, and after the operator's measured cost), COMPLETED, or STALE
     (the bars left the chart first: NO TRADE before a confirmation, UNRESOLVED after one)."""
     base = {"setup_id": setup_id(r), "panel_no": r.get("id"), "kind": r["kind"], "tf": r["tf"],
@@ -503,7 +524,8 @@ def events_of(r: dict) -> list[dict]:
                    "move_usd": r.get("move_usd"), "entry": r["entry"], "sl": r["sl"], "tp1": r["tp1"], "tp2": r["tp2"]})
         x20 = r.get("x20") or {}
         if x20.get("status") == "CONFIRMED":
-            ev.append({"event": "X20_CONFIRMED", "event_utc": x20["t"], "confirmation_price": x20["px"]})
+            ev.append({"event": "X20_CLOSE", "event_utc": x20["t"], "close_price": x20["px"],
+                       "note": "a later 15m close $20 beyond the trigger price: a milestone after the confirmation"})
         for nm in ("T15", "T20"):
             x = (r.get("result") or {}).get(nm) or {}
             if x.get("out") not in (None, "OPEN"):
@@ -513,7 +535,8 @@ def events_of(r: dict) -> list[dict]:
     if st == "CONFIRMED" and r.get("t_done") is not None:
         ev.append({"event": "COMPLETED", "event_utc": r["t_done"]})
     elif st in ("INVALIDATED", "EXPIRED") or (st == "STALE" and not conf):
-        ev.append({"event": st, "event_utc": r.get("t_done"), "outcome": "NO TRADE", "exit_reason": r.get("why")})
+        ev.append({"event": st, "event_utc": r.get("t_done"), "outcome": "NO TRADE", "exit_reason": r.get("why"),
+                   **({"overshoot_usd": r["overshoot_usd"]} if r.get("overshoot_usd") is not None else {})})
     elif st == "STALE":
         ev.append({"event": "STALE", "event_utc": r.get("t_done"), "outcome": "UNRESOLVED",
                    "exit_reason": "confirmed, but its 15m bars left the chart before every exit was reached"})
