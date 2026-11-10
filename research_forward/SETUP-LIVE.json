@@ -919,6 +919,146 @@
    "mae": 2.2399999999997817,
    "bars": 21,
    "path": "5m"
+  },
+  {
+   "id": 27,
+   "tf": "15m",
+   "t": 1794285000,
+   "t_dec": 1794285900,
+   "dir": -1,
+   "entry": 4116.24,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HH",
+     4117.26
+    ]
+   ],
+   "zones": [
+    "POC 4118.55"
+   ],
+   "sl": 4129.24,
+   "tp": 4101.24,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794286200,
+   "result": "TP",
+   "t_res": 1794301200,
+   "mfe": 27.09999999999991,
+   "mae": 11.44000000000051,
+   "bars": 52,
+   "path": "5m"
+  },
+  {
+   "id": 28,
+   "tf": "15m",
+   "t": 1794287700,
+   "t_dec": 1794288600,
+   "dir": 1,
+   "entry": 4120.89,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "4HL",
+     4120.3
+    ]
+   ],
+   "zones": [
+    "POC 4118.55"
+   ],
+   "sl": 4107.89,
+   "tp": 4135.89,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794288857,
+   "result": "SL",
+   "t_res": 1794301200,
+   "mfe": 6.789999999999964,
+   "mae": 31.750000000000455,
+   "bars": 43,
+   "path": "5m"
+  },
+  {
+   "id": 29,
+   "tf": "15m",
+   "t": 1794294900,
+   "t_dec": 1794295800,
+   "dir": 1,
+   "entry": 4120.43,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HL",
+     4119.13
+    ]
+   ],
+   "zones": [
+    "POC 4118.55"
+   ],
+   "sl": 4107.43,
+   "tp": 4135.43,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794296095,
+   "result": "SL",
+   "t_res": 1794301200,
+   "mfe": 1.069999999999709,
+   "mae": 31.29000000000042,
+   "bars": 19,
+   "path": "5m"
+  },
+  {
+   "id": 30,
+   "tf": "15m",
+   "t": 1794297600,
+   "t_dec": 1794298500,
+   "dir": 1,
+   "entry": 4118.06,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HL",
+     4112.35
+    ]
+   ],
+   "zones": [
+    "value-area low 4110.32"
+   ],
+   "sl": 4105.06,
+   "tp": 4133.06,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794298856,
+   "result": "SL",
+   "t_res": 1794301200,
+   "mfe": 3.4399999999996,
+   "mae": 28.920000000000528,
+   "bars": 10,
+   "path": "5m"
   }
  ],
  "live": {
@@ -927,8 +1067,8 @@
    0
   ],
   "SWEEP": [
-   12,
-   6
+   16,
+   7
   ],
   "BREAKOUT": [
    9,
