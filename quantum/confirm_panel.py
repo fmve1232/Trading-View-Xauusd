@@ -406,9 +406,14 @@ def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0, store_dir: st
             "op_cost": OP_COST, "model_cost": list(MODEL_COST), "check_text": CHECK_TEXT, "no_trade": NO_TRADE,
             "x_usd": X_USD, "tp_usd": TP_USD, "sl_usd": SL_USD, "inv_usd": INV_USD, "win_bars": WIN, "hold_bars": HOLD,
             "status_text": STATUS_TEXT, "insufficient": INSUFFICIENT, "live_min_n": LIVE_MIN_N}
+    top_k, top = max(((k, v["rates"]["X15 T15"][-1]) for k, v in EVIDENCE.items() if v["rates"].get("X15 T15")),
+                     key=lambda kv: kv[1][0] / kv[1][1])
+    tm = rate(*top[:2])
     sub = (f"No signal type has a validated success rate above break-even ({break_even(15.0):.1%} for +$15 before -$13 at "
            f"your ${OP_COST:.2f} cost). Measured after a $15 confirmation: +$15 first {min(x15):.0%}-{max(x15):.0%} for the "
-           f"alert types, {rnd[0] / rnd[1]:.0%} for random triggers.")
+           f"alert types (the top figure is {top[0]} of {top[1]} {EVIDENCE[top_k]['label']} trades, {top[2]}, 95% "
+           f"{tm['lo']:.0%}-{tm['hi']:.0%}: {STATUS_TEXT[EVIDENCE[top_k]['status']]}, not a proven accuracy), "
+           f"{rnd[0] / rnd[1]:.0%} for random triggers.")
     if p15 is None:
         return {**base, "headline": NO_TRADE, "sub": sub + " No 15m bars this run.", "rows": [], "record": {}}
     P = path(p15)
@@ -519,27 +524,37 @@ def _sha(line: bytes) -> str:
     return hashlib.sha256(line).hexdigest()
 
 
-def _read_events(path: str) -> tuple[bool, str, str, int, set]:
+def _read_events(path: str, head: dict | None = None) -> tuple[bool, str, str, int, set]:
     """(intact, why, sha of the last line, count, event ids). Intact = every line parses, seq counts from 1 and each prev
-    is the SHA-256 of the line before it (a torn or edited line breaks it)."""
-    prev, n, ids = GENESIS, 0, set()
-    if not os.path.exists(path):
+    is the SHA-256 of the line before it (a torn, edited, inserted, removed or reordered line breaks it). A chain alone
+    cannot show that lines were cut from its END, so head = the last line this panel wrote ({seq, sha}, kept in the
+    state): the log must still hold that line unchanged, or it was truncated, deleted or replaced."""
+    prev, n, ids, shas = GENESIS, 0, set(), []
+    if os.path.exists(path):
+        with open(path, "rb") as fh:
+            for n, ln in enumerate((x.rstrip(b"\n") for x in fh if x.strip()), 1):
+                try:
+                    rec = json.loads(ln)
+                except ValueError:
+                    return False, f"event {n} breaks the chain (not valid JSON)", prev, n, ids
+                if not isinstance(rec, dict) or rec.get("seq") != n or rec.get("prev") != prev:
+                    return False, f"event {n} breaks the chain", prev, n, ids
+                ids.add(rec.get("event_id"))
+                prev = _sha(ln)
+                shas.append(prev)
+    if head and head.get("seq"):
+        hs = int(head["seq"])
+        if n < hs:
+            return False, (f"the log holds {n} events but this panel last wrote event {hs}: truncated or deleted"), prev, n, ids
+        if shas[hs - 1] != head.get("sha"):
+            return False, f"event {hs} is not the line this panel wrote: replaced", prev, n, ids
+    if not n:
         return True, "no events yet", prev, 0, ids
-    with open(path, "rb") as fh:
-        for n, ln in enumerate((x.rstrip(b"\n") for x in fh if x.strip()), 1):
-            try:
-                rec = json.loads(ln)
-            except ValueError:
-                return False, f"event {n} breaks the chain (not valid JSON)", prev, n, ids
-            if not isinstance(rec, dict) or rec.get("seq") != n or rec.get("prev") != prev:
-                return False, f"event {n} breaks the chain", prev, n, ids
-            ids.add(rec.get("event_id"))
-            prev = _sha(ln)
     return True, f"{n} events, chain intact", prev, n, ids
 
 
-def verify_events(path: str) -> tuple[bool, str]:
-    ok, why, *_ = _read_events(path)
+def verify_events(path: str, head: dict | None = None) -> tuple[bool, str]:
+    ok, why, *_ = _read_events(path, head)
     return ok, why
 
 
@@ -548,7 +563,7 @@ def log_events(store_dir: str, rows: list[dict], st: dict, t_now: int) -> int:
     file or a crashed run can neither duplicate nor skip one). Never rewrites or removes a line; refuses to append to a
     broken chain, and the panel then shows why (state["confirm"]["events_status"])."""
     path = os.path.join(store_dir, "research_forward", EVENTS_FILE)
-    ok, why, prev, seq, have = _read_events(path)
+    ok, why, prev, seq, have = _read_events(path, st.get("events_head"))
     if not ok:
         st["events_status"] = {"file": EVENTS_FILE, "ok": False, "why": why + "; nothing appended"}
         return 0
@@ -568,6 +583,8 @@ def log_events(store_dir: str, rows: list[dict], st: dict, t_now: int) -> int:
             fh.write(b"".join(x + b"\n" for x in new))
             fh.flush()
             os.fsync(fh.fileno())
+    if seq:
+        st["events_head"] = {"seq": seq, "sha": prev}                  # the anchor for the next run's check
     st["events_status"] = {"file": EVENTS_FILE, "ok": True, "why": f"{seq} events, chain intact", "appended": len(new)}
     return len(new)
 

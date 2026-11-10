@@ -488,3 +488,49 @@ def test_the_event_log_is_tamper_evident_and_never_extended_when_broken(tmp_path
     cp.panel(_eng_payload(rows + [FLAT], [(2, 1), (6, -1)]), st, T0 + 8 * 900, store_dir=str(tmp_path))
     assert p.read_text() == before and "breaks the chain" in st["confirm"]["events_status"]["why"]
     assert st["confirm"]["events_status"]["ok"] is False
+
+
+def _two_setups(tmp_path):
+    rows = [FLAT] * 3 + [(4000.0, 4001.0, 3986.0, 3990.0)] + [FLAT] * 3 + [(4000.0, 4016.0, 3999.0, 4015.5)] + [FLAT] * 2
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:3], [(2, 1)]), st, T0 + 3 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(2, 1), (5, -1)]), st, T0 + 10 * 900, store_dir=str(tmp_path))
+    return rows, st, tmp_path / "research_forward" / cp.EVENTS_FILE
+
+
+@pytest.mark.parametrize("cut", ["drop the last line", "delete the file"])
+def test_lines_cut_from_the_end_of_the_event_log_are_detected_by_the_anchor(tmp_path, cut):
+    """A hash chain cannot show a cut tail on its own: the state keeps the last line this panel wrote (seq, SHA-256) and
+    the next run requires it to still be there, unchanged. Nothing is appended until the log is restored."""
+    rows, st, p = _two_setups(tmp_path)
+    assert st["confirm"]["events_head"]["seq"] == 4
+    if cut == "drop the last line":
+        p.write_text("\n".join(p.read_text().splitlines()[:-1]) + "\n")
+    else:
+        p.unlink()
+    before = p.read_text() if p.exists() else None
+    out = cp.panel(_eng_payload(rows + [FLAT] * 30, [(2, 1), (5, -1), (30, 1)]), st, T0 + 41 * 900, store_dir=str(tmp_path))
+    assert out["events"]["ok"] is False and "truncated or deleted" in out["events"]["why"]
+    assert (p.read_text() if p.exists() else None) == before
+
+
+def test_a_replaced_last_line_is_detected_and_a_lost_state_raises_no_false_alarm(tmp_path):
+    _rows, st, p = _two_setups(tmp_path)
+    lines = p.read_text().splitlines()
+    rec = json.loads(lines[-1])
+    rec["exit_reason"] = "edited"                                    # a valid-looking line, chained correctly
+    lines[-1] = json.dumps(rec)
+    p.write_text("\n".join(lines) + "\n")
+    assert cp.verify_events(str(p))[0]                               # the chain alone cannot see it ...
+    ok, why = cp.verify_events(str(p), st["confirm"]["events_head"])
+    assert not ok and "replaced" in why                              # ... the anchor does
+    rows2, st2, _p2 = _two_setups(tmp_path / "b")
+    st2["confirm"].pop("events_head")                                # state lost: no anchor, no false alarm
+    out = cp.panel(_eng_payload(rows2 + [FLAT] * 30, [(2, 1), (5, -1), (30, 1)]), st2, T0 + 41 * 900, store_dir=str(tmp_path / "b"))
+    assert out["events"]["ok"] is True and out["events"]["appended"] == 1
+
+
+def test_the_headline_figure_is_never_shown_without_its_sample_and_status():
+    sub = cp.panel({}, {}, T0)["sub"]
+    assert "12 of 20 engine signal trades, 2020-22, 95% 39%-78%" in sub and "not a proven accuracy" in sub
+    assert cp.STATUS_TEXT["INSUFFICIENT"] in sub and "No signal type has a validated success rate" in sub

@@ -1993,7 +1993,7 @@ function cfSizing(r) {
 function renderConfirm() {
   const el = $("#cf"), st = $("#cf-state"); if (!el) return;
   const C = S.index && S.index.alerts && S.index.alerts.confirm;
-  if (!C) { el.innerHTML = `<span class="muted">The confirmation panel appears after the next engine run.</span>`; if (st) { st.textContent = "—"; st.className = "pill"; } return; }
+  if (!C) { el.innerHTML = `<span class="muted">No confirmation panel in this build: it is switched off (CONFIRM_PANEL=0) or has not run yet. Nothing here is a trade signal.</span>`; if (st) { st.textContent = "OFF"; st.className = "pill"; } return; }
   if (C.error) { el.innerHTML = `<span class="muted">Panel unavailable this run (${esc(C.error)}). Alerts are not affected.</span>`; if (st) { st.textContent = "—"; st.className = "pill"; } return; }
   const accepted = C.headline !== C.no_trade;
   if (st) { st.textContent = accepted ? "TRADE" : "NO TRADE"; st.className = "pill " + (accepted ? "bull" : "warn"); }
@@ -2007,11 +2007,11 @@ function renderConfirm() {
   const OUT = { TP: ["bull", "target first"], SL: ["bear", "stop first"], AMBIGUOUS: ["warn", "target and stop in one bar (counted as the stop)"], TIMEOUT: ["", "neither in 192 bars"], OPEN: ["", "open"] };
   const usd = (x) => (isNum(x) ? (x < 0 ? "−$" : "+$") + Math.abs(x).toFixed(2) : "—");
   const STAGE = {
-    PENDING: (r) => `<b>CONFIRMATION PENDING</b> · needs a 15m close at ${px(r.confirm_at)} before ${px(r.invalid_at)} (${r.bars || 0} of ${C.win_bars} bars)`,
-    INVALIDATED: (r) => `<b class="bear">INVALIDATED</b> · ${esc(r.why || "")}${r.t_done ? ` (${tfmt(r.t_done)})` : ""}`,
-    EXPIRED: (r) => `<b>EXPIRED</b> · ${esc(r.why || "")}`,
-    STALE: (r) => `<b>NOT FINISHED</b> · ${esc(r.why || "")}`,
-    CONFIRMED: (r) => `<b class="bull">$15 CONFIRMED</b> · 15m close ${px(r.entry)} at ${tfmt(r.t_conf)}` +
+    PENDING: (r) => `<b>INITIAL SETUP</b> <span class="dim">(not a trade)</span> · confirmation pending: needs a 15m close at ${px(r.confirm_at)} before ${px(r.invalid_at)} (${r.bars || 0} of ${C.win_bars} bars)`,
+    INVALIDATED: (r) => `<b class="bear">INVALIDATED</b> → NO TRADE · ${esc(r.why || "")}${r.t_done ? ` (${tfmt(r.t_done)})` : ""}`,
+    EXPIRED: (r) => `<b>EXPIRED</b> → NO TRADE · ${esc(r.why || "")}`,
+    STALE: (r) => `<b>NOT FINISHED</b> → ${r.t_conf ? "UNRESOLVED" : "NO TRADE"} · ${esc(r.why || "")}`,
+    CONFIRMED: (r) => `<b class="bull">CONFIRMED</b> ($15 close) · 15m close ${px(r.entry)} at ${tfmt(r.t_conf)}` +
       (r.x20 && r.x20.status === "CONFIRMED" ? ` · $20 close ${px(r.x20.px)} at ${tfmt(r.x20.t)}` : ""),
   };
   const flagsOf = (r) => [r.backfill ? "rebuilt from the chart when the panel started" : "", r.late ? '<b class="warn">appeared after its bar was already processed (repaint or late data)</b>' : "",
@@ -2050,11 +2050,11 @@ function renderConfirm() {
   const live = rows.filter((r) => r.status === "PENDING" || (r.status === "CONFIRMED" && !r.t_done));
   const doneConf = rows.filter((r) => r.status === "CONFIRMED" && r.t_done).slice(0, 6);
   const rejected = rows.filter((r) => r.status !== "PENDING" && r.status !== "CONFIRMED");
-  const stName = (r) => (r.status === "INVALIDATED" ? "invalidated" : r.status === "EXPIRED" ? "expired" : r.status === "STALE" ? (r.t_conf ? "confirmed, not finished" : "not finished") : String(r.status || "").toLowerCase());
-  const rejLines = rejected.map((r) => `<li>${head(r)} · <b>${esc(stName(r))}</b>: ${esc(r.why || "")}${r.repeats ? ` <span class="dim">(+${r.repeats} folded)</span>` : ""}</li>`).join("");
+  const stName = (r) => (r.status === "STALE" ? (r.t_conf ? "CONFIRMED, NOT FINISHED → UNRESOLVED" : "NOT FINISHED → NO TRADE") : `${String(r.status || "")} → NO TRADE`);
+  const rejLines = rejected.map((r) => `<li>${head(r)} · <b class="${r.status === "INVALIDATED" ? "bear" : ""}">${esc(stName(r))}</b>: ${esc(r.why || "")}${r.repeats ? ` <span class="dim">(+${r.repeats} folded)</span>` : ""}</li>`).join("");
   const items = (live.length ? `<h4>Now</h4>${live.map((r) => block(r, true)).join("")}` : '<p class="muted">Nothing waiting for confirmation or running now.</p>') +
     (doneConf.length ? `<h4>Confirmed in the last 3 days</h4>${doneConf.map((r) => block(r, false)).join("")}` : "") +
-    (rejected.length ? `<details class="cf-ev"><summary class="dim">Why no entry was taken: ${rejected.length} trigger(s) invalidated, expired or not finished</summary><ul class="cf-rej">${rejLines}</ul></details>` : "");
+    (rejected.length ? `<details class="cf-ev"><summary class="dim">NO TRADE: ${rejected.length} trigger(s) INVALIDATED, EXPIRED or not finished (why)</summary><ul class="cf-rej">${rejLines}</ul></details>` : "");
   const R = C.random || {}, rnd = (key) => (R.rates || {})[key];
   const evRows = Object.entries(C.evidence || {}).map(([k, v]) => {
     const conf = v.confirmed && v.triggers ? `${pct((100 * v.confirmed.X15) / v.triggers, 0)} of ${Number(v.triggers).toLocaleString("en-US")}` : "—";
@@ -2072,6 +2072,7 @@ function renderConfirm() {
     ? `<p class="warn"><b>OUT OF DATE</b>: this panel was built ${f(ageMin, 0)} min ago (the site updates every 15 min). Nothing below is live until the next update.</p>` : "";
   el.innerHTML = `${stale}<div class="cf-head ${accepted ? "bull" : "warn"}">${esc(C.headline)}</div>
     <p class="cf-sub">${esc(C.sub || "")} ${isNum(C.pending) ? `Now: ${C.pending} waiting for confirmation, ${C.running} confirmed and running.` : ""}</p>
+    <p class="note"><b>Stages:</b> INITIAL SETUP (a trigger; not a trade) → CONFIRMED (a 15m close $${f((C.x_usd || {}).X15, 0)} beyond the trigger price, before −$${f(C.inv_usd, 0)}) → plan. INVALIDATED or EXPIRED = NO TRADE. Every row stays NO TRADE until its type passes an out-of-sample test above break-even; none has. Shadow / forward test only: nothing is executed or sent.</p>
     ${rows.length ? items : '<p class="muted">No trigger in the last 3 days.</p>'}
     <details class="cf-ev"><summary class="dim">What each trigger type measured (2020–22, one per idea; validation where it was run)</summary>
       <div class="scroll"><table class="t yt"><tr><th>Type</th><th>Triggers confirmed</th><th>+$15 before −$13, after a $15 close</th><th>+$20 before −$13, after a $15 close</th><th>+$15 before −$13, entered at the trigger</th><th>Touch, stop ignored</th><th>Validation status</th></tr>${evRows}${rndRow}</table></div>
