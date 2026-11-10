@@ -30,6 +30,7 @@ Display only: nothing here reaches the phone, the plans, the B9 / B15 tests or t
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -60,6 +61,8 @@ STATUS_TEXT = {"VALIDATED": "VALIDATED out of sample", "FAILED": "NOT VALIDATED:
                "INSUFFICIENT": INSUFFICIENT}
 LIVE_MIN_N = 30                        # a live record is shown as a rate only from 30 decided results (notify.MIN_N)
 AUDIT_FILE = "CONFIRM-LIVE.json"       # <store>/research_forward/: every finished row, kept; copied to forward-ledger
+EVENTS_FILE = "CONFIRM-EVENTS.jsonl"   # <store>/research_forward/: every stage event once, hash-chained (append-only)
+GENESIS = "GENESIS"
 
 # Measured rates (k reached the target first, n trades), copied from the committed results and checked against them by
 # tests/test_confirm_panel.py. Development = 2020-01-24 -> 2023-01-24 (scored from 2020-04-01); validation = 2023-01-24 ->
@@ -328,7 +331,7 @@ def evaluate(P: dict, row: dict, votes: list, s: float = 1.0) -> dict:
             return out
         k = c15["k"]
         e = float(P["c"][k])
-        out.update(t_conf=t[k] + 900, entry=round(e, 2), entry_px=e, sl=round(e - d * SL_USD * s, 2),
+        out.update(t_conf=t[k] + 900, entry=round(e, 2), entry_px=e, move_usd=round((e - p0) * d, 2), sl=round(e - d * SL_USD * s, 2),
                    tp1=round(e + d * TP_USD["T15"] * s, 2), tp2=round(e + d * TP_USD["T20"] * s, 2),
                    rr1=TP_USD["T15"] / SL_USD, rr2=TP_USD["T20"] / SL_USD, checks=checks(P, row, j0, k, votes))
         prev_res: dict = {}
@@ -370,6 +373,9 @@ def verdict(row: dict) -> tuple[str, str]:
         return "WAIT", f"not confirmed: needs a 15m close at {row['confirm_at']:.2f} before {row['invalid_at']:.2f}"
     if st in ("INVALIDATED", "EXPIRED"):
         return "NO TRADE", row.get("why", st.lower())
+    if st == "STALE":
+        return "NO TRADE", (row.get("why", "stale") + ("; it was confirmed, but its exits were never reached on the chart"
+                                                        if row.get("t_conf") is not None else "; never confirmed"))
     if ev.get("validated"):
         return "TRADE", "confirmed; this type has a validated out-of-sample success rate above break-even"
     label = STATUS_TEXT[ev.get("status", "INSUFFICIENT")]
@@ -440,10 +446,15 @@ def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0, store_dir: st
             r.update(status="STALE", why="its 15m bars left the chart before it finished", t_done=t_now)
         r["verdict"], r["reason"] = verdict(r)
         (done if r.get("t_done") is not None else keep).append(r)
+    src = (p15.get("meta") or {}).get("price_source") or "unknown"
+    for r in keep + done:
+        r.setdefault("data_source", f"{src} 15m bars (closed bars only)")
     log = (log + done)[-LOG_MAX:]
     st["rows"], st["log"] = keep[-200:], log
     if store_dir and done:
         audit(store_dir, done, st["started"])
+    if store_dir:
+        log_events(store_dir, keep + done, st, t_now)
     st["seen"] = {k: v for k, v in seen.items() if _key_t(k)[1] >= starts.get(_key_t(k)[0], t0)}
     for tf, p in ((tf, _ok(payloads.get(tf))) for tf in ENG_TFS):
         if p is not None:
@@ -457,7 +468,108 @@ def panel(payloads: dict, state: dict, t_now: int, s: float = 1.0, store_dir: st
     pn = notify.price_now(payloads, "15m")
     return {**base, "headline": head, "sub": sub, "pending": pend, "running": running, "rows": shown[:20],
             "record": record(log, st["started"]), "started_utc": st["started"], "price_now": pn["px"] if pn else None,
-            "t": t_now}
+            "events": st.get("events_status"), "t": t_now}
+
+
+def setup_id(r: dict) -> str:
+    """A setup's id in the event log, from the trigger itself (type, timeframe, signal bar, direction), so it never depends
+    on the panel's state: a lost or reset state file cannot reuse an id."""
+    return f"CF-{r['kind']}-{r['tf']}-{int(r['t'])}-{'B' if r['dir'] > 0 else 'S'}"
+
+
+EXIT_REASON = {"TP": "target", "SL": "stop", "AMBIGUOUS": "target and stop in one bar (counted as the stop)",
+               "TIMEOUT": "time stop (192 bars)"}
+
+
+def events_of(r: dict) -> list[dict]:
+    """The stage events a row has reached, in order. Each carries the bar time at which it happened (never the run time):
+    SETUP (stage A), CONFIRMED / X20_CONFIRMED (stage B), INVALIDATED / EXPIRED (no trade), EXIT_T15 / EXIT_T20 (each
+    target's result, P&L in $ of price per oz before costs, and after the operator's measured cost), COMPLETED, or STALE
+    (the bars left the chart first: NO TRADE before a confirmation, UNRESOLVED after one)."""
+    base = {"setup_id": setup_id(r), "panel_no": r.get("id"), "kind": r["kind"], "tf": r["tf"],
+            "direction": "BUY" if r["dir"] > 0 else "SELL", "trigger_price": r["p0"], "trigger_utc": r["t_close"],
+            "data_source": r.get("data_source"),
+            "flags": [f for f in ("backfill", "late", "vanished") if r.get(f)] + (["revised"] if r.get("revised") else [])}
+    ev = [{"event": "SETUP", "event_utc": r["t_close"], "confirm_at": r.get("confirm_at"), "invalid_at": r.get("invalid_at"),
+           "what": r.get("what")}]
+    st, conf = r.get("status"), r.get("t_conf") is not None
+    if conf:
+        ev.append({"event": "CONFIRMED", "event_utc": r["t_conf"], "confirmation_price": r["entry"], "confirmation_utc": r["t_conf"],
+                   "move_usd": r.get("move_usd"), "entry": r["entry"], "sl": r["sl"], "tp1": r["tp1"], "tp2": r["tp2"]})
+        x20 = r.get("x20") or {}
+        if x20.get("status") == "CONFIRMED":
+            ev.append({"event": "X20_CONFIRMED", "event_utc": x20["t"], "confirmation_price": x20["px"]})
+        for nm in ("T15", "T20"):
+            x = (r.get("result") or {}).get(nm) or {}
+            if x.get("out") not in (None, "OPEN"):
+                ev.append({"event": f"EXIT_{nm}", "event_utc": x.get("t"), "target": nm, "outcome": x["out"],
+                           "exit_reason": EXIT_REASON.get(x["out"], x["out"]), "pnl_usd_per_oz": x.get("usd"),
+                           "pnl_after_operator_cost": _r(x["usd"] - OP_COST) if x.get("usd") is not None else None})
+    if st == "CONFIRMED" and r.get("t_done") is not None:
+        ev.append({"event": "COMPLETED", "event_utc": r["t_done"]})
+    elif st in ("INVALIDATED", "EXPIRED") or (st == "STALE" and not conf):
+        ev.append({"event": st, "event_utc": r.get("t_done"), "outcome": "NO TRADE", "exit_reason": r.get("why")})
+    elif st == "STALE":
+        ev.append({"event": "STALE", "event_utc": r.get("t_done"), "outcome": "UNRESOLVED",
+                   "exit_reason": "confirmed, but its 15m bars left the chart before every exit was reached"})
+    return [{**base, **e, "event_id": f"{base['setup_id']}-{e['event']}"} for e in ev]
+
+
+def _sha(line: bytes) -> str:
+    return hashlib.sha256(line).hexdigest()
+
+
+def _read_events(path: str) -> tuple[bool, str, str, int, set]:
+    """(intact, why, sha of the last line, count, event ids). Intact = every line parses, seq counts from 1 and each prev
+    is the SHA-256 of the line before it (a torn or edited line breaks it)."""
+    prev, n, ids = GENESIS, 0, set()
+    if not os.path.exists(path):
+        return True, "no events yet", prev, 0, ids
+    with open(path, "rb") as fh:
+        for n, ln in enumerate((x.rstrip(b"\n") for x in fh if x.strip()), 1):
+            try:
+                rec = json.loads(ln)
+            except ValueError:
+                return False, f"event {n} breaks the chain (not valid JSON)", prev, n, ids
+            if not isinstance(rec, dict) or rec.get("seq") != n or rec.get("prev") != prev:
+                return False, f"event {n} breaks the chain", prev, n, ids
+            ids.add(rec.get("event_id"))
+            prev = _sha(ln)
+    return True, f"{n} events, chain intact", prev, n, ids
+
+
+def verify_events(path: str) -> tuple[bool, str]:
+    ok, why, *_ = _read_events(path)
+    return ok, why
+
+
+def log_events(store_dir: str, rows: list[dict], st: dict, t_now: int) -> int:
+    """Append each row's events that the log does not hold yet (by event id, read from the log itself, so a lost state
+    file or a crashed run can neither duplicate nor skip one). Never rewrites or removes a line; refuses to append to a
+    broken chain, and the panel then shows why (state["confirm"]["events_status"])."""
+    path = os.path.join(store_dir, "research_forward", EVENTS_FILE)
+    ok, why, prev, seq, have = _read_events(path)
+    if not ok:
+        st["events_status"] = {"file": EVENTS_FILE, "ok": False, "why": why + "; nothing appended"}
+        return 0
+    new = []
+    for r in rows:
+        for e in events_of(r):
+            if e["event_id"] in have:
+                continue
+            seq += 1
+            line = json.dumps(notify.json_safe({"seq": seq, "prev": prev, "logged_utc": t_now, **e}), allow_nan=False).encode()
+            new.append(line)
+            prev = _sha(line)
+            have.add(e["event_id"])
+    if new:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "ab") as fh:
+            fh.write(b"".join(x + b"\n" for x in new))
+            fh.flush()
+            os.fsync(fh.fileno())
+    st["events_status"] = {"file": EVENTS_FILE, "ok": True, "why": f"{seq} events, chain intact", "appended": len(new)}
+    return len(new)
 
 
 def audit(store_dir: str, done: list[dict], started: int) -> None:
@@ -471,8 +583,10 @@ def audit(store_dir: str, done: list[dict], started: int) -> None:
     have = {r["key"] for r in rec["rows"]}
     rec["rows"] += [notify.json_safe({k: v for k, v in r.items() if k not in ("checks",)}) for r in done if r["key"] not in have]
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w") as f:
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
         json.dump(rec, f, indent=1)
+    os.replace(tmp, path)
 
 
 def record(log: list[dict], started: int) -> dict:
@@ -485,7 +599,7 @@ def record(log: list[dict], started: int) -> dict:
                                          "T15": [0, 0], "T20": [0, 0]})
         g["triggers"] += 1
         st = r.get("status")
-        if st == "CONFIRMED":
+        if st == "CONFIRMED" or r.get("t_conf") is not None:
             g["confirmed"] += 1
             for nm in ("T15", "T20"):
                 o = ((r.get("result") or {}).get(nm) or {}).get("out")

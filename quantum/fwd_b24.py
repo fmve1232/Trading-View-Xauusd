@@ -82,13 +82,27 @@ def _fixed24(P: dict, start: int, entry: float, d: int) -> dict | None:
             "mae": float(np.nanmax((entry - lo_) if d > 0 else (h - entry)))}
 
 
+GAP_WHY = ("bars it still needed left the chart before any run examined them (the site did not run for days); no decision "
+           "is made on bars never examined")
+
+
+def _gap(next_open: int, t: np.ndarray, sec: int) -> bool:
+    """True when the next bar this row must examine opens before the chart's first bar: the bars in between were never
+    seen by any run, so scanning on from the chart's start would skip them."""
+    return len(t) > 0 and -(-int(next_open) // sec) * sec < int(t[0])
+
+
 def advance(row: dict, P15: dict, P5: dict | None, payloads: dict, t_now: int) -> None:
-    """Move one row forward on bars no earlier run examined; decisions are frozen once written."""
+    """Move one row forward on bars no earlier run examined; decisions are frozen once written. A row whose next bar is
+    no longer on the chart is closed as DATA GAP (not decided; never counted in a look)."""
     t = P15["t"]
     j0 = bisect_left(t, row["t_close"])
     d, p0 = row["dir"], row["p0"]
     if row["stage"] == "PENDING":
         if j0 >= len(t):
+            return
+        if _gap(row["t_close"] if row.get("scan_t") is None else row["scan_t"], t, 900):
+            row.update(stage="DATA GAP", why=GAP_WHY, t_stage=t_now, t_stage_seen=t_now)
             return
         js = j0 if row.get("scan_t") is None else bisect_left(t, row["scan_t"])
         c = cp.confirm_one(P15, j0, p0, d, 15.0, start=js)
@@ -123,6 +137,7 @@ def advance(row: dict, P15: dict, P5: dict | None, payloads: dict, t_now: int) -
         j = bisect_left(P["t"], int(e["t"]))                                # the first bar opening at or after the entry
         if j >= len(P["t"]):
             continue
+        sec = 300 if P is P5 else 900
         for tk, T in TARGETS.items():
             for sk in STOPS:
                 dist = ((row.get("stops") or {}).get(ent) or {}).get(sk)
@@ -132,6 +147,9 @@ def advance(row: dict, P15: dict, P5: dict | None, payloads: dict, t_now: int) -
                     if dist is None:
                         row["res"][key] = {"out": "N/A"}
                     continue
+                if _gap(cur["scan_t"] if cur.get("scan_t") else int(e["t"]), P["t"], sec):
+                    row["res"][key] = {"out": "DATA GAP", "why": GAP_WHY}
+                    continue
                 st0 = bisect_left(P["t"], cur["scan_t"]) if cur.get("scan_t") else j
                 x = cp.exit_one(P, j - 1, d, T, 1.0, entry=e["px"], start=st0, mfe0=cur.get("mfe", 0.0), mae0=cur.get("mae", 0.0),
                                 stop=dist, hold=hold)
@@ -140,11 +158,11 @@ def advance(row: dict, P15: dict, P5: dict | None, payloads: dict, t_now: int) -
                                    "t_exit": P["t"][x["bar"]] + (300 if P is P5 else 900) if x["out"] != "OPEN" else None,
                                    "scan_t": P["t"][-1] + (300 if P is P5 else 900) if x["out"] == "OPEN" else None}
         if P is P5 and e.get("fixed24") is None:
-            e["fixed24"] = _fixed24(P, j, e["px"], d)
+            e["fixed24"] = {"data_gap": True} if _gap(int(e["t"]), P["t"], sec) else _fixed24(P, j, e["px"], d)
 
 
 def finished(row: dict) -> bool:
-    if row["stage"] in ("INVALIDATED", "EXPIRED", "FOLDED"):
+    if row["stage"] in ("INVALIDATED", "EXPIRED", "FOLDED", "DATA GAP"):
         return True
     if row["stage"] != "CONFIRMED":
         return False
@@ -200,7 +218,8 @@ def weekly(rows: list[dict], week: str, started: int, status: str) -> dict:
         conf = [r for r in rs if r["stage"] == "CONFIRMED"]
         out = {"triggers": len(rs), "buy": sum(r["dir"] > 0 for r in rs), "sell": sum(r["dir"] < 0 for r in rs),
                "confirmed": len(conf), "invalidated": sum(r["stage"] == "INVALIDATED" for r in rs),
-               "expired": sum(r["stage"] == "EXPIRED" for r in rs), "folded": sum(r["stage"] == "FOLDED" for r in rs)}
+               "expired": sum(r["stage"] == "EXPIRED" for r in rs), "folded": sum(r["stage"] == "FOLDED" for r in rs),
+               "data_gap": sum(r["stage"] == "DATA GAP" for r in rs)}
         for key in ("B T15 S13", "B T20 S13", "A T15 S13"):
             dec = [r["res"][key] for r in conf if (r.get("res") or {}).get(key, {}).get("out") in ("TP", "SL", "AMBIGUOUS", "TIMEOUT")]
             n, k = len(dec), sum(x["out"] == "TP" for x in dec)
@@ -273,8 +292,10 @@ def run(payloads: dict, state: dict, t_now: int, store_dir: str | None = None) -
     st["last_bar"] = {**last_bar, **{tf: int(p["chart"]["t"][-1]) for tf in cp.ENG_TFS for p in [cp._ok(payloads.get(tf))] if p is not None}}
     if path:
         os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w") as f:
+        tmp = path + ".tmp"                                              # replaced whole: a crash cannot truncate it
+        with open(tmp, "w") as f:
             json.dump(rec, f, indent=1)
+        os.replace(tmp, path)
     dec = [r for r in rec["rows"] if primary(r)]
     return notify.json_safe({"id": ID, "status": status, "started_utc": st["started"], "open": len(keep), "recorded": len(rec["rows"]),
                              "decided": len(dec), "wins": sum(primary(r)[0] == "TP" for r in dec), "looks": list(LOOKS),

@@ -385,3 +385,17 @@ stream it trades.**
 - **The confirmation step kept almost every trade out.** Price went −$13 against 25 of 28 triggers before a 15m candle
   closed +$15 beyond them. That avoided 8 of the engine's 10 losing ideas, but the 1–2 trades it did take lost.
 - **Waiting for pending triggers:** none was pending at the 6 Nov close.
+
+## Erratum (2026-11-10): cost units
+
+Found while validating the confirmation panel (`research/CF_VALIDATION.md`, PR #90). Section 3 defines
+net = (exit − entry)·d / s − cost: the move is put at a $4,000 price (divided by s = P0 / 4000) but the cost is not,
+so the cost is under-weighted by 1 / s when gold traded far below $4,000. In consistent units (cost / s) the ENG
+X15F0 E1 S13 +$15 figure falls from +$2.97 to +$1.99 per oz on 2020-22 (s ≈ 0.46) and from +$6.12 to +$5.39 on
+2023-24 (s ≈ 0.52); 2026 (s ≈ 1.1) is unchanged in substance. The EXECUTE cost cap (cost ≤ 0.15·D / s) mixes the same
+units: in consistent units 6 of the 20 confirmed 2020-22 trades and 1 of the 7 2023-24 trades would fail it.
+
+What does not change: every TP-first / SL-first count and rate (outcomes do not depend on the cost), every verdict
+(each correction lowers the expectancy, and no B19 configuration was validated), and the confirmation panel, which
+shows only those counts. The original figures are kept above as they were reported; the corrected ones, with
+`net_b19` beside them for reproduction, are in `research/results/cf_validation.json`.

@@ -384,3 +384,107 @@ def test_every_probability_carries_its_sample_period_and_status():
             assert 0 <= k <= n and period == "2020-22"
     assert cp.EVIDENCE["ENG"]["status"] == cp.EVIDENCE["4H"]["status"] == "INSUFFICIENT"
     assert cp.STATUS_TEXT["INSUFFICIENT"] == "INSUFFICIENT DATA — NOT STATISTICALLY VALIDATED"
+
+
+def _events(tmp_path):
+    p = tmp_path / "research_forward" / cp.EVENTS_FILE
+    return [json.loads(x) for x in p.read_text().splitlines()] if p.exists() else []
+
+
+def test_every_stage_event_is_recorded_once_in_order_with_its_bar_time(tmp_path):
+    """Setup -> $15 confirmation -> TP1 result, each event once, timed by the bar it happened on (not the run), with the
+    trigger and confirmation prices, the confirmed move, the data source; a re-run with nothing new adds nothing."""
+    rows = [FLAT] * 30 + [(4000.0, 4016.0, 3999.0, 4015.0)] + [(4015.0, 4031.0, 4014.0, 4030.5)]
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:29], [(28, 1)]), st, T0 + 29 * 900, store_dir=str(tmp_path))
+    out = cp.panel(_eng_payload(rows, [(28, 1)]), st, T0 + 32 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(28, 1)]), st, T0 + 33 * 900, store_dir=str(tmp_path))          # nothing new
+    ev = _events(tmp_path)
+    assert [e["event"] for e in ev] == ["SETUP", "CONFIRMED", "X20_CONFIRMED", "EXIT_T15"]     # 4030.5 is also $20 beyond
+    s, c, x20, x = ev
+    assert x20["confirmation_price"] == 4030.5 and x20["event_utc"] == T0 + 32 * 900
+    assert s["setup_id"] == c["setup_id"] == x["setup_id"] == f"CF-ENG-15m-{T0 + 28 * 900}-B" and s["panel_no"] == 1
+    assert s["direction"] == "BUY" and s["tf"] == "15m" and len({e["event_id"] for e in ev}) == 4
+    assert s["event_utc"] == T0 + 29 * 900 and s["trigger_price"] == rows[28][3] and s["confirm_at"] == rows[28][3] + 15
+    assert c["event_utc"] == T0 + 31 * 900 and c["confirmation_price"] == 4015.0 and c["move_usd"] == 4015.0 - rows[28][3]
+    assert c["move_usd"] >= 15 and c["sl"] == 4002.0 and c["tp1"] == 4030.0 and c["tp2"] == 4035.0
+    assert x["outcome"] == "TP" and x["exit_reason"] == "target" and x["pnl_usd_per_oz"] == 15.0
+    assert x["pnl_after_operator_cost"] == round(15.0 - cp.OP_COST, 2) and "15m bars" in x["data_source"]
+    assert all(e["logged_utc"] >= e["event_utc"] for e in ev) and s["flags"] == ["backfill"]
+    assert out["rows"][0]["move_usd"] == c["move_usd"]
+    assert cp.verify_events(str(tmp_path / "research_forward" / cp.EVENTS_FILE)) == (True, "4 events, chain intact")
+    assert out["events"] == {"file": cp.EVENTS_FILE, "ok": True, "why": "4 events, chain intact", "appended": 3}
+
+
+def test_a_lost_state_file_neither_duplicates_nor_renumbers_events(tmp_path):
+    """Ids come from the trigger and the log itself is the dedupe key: a fresh state (lost / reset) re-sees the same
+    triggers and appends nothing it already holds; the next real event still goes in."""
+    rows = [FLAT] * 30 + [(4000.0, 4016.0, 3999.0, 4015.0)]
+    cp.panel(_eng_payload(rows[:29], [(28, 1)]), {}, T0 + 29 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(28, 1)]), {}, T0 + 31 * 900, store_dir=str(tmp_path))       # state lost between runs
+    ev = _events(tmp_path)
+    assert [e["event"] for e in ev] == ["SETUP", "CONFIRMED"]
+    assert len({e["event_id"] for e in ev}) == len(ev)
+    assert cp.verify_events(str(tmp_path / "research_forward" / cp.EVENTS_FILE))[0]
+
+
+def test_a_torn_last_line_is_reported_not_raised_and_nothing_is_appended(tmp_path):
+    rows = [FLAT] * 3 + [(4000.0, 4001.0, 3986.0, 3990.0)] + [FLAT] * 3
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:3], [(2, 1)]), st, T0 + 3 * 900, store_dir=str(tmp_path))
+    p = tmp_path / "research_forward" / cp.EVENTS_FILE
+    p.write_bytes(p.read_bytes() + b'{"seq": 2, "prev": "ab')                    # a run killed mid-write
+    before = p.read_bytes()
+    out = cp.panel(_eng_payload(rows, [(2, 1)]), st, T0 + 7 * 900, store_dir=str(tmp_path))
+    assert p.read_bytes() == before and out["events"]["ok"] is False and "not valid JSON" in out["events"]["why"]
+    assert out["headline"] == cp.NO_TRADE
+
+
+def test_a_confirmed_setup_whose_bars_leave_the_chart_is_unresolved_not_no_trade(tmp_path):
+    """Stage B reached, an exit still open, then the trigger's bars drop off the chart (the site was down for days): the
+    log says UNRESOLVED after CONFIRMED, the verdict does not call it unconfirmed, and the record still counts the
+    confirmation (its exits stay undecided)."""
+    rows = [FLAT] * 30 + [(4000.0, 4016.0, 3999.0, 4015.0)]
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:29], [(28, 1)]), st, T0 + 29 * 900, store_dir=str(tmp_path))
+    st["confirm"]["started"] = T0                                                 # count it in the live record
+    for r in st["confirm"]["rows"]:
+        r["backfill"] = False
+    cp.panel(_eng_payload(rows, [(28, 1)]), st, T0 + 31 * 900, store_dir=str(tmp_path))
+    later = {"15m": _payload("15m", *_bars([FLAT] * 5, t0=T0 + 40 * 900))}
+    out = cp.panel(later, st, T0 + 45 * 900, store_dir=str(tmp_path))
+    ev = _events(tmp_path)
+    assert [e["event"] for e in ev] == ["SETUP", "CONFIRMED", "STALE"]
+    assert ev[-1]["outcome"] == "UNRESOLVED" and ev[-1]["event_utc"] == T0 + 45 * 900
+    row = st["confirm"]["log"][-1]
+    assert row["status"] == "STALE" and row["verdict"] == "NO TRADE" and "it was confirmed" in row["reason"]
+    assert out["record"]["ENG"]["confirmed"] == 1 and out["record"]["ENG"]["T15"] == [0, 0]
+    assert cp.verdict({"kind": "ENG", "dir": 1, "status": "STALE", "why": "gone"})[1] == "gone; never confirmed"
+
+
+def test_a_cancelled_setup_is_recorded_as_no_trade(tmp_path):
+    rows = [FLAT] * 3 + [(4000.0, 4001.0, 3986.0, 3990.0)] + [FLAT] * 3
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:3], [(2, 1)]), st, T0 + 3 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(2, 1)]), st, T0 + 7 * 900, store_dir=str(tmp_path))
+    ev = _events(tmp_path)
+    assert [e["event"] for e in ev] == ["SETUP", "INVALIDATED"]
+    assert ev[1]["outcome"] == "NO TRADE" and "against" in ev[1]["exit_reason"] and ev[1]["event_utc"] == T0 + 4 * 900
+
+
+def test_the_event_log_is_tamper_evident_and_never_extended_when_broken(tmp_path):
+    rows = [FLAT] * 3 + [(4000.0, 4001.0, 3986.0, 3990.0)] + [FLAT] * 3
+    st: dict = {}
+    cp.panel(_eng_payload(rows[:3], [(2, 1)]), st, T0 + 3 * 900, store_dir=str(tmp_path))
+    cp.panel(_eng_payload(rows, [(2, 1)]), st, T0 + 7 * 900, store_dir=str(tmp_path))
+    p = tmp_path / "research_forward" / cp.EVENTS_FILE
+    lines = p.read_text().splitlines()
+    rec = json.loads(lines[0])
+    rec["trigger_price"] = 1.0                                                   # an edited record
+    p.write_text("\n".join([json.dumps(rec)] + lines[1:]) + "\n")
+    ok, why = cp.verify_events(str(p))
+    assert not ok and "event 2" in why
+    before = p.read_text()
+    cp.panel(_eng_payload(rows + [FLAT], [(2, 1), (6, -1)]), st, T0 + 8 * 900, store_dir=str(tmp_path))
+    assert p.read_text() == before and "breaks the chain" in st["confirm"]["events_status"]["why"]
+    assert st["confirm"]["events_status"]["ok"] is False

@@ -1,6 +1,6 @@
 """B24-CONFIRM-FWD recorder (quantum/fwd_b24.py) against its registration (research/registrations/B24-CONFIRM-FWD.json)."""
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import numpy as np
 import pytest
@@ -8,7 +8,7 @@ import pytest
 from quantum import fwd_b24 as fb
 from quantum import notify
 
-MON = int(datetime(2026, 11, 2, 0, 0, tzinfo=timezone.utc).timestamp())       # a Monday
+MON = int(datetime(2026, 11, 2, 0, 0, tzinfo=UTC).timestamp())       # a Monday
 
 
 def _path5():
@@ -37,10 +37,10 @@ def _payloads(n15: int, gen: int, forming_c=None, signal=True):
     c15 = [float(C5[3 * i + 2]) for i in range(n15)]
     mk = [{"t": t15[40], "type": "SIGNAL", "dir": 1, "px": c15[40], "tq": 62, "sl": 3987.0, "tp1": 4013.0, "tp2": 4020.0,
            "tp3": 4030.0}] if signal and n15 > 40 else []
-    p15 = {"meta": {"tf": "15m", "synthetic": False, "price_source": "td", "generated_utc": datetime.fromtimestamp(gen, timezone.utc).isoformat()},
+    p15 = {"meta": {"tf": "15m", "synthetic": False, "price_source": "td", "generated_utc": datetime.fromtimestamp(gen, UTC).isoformat()},
            "markers": mk, "decisions": [], "news": None, "dashboard": {"checks": {"cost_pts": 0.85}},
            "chart": {"t": t15, "o": o15, "h": h15, "l": l15, "c": c15}}
-    meta5 = {"tf": "5m", "synthetic": False, "price_source": "td", "generated_utc": datetime.fromtimestamp(gen, timezone.utc).isoformat(),
+    meta5 = {"tf": "5m", "synthetic": False, "price_source": "td", "generated_utc": datetime.fromtimestamp(gen, UTC).isoformat(),
              "forming": {"t": int(T5[n5]) if n5 < 600 else None, "c": forming_c} if forming_c is not None else None}
     p5 = {"meta": meta5, "markers": [], "decisions": [], "news": None,
           "chart": {"t": [int(x) for x in T5[:n5]], "o": O5[:n5].tolist(), "h": H5[:n5].tolist(), "l": L5[:n5].tolist(), "c": C5[:n5].tolist()}}
@@ -92,6 +92,35 @@ def test_exits_on_5m_bars_then_one_append_never_edited(tmp_path):
     before = path.read_text()
     fb.run(_payloads(199, _close(198) + 60), st, _close(198) + 60, str(tmp_path))
     assert json.loads(path.read_text())["rows"] == json.loads(before)["rows"]
+
+
+def _trim(pl, i15):
+    """The same payloads with the charts starting at 15m bar i15 (the site was down; older bars left the chart)."""
+    for tf, k in (("15m", i15), ("5m", 3 * i15)):
+        pl[tf]["chart"] = {c: v[k:] for c, v in pl[tf]["chart"].items()}
+    return pl
+
+
+def test_a_pending_row_whose_bars_left_the_chart_is_a_data_gap_not_a_decision(tmp_path):
+    """Bars 41-49 were never examined (no run); from bar 50 price sits $17 above the trigger. Scanning on from the chart's
+    first bar would invent a confirmation; the recorder closes the row as DATA GAP and counts it in no look."""
+    st: dict = {}
+    fb.run(_payloads(30, _close(29)), st, _close(29), str(tmp_path))
+    fb.run(_payloads(41, _close(40)), st, _close(40), str(tmp_path))
+    fb.run(_trim(_payloads(150, _close(149)), 50), st, _close(149), str(tmp_path))
+    rec = json.loads((tmp_path / "research_forward" / fb.FILE).read_text())
+    assert [r["stage"] for r in rec["rows"]] == ["DATA GAP"] and fb.primary(rec["rows"][0]) is None
+    assert fb.weekly(rec["rows"], notify.trading_week(_close(40)), MON, "COLLECTING")["since_start"]["data_gap"] == 1
+
+
+def test_a_confirmed_row_whose_exit_bars_left_the_chart_records_data_gap_exits(tmp_path):
+    st = _drive(tmp_path)
+    fb.run(_trim(_payloads(199, _close(198)), 100), st, _close(198), str(tmp_path))   # 5m bars 126-299 never examined
+    rec = json.loads((tmp_path / "research_forward" / fb.FILE).read_text())
+    row = rec["rows"][0]
+    assert row["stage"] == "CONFIRMED" and {v["out"] for v in row["res"].values()} <= {"DATA GAP", "N/A"}
+    assert row["A"]["fixed24"] == {"data_gap": True} and fb.primary(row) is None
+    assert not (tmp_path / "research_forward" / (fb.FILE + ".tmp")).exists()
 
 
 def _fake(k_wins, n, dir_=1, net_win=14.74, net_loss=-13.26):
