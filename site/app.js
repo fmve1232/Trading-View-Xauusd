@@ -2026,7 +2026,7 @@ function renderConfirm() {
     const sz = r.status === "CONFIRMED" ? cfSizing(r) : null;
     const plan = r.status === "CONFIRMED" ? `<div class="kv">
         <div>Setup (trigger close)</div><div>${tfmt(r.t_close)} · ${px(r.p0)}</div>
-        <div>Confirmed</div><div>${tfmt(r.t_conf)} · moved <b>${usd(r.move_usd)}</b> from the trigger <span class="dim">(needed +$${f(C.x_usd.X15, 0)} on a 15m close)</span></div>
+        <div>Confirmed</div><div>${tfmt(r.t_conf)} · moved <b>${usd(r.move_usd)}</b> from the trigger <span class="dim">(needed a 15m close $${f(C.x_usd.X15, 0)}–$${f(C.cap_usd || 20, 0)} beyond the trigger price)</span></div>
         <div>Entry (reference)</div><div><b>${px(r.entry)}</b>${full ? ' <span class="dim">(the confirming 15m close; this page updates 3–66 min after a close, so your fill will differ: set SL / TP as distances from your own fill)</span>' : ""}</div>
         <div>SL</div><div>${px(r.sl)} <span class="dim">−$${f(C.sl_usd, 0)}</span></div>
         <div>TP1</div><div>${px(r.tp1)} <span class="dim">+$15 · R:R ${f(r.rr1, 2)}</span></div>
