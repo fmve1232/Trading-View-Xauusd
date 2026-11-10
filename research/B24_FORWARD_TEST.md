@@ -63,3 +63,17 @@ earlier 60% → 30% drop at +15 minutes was the noise of 20 trades. So the forwa
 site actually had, without a timing penalty assumed in advance. B25 also showed that no other entry timing (retest,
 stop order, 5m confirmation) beats the confirming close, so the close (A) is recorded beside the executable price (B),
 and nothing else is.
+
+## Amendment A1 (2026-11-10): the confirming close must be $15 to $20 beyond the trigger price
+
+Registered before B24 started and before any code: `research/registrations/B24-CONFIRM-FWD-A1.json`
+(SHA-256 `f3799d529cbf97ce177ff62310690fd0629e93506d40c7aa693f42bad5626acd`). It amends the original registration,
+which stays byte-identical (SHA-256 `6078abc269e9d7fe446255c413bc98d9c0caf9954e1740bce685c391ce86b363`), and is
+recorded in `research/trials.jsonl` (phase `B24-A1`).
+
+The only change: the first 15m close at least $15 beyond the trigger price confirms only if it is no more than $20
+beyond. If it is more than $20 beyond, the setup is EXPIRED (overshoot), and it is never confirmed later.
+Everything else is unchanged: the −$13 invalidation (checked first), the trigger price (the trigger bar's close,
+never reset), 96 bars, entries, exits, looks, thresholds and the deadline. The capped and uncapped historical
+results are reported side by side in `research/CF_VALIDATION.md`; the cap was the operator's decision before either
+existed.
