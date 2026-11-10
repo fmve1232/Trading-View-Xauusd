@@ -45,6 +45,7 @@ def test_the_drift_solver_reproduces_the_geometry_and_ninety_percent():
 
 
 def test_evaluate_counts_precision_in_the_top_fraction_and_net_after_cost():
+    pytest.importorskip("sklearn")                                  # research-only dependency, not in requirements.txt
     rng = np.random.default_rng(1)
     n = 4000
     p = rng.random(n)
