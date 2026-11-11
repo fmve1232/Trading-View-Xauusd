@@ -3,9 +3,10 @@
 **Registration:** `research/registrations/B24-CONFIRM-FWD.json`, committed `fa20f3bc9` before any code.
 **Recorder:** `quantum/fwd_b24.py` (`5a9a3760a`). **Tests:** `tests/test_fwd_b24.py`.
 
-**Status:** prepared and tested, **not deployed**. It starts with the first site run that carries the recorder. That
-needs your separate approval, because the recorder runs inside the production pipeline. Nothing is recorded before
-then, and no history is back-filled.
+**Status (2026-11-11): NOT started.** PR #90 deployed the recorder (merge `4bf0fa495`). The hold-off variable did
+not reach the workflow, so the pre-A2 recorder started by mistake at 2026-11-10 21:35:34 UTC. It recorded nothing,
+and the operator declared that start **void** (amendment A2, below). From A2 the recorder runs only when `FWD_B24=1`.
+B24's official start is the first site run after the operator approves setting it. No history is back-filled.
 
 ## What it records, for every engine signal (BUY and SELL)
 
@@ -78,3 +79,34 @@ never reset), 96 bars, entries, exits, looks, thresholds and the deadline. The c
 results are reported side by side in `research/CF_VALIDATION.md` (2020-22 / 2023-24 / 2026) and
 `research/B24_A1_REALDATA.md` (the same 200 live setups of 2026-10-18 to 11-10); the cap was the operator's decision
 before either existed, and neither is used to choose a rule.
+
+## Amendment A2 (2026-11-10): the schedule (maximum administrative horizon; INSUFFICIENT EVIDENCE)
+
+Registered before B24 started and before the recorder code implementing it: `research/registrations/B24-CONFIRM-FWD-A2.json`
+(SHA-256 `272ec21e7ae748f8835657606d300599b5d849f19bed5b9a2e3e45f5b6469c51`), recorded in `research/trials.jsonl`
+(phase `B24-A2`). The original and A1 stay byte-identical. The evidence is `research/B24_SCHEDULE.md`, built from
+`research/results/b24_schedule_2026-11-10.json` (SHA-256 `020de6a8a1631454a46871bfbcd28767a1bdf55ceb4ff7858f048876a30a9852`).
+
+- **Unchanged:** the stream, the A1 rule, entries, exits, the looks at 30 / 50 / 75 / 100 decided results and their
+  thresholds (21 / 32 / 46 / 59 wins, Wilson z = 2.24, and a positive mean after $0.26), and H-ALL / H-BUY / H-SELL.
+  No look is added and no threshold lowered.
+- **Replaced:** the 2029-12-31 deadline. The capped rule confirms about 1.1 engine signals a month at the 2026
+  frequency, so that date would have cut the test off after about 42 results.
+- **The maximum administrative horizon is 12 years after `started_utc`.** It is the longest the test may run. **It
+  is not a forecast or a guarantee that 100 results will be collected.**
+- **The sample** is the first 100 decided results that resolve before the horizon. The test ends at the 100th, or at
+  the horizon, whichever comes first.
+- **End states:**
+  - PROVEN at a look;
+  - NOT PROVEN when H-ALL reaches its 100 look without proof;
+  - otherwise **INSUFFICIENT EVIDENCE**, with the decided count and the last look reached.
+  - H-BUY / H-SELL end with H-ALL: undecided at the end means INSUFFICIENT EVIDENCE.
+  - The horizon never produces PROVEN or NOT PROVEN.
+- **Two assumptions, shown separately.**
+  - At the 2026 frequency the 100 look comes in about 7.5 years, and within the horizon in about 91% of simulated futures.
+  - At the 2020-24 frequency it takes about 29 years, so under 1% within the horizon. There the test would most likely end INSUFFICIENT EVIDENCE after the 30 look.
+  - The 91% is a model probability under stationarity (the 2026 rate, 9 events in 8.1 months, holding for 12 years), not a confidence level. `research/B24_SCHEDULE.md` section 5 lists its limits.
+- **Annual schedule report:** descriptive, no outcome read, changes nothing.
+- **Void start and fail-safe:** the start of 2026-11-10 21:35:34 UTC came from the missing hold-off variable. It had 0 rows and is void, moved aside to `research_forward/B24-CONFIRM-FWD.void-20261110T213534Z.json` with a tombstone at the record's path. The recorder now runs only when `FWD_B24=1`.
+- **Superseded text:** the "Pace and deadline" line above and the deadline sentence in `research/CF_VALIDATION.md`.
+  Both describe the schedule before A2 and are kept as written.
