@@ -250,8 +250,8 @@
    "sl": 3969.32,
    "src": "twelvedata:XAU/USD",
    "status": "OPEN",
-   "mfe": 0.0,
-   "mae": 0.0,
+   "mfe": 1.27,
+   "mae": 1.85,
    "id": 9,
    "alert": {
     "t": 1794440181,
