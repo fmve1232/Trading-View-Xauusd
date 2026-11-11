@@ -1,8 +1,8 @@
 # Read-only delivery check: lists what ntfy.sh holds for the alerts' topic (repository secret NTFY_TOPIC), so it can be
 # verified whether alerts actually reached ntfy. ntfy.sh keeps messages for about 12 hours. Manual dispatch only.
 # It SENDS NOTHING (a GET with poll=1 never notifies the phone). The topic is a secret: GitHub masks it, and it is
-# never printed. Per message it prints only the time (UTC), the title, the length, a SHA-256 of the body and its
-# first 60 characters (the same text the public site shows).
+# never printed. Per message it prints only the time (UTC), the title, the length, a SHA-256 of the body, its
+# first 60 characters, and each alert's headline / TIMING / LATE line cut at 110 characters (text the public site shows).
 name: alert-delivery-check
 
 on:
@@ -40,4 +40,7 @@ jobs:
               body = m.get("message", "")
               first = body.splitlines()[0][:60] if body else ""
               print(f"{t} | {m.get('title', '')} | {len(body)} chars | sha256 {hashlib.sha256(body.encode()).hexdigest()[:16]} | {first}")
+              for ln in body.splitlines()[1:]:                   # each alert's headline, timing and LATE line only
+                  if ln.startswith(("XAUUSD ", "TIMING:", "LATE:")):
+                      print(f"    {ln[:110]}")
           PY
