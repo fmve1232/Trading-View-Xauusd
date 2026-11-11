@@ -1938,6 +1938,33 @@
    "overshoot_usd": 23.97,
    "why": "the first 15m close $15 beyond was $23.97 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
    "t_done": 1794411000
+  },
+  {
+   "key": "GRAB|15m|1794407400|1",
+   "kind": "GRAB",
+   "tf": "15m",
+   "t": 1794407400,
+   "t_close": 1794408300,
+   "dir": 1,
+   "p0": 4017.65,
+   "what": "PDL 4013.81 swept and rejected",
+   "id": 54,
+   "seen": 1794408671,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 4032.65,
+   "invalid_at": 4004.65,
+   "cap_at": 4037.65,
+   "confirm20_at": 4037.65,
+   "status": "INVALIDATED",
+   "bars": 4,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794411900
   }
  ]
 }
