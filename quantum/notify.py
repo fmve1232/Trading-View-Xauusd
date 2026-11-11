@@ -37,6 +37,9 @@ SIGNAL alert also carries:
            signal (the 5m forming bar of the same download, else the last close);
   LATE     when that move is >= PLAN_LATE_FRAC (0.30) of the stop: the alert's levels are stale (a discipline rule,
            not a measured edge: no tested signal beats SL / (TP + SL), so neither does skipping).
+STALE-SIGNAL PROTECTION (operator, 2026-11-11, after the 2026-11-10 outage): every new trade alert is FRESH (<= 15 min
+after the close: unchanged), DELAYED (15-60 min: only after a fresh live-price check, labelled) or NOT ACTIONABLE
+(> 60 min or the check failed: no plan, one summary line, results website-only). See freshness(); records unchanged.
 MT5 server time = New York + 7 h (UTC+2 in the northern winter, UTC+3 in summer: most prop-firm brokers);
 MT5_SERVER_UTC_OFFSET (hours) fixes another offset. Local time: ALERT_LOCAL_TZ (Asia/Karachi). A TP / SL follow-up
 decided by less than FEED_MARGIN ($0.50) on the site's prices says to confirm it in MT5.
@@ -51,6 +54,7 @@ replace the per-bar SWEEP tags of the structure line, which fired on every bar n
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -176,6 +180,108 @@ def alert_timing(m: dict, tf: str, now: dict | None, pl: dict | None) -> dict | 
             out["limit"] = round(frac * stop, 2)
             out["late"] = abs(mv) >= frac * stop
     return out
+
+
+# ---------------- stale-signal protection (operator, 2026-11-11: "Historical signals recovered after an outage must never be
+# presented as fresh actionable trading opportunities"; "Require fresh market-price validation before issuing any
+# recovered or delayed trading plan") ----------------
+# Every new trade alert (engine signal plan, SETUP, 4h breakout, grab test trade) is classified by its delay after the
+# bar close, BEFORE it is presented; records are written exactly as before (the registered tests count signals from
+# their close, not from the alert), only the phone presentation changes:
+#   FRESH           delay <= FRESH_SEC: unchanged (normal in-session alerts measured 2.2-7.8 min after the close, 41 of
+#                   41, 2026-11-03..11; a run every 15 min)
+#   DELAYED         FRESH_SEC < delay <= RECOVERY_SEC: issued only after a fresh market-price check (a live quote read
+#                   at most PRICE_FRESH_SEC before the alert; the move since the signal inside the LATE limit; the stop
+#                   and the first target not yet traded), and labelled DELAYED
+#   NOT ACTIONABLE  delay > RECOVERY_SEC, or the price check fails: no plan, no MT5 line; one summary line says so, and
+#                   its later results stay off the phone (website only, prefixed RECORD_ONLY)
+FRESH_SEC = 900           # one scheduler cycle
+RECOVERY_SEC = 3600       # beyond an hour after the close the signal is history (e.g. recovered after an outage)
+PRICE_FRESH_SEC = 300     # the re-check price must come from this run's download (the 5m forming bar)
+RECORD_ONLY = "RECORD ONLY (its alert was not actionable) "
+GATE_KEEP = 300
+
+
+def _traded(bars: list, t_close: int, d: int, entry: float, sl_px: float, tp_px: float) -> str | None:
+    """'SL' / 'TP' if a bar that opened at or after the signal's close traded the stop / the first target (a forming
+    bar's high / low counts when the payload has them), else None."""
+    for p in bars:
+        if not p:
+            continue
+        ch, fb = p.get("chart") or {}, (p.get("meta") or {}).get("forming") or {}
+        rows = list(zip(ch.get("t") or [], ch.get("h") or [], ch.get("l") or [], strict=False))
+        if fb.get("t") is not None and fb.get("h") is not None and fb.get("l") is not None:
+            rows.append((fb["t"], fb["h"], fb["l"]))
+        for t, h, lo in rows:
+            if t is None or h is None or lo is None or int(t) < t_close:
+                continue
+            stop = lo <= entry - sl_px if d == 1 else h >= entry + sl_px
+            tgt = h >= entry + tp_px if d == 1 else lo <= entry - tp_px
+            if stop or tgt:
+                return "SL" if stop else "TP"
+    return None
+
+
+def freshness(t_close: int, d: int, entry: float, sl_px: float, tp_px: float, now: dict | None, bars: list) -> dict:
+    """FRESH / DELAYED / NOT ACTIONABLE for a trade alert about to be presented (see the block comment above)."""
+    t_now = int((now or {}).get("t") or 0)
+    age = t_now - int(t_close)
+    out = {"t_close": int(t_close), "t_alert": t_now, "age_min": round(age / 60, 1)}
+    if age <= FRESH_SEC:
+        return {**out, "state": "FRESH"}
+    if age > RECOVERY_SEC:
+        return {**out, "state": "NOT ACTIONABLE", "why": f"{age // 60} min after the close (limit {RECOVERY_SEC // 60})"}
+    px, t_px = (now or {}).get("px"), (now or {}).get("t_px")
+    if px is None or not now.get("live") or t_px is None or t_now - int(t_px) > PRICE_FRESH_SEC:
+        return {**out, "state": "NOT ACTIONABLE", "why": "no live price to re-check it"}
+    mv = (float(px) - entry) * d
+    lim = _env_float("PLAN_LATE_FRAC", LATE_FRAC) * sl_px
+    out.update(px_now=float(px), t_px=int(t_px), move=round(mv, 2), limit=round(lim, 2))
+    if abs(mv) >= lim:
+        return {**out, "state": "NOT ACTIONABLE", "why": f"price moved ${abs(mv):.2f} since the signal (limit ${lim:.2f})"}
+    hit = _traded(bars, int(t_close), d, entry, sl_px, tp_px)
+    if hit:
+        return {**out, "state": "NOT ACTIONABLE", "why": f"its {'stop' if hit == 'SL' else 'first target'} was already traded"}
+    return {**out, "state": "DELAYED"}
+
+
+def delayed_line(fz: dict, off: float = 0.0) -> str:
+    at = datetime.fromtimestamp(fz["t_px"], timezone.utc).strftime("%H:%M UTC")
+    where = "toward TP" if fz["move"] > 0 else "toward SL" if fz["move"] < 0 else "unchanged"
+    return (f"DELAYED ALERT: sent {fz['age_min']:.0f} min after the bar closed (normal: under {FRESH_SEC // 60}). Re-checked at the "
+            f"live price {_fmt(fz['px_now'], off)} ({at}): ${abs(fz['move']):.2f} {where} since the signal, inside the "
+            f"${fz['limit']:.2f} limit; stop and first target not yet traded. Valid only at the re-checked price")
+
+
+def stale_line(what: str, items: list[str]) -> str:
+    """One line for every alert of a kind that was not actionable in this run (no plan, no MT5 line)."""
+    shown = "; ".join(items[:6]) + (f"; +{len(items) - 6} more" if len(items) > 6 else "")
+    return (f"XAUUSD NOT ACTIONABLE: {len(items)} {what} recovered late -- no plan, do not trade "
+            f"{'it' if len(items) == 1 else 'them'} (recorded for the tests only): {shown}")
+
+
+def stale_item(side: str, label: str, t_close: int, px: float, fz: dict, off: float = 0.0) -> str:
+    return (f"{label} {side} at {_fmt(px, off)}, bar closed {datetime.fromtimestamp(t_close, timezone.utc).strftime('%d %b %H:%M UTC')} "
+            f"({fz.get('why')})")
+
+
+def gate_note(state: dict, key: str, fz: dict) -> None:
+    """Remember a non-FRESH decision (website + follow-up filter); bounded."""
+    g = state.setdefault("fresh_gate", {})
+    g[key] = {k: fz[k] for k in ("state", "age_min", "t_close", "t_alert", "why", "px_now", "move") if k in fz}
+    if len(g) > GATE_KEEP:
+        for k in list(g)[: len(g) - GATE_KEEP]:
+            del g[k]
+
+
+def gate_quiet(state: dict, kind: str) -> set:
+    return {int(k.split(":", 1)[1]) for k, v in (state.get("fresh_gate") or {}).items()
+            if k.startswith(kind + ":") and v.get("state") == "NOT ACTIONABLE"}
+
+
+def phone_only(lines: list[str]) -> list[str]:
+    """What may reach the phone: never a RECORD_ONLY line."""
+    return [x for x in lines if not x.startswith(RECORD_ONLY)]
 
 
 def mt5_line(d: int, pl: dict) -> str:
@@ -329,14 +435,21 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
     lines (part A, 2026-11-05). signals_only: the SIGNAL alerts alone (the phone in sixty mode)."""
     tf = payload["meta"]["tf"]
     off = float(os.environ.get("MT5_PRICE_OFFSET", "0") or 0)
-    out = []
+    out, stale, stale_at = [], [], None
     for m in payload["markers"]:
         if since_t is not None and m["t"] <= since_t:
             continue
         if m["type"] == "SIGNAL":
             d = "BUY" if m["dir"] == 1 else "SELL"
+            fz = ((ctx or {}).get("fresh") or {}).get(m["t"])      # stale-signal protection (None = FRESH, as before)
+            if fz and fz["state"] == "NOT ACTIONABLE":
+                stale_at = len(out) if stale_at is None else stale_at
+                stale.append(stale_item(d, f"{tf} signal", int(m["t"]) + TF_SEC.get(tf, 0), m["px"], fz, off))
+                continue
             out.append(f"XAUUSD {tf} {d} (confirmed close) | entry {_fmt(m['px'], off)} SL {_fmt(m['sl'], off)} "
                        f"TP1 {_fmt(m['tp1'], off)} TP2 {_fmt(m['tp2'], off)} TP3 {_fmt(m['tp3'], off)} | TQ {m['tq']}")
+            if fz and fz["state"] == "DELAYED":
+                out.append(delayed_line(fz, off))                  # second line: visible in the phone's preview
             rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
             if rp is not None:
                 out.append(repeat_line(m, tf, rp, off))
@@ -362,6 +475,8 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             out.append(f"XAUUSD {tf} tracked plan {'STOPPED' if (m.get('r') or 0) < 0 else 'reached TP1'} at {_fmt(m['px'], off)} = {m.get('r')}R")
         elif m["type"] == "RISK_LOCK":
             out.append(f"XAUUSD {tf} RISK LOCK engaged -- new entries blocked")
+    if stale:
+        out.insert(stale_at, stale_line("engine signal" + ("s" if len(stale) > 1 else ""), stale))
     if signals_only:
         return out
     if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0" and not quality():
@@ -1213,12 +1328,13 @@ def grab_run(store_dir: str | None, state: dict, payloads: dict, t_send: int, of
             trades[i] = grab_resolve(tr, p5, t_send)
             if trades[i]["status"] != "OPEN":
                 done.append(trades[i])
-    new = []
+    new, fzs = [], {}
     for tf in GRAB_TFS:                                     # then new test trades, 15m before 30m before 1h before 4h
         p = payloads.get(tf)
         if not p or p["meta"].get("synthetic") or not (p.get("chart") or {}).get("t"):
             continue
         last_t = p["chart"]["t"][-1]
+        same5 = p5 if p5 is not None and (p5.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
         if tf in pos:
             for tr in grab_new(p, pos[tf], g["started_utc"], seen):
                 tr["id"] = len(trades) + 1
@@ -1226,13 +1342,29 @@ def grab_run(store_dir: str | None, state: dict, payloads: dict, t_send: int, of
                 tr["alert"] = {"t": t_send, **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
                 trades.append(tr)
                 new.append(tr)
+                fzs[tr["id"]] = freshness(int(tr["t"]) + TF_SEC.get(tf, 0), tr["dir"], tr["entry"], GRAB_SL, GRAB_TP,
+                                          tr["alert"], [p, same5])   # stale-signal protection; the record is untouched
+                if fzs[tr["id"]]["state"] != "FRESH":
+                    gate_note(state, f"grab:{tr['id']}", fzs[tr["id"]])
         pos[tf] = last_t
     sm = grab_verdict(trades, book, t_send)
     book["checks"], book["verdict"] = sm["checks"], sm["verdict"]
+    quiet = gate_quiet(state, "grab")
     for tr in done:
-        lines.append(grab_line_done(tr, sm["status"], off))
+        ln = grab_line_done(tr, sm["status"], off)
+        lines.append(RECORD_ONLY + ln if tr.get("id") in quiet else ln)
+    stale_g = []
     for tr in new:
-        lines += grab_lines_new(tr, tr["alert"], off)
+        fz = fzs.get(tr["id"]) or {"state": "FRESH"}
+        nl = grab_lines_new(tr, tr["alert"], off)
+        if fz["state"] == "NOT ACTIONABLE":
+            stale_g.append(stale_item("BUY" if tr["dir"] == 1 else "SELL", f"{tr['tf']} GRAB TEST #{tr['id']}",
+                                      int(tr["t"]) + TF_SEC.get(tr["tf"], 0), tr["entry"], fz, off))
+            lines += [RECORD_ONLY + x for x in nl]
+            continue
+        lines += nl[:1] + ([delayed_line(fz, off)] if fz["state"] == "DELAYED" else []) + nl[1:]
+    if stale_g:
+        lines.append(stale_line("grab test trade" + ("s" if len(stale_g) > 1 else ""), stale_g))
     if new:
         lines.append(f"Registered test {GRAB_ID}, not a proven signal: {sm['status']} (break-even {GRAB_BE:.0%})")
     keep_from = trading_day(t_send - 3 * 86400)
@@ -1382,9 +1514,10 @@ def plan_result(plan: dict, chart: dict) -> tuple[str, int] | None:
 
 
 def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float = 0.0,
-                 p5: dict | None = None) -> tuple[list[str], list[dict], list[dict]]:
+                 p5: dict | None = None, quiet: set | None = None) -> tuple[list[str], list[dict], list[dict]]:
     """Follow-up alerts for this timeframe's open plans, the plans still open afterwards, and the ones that closed.
-    p5: the same feed's 5m payload; plans are resolved on it when it covers their signal's close."""
+    p5: the same feed's 5m payload; plans are resolved on it when it covers their signal's close. quiet: ids of plans
+    whose alert was NOT ACTIONABLE (stale-signal protection): their lines start with RECORD_ONLY (website only)."""
     lines, keep, closed = [], [], []
     for pl in plans:
         if pl["tf"] != tf:
@@ -1392,6 +1525,8 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
             continue
         side = "BUY" if pl["dir"] == 1 else "SELL"
         head = f"XAUUSD {tf} YOUR PLAN {side} from {_fmt(pl['entry'], off)}"
+        if quiet and pl.get("id") in quiet:
+            head = RECORD_ONLY + head
         path = plan_path5(pl, p5) or plan_path(pl, chart)
         if path["result"] is None:
             if now_t - pl["t"] > PLAN_TRACK_SEC:
@@ -1597,33 +1732,73 @@ def news_lines(news: dict | None, now_t: int, last_alerted: int | None) -> tuple
     return [], last_alerted
 
 
+DELIVERY = "alerts_delivery.json"     # every send attempt (no secret, no full text): proof of delivery after ntfy's cache
+DELIVERY_MAX = 1000
+_DELIVERIES: list[dict] = []
+
+
+def _post(name: str, text: str, fn) -> tuple[bool, dict]:
+    """One channel: a channel counts as sent only on HTTP 2xx (before 2026-11-11 any answer counted)."""
+    rec = {"channel": name, "http": None, "id": None}
+    try:
+        r = fn()
+        rec["http"] = getattr(r, "status_code", None)
+        if name == "ntfy" and rec["http"] is not None and 200 <= rec["http"] < 300:
+            try:
+                rec["id"] = (r.json() or {}).get("id")
+            except Exception:  # noqa: BLE001  (an id is a nicety; the status decides)
+                rec["id"] = None
+    except Exception as e:  # noqa: BLE001  (a channel failure must never stop the alerts)
+        rec["error"] = type(e).__name__
+    return rec["http"] is not None and 200 <= rec["http"] < 300, rec
+
+
 def send(lines: list[str]) -> list[str]:
     sent = []
     if not lines or requests is None:
         return sent
     text = "\n".join(lines)
+    meta = {"t": int(datetime.now(timezone.utc).timestamp()), "sha16": hashlib.sha256(text.encode()).hexdigest()[:16],
+            "lines": len(lines), "first": lines[0][:80]}
     topic = os.environ.get("NTFY_TOPIC", "").strip()
+    chans = []
     if topic:
-        try:
-            requests.post(f"https://ntfy.sh/{topic}", data=text.encode(), timeout=15, headers={"Title": "XAUUSD Quantum"})
-            sent.append("ntfy")
-        except Exception:
-            pass
+        chans.append(("ntfy", lambda: requests.post(f"https://ntfy.sh/{topic}", data=text.encode(), timeout=15,
+                                                    headers={"Title": "XAUUSD Quantum"})))
     tok, chat = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip(), os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     if tok and chat:
-        try:
-            requests.post(f"https://api.telegram.org/bot{tok}/sendMessage", json={"chat_id": chat, "text": text}, timeout=15)
-            sent.append("telegram")
-        except Exception:
-            pass
+        chans.append(("telegram", lambda: requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
+                                                        json={"chat_id": chat, "text": text}, timeout=15)))
     hook = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
     if hook:
-        try:
-            requests.post(hook, json={"content": text[:1900]}, timeout=15)
-            sent.append("discord")
-        except Exception:
-            pass
+        chans.append(("discord", lambda: requests.post(hook, json={"content": text[:1900]}, timeout=15)))
+    for name, fn in chans:
+        ok, rec = _post(name, text, fn)
+        if ok:
+            sent.append(name)
+        _DELIVERIES.append({**meta, **rec, "ok": ok})
     return sent
+
+
+def save_deliveries(store_dir: str | None) -> list[dict]:
+    """Append this run's send attempts to <store>/alerts_delivery.json (bounded) and clear the buffer."""
+    got = list(_DELIVERIES)
+    _DELIVERIES.clear()
+    if not store_dir or not got:
+        return got
+    path = os.path.join(store_dir, DELIVERY)
+    old = []
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                old = json.load(f)
+        except (OSError, ValueError):
+            old = []
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump((old + got)[-DELIVERY_MAX:], f, indent=0)
+    os.replace(tmp, path)
+    return got
 
 
 GATE_NAMES = {"Trend": "trend", "HTF": "higher-timeframe gate", "Sess": "session", "Trig": "no trigger", "Recent": "old bar",
@@ -1727,10 +1902,19 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         ev = liquidity_events(p, since, seen) if liq_on() else []   # liquidity grabs / breaks on this timeframe's new bars
         liq_log += ev
         upd, repeats = [], {}
+        p5g = payloads.get("5m")
+        p5g = p5g if p5g is not None and (p5g.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
+        fresh = {}                                         # stale-signal protection: each new signal, before it is shown
+        for m in p["markers"]:
+            if m["type"] == "SIGNAL" and m["t"] > since and m.get("px") is not None:
+                slp = pl_cfg["sl_px"] if pl_cfg else abs(m["px"] - m["sl"]) if m.get("sl") is not None else ENG_PX
+                tpp = pl_cfg["tp_px"] if pl_cfg else abs(m["tp1"] - m["px"]) if m.get("tp1") is not None else ENG_PX
+                fresh[m["t"]] = freshness(int(m["t"]) + TF_SEC.get(tf, 0), m["dir"], m["px"], slp, tpp, now, [p, p5g])
         if pl_cfg:                                         # the operator's plan: results of earlier signals, then new ones
             p5 = payloads.get("5m")
             same = p5 is not None and (p5.get("meta") or {}).get("price_source") == p["meta"].get("price_source")
-            upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off, p5 if same else None)
+            upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off, p5 if same else None,
+                                            quiet=gate_quiet(state, "plan"))
             for c in done:
                 tally[c["result"]] = tally.get(c["result"], 0) + 1
             log = (log + done)[-PLAN_LOG:]
@@ -1746,6 +1930,10 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                 rp = repeat_of(m, tf, plans)               # A1: one idea, one plan
                 if rp is not None:
                     repeats[m["t"]] = rp
+                    fz_rp = fresh.get(m["t"])
+                    if fz_rp and fz_rp["state"] != "FRESH" and rp.get("id") in gate_quiet(state, "plan"):
+                        fresh[m["t"]] = {**fz_rp, "state": "NOT ACTIONABLE",   # the idea it repeats was not actionable
+                                         "why": f"repeat of plan #{rp.get('id')}, which was not actionable"}
                     state["plan_repeats"] = (state.get("plan_repeats", []) + [
                         {"tf": tf, "t": m["t"], "t_dec": int(m["t"]) + TF_SEC.get(tf, 0), "dir": m["dir"], "entry": m["px"],
                          "of_id": rp.get("id"), "of_tf": rp["tf"], "of_entry": rp["entry"], "t_alert": t_send}])[-PLAN_LOG:]
@@ -1761,14 +1949,17 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                               "session": session_of(t_dec), "dow": date.fromisoformat(trading_day(t_dec)).strftime("%a"),
                               "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
                               "move_alert": tm.get("move"), "late": tm.get("late")})
-        ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf)}
+                if fresh.get(m["t"], {}).get("state", "FRESH") != "FRESH":
+                    gate_note(state, f"plan:{state['plan_seq']}", fresh[m["t"]])
+        ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf),
+               "fresh": fresh}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
         lines = upd + messages(p, since, now, ctx) + ([] if quality() else ll)
         if sixty():                                        # the phone: 15m signals and their plan follow-ups only
             phone_lines = upd + messages(p, since, now, ctx, signals_only=True) if tf in PHONE_TFS_SIXTY else []
         else:
             phone_lines = lines
-        report[tf] = {"lines": lines, "sent": send(phone_lines)}
+        report[tf] = {"lines": lines, "sent": send(phone_only(phone_lines))}
         if tf == "15m" and setups_on():                    # SETUP alerts: the operator's level rules (B16)
             p5s = payloads.get("5m")
             p5s = p5s if p5s is not None and (p5s.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
@@ -1776,6 +1967,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             s_log = (list(state.get("setup_log", [])) + s_done)[-500:]
             sseen = dict(state.get("setup_seen", {}))
             live = setup_record(None, s_log, t_send)["live"]
+            stale_s = []
             for e in setup_scan(payloads, since, sseen):
                 state["setup_seq"] = int(state.get("setup_seq", 0)) + 1
                 sid, d, x = state["setup_seq"], e["dir"], e["close"]
@@ -1784,10 +1976,23 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                                "levels": e["levels"], "zones": e["zones"], "sl": round(x - d * SETUP_SL_PX, 2),
                                "tp": round(x + d * SETUP_TP_PX, 2), "checks": e.get("checks"), "confirmed": conf,
                                "phone": (conf and not sixty()) or not quality(), "t_alert": t_send})
+                fz = freshness(e["t"] + 900, d, x, SETUP_SL_PX, ENG_PX, now, [p, p5s])   # TP1 +$13 is the first target
                 sl_ = setup_lines(e, sid, pl_cfg, now, off, live)
+                if fz["state"] != "FRESH":
+                    gate_note(state, f"setup:{sid}", fz)
+                if fz["state"] == "NOT ACTIONABLE":
+                    if s_open[-1]["phone"]:
+                        stale_s.append(stale_item("BUY" if d == 1 else "SELL", f"15m SETUP #{sid}", e["t"] + 900, x, fz, off))
+                    report.setdefault("setup_alerts", []).append({"lines": [RECORD_ONLY + x_ for x_ in sl_], "sent": []})
+                    continue
+                if fz["state"] == "DELAYED":
+                    sl_ = sl_[:1] + [delayed_line(fz, off)] + sl_[1:]
                 report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if s_open[-1]["phone"] else []})
+            if stale_s:
+                ls_ = [stale_line("setup alert" + ("s" if len(stale_s) > 1 else ""), stale_s)]
+                report["setup_stale"] = {"lines": ls_, "sent": send(ls_)}
             if s_upd:                                      # results only for setups that reached the phone
-                shown = {c_["id"] for c_ in s_done if c_.get("phone", True)}
+                shown = {c_["id"] for c_ in s_done if c_.get("phone", True)} - gate_quiet(state, "setup")
                 s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]
                 if s_upd:
                     report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
@@ -1797,6 +2002,11 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         if tf == "4h" and setups_on():                     # B18: the operator's 4h candle breakout with all four confirmations
             live = setup_record(None, state.get("setup_log", []), t_send)["live"]
             s_open = list(state.get("setups", []))
+            stale_h = []
+            p15h = payloads.get("15m")
+            p5h = payloads.get("5m")
+            p5h = p5h if p5h is not None and p15h is not None and (p5h.get("meta") or {}).get("price_source") == \
+                (p15h.get("meta") or {}).get("price_source") else None
             for e in h4_scan(payloads, since):
                 state["setup_seq"] = int(state.get("setup_seq", 0)) + 1
                 sid, d, x = state["setup_seq"], e["dir"], e["close"]
@@ -1805,8 +2015,21 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                                "kind": "4H BREAKOUT", "levels": e["beyond"], "zones": [], "sl": round(x - d * SETUP_SL_PX, 2),
                                "tp": round(x + d * SETUP_TP_PX, 2), "checks": e["checks"], "confirmed": e["confirmed"],
                                "phone": phone, "t_alert": t_send})
+                fz = freshness(e["t_close"], d, x, SETUP_SL_PX, ENG_PX, now, [p, p15h, p5h])
                 hl = h4_lines(e, sid, pl_cfg, now, off, live)
+                if fz["state"] != "FRESH":
+                    gate_note(state, f"setup:{sid}", fz)
+                if fz["state"] == "NOT ACTIONABLE":
+                    if phone:
+                        stale_h.append(stale_item("BUY" if d == 1 else "SELL", f"4h CANDLE BREAKOUT #{sid}", e["t_close"], x, fz, off))
+                    report.setdefault("h4_alerts", []).append({"lines": [RECORD_ONLY + x_ for x_ in hl], "sent": []})
+                    continue
+                if fz["state"] == "DELAYED":
+                    hl = hl[:1] + [delayed_line(fz, off)] + hl[1:]
                 report.setdefault("h4_alerts", []).append({"lines": hl, "sent": send(hl) if phone else []})
+            if stale_h:
+                lh_ = [stale_line("4h breakout alert" + ("s" if len(stale_h) > 1 else ""), stale_h)]
+                report["h4_stale"] = {"lines": lh_, "sent": send(lh_)}
             state["setups"] = s_open[-60:]
         state[tf] = last_t
     if pl_cfg:
@@ -1828,7 +2051,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     report["turn_log"] = state.get("turn_log", [])[::-1][:10]
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
-        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else send(glines)}   # trades and results
+        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else send(phone_only(glines))}   # trades and results
     if setups_on():                                        # the live SETUP record (descriptive) and the site block
         srec = setup_record(store_dir, state.get("setup_log", []), t_send)
         report["setups"] = {"on": True, "quality": quality(), "sixty": sixty(), "hist_confirmed": list(SETUP_HIST_CONFIRMED) if SETUP_HIST_CONFIRMED else None,
@@ -1852,6 +2075,8 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     report["liquidity"] = {"on": liq_on(), "near_usd": _env_float("LIQ_NEAR_USD", LIQ_NEAR_USD), "recent": state["liq_log"][::-1]}
     report["engine_status"] = {"gates": state.get("gates", {}), "last_signal": state.get("last_signal")}
     report["channels"] = channels()
+    report["fresh_gate"] = {"fresh_sec": FRESH_SEC, "recovery_sec": RECOVERY_SEC, "price_fresh_sec": PRICE_FRESH_SEC,
+                            "recent": [{"key": k, **v} for k, v in list((state.get("fresh_gate") or {}).items())[::-1][:20]]}
     from . import confirm_panel  # the confirmation panel: website only, never sent
     if confirm_panel.on():
         try:
@@ -1920,6 +2145,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     if path:
         with open(path, "w") as f:
             json.dump(state, f)
+    dl = save_deliveries(store_dir)                        # proof of delivery (status codes, ntfy ids), no secrets
+    if dl:
+        report["delivery"] = dl
     if vpath and pl_cfg:
         with open(vpath, "w") as f:
             json.dump(vlog, f)

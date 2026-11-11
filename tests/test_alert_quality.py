@@ -43,6 +43,9 @@ def _pay(tf, t_last, markers=(), dash=None, gen="2026-11-03T10:20:00+00:00"):
 
 
 def test_a1_replay_of_the_3_november_cluster_gives_one_plan_not_eight(tmp_path, monkeypatch):
+    # this replay delivers a 2-hour cluster in ONE run to test the REPEAT folding; the stale-signal gate (which would
+    # rightly call the oldest of them NOT ACTIONABLE) is tested on its own in tests/test_stale_signals.py
+    monkeypatch.setattr(N, "FRESH_SEC", 10**9)
     sent = []
     monkeypatch.setattr(N, "send", lambda lines: sent.append(list(lines)) or ["test"])
     store = str(tmp_path)
