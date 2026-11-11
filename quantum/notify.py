@@ -1859,6 +1859,12 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         except Exception as e:  # noqa: BLE001  (a panel failure must never stop the alerts)
             report["confirm"] = {"on": True, "error": f"{type(e).__name__}: {e}"}
     from . import fwd_b24  # B24-CONFIRM-FWD: records only, never sent
+    try:                                                 # A2: a start the operator declared void is moved aside, once
+        v = fwd_b24.void_premature(state, store_dir, t_send)
+        if v:
+            report["b24_void"] = v
+    except Exception as e:  # noqa: BLE001  (a recorder failure must never stop the alerts)
+        report["b24_void"] = {"error": f"{type(e).__name__}: {e}"}
     if fwd_b24.on():
         try:
             report["b24"] = fwd_b24.run(payloads, state, t_send, store_dir)

@@ -1,0 +1,67 @@
+{
+ "id": "B24-CONFIRM-FWD-A2",
+ "title": "Amendment A2 to B24-CONFIRM-FWD: the schedule. Looks and thresholds unchanged; the 2029-12-31 deadline replaced by a maximum administrative horizon of 12 years; INSUFFICIENT EVIDENCE as the end state when the sample stays too small",
+ "amends": "research/registrations/B24-CONFIRM-FWD.json, as amended by research/registrations/B24-CONFIRM-FWD-A1.json",
+ "amends_sha256": {
+  "B24-CONFIRM-FWD.json": "6078abc269e9d7fe446255c413bc98d9c0caf9954e1740bce685c391ce86b363",
+  "B24-CONFIRM-FWD-A1.json": "f3799d529cbf97ce177ff62310690fd0629e93506d40c7aa693f42bad5626acd"
+ },
+ "status": "REGISTERED 2026-11-11, before B24's official start. PR #90 was deployed on 2026-11-10 (merge 4bf0fa495; first successful run after the deploy-gate fix PR #92, 9dc38db7c). The hold-off variable FWD_B24=0 did not reach the workflow (the run log showed FWD_B24 empty), and the pre-A2 recorder treated unset as on, so it started by mistake at 2026-11-10T21:35:34Z. It recorded nothing (0 rows, 0 checks) before the operator declared that start VOID on 2026-11-11 (see 'void_start'). B24's official start is the first site run after the operator approves starting it by setting FWD_B24=1, with the A2 recorder deployed. The original registration and A1 are kept byte-identical; this file states only what changes.",
+ "approved_by_operator": true,
+ "approval": "Operator, 2026-11-10 (chat): \"B24 deadline - REVISE BEFORE STARTING. The current sample rate makes the 100-result checkpoint unlikely to be reached by the registered deadline. Prepare a statistically defensible revised validation schedule. Show expected time to 30, 50, 75 and 100 results using actual historical signal frequency. Do not increase signal frequency artificially, weaken criteria, combine different trigger categories without separate analysis, or optimise against the test results. Register any necessary amendment before B24 begins. If the sample remains insufficient, report INSUFFICIENT EVIDENCE rather than claiming accuracy.\" Then: \"Register and commit amendment A2 while B24 remains disabled. Update the recorder to support the revised deadline and INSUFFICIENT EVIDENCE outcome before B24 starts.\" and \"Regarding the 12-year horizon: retain it only as a maximum administrative horizon, not a guarantee that 100 observations will be collected. Show the 2026 and historical-frequency assumptions separately. Do not claim 91% confidence without explaining the stationarity assumption and its limitations.\" Then, 2026-11-11, on the premature start: \"Void it (Recommended)\", and on stopping the recorder: \"You are responsible to do everything at your own with knowledge\".",
+ "evidence": {
+  "write_up": "research/B24_SCHEDULE.md",
+  "results": "research/results/b24_schedule_2026-11-10.json",
+  "results_sha256": "020de6a8a1631454a46871bfbcd28767a1bdf55ceb4ff7858f048876a30a9852",
+  "tool": "research/tools/b24_schedule.py (frequencies from research/results/cf_validation.json, capped rule; seed 20261110; no outcome read)",
+  "measured_frequency": "capped engine-signal confirmations per month in the research data (distances scaled to price, s = P0 / 4000): 2026 1.11 (9 in 8.1 months, exact 95% 0.51-2.11, s mean 1.10); 2023-24 0.33 (5 in 15.0, 0.11-0.78); 2020-22 0.27 (9 in 33.8, 0.12-0.51); historical 2020-24 together 0.29 (14 in 48.8, 0.16-0.48). No period measured the live fixed-dollar rule exactly.",
+  "assumption_A_2026_frequency": "H-ALL point estimate 2.2 / 3.7 / 5.6 / 7.5 years to 30 / 50 / 75 / 100 decided results (with the rate's sampling uncertainty, 90th percentile 3.6 years to 30 and 11.7 to 100)",
+  "assumption_B_historical_frequency": "2020-24 together 8.7 / 14.5 / 21.8 / 29.0 years (2023-24 alone 7.5 / 12.5 / 18.7 / 25.0; 2020-22 alone 9.4 / 15.6 / 23.5 / 31.3)",
+  "reference_all_periods_pooled": "2020-26 pooled 6.2 / 10.3 / 15.4 / 20.6 years; shown for reference only, not as an assumption",
+  "at_the_old_deadline": "2029-12-31 is about 3.1 years after a November 2026 start: at the 2026 frequency about 42 decided results (the 30 look, perhaps the 50), never the 100 look; at the 2020-24 frequencies probably not even the 30 look"
+ },
+ "unchanged": "The stream (engine signals 15m / 30m / 1h / 4h, one per idea; no other trigger category is added or pooled), the confirmation rule of A1, the trigger price, entries A and B, costs, exits, excursions and records. The looks: only when a hypothesis's decided results first reach 30, 50, 75 and 100 (count-based, never calendar-based). The thresholds at each look: Wilson lower bound with z = 2.24 above 47.4% (21 / 30, 32 / 50, 46 / 75, 59 / 100 wins) AND a positive mean net per trade after $0.26. The hypotheses H-ALL, H-BUY, H-SELL, each on its own results. Between looks every figure is PRELIMINARY. A2 adds no look and lowers no threshold; the horizon can only stop the test before a look is reached, which can only lower the chance of any PROVEN (false or true) compared with reaching every look.",
+ "replaces": {
+  "primary_test.not_proven": "MAXIMUM ADMINISTRATIVE HORIZON = 12 calendar years after B24's start (started_utc in research_forward/B24-CONFIRM-FWD.json; the same UTC date and time 12 years later, 29 February -> 28 February). It is the longest the test may run, an administrative limit so the test cannot stay open for ever; it is NOT a forecast or a guarantee that 100, or even 30, decided results will be collected. The test's sample is the first 100 decided primary results (in the order they resolved) that resolve before the horizon; results resolving after the 100th or after the horizon are recorded but never counted in a look. The test ends at the 100th such result or at the horizon, whichever comes first. End states: PROVEN at a look (as registered); NOT PROVEN when H-ALL reaches its 100 look without proof (as registered); INSUFFICIENT EVIDENCE for any hypothesis not decided when the test ends: H-ALL when the horizon comes before its 100 look; H-BUY and H-SELL (which end with H-ALL, as registered) when they have not been decided at a look of their own by then. Each INSUFFICIENT EVIDENCE is recorded with its decided count and the last look it reached. The horizon itself never produces PROVEN or NOT PROVEN, and no end state is described as accuracy or profitability. Clarification of 'end with H-ALL' (stated before any data, because the original text did not say it): if H-ALL is proven at an earlier look, the test still ends at the 100th result of the sample or at the horizon, and H-BUY / H-SELL keep being checked at their own looks on their share of the sample until then.",
+  "horizon_rule": "ceil(90th percentile of the predictive time to 100 decided results at the 2026 frequency, with that frequency's own sampling uncertainty (Jeffreys rate posterior), in years) = ceil(141 months / 12) = 12. The rule uses signal frequency only, never an outcome. It was written before the number was computed, but after the per-period frequencies had been seen, so it is not blind to them.",
+  "expected_pace": "Two assumptions, shown separately (research/B24_SCHEDULE.md). (A) If the live frequency stays at the 2026 rate: about 160 confirmations in 12 years (predictive 10-90%: 102-244), and the 100 look is reached within the horizon in about 91% of simulated futures. (B) If it returns to the 2020-24 rate: about 41 confirmations in 12 years (27-60); the 30 look is reached in about 85% of futures, the 50 look in 28%, the 100 look in under 1%, so the test would most likely end INSUFFICIENT EVIDENCE unless an early look proves it. The 91% is a model probability, not a confidence level: it assumes that the 2026 rate (9 confirmations in 8.1 months) holds unchanged for 12 years (stationarity), that signals arrive independently (Poisson; real signals cluster), and that the research rate (distances scaled to price, its own bar history) equals the live rate (fixed $15-$20, the site's feed, DATA GAP rows never decided). Every earlier period's rate was 3-4 times lower; under those rates the figure is 0-4%. H-BUY and H-SELL see only their share of the sample: at the 2026 frequency (8 of 9 confirmations SELL) H-SELL reaches its 75 look in about 81% of futures and H-BUY its 30 look in about 11%; at the 2020-24 frequency H-BUY reaches its 30 look in about 30% and H-SELL in about 12%."
+ },
+ "added": {
+  "annual_schedule_report": "Once a year from the start (the anniversaries of started_utc): the live confirmation frequency per hypothesis with its exact Poisson 95% interval, the decided count per hypothesis within the sample, the next look and the projected months to it from that live frequency (point, and at the interval's ends), and the months left to the horizon. Descriptive only: it reads no outcome (whether any result won), and it never changes the looks, thresholds, horizon, stream or rule (no adaptive change)."
+ },
+ "machine_readable": {
+  "horizon_years": 12,
+  "looks": [
+   30,
+   50,
+   75,
+   100
+  ],
+  "wins_needed": {
+   "30": 21,
+   "50": 32,
+   "75": 46,
+   "100": 59
+  },
+  "z": 2.24,
+  "break_even": 0.4735714285714286,
+  "op_cost": 0.26,
+  "end_states": [
+   "PROVEN",
+   "NOT PROVEN",
+   "INSUFFICIENT EVIDENCE"
+  ],
+  "sample": "first 100 decided primary results (B T15 S13) resolving before the horizon"
+ },
+ "code": "The recorder (quantum/fwd_b24.py) is brought to A2 in the change committed after this registration, before B24's official start: on() is true only for FWD_B24=1; void_premature() moves the void start aside (called from notify.run under its own guard; phone output unchanged, tested); HORIZON_YEARS = 12 replaces DEADLINE = 2029-12-31; only the sample defined above counts; INSUFFICIENT EVIDENCE is written as defined above (look 'horizon', or 'test ended' for a direction left undecided at the 100th result); the record carries 'amendments', 'horizon_end_utc' and 'annual'; a void tombstone is never read as a record. tests/test_fwd_b24.py checks the code against machine_readable above.",
+ "separate_categories": "The other trigger types on the panel (liquidity grab / break, sweep / breakout setups, 4h breakouts) are not part of B24 and are not pooled into it. A forward test of any of them would need its own registration, its own analysis and a multiplicity correction across the tests.",
+ "void_start": {
+  "start_utc": 1794346534,
+  "start_iso": "2026-11-10T21:35:34Z",
+  "cause": "PR #90's recorder defaulted to ON when FWD_B24 was unset; the operator's hold-off value did not reach the workflow (the first successful run's log printed 'FWD_B24:' empty), so the first run after the merge started B24",
+  "recorded_before_the_decision": "0 rows, 0 checks, 0 weekly reports (no engine signal closed after the start had been tracked); nothing was measured",
+  "decision": "operator, 2026-11-11: void. Never counted; not B24's start",
+  "handling": "moved aside once by quantum/fwd_b24.void_premature: the state key and the record go whole to research_forward/B24-CONFIRM-FWD.void-20261110T213534Z.json; the record path keeps a tombstone {void: true, moved_to}; the forward-ledger git history keeps every version. Idempotent; touches no other record",
+  "fail_safe": "from this amendment the recorder runs only when FWD_B24 is exactly 1 (unset, empty, 0 or a misplaced variable = off), so a missing hold-off can no longer start it"
+ }
+}

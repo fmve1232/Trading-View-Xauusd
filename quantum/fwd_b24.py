@@ -21,6 +21,12 @@ Finished rows are appended to <store>/research_forward/B24-CONFIRM-FWD.json (the
 Checks of H-ALL / H-BUY / H-SELL happen only at 30, 50, 75, 100 decided results (Wilson z = 2.24 above 47.4% and a
 positive mean net after $0.26); a weekly report is appended after each Friday New York close. Between looks every
 figure is PRELIMINARY.
+Amendment A2 (research/registrations/B24-CONFIRM-FWD-A2.json) replaces the 2029-12-31 deadline: the test's sample is
+the first 100 decided results that resolve before the HORIZON, 12 years after started_utc, a maximum administrative
+limit, not a promise that 100 results will come. The test ends at the 100th such result or at the horizon, whichever
+comes first; a hypothesis not decided by then ends INSUFFICIENT EVIDENCE (H-ALL at its own 100 look: NOT PROVEN, as
+registered). Once a year a descriptive schedule report (confirmation frequency, decided counts, projected time to the
+next look; no outcome read) is appended; it changes nothing.
 """
 from __future__ import annotations
 
@@ -28,6 +34,7 @@ import json
 import math
 import os
 from bisect import bisect_left
+from datetime import UTC, datetime
 
 import numpy as np
 
@@ -39,7 +46,10 @@ OP_COST = 0.26
 BREAK_EVEN = (13.0 + OP_COST) / 28.0                      # 47.36%
 Z = 2.24
 LOOKS = (30, 50, 75, 100)
-DEADLINE = "2029-12-31"
+HORIZON_YEARS = 12                                         # amendment A2; replaces DEADLINE = "2029-12-31"
+ENDS = ("PROVEN", "NOT PROVEN", "INSUFFICIENT EVIDENCE")   # final results; CONTINUE is not one
+HYPS = (("H-ALL", lambda r: True), ("H-BUY", lambda r: r["dir"] > 0), ("H-SELL", lambda r: r["dir"] < 0))
+MONTH_S = 30.44 * 86400
 TARGETS = {"T15": 15.0, "T20": 20.0}
 STOPS = ("S13", "S10", "SATR", "SSTR")
 HOLD5, FIX24_5 = 576, 288                                  # 48 h and 24 h of 5m bars
@@ -47,7 +57,58 @@ SATR_MULT, SSTR_BUF, STOP_MIN, STOP_MAX = 3.0, 0.2, 5.0, 40.0
 
 
 def on() -> bool:
-    return os.environ.get("FWD_B24", "1").strip() != "0"
+    """Off unless FWD_B24 is exactly 1 (A2 fail-safe, 2026-11-11): an unset, empty or misplaced variable keeps B24 off.
+    Before this, unset meant on, and a hold-off variable that the workflow did not read started B24 by mistake."""
+    return os.environ.get("FWD_B24", "").strip() == "1"
+
+
+# A2: a start the operator declared void. The recorder (pre-A2 code) started at the first successful run after PR #90's
+# merge because the hold-off variable FWD_B24=0 did not reach the workflow (its log showed it empty). Nothing had been
+# recorded when the operator decided (2026-11-11: "Void it"). It is moved aside once, never deleted and never counted.
+VOID_STARTS = {1794346534: "2026-11-10T21:35:34Z"}
+VOID_WHY = ("started by mistake: the hold-off variable FWD_B24=0 did not reach the workflow; the operator declared this "
+            "start void on 2026-11-11 (amendment A2), before any result; never counted in B24")
+
+
+def void_premature(state: dict, store_dir: str | None, t_now: int) -> dict | None:
+    """Move a void start aside, once: the state key and the record go, whole, to research_forward/
+    B24-CONFIRM-FWD.void-<start>.json, and the record's own path keeps a tombstone (so the forward-ledger copy is
+    replaced too). Touches nothing else; does nothing when no void start is present. Idempotent."""
+    st = state.get("b24") or {}
+    path = os.path.join(store_dir, "research_forward", FILE) if store_dir else None
+    rec = None
+    if path and os.path.exists(path):
+        with open(path) as f:
+            rec = json.load(f)
+    s0 = st.get("started")
+    r0 = None if (rec is None or rec.get("void")) else rec.get("started_utc")
+    start = s0 if s0 in VOID_STARTS else (r0 if r0 in VOID_STARTS else None)
+    if start is None:
+        return None
+    iso = VOID_STARTS[start]
+    out = {"voided_start_utc": start, "voided_start_iso": iso, "why": VOID_WHY, "voided_at": t_now,
+           "rows_in_record": len((rec or {}).get("rows", [])) if r0 == start else None,
+           "open_rows_in_state": len(st.get("rows", [])) if s0 == start else None}
+    if path:
+        vpath = os.path.join(os.path.dirname(path), f"B24-CONFIRM-FWD.void-{iso.replace(':', '').replace('-', '')}.json")
+        keep = {**out, "registration": "research/registrations/B24-CONFIRM-FWD-A2.json",
+                "record": rec if r0 == start else None, "state": st if s0 == start else None}
+        if not os.path.exists(vpath):
+            tmp = vpath + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(notify.json_safe(keep), f, indent=1)
+            os.replace(tmp, vpath)
+        if r0 == start:
+            tomb = {"void": True, "voided_start_utc": start, "moved_to": os.path.basename(vpath), "why": VOID_WHY,
+                    "registration": "research/registrations/B24-CONFIRM-FWD-A2.json"}
+            tmp = path + ".tmp"
+            with open(tmp, "w") as f:
+                json.dump(tomb, f, indent=1)
+            os.replace(tmp, path)
+        out["moved_to"] = os.path.basename(vpath)
+    if s0 == start:
+        state.pop("b24", None)
+    return out
 
 
 def wilson_lo(k: int, n: int, z: float = Z) -> float:
@@ -183,15 +244,39 @@ def primary(row: dict) -> tuple[str, float] | None:
     return None
 
 
-def checks(rows: list[dict], checks_done: list[dict], t_now: int) -> list[dict]:
-    """New looks for H-ALL / H-BUY / H-SELL, in the order the results resolved; a decided hypothesis stops."""
+def years_after(t: int, n: int) -> int:
+    """The same UTC date and time n calendar years after t (29 February -> 28 February)."""
+    s = datetime.fromtimestamp(int(t), UTC)
+    try:
+        return int(s.replace(year=s.year + n).timestamp())
+    except ValueError:
+        return int(s.replace(year=s.year + n, day=28).timestamp())
+
+
+def horizon_end(started: int) -> int:
+    return years_after(started, HORIZON_YEARS)
+
+
+def sample(rows: list[dict], started: int | None) -> list[dict]:
+    """A2: the test's sample, in the order the results resolved: decided primary results that resolved before the
+    horizon, the first 100 of them. Results after the 100th or after the horizon are recorded but never counted."""
+    end_t = horizon_end(started) if started is not None else None
+    dec = sorted((r for r in rows if primary(r) and (end_t is None or r["res"]["B T15 S13"]["t_exit"] < end_t)),
+                 key=lambda r: r["res"]["B T15 S13"]["t_exit"])
+    return dec[:LOOKS[-1]]
+
+
+def checks(rows: list[dict], checks_done: list[dict], t_now: int, started: int | None = None) -> list[dict]:
+    """New looks for H-ALL / H-BUY / H-SELL, in the order the results resolved; a decided hypothesis stops. With
+    started (amendment A2): only the sample counts, and at its end (H-ALL's 100th result, or the horizon) every
+    hypothesis not decided ends INSUFFICIENT EVIDENCE, with its decided count and the last look it reached."""
     out = []
-    dec = sorted((r for r in rows if primary(r)), key=lambda r: r["res"]["B T15 S13"]["t_exit"])
+    dec = sample(rows, started)
     need = wins_needed()
-    for h, sel in (("H-ALL", lambda r: True), ("H-BUY", lambda r: r["dir"] > 0), ("H-SELL", lambda r: r["dir"] < 0)):
+    for h, sel in HYPS:
         mine = [r for r in dec if sel(r)]
         done = {c["look"] for c in checks_done if c["hypothesis"] == h}
-        if any(c["hypothesis"] == h and c["result"] in ("PROVEN", "NOT PROVEN") for c in checks_done):
+        if any(c["hypothesis"] == h and c["result"] in ENDS for c in checks_done):
             continue
         for L in LOOKS:
             if len(mine) < L or L in done:
@@ -204,16 +289,57 @@ def checks(rows: list[dict], checks_done: list[dict], t_now: int) -> list[dict]:
                         "mean_net_after_026": mean_net, "result": res, "t": t_now})
             if res != "CONTINUE":
                 break
-    if notify.trading_day(t_now) > DEADLINE and not any(c["hypothesis"] == "H-ALL" and c["result"] != "CONTINUE"
-                                                        for c in checks_done + out):
-        out.append({"hypothesis": "H-ALL", "look": "deadline", "result": "NOT PROVEN", "t": t_now})
-    allc = checks_done + out
-    ended = any(c["hypothesis"] == "H-ALL" and (c["look"] in (LOOKS[-1], "deadline")) for c in allc)
-    if ended:                                                            # H-BUY / H-SELL end with H-ALL (registered)
-        for h in ("H-BUY", "H-SELL"):
-            if not any(c["hypothesis"] == h and c["result"] in ("PROVEN", "NOT PROVEN") for c in allc):
-                out.append({"hypothesis": h, "look": "test ended", "result": "NOT PROVEN", "t": t_now})
+    full = len(dec) >= LOOKS[-1]
+    past = started is not None and t_now >= horizon_end(started)
+    if full or past:                                                     # the test has ended: H-BUY / H-SELL end with it
+        allc = checks_done + out
+        for h, sel in HYPS:
+            if any(c["hypothesis"] == h and c["result"] in ENDS for c in allc):
+                continue
+            last = max((c["look"] for c in allc if c["hypothesis"] == h and isinstance(c["look"], int)), default=None)
+            out.append({"hypothesis": h, "look": "test ended" if full else "horizon", "result": "INSUFFICIENT EVIDENCE",
+                        "decided": sum(1 for r in dec if sel(r)), "last_look": last, "t": t_now})
     return out
+
+
+def poisson_ci(k: int, t: float, a: float = 0.05) -> list[float]:
+    """Exact (Garwood) interval for a Poisson rate: k events in t units."""
+    def cdf(n: int, mu: float) -> float:
+        return 1.0 if mu <= 0 else sum(math.exp(-mu + i * math.log(mu) - math.lgamma(i + 1)) for i in range(n + 1))
+
+    def root(f, hi: float) -> float:
+        lo = 0.0
+        for _ in range(200):
+            m = (lo + hi) / 2
+            lo, hi = (lo, m) if f(m) else (m, hi)
+        return (lo + hi) / 2
+    top = k + 20 * math.sqrt(k + 1) + 20
+    lo = 0.0 if k == 0 else root(lambda mu: 1 - cdf(k - 1, mu) >= a / 2, top)
+    return [lo / t, root(lambda mu: cdf(k, mu) <= a / 2, top) / t]
+
+
+def annual(rows: list[dict], started: int, year: int) -> dict:
+    """A2's yearly schedule report, as of the start's anniversary: descriptive only. It reads how often a confirmation
+    happened and how many results are decided, never whether one won, and it changes no look, threshold or horizon."""
+    t1 = years_after(started, year)
+    months = (t1 - started) / MONTH_S
+    conf = [r for r in rows if r.get("stage") == "CONFIRMED" and r.get("t_conf") is not None and r["t_conf"] < t1]
+    dec = [r for r in sample(rows, started) if r["res"]["B T15 S13"]["t_exit"] < t1]
+    out = {"year": year, "as_of_utc": t1, "months": months, "label": "DESCRIPTIVE: changes no look, threshold or horizon",
+           "horizon_end_utc": horizon_end(started), "hypotheses": {}}
+    for h, sel in HYPS:
+        k, n = sum(1 for r in conf if sel(r)), sum(1 for r in dec if sel(r))
+        rate, ci = k / months, poisson_ci(k, months)
+        nxt = next((L for L in LOOKS if L > n), None)
+        left = (horizon_end(started) - t1) / MONTH_S
+        proj = {key: ((nxt - n) / v if v > 0 else None) for key, v in (("point", rate), ("slow", ci[0]), ("fast", ci[1]))} if nxt else None
+        out["hypotheses"][h] = {"confirmations": k, "rate_per_month": rate, "rate_ci95": ci, "decided": n, "next_look": nxt,
+                                "months_to_next_look": proj, "months_left_to_horizon": left}
+    return out
+
+
+LABELS = {"PROVEN": "STATISTICALLY VALIDATED: PROVEN at a registered look", "NOT PROVEN": "DECIDED: NOT PROVEN",
+          "INSUFFICIENT EVIDENCE": "ENDED: INSUFFICIENT EVIDENCE (too few results before the end; not a measure of accuracy)"}
 
 
 def weekly(rows: list[dict], week: str, started: int, status: str) -> dict:
@@ -243,7 +369,7 @@ def weekly(rows: list[dict], week: str, started: int, status: str) -> dict:
                    cost_model_mean=float(np.mean(cm)) if cm else None)
         return out
     wk = [r for r in rows if notify.trading_week(r["t_close"]) == week]
-    label = {"PROVEN": "STATISTICALLY VALIDATED: PROVEN at a registered look", "NOT PROVEN": "DECIDED: NOT PROVEN"}.get(status, "PRELIMINARY")
+    label = LABELS.get(status, "PRELIMINARY")
     return {"week": week, "label": label, "status": status,
             "this_week": block(wk), "since_start": block(rows), "started_utc": started}
 
@@ -260,11 +386,15 @@ def run(payloads: dict, state: dict, t_now: int, store_dir: str | None = None) -
     rows, seen, last_bar = list(st.get("rows", [])), dict(st.get("seen", {})), dict(st.get("last_bar", {}))
     starts = {tf: int(p["chart"]["t"][0]) for tf in cp.ENG_TFS for p in [cp._ok(payloads.get(tf))] if p is not None}
     path = os.path.join(store_dir, "research_forward", FILE) if store_dir else None
-    rec = {"registration": "research/registrations/B24-CONFIRM-FWD.json", "started_utc": st["started"], "rows": [],
-           "checks": [], "weekly": []}
+    rec = {"registration": "research/registrations/B24-CONFIRM-FWD.json",
+           "amendments": ["research/registrations/B24-CONFIRM-FWD-A1.json", "research/registrations/B24-CONFIRM-FWD-A2.json"],
+           "started_utc": st["started"], "horizon_end_utc": horizon_end(st["started"]), "rows": [], "checks": [], "weekly": [],
+           "annual": []}
     if path and os.path.exists(path):
         with open(path) as f:
-            rec = json.load(f)
+            old = json.load(f)
+        if not old.get("void"):                                           # a tombstone of a void start: begin afresh
+            rec = old
     for x in (y for y in cp.scan(payloads) if y["kind"] == "ENG"):
         if x["key"] in seen:
             continue
@@ -285,8 +415,13 @@ def run(payloads: dict, state: dict, t_now: int, store_dir: str | None = None) -
         (done if finished(r) else keep).append(r)
     have = {r["key"] for r in rec["rows"]}
     rec["rows"] += [notify.json_safe(r) for r in done if r["key"] not in have]
-    new_checks = checks(rec["rows"], rec["checks"], t_now)
+    t0 = int(rec.get("started_utc") or st["started"])                  # A2: the horizon runs from the record's start
+    new_checks = checks(rec["rows"], rec["checks"], t_now, t0)
     rec["checks"] += new_checks
+    have_y = {a["year"] for a in rec.get("annual", [])}
+    for y in range(1, HORIZON_YEARS + 1):                                # A2: the yearly schedule report, once each
+        if years_after(t0, y) <= t_now and y not in have_y:
+            rec.setdefault("annual", []).append(notify.json_safe(annual(rec["rows"] + keep, t0, y)))
     week = notify.trading_week(t_now)
     status = next((c["result"] for c in reversed(rec["checks"]) if c["hypothesis"] == "H-ALL" and c["result"] != "CONTINUE"), "COLLECTING")
     if st.get("week") and st["week"] != week:                           # a trading week has ended: its report, once
@@ -305,4 +440,6 @@ def run(payloads: dict, state: dict, t_now: int, store_dir: str | None = None) -
     return notify.json_safe({"id": ID, "status": status, "started_utc": st["started"], "open": len(keep), "recorded": len(rec["rows"]),
                              "decided": len(dec), "wins": sum(primary(r)[0] == "TP" for r in dec), "looks": list(LOOKS),
                              "wins_needed": wins_needed(), "break_even": BREAK_EVEN, "label": "PRELIMINARY" if status == "COLLECTING" else status,
+                             "horizon_end_utc": horizon_end(t0), "in_sample": len(sample(rec["rows"], t0)), "results": {h: next((c["result"] for c in reversed(rec["checks"])
+                                                                                     if c["hypothesis"] == h), "COLLECTING") for h, _ in HYPS},
                              "last_week": rec["weekly"][-1] if rec["weekly"] else None})

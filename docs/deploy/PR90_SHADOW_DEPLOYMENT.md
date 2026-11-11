@@ -25,8 +25,11 @@ authorised unrestricted production deployment, and has not authorised any trade 
 
 ## Steps (operator)
 
-1. **Before the merge, hold the recorder off.** In GitHub, Settings → Secrets and variables → Actions → Variables, set
-   `FWD_B24` = `0`. Leave `CONFIRM_PANEL` unset; unset means on.
+1. **The recorder is off unless `FWD_B24` = `1`** (amendment A2's fail-safe). Unset, empty, `0`, or a value saved as
+   a Secret instead of a Variable all mean off. Leave `CONFIRM_PANEL` unset; unset means on.
+   - **Incident, 2026-11-10:** the PR #90 code treated an unset `FWD_B24` as on. The hold-off value did not reach the
+     workflow (the run log printed `FWD_B24:` empty), so B24 started by mistake at 21:35:34 UTC with 0 rows. The
+     operator declared that start void; A2 moves it aside once and made off the default.
 2. **Merge PR #90** into `claude/audit-prompt-real-artefacts-nekqv6`, then run `quantum-site.yml`, or wait for the
    15-minute scheduler.
    - The workflow's `pytest` step gates the deploy: a red suite deploys nothing.
@@ -39,20 +42,39 @@ authorised unrestricted production deployment, and has not authorised any trade 
    ```
 
    It must print `SHADOW CHECK PASSED`. Look at the card: SHADOW TEST banner, NO TRADE, stages named.
-4. **Start B24** (stage 2): delete the `FWD_B24` variable, or set it to `1`.
-   - The next run is B24's start: `started_utc` in `B24-CONFIRM-FWD.json`.
+   Where the site's `index.json` cannot be fetched, audit the records instead. Take a snapshot of both branches before
+   the merge, and save the log of the last run before the merge and of the first run after it:
+
+   ```sh
+   python docs/deploy/shadow_store_check.py --store store --ledger ledger --before-store store_before \
+       --before-ledger ledger_before --log first_run.log --log-before last_run_before.log --b24-off
+   ```
+
+   It must print `SHADOW STORE AUDIT PASSED`.
+4. **Before B24 starts: amendment A2.** `research/registrations/B24-CONFIRM-FWD-A2.json` replaces the 2029-12-31
+   deadline with a maximum administrative horizon (12 years after the start) and adds the INSUFFICIENT EVIDENCE end
+   state. The recorder that implements it must be merged and deployed (a separate reviewed change) while `FWD_B24`
+   is off (unset or `0`).
+   - Check: the deployed `quantum/fwd_b24.py` has `HORIZON_YEARS = 12`, no `DEADLINE`, and `on()` true only for `1`.
+   - Re-run step 3 with `--b24-off`; it must pass.
+5. **Start B24** (stage 2), only with the operator's separate approval: set the repository **Variable** `FWD_B24` = `1`
+   (Settings → Secrets and variables → Actions → **Variables** tab).
+   - Check the next run's log: the "Run pipeline" env must print `FWD_B24: 1`.
+   - The next run is B24's start: `started_utc` and `horizon_end_utc` in `B24-CONFIRM-FWD.json`.
    - Re-run step 3 without `--b24-off`; it must pass again.
-5. **Watch** at least weekly:
+6. **Watch** at least weekly:
    - re-run the check;
    - read B24's weekly report (in its record file, after each Friday New York close).
    - Every figure stays PRELIMINARY until a registered look (30 / 50 / 75 / 100 decided results). Nothing is called
      profitable or accurate before then.
+   - Once a year, read the schedule report (`annual` in the record). It is descriptive and changes nothing.
+   - If the horizon comes before a decision, the result is INSUFFICIENT EVIDENCE. That is not a measure of accuracy.
 
 ## Rollback
 
 - **Fast, no code change:**
   - `CONFIRM_PANEL` = `0` removes the card and stops the event log;
-  - `FWD_B24` = `0` stops the recorder.
+  - `FWD_B24` unset or `0` stops the recorder.
   - Each switch is independent. With both at 0 the run's output is byte-identical to the deployed `2b782dbab` (tested).
   - Records already written stay, unchanged.
 - **Full:** revert the merge commit (`git revert -m 1 <merge sha>`) and push; the next run deploys the previous code.
