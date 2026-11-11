@@ -1910,6 +1910,34 @@
     }
    },
    "t_done": 1794408300
+  },
+  {
+   "key": "BREAKOUT|15m|1794405600|-1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1794405600,
+   "t_close": 1794406500,
+   "dir": -1,
+   "p0": 4030.24,
+   "what": "breakout at 4HL 4032.10, 1HL 4032.10",
+   "id": 53,
+   "seen": 1794406888,
+   "backfill": false,
+   "late": false,
+   "repeats": 1,
+   "confirm_at": 4015.24,
+   "invalid_at": 4043.24,
+   "cap_at": 4010.24,
+   "confirm20_at": 4010.24,
+   "status": "EXPIRED",
+   "bars": 5,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $23.97 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "overshoot_usd": 23.97,
+   "why": "the first 15m close $15 beyond was $23.97 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1794411000
   }
  ]
 }
