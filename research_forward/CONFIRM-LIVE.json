@@ -1992,6 +1992,34 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "SWEEP|15m|1792502100|1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1792502100,
+   "t_close": 1792503000,
+   "dir": 1,
+   "p0": 4121.58,
+   "what": "sweep at TDL 4113.63",
+   "id": 61,
+   "seen": 1794431354,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 4136.58,
+   "invalid_at": 4108.58,
+   "cap_at": 4141.58,
+   "confirm20_at": 4141.58,
+   "status": "EXPIRED",
+   "bars": 96,
+   "scan_t": null,
+   "overshoot_usd": 30.87,
+   "why": "the first 15m close $15 beyond was $30.87 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1792506600,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $30.87 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
