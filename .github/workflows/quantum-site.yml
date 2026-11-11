@@ -30,6 +30,7 @@ permissions:
   contents: write     # push the market-data branch
   pages: write
   id-token: write
+  actions: read       # the outage notice reads this workflow's recent runs (read only)
 
 concurrency:
   group: quantum-site
@@ -216,3 +217,27 @@ jobs:
           path: site
       - id: deploy
         uses: actions/deploy-pages@v4
+
+      - name: Outage notice (one phone message when runs start failing; never fails the run)
+        # Added after the 2026-11-10 outage: 37 runs failed their test gate over 9 hours and nothing told the operator.
+        # Sends ONE ntfy message on the first failed run (no other failed run of this workflow in the last 60 min).
+        # OUTAGE_NOTICE=0 turns it off. The topic is a secret: masked, never printed.
+        if: failure() && vars.OUTAGE_NOTICE != '0'
+        continue-on-error: true
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          [ -n "$NTFY_TOPIC" ] || { echo "no NTFY_TOPIC: no notice"; exit 0; }
+          prev=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$REPO/actions/workflows/quantum-site.yml/runs?status=failure&per_page=20" \
+            | python3 -c 'import datetime as d, json, os, sys; r = json.load(sys.stdin).get("workflow_runs") or []; now = d.datetime.now(d.timezone.utc); print(sum(1 for x in r if str(x["id"]) != os.environ["RUN_ID"] and (now - d.datetime.fromisoformat(x["created_at"].replace("Z", "+00:00"))).total_seconds() < 3600))' \
+            || echo "?")
+          echo "other failed runs in the last 60 min: $prev"
+          if [ "$prev" = "0" ]; then
+            msg="XAUUSD SITE DOWN: the site run of $(date -u +%H:%M) UTC failed, so alerts are paused until it is fixed. Signals from the gap will be marked NOT ACTIONABLE when it is back. Do not act on old alerts."
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H "Title: XAUUSD Quantum (site down)" --data-binary "$msg" "https://ntfy.sh/$NTFY_TOPIC")
+            echo "ntfy.sh answered HTTP $code"
+          fi

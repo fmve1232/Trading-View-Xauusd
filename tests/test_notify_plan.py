@@ -80,6 +80,7 @@ def _payload(t_last, markers, bars):
 
 
 def test_run_end_to_end(tmp_path, monkeypatch):
+    # sent_t: each run 5 minutes after its newest bar, as in production (the stale-signal gate reads the delay)
     monkeypatch.setenv("PLAN_TP2_USD", "0")                  # the one-TP plan (two targets: test_two_targets_end_to_end)
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
@@ -87,13 +88,13 @@ def test_run_end_to_end(tmp_path, monkeypatch):
     notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"])                      # first run: position only
     assert sent == []
     sig = {"t": 1900, "type": "SIGNAL", "dir": -1, "px": 4000.0, "tq": 70, "sl": 4010.0, "tp1": 3990.0, "tp2": 3980.0, "tp3": 3970.0}
-    notify.run(store, {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"])
+    notify.run(store, {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"], sent_t=2300)
     assert len(sent) == 1 and sent[0][0].startswith("XAUUSD 15m SELL") and sent[0][1].startswith("YOUR PLAN 0.5 lot: SL 4013.00 (-$650) TP 3987.00")
     state = json.loads((tmp_path / notify.STATE).read_text())
     assert state["plans"][0]["tp"] == 3987.0 and state["plans"][0]["dir"] == -1
-    notify.run(store, {"15m": _payload(2900, [sig], [(1900, 4001, 3999), (2000, 4003, 3990), (2900, 3995, 3986.8)])}, ["15m"])
+    notify.run(store, {"15m": _payload(2900, [sig], [(1900, 4001, 3999), (2000, 4003, 3990), (2900, 3995, 3986.8)])}, ["15m"], sent_t=3200)
     assert len(sent) == 2 and "TP 3987.00 HIT +$650 -- trade closed in profit" in sent[1][0] and len(sent[1]) == 1
-    notify.run(store, {"15m": _payload(3800, [sig], [(1900, 4001, 3999), (2900, 3995, 3986.8)])}, ["15m"])
+    notify.run(store, {"15m": _payload(3800, [sig], [(1900, 4001, 3999), (2900, 3995, 3986.8)])}, ["15m"], sent_t=4100)
     assert len(sent) == 3 and sent[2] == []                                           # nothing repeated
     st = json.loads((tmp_path / notify.STATE).read_text())
     assert st["plans"] == [] and st["plan_tally"] == {"TP": 1} and st["plan_log"][0]["result"] == "TP"
@@ -500,18 +501,18 @@ def test_two_targets_end_to_end(tmp_path, monkeypatch):
     sent = []
     monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
     store = str(tmp_path)
-    notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"])
+    notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"], sent_t=1300)
     sig = {"t": 1900, "type": "SIGNAL", "dir": 1, "px": 4000.0, "tq": 70, "sl": 3990.0, "tp1": 4010.0, "tp2": 4020.0, "tp3": 4030.0}
-    notify.run(store, {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"])
+    notify.run(store, {"15m": _payload(2000, [sig], [(1900, 4001, 3999)])}, ["15m"], sent_t=2300)
     assert sent[0][1].startswith("YOUR PLAN 0.5 lot: SL 3987.00 (-$650) | TP1 4013.00: close half (+$325)") and "TP2 4020.00" in sent[0][1]
     bars = [(1900, 4001, 3999), (2000, 4013.5, 4001)]                                  # TP1 hit
-    notify.run(store, {"15m": _payload(2900, [sig], bars)}, ["15m"])
+    notify.run(store, {"15m": _payload(2900, [sig], bars)}, ["15m"], sent_t=3200)
     assert len(sent[1]) == 1 and "TP1 4013.00 HIT +$325 on half -- close half, move the other half's SL to your fill" in sent[1][0]
     st = json.loads((tmp_path / notify.STATE).read_text())
     assert len(st["plans"]) == 1 and st["plans"][0]["tp1_sent"] is True and st["plan_log"] == []   # still open: the rest runs
-    notify.run(store, {"15m": _payload(3800, [sig], bars + [(2900, 4012, 4003)])}, ["15m"])
+    notify.run(store, {"15m": _payload(3800, [sig], bars + [(2900, 4012, 4003)])}, ["15m"], sent_t=4100)
     assert sent[2] == []                                                               # TP1 not repeated; nothing new
-    notify.run(store, {"15m": _payload(4700, [sig], bars + [(2900, 4012, 4003), (3800, 4020.5, 4008)])}, ["15m"])
+    notify.run(store, {"15m": _payload(4700, [sig], bars + [(2900, 4012, 4003), (3800, 4020.5, 4008)])}, ["15m"], sent_t=5000)
     assert len(sent[3]) == 1 and "TP2 4020.00 HIT -- trade closed: +$825 total" in sent[3][0]
     st = json.loads((tmp_path / notify.STATE).read_text())
     assert st["plans"] == [] and st["plan_log"][0]["result"] == "TP" and st["plan_log"][0]["tp2_result"] == "TP2"
