@@ -1,7 +1,7 @@
 {
- "registration": "research/registrations/B24-CONFIRM-FWD.json",
- "started_utc": 1794346534,
- "rows": [],
- "checks": [],
- "weekly": []
+ "void": true,
+ "voided_start_utc": 1794346534,
+ "moved_to": "B24-CONFIRM-FWD.void-20261110T213534Z.json",
+ "why": "started by mistake: the hold-off variable FWD_B24=0 did not reach the workflow; the operator declared this start void on 2026-11-11 (amendment A2), before any result; never counted in B24",
+ "registration": "research/registrations/B24-CONFIRM-FWD-A2.json"
 }
