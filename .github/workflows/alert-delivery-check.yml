@@ -1,0 +1,43 @@
+# Read-only delivery check: lists what ntfy.sh holds for the alerts' topic (repository secret NTFY_TOPIC), so it can be
+# verified whether alerts actually reached ntfy. ntfy.sh keeps messages for about 12 hours. Manual dispatch only.
+# It SENDS NOTHING (a GET with poll=1 never notifies the phone). The topic is a secret: GitHub masks it, and it is
+# never printed. Per message it prints only the time (UTC), the title, the length, a SHA-256 of the body and its
+# first 60 characters (the same text the public site shows).
+name: alert-delivery-check
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "ntfy 'since' value: a duration such as 12h, or a UNIX timestamp"
+        required: false
+        default: "12h"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: List the messages ntfy.sh holds for the topic (read-only)
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          if [ -z "$NTFY_TOPIC" ]; then echo "::error::the repository secret NTFY_TOPIC is not set"; exit 1; fi
+          if ! printf '%s' "$SINCE" | grep -Eq '^([0-9]{1,2}[hm]|[0-9]{10})$'; then echo "::error::since must be like 12h or a UNIX time"; exit 1; fi
+          python3 - <<'PY'
+          import datetime, hashlib, json, os, urllib.request
+          url = "https://ntfy.sh/" + os.environ["NTFY_TOPIC"] + "/json?poll=1&since=" + os.environ["SINCE"]
+          with urllib.request.urlopen(url, timeout=30) as r:
+              rows = [json.loads(x) for x in r.read().decode().splitlines() if x.strip()]
+          msgs = [m for m in rows if m.get("event") == "message"]
+          print(f"ntfy.sh holds {len(msgs)} message(s) for the topic since {os.environ['SINCE']}")
+          for m in msgs:
+              t = datetime.datetime.fromtimestamp(m["time"], datetime.timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+              body = m.get("message", "")
+              first = body.splitlines()[0][:60] if body else ""
+              print(f"{t} | {m.get('title', '')} | {len(body)} chars | sha256 {hashlib.sha256(body.encode()).hexdigest()[:16]} | {first}")
+          PY
