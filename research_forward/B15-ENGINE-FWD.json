@@ -32,6 +32,21 @@
    "late": false,
    "move_alert": 3.49,
    "session": "Rollover"
+  },
+  {
+   "id": 3,
+   "tf": "30m",
+   "dir": -1,
+   "entry": 4050.55,
+   "t_dec": 1794394800,
+   "status": "TP",
+   "result": "TP",
+   "t_res": 1794404100,
+   "tp2_result": "TP2",
+   "path": "5m",
+   "late": false,
+   "move_alert": -1.79,
+   "session": "London"
   }
  ],
  "excluded": 0,
