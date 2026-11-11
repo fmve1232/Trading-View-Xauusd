@@ -17,6 +17,21 @@
    "late": false,
    "move_alert": -2.86,
    "session": "New York"
+  },
+  {
+   "id": 2,
+   "tf": "1h",
+   "dir": -1,
+   "entry": 4031.33,
+   "t_dec": 1794344400,
+   "status": "SL",
+   "result": "SL",
+   "t_res": 1794360600,
+   "tp2_result": null,
+   "path": "5m",
+   "late": false,
+   "move_alert": 3.49,
+   "session": "Rollover"
   }
  ],
  "excluded": 0,
