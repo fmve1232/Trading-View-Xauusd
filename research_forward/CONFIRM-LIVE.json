@@ -2297,6 +2297,33 @@
     }
    },
    "t_done": 1794444300
+  },
+  {
+   "key": "BREAK|15m|1794439800|-1",
+   "kind": "BREAK",
+   "tf": "15m",
+   "t": 1794439800,
+   "t_close": 1794440700,
+   "dir": -1,
+   "p0": 3981.6,
+   "what": "PDL 3982.17 broken",
+   "id": 64,
+   "seen": 1794440965,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3966.6,
+   "invalid_at": 3994.6,
+   "cap_at": 3961.6,
+   "confirm20_at": 3961.6,
+   "status": "INVALIDATED",
+   "bars": 5,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794445200
   }
  ]
 }
