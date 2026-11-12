@@ -2020,6 +2020,69 @@
    "verdict": "NO TRADE",
    "reason": "the first 15m close $15 beyond was $30.87 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "ENG|30m|1794407400|-1",
+   "kind": "ENG",
+   "tf": "30m",
+   "t": 1794407400,
+   "t_close": 1794409200,
+   "dir": -1,
+   "p0": 4016.93,
+   "what": "engine 30m signal, TQ 65",
+   "id": 55,
+   "seen": 1794409473,
+   "backfill": false,
+   "late": false,
+   "repeats": 1,
+   "confirm_at": 4001.93,
+   "invalid_at": 4029.93,
+   "cap_at": 3996.93,
+   "confirm20_at": 3996.93,
+   "status": "CONFIRMED",
+   "bars": 7,
+   "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
+   "reason": "confirmed, but INSUFFICIENT DATA \u2014 NOT STATISTICALLY VALIDATED: +$15 before -$13 after a $15 confirmation was 60% of 20 trades (2020-22, 95% 39%-78%) against a break-even of 47.4%; INSUFFICIENT: too few confirmed signals (20 in 2020-22, 7 in 2023-24)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "t_conf": 1794415500,
+   "entry": 3999.87,
+   "entry_px": 3999.87,
+   "move_usd": 17.06,
+   "sl": 4012.87,
+   "tp1": 3984.87,
+   "tp2": 3979.87,
+   "rr1": 1.1538461538461537,
+   "rr2": 1.5384615384615385,
+   "x20": {
+    "status": "CONFIRMED",
+    "scan_t": null,
+    "t": 1794420000,
+    "px": 3993.54
+   },
+   "result": {
+    "T15": {
+     "out": "TP",
+     "usd": 15.0,
+     "mfe": 15.0,
+     "mae": 7.33,
+     "mfe_px": 15.0,
+     "mae_px": 7.329999999999927,
+     "t": 1794425400,
+     "scan_t": null
+    },
+    "T20": {
+     "out": "TP",
+     "usd": 20.0,
+     "mfe": 20.0,
+     "mae": 7.33,
+     "mfe_px": 20.0,
+     "mae_px": 7.329999999999927,
+     "t": 1794441600,
+     "scan_t": null
+    }
+   },
+   "t_done": 1794441600
   }
  ]
 }
