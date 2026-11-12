@@ -242,3 +242,65 @@ def test_a_delayed_repeat_of_a_not_actionable_plan_is_not_actionable_either(tmp_
     assert not any(x.startswith(("XAUUSD 15m SELL", "DELAYED ALERT", "YOUR PLAN")) for x in flat)
     na = next(x for x in flat if x.startswith("XAUUSD NOT ACTIONABLE: 2 engine signals"))
     assert "repeat of plan #1, which was not actionable" in na and len(rep["plans"]["open"]) == 1
+
+
+# ---- hardening after the 2026-11-12 audit of the gate (display only; records unchanged) ----
+
+def test_an_unpriced_signal_is_never_shown_late(tmp_path, sent):
+    """A SIGNAL marker without a price got no freshness decision and its headline was shown however late it was."""
+    t_send = C + 306 * 60
+    _run(tmp_path, _pay(C + 17100, [{**_sig(), "px": None}], forming=4027.84, gen=t_send - 60), t_send, sent)
+    flat = _flat(sent)
+    assert not any(x.startswith("XAUUSD 15m SELL (confirmed close)") for x in flat)
+    na = [x for x in flat if x.startswith("XAUUSD NOT ACTIONABLE: 1 engine signal recovered late")]
+    assert len(na) == 1 and "SELL at —" in na[0] and "306 min after the close" in na[0]
+    late = N.freshness(C, -1, None, 13, 13, _now(C + 1200, 4025.5, C + 1140), [])      # 20 min, live price: still no
+    assert late["state"] == "NOT ACTIONABLE" and late["why"] == "no signal price to re-check it"
+    assert N.freshness(C, -1, None, 13, 13, _now(C + 300), [])["state"] == "FRESH"     # in time: shown as before
+
+
+def test_pruning_never_releases_a_still_tracked_not_actionable_plan(tmp_path, sent):
+    """GATE_KEEP pruned the oldest decisions first; after 300 later ones a NOT ACTIONABLE plan still open lost its flag
+    and its result reached the phone. Now DELAYED decisions go first, NOT ACTIONABLE ones only after GATE_HOLD_SEC."""
+    t_send = C + 306 * 60
+    _run(tmp_path, _pay(C + 17100, [_sig()], forming=4027.84, gen=t_send - 60), t_send, sent)
+    st = json.loads((tmp_path / N.STATE).read_text())
+    for i in range(N.GATE_KEEP + 50):                              # a long outage: many later decisions
+        N.gate_note(st, f"setup:{1000 + i}", {"state": "DELAYED" if i % 3 == 0 else "NOT ACTIONABLE", "age_min": 30.0,
+                                              "t_close": C, "t_alert": t_send})
+    g = st["fresh_gate"]
+    assert g["plan:1"]["state"] == "NOT ACTIONABLE" and all(v["state"] == "NOT ACTIONABLE" for v in list(g.values())[:2])
+    assert sum(v["state"] == "NOT ACTIONABLE" for v in g.values()) == 1 + sum(1 for i in range(N.GATE_KEEP + 50) if i % 3)
+    (tmp_path / N.STATE).write_text(json.dumps(st))
+    n = len(sent)
+    rep = N.run(str(tmp_path), {"15m": _pay(C + 18000, [_sig()], hi={C + 18000: 4040.0})}, ["15m"], sent_t=C + 18300)
+    assert not any("SL 4037.98 HIT" in x for x in _flat(sent[n:]))                     # still website only
+    assert any(x.startswith(N.RECORD_ONLY) and "SL 4037.98 HIT" in x for x in rep["15m"]["lines"])
+    only = {}                                                      # all NOT ACTIONABLE and recent: nothing is dropped
+    for i in range(N.GATE_KEEP + 5):
+        N.gate_note(only, f"plan:{i}", {"state": "NOT ACTIONABLE", "age_min": 99.0, "t_close": C, "t_alert": C + i})
+    assert len(only["fresh_gate"]) == N.GATE_KEEP + 5 and "plan:0" in only["fresh_gate"]
+    edge = C + N.GATE_HOLD_SEC + 3                                 # only the ones past the hold may go (here 3 of them)
+    N.gate_note(only, "plan:9998", {"state": "NOT ACTIONABLE", "age_min": 99.0, "t_close": edge, "t_alert": edge})
+    assert len(only["fresh_gate"]) == N.GATE_KEEP + 3 and "plan:3" in only["fresh_gate"] and "plan:2" not in only["fresh_gate"]
+    later = C + N.GATE_HOLD_SEC + 10**4                            # later still: back to the cap, oldest first
+    N.gate_note(only, "plan:9999", {"state": "NOT ACTIONABLE", "age_min": 99.0, "t_close": later, "t_alert": later})
+    g2 = only["fresh_gate"]
+    assert len(g2) == N.GATE_KEEP and {"plan:9998", "plan:9999"} <= set(g2) and "plan:6" not in g2 and "plan:7" in g2
+    assert N.GATE_HOLD_SEC > max(N.PLAN_TRACK_SEC, N.SETUP_STALE_SEC, N.GRAB_STALE)
+
+
+def test_a_fresh_repeat_of_a_not_actionable_plan_does_not_imply_a_position(tmp_path, sent):
+    """The REPEAT line said "still open ... don't add a trade" about a plan the operator was told not to trade."""
+    _run(tmp_path, _pay(C, [_sig()], forming=4025.5, gen=C + 1200 - 400), C + 1200, sent)   # 20 min, stale price
+    assert any(x.startswith("XAUUSD NOT ACTIONABLE") and "no live price" in x for x in _flat(sent))
+    n = len(sent)
+    t3 = C + 3600 + 300                                            # a repeat 5 min after its close: FRESH
+    rep = N.run(str(tmp_path), {"15m": _pay(C + 2700, [_sig(), _sig(t=C + 2700, px=ENTRY - 3)], forming=ENTRY - 3,
+                                            gen=t3 - 60)}, ["15m"], sent_t=t3)
+    flat = _flat(sent[n:])
+    rp = [x for x in flat if x.startswith("REPEAT of #1")]
+    assert len(rp) == 1 and "which was NOT ACTIONABLE (sent late, no plan)" in rp[0] and "still open" not in rp[0]
+    assert not any(x.startswith(("YOUR PLAN", "ON MT5", "LADDER")) for x in flat) and len(rep["plans"]["open"]) == 1
+    plain = N.repeat_line(_sig(), "15m", {"id": 7, "tf": "15m", "entry": ENTRY, "t": C - 900, "t_dec": C})
+    assert "still open" in plain and "don't add a trade" in plain                       # an actionable plan: as before
