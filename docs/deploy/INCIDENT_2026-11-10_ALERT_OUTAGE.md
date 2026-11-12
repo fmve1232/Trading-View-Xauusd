@@ -68,7 +68,8 @@
    - Every attempt is appended to `<store>/alerts_delivery.json`: time, channel, HTTP status, ntfy message id,
      body hash and first line. No secret and no full text are stored.
 4. **Outage notice.** The site workflow sends one phone message on the first failed run (no other failed run in the
-   last 60 minutes). `OUTAGE_NOTICE=0` turns it off.
+   last 60 minutes). `OUTAGE_NOTICE=0` turns it off. **See the correction below: as first deployed it never ran; the
+   fix is described after it.**
 5. **The `alert-delivery-check` workflow** lists what ntfy.sh holds for the topic. It is read-only and sends nothing.
 
 ## Verification
@@ -78,3 +79,53 @@ See the PR that deployed items 2–4. In summary:
   - **normal timing**: the phone output and every record are byte-identical;
   - **simulated outages**: the records are byte-identical, and the phone gets NOT ACTIONABLE lines instead of the
     old code's stale plans.
+
+## Correction (2026-11-12): the outage notice of item 4 never ran
+- **What happened.** Three runs on the deployed commit failed after their alerts had gone out:
+  - run 3038 (11 Nov 10:31): `deploy-pages` failed;
+  - run 3078 (11 Nov 20:16): `upload-pages-artifact` failed (GitHub's artifact service answered with an HTML page);
+  - run 3094 (12 Nov 01:01): `deploy-pages` found no artifact.
+
+  In all three the outage-notice step was **skipped**. (These were Pages-only failures, so no notice was needed; but
+  the step could not have run for any failure.)
+- **Cause (proved by a probe run).** The step condition was `failure() && vars.OUTAGE_NOTICE != '0'`.
+  - The variable `OUTAGE_NOTICE` is not set. An unset variable is `null` inside an expression.
+  - GitHub's loose comparison coerces `null` to 0, so `null != '0'` is false, and the step could never run while the
+    variable was unset.
+  - Probe run 43125115555 showed it. `format('x{0}', vars.OUTAGE_NOTICE) != 'x0'` runs as intended.
+- **Same probe: `FWD_B24` is not set** as a repository or environment variable either.
+  - B24 is off because the code's own default is off (`fwd_b24.on()` is true only for "1"), not because of a stored "0".
+- **Not covered by any in-workflow notice.** Two runs (3079, 3080) ended in `startup_failure`: GitHub ran no job, so
+  no step of the workflow could send anything. Detecting those needs a watchdog outside GitHub Actions.
+
+## Fix (2026-11-12, PR "Outage notice: make it run ..."; not deployed until the operator approves)
+- **Condition** (pinned by `tests/test_outage_notice.py` to the text GitHub evaluated in probe run 43172558297):
+  `(failure() || cancelled()) && format('x{0}', vars.OUTAGE_NOTICE) != 'x0' && (steps.pipeline.outcome != 'success'
+  || steps.savestore.outcome != 'success')`.
+  - It sends when the alerts may be affected: the test gate, the store load, the pipeline or the store save failed,
+    or the job timed out in the pipeline.
+  - It sends nothing for a Pages, ledger or display-step failure: that run's alerts went out.
+  - `cancelled()` is new. The probe showed that a job timed out in the pipeline would otherwise stay silent.
+- **Logic** in `quantum/outage_notice.py` (stdlib only, so it still runs when `pip install` failed):
+  - "XAUUSD SITE DOWN" when the pipeline did not succeed;
+  - "XAUUSD ALERT STATE NOT SAVED" when the alerts went out but their state was not saved.
+- **De-duplication reads delivered notices, not failed runs.** The first version of this fix skipped a notice when
+  any other run had failed in the last 60 minutes. A Pages-only failure (no notice, by design) would then have
+  silenced a pipeline failure 15 minutes later. Now nothing is sent only while ntfy.sh holds an outage notice (tag
+  `xau-outage`) from the last 180 minutes. If that cannot be read, the notice is sent.
+- **Replay on every real run of the workflow** (`audit/tools/outage_replay.py`, 3,118 runs, 91 not successful):
+
+  | Version | Notices |
+  |---|---|
+  | deployed | 0 |
+  | first version of the fix | 7 |
+  | this fix | 9 |
+
+  - **This fix's 9 notices:** 10 Nov 12:16, 15:31 and 18:31 (the nine-hour test-gate outage: one notice and two
+    reminders), and six "state not saved" notices.
+  - **The six "state not saved" runs:** 864, 1400, 2105, 2541, 2663 and 2689. GitHub rejected the store push
+    ("remote rejected ... fatal error in commit_refs_rules").
+  - **No notice was sent for any Pages-only failure:** 26 `deploy-pages`, 1 upload and 1 configure.
+- **Mutation test:** `audit/tools/mutation_outage_notice.py`, 24 of 24 mutants killed.
+  - 14 are on the module.
+  - 10 are on the workflow condition and wiring, including the deployed condition and the first version of this fix.

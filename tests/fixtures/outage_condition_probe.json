@@ -1,0 +1,218 @@
+{
+ "cases": {
+  "deploy": {
+   "cancelled": false,
+   "failure": true,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": false,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": false,
+    "REAL": false,
+    "REAL-VAR0": false,
+    "REAL-VAR1": false
+   },
+   "steps": {
+    "pipeline": "success",
+    "savestore": "success"
+   }
+  },
+  "events": {
+   "cancelled": false,
+   "failure": false,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": false,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": false,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": false,
+    "REAL": false,
+    "REAL-VAR0": false,
+    "REAL-VAR1": false
+   },
+   "steps": {
+    "pipeline": "success",
+    "savestore": "success"
+   }
+  },
+  "ledger": {
+   "cancelled": false,
+   "failure": true,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": false,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": false,
+    "REAL": false,
+    "REAL-VAR0": false,
+    "REAL-VAR1": false
+   },
+   "steps": {
+    "pipeline": "success",
+    "savestore": "success"
+   }
+  },
+  "loadstore": {
+   "cancelled": false,
+   "failure": true,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": true,
+    "M2-AND": true,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": true,
+    "REAL": true,
+    "REAL-VAR0": false,
+    "REAL-VAR1": true
+   },
+   "steps": {
+    "pipeline": "skipped",
+    "savestore": "skipped"
+   }
+  },
+  "ok": {
+   "cancelled": false,
+   "failure": false,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": false,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": false,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": false,
+    "REAL": false,
+    "REAL-VAR0": false,
+    "REAL-VAR1": false
+   },
+   "steps": {
+    "pipeline": "success",
+    "savestore": "success"
+   }
+  },
+  "pipeline": {
+   "cancelled": false,
+   "failure": true,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": true,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": true,
+    "PRA-FIRST": true,
+    "REAL": true,
+    "REAL-VAR0": false,
+    "REAL-VAR1": true
+   },
+   "steps": {
+    "pipeline": "failure",
+    "savestore": "success"
+   }
+  },
+  "savestore": {
+   "cancelled": false,
+   "failure": true,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": false,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": true,
+    "PRA-FIRST": true,
+    "REAL": true,
+    "REAL-VAR0": false,
+    "REAL-VAR1": true
+   },
+   "steps": {
+    "pipeline": "success",
+    "savestore": "failure"
+   }
+  },
+  "tests": {
+   "cancelled": false,
+   "failure": true,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": true,
+    "M2-AND": true,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": true,
+    "REAL": true,
+    "REAL-VAR0": false,
+    "REAL-VAR1": true
+   },
+   "steps": {
+    "pipeline": "skipped",
+    "savestore": "skipped"
+   }
+  },
+  "timeout": {
+   "cancelled": true,
+   "failure": false,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": true,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": false,
+    "REAL": true,
+    "REAL-VAR0": false,
+    "REAL-VAR1": true
+   },
+   "steps": {
+    "pipeline": "cancelled",
+    "savestore": "success"
+   }
+  },
+  "upload": {
+   "cancelled": false,
+   "failure": true,
+   "github": {
+    "DEPLOYED": false,
+    "M1-NO-SAVESTORE": false,
+    "M2-AND": false,
+    "M3-NO-OUTCOME": true,
+    "M4-NULL-BUG": false,
+    "M5-EQ": false,
+    "PRA-FIRST": false,
+    "REAL": false,
+    "REAL-VAR0": false,
+    "REAL-VAR1": false
+   },
+   "steps": {
+    "pipeline": "success",
+    "savestore": "success"
+   }
+  }
+ },
+ "expressions": {
+  "DEPLOYED": "failure() && vars.OUTAGE_NOTICE != '0'",
+  "M1-NO-SAVESTORE": "(failure() || cancelled()) && format('x{0}', vars.OUTAGE_NOTICE) != 'x0' && steps.pipeline.outcome != 'success'",
+  "M2-AND": "(failure() || cancelled()) && format('x{0}', vars.OUTAGE_NOTICE) != 'x0' && (steps.pipeline.outcome != 'success' && steps.savestore.outcome != 'success')",
+  "M3-NO-OUTCOME": "(failure() || cancelled()) && format('x{0}', vars.OUTAGE_NOTICE) != 'x0'",
+  "M4-NULL-BUG": "(failure() || cancelled()) && vars.OUTAGE_NOTICE != '0' && (steps.pipeline.outcome != 'success' || steps.savestore.outcome != 'success')",
+  "M5-EQ": "(failure() || cancelled()) && format('x{0}', vars.OUTAGE_NOTICE) != 'x0' && (steps.pipeline.outcome == 'failure' || steps.savestore.outcome == 'failure')",
+  "PRA-FIRST": "failure() && format('x{0}', vars.OUTAGE_NOTICE) != 'x0' && (steps.pipeline.outcome != 'success' || steps.savestore.outcome != 'success')",
+  "REAL": "(failure() || cancelled()) && format('x{0}', vars.OUTAGE_NOTICE) != 'x0' && (steps.pipeline.outcome != 'success' || steps.savestore.outcome != 'success')",
+  "REAL-VAR0": "(failure() || cancelled()) && format('x{0}', '0') != 'x0' && (steps.pipeline.outcome != 'success' || steps.savestore.outcome != 'success')",
+  "REAL-VAR1": "(failure() || cancelled()) && format('x{0}', '1') != 'x0' && (steps.pipeline.outcome != 'success' || steps.savestore.outcome != 'success')"
+ },
+ "source": "GitHub Actions probe run 43172558297 (2026-11-12, workflow zz-probe-outage3.yml, removed after the run): each case reproduces a failure pattern of quantum-site.yml with the same step ids and step conditions; 'github' is whether GitHub ran a step guarded by each expression. vars.OUTAGE_NOTICE is unset in this repository.",
+ "vars": {}
+}
