@@ -235,6 +235,26 @@ All times are UTC.
 4. A pre-registered study before (3): how often a version flip changes a decision at decision time, over the ledger's
    history.
 
+**Addendum (12 Nov, later; details in `docs/deploy/R14_AUX_REVISIONS_2026-11-12.md`)**
+- **More pairs.** Four flips (3092→3093, 3093→3094, 3094→3095, 3095→3096), five same-version or normal pairs, two 10 Nov
+  pairs and a volume / price attribution all agree with the table above.
+- **Corrections:**
+  - The largest live 15m change in a flip is **1.08 pp** (3094→3095, 56.63 → 57.71%), not 0.86 pp.
+  - The new document counts SL changes per matched signal (bar, direction and entry): 5 / 1 / 13 / 19 / 7. The "SL / TP
+    levels changed" row above used a different count. The maxima agree.
+- **Attribution:**
+  - GC **volume** revisions cause every SL / TP change.
+  - **Price** revisions cause the 30m signal and most of the probability variance.
+- **New, and larger: decision-time volume completeness (R18).**
+  - The site reads the data about 5 minutes after the 15m bar closes. By then, Yahoo's GC volume for that bar is 46–77%
+    of its final value: 9 of 9 decision bars measured, median about 64%.
+  - The newest GC 5m bar was 0% complete once.
+  - History and the backtest see the final volume.
+  - On the real 10 Nov 06:51 read, final volume would have moved the live 15m probability from 33.74% to 40.80%. The
+    decision was WAIT either way.
+  - This is a live / backtest input mismatch, not a version effect. It is the reason PR-E (an earlier read) is now on
+    hold.
+
 ## 6. R2: runs that never start
 **Evidence**
 - In 3,118 runs since 26 Sep there were 2 `startup_failure` runs: 3079 (11 Nov 20:31) and 3080 (20:46).
@@ -271,6 +291,7 @@ endpoint reports the expiry date.
 | R15 | Cause and limits established (§4). |
 | R16 (new) | The revision log (`manifest.py`) compares prices only. GC volume revisions, which feed the engine, are never recorded. Bookkeeping fix: PR-H. |
 | R17 (new) | The expiry of the dispatch token is not monitored (§6). |
+| R18 (new) | Decision-time GC volume completeness: the decision bar's volume is about 64% complete when the site reads it (§5 addendum). Live volume gates are stricter than in the history the statistics come from. MEDIUM–HIGH until it has been measured across sessions (protocol M7). No change proposed without approval; any engine or data-layer fix restarts the holdout. |
 
 ## 8. Rollback procedures
 | Change | Rollback | Data |

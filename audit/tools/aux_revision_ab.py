@@ -1,7 +1,9 @@
 """R14 A/B: effect of Yahoo auxiliary-series revisions on the engine (offline, read-only; research measurement).
 
 Usage (from a checkout; nothing is written outside <work>):
-  python audit/tools/aux_revision_ab.py <base store snapshot> <donor store snapshot> <now UTC epoch> <work dir> [ctrl]
+  python audit/tools/aux_revision_ab.py <base store snapshot> <donor store snapshot> <now UTC epoch> <work dir> [ctrl] [part]
+part: all (default) = the donor's auxiliary rows; volume = the base rows with the donor's VOLUME on common bars;
+price = the base rows with the donor's OPEN / HIGH / LOW / CLOSE on common bars (attribution of the effect).
 The two snapshots are copies of the market-data store from two production runs (e.g. `git archive` of two
 market-data commits); keep them out of the repository (vendor data). Writes <work>/result.json and <work>/raw.pkl.
 
@@ -53,7 +55,7 @@ def is_aux(name):
     return not name.startswith("XAU_USD")
 
 
-def make_arm(base, donor, out, mode):
+def make_arm(base, donor, out, mode, part="all"):
     if os.path.exists(out):
         shutil.rmtree(out)
     shutil.copytree(base, out)
@@ -66,6 +68,14 @@ def make_arm(base, donor, out, mode):
         if src is None:
             continue
         src = src[src.index <= b.index.max()]
+        if mode == "swap" and part in ("volume", "price"):
+            cols_p = [c for c in ("open", "high", "low", "close") if c in b.columns and c in src.columns]
+            take = ["volume"] if part == "volume" else cols_p
+            take = [c for c in take if c in b.columns and c in src.columns]
+            common = b.index.intersection(src.index)
+            mixed = b.copy()
+            mixed.loc[common, take] = src.loc[common, take].to_numpy()
+            src = mixed
         if mode == "swap":
             common = b.index.intersection(src.index)
             cols = [c for c in b.columns if c in src.columns]
@@ -96,7 +106,8 @@ def run_tf(store_dir, tf, now_iso):
     ctrl = engine.run(m, cfg, "control", F)
     chal = engine.run(m, cfg, "challenger", F)
     payload = report.build(m, res, ctrl, cfg, man, now, store_dir, res_chal=chal)
-    out = {"t": [int(x) for x in (m.base.index.astype("int64") // 10**9)], "payload": payload, "psrc": dl.price_source}
+    t_s = (m.base.index - pd.Timestamp(0, tz="UTC")) // pd.Timedelta(seconds=1)      # unit-safe epoch seconds
+    out = {"t": [int(x) for x in t_s], "payload": payload, "psrc": dl.price_source}
     for arm, r in (("treatment", res), ("control", ctrl), ("challenger", chal)):
         out[arm] = {"rows": {k: (np.asarray(v).tolist() if not isinstance(v, (str, int, float)) else v) for k, v in r.rows.items()},
                     "events": r.events, "last": r.last}
@@ -149,7 +160,7 @@ def compare(A, B):
     return rep
 
 
-def main(base, donor, now_epoch, work, with_ctrl):
+def main(base, donor, now_epoch, work, with_ctrl, part="all"):
     os.makedirs(work, exist_ok=True)
     arms = {"base": None, "swap": "swap"} | ({"ctrl": "ctrl"} if with_ctrl else {})
     pert = {}
@@ -161,7 +172,7 @@ def main(base, donor, now_epoch, work, with_ctrl):
                 shutil.rmtree(d)
             shutil.copytree(base, d)
         else:
-            p = make_arm(base, donor, d, mode)
+            p = make_arm(base, donor, d, mode, part)
             if mode == "swap":
                 pert = p
         dirs[a] = d
@@ -172,7 +183,7 @@ def main(base, donor, now_epoch, work, with_ctrl):
             for tf in TFS:
                 jobs[(a, tf)] = ex.submit(run_tf, d, tf, now)
         out = {k: f.result() for k, f in jobs.items()}
-    result = {"base": base, "donor": donor, "now": now, "perturbation": pert, "tfs": {}}
+    result = {"base": base, "donor": donor, "now": now, "part": part, "perturbation": pert, "tfs": {}}
     for tf in TFS:
         r = {"swap_vs_base": compare(out[("base", tf)], out[("swap", tf)]), "psrc": out[("base", tf)]["psrc"]}
         if with_ctrl:
@@ -187,4 +198,6 @@ def main(base, donor, now_epoch, work, with_ctrl):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], len(sys.argv) > 5 and sys.argv[5] == "ctrl")
+    extra = sys.argv[5:]
+    main(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], "ctrl" in extra,
+         next((x for x in extra if x in ("all", "volume", "price")), "all"))
