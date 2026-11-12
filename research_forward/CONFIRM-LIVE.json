@@ -2432,6 +2432,33 @@
    "verdict": "NO TRADE",
    "reason": "an opposite 15m structure break came first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "SWEEP|15m|1794447900|1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1794447900,
+   "t_close": 1794448800,
+   "dir": 1,
+   "p0": 3984.65,
+   "what": "sweep at PDL 3982.17, 4HL 3982.17",
+   "id": 67,
+   "seen": 1794449049,
+   "backfill": false,
+   "late": false,
+   "repeats": 1,
+   "confirm_at": 3999.65,
+   "invalid_at": 3971.65,
+   "cap_at": 4004.65,
+   "confirm20_at": 4004.65,
+   "status": "INVALIDATED",
+   "bars": 14,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794461400
   }
  ]
 }
