@@ -3147,6 +3147,33 @@
     }
    },
    "t_done": 1794495600
+  },
+  {
+   "key": "GRAB|15m|1794494700|1",
+   "kind": "GRAB",
+   "tf": "15m",
+   "t": 1794494700,
+   "t_close": 1794495600,
+   "dir": 1,
+   "p0": 3871.2,
+   "what": "PWL 3866.02 swept and rejected",
+   "id": 89,
+   "seen": 1794495993,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3886.2,
+   "invalid_at": 3858.2,
+   "cap_at": 3891.2,
+   "confirm20_at": 3891.2,
+   "status": "INVALIDATED",
+   "bars": 1,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794496500
   }
  ]
 }
