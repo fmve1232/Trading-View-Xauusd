@@ -20,7 +20,14 @@ link no server log can prove.
 **What the phone receives in production** (`ALERT_MODE` unset = sixty):
 - 15m engine signals and their plan results, which are rare (none since 10 Nov);
 - B15 checks;
-- the daily validation, about 22:25–22:35 UTC on trading days (03:25–03:35 PKT);
+- the daily validation, sent by the **first site run after the New York close** (17:00 New York = 22:00 UTC = 03:00
+  PKT in winter) on trading days:
+  - The dispatcher skips the shut hour (22:00–23:00 UTC), so this is normally the 23:01 UTC run, arriving about
+    23:05–23:07 UTC (**about 04:05 PKT**).
+  - It comes earlier only when GitHub's backup cron happens to fire inside the shut hour. That happened on 11 Nov: run
+    3085 (`schedule`) at 22:25 UTC sent it at 22:29 (03:29 PKT).
+  - The time therefore varies from night to night. An earlier note saying "22:25–22:35 UTC" generalised from that one
+    night and was wrong;
 - news.
 
 **A quiet phone is therefore normal most of the day.**
