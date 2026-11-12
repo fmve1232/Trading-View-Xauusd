@@ -2236,6 +2236,67 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1794442500
+  },
+  {
+   "key": "ENG|30m|1794418200|-1",
+   "kind": "ENG",
+   "tf": "30m",
+   "t": 1794418200,
+   "t_close": 1794420000,
+   "dir": -1,
+   "p0": 3993.54,
+   "what": "engine 30m signal, TQ 76",
+   "id": 58,
+   "seen": 1794420376,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3978.54,
+   "invalid_at": 4006.54,
+   "cap_at": 3973.54,
+   "confirm20_at": 3973.54,
+   "status": "CONFIRMED",
+   "bars": 21,
+   "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
+   "reason": "confirmed, but INSUFFICIENT DATA \u2014 NOT STATISTICALLY VALIDATED: +$15 before -$13 after a $15 confirmation was 60% of 20 trades (2020-22, 95% 39%-78%) against a break-even of 47.4%; INSUFFICIENT: too few confirmed signals (20 in 2020-22, 7 in 2023-24)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "t_conf": 1794442500,
+   "entry": 3974.71,
+   "entry_px": 3974.71,
+   "move_usd": 18.83,
+   "sl": 3987.71,
+   "tp1": 3959.71,
+   "tp2": 3954.71,
+   "rr1": 1.1538461538461537,
+   "rr2": 1.5384615384615385,
+   "x20": {
+    "status": "PENDING",
+    "scan_t": 1794444300
+   },
+   "result": {
+    "T15": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 4.03,
+     "mae": 13.0,
+     "mfe_px": 4.0300000000002,
+     "mae_px": 13.0,
+     "t": 1794444300,
+     "scan_t": null
+    },
+    "T20": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 4.03,
+     "mae": 13.0,
+     "mfe_px": 4.0300000000002,
+     "mae_px": 13.0,
+     "t": 1794444300,
+     "scan_t": null
+    }
+   },
+   "t_done": 1794444300
   }
  ]
 }
