@@ -3465,6 +3465,33 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "4H|4h|1794492000|-1",
+   "kind": "4H",
+   "tf": "4h",
+   "t": 1794492000,
+   "t_close": 1794506400,
+   "dir": -1,
+   "p0": 3872.57,
+   "what": "4h close below the previous 4h low 3885.00",
+   "id": 96,
+   "seen": 1794506805,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3857.57,
+   "invalid_at": 3885.57,
+   "cap_at": 3852.57,
+   "confirm20_at": 3852.57,
+   "status": "INVALIDATED",
+   "bars": 1,
+   "verdict": "NO TRADE",
+   "reason": "an opposite 15m structure break came first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "an opposite 15m structure break came first",
+   "t_done": 1794507300
   }
  ]
 }
