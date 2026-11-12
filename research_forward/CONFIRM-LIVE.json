@@ -3411,6 +3411,33 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1794498300
+  },
+  {
+   "key": "BREAK|15m|1794495600|-1",
+   "kind": "BREAK",
+   "tf": "15m",
+   "t": 1794495600,
+   "t_close": 1794496500,
+   "dir": -1,
+   "p0": 3857.16,
+   "what": "PWL 3866.02 broken",
+   "id": 91,
+   "seen": 1794496889,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3842.16,
+   "invalid_at": 3870.16,
+   "cap_at": 3837.16,
+   "confirm20_at": 3837.16,
+   "status": "INVALIDATED",
+   "bars": 3,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794499200
   }
  ]
 }
