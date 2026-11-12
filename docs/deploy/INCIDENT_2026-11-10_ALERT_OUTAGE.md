@@ -100,3 +100,25 @@ See the PR that deployed items 2–4. In summary:
     holds the alert state was not saved.
   - A Pages-only failure sends nothing: that run's alerts went out, and the next run republishes the site.
   - Probe run 43127410617 checked the three cases.
+
+## Gate audit (2026-11-12): three edge cases hardened (proposal, not merged)
+**What held.** An audit of the four paths (engine plans, setups, 4h breakouts, grab test trades) found the three
+rules held on every path:
+- 15 minutes or less: FRESH;
+- 15–60 minutes: DELAYED, only after a live-price check;
+- over 60 minutes: NOT ACTIONABLE.
+
+No repeat of a NOT ACTIONABLE plan ever got a plan or an MT5 line.
+
+**Three gaps were found and are fixed in the proposal:**
+1. **A SIGNAL marker without a price got no decision.** Its headline was shown however late it was. It is now
+   classified by its age, and can never be DELAYED (there is no price to re-check).
+2. **Pruning could release a quiet plan.** `fresh_gate` kept the newest 300 decisions. After 300 later decisions, a
+   NOT ACTIONABLE plan that was still open lost its flag, and its result would have reached the phone. Pruning now
+   drops DELAYED decisions first, and NOT ACTIONABLE ones only after 14 days. Every plan, setup and grab trade stops
+   being tracked well before that.
+3. **A FRESH repeat of a NOT ACTIONABLE plan was mislabelled.** It said "still open ... don't add a trade", as if the
+   operator held that plan. It now says the plan was not actionable, and still issues no plan.
+
+**Records are unchanged.** A replay of the deployed code and of the proposal on the same real payloads (3 and 9–10
+Nov, normal timing and simulated outages, sixty and all modes) gave byte-identical phone output, records and state.
