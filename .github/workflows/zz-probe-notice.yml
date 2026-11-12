@@ -1,0 +1,33 @@
+# TEMPORARY probe (removed in the next commit): the proposed outage-notice condition on three failure kinds.
+# No secrets, no writes. Expected: pipefail -> RAN (failure), savefail -> RAN (success), deployfail -> skipped.
+name: zz-probe-notice
+
+on:
+  push:
+    branches: [claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4]
+    paths: [".github/workflows/zz-probe-notice.yml"]
+
+permissions: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [pipefail, savefail, deployfail]
+    steps:
+      - id: pipeline
+        run: '[ "${{ matrix.scenario }}" != pipefail ]'
+      - id: savestore
+        if: always()
+        run: '[ "${{ matrix.scenario }}" != savefail ]'
+      - id: deploy
+        run: '[ "${{ matrix.scenario }}" != deployfail ]'
+      - if: >-
+          failure() && format('x{0}', vars.OUTAGE_NOTICE) != 'x0'
+          && (steps.pipeline.outcome != 'success' || steps.savestore.outcome != 'success')
+        env:
+          PIPELINE: ${{ steps.pipeline.outcome }}
+        run: echo "NOTICE RAN scenario=${{ matrix.scenario }} pipeline=$PIPELINE"
