@@ -68,7 +68,7 @@
    - Every attempt is appended to `<store>/alerts_delivery.json`: time, channel, HTTP status, ntfy message id,
      body hash and first line. No secret and no full text are stored.
 4. **Outage notice.** The site workflow sends one phone message on the first failed run (no other failed run in the
-   last 60 minutes). `OUTAGE_NOTICE=0` turns it off.
+   last 60 minutes). `OUTAGE_NOTICE=0` turns it off. **See the correction below: as first deployed it never ran.**
 5. **The `alert-delivery-check` workflow** lists what ntfy.sh holds for the topic. It is read-only and sends nothing.
 
 ## Verification
@@ -78,3 +78,25 @@ See the PR that deployed items 2–4. In summary:
   - **normal timing**: the phone output and every record are byte-identical;
   - **simulated outages**: the records are byte-identical, and the phone gets NOT ACTIONABLE lines instead of the
     old code's stale plans.
+
+## Correction (2026-11-12): the outage notice of item 4 never ran
+- **What happened.** Two runs on the deployed commit failed after their alerts had gone out:
+  - run 3038 (11 Nov 10:31): `deploy-pages` failed;
+  - run 3078 (11 Nov 20:16): `upload-pages-artifact` failed (GitHub's artifact service answered with an HTML page).
+
+  In both, the outage-notice step was **skipped**.
+- **Cause (proved by a probe run).** The step condition was `failure() && vars.OUTAGE_NOTICE != '0'`.
+  - The variable `OUTAGE_NOTICE` is not set. An unset variable is `null` inside an expression.
+  - GitHub's loose comparison coerces `null` to 0, so `null != '0'` is false, and the step could never run while the
+    variable was unset.
+  - Probe run 43125115555 showed it. `format('x{0}', vars.OUTAGE_NOTICE) != 'x0'` runs as intended.
+- **Same probe: `FWD_B24` is not set** as a repository or environment variable either.
+  - B24 is off because the code's own default is off (`fwd_b24.on()` is true only for "1"), not because of a stored "0".
+- **Not covered by any in-workflow notice.** Two runs (3079, 3080) ended in `startup_failure`: GitHub ran no job, so
+  no step of the workflow could send anything.
+- **Proposed fix (not deployed; needs the operator's approval).**
+  - Use the `format()` condition.
+  - Send the notice only when the alerts themselves may be affected: the pipeline did not succeed, or the store that
+    holds the alert state was not saved.
+  - A Pages-only failure sends nothing: that run's alerts went out, and the next run republishes the site.
+  - Probe run 43127410617 checked the three cases.
