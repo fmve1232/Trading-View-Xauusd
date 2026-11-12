@@ -30,7 +30,7 @@ permissions:
   contents: write     # push the market-data branch
   pages: write
   id-token: write
-  actions: read       # the outage notice reads this workflow's recent runs (read only)
+  actions: read       # read only (the gate job reads this workflow's runs; nothing here writes to Actions)
 
 concurrency:
   group: quantum-site
@@ -120,6 +120,7 @@ jobs:
           touch ledger-loaded.flag
 
       - name: Run pipeline
+        id: pipeline
         env:
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
@@ -185,6 +186,7 @@ jobs:
         run: python -m quantum.manifest --store store --ledger ledger
 
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
+        id: savestore
         if: always() && hashFiles('store-loaded.flag') != ''
         run: |
           cd store
@@ -218,26 +220,26 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@v4
 
-      - name: Outage notice (one phone message when runs start failing; never fails the run)
+      - name: Outage notice (one phone message when alerts may be missing or repeated; never fails the run)
         # Added after the 2026-11-10 outage: 37 runs failed their test gate over 9 hours and nothing told the operator.
-        # Sends ONE ntfy message on the first failed run (no other failed run of this workflow in the last 60 min).
-        # OUTAGE_NOTICE=0 turns it off. The topic is a secret: masked, never printed.
-        if: failure() && vars.OUTAGE_NOTICE != '0'
+        # Runs after a failed step or a cancellation (a job timeout: a hung pipeline must not stay silent) and only when
+        # the alerts themselves may be affected: the pipeline (which sends them) did not succeed, or the store that holds
+        # the alert state was not saved. A failed Pages deploy or ledger save alone sends nothing: that run's alerts went
+        # out and the next run republishes the site. De-duplication and the message are in quantum/outage_notice.py
+        # (stdlib only; one notice per outage plus at most one reminder every 3 h, using ntfy's own record of delivered
+        # notices). OUTAGE_NOTICE=0 turns it off. The topic is a secret: masked, never printed.
+        # format() is deliberate: an unset variable is null in an expression, and null != '0' is FALSE (null is coerced to
+        # 0), so the first version (`vars.OUTAGE_NOTICE != '0'`) never ran while the variable was unset (runs 3038, 3078,
+        # 3094; probe runs 43125115555 and 43172558297, whose truth table tests/test_outage_notice.py pins).
+        if: >-
+          (failure() || cancelled()) && format('x{0}', vars.OUTAGE_NOTICE) != 'x0'
+          && (steps.pipeline.outcome != 'success' || steps.savestore.outcome != 'success')
         continue-on-error: true
+        timeout-minutes: 2
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          RUN_ID: ${{ github.run_id }}
+          PIPELINE: ${{ steps.pipeline.outcome }}
+          SAVESTORE: ${{ steps.savestore.outcome }}
         run: |
-          [ -n "$NTFY_TOPIC" ] || { echo "no NTFY_TOPIC: no notice"; exit 0; }
-          prev=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/$REPO/actions/workflows/quantum-site.yml/runs?status=failure&per_page=20" \
-            | python3 -c 'import datetime as d, json, os, sys; r = json.load(sys.stdin).get("workflow_runs") or []; now = d.datetime.now(d.timezone.utc); print(sum(1 for x in r if str(x["id"]) != os.environ["RUN_ID"] and (now - d.datetime.fromisoformat(x["created_at"].replace("Z", "+00:00"))).total_seconds() < 3600))' \
-            || echo "?")
-          echo "other failed runs in the last 60 min: $prev"
-          if [ "$prev" = "0" ]; then
-            msg="XAUUSD SITE DOWN: the site run of $(date -u +%H:%M) UTC failed, so alerts are paused until it is fixed. Signals from the gap will be marked NOT ACTIONABLE when it is back. Do not act on old alerts."
-            code=$(curl -s -o /dev/null -w '%{http_code}' -H "Title: XAUUSD Quantum (site down)" --data-binary "$msg" "https://ntfy.sh/$NTFY_TOPIC")
-            echo "ntfy.sh answered HTTP $code"
-          fi
+          if [ -f quantum/outage_notice.py ]; then python3 quantum/outage_notice.py
+          else echo "::warning::no checkout, so this run cannot send an outage notice"; fi
