@@ -92,6 +92,21 @@
    "late": true,
    "move_alert": -4.8,
    "session": "London+NY"
+  },
+  {
+   "id": 8,
+   "tf": "15m",
+   "dir": -1,
+   "entry": 3854.59,
+   "t_dec": 1794497400,
+   "status": "SL",
+   "result": "SL",
+   "t_res": 1794498000,
+   "tp2_result": null,
+   "path": "5m",
+   "late": true,
+   "move_alert": -9.53,
+   "session": "London+NY"
   }
  ],
  "excluded": 0,
