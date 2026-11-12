@@ -2600,6 +2600,123 @@
    "mae": 9.08999999999969,
    "bars": 28,
    "path": "5m"
+  },
+  {
+   "id": 74,
+   "tf": "15m",
+   "t": 1794465900,
+   "t_dec": 1794466800,
+   "dir": -1,
+   "entry": 3966.34,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDL",
+     3969.04
+    ],
+    [
+     "4HL",
+     3970.25
+    ],
+    [
+     "1HL",
+     3970.25
+    ]
+   ],
+   "zones": [
+    "below value-area low 3968.61"
+   ],
+   "sl": 3979.34,
+   "tp": 3951.34,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794467056,
+   "result": "TP",
+   "t_res": 1794471900,
+   "mfe": 20.170000000000073,
+   "mae": 6.170000000000073,
+   "bars": 18,
+   "path": "5m"
+  },
+  {
+   "id": 75,
+   "tf": "15m",
+   "t": 1794466800,
+   "t_dec": 1794467700,
+   "dir": -1,
+   "entry": 3960.58,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDL",
+     3964.79
+    ],
+    [
+     "1HL",
+     3964.79
+    ]
+   ],
+   "zones": [
+    "below value-area low 3972.34"
+   ],
+   "sl": 3973.58,
+   "tp": 3945.58,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794468010,
+   "result": "TP",
+   "t_res": 1794472200,
+   "mfe": 15.039999999999964,
+   "mae": 6.099999999999909,
+   "bars": 16,
+   "path": "5m"
+  },
+  {
+   "id": 78,
+   "tf": "15m",
+   "t": 1794469500,
+   "t_dec": 1794470400,
+   "dir": 1,
+   "entry": 3966.46,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HL",
+     3964.79
+    ]
+   ],
+   "zones": [
+    "value-area low 3962.62"
+   ],
+   "sl": 3953.46,
+   "tp": 3981.46,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794470780,
+   "result": "SL",
+   "t_res": 1794471600,
+   "mfe": 0.0,
+   "mae": 14.25,
+   "bars": 5,
+   "path": "5m"
   }
  ],
  "live": {
@@ -2608,12 +2725,12 @@
    6
   ],
   "SWEEP": [
-   26,
+   27,
    12
   ],
   "BREAKOUT": [
-   34,
-   23
+   36,
+   25
   ],
   "4H CONFIRMED": [
    1,
