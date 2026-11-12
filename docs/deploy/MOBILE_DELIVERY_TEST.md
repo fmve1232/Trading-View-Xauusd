@@ -18,7 +18,10 @@ link no server log can prove.
 | Phone receipt | NOT EVIDENCED | ntfy has no read receipts |
 
 **What the phone receives in production** (`ALERT_MODE` unset = sixty):
-- 15m engine signals and their plan results, which are rare (none since 10 Nov);
+- 15m engine signals and their plan results. They are a few a week. For example, on 12 Nov two 15m SELL alerts went
+  out at 15:06 and 15:35 UTC, with three follow-ups by 16:04 UTC. ntfy accepted all five (HTTP 200,
+  `alerts_delivery.json`). An earlier note said "none since 10 Nov"; it was written before those signals and was
+  wrong by the evening;
 - B15 checks;
 - the daily validation, sent by the **first site run after the New York close** (17:00 New York = 22:00 UTC = 03:00
   PKT in winter) on trading days:
