@@ -200,6 +200,8 @@ RECOVERY_SEC = 3600       # beyond an hour after the close the signal is history
 PRICE_FRESH_SEC = 300     # the re-check price must come from this run's download (the 5m forming bar)
 RECORD_ONLY = "RECORD ONLY (its alert was not actionable) "
 GATE_KEEP = 300
+GATE_HOLD_SEC = 14 * 86400  # a NOT ACTIONABLE decision is kept this long: longer than any plan (3 days), setup (7) or
+                            # grab test trade (5) is tracked, so pruning never lets a still-tracked result reach the phone
 
 
 def _traded(bars: list, t_close: int, d: int, entry: float, sl_px: float, tp_px: float) -> str | None:
@@ -231,6 +233,8 @@ def freshness(t_close: int, d: int, entry: float, sl_px: float, tp_px: float, no
         return {**out, "state": "FRESH"}
     if age > RECOVERY_SEC:
         return {**out, "state": "NOT ACTIONABLE", "why": f"{age // 60} min after the close (limit {RECOVERY_SEC // 60})"}
+    if entry is None:                                      # a signal without a price cannot be re-checked
+        return {**out, "state": "NOT ACTIONABLE", "why": "no signal price to re-check it"}
     px, t_px = (now or {}).get("px"), (now or {}).get("t_px")
     if px is None or not now.get("live") or t_px is None or t_now - int(t_px) > PRICE_FRESH_SEC:
         return {**out, "state": "NOT ACTIONABLE", "why": "no live price to re-check it"}
@@ -269,9 +273,15 @@ def gate_note(state: dict, key: str, fz: dict) -> None:
     """Remember a non-FRESH decision (website + follow-up filter); bounded."""
     g = state.setdefault("fresh_gate", {})
     g[key] = {k: fz[k] for k in ("state", "age_min", "t_close", "t_alert", "why", "px_now", "move") if k in fz}
-    if len(g) > GATE_KEEP:
-        for k in list(g)[: len(g) - GATE_KEEP]:
-            del g[k]
+    if len(g) > GATE_KEEP:                                 # oldest first: DELAYED ones (they never quiet anything), then
+        t_new = int(fz.get("t_alert") or 0)                # NOT ACTIONABLE ones past GATE_HOLD_SEC; never a newer one
+        drop = [k for k, v in g.items() if v.get("state") != "NOT ACTIONABLE"] + \
+               [k for k, v in g.items() if v.get("state") == "NOT ACTIONABLE" and t_new - int(v.get("t_alert") or 0) > GATE_HOLD_SEC]
+        for k in drop:
+            if len(g) <= GATE_KEEP:
+                break
+            if k != key:
+                g.pop(k, None)
 
 
 def gate_quiet(state: dict, kind: str) -> set:
@@ -347,9 +357,12 @@ def repeat_of(m: dict, tf: str, plans: list[dict]) -> dict | None:
     return min(hits, key=_decision_t) if hits else None
 
 
-def repeat_line(m: dict, tf: str, rp: dict, off: float = 0.0) -> str:
+def repeat_line(m: dict, tf: str, rp: dict, off: float = 0.0, quiet: bool = False) -> str:
     side = "BUY" if m["dir"] == 1 else "SELL"
     when = datetime.fromtimestamp(_decision_t(rp), timezone.utc).strftime("%H:%M UTC")
+    if quiet:                                              # its plan was never offered: say so, do not imply a position
+        return (f"REPEAT of #{rp.get('id', '?')} ({rp['tf']} {side} from {_fmt(rp['entry'], off)} at {when}), which was NOT "
+                f"ACTIONABLE (sent late, no plan): the same idea -- no plan from this repeat either")
     return (f"REPEAT of #{rp.get('id', '?')} ({rp['tf']} {side} from {_fmt(rp['entry'], off)} at {when}, still open): "
             f"the same idea -- don't add a trade (no new plan)")
 
@@ -452,7 +465,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
                 out.append(delayed_line(fz, off))                  # second line: visible in the phone's preview
             rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
             if rp is not None:
-                out.append(repeat_line(m, tf, rp, off))
+                out.append(repeat_line(m, tf, rp, off, quiet=rp.get("id") in ((ctx or {}).get("quiet") or ())))
                 continue
             pl = plan_cfg()
             late, timing = timing_lines(alert_timing(m, tf, now, pl), off)
@@ -1905,11 +1918,14 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         p5g = payloads.get("5m")
         p5g = p5g if p5g is not None and (p5g.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
         fresh = {}                                         # stale-signal protection: each new signal, before it is shown
-        for m in p["markers"]:
-            if m["type"] == "SIGNAL" and m["t"] > since and m.get("px") is not None:
-                slp = pl_cfg["sl_px"] if pl_cfg else abs(m["px"] - m["sl"]) if m.get("sl") is not None else ENG_PX
-                tpp = pl_cfg["tp_px"] if pl_cfg else abs(m["tp1"] - m["px"]) if m.get("tp1") is not None else ENG_PX
-                fresh[m["t"]] = freshness(int(m["t"]) + TF_SEC.get(tf, 0), m["dir"], m["px"], slp, tpp, now, [p, p5g])
+        for m in p["markers"]:                             # priced or not: an unpriced one is never DELAYED
+            if m["type"] == "SIGNAL" and m["t"] > since:
+                px_m = m.get("px")
+                slp = (pl_cfg["sl_px"] if pl_cfg else abs(px_m - m["sl"]) if px_m is not None and m.get("sl") is not None
+                       else ENG_PX)
+                tpp = (pl_cfg["tp_px"] if pl_cfg else abs(m["tp1"] - px_m) if px_m is not None and m.get("tp1") is not None
+                       else ENG_PX)
+                fresh[m["t"]] = freshness(int(m["t"]) + TF_SEC.get(tf, 0), m["dir"], px_m, slp, tpp, now, [p, p5g])
         if pl_cfg:                                         # the operator's plan: results of earlier signals, then new ones
             p5 = payloads.get("5m")
             same = p5 is not None and (p5.get("meta") or {}).get("price_source") == p["meta"].get("price_source")
@@ -1952,7 +1968,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                 if fresh.get(m["t"], {}).get("state", "FRESH") != "FRESH":
                     gate_note(state, f"plan:{state['plan_seq']}", fresh[m["t"]])
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf),
-               "fresh": fresh}
+               "fresh": fresh, "quiet": gate_quiet(state, "plan")}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
         lines = upd + messages(p, since, now, ctx) + ([] if quality() else ll)
         if sixty():                                        # the phone: 15m signals and their plan follow-ups only
