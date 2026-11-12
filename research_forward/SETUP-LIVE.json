@@ -2084,20 +2084,131 @@
    "mae": 1.6700000000000728,
    "bars": 59,
    "path": "5m"
+  },
+  {
+   "id": 60,
+   "tf": "15m",
+   "t": 1794420900,
+   "t_dec": 1794421800,
+   "dir": -1,
+   "entry": 3992.28,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "4HL",
+     3993.29
+    ],
+    [
+     "1HL",
+     3993.29
+    ]
+   ],
+   "zones": [
+    "below value-area low 4016.29"
+   ],
+   "sl": 4005.28,
+   "tp": 3977.28,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794422183,
+   "result": "TP",
+   "t_res": 1794441600,
+   "mfe": 17.88000000000011,
+   "mae": 2.9299999999998363,
+   "bars": 55,
+   "path": "5m"
+  },
+  {
+   "id": 61,
+   "tf": "15m",
+   "t": 1794423600,
+   "t_dec": 1794424500,
+   "dir": -1,
+   "entry": 3986.32,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDL",
+     3986.56
+    ],
+    [
+     "1HL",
+     3986.56
+    ]
+   ],
+   "zones": [
+    "below value-area low 4016.60"
+   ],
+   "sl": 3999.32,
+   "tp": 3971.32,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794424819,
+   "result": "TP",
+   "t_res": 1794442200,
+   "mfe": 17.2800000000002,
+   "mae": 8.569999999999709,
+   "bars": 48,
+   "path": "5m"
+  },
+  {
+   "id": 62,
+   "tf": "15m",
+   "t": 1794433500,
+   "t_dec": 1794434400,
+   "dir": -1,
+   "entry": 3988.01,
+   "kind": "4H BREAKOUT",
+   "levels": [
+    [
+     "PDL",
+     4013.81
+    ]
+   ],
+   "zones": [],
+   "sl": 4001.01,
+   "tp": 3973.01,
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794436164,
+   "result": "TP",
+   "t_res": 1794441900,
+   "mfe": 16.190000000000055,
+   "mae": 6.879999999999654,
+   "bars": 14,
+   "path": "5m"
   }
  ],
  "live": {
   "4H BREAKOUT": [
-   12,
-   5
+   13,
+   6
   ],
   "SWEEP": [
    22,
    11
   ],
   "BREAKOUT": [
-   25,
-   18
+   27,
+   20
   ],
   "4H CONFIRMED": [
    1,
