@@ -48,7 +48,7 @@ Other local store copies have no provenance record and were **not** used.
 ## 3. Census: what revises (12 snapshots, 11 transitions)
 | Transition | Hours | XAU price bars | GC price bars | GC volume bars | of which volume only | Silver price / volume | DXY / EURUSD / US10Y / S&P price |
 |---|---|---|---|---|---|---|---|
-| normal (7 transitions) | 0.2–0.5 | 0–1 | 1–5 | 2–5 | 0–1 | 1–4 / 2–4 | 0–1 / 0 / 0–6 / 0 |
+| normal (6 transitions) | 0.2–0.5 | 0–1 | 1–5 | 2–5 | 0–1 | 1–4 / 2–4 | 0–1 / 0 / 0–6 / 0 |
 | **version flip** (3092→3093, 3093→3094, 3094→3095, 3095→3096) | 0.2–0.3 | 0–1 | **9,724–9,730** | **8,083–8,090** | **2,811–2,814** | **5,203–5,207 / 5,270–5,277** | 20–21 / 37–45 / 198–204 / 9 |
 | 10 Nov 07:21 → 12 Nov 00:06 | 40.8 | 1 | 9,598 | 7,973 | 2,765 | 5,190 / 5,198 | 20 / 37 / 198 / 9 |
 
@@ -63,6 +63,11 @@ Other local store copies have no provenance record and were **not** used.
 - **Normal runs change only the newest 1–3 bars.** Their volume changes by a median of 29–116%, because those bars are
   still filling (§6).
 - **XAU/USD (Twelve Data):** 0–1 revised closed bar per run, as the manifest reports.
+- **Volume coverage (zero-volume bars in the engine's history, snapshot 3093).**
+  - 30m: 30.7% of bars. 1,072 of them fall before GC 30m data begins (25 Aug); the 30m history starts 22 Jul.
+  - 1h: 6.5%; 4h: 2.7%; 15m: 1.8%; 5m: 0.5% (scattered gaps).
+  - Missing GC volume enters the engine as 0 (D-07). This is reported here as a fact; its effect on the 30m statistics
+    is not measured.
 
 ## 4. Engine impact of a version flip (4 flips, both directions, two independent flip pairs)
 Treatment arm, the alerting engine. The two flip pairs agree to the bar; the reverse direction is the mirror image.

@@ -13,7 +13,7 @@ link no server log can prove.
 |---|---|---|
 | Server | `https://ntfy.sh` (public instance) | `quantum/notify.py` `send()`; `alert-delivery-check.yml` |
 | Topic | repository secret `NTFY_TOPIC`; letters, digits, `-` and `_` only | `alert-test` run of 2 Nov passed its format check; the topic value is never printed |
-| Message format | plain text, title `XAUUSD Quantum`, **default priority (3)**, no tags | `notify.send()` headers |
+| Message format | plain text, title `XAUUSD Quantum`, **default priority (3)**, no tags | `notify.send()` headers (the test uses ntfy's JSON publish for its UTF-8 title; the same server, priority and delivery path) |
 | Messages reach the server | YES: ntfy's cache held the daily validation of 11 Nov 22:29:25 (sha256 af7c9b2bfe014103) | `alert-delivery-check` runs 43124819608 and 43141415446 |
 | Phone receipt | NOT EVIDENCED | ntfy has no read receipts |
 
@@ -42,17 +42,30 @@ link no server log can prove.
    - If the daily validation of a recent night is listed, the phone received it, even if no notification popped up.
    - In that case the problem is in steps 3–6, not in delivery.
 
-## 3. The test (only after the operator authorises it in writing)
+## 3. The test (authorised by the operator on 12 Nov, once the secret is configured)
+**The test topic is chosen by the operator and never appears in chat, code or logs.**
+- A topic suggested in chat earlier on 12 Nov is treated as exposed and is not used.
+- Claude has no tool that writes repository secrets and never needs to see the topic.
+
 | Step | Who | What |
 |---|---|---|
-| 1 | operator | Subscribe in the ntfy app: server ntfy.sh, the **test** topic given in chat (never committed), Instant delivery on. |
-| 2 | operator | Add the repository secret `NTFY_TEST_TOPIC` with the same test topic (Settings → Secrets and variables → Actions → New repository secret). |
-| 3 | operator | Authorise the send in writing. |
-| 4 | Claude | Push branch `claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-ntfy-test` (one commit, workflow `zz-ntfy-delivery-test.yml`). The push is the trigger, so nothing is sent before it. |
-| 5 | workflow | Refuses if the test secret is missing, malformed or equal to `NTFY_TOPIC`. Sends one message, titled `XAUUSD TEST - not a signal`, body "DELIVERY TEST ONLY - NOT A TRADING SIGNAL ... Test id T-2026-11-12-A ...", with production's options (plain text, default priority, no tags). Records the HTTP status, ntfy message id and body SHA-256, then reads the test topic's cache back. |
-| 6 | Claude | Report the server-side evidence (HTTP, id, hash, in cache) **separately** from the phone. |
-| 7 | operator | Confirm whether the notification appeared, and when (PKT), by replying with the test id. |
-| 8 | Claude | Remove the workflow (delete the branch). The operator may then delete the secret and the test subscription. |
+| 1 | operator | Make an unguessable topic: `xautest-` followed by about 20 random letters and digits, e.g. from a password generator. Keep it private. |
+| 2 | operator | In the ntfy app, subscribe to it (server ntfy.sh) and turn Instant delivery on. |
+| 3 | operator | Add it as repository secret `NTFY_TEST_TOPIC`: Settings → Secrets and variables → Actions → New repository secret. |
+| 4 | operator | Tell Claude in chat only that the secret is configured, never its value. |
+| 5 | Claude | Push branch `claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-ntfy-test` (one commit, workflow `zz-ntfy-delivery-test.yml`). The push is the trigger, so nothing is sent before it. |
+| 6 | workflow | Refuses if the test secret is missing, malformed or equal to `NTFY_TOPIC`. Otherwise sends **one** message: title `MOBILE DELIVERY TEST — NOT A TRADING SIGNAL`, body starting with the same label plus "No action, no trade, no price, no plan", test id T-2026-11-12-A. Uses ntfy's JSON publish (topic in the body, UTF-8 title), default priority, no tags. Records the HTTP status, ntfy message id and body SHA-256, then reads the test topic's cache back. |
+| 7 | Claude | Report the server-side evidence (HTTP, id, hash, in cache) **separately** from the phone. |
+| 8 | operator | Confirm whether the notification appeared on Android, and when (PKT), by replying with the test id. |
+| 9 | Claude | Remove the workflow (delete the branch). The operator may then delete the secret and the test subscription. |
+
+**Checked locally before the send:** the script ran against a mock ntfy server, and 15 of 15 checks passed:
+- one POST, with the label as title and body;
+- no topic in the output;
+- refusal, with nothing sent, for an empty, short, malformed or production-equal topic;
+- failure if the server holds a different body.
+
+This is a local check, not a GitHub run.
 
 ## 4. Reading the result
 | Server (step 6) | Phone (step 7) | Meaning | Next step |
