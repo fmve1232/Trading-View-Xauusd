@@ -1,0 +1,507 @@
+{
+ "15m": {
+  "bars": 6590,
+  "first_bar": "2026-08-05 22:00",
+  "signals_counted_from": "2026-01-01",
+  "last_bar": "2026-11-13 13:15",
+  "price_source": "twelvedata:XAU/USD",
+  "series_status": {
+   "XAU/USD_5m": "store (live fetch failed)",
+   "XAU/USD_15m": "store (live fetch failed)",
+   "XAU/USD_30m": "store (live fetch failed)",
+   "XAU/USD_60m": "store (live fetch failed)",
+   "XAU/USD_1d": "store (live fetch failed)",
+   "GC=F_5m": "store (live fetch failed)",
+   "GC=F_15m": "store (live fetch failed)",
+   "GC=F_30m": "store (live fetch failed)",
+   "GC=F_60m": "store (live fetch failed)",
+   "GC=F_1d": "store (live fetch failed)",
+   "SI=F_5m": "store (live fetch failed)",
+   "SI=F_15m": "store (live fetch failed)",
+   "SI=F_30m": "store (live fetch failed)",
+   "SI=F_60m": "store (live fetch failed)",
+   "EURUSD=X_5m": "store (live fetch failed)",
+   "EURUSD=X_15m": "store (live fetch failed)",
+   "EURUSD=X_30m": "store (live fetch failed)",
+   "EURUSD=X_60m": "store (live fetch failed)",
+   "^GSPC_5m": "store (live fetch failed)",
+   "^GSPC_15m": "store (live fetch failed)",
+   "^GSPC_30m": "store (live fetch failed)",
+   "^GSPC_60m": "store (live fetch failed)",
+   "DX-Y.NYB_60m": "store (live fetch failed)",
+   "^TNX_60m": "store (live fetch failed)",
+   "^VIX_1d": "store (live fetch failed)",
+   "DGS2": "",
+   "DFII10": "",
+   "COT": ""
+  },
+  "variants": {
+   "baseline": {
+    "signals": 77,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no DXY": {
+    "signals": 77,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 1,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 1
+    }
+   },
+   "no US10Y": {
+    "signals": 76,
+    "removed_by_dropping": 2,
+    "added_by_dropping": 1,
+    "outcomes_of_signals_that_need_the_feed": {
+     "SL": 2
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 1
+    }
+   },
+   "no silver": {
+    "signals": 76,
+    "removed_by_dropping": 4,
+    "added_by_dropping": 3,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1,
+     "SL": 3
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 1,
+     "SL": 2
+    }
+   },
+   "no EURUSD": {
+    "signals": 77,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no SPX": {
+    "signals": 78,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 2,
+    "outcomes_of_signals_that_need_the_feed": {
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 1,
+     "SL": 1
+    }
+   },
+   "no GC confirm": {
+    "signals": 76,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no cross-asset at all": {
+    "signals": 74,
+    "removed_by_dropping": 12,
+    "added_by_dropping": 9,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 2,
+     "SL": 10
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 2,
+     "SL": 7
+    }
+   }
+  },
+  "baseline_outcomes": {
+   "TP": 39,
+   "SL": 37,
+   "BOTH": 1
+  }
+ },
+ "30m": {
+  "bars": 3757,
+  "first_bar": "2026-07-22 20:00",
+  "signals_counted_from": "2026-01-01",
+  "last_bar": "2026-11-13 13:00",
+  "price_source": "twelvedata:XAU/USD",
+  "series_status": {
+   "XAU/USD_5m": "store (live fetch failed)",
+   "XAU/USD_15m": "store (live fetch failed)",
+   "XAU/USD_30m": "store (live fetch failed)",
+   "XAU/USD_60m": "store (live fetch failed)",
+   "XAU/USD_1d": "store (live fetch failed)",
+   "GC=F_5m": "store (live fetch failed)",
+   "GC=F_15m": "store (live fetch failed)",
+   "GC=F_30m": "store (live fetch failed)",
+   "GC=F_60m": "store (live fetch failed)",
+   "GC=F_1d": "store (live fetch failed)",
+   "SI=F_5m": "store (live fetch failed)",
+   "SI=F_15m": "store (live fetch failed)",
+   "SI=F_30m": "store (live fetch failed)",
+   "SI=F_60m": "store (live fetch failed)",
+   "EURUSD=X_5m": "store (live fetch failed)",
+   "EURUSD=X_15m": "store (live fetch failed)",
+   "EURUSD=X_30m": "store (live fetch failed)",
+   "EURUSD=X_60m": "store (live fetch failed)",
+   "^GSPC_5m": "store (live fetch failed)",
+   "^GSPC_15m": "store (live fetch failed)",
+   "^GSPC_30m": "store (live fetch failed)",
+   "^GSPC_60m": "store (live fetch failed)",
+   "DX-Y.NYB_60m": "store (live fetch failed)",
+   "^TNX_60m": "store (live fetch failed)",
+   "^VIX_1d": "store (live fetch failed)",
+   "DGS2": "",
+   "DFII10": "",
+   "COT": ""
+  },
+  "variants": {
+   "baseline": {
+    "signals": 43,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no DXY": {
+    "signals": 46,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 3,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 2,
+     "BOTH": 1
+    }
+   },
+   "no US10Y": {
+    "signals": 45,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 2,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 2
+    }
+   },
+   "no silver": {
+    "signals": 44,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 2,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 1,
+     "SL": 1
+    }
+   },
+   "no EURUSD": {
+    "signals": 43,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 1,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 1
+    }
+   },
+   "no SPX": {
+    "signals": 44,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 2,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 1,
+     "SL": 1
+    }
+   },
+   "no GC confirm": {
+    "signals": 44,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 1,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 1
+    }
+   },
+   "no cross-asset at all": {
+    "signals": 55,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 13,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 6,
+     "SL": 7
+    }
+   }
+  },
+  "baseline_outcomes": {
+   "TP": 23,
+   "SL": 20
+  }
+ },
+ "1h": {
+  "bars": 4230,
+  "first_bar": "2026-03-02 15:00",
+  "signals_counted_from": "2026-01-01",
+  "last_bar": "2026-11-13 12:00",
+  "price_source": "twelvedata:XAU/USD",
+  "series_status": {
+   "XAU/USD_5m": "store (live fetch failed)",
+   "XAU/USD_15m": "store (live fetch failed)",
+   "XAU/USD_30m": "store (live fetch failed)",
+   "XAU/USD_60m": "store (live fetch failed)",
+   "XAU/USD_1d": "store (live fetch failed)",
+   "GC=F_5m": "store (live fetch failed)",
+   "GC=F_15m": "store (live fetch failed)",
+   "GC=F_30m": "store (live fetch failed)",
+   "GC=F_60m": "store (live fetch failed)",
+   "GC=F_1d": "store (live fetch failed)",
+   "SI=F_5m": "store (live fetch failed)",
+   "SI=F_15m": "store (live fetch failed)",
+   "SI=F_30m": "store (live fetch failed)",
+   "SI=F_60m": "store (live fetch failed)",
+   "EURUSD=X_5m": "store (live fetch failed)",
+   "EURUSD=X_15m": "store (live fetch failed)",
+   "EURUSD=X_30m": "store (live fetch failed)",
+   "EURUSD=X_60m": "store (live fetch failed)",
+   "^GSPC_5m": "store (live fetch failed)",
+   "^GSPC_15m": "store (live fetch failed)",
+   "^GSPC_30m": "store (live fetch failed)",
+   "^GSPC_60m": "store (live fetch failed)",
+   "DX-Y.NYB_60m": "store (live fetch failed)",
+   "^TNX_60m": "store (live fetch failed)",
+   "^VIX_1d": "store (live fetch failed)",
+   "DGS2": "",
+   "DFII10": "",
+   "COT": ""
+  },
+  "variants": {
+   "baseline": {
+    "signals": 91,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no DXY": {
+    "signals": 92,
+    "removed_by_dropping": 3,
+    "added_by_dropping": 4,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 2,
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 4
+    }
+   },
+   "no US10Y": {
+    "signals": 94,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 4,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 4
+    }
+   },
+   "no silver": {
+    "signals": 89,
+    "removed_by_dropping": 4,
+    "added_by_dropping": 2,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 3,
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 1,
+     "SL": 1
+    }
+   },
+   "no EURUSD": {
+    "signals": 92,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 2,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 2
+    }
+   },
+   "no SPX": {
+    "signals": 87,
+    "removed_by_dropping": 5,
+    "added_by_dropping": 1,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 4,
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 1
+    }
+   },
+   "no GC confirm": {
+    "signals": 93,
+    "removed_by_dropping": 2,
+    "added_by_dropping": 4,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1,
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 4
+    }
+   },
+   "no cross-asset at all": {
+    "signals": 99,
+    "removed_by_dropping": 14,
+    "added_by_dropping": 22,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 5,
+     "SL": 7,
+     "BOTH": 2
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "TP": 5,
+     "SL": 17
+    }
+   }
+  },
+  "baseline_outcomes": {
+   "TP": 36,
+   "SL": 50,
+   "BOTH": 5
+  }
+ },
+ "4h": {
+  "bars": 1103,
+  "first_bar": "2026-03-02 14:00",
+  "signals_counted_from": "2026-01-01",
+  "last_bar": "2026-11-13 06:00",
+  "price_source": "twelvedata:XAU/USD",
+  "series_status": {
+   "XAU/USD_5m": "store (live fetch failed)",
+   "XAU/USD_15m": "store (live fetch failed)",
+   "XAU/USD_30m": "store (live fetch failed)",
+   "XAU/USD_60m": "store (live fetch failed)",
+   "XAU/USD_1d": "store (live fetch failed)",
+   "GC=F_5m": "store (live fetch failed)",
+   "GC=F_15m": "store (live fetch failed)",
+   "GC=F_30m": "store (live fetch failed)",
+   "GC=F_60m": "store (live fetch failed)",
+   "GC=F_1d": "store (live fetch failed)",
+   "SI=F_5m": "store (live fetch failed)",
+   "SI=F_15m": "store (live fetch failed)",
+   "SI=F_30m": "store (live fetch failed)",
+   "SI=F_60m": "store (live fetch failed)",
+   "EURUSD=X_5m": "store (live fetch failed)",
+   "EURUSD=X_15m": "store (live fetch failed)",
+   "EURUSD=X_30m": "store (live fetch failed)",
+   "EURUSD=X_60m": "store (live fetch failed)",
+   "^GSPC_5m": "store (live fetch failed)",
+   "^GSPC_15m": "store (live fetch failed)",
+   "^GSPC_30m": "store (live fetch failed)",
+   "^GSPC_60m": "store (live fetch failed)",
+   "DX-Y.NYB_60m": "store (live fetch failed)",
+   "^TNX_60m": "store (live fetch failed)",
+   "^VIX_1d": "store (live fetch failed)",
+   "DGS2": "",
+   "DFII10": "",
+   "COT": ""
+  },
+  "variants": {
+   "baseline": {
+    "signals": 52,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no DXY": {
+    "signals": 52,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 1,
+    "outcomes_of_signals_that_need_the_feed": {
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 1
+    }
+   },
+   "no US10Y": {
+    "signals": 51,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no silver": {
+    "signals": 51,
+    "removed_by_dropping": 1,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no EURUSD": {
+    "signals": 52,
+    "removed_by_dropping": 0,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {},
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no SPX": {
+    "signals": 51,
+    "removed_by_dropping": 2,
+    "added_by_dropping": 1,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 2
+    },
+    "outcomes_of_signals_the_feed_suppresses": {
+     "SL": 1
+    }
+   },
+   "no GC confirm": {
+    "signals": 50,
+    "removed_by_dropping": 2,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 2
+    },
+    "outcomes_of_signals_the_feed_suppresses": {}
+   },
+   "no cross-asset at all": {
+    "signals": 49,
+    "removed_by_dropping": 3,
+    "added_by_dropping": 0,
+    "outcomes_of_signals_that_need_the_feed": {
+     "TP": 2,
+     "SL": 1
+    },
+    "outcomes_of_signals_the_feed_suppresses": {}
+   }
+  },
+  "baseline_outcomes": {
+   "TP": 21,
+   "SL": 21,
+   "BOTH": 10
+  }
+ }
+}
