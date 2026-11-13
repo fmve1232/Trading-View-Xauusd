@@ -1,0 +1,130 @@
+{
+ "15m": {
+  "none": {
+   "signals": 77,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "XAU daily": {
+   "signals": 73,
+   "differ_from_full_store": 6,
+   "first_differing_bar": "2026-09-08 08:15",
+   "last_differing_bar": "2026-09-23 15:00"
+  },
+  "GC and VIX daily": {
+   "signals": 77,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "cross-asset intraday": {
+   "signals": 77,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "everything": {
+   "signals": 73,
+   "differ_from_full_store": 6,
+   "first_differing_bar": "2026-09-08 08:15",
+   "last_differing_bar": "2026-09-23 15:00"
+  }
+ },
+ "30m": {
+  "none": {
+   "signals": 43,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "XAU daily": {
+   "signals": 41,
+   "differ_from_full_store": 2,
+   "first_differing_bar": "2026-09-23 10:30",
+   "last_differing_bar": "2026-09-23 13:00"
+  },
+  "GC and VIX daily": {
+   "signals": 43,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "cross-asset intraday": {
+   "signals": 43,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "everything": {
+   "signals": 41,
+   "differ_from_full_store": 2,
+   "first_differing_bar": "2026-09-23 10:30",
+   "last_differing_bar": "2026-09-23 13:00"
+  }
+ },
+ "1h": {
+  "none": {
+   "signals": 91,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "XAU daily": {
+   "signals": 85,
+   "differ_from_full_store": 16,
+   "first_differing_bar": "2026-03-31 16:00",
+   "last_differing_bar": "2026-09-28 17:00"
+  },
+  "GC and VIX daily": {
+   "signals": 91,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "cross-asset intraday": {
+   "signals": 91,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "everything": {
+   "signals": 85,
+   "differ_from_full_store": 16,
+   "first_differing_bar": "2026-03-31 16:00",
+   "last_differing_bar": "2026-09-28 17:00"
+  }
+ },
+ "4h": {
+  "none": {
+   "signals": 52,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "XAU daily": {
+   "signals": 52,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "GC and VIX daily": {
+   "signals": 52,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "cross-asset intraday": {
+   "signals": 52,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  },
+  "everything": {
+   "signals": 52,
+   "differ_from_full_store": 0,
+   "first_differing_bar": null,
+   "last_differing_bar": null
+  }
+ }
+}

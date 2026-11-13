@@ -1,5 +1,9 @@
 # Master audit, 13 Nov 2026: data lineage, cross-asset relationships, calibration and end-to-end integrity
 
+> **Read with `VERIFICATION_STAGE2_2026-11-13.md`**, which reproduces every headline number from the raw records and
+> corrects seven statements below (its §9): B15 look arithmetic, the calibration p-value and its version split, the VIX
+> regime, sealed-data use, the ablation at idea level, the scope of the daily rewrite, and the feature counts.
+
 Operator directive of 13 Nov 2026 ("Master directive — XAUUSD quantitative validation, market correlation and end-to-end
 system integrity"). **Read-only:** no production change, no engine or threshold change, no research registration, no
 amendment, no merge, no deploy. B15 continues unchanged; B24 stays OFF (`fwd_b24.on()` False on every branch checked).

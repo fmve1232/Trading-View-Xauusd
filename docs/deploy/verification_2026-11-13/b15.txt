@@ -1,0 +1,36 @@
+registration audit_wt/research/registrations/B15-ENGINE-FWD.json sha256 70571cecc01c3ed602ddacd227cc46bc337f6523af1b837789642f27d50cf770
+  proven rule: at a look, the Wilson 95% lower bound of the TP1-first rate is above 51.0% (needs 21/30, 27/40, 33/50, 39/60, 44/70, 50/80, 56/90, 61/100): the B9-GRAB-FWD rule
+  break-even (13 + 0.26) / 26 = 0.51
+  look 30: minimum TP1 count 21 (Wilson lower bound 0.5212; with 20: 0.4878)
+  look 40: minimum TP1 count 27 (Wilson lower bound 0.5202; with 26: 0.4951)
+  look 50: minimum TP1 count 33 (Wilson lower bound 0.5215; with 32: 0.5014)
+  look 60: minimum TP1 count 39 (Wilson lower bound 0.5236; with 38: 0.5068)
+  look 70: minimum TP1 count 44 (Wilson lower bound 0.5115; with 43: 0.4972)
+  look 80: minimum TP1 count 50 (Wilson lower bound 0.5155; with 49: 0.5029)
+  look 90: minimum TP1 count 56 (Wilson lower bound 0.5190; with 55: 0.5078)
+  look 100: minimum TP1 count 61 (Wilson lower bound 0.5120; with 60: 0.5020)
+record fl_latest/research_forward/B15-ENGINE-FWD.json sha256 f719c1014ea46464f674280cbd5b12d5ab3cf84a273e02382e7401cdf8d6a6bd
+  trades 11, decided 11, excluded 0, checks 0, verdict None
+    1 15m SELL 4024.98 10 Nov 16:30 -> SL 10 Nov 23:55 5m 
+    2 1h SELL 4031.33 10 Nov 21:00 -> SL 11 Nov 01:30 5m 
+    3 30m SELL 4050.55 11 Nov 11:00 -> TP 11 Nov 13:35 5m 
+    4 30m SELL 4016.93 11 Nov 15:00 -> TP 11 Nov 15:30 5m 
+    5 30m SELL 3993.54 11 Nov 18:00 -> TP 11 Nov 23:35 5m 
+    6 4h SELL 3890.58 12 Nov 14:00 -> SL 12 Nov 14:15 5m late
+    7 15m SELL 3871.20 12 Nov 15:00 -> TP 12 Nov 15:10 5m late
+    8 15m SELL 3854.59 12 Nov 15:30 -> SL 12 Nov 15:40 5m late
+    9 30m SELL 3868.79 12 Nov 16:00 -> SL 12 Nov 16:50 5m 
+    11 4h SELL 3877.48 12 Nov 22:00 -> SL 13 Nov 00:45 5m 
+    10 30m SELL 3879.25 12 Nov 17:00 -> SL 13 Nov 00:50 5m 
+  tally 4 TP / 7 SL of 11 = 0.364; Wilson 95% [0.152, 0.646]
+  look 30: needs 21 TP1 of 30; now 4 of 11; 17 of the next 19 must be TP1 (89%)
+  look 40: needs 27 TP1 of 40; now 4 of 11; 23 of the next 29 must be TP1 (79%)
+  look 50: needs 33 TP1 of 50; now 4 of 11; 29 of the next 39 must be TP1 (74%)
+  look 60: needs 39 TP1 of 60; now 4 of 11; 35 of the next 49 must be TP1 (71%)
+  look 70: needs 44 TP1 of 70; now 4 of 11; 40 of the next 59 must be TP1 (68%)
+  look 80: needs 50 TP1 of 80; now 4 of 11; 46 of the next 69 must be TP1 (67%)
+  look 90: needs 56 TP1 of 90; now 4 of 11; 52 of the next 79 must be TP1 (66%)
+  look 100: needs 61 TP1 of 100; now 4 of 11; 57 of the next 89 must be TP1 (64%)
+plan_validation md_latest/plan_validation.json sha256 d1a2f5a0dd430ad8207adc8c1a71144280e6d78706733a82937007d19c702cd8
+  B15 trades found in plan_validation: 11 of 11; result mismatches []; missing []
+  decided plans in plan_validation since B15 start not in B15: 0 []

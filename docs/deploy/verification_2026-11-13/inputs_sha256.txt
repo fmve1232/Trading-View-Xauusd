@@ -1,0 +1,12 @@
+market-data snapshot commit (copy used): 8e982370d (2026-11-13T13:34:10Z)
+forward-ledger commit (copy used): 35c0e4c35 (2026-11-13T13:34:12Z)
+research-data commit: a0d74e498
+deployed code: 30a3da10d
+d1a2f5a0dd430ad8207adc8c1a71144280e6d78706733a82937007d19c702cd8  md_latest/plan_validation.json
+988fbb17a2ff26306a1feaa6401dd2a829d11fba91ee0a5f210a57da77bee435  md_latest/alerts_state.json
+3d35372a0d1b872e16953283e43634cf87f6efde5ef0186778eb4f46f219d081  md_latest/alerts_delivery.json
+f719c1014ea46464f674280cbd5b12d5ab3cf84a273e02382e7401cdf8d6a6bd  fl_latest/research_forward/B15-ENGINE-FWD.json
+fc2cbe8cc855ef7708724fa560e855b706a8146eafa129ed8e8438af02bc4ef9  fl_latest/research_forward/B9-GRAB-FWD.json
+70571cecc01c3ed602ddacd227cc46bc337f6523af1b837789642f27d50cf770  audit_wt/research/registrations/B15-ENGINE-FWD.json
+99ec601843dc3d4f542817776cf5df03257c9e0796600388eab658613487f008  fl_latest/manifests/runs-2026-10.jsonl
+10c1b454d8572cebbdb50ef867528ec7189b07fbd98555f519e492ba31e009cd  fl_latest/manifests/runs-2026-11.jsonl

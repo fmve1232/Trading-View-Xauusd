@@ -1,0 +1,81 @@
+{
+ "15m": {
+  "baseline_signals": 77,
+  "keys_tested": 192,
+  "verdicts": {
+   "no effect on this sample": 117,
+   "changes engine state / display, not signals, on this sample": 29,
+   "DRIVES SIGNALS on this sample": 40,
+   "not perturbable": 3,
+   "read by the engine (perturbation crashed it)": 3
+  },
+  "static_vs_perturbation": {
+   "decision": {
+    "no effect on this sample": 22,
+    "changes engine state / display, not signals, on this sample": 27,
+    "DRIVES SIGNALS on this sample": 38,
+    "not perturbable": 1,
+    "read by the engine (perturbation crashed it)": 2
+   },
+   "-": {
+    "no effect on this sample": 47,
+    "DRIVES SIGNALS on this sample": 2,
+    "changes engine state / display, not signals, on this sample": 2,
+    "read by the engine (perturbation crashed it)": 1,
+    "not perturbable": 1
+   },
+   "display_and_feeds_other_features": {
+    "no effect on this sample": 22
+   },
+   "never_read": {
+    "no effect on this sample": 3,
+    "not perturbable": 1
+   },
+   "internal_only": {
+    "no effect on this sample": 9
+   },
+   "display_only": {
+    "no effect on this sample": 14
+   }
+  }
+ },
+ "1h": {
+  "baseline_signals": 91,
+  "keys_tested": 192,
+  "verdicts": {
+   "no effect on this sample": 114,
+   "DRIVES SIGNALS on this sample": 46,
+   "changes engine state / display, not signals, on this sample": 26,
+   "not perturbable": 3,
+   "read by the engine (perturbation crashed it)": 3
+  },
+  "static_vs_perturbation": {
+   "decision": {
+    "no effect on this sample": 19,
+    "DRIVES SIGNALS on this sample": 42,
+    "changes engine state / display, not signals, on this sample": 26,
+    "not perturbable": 1,
+    "read by the engine (perturbation crashed it)": 2
+   },
+   "-": {
+    "no effect on this sample": 47,
+    "DRIVES SIGNALS on this sample": 4,
+    "read by the engine (perturbation crashed it)": 1,
+    "not perturbable": 1
+   },
+   "display_and_feeds_other_features": {
+    "no effect on this sample": 22
+   },
+   "never_read": {
+    "no effect on this sample": 3,
+    "not perturbable": 1
+   },
+   "internal_only": {
+    "no effect on this sample": 9
+   },
+   "display_only": {
+    "no effect on this sample": 14
+   }
+  }
+ }
+}

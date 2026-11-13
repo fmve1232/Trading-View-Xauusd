@@ -1,0 +1,254 @@
+{
+ "manifest_runs": 2707,
+ "manifest_first_run": "2026-10-03T10:38:11Z",
+ "manifest_last_run": "2026-11-13T13:34:09Z",
+ "manifest_revised_closed_bars_total": 16801410,
+ "manifest_fields": [
+  "changed",
+  "commit",
+  "forming_bar_updates",
+  "freeze_key",
+  "n_files",
+  "removed",
+  "revised_closed_bars",
+  "revised_files",
+  "run_id",
+  "run_utc",
+  "tree_sha256"
+ ],
+ "series": {
+  "DX-Y.NYB_60m": {
+   "listed_revisions_old_value_recoverable": 94794,
+   "distinct_bars_listed": 1009,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 284,
+   "share_recoverable": 1.0
+  },
+  "EURUSD_X_15m": {
+   "listed_revisions_old_value_recoverable": 6221,
+   "distinct_bars_listed": 77,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 255,
+   "share_recoverable": 1.0
+  },
+  "EURUSD_X_30m": {
+   "listed_revisions_old_value_recoverable": 1298,
+   "distinct_bars_listed": 19,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "EURUSD_X_5m": {
+   "listed_revisions_old_value_recoverable": 21011,
+   "distinct_bars_listed": 524,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 255,
+   "share_recoverable": 1.0
+  },
+  "EURUSD_X_60m": {
+   "listed_revisions_old_value_recoverable": 47855,
+   "distinct_bars_listed": 266,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 255,
+   "share_recoverable": 1.0
+  },
+  "GC_F_15m": {
+   "listed_revisions_old_value_recoverable": 345280,
+   "distinct_bars_listed": 2893,
+   "revisions_count_only_old_value_lost": 2132120,
+   "count_only_rows": 2654,
+   "removed_bars": 299,
+   "share_recoverable": 0.13937192217647534
+  },
+  "GC_F_1d": {
+   "listed_revisions_old_value_recoverable": 37,
+   "distinct_bars_listed": 29,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "GC_F_30m": {
+   "listed_revisions_old_value_recoverable": 89538,
+   "distinct_bars_listed": 1018,
+   "revisions_count_only_old_value_lost": 304451,
+   "count_only_rows": 565,
+   "removed_bars": 0,
+   "share_recoverable": 0.2272601519331758
+  },
+  "GC_F_5m": {
+   "listed_revisions_old_value_recoverable": 155999,
+   "distinct_bars_listed": 3210,
+   "revisions_count_only_old_value_lost": 5512479,
+   "count_only_rows": 3428,
+   "removed_bars": 297,
+   "share_recoverable": 0.027520438466904166
+  },
+  "GC_F_60m": {
+   "listed_revisions_old_value_recoverable": 1895671,
+   "distinct_bars_listed": 3199,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 297,
+   "share_recoverable": 1.0
+  },
+  "SI_F_15m": {
+   "listed_revisions_old_value_recoverable": 791632,
+   "distinct_bars_listed": 3765,
+   "revisions_count_only_old_value_lost": 537418,
+   "count_only_rows": 1030,
+   "removed_bars": 299,
+   "share_recoverable": 0.5956374854219179
+  },
+  "SI_F_30m": {
+   "listed_revisions_old_value_recoverable": 218909,
+   "distinct_bars_listed": 1041,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "SI_F_5m": {
+   "listed_revisions_old_value_recoverable": 310844,
+   "distinct_bars_listed": 3102,
+   "revisions_count_only_old_value_lost": 2657068,
+   "count_only_rows": 2821,
+   "removed_bars": 297,
+   "share_recoverable": 0.10473491127769287
+  },
+  "SI_F_60m": {
+   "listed_revisions_old_value_recoverable": 1168458,
+   "distinct_bars_listed": 2236,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 297,
+   "share_recoverable": 1.0
+  },
+  "XAU_USD_15m": {
+   "listed_revisions_old_value_recoverable": 42,
+   "distinct_bars_listed": 41,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "XAU_USD_1d": {
+   "listed_revisions_old_value_recoverable": 653,
+   "distinct_bars_listed": 653,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "XAU_USD_30m": {
+   "listed_revisions_old_value_recoverable": 3,
+   "distinct_bars_listed": 3,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "XAU_USD_5m": {
+   "listed_revisions_old_value_recoverable": 870,
+   "distinct_bars_listed": 867,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "XAU_USD_60m": {
+   "listed_revisions_old_value_recoverable": 15,
+   "distinct_bars_listed": 15,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  },
+  "_GSPC_15m": {
+   "listed_revisions_old_value_recoverable": 5398,
+   "distinct_bars_listed": 29,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 81,
+   "share_recoverable": 1.0
+  },
+  "_GSPC_5m": {
+   "listed_revisions_old_value_recoverable": 9974,
+   "distinct_bars_listed": 202,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 81,
+   "share_recoverable": 1.0
+  },
+  "_GSPC_60m": {
+   "listed_revisions_old_value_recoverable": 37265,
+   "distinct_bars_listed": 160,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 83,
+   "share_recoverable": 1.0
+  },
+  "_TNX_60m": {
+   "listed_revisions_old_value_recoverable": 452901,
+   "distinct_bars_listed": 1652,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 80,
+   "share_recoverable": 1.0
+  },
+  "_VIX_1d": {
+   "listed_revisions_old_value_recoverable": 46,
+   "distinct_bars_listed": 23,
+   "revisions_count_only_old_value_lost": 0,
+   "count_only_rows": 0,
+   "removed_bars": 0,
+   "share_recoverable": 1.0
+  }
+ },
+ "xau_5m": {
+  "rows": 870,
+  "distinct_bars": 867,
+  "revisions_per_bar": {
+   "1": 864,
+   "2": 3
+  },
+  "minutes_after_close_quantiles": {
+   "0.05": 11.7,
+   "0.25": 14.6,
+   "0.5": 15.3,
+   "0.75": 16.4,
+   "0.95": 25.354999999999993,
+   "1.0": 18655.2
+  },
+  "abs_change_usd_quantiles": {
+   "0.5": 0.845,
+   "0.9": 2.591,
+   "0.99": 5.546799999999985,
+   "1.0": 7.65
+  },
+  "share_over_1_usd": 0.432183908045977,
+  "first": "2026-10-04 07:50",
+  "last": "2026-11-13 13:15"
+ },
+ "xau_1d_revision_runs": {
+  "2026-10-16T16:04": {
+   "bars": 652,
+   "first_bar": "2022-08-15",
+   "last_bar": "2026-10-15",
+   "median_bp": 4.4104173851182304,
+   "max_bp": 177.3314090532664
+  },
+  "2026-10-30T11:04": {
+   "bars": 1,
+   "first_bar": "2026-10-16",
+   "last_bar": "2026-10-16",
+   "median_bp": 0.0,
+   "max_bp": 0.0
+  }
+ }
+}

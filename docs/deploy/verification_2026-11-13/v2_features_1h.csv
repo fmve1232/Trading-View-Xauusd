@@ -1,0 +1,193 @@
+key,static_class,perturbation,signals_changed,other_events_changed,dashboard_state_changed,error,verdict
+COT_STATUS,decision,constant +1,0,0,False,,no effect on this sample
+GC_STATUS,decision,reversed,0,0,False,,no effect on this sample
+OI_STATUS,decision,constant +1,0,0,False,,no effect on this sample
+US2Y_STATUS,decision,constant +1,0,0,False,,no effect on this sample
+aatr,decision,reversed,37,391,True,,DRIVES SIGNALS on this sample
+adx,decision,reversed,21,69,True,,DRIVES SIGNALS on this sample
+adx_gate,decision,negated,100,425,True,,DRIVES SIGNALS on this sample
+atr,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+atr_pct,decision,reversed,35,97,True,,DRIVES SIGNALS on this sample
+atr_sma20,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+avg_corr,-,"dict, element-wise",0,0,False,,no effect on this sample
+avg_corr_health,decision,reversed,5,19,True,,DRIVES SIGNALS on this sample
+avg_stability,decision,reversed,0,0,False,,no effect on this sample
+bb_basis,-,reversed,0,0,False,,no effect on this sample
+bb_dev,display_and_feeds_other_features,reversed,0,0,False,,no effect on this sample
+bear_trend,decision,negated,59,273,True,,DRIVES SIGNALS on this sample
+bear_trend_score,decision,reversed,20,48,True,,DRIVES SIGNALS on this sample
+body,decision,reversed,28,164,True,,DRIVES SIGNALS on this sample
+body_pct,decision,reversed,59,255,True,,DRIVES SIGNALS on this sample
+bull_trend,decision,negated,60,230,True,,DRIVES SIGNALS on this sample
+bull_trend_score,-,reversed,13,30,True,,DRIVES SIGNALS on this sample
+cal,decision,not perturbable,,,,,not perturbable
+cf_unsolved,never_read,scalar doubled,0,0,False,,no effect on this sample
+close_epoch,internal_only,reversed,0,0,False,,no effect on this sample
+corr,-,"dict, element-wise",0,0,False,,no effect on this sample
+corr_health,display_only,"dict, element-wise",0,0,False,,no effect on this sample
+corr_sig,display_only,"dict, element-wise",0,0,False,,no effect on this sample
+cot_crowd_long,-,negated,0,0,False,,no effect on this sample
+cot_crowd_short,display_only,negated,0,0,False,,no effect on this sample
+cot_pct,display_and_feeds_other_features,constant +1,0,0,False,,no effect on this sample
+cot_regime,decision,constant +1,7,24,True,,DRIVES SIGNALS on this sample
+cot_valid,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+curve_2s10s,display_only,constant +1,0,0,False,,no effect on this sample
+curve_steep,display_only,negated,0,0,False,,no effect on this sample
+cvd_bear,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+cvd_bull,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+d_c1,internal_only,reversed,0,0,False,,no effect on this sample
+d_c2,never_read,reversed,0,0,False,,no effect on this sample
+diminus,-,reversed,1,4,True,,DRIVES SIGNALS on this sample
+diplus,-,reversed,1,4,True,,DRIVES SIGNALS on this sample
+dist_vwap_atr,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+dxy_bear,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+dxy_bull,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+dxy_c1,-,reversed,0,0,False,,no effect on this sample
+dxy_e10,-,reversed,0,0,False,,no effect on this sample
+dxy_e20,-,reversed,0,0,False,,no effect on this sample
+dxy_ok,-,negated,0,0,False,,no effect on this sample
+dxy_open,-,reversed,0,0,False,,no effect on this sample
+dxy_roc,-,reversed,0,0,False,,no effect on this sample
+dxy_rsi,display_and_feeds_other_features,reversed,0,0,False,,no effect on this sample
+dxy_valid,decision,negated,0,0,False,,no effect on this sample
+ema100,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+ema20,decision,reversed,1,3,True,,DRIVES SIGNALS on this sample
+ema200,decision,reversed,25,101,True,,DRIVES SIGNALS on this sample
+eur_bear,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+eur_bull,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+eur_c1,-,reversed,0,0,False,,no effect on this sample
+eur_e10,-,reversed,0,0,False,,no effect on this sample
+eur_e20,-,reversed,0,0,False,,no effect on this sample
+eur_ok,-,negated,0,0,False,,no effect on this sample
+eur_open,-,reversed,0,0,False,,no effect on this sample
+eur_roc,-,reversed,0,0,False,,no effect on this sample
+eur_valid,decision,negated,0,0,False,,no effect on this sample
+gc_c1,-,reversed,0,0,False,,no effect on this sample
+gc_confirms_bear,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+gc_confirms_bull,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+gc_diverges,display_only,negated,0,0,False,,no effect on this sample
+gc_e10,-,reversed,0,0,False,,no effect on this sample
+gc_e20,-,reversed,0,0,False,,no effect on this sample
+gc_enabled,display_and_feeds_other_features,scalar negated,0,0,False,,no effect on this sample
+gc_fail,display_only,reversed,0,0,False,,no effect on this sample
+gc_ok,-,negated,0,0,False,,no effect on this sample
+gc_open,-,reversed,0,0,False,,no effect on this sample
+gc_strong_bear,display_only,negated,0,0,False,,no effect on this sample
+gc_strong_bull,display_only,negated,0,0,False,,no effect on this sample
+gc_t1,-,reversed,0,0,False,,no effect on this sample
+gc_v1,-,reversed,0,0,False,,no effect on this sample
+gc_valid,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+gc_vavg,-,reversed,0,0,False,,no effect on this sample
+gold_ret,internal_only,reversed,0,0,False,,no effect on this sample
+high_volume,internal_only,negated,0,0,False,,no effect on this sample
+highest_n,never_read,not perturbable,,,,,not perturbable
+htf_align_long,decision,reversed,5,11,True,,DRIVES SIGNALS on this sample
+htf_align_short,decision,reversed,10,43,True,,DRIVES SIGNALS on this sample
+htf_bear,decision,"dict, element-wise",,,,AttributeError: 'tuple' object has no attribute 'tolist',read by the engine (perturbation crashed it)
+htf_bear_gate,decision,negated,70,270,True,,DRIVES SIGNALS on this sample
+htf_bull,-,"dict, element-wise",,,,AttributeError: 'tuple' object has no attribute 'tolist',read by the engine (perturbation crashed it)
+htf_bull_gate,decision,negated,60,296,True,,DRIVES SIGNALS on this sample
+htf_full_avail,decision,scalar doubled,0,0,True,,"changes engine state / display, not signals, on this sample"
+htf_full_long,decision,reversed,0,0,False,,no effect on this sample
+htf_full_short,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+htf_scores,decision,"dict, element-wise",,,,IndexError: tuple index out of range,read by the engine (perturbation crashed it)
+index,-,not perturbable,,,,,not perturbable
+macro_bear,decision,negated,19,63,True,,DRIVES SIGNALS on this sample
+macro_bear_votes,decision,reversed,4,14,True,,DRIVES SIGNALS on this sample
+macro_bull,decision,negated,6,26,True,,DRIVES SIGNALS on this sample
+macro_bull_votes,-,reversed,6,20,True,,DRIVES SIGNALS on this sample
+macro_strength,decision,reversed,7,21,True,,DRIVES SIGNALS on this sample
+macro_strength_conf,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+mkt_regime,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+mr_composite,decision,reversed,26,84,True,,DRIVES SIGNALS on this sample
+mtf_avail,decision,scalar doubled,2,7,True,,DRIVES SIGNALS on this sample
+mvwap,decision,reversed,4,16,True,,DRIVES SIGNALS on this sample
+num_valid,decision,constant +1,0,0,False,,no effect on this sample
+oi_chg_pct,display_and_feeds_other_features,constant +1,0,0,False,,no effect on this sample
+oi_conviction,decision,constant +1,0,4,True,,"changes engine state / display, not signals, on this sample"
+oi_price_up,internal_only,negated,0,0,False,,no effect on this sample
+oi_state,display_only,constant replaced,0,0,False,,no effect on this sample
+oi_valid,decision,negated,0,0,False,,no effect on this sample
+open_epoch,internal_only,reversed,0,0,False,,no effect on this sample
+piv_hi,decision,reversed,83,448,True,,DRIVES SIGNALS on this sample
+piv_lo,decision,reversed,63,485,True,,DRIVES SIGNALS on this sample
+pm_high,decision,reversed,1,75,True,,DRIVES SIGNALS on this sample
+pm_low,decision,reversed,4,57,True,,DRIVES SIGNALS on this sample
+pr_raw_vol,decision,reversed,0,0,False,,no effect on this sample
+range,decision,reversed,0,0,False,,no effect on this sample
+reg_abnormal,decision,negated,91,212,True,,DRIVES SIGNALS on this sample
+reg_bos_mult,decision,reversed,27,77,True,,DRIVES SIGNALS on this sample
+reg_compression,decision,negated,46,111,True,,DRIVES SIGNALS on this sample
+reg_conf_cap,decision,reversed,0,0,False,,no effect on this sample
+reg_expansion,decision,negated,9,25,True,,DRIVES SIGNALS on this sample
+reg_horizon_mult,display_only,reversed,0,0,False,,no effect on this sample
+reg_liq_mult,decision,reversed,1,4,True,,DRIVES SIGNALS on this sample
+reg_size_mult,display_only,reversed,0,0,False,,no effect on this sample
+reg_sl_mult,decision,reversed,25,71,True,,DRIVES SIGNALS on this sample
+reg_strong,decision,negated,6,16,True,,DRIVES SIGNALS on this sample
+reg_weak,decision,negated,5,18,True,,DRIVES SIGNALS on this sample
+regime_dead,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+regime_ranging,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+regime_strength,decision,reversed,2,7,True,,DRIVES SIGNALS on this sample
+regime_trending,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+ret_kurt,display_only,reversed,0,0,False,,no effect on this sample
+ret_skew,-,reversed,0,0,False,,no effect on this sample
+ret_z,internal_only,reversed,0,0,False,,no effect on this sample
+ret_z_raw,never_read,reversed,0,0,False,,no effect on this sample
+rsi,decision,reversed,0,0,False,,no effect on this sample
+sess_spread,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+session_conf_mult,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+session_label,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+session_quality,decision,reversed,25,127,True,,DRIVES SIGNALS on this sample
+slv_bear,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+slv_bull,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+slv_c1,-,reversed,0,0,False,,no effect on this sample
+slv_e10,-,reversed,0,0,False,,no effect on this sample
+slv_e20,-,reversed,0,0,False,,no effect on this sample
+slv_ok,-,negated,0,0,False,,no effect on this sample
+slv_open,-,reversed,0,0,False,,no effect on this sample
+slv_rsi,-,reversed,0,0,False,,no effect on this sample
+slv_valid,decision,negated,0,0,False,,no effect on this sample
+spx_bear,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+spx_bull,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+spx_c1,-,reversed,0,0,False,,no effect on this sample
+spx_e10,-,reversed,0,0,False,,no effect on this sample
+spx_e20,-,reversed,0,0,False,,no effect on this sample
+spx_ok,-,negated,0,0,False,,no effect on this sample
+spx_open,-,reversed,0,0,False,,no effect on this sample
+spx_valid,decision,negated,0,0,False,,no effect on this sample
+swing_piv_hi,decision,reversed,10,30,True,,DRIVES SIGNALS on this sample
+swing_piv_lo,decision,reversed,11,24,True,,DRIVES SIGNALS on this sample
+tips_c1,-,reversed,0,0,False,,no effect on this sample
+tips_e10,-,reversed,0,0,False,,no effect on this sample
+tips_e20,-,reversed,0,0,False,,no effect on this sample
+tips_falling,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+tips_ok,-,negated,0,0,False,,no effect on this sample
+tips_on,display_and_feeds_other_features,scalar negated,0,0,False,,no effect on this sample
+tips_open,-,reversed,0,0,False,,no effect on this sample
+tips_rising,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+tips_valid,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+var_long,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+var_short,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+vix,display_and_feeds_other_features,reversed,0,0,False,,no effect on this sample
+vol_delta50,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+vol_imputed,display_only,scalar doubled,0,0,False,,no effect on this sample
+vol_sma20,decision,reversed,18,107,True,,DRIVES SIGNALS on this sample
+vol_tag,decision,reversed,0,0,False,,no effect on this sample
+vwap,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+vwap_accel,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+vwap_lo2,internal_only,reversed,0,0,False,,no effect on this sample
+vwap_reject_bull,decision,negated,0,0,True,,"changes engine state / display, not signals, on this sample"
+vwap_slope,decision,reversed,0,0,True,,"changes engine state / display, not signals, on this sample"
+vwap_up2,decision,reversed,0,0,False,,no effect on this sample
+wvwap,decision,reversed,2,23,True,,DRIVES SIGNALS on this sample
+y2_valid,internal_only,negated,0,0,False,,no effect on this sample
+yld_c1,-,reversed,0,0,False,,no effect on this sample
+yld_e10,-,reversed,0,0,False,,no effect on this sample
+yld_e20,-,reversed,0,0,False,,no effect on this sample
+yld_falling,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+yld_ok,-,negated,0,0,False,,no effect on this sample
+yld_open,-,reversed,0,0,False,,no effect on this sample
+yld_rising,display_and_feeds_other_features,negated,0,0,False,,no effect on this sample
+yld_roc,-,reversed,0,0,False,,no effect on this sample
+yld_valid,decision,negated,0,0,False,,no effect on this sample

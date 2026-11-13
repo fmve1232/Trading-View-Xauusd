@@ -1,0 +1,146 @@
+{
+ "15m | needs the feeds (removed when dropped)": {
+  "signals": 12,
+  "ideas": 5,
+  "signal_outcomes": {
+   "TP": 2,
+   "SL": 10
+  },
+  "idea_outcomes": {
+   "TP": 2,
+   "SL": 3
+  }
+ },
+ "15m | suppressed by the feeds (added when dropped)": {
+  "signals": 9,
+  "ideas": 7,
+  "signal_outcomes": {
+   "SL": 7,
+   "TP": 2
+  },
+  "idea_outcomes": {
+   "SL": 5,
+   "TP": 2
+  }
+ },
+ "15m | baseline": {
+  "signals": 65,
+  "ideas": 23,
+  "signal_outcomes": {
+   "TP": 37,
+   "BOTH": 1,
+   "SL": 27
+  },
+  "idea_outcomes": {
+   "TP": 11,
+   "BOTH": 1,
+   "SL": 11
+  }
+ },
+ "30m | needs the feeds (removed when dropped)": {
+  "signals": 1,
+  "ideas": 1,
+  "signal_outcomes": {
+   "TP": 1
+  },
+  "idea_outcomes": {
+   "TP": 1
+  }
+ },
+ "30m | suppressed by the feeds (added when dropped)": {
+  "signals": 13,
+  "ideas": 9,
+  "signal_outcomes": {
+   "SL": 7,
+   "TP": 6
+  },
+  "idea_outcomes": {
+   "SL": 6,
+   "TP": 3
+  }
+ },
+ "30m | baseline": {
+  "signals": 42,
+  "ideas": 17,
+  "signal_outcomes": {
+   "SL": 20,
+   "TP": 22
+  },
+  "idea_outcomes": {
+   "SL": 8,
+   "TP": 9
+  }
+ },
+ "1h | needs the feeds (removed when dropped)": {
+  "signals": 14,
+  "ideas": 9,
+  "signal_outcomes": {
+   "BOTH": 2,
+   "SL": 7,
+   "TP": 5
+  },
+  "idea_outcomes": {
+   "BOTH": 2,
+   "SL": 4,
+   "TP": 3
+  }
+ },
+ "1h | suppressed by the feeds (added when dropped)": {
+  "signals": 22,
+  "ideas": 15,
+  "signal_outcomes": {
+   "SL": 17,
+   "TP": 5
+  },
+  "idea_outcomes": {
+   "SL": 12,
+   "TP": 3
+  }
+ },
+ "1h | baseline": {
+  "signals": 77,
+  "ideas": 40,
+  "signal_outcomes": {
+   "SL": 43,
+   "TP": 31,
+   "BOTH": 3
+  },
+  "idea_outcomes": {
+   "SL": 22,
+   "TP": 17,
+   "BOTH": 1
+  }
+ },
+ "4h | needs the feeds (removed when dropped)": {
+  "signals": 3,
+  "ideas": 3,
+  "signal_outcomes": {
+   "TP": 2,
+   "SL": 1
+  },
+  "idea_outcomes": {
+   "TP": 2,
+   "SL": 1
+  }
+ },
+ "4h | suppressed by the feeds (added when dropped)": {
+  "signals": 0,
+  "ideas": 0,
+  "signal_outcomes": {},
+  "idea_outcomes": {}
+ },
+ "4h | baseline": {
+  "signals": 49,
+  "ideas": 41,
+  "signal_outcomes": {
+   "TP": 19,
+   "SL": 20,
+   "BOTH": 10
+  },
+  "idea_outcomes": {
+   "TP": 15,
+   "SL": 16,
+   "BOTH": 10
+  }
+ }
+}

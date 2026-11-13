@@ -1,0 +1,61 @@
+{'manifest_runs': 2707, 'manifest_first_run': '2026-10-03T10:38:11Z', 'manifest_last_run': '2026-11-13T13:34:09Z', 'manifest_revised_closed_bars_total': 16801410}
+all series: listed (recoverable) 5,654,714 | count-only (lost) 11,143,536 | listed + count = 16,798,250
+  DX-Y.NYB_60m   listed    94,794 (1,009 bars) | count-only          0 | removed   284 | recoverable 1.0
+  EURUSD_X_15m   listed     6,221 (77 bars) | count-only          0 | removed   255 | recoverable 1.0
+  EURUSD_X_30m   listed     1,298 (19 bars) | count-only          0 | removed     0 | recoverable 1.0
+  EURUSD_X_5m    listed    21,011 (524 bars) | count-only          0 | removed   255 | recoverable 1.0
+  EURUSD_X_60m   listed    47,855 (266 bars) | count-only          0 | removed   255 | recoverable 1.0
+  GC_F_15m       listed   345,280 (2,893 bars) | count-only  2,132,120 | removed   299 | recoverable 0.139
+  GC_F_1d        listed        37 (29 bars) | count-only          0 | removed     0 | recoverable 1.0
+  GC_F_30m       listed    89,538 (1,018 bars) | count-only    304,451 | removed     0 | recoverable 0.227
+  GC_F_5m        listed   155,999 (3,210 bars) | count-only  5,512,479 | removed   297 | recoverable 0.028
+  GC_F_60m       listed 1,895,671 (3,199 bars) | count-only          0 | removed   297 | recoverable 1.0
+  SI_F_15m       listed   791,632 (3,765 bars) | count-only    537,418 | removed   299 | recoverable 0.596
+  SI_F_30m       listed   218,909 (1,041 bars) | count-only          0 | removed     0 | recoverable 1.0
+  SI_F_5m        listed   310,844 (3,102 bars) | count-only  2,657,068 | removed   297 | recoverable 0.105
+  SI_F_60m       listed 1,168,458 (2,236 bars) | count-only          0 | removed   297 | recoverable 1.0
+  XAU_USD_15m    listed        42 (41 bars) | count-only          0 | removed     0 | recoverable 1.0
+  XAU_USD_1d     listed       653 (653 bars) | count-only          0 | removed     0 | recoverable 1.0
+  XAU_USD_30m    listed         3 (3 bars) | count-only          0 | removed     0 | recoverable 1.0
+  XAU_USD_5m     listed       870 (867 bars) | count-only          0 | removed     0 | recoverable 1.0
+  XAU_USD_60m    listed        15 (15 bars) | count-only          0 | removed     0 | recoverable 1.0
+  _GSPC_15m      listed     5,398 (29 bars) | count-only          0 | removed    81 | recoverable 1.0
+  _GSPC_5m       listed     9,974 (202 bars) | count-only          0 | removed    81 | recoverable 1.0
+  _GSPC_60m      listed    37,265 (160 bars) | count-only          0 | removed    83 | recoverable 1.0
+  _TNX_60m       listed   452,901 (1,652 bars) | count-only          0 | removed    80 | recoverable 1.0
+  _VIX_1d        listed        46 (23 bars) | count-only          0 | removed     0 | recoverable 1.0
+XAU 5m: {
+"rows": 870,
+"distinct_bars": 867,
+"revisions_per_bar": {
+"1": 864,
+"2": 3
+},
+"minutes_after_close_quantiles": {
+"0.05": 11.7,
+"0.25": 14.6,
+"0.5": 15.3,
+"0.75": 16.4,
+"0.95": 25.354999999999993,
+"1.0": 18655.2
+},
+"abs_change_usd_quantiles": {
+"0.5": 0.845,
+"0.9": 2.591,
+"0.99": 5.546799999999985,
+"1.0": 7.65
+},
+"share_over_1_usd": 0.432183908045977,
+"first": "2026-10-04 07:50",
+"last": "2026-11-13 13:15"
+}
+XAU 1d revision runs with >= 5 bars or >= 20 bp: {
+"2026-10-16T16:04": {
+"bars": 652,
+"first_bar": "2022-08-15",
+"last_bar": "2026-10-15",
+"median_bp": 4.4104173851182304,
+"max_bp": 177.3314090532664
+}
+}
+XAU 1d revision runs total: 2 | rows 653
