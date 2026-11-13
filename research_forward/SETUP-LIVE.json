@@ -3405,6 +3405,41 @@
    "mae": 14.050000000000182,
    "bars": 56,
    "path": "5m"
+  },
+  {
+   "id": 96,
+   "tf": "15m",
+   "t": 1794576600,
+   "t_dec": 1794577500,
+   "dir": -1,
+   "entry": 3890.38,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HH",
+     3896.21
+    ]
+   ],
+   "zones": [
+    "POC 3895.48"
+   ],
+   "sl": 3903.38,
+   "tp": 3875.38,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794577868,
+   "result": "TP",
+   "t_res": 1794577800,
+   "mfe": 19.940000000000055,
+   "mae": 1.900000000000091,
+   "bars": 2,
+   "path": "5m"
   }
  ],
  "live": {
@@ -3413,8 +3448,8 @@
    7
   ],
   "SWEEP": [
-   31,
-   14
+   32,
+   15
   ],
   "BREAKOUT": [
    47,
