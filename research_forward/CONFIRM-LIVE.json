@@ -3798,6 +3798,33 @@
    "scan_t": null,
    "why": "an opposite 15m structure break came first",
    "t_done": 1794569400
+  },
+  {
+   "key": "BREAKOUT|15m|1792645200|-1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1792645200,
+   "t_close": 1792646100,
+   "dir": -1,
+   "p0": 4089.4,
+   "what": "breakout at TDL 4090.59",
+   "id": 108,
+   "seen": 1794574291,
+   "backfill": false,
+   "late": true,
+   "repeats": 1,
+   "confirm_at": 4074.4,
+   "invalid_at": 4102.4,
+   "cap_at": 4069.4,
+   "confirm20_at": 4069.4,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "an opposite 15m structure break came first",
+   "t_done": 1792649700,
+   "verdict": "NO TRADE",
+   "reason": "an opposite 15m structure break came first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
