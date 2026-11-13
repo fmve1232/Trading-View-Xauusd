@@ -1,0 +1,82 @@
+# Read-only checks on every pull request (operator approval 2026-11-13, audit F-04).
+# Runs the same requirements-only test suite as the production gate, plus the Pine reference checkers and the frozen-file
+# manifest, BEFORE a merge instead of after it. It has no secrets, no write permission and no deployment step:
+#   - permissions: contents read only (no pages, id-token, actions or packages scope);
+#   - no `secrets.*` anywhere; a fork's pull request gets none either;
+#   - `pull_request` (never `pull_request_target`), so a PR's code never runs with the base repository's privileges;
+#   - nothing is pushed, uploaded, deployed or sent (no ntfy, no Pages, no store or ledger access).
+# It does not replace the production gate in quantum-site.yml, which still runs on every site run.
+name: pr-checks
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: tests (requirements-only, as the production gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install (requirements.txt only, the production gate's set)
+        run: pip install -r requirements.txt
+
+      - name: Record the versions this check ran on
+        run: |
+          python - <<'PY'
+          import platform, numpy, pandas
+          line = f"python {platform.python_version()} | numpy {numpy.__version__} | pandas {pandas.__version__}"
+          print(line)
+          with open(__import__("os").environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write(f"Versions: {line}\n")
+          PY
+          node --version
+
+      - name: Full test suite (engine, no-look-ahead, alerts; node tests run through tests/test_relay.py)
+        run: python -m pytest -q tests
+
+  reference:
+    name: Pine reference checkers and frozen-file manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Frozen-file manifest (audit/MANIFEST.sha256)
+        run: sha256sum -c audit/MANIFEST.sha256 --quiet && echo "MANIFEST all OK"
+
+      - name: Pine checkers (precheck, undeclared, order, deadcode, pinelimits, diag_parity)
+        run: |
+          set -e
+          for t in precheck pinelimits; do               # these exit non-zero on a finding
+            echo "== $t"; python audit/tools/$t.py artefacts/*.pine
+          done
+          # undeclared.py, order.py and deadcode.py always exit 0, so their counts are checked here
+          echo "== undeclared"; out=$(python audit/tools/undeclared.py artefacts/*.pine); echo "$out"
+          if echo "$out" | grep -Eq ': [1-9][0-9]* unresolved'; then echo "::error::undeclared identifiers"; exit 1; fi
+          echo "== order"; out=$(python audit/tools/order.py artefacts/*.pine); echo "$out"
+          if echo "$out" | grep -Eq ': [1-9][0-9]* order violation'; then echo "::error::declaration-order violations"; exit 1; fi
+          echo "== deadcode"; out=$(python audit/tools/deadcode.py artefacts/*.pine); echo "$out"
+          if echo "$out" | grep -Eq ': [1-9][0-9]* dead,'; then echo "::error::dead code"; exit 1; fi
+          echo "== diag_parity"; python audit/tools/diag_parity.py
