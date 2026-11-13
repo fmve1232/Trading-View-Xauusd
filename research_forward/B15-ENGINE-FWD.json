@@ -167,6 +167,21 @@
    "late": false,
    "move_alert": -0.5,
    "session": "Rollover"
+  },
+  {
+   "id": 12,
+   "tf": "15m",
+   "dir": -1,
+   "entry": 3897.97,
+   "t_dec": 1794554100,
+   "status": "TP",
+   "result": "TP",
+   "t_res": 1794575700,
+   "tp2_result": "BE",
+   "path": "5m",
+   "late": false,
+   "move_alert": 0.36,
+   "session": "London"
   }
  ],
  "excluded": 0,
