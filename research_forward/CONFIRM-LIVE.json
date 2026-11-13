@@ -3627,6 +3627,33 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "ENG|4h|1794506400|-1",
+   "kind": "ENG",
+   "tf": "4h",
+   "t": 1794506400,
+   "t_close": 1794520800,
+   "dir": -1,
+   "p0": 3877.48,
+   "what": "engine 4h signal, TQ 58",
+   "id": 100,
+   "seen": 1794524725,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3862.48,
+   "invalid_at": 3890.48,
+   "cap_at": 3857.48,
+   "confirm20_at": 3857.48,
+   "status": "INVALIDATED",
+   "bars": 8,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794531600
   }
  ]
 }

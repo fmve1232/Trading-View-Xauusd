@@ -137,6 +137,36 @@
    "late": false,
    "move_alert": 0.83,
    "session": "New York"
+  },
+  {
+   "id": 10,
+   "tf": "30m",
+   "dir": -1,
+   "entry": 3879.25,
+   "t_dec": 1794502800,
+   "status": "SL",
+   "result": "SL",
+   "t_res": 1794531000,
+   "tp2_result": null,
+   "path": "5m",
+   "late": false,
+   "move_alert": 2.54,
+   "session": "New York"
+  },
+  {
+   "id": 11,
+   "tf": "4h",
+   "dir": -1,
+   "entry": 3877.48,
+   "t_dec": 1794520800,
+   "status": "SL",
+   "result": "SL",
+   "t_res": 1794530700,
+   "tp2_result": null,
+   "path": "5m",
+   "late": false,
+   "move_alert": -0.5,
+   "session": "Rollover"
   }
  ],
  "excluded": 0,
