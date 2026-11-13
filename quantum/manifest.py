@@ -7,7 +7,10 @@ earlier versions of a bar are not kept there. This module records, on the never-
   manifests/state.json       full map {file: [sha256, rows]} for the store as of this run; the
                              branch's git history keeps every earlier version of this file
   manifests/runs-YYYY-MM.jsonl  one line per run: time, GitHub run id, commit, freeze key,
-                             tree hash (one SHA-256 over the whole store) and the files changed
+                             tree hash (one SHA-256 over the whole store), the files changed, and
+                             `env`: the Python / NumPy / pandas versions the run used (operator
+                             approval 2026-11-13, audit F-03: the freeze key hashes source files
+                             only, so a library upgrade would otherwise leave no trace)
   revisions/<series>/YYYY-MM.csv  the OLD values of every bar that a later download changed
                              after that bar had closed (a forming bar finishing is not a revision)
 
@@ -23,6 +26,7 @@ import hashlib
 import io
 import json
 import os
+import platform
 import subprocess
 from datetime import datetime, timezone
 
@@ -32,6 +36,13 @@ import pandas as pd
 BAR_SEC = {"5m": 300, "15m": 900, "30m": 1800, "60m": 3600, "1h": 3600, "1d": 86400}
 PRICE_COLS = ("open", "high", "low", "close")
 MAX_REVISIONS_PER_FILE = 500      # beyond this, only the count is recorded (a re-based series)
+
+
+def env_versions() -> dict:
+    """The interpreter and numeric libraries this process runs on. quantum-site.yml runs this module in the build job,
+    on the same interpreter and installed packages as the pipeline step a few steps earlier, so these are the versions
+    the engine used in this run. Bookkeeping only: not part of the freeze key (holdout.ENGINE_SOURCES is unchanged)."""
+    return {"python": platform.python_version(), "numpy": np.__version__, "pandas": pd.__version__}
 
 
 def file_digest(path: str) -> tuple[str, int]:
@@ -154,7 +165,8 @@ def record(store_dir: str, ledger_dir: str, run_id: str = "", sha: str = "", fre
         json.dump({"run_utc": stamp, "tree_sha256": tree, "files": state}, f, indent=0, sort_keys=True)
     line = {"run_utc": stamp, "run_id": run_id, "commit": sha, "freeze_key": freeze_key, "tree_sha256": tree,
             "n_files": len(state), "changed": changed, "removed": removed,
-            "revised_closed_bars": n_rev, "revised_files": rev_files, "forming_bar_updates": n_forming}
+            "revised_closed_bars": n_rev, "revised_files": rev_files, "forming_bar_updates": n_forming,
+            "env": env_versions()}
     with open(os.path.join(mdir, f"runs-{now:%Y-%m}.jsonl"), "a") as f:
         f.write(json.dumps(line, sort_keys=True) + "\n")
     return line
@@ -174,7 +186,8 @@ def main() -> None:
             key = json.load(f).get("freeze_key", "")
     line = record(a.store, a.ledger, a.run_id, a.sha, key)
     print(f"manifest: tree {line['tree_sha256'][:16]} · {line['n_files']} files · {len(line['changed'])} changed · "
-          f"{line['revised_closed_bars']} revised closed bars · {line['forming_bar_updates']} forming-bar updates")
+          f"{line['revised_closed_bars']} revised closed bars · {line['forming_bar_updates']} forming-bar updates · "
+          + " ".join(f"{k} {v}" for k, v in line["env"].items()))
 
 
 if __name__ == "__main__":
