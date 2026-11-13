@@ -4056,6 +4056,33 @@
     }
    },
    "t_done": 1794591900
+  },
+  {
+   "key": "BREAKOUT|15m|1794582900|-1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1794582900,
+   "t_close": 1794583800,
+   "dir": -1,
+   "p0": 3877.85,
+   "what": "breakout at 1HL 3880.85",
+   "id": 114,
+   "seen": 1794584118,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3862.85,
+   "invalid_at": 3890.85,
+   "cap_at": 3857.85,
+   "confirm20_at": 3857.85,
+   "status": "INVALIDATED",
+   "bars": 10,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794592800
   }
  ]
 }
