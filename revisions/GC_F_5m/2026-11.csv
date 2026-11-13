@@ -45098,3 +45098,4 @@ bar_open,run_utc,old_open,old_high,old_low,old_close,new_open,new_high,new_low,n
 2026-11-13 03:30:00+00:00,2026-11-13T05:06:23Z,963 closed bars revised (series re-based); not listed
 2026-11-13 03:05:00+00:00,2026-11-13T05:19:21Z,960 closed bars revised (series re-based); not listed
 2026-11-13 05:05:00+00:00,2026-11-13T05:35:17Z,961 closed bars revised (series re-based); not listed
+2026-11-13 05:20:00+00:00,2026-11-13T05:50:09Z,3922.500000,3922.500000,3918.199951,3920.199951,3922.500000,3922.500000,3918.199951,3920.399902,changed
