@@ -3723,3 +3723,14 @@ missing data: 0 NaN. `compile_est`: Visuals main body + strings 23,502 (≤ 30,5
 under the Master's dashboard. To bring back anything: Visuals → Settings → LAYOUT / TERMINAL PANEL / DOCK.
 
 **Not run:** the TradingView compile and rendering of v103.
+
+## v103 follow-up — input order gate (F-A93), no artefact change (2026-11-14)
+
+The operator's v103 screenshot: the strip is in place under the Master's columns, but the detail panel still shows.
+v103's defaults switch it off (`v103_check.py` 4). TradingView keeps a chart's saved inputs by POSITION; v103 inserted
+two switches before 159 existing inputs and 123 moved, so the saved v102 values landed on other inputs.
+
+- Remedy (operator, once): Visuals → Settings → Defaults (bottom left) → Reset settings; then re-pick the two LINK
+  sources (RUNBOOK Step 1a). The files are not changed: moving the inputs again would scramble the settings a second time.
+- `input_order_check.py` (new, a gate): each input of a file's previous build keeps its position, name and type; new
+  inputs are appended only; v103 Visuals recorded as ACCEPTED. Control: an input inserted at the top is detected.

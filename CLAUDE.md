@@ -117,6 +117,7 @@ python3 audit/tools/dst_check.py        # v99: the session engine's DST tracker 
 python3 audit/tools/edge_check.py       # v100: edge cases E3 macro feeds missing, E4 gap, E7 one alert per run, E8 empty-array loops / input extremes
 python3 audit/tools/v101_check.py       # v101: Visuals' ten wrapped display blocks == v100's code (CE10295 fix)
 python3 audit/tools/v103_check.py       # v103: Visuals' strip under the Master: alignment, one source, default view, switches
+python3 audit/tools/input_order_check.py # F-A93: inputs keep their positions (TradingView maps saved values by position); new inputs only at the END
 sha256sum -c audit/MANIFEST.sha256
 ```
 
@@ -176,6 +177,9 @@ of record (A7); never open website PRs or research declarations from this thread
   23,844, so strings count: main-body tokens + 2 x string-literal words must stay ≤ 30,568 (v83 Diagnostics, the largest
   that compiled; v68 Master 32,640 and v99 Visuals 32,920 failed). Long display text goes inside a function, never in the
   main body (Visuals' panel / ticker / docks / cards are wrapped since v101, `fix_v101.py`).
+- **New inputs go at the END of a file's inputs, never between existing ones** (F-A93): TradingView keeps a chart's saved
+  input values by position, so an insertion or reorder hands the operator's settings to other inputs (v103 moved 123
+  Visuals inputs; the operator had to reset). `input_order_check.py` gates it.
 - The checkers narrow the search; **they do not replace the compiler.** Three static passes
   gave false confidence this session, including one syntax error introduced by a fix.
 
@@ -187,7 +191,7 @@ of record (A7); never open website PRs or research declarations from this thread
 | `audit/PREREGISTRATION.md` | The frozen forward test: holdout start, frozen hashes, decision rules. |
 | `audit/XAUUSD_Forward_Test_Log.xlsx` | The operator's forward log and automatic verdicts (formulas verified against Python). |
 | `audit/AUDIT_PROMPT.md` | The audit prompt, pinned to current hashes. |
-| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A92. |
+| `audit/FINDINGS_TRACEABILITY.md` | All findings, F-A01 … F-A93. |
 | `audit/CHANGELOG.md` | Per-build detail, v1 → current. |
 | `audit/RUNBOOK.md` | How to collect data from TradingView. |
 | `audit/MANIFEST.sha256` | Hashes; the audit's stop rule depends on these. |

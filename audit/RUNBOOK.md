@@ -95,6 +95,12 @@ establish that the Master is wired to those expressions — that is a separate, 
 - A layout preview of the phone card is in `audit/mobile_card_preview_v59.png` (sample values, not live).
 - Visuals: H2 card layout = **Compact (phone)**; H2 card text size = Normal if it reads too small.
 
+## Step 0 — After pasting a build that moved inputs: reset that indicator's settings once (F-A93)
+
+TradingView keeps an indicator's saved settings by input POSITION. If the build record says a file's inputs moved (v103
+Visuals did), open that indicator's **Settings → Defaults (bottom left) → Reset settings**, then redo Step 1a. Builds
+since v103 only append inputs (`input_order_check.py`), so this is not needed otherwise.
+
 ## Step 1a — Connect the Master → Visuals link (v94, once per chart)
 
 Visuals reads the Master's DECISION and plan through two hidden series. They appear only in the Data Window and draw
