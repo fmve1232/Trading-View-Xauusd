@@ -212,9 +212,16 @@ class _R:
 
 
 def test_send_counts_only_http_2xx_and_logs_every_attempt(tmp_path, monkeypatch):
+    """With the P-0 kill switch (DELIVERY_RETRY=0) a send is exactly the pre-P-0 single attempt per channel; the
+    retry path is covered by tests/test_notify_delivery.py."""
     monkeypatch.setenv("NTFY_TOPIC", "secret-topic-xyz")
+    monkeypatch.setenv("DELIVERY_RETRY", "0")
     monkeypatch.delenv("TELEGRAM_BOT_TOKEN", raising=False)
     monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
+
+    def no_poll(*a, **k):
+        raise AssertionError("no cache poll with DELIVERY_RETRY=0")
+    monkeypatch.setattr(N.requests, "get", no_poll)
     N._DELIVERIES.clear()
     monkeypatch.setattr(N.requests, "post", lambda *a, **k: _R(200, {"id": "abc123", "time": 1}))
     assert N.send(["XAUUSD 15m SELL test", "line 2"]) == ["ntfy"]

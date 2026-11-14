@@ -13,26 +13,28 @@ W = sys.argv[1]
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 NOTIFY = "quantum/notify.py"
 TESTS = ["tests/test_alert_disclaimer.py", "tests/test_stale_signals.py", "tests/test_notify_plan.py",
-         "tests/test_alert_sixty.py"]
+         "tests/test_alert_sixty.py", "tests/test_notify_delivery.py"]
 D0 = 'TRADE_DISCLAIMER = ("RECORD \\u2014 NOT A VALIDATED SIGNAL \\u2014 NO TRADE",'
 
-MUTANTS = {
+MUTANTS = {   # integrated with P-0 (#104): sends go through _say / _say_tf; the tf message is wrapped inside _say_tf
     "A01 wording changed": (D0, 'TRADE_DISCLAIMER = ("RECORD - NOT A VALIDATED SIGNAL - NO TRADE",'),
     "A02 explanation dropped": ('"a validated live trading edge.")', '"")'),
     "A03 lone disclaimer when nothing to send": ("return [*TRADE_DISCLAIMER, *lines] if lines else []",
                                                  "return [*TRADE_DISCLAIMER, *lines]"),
-    "A04 engine alerts without it": ('"sent": send(trade_msg(phone_only(phone_lines)))}', '"sent": send(phone_only(phone_lines))}'),
-    "A05 setup alerts without it": ('"sent": send(trade_msg(sl_)) if', '"sent": send(sl_) if'),
-    "A06 4h alerts without it": ('"sent": send(trade_msg(hl)) if', '"sent": send(hl) if'),
-    "A07 grab trades without it": ("send(trade_msg(phone_only(glines)))", "send(phone_only(glines))"),
-    "A08 setup results without it": ('"sent": send(trade_msg(s_upd))}', '"sent": send(s_upd)}'),
-    "A09 on the daily report too": ('report["validation_report"] = {"lines": lines, "sent": send(lines)}',
-                                    'report["validation_report"] = {"lines": lines, "sent": send(trade_msg(lines))}'),
+    "A04 engine alerts without it": ("_say(tf, trade_msg(out), sorted(events)", "_say(tf, out, sorted(events)"),
+    "A05 setup alerts without it": ('"setup", trade_msg(sl_), [', '"setup", sl_, ['),
+    "A06 4h alerts without it": ('"h4", trade_msg(hl), [', '"h4", hl, ['),
+    "A07 grab trades without it": ('_say("grab_test", trade_msg(phone_only(glines)),', '_say("grab_test", phone_only(glines),'),
+    "A08 setup results without it": ('_say("setup_updates", trade_msg(s_upd),', '_say("setup_updates", s_upd,'),
+    "A09 on the daily report too": ('_say("report", lines, [rkey], "daily / weekly report")',
+                                    '_say("report", trade_msg(lines), [rkey], "daily / weekly report")'),
     "A10 on the website lines too": ('report[tf] = {"lines": lines, "sent"', 'report[tf] = {"lines": trade_msg(lines), "sent"'),
-    "A11 after the phone filter is skipped": ("send(trade_msg(phone_only(phone_lines)))", "send(trade_msg(phone_lines))"),
-    "A12 delivery log names the disclaimer": ('"first": (without_disclaimer(lines) or lines)[0][:80]}', '"first": lines[0][:80]}'),
+    "A11 after the phone filter is skipped": ("allowed, j, pairs = phone_only(phone_lines), 0, []", "allowed, j, pairs = list(phone_lines), 0, []"),
+    "A12 delivery log names the disclaimer": ('"first": (without_disclaimer(lines) or lines)[0][:80],', '"first": lines[0][:80],'),
+    "A13 the DELIVERY WARNING above the disclaimer": ("    body = lines[:top] + warn + lines[top:]", "    body = warn + lines"),
+    "A14 a RESENT line above the disclaimer": ("    return lines[:top] + [f\"RESENT ({'; '.join(notes)})\"[:RESENT_MAX]] + lines[top:] + ",
+                                               "    return [f\"RESENT ({'; '.join(notes)})\"[:RESENT_MAX]] + lines + "),
 }
-
 
 def main():
     for d in ("quantum", "tests"):
