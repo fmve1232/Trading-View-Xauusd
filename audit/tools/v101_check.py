@@ -27,9 +27,11 @@ def report(ok, msg):
     print(f"  {'PASS' if ok else 'FAIL'}  {msg}")
 
 
-cur = open(V, encoding="utf-8").read()
+cur = subprocess.run(["git", "show", "05c2c469a:" + V], capture_output=True, text=True, check=True).stdout   # v101 build (v102 refreshed typed records)
 v100 = subprocess.run(["git", "show", "4e1da3cab:" + V], capture_output=True, text=True, check=True).stdout
-report(F.fix(v100) == cur and F.unfix(cur) == v100, "1 Visuals == fix_v101.fix(v100 @ 4e1da3cab) byte for byte, and unfix(Visuals) == v100")
+live = open(V, encoding="utf-8").read()
+report(F.fix(v100) == cur and F.unfix(cur) == v100 and all(f"{b[2]}() =>" in live for b in F.BLOCKS),
+       "1 Visuals @ v101 (05c2c469a) == fix_v101.fix(v100 @ 4e1da3cab) byte for byte, unfix() == v100; the current file still carries the 10 wrappers")
 
 names = [b[2] for b in F.BLOCKS]
 # an independent reconstruction (not fix_v101.unfix): drop each wrapper's four lines, de-indent its body by exactly four

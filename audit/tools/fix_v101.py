@@ -87,7 +87,8 @@ def fix(src):
 def unfix(src):
     """the exact inverse: the v100 text back (v101_check.py proves fix(unfix(x)) == x and unfix(fix(v100)) == v100)"""
     L = src.split("\n")
-    L[L.index(STAMP_NEW)] = STAMP_OLD
+    if STAMP_NEW in L:                     # a later build has its own stamp: left as it is
+        L[L.index(STAMP_NEW)] = STAMP_OLD
     for _, _, name in BLOCKS:
         a = L.index(f"{name}() =>")
         assert L[a - 1] == HEAD

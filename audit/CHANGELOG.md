@@ -3662,3 +3662,34 @@ file passes it (Diagnostics 30,548, Brief 30,349, Master 27,900). `panel_check` 
 **Visible on the chart:** Visuals loads again: panel, ticker, docks, cards, tags and structure labels as in v99 / v100.
 
 **Not run:** the TradingView compile of v101 (the operator's next paste).
+
+# v102 — typed forward records refreshed after the website's web.8 restart (2026-11-14)
+
+Operator: "Do we need to update our files?" — yes. The website moved to engine **web.8** (Amendment 15, 2026-11-03
+23:47 UTC: a 30m timeframe added; the 5m–4h engine output is identical, so no Pine engine change), and every forward test
+restarted. The site now judges each H4 playbook on web.8's record OR web.7's archived one; the Brief and Visuals still
+typed web.6's records (two engines back). `brief_trace` 7 and `v86_check` 7 both failed on it (the v98 repair worked).
+
+**Records typed (the ledger as of 2026-11-14 00:55 UTC, web.8 live):**
+
+| Record | N | mean R | t | Site verdict |
+|---|---:|---:|---:|---|
+| H4 5m | 334 | −0.167 | −3.54 | **LOSING** (its own live record) |
+| H4 15m (deciding) | 95 | −0.015 | −0.16 | not losing |
+| H4 1h | 29 | +0.116 | +0.59 | not losing |
+| H4 4h | 13 | −0.030 | −0.13 | not losing |
+| H3 1H | 0 | — | — | no trade yet |
+
+The Brief's verdicts were the same before and after (5m losing, the rest not); the numbers, the "as of" and Visuals'
+banner were stale. On a 30m chart the Brief has no typed H4 record (no input for 30m; the Brief has no token room for
+one) and shows "no record typed in"; the site's 30m H4 record (N 54, t +0.87) is not losing, so the verdict agrees.
+
+**Checkers:** the current freeze key grows with every ledger update, so `brief_trace` 7 and `v86_check` 7 read it AS OF
+the time the typed string states; an all-zero typed record matches an empty one (H3 1H). `fix_v101.unfix()` leaves a
+later stamp alone; `v101_check` 1 is anchored to the v101 commit. Every checker passes; `pine_web_parity` passes
+against web.8 (@ 30a3da10d).
+
+**Visible on the chart:** the Brief's PLAYBOOK line reads "H4 record 5m: N 334 t -3.54 LOSING (web.8 live, to
+2026-11-14 00:55 UTC)"; Visuals' banner: H4 · 15m N 95, H3 · 1H N 0, the new notes. Nothing else changes.
+
+**Not run:** the TradingView compile of v101 / v102; `level_check` and `tf_check` (no engine or session code changed).

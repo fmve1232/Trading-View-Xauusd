@@ -382,8 +382,15 @@ def gshow(path):
                                      check=True).stdout)
 
 
-def rec_of(rows, key):
-    r_ = [t['r'] for t in rows if isinstance(t, dict) and not t.get('open') and t.get('freeze_key') == key]
+# v102: the current key's record grows with every ledger update, so it is read AS OF the time the Brief's typed
+# records state ("... to YYYY-MM-DD HH:MM UTC"); an archived key is closed and read whole
+_asm = re.search(r'brH4Asof = input\.string\("[^"]*?(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}) UTC"', "\n".join(SRC))
+ASOF_CUT = f"{_asm.group(1)}T{_asm.group(2)}:59.999999" if _asm else "9999"
+
+
+def rec_of(rows, key, cut="9999"):
+    r_ = [t['r'] for t in rows if isinstance(t, dict) and not t.get('open') and t.get('freeze_key') == key
+          and t.get('recorded_utc', '') <= cut]
     if len(r_) < 2:
         return (len(r_), r_[0] if r_ else 0.0, 0.0)
     mu = sum(r_) / len(r_)
@@ -403,7 +410,7 @@ for k, f in (('5', '5m_h4'), ('15', '15m_h4'), ('60', '1h_h4'), ('240', '4h_h4')
     dM = float(re.search(rf'brH4M{k} = input\.float\(([-\d.]+),', "\n".join(SRC)).group(1))
     dS = float(re.search(rf'brH4S{k} = input\.float\(([-\d.]+),', "\n".join(SRC)).group(1))
     try:
-        cur = rec_of(gshow(f'holdout/{f}.json'), cur_key)
+        cur = rec_of(gshow(f'holdout/{f}.json'), cur_key, ASOF_CUT)
         try:
             prv = rec_of(gshow(f'holdout/archive/{f}.json'), prev_key) if prev_key else None
         except subprocess.CalledProcessError:

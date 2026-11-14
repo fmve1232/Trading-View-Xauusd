@@ -384,6 +384,10 @@ for _ in range(1500):
 # losing one (N >= 50, t <= -2) if either is losing. Unreachable = NOT RUN and FAILS the line; nothing is swallowed.
 
 
+_lgm = re.search(r'lgAsof = input\.string\("[^"]*?(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}) UTC"', V)
+LG_CUT = f"{_lgm.group(1)}T{_lgm.group(2)}:59.999999" if _lgm else "9999"   # v102: the current key read AS OF the typed time
+
+
 def ledger_recs(f, arm):
     def gs(path):
         return json.loads(subprocess.run(["git", "show", f"origin/forward-ledger:{path}"], capture_output=True, text=True,
@@ -394,7 +398,8 @@ def ledger_recs(f, arm):
                           ("archived", f"holdout/archive/{f}.json", ((man.get("history") or [{}])[-1]).get("freeze_key"))):
         if not key:
             continue
-        r_ = [t["r"] for t in gs(path) if isinstance(t, dict) and not t.get("open") and t.get("freeze_key") == key]
+        r_ = [t["r"] for t in gs(path) if isinstance(t, dict) and not t.get("open") and t.get("freeze_key") == key
+              and (nm == "archived" or t.get("recorded_utc", "") <= LG_CUT)]
         if len(r_) < 2:
             out.append((nm, len(r_), sum(x > 0 for x in r_), None, None, None))
             continue
@@ -437,7 +442,8 @@ for pfx, f in (("lg", "15m_h4"), ("lg2", "1h_h3")):
         led_ok = False
         ledger.append(f"{f}: NOT RUN (forward-ledger branch not reachable) -> FAIL")
         continue
-    match = [r for r in recs if r[3] is not None and (r[1], r[2]) == d_[:2] and abs(r[3] - d_[2]) < 5e-5
+    match = [r for r in recs if r[1] == 0 and tuple(d_) == (0, 0, 0.0, 0.0, 0.0)] + \
+        [r for r in recs if r[3] is not None and (r[1], r[2]) == d_[:2] and abs(r[3] - d_[2]) < 5e-5
              and abs(r[4] - d_[3]) < 5e-5 and r[5] is not None and abs(r[5] - d_[4]) < 5e-5]
     any_l = any(rec_losing(r[1], r[3], r[4]) for r in recs)
     ok_ = bool(match) and (not any_l or rec_losing(d_[0], d_[2], d_[3]))
