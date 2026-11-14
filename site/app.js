@@ -919,14 +919,29 @@ function rrEntry(x, ov, through, price) {
   const v = (Math.abs(x.tp1 - x.trigger) / D - ov) / (1 + ov);
   return { v, how: `from a typical entry (the close lands a median ${f(ov, 2)} stop distances past the trigger)` };
 }
+// IA-04 (audit 2026-11-14): the engine's levels (structure / ATR stop, liquidity targets; the engine's EV gate is computed
+// on them) are not the plan the phone sends (fixed dollars, index.json -> alerts.plans.cfg). Wherever levels are shown,
+// the engine's are named "engine" and the phone's plan is shown beside them.
+function myPlanPx(dir, entry) {
+  const c = S.index && S.index.alerts && S.index.alerts.plans && S.index.alerts.plans.cfg;
+  if (!c || !isNum(entry) || !(c.lot > 0) || !(c.sl_usd > 0) || !(c.tp_usd > 0)) return null;
+  const oz = c.lot * 100, d = dir < 0 ? -1 : 1;
+  return { sl: entry - d * c.sl_usd / oz, tp1: entry + d * c.tp_usd / oz, tp2: c.tp2_usd > c.tp_usd ? entry + d * c.tp2_usd / oz : null, lot: c.lot };
+}
+function myPlanHtml(dir, entry, lead) {
+  const m = myPlanPx(dir, entry);
+  return m ? `<div class="pbx myplan"><b>${lead}</b> stop ${px(m.sl)} · TP1 ${px(m.tp1)}${isNum(m.tp2) ? ` · TP2 ${px(m.tp2)}` : ""} ` +
+    `<span class="dim">(${f(m.lot, 2)} lot, fixed $ from the entry; the engine levels are a reference, not your plan)</span></div>` : "";
+}
 function pbLine(x, tf, primary, ov) {
   if (!x) return "";
   const s = x.dir < 0, through = isNum(x.dist) && (s ? x.dist > 0 : x.dist < 0);   // live price already beyond the trigger
   const re = rrEntry(x, ov, through, isNum(x.dist) ? x.trigger - x.dist : null);
   return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(lvl(x.tname))}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
-    `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span title="${esc(lvl(x.tp1n))}"><i>Target 1 · ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
-    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span title="Measured from the trigger level"><i>Reward:risk at trigger</i><b>${f(x.rr, 1)} : 1</b></span>${re ? `<span title="${esc(re.how)}"><i>From entry</i><b class="${re.v < 1 ? "warn" : ""}">${f(re.v, 1)} : 1</b></span>` : ""}<span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
-    (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") + `</div>`;
+    `<div class="pl"><span><i>Engine stop</i><b class="bear">${px(x.stop)}</b></span><span title="${esc(lvl(x.tp1n))}"><i>Engine target 1 · ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
+    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Engine target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span title="Measured from the trigger level"><i>Reward:risk at trigger</i><b>${f(x.rr, 1)} : 1</b></span>${re ? `<span title="${esc(re.how)}"><i>From entry</i><b class="${re.v < 1 ? "warn" : ""}">${f(re.v, 1)} : 1</b></span>` : ""}<span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
+    (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") +
+    myPlanHtml(x.dir, x.trigger, "Your plan if it fires (what the phone sends):") + `</div>`;
 }
 // IA-13 (audit 2026-11-14): position size = a FIXED risk % of the account (the viewer's choice, default the config's
 // risk_percent). Kelly needs a validated win rate and the engine's is not (43 live trades: p 62.5% on average, 34.9% won),
@@ -996,7 +1011,7 @@ function renderBrief() {
     <div class="bs">Model decision: <b>${esc(dec)}</b>. ${h4rec(D)}${pb && pb.lowSession ? ' <b class="warn">Thin trading hours now.</b>' : ""}</div></div>`
     : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
     <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
-    <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
+    <div class="pl"><span><i>Engine stop</i><b class="bear">${px(p.sl)}</b></span><span><i>Engine TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>Engine TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>Engine TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>${myPlanHtml(p.long ? 1 : -1, p.entry, "Your plan (what the phone sends):")}
     <div class="bs">Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")} · risk ${f(riskPctFixed(), 2)}% of the account (fixed)</div></div>`;
   el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="lpill" id="brief-live"></span><span class="bpx">${px(price)}</span>` +
     `<span class="dim">XAUUSD · ${esc(M.tf)} · analysis as of the candle that closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</span><span class="dim clk" id="brief-clock"></span></div>
@@ -1083,17 +1098,18 @@ function renderSide() {
     const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
     $("#plan").innerHTML = `<div class="noplan"><b>No model signal right now</b> (decision: ${esc(dec)}). If-then plan from the current levels:</div>` +
       (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir, D.h4 && D.h4.entry_overshoot ? D.h4.entry_overshoot.median : null)).join("") : "") +
-      `<p class="note">Act only when a ${esc(M.tf)} candle closes beyond the trigger. The stop sits ${pb ? f(pb.stopD, 2) : "—"} beyond it (the model's volatility-based stop); targets are the next liquidity levels at least one stop distance further. ${h4rec(D)}</p>`;
+      `<p class="note">Act only when a ${esc(M.tf)} candle closes beyond the trigger. The engine's stop sits ${pb ? f(pb.stopD, 2) : "—"} beyond it (the model's volatility-based stop) and its targets are the next liquidity levels at least one stop distance further: <b>reference levels; the phone sends your fixed plan (shown on each line), and the engine's EV check is computed on the engine levels, not on your plan</b>. ${h4rec(D)}</p>`;
   } else {
   $("#plan").innerHTML = `
     <div class="plan-grid">
       <div class="cell"><div class="k">Entry</div><div class="v">${px(p.entry)}</div></div>
-      <div class="cell sl"><div class="k">Stop · ${esc(p.sl_basis)}</div><div class="v">${px(p.sl)}</div></div>
+      <div class="cell sl"><div class="k">Engine stop · ${esc(p.sl_basis)}</div><div class="v">${px(p.sl)}</div></div>
       <div class="cell"><div class="k">Risk</div><div class="v">${f(p.dist, 2)}</div></div>
-      <div class="cell tp"><div class="k">TP1 · ${esc(p.tp_basis[0])}</div><div class="v">${px(p.tp1)}</div></div>
-      <div class="cell tp"><div class="k">TP2 · ${esc(p.tp_basis[1])}</div><div class="v">${px(p.tp2)}</div></div>
-      <div class="cell tp"><div class="k">TP3 · ${esc(p.tp_basis[2])}</div><div class="v">${px(p.tp3)}</div></div>
+      <div class="cell tp"><div class="k">Engine TP1 · ${esc(p.tp_basis[0])}</div><div class="v">${px(p.tp1)}</div></div>
+      <div class="cell tp"><div class="k">Engine TP2 · ${esc(p.tp_basis[1])}</div><div class="v">${px(p.tp2)}</div></div>
+      <div class="cell tp"><div class="k">Engine TP3 · ${esc(p.tp_basis[2])}</div><div class="v">${px(p.tp3)}</div></div>
     </div>
+    ${myPlanHtml(p.long ? 1 : -1, p.entry, "Your plan (what the phone sends):")}
     ${kv([["R multiples", `1:${f(p.rr1, 1)} / 1:${f(p.rr2, 1)} / 1:${f(p.rr3, 1)}`],
       ["Race EV (TP1 vs SL)", isNum(p.ev) ? `<span class="${p.ev >= 0 ? "bull" : "bear"}">${fs(p.ev, 2)} R</span> <span class="dim">n${f(p.race_n, 0)}</span>` : "—"],
       [`Touch within ${p.horizon_bars} bars`, touch]])}
