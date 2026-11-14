@@ -51,6 +51,15 @@ LIQUIDITY (operator, 2026-11-03), once per pool per trading day (ALERT_LIQUIDITY
   BREAK  a closed bar beyond a previous day / week high or low it had not closed beyond the bar before.
 Information, not trade signals (sweeps and breaks did not beat break-even on 2020-2022 data, research B2 / B3). They
 replace the per-bar SWEEP tags of the structure line, which fired on every bar near the same pool.
+
+DELIVERY INTEGRITY (P-0, operator 2026-11-14, after plan #12's opening alert was lost on 13 Nov): every phone message
+carries a tag (ntfy Tags "xq-<key>", the key derived from its events), is retried once after a retryable failure
+(ntfy's cache is checked first, so a message that did arrive is not sent twice; a resend says RESENT), is recorded per
+attempt with its full text (<store>/notifications/<YYYY-MM-DD>.jsonl, copied to the forward ledger) and ends
+DELIVERY_UNCONFIRMED when a server accepted it: nothing confirms the phone showed it. When a plan's opening alert
+failed on every channel, every later message of that plan (REPEAT, TP / SL follow-up) repeats the plan's own levels and
+says the original was not delivered, and the next accepted message opens with a DELIVERY WARNING. Plans, levels,
+results and records are unchanged by any of this. DELIVERY_RETRY=0 turns the retry and the cache checks off.
 """
 from __future__ import annotations
 
@@ -58,9 +67,12 @@ import hashlib
 import json
 import math
 import os
+import sys
+import time
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+from .data.sources import redact as _src_redact
 from .data.sources import requests
 
 STATE = "alerts_state.json"
@@ -442,13 +454,20 @@ def turn_lines(state: dict, payloads: dict, tfs: list[str], liq_log: list[dict],
 
 
 def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: dict | None = None,
-             signals_only: bool = False) -> list[str]:
+             signals_only: bool = False, refs: list | None = None) -> list[str]:
     """Alert lines for bars closed after since_t. `now` ({'t' send time, 'px', 't_px', 'live'}) adds the MT5 and
     timing lines to each SIGNAL; `ctx` ({'repeats': {bar t: plan}, 'breaks': today's BREAKs}) the REPEAT and CONTEXT
-    lines (part A, 2026-11-05). signals_only: the SIGNAL alerts alone (the phone in sixty mode)."""
+    lines (part A, 2026-11-05). signals_only: the SIGNAL alerts alone (the phone in sixty mode). refs (P-0, delivery
+    only): when given, receives (line index, kind, marker) for every line a SIGNAL produced, kind HEAD (its headline),
+    REPEAT (its REPEAT line), BODY (the rest) or STALE (the NOT ACTIONABLE summary line); the lines are unchanged."""
     tf = payload["meta"]["tf"]
     off = float(os.environ.get("MT5_PRICE_OFFSET", "0") or 0)
-    out, stale, stale_at = [], [], None
+    out, stale, stale_at, stale_ms = [], [], None, []
+
+    def mark(i0: int, m: dict, repeat: bool = False) -> None:
+        if refs is not None:
+            refs.extend((i, "HEAD" if i == i0 else "REPEAT" if repeat and i == len(out) - 1 else "BODY", m)
+                        for i in range(i0, len(out)))
     for m in payload["markers"]:
         if since_t is not None and m["t"] <= since_t:
             continue
@@ -458,7 +477,9 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             if fz and fz["state"] == "NOT ACTIONABLE":
                 stale_at = len(out) if stale_at is None else stale_at
                 stale.append(stale_item(d, f"{tf} signal", int(m["t"]) + TF_SEC.get(tf, 0), m["px"], fz, off))
+                stale_ms.append(m)
                 continue
+            i0 = len(out)
             out.append(f"XAUUSD {tf} {d} (confirmed close) | entry {_fmt(m['px'], off)} SL {_fmt(m['sl'], off)} "
                        f"TP1 {_fmt(m['tp1'], off)} TP2 {_fmt(m['tp2'], off)} TP3 {_fmt(m['tp3'], off)} | TQ {m['tq']}")
             if fz and fz["state"] == "DELAYED":
@@ -466,6 +487,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
             if rp is not None:
                 out.append(repeat_line(m, tf, rp, off, quiet=rp.get("id") in ((ctx or {}).get("quiet") or ())))
+                mark(i0, m, repeat=True)
                 continue
             pl = plan_cfg()
             late, timing = timing_lines(alert_timing(m, tf, now, pl), off)
@@ -482,6 +504,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
                 out.append(cl)
             if sixty() and tf in SIGNAL_RECORD:
                 out.append(SIGNAL_RECORD[tf])
+            mark(i0, m)
         elif signals_only:
             continue
         elif m["type"] == "TRACK_EXIT":
@@ -490,6 +513,8 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             out.append(f"XAUUSD {tf} RISK LOCK engaged -- new entries blocked")
     if stale:
         out.insert(stale_at, stale_line("engine signal" + ("s" if len(stale) > 1 else ""), stale))
+        if refs is not None:                               # the summary line pushed every later line down by one
+            refs[:] = [(i + (i >= stale_at), k, m) for i, k, m in refs] + [(stale_at, "STALE", m) for m in stale_ms]
     if signals_only:
         return out
     if os.environ.get("ALERT_STRUCTURE", "1").strip() != "0" and not quality():
@@ -1527,22 +1552,30 @@ def plan_result(plan: dict, chart: dict) -> tuple[str, int] | None:
 
 
 def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float = 0.0,
-                 p5: dict | None = None, quiet: set | None = None) -> tuple[list[str], list[dict], list[dict]]:
+                 p5: dict | None = None, quiet: set | None = None,
+                 refs: list | None = None) -> tuple[list[str], list[dict], list[dict]]:
     """Follow-up alerts for this timeframe's open plans, the plans still open afterwards, and the ones that closed.
     p5: the same feed's 5m payload; plans are resolved on it when it covers their signal's close. quiet: ids of plans
-    whose alert was NOT ACTIONABLE (stale-signal protection): their lines start with RECORD_ONLY (website only)."""
+    whose alert was NOT ACTIONABLE (stale-signal protection): their lines start with RECORD_ONLY (website only).
+    refs (P-0, delivery only): when given, receives (line index, plan id, event key) for every line returned, the event
+    one of EXPIRED / TP1 / TP2 / BE / TP / SL / BOTH; lines, plans and results are unchanged."""
     lines, keep, closed = [], [], []
     for pl in plans:
         if pl["tf"] != tf:
             keep.append(pl)
             continue
         side = "BUY" if pl["dir"] == 1 else "SELL"
+
+        def ref(ev: str, pl=pl, side=side) -> None:        # the event the NEXT line carries
+            if refs is not None:
+                refs.append((len(lines), pl.get("id"), event_key(ev, tf, pl["t"], side)))
         head = f"XAUUSD {tf} YOUR PLAN {side} from {_fmt(pl['entry'], off)}"
         if quiet and pl.get("id") in quiet:
             head = RECORD_ONLY + head
         path = plan_path5(pl, p5) or plan_path(pl, chart)
         if path["result"] is None:
             if now_t - pl["t"] > PLAN_TRACK_SEC:
+                ref("EXPIRED")
                 lines.append(f"{head}: no TP or SL after 3 days on the site's prices -- check the trade in MT5 (tracking stopped)")
                 closed.append({**pl, **path, "result": "EXPIRED", "t_res": now_t})
             else:
@@ -1563,6 +1596,7 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
                      f"({hhmm} bar)")
                 if path["mfe"] - to_tp < FEED_MARGIN:
                     s += f" | only ${path['mfe'] - to_tp:.2f} past TP1 on the site's prices: confirm in MT5 (broker prices differ)"
+                ref("TP1")
                 lines.append(s)
                 pl = {**pl, "tp1_sent": True, "t_tp1": bt}
             ch2 = (p5 or {}).get("chart") if path.get("path") == "5m" else chart
@@ -1570,6 +1604,7 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
             banked = pl["tp_usd"] / 2
             if s2["result"] is None:
                 if now_t - pl["t"] > PLAN_TRACK_SEC:
+                    ref("EXPIRED")
                     lines.append(f"{head}: no TP2 or break-even after 3 days on the site's prices -- check MT5 (tracking "
                                  f"stopped); +${banked:,.0f} banked at TP1")
                     closed.append({**pl, **path, "tp2_result": "EXPIRED", "t_tp2": now_t})
@@ -1577,9 +1612,11 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
                     keep.append(pl)
                 continue
             if s2["result"] == "TP2":
+                ref("TP2")
                 lines.append(f"{head}: TP2 {_fmt(pl['tp2'], off)} HIT -- trade closed: +${banked + pl['tp2_usd'] / 2:,.0f} "
                              f"total ({clock(s2['t_res'])} bar)")
             else:
+                ref("BE")
                 lines.append(f"{head}: back at entry {_fmt(pl['entry'], off)} after TP1 -- the rest closed at break-even: "
                              f"+${banked:,.0f} total ({clock(s2['t_res'])} bar)")
             closed.append({**pl, **path, "tp2_result": s2["result"], "t_tp2": s2["t_res"]})
@@ -1590,6 +1627,7 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
             past = path["mfe"] - to_tp
             if past < FEED_MARGIN:
                 s += f" | only ${past:.2f} past TP on the site's prices: confirm in MT5 (broker prices differ)"
+            ref("TP")
             lines.append(s)
         elif what == "SL":
             s = f"{head}: SL {_fmt(pl['sl'], off)} HIT -${pl['sl_usd']:,.0f} -- trade closed at the stop ({hhmm} bar)"
@@ -1598,8 +1636,10 @@ def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float
                 s += f" | only ${past:.2f} past SL on the site's prices: confirm in MT5 (broker prices differ)"
             if short < FEED_MARGIN:
                 s += f" | price came within ${max(short, 0):.2f} of TP: check MT5, your TP may have filled"
+            ref("SL")
             lines.append(s)
         else:
+            ref("BOTH")
             lines.append(f"{head}: TP and SL both inside the {hhmm} bar -- order unknown, check MT5 (counted as SL)")
     return lines, keep, closed
 
@@ -1745,52 +1785,701 @@ def news_lines(news: dict | None, now_t: int, last_alerted: int | None) -> tuple
     return [], last_alerted
 
 
-DELIVERY = "alerts_delivery.json"     # every send attempt (no secret, no full text): proof of delivery after ntfy's cache
+# ---------------- P-0 delivery integrity (operator, 2026-11-14; docs/deploy/P0_NOTIFICATION_INTEGRITY_SPEC.md) ----------
+# How a phone message is sent, retried, de-duplicated, recorded and explained. Nothing here changes a signal, a plan, a
+# level, a result or a record: plans are created before, and independently of, any send.
+# States: SIGNAL_GENERATED (the event exists) -> SEND_ATTEMPTED (each HTTP request) -> SERVER_ACCEPTED (2xx on attempt
+# 1; or an earlier run's acceptance, from ntfy's cache or this store's own record) | SEND_FAILED (attempt 1 failed) ->
+# RETRY_SUCCEEDED (2xx on attempt 2; or ntfy's cache shows attempt 1 had arrived) | RETRY_FAILED. An accepted message
+# ends DELIVERY_UNCONFIRMED: a server holds it; the system has no acknowledgement that the phone showed it.
+DELIVERY = "alerts_delivery.json"     # every attempt (no secret, no full text): the website's window of the records
 DELIVERY_MAX = 1000
+NOTIFY_STATE = "alerts_notify.json"   # undelivered plan openings and pending delivery warnings (state, not a record)
+NOTIF_DIR = "notifications"           # <store>/notifications/<YYYY-MM-DD>.jsonl (the run's UTC day): every attempt WITH its
+                                      # full text (decision D1); one small file changes per run; the workflow merges them
+                                      # into the forward ledger (git history, never forced)
+SEND_TIMEOUT = (5, 10)                # connect, read (s); was one 15 s value
+RETRY_PAUSE_SEC = 5                   # before attempt 2 (and before the cache check that precedes it)
+CACHE_RETRY_SINCE = "15m"             # before attempt 2: did attempt 1 reach ntfy after all?
+CACHE_RUN_SINCE, CACHE_RUN_SEC = "6h", 6 * 3600   # once per run: what earlier runs already delivered (ntfy keeps 12 h)
+RETRY_HTTP = (429, 500, 502, 503, 504)
+PART_LIMIT = {"ntfy": (4096, True), "telegram": (4096, False), "discord": (2000, False)}   # each channel's hard limit
+RESENT_MAX, REF_MAX, MARK_MAX = 110, 22, 10   # the longest RESENT line, "ref xq-<key>-<n>" line and "(i/n) " mark: a
+                                              # body is split only if it could exceed the limit once marked as a resend
+DELIVERY_BUDGET_SEC = 120             # once a run has spent this long in requests and cache reads: no more retries or
+                                      # cache reads in that run (one attempt per message), so hanging channels cannot
+                                      # eat the job's 20-minute limit
+UNDELIVERED_KEEP_SEC = 3 * 86400      # an undelivered plan's entry is dropped this long after the plan closed
+PENDING_MAX = 50
+ACCEPTED = ("SERVER_ACCEPTED", "RETRY_SUCCEEDED")
+FINAL_OK = "DELIVERY_UNCONFIRMED"     # never "delivered": nothing confirms the phone
 _DELIVERIES: list[dict] = []
+_EVENTS: dict | None = None           # set by _say() just before each send(): stream, event keys, plan ids; cleared after
+_RUN: dict | None = None              # this run's delivery context (store, notify state, caches, channels down)
+_sleep = time.sleep                   # the retry pause (tests replace it)
 
 
-def _post(name: str, text: str, fn) -> tuple[bool, dict]:
-    """One channel: a channel counts as sent only on HTTP 2xx (before 2026-11-11 any answer counted)."""
-    rec = {"channel": name, "http": None, "id": None}
+def retry_on() -> bool:
+    """DELIVERY_RETRY=0 (repository variable) turns the retry and every cache / record check off without a revert."""
+    return os.environ.get("DELIVERY_RETRY", "1").strip() != "0"
+
+
+def _sha(text: str, n: int = 16) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()[:n]
+
+
+def event_key(kind: str, tf: str, bar, side) -> str:
+    """An event's idempotency key: deterministic and independent of the alert state (the same after a lost save)."""
+    sd = side if isinstance(side, str) else ("BUY" if side == 1 else "SELL")
+    return f"{kind}:{tf}:{int(bar)}:{sd}"
+
+
+def notif_key(events: list[str]) -> str:
+    """A message's key: the first 10 hex digits of SHA-256 over its sorted event keys (its ntfy tag is xq-<key>)."""
+    return _sha("\n".join(sorted(set(events))), 10)
+
+
+def _secret_values() -> list[str]:
+    vals = [os.environ.get(k, "").strip() for k in ("NTFY_TOPIC", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "DISCORD_WEBHOOK_URL")]
+    hook = vals[3]
+    if hook:                                               # an error can quote the webhook's path alone
+        path = hook.split("://", 1)[-1].partition("/")[2]
+        vals += ["/" + path, path.rsplit("/", 1)[-1]] if path else []
+    return sorted({v for v in vals if len(v) >= 4}, key=len, reverse=True)
+
+
+def _redact(text) -> str:
+    out = _src_redact(str(text))
+    for v in _secret_values():
+        out = out.replace(v, "***")
+    return out[:160]                                       # cut after the secrets are gone, never before
+
+
+def _channels_cfg() -> list[tuple]:
+    """The configured channels as (name, post(text, tag)); the values never leave this function."""
+    out = []
+    topic = os.environ.get("NTFY_TOPIC", "").strip()
+    if topic:
+        out.append(("ntfy", lambda text, tag: requests.post(f"https://ntfy.sh/{topic}", data=text.encode(), timeout=SEND_TIMEOUT,
+                                                           headers={"Title": "XAUUSD Quantum", "Tags": tag})))
+    tok, chat = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip(), os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+    if tok and chat:
+        out.append(("telegram", lambda text, tag: requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
+                                                               json={"chat_id": chat, "text": text}, timeout=SEND_TIMEOUT)))
+    hook = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
+    if hook:
+        out.append(("discord", lambda text, tag: requests.post(hook, json={"content": text}, timeout=SEND_TIMEOUT)))
+    return out
+
+
+def _classify(e: BaseException) -> tuple[bool, bool]:
+    """(retryable, uncertain) for an exception; uncertain = the server may have received the request. Recorded only:
+    the policy does not depend on it (the cache check before attempt 2 decides)."""
+    rq = getattr(requests, "exceptions", None)
+    if rq is not None:
+        if isinstance(e, rq.ConnectTimeout):
+            return True, False                             # never connected
+        if isinstance(e, (rq.ReadTimeout, rq.ChunkedEncodingError)):
+            return True, True                              # the request was written; the answer was lost
+        if isinstance(e, rq.ConnectionError):
+            msg = str(e)
+            never = any(x in msg for x in ("NewConnectionError", "NameResolutionError", "Failed to resolve", "Connection refused",
+                                           "Name or service not known", "Temporary failure in name resolution"))
+            return True, not never
+        if isinstance(e, rq.Timeout):
+            return True, True
+        if isinstance(e, rq.RequestException):
+            return False, False                            # bad URL / schema / header: configuration, not the network
+    if isinstance(e, ConnectionRefusedError):
+        return True, False
+    if isinstance(e, OSError):
+        return True, True
+    return False, False
+
+
+def _attempt(name: str, post, text: str, tag: str) -> dict:
+    """One HTTP request on one channel. ok only on HTTP 2xx (before 2026-11-11 any answer counted)."""
+    t0 = time.time()
+    rec = {"channel": name, "http": None, "id": None, "t_start": int(t0 * 1000), "exception": None, "request": True}
     try:
-        r = fn()
-        rec["http"] = getattr(r, "status_code", None)
-        if name == "ntfy" and rec["http"] is not None and 200 <= rec["http"] < 300:
+        r = post(text, tag)
+        code = getattr(r, "status_code", None)
+        rec["http"] = code if isinstance(code, int) else None
+        ok = rec["http"] is not None and 200 <= rec["http"] < 300
+        if ok and name == "ntfy":
             try:
                 rec["id"] = (r.json() or {}).get("id")
             except Exception:  # noqa: BLE001  (an id is a nicety; the status decides)
                 rec["id"] = None
+        rec["retryable"], rec["uncertain"] = rec["http"] in RETRY_HTTP, rec["http"] in (502, 504)
     except Exception as e:  # noqa: BLE001  (a channel failure must never stop the alerts)
-        rec["error"] = type(e).__name__
-    return rec["http"] is not None and 200 <= rec["http"] < 300, rec
+        ok = False
+        rec["retryable"], rec["uncertain"] = _classify(e)
+        rec["error"] = rec["exception"] = type(e).__name__
+        rec["error_detail"] = _redact(e)
+    rec["t_end"], rec["ok"] = int(time.time() * 1000), ok
+    return rec
+
+
+def _why(rec: dict) -> str:
+    return rec.get("exception") or f"HTTP {rec.get('http')}"
+
+
+def _poll_tags(since: str) -> tuple[set | None, str | None]:
+    """The tags of the messages ntfy's cache holds for the topic (the request outage_notice.py makes); (None, why)
+    when it cannot be read -- the caller then sends (fails open: a lost alert costs more than a marked duplicate)."""
+    topic = os.environ.get("NTFY_TOPIC", "").strip()
+    if not topic or requests is None:
+        return None, "no ntfy topic"
+    try:
+        r = requests.get(f"https://ntfy.sh/{topic}/json?poll=1&since={since}", timeout=SEND_TIMEOUT)
+        if getattr(r, "status_code", None) != 200:
+            return None, f"HTTP {getattr(r, 'status_code', None)}"
+        tags = set()
+        for ln in (getattr(r, "text", "") or "").splitlines():
+            try:
+                m = json.loads(ln)
+            except ValueError:
+                continue
+            if isinstance(m, dict) and m.get("event") == "message":
+                tags.update(t for t in (m.get("tags") or []) if isinstance(t, str))
+        return tags, None
+    except Exception as e:  # noqa: BLE001  (an unreadable cache never stops a send)
+        return None, type(e).__name__
+
+
+def _new_ctx(store_dir: str | None, t_run: int, nstate: dict | None = None) -> dict:
+    return {"store": store_dir, "t_run": int(t_run), "state": nstate or {"open": {}, "pending_warnings": []},
+            "polled": False, "seen": None, "seen_why": None, "local": None, "down": set(), "reconciled": False, "spent": 0.0}
+
+
+def _over_budget(R: dict) -> bool:
+    return R.get("spent", 0.0) >= DELIVERY_BUDGET_SEC
+
+
+def _timed(R: dict, fn, *a):
+    t0 = time.monotonic()
+    try:
+        return fn(*a)
+    finally:
+        R["spent"] = R.get("spent", 0.0) + time.monotonic() - t0
+
+
+def _ctx() -> dict:
+    """This run's delivery context; a send outside run() (a test, a tool) gets a throwaway one."""
+    return _RUN if _RUN is not None else _new_ctx(None, int(time.time()))
+
+
+def _run_cache(R: dict) -> set | None:
+    """ntfy's cache over the last 6 h, read once per run (before this run's first ntfy message)."""
+    if not R["polled"]:
+        R["polled"] = True
+        R["seen"], R["seen_why"] = (None, "delivery time budget used up") if _over_budget(R) else _timed(R, _poll_tags, CACHE_RUN_SINCE)
+    return R["seen"]
+
+
+def _day(t: int) -> str:
+    return datetime.fromtimestamp(int(t), timezone.utc).strftime("%Y-%m-%d")
+
+
+def _day_files(store_dir: str, t: int) -> list[str]:
+    """The record files that can hold the last 6 h of runs (today's and, before 06:00 UTC, yesterday's)."""
+    d = os.path.join(store_dir, NOTIF_DIR)
+    return [os.path.join(d, f"{n}.jsonl") for n in sorted({_day(t), _day(t - CACHE_RUN_SEC)})]
+
+
+def _local(R: dict) -> dict:
+    """This store's own record of what EARLIER runs (last 6 h) did with each (tag, channel): accepted, or failed
+    and why. It survives a crash before the alert state is written (each message's records are appended at once)."""
+    if R["local"] is None:
+        R["local"] = {}
+        if R["store"]:
+            for path in _day_files(R["store"], R["t_run"]):
+                try:
+                    with open(path) as f:
+                        rows = [json.loads(x) for x in f if x.strip()]
+                except (OSError, ValueError):
+                    continue
+                for r in rows:
+                    tr = r.get("t_run")
+                    if not isinstance(tr, int) or not R["t_run"] - CACHE_RUN_SEC <= tr < R["t_run"]:
+                        continue                           # another run's records only, from the last 6 h
+                    if not r.get("request") and r.get("state") not in ACCEPTED:
+                        continue                           # "no channel configured": nothing was tried
+                    k = (r.get("tag"), r.get("channel"))
+                    if r.get("state") in ACCEPTED:
+                        R["local"][k] = {"accepted": True}
+                    elif not R["local"].get(k, {}).get("accepted"):
+                        R["local"][k] = {"accepted": False, "why": _why(r)}
+    return R["local"]
+
+
+def _prior(R: dict, name: str, tag: str) -> dict | None:
+    """What an earlier run already did with this exact message on this channel (None = nothing known, or checks off)."""
+    if not retry_on():
+        return None
+    loc = _local(R).get((tag, name))
+    if loc and loc["accepted"]:
+        return {"accepted": True, "where": "record"}
+    if name == "ntfy":
+        seen = _run_cache(R)
+        if seen is not None and tag in seen:
+            return {"accepted": True, "where": "cache"}
+    return {"accepted": False, "why": loc["why"]} if loc else None
+
+
+def _marked(lines: list[str], notes: list[str], name: str, tag: str) -> list[str]:
+    """A resend: RESENT first, the same tag (ntfy) or a ref line (Telegram / Discord, which carry no tag)."""
+    if not notes:
+        return lines
+    return [f"RESENT ({'; '.join(notes)})"[:RESENT_MAX]] + lines + ([] if name == "ntfy" else [f"ref {tag}"[:REF_MAX]])
+
+
+def _body(text: str) -> dict:
+    return {"text": text, "body_sha16": _sha(text), "bytes": len(text.encode()), "body_lines": text.count("\n") + 1}
+
+
+def _deliver(R: dict, name: str, post, lines: list[str], tag: str) -> tuple[str, list[dict], list[str]]:
+    """One message part on one channel: attempt 1; then, when it failed with a retryable error (retry on, the channel
+    not already down this run), a 5 s pause, ntfy's cache check, and attempt 2. (channel state, records, trail)."""
+    trail = ["SIGNAL_GENERATED"]
+    pr = _prior(R, name, tag)
+    if pr and pr["accepted"]:
+        trail.append("SERVER_ACCEPTED")
+        rec = {"channel": name, "tag": tag, "attempt": 0, "http": None, "id": None, "exception": None, "ok": True,
+               "t_start": int(time.time() * 1000), "t_end": int(time.time() * 1000), "resent": False, "request": False,
+               "cache_check": "hit" if pr["where"] == "cache" else "none", "found_in": pr["where"],
+               "state": "SERVER_ACCEPTED", "note": "already accepted by an earlier run: not sent again"}
+        rec.update(_body("\n".join(lines)))
+        return "SERVER_ACCEPTED", [rec], trail
+    notes = [f"an earlier run's attempt failed: {pr['why']}"] if pr else []
+    text = "\n".join(_marked(lines, notes, name, tag))
+    trail.append("SEND_ATTEMPTED")
+    a1 = _timed(R, _attempt, name, post, text, tag)
+    a1.update(attempt=1, tag=tag, resent=bool(notes), cache_check="none", **_body(text))
+    if a1["ok"]:
+        a1["state"] = "SERVER_ACCEPTED"
+        trail.append("SERVER_ACCEPTED")
+        return "SERVER_ACCEPTED", [a1], trail
+    a1["state"] = "SEND_FAILED"
+    trail.append("SEND_FAILED")
+    skip = ("retry off (DELIVERY_RETRY=0)" if not retry_on() else "not retryable" if not a1["retryable"]
+            else "channel failed twice earlier in this run" if name in R["down"]
+            else "delivery time budget of this run used up" if _over_budget(R) else None)
+    if skip:
+        a1["no_retry"] = skip
+        return "SEND_FAILED", [a1], trail
+    _sleep(RETRY_PAUSE_SEC)
+    cache = "none"
+    if name == "ntfy":
+        t0 = time.time()
+        tags, why = _timed(R, _poll_tags, CACHE_RETRY_SINCE)
+        if tags is not None and tag in tags:               # attempt 1 had arrived: nothing is sent twice
+            trail.append("RETRY_SUCCEEDED")
+            a2 = {"channel": name, "tag": tag, "attempt": 2, "http": None, "id": None, "exception": None, "ok": True,
+                  "t_start": int(t0 * 1000), "t_end": int(time.time() * 1000), "resent": False, "cache_check": "hit",
+                  "request": False, "state": "RETRY_SUCCEEDED", "note": "attempt 1 had reached ntfy (found in its cache): not resent"}
+            a2.update(_body(text))
+            return "RETRY_SUCCEEDED", [a1, a2], trail
+        cache = "miss" if tags is not None else "unavailable"
+    text2 = "\n".join(_marked(lines, notes + [f"first attempt failed: {_why(a1)}"], name, tag))
+    trail.append("SEND_ATTEMPTED")
+    a2 = _timed(R, _attempt, name, post, text2, tag)
+    a2.update(attempt=2, tag=tag, resent=True, cache_check=cache, **_body(text2))
+    a2["state"] = "RETRY_SUCCEEDED" if a2["ok"] else "RETRY_FAILED"
+    trail.append(a2["state"])
+    if not a2["ok"]:
+        R["down"].add(name)                                # per-run budget: one attempt for its later messages
+    return a2["state"], [a1, a2], trail
+
+
+def split_parts(lines: list[str], channel: str) -> list[list[str]]:
+    """A message too long for the channel as parts marked (1/n) ... (n/n), in order: nothing is ever cut off (ntfy turns
+    a body over 4,096 bytes into a file attachment; Discord took 1,900 characters and silently dropped the rest). A
+    message is split only when it could pass the channel's hard limit (ntfy 4,096 bytes, Telegram 4,096 / Discord
+    2,000 characters) once a RESENT line (and on Telegram / Discord a ref line) is added, so a message that is shown in
+    full today stays one message. The warning and undelivered-plan lines come first, so they are in part 1."""
+    lim, in_bytes = PART_LIMIT.get(channel, (4096, True))
+    mark = RESENT_MAX + 1 + (0 if channel == "ntfy" else REF_MAX + 1)
+
+    def size(x: str) -> int:
+        return len(x.encode()) if in_bytes else len(x)
+    if size("\n".join(lines)) <= lim - mark:
+        return [list(lines)]
+    room = lim - mark - MARK_MAX
+    pieces = []
+    for ln in lines:                                       # a single line longer than a part is split, not cut
+        while size(ln) > room:
+            k = room
+            while k > 1 and size(ln[:k]) > room:
+                k -= 1
+            pieces.append(ln[:k])
+            ln = ln[k:]
+        pieces.append(ln)
+    parts, cur, n = [], [], 0
+    for pc in pieces:
+        add = size(pc) + (1 if cur else 0)
+        if cur and n + add > room:
+            parts.append(cur)
+            cur, n, add = [], 0, size(pc)
+        cur.append(pc)
+        n += add
+    parts.append(cur)
+    return [[f"({i}/{len(parts)}) {p[0]}"] + p[1:] for i, p in enumerate(parts, 1)]
+
+
+def _hm(t: int, ref_t: int, date_always: bool = False) -> str:
+    d = datetime.fromtimestamp(int(t), timezone.utc)
+    same = d.date() == datetime.fromtimestamp(int(ref_t), timezone.utc).date()
+    return d.strftime("%H:%M UTC" if same and not date_always else "%d %b %H:%M UTC")
+
+
+def _warning_lines(R: dict, key: str | None = None) -> tuple[list[str], list[str]]:
+    """The DELIVERY WARNING that opens the next accepted message (any stream), and the ids it carries; never a
+    warning about the message being sent (key: a message regenerated after a crash)."""
+    pw = [w for w in (R["state"].get("pending_warnings") or []) if w.get("notif_key") != key]
+    if not pw:
+        return [], []
+    n = len(pw)
+    items = [f"{_hm(w['t'], R['t_run'], True)}, {w['desc']}, {w['attempts']} attempt{'' if w['attempts'] == 1 else 's'}, "
+             f"{w['why']}" for w in pw[-5:]]
+    more = f"; and {n - 5} earlier" if n > 5 else ""
+    plan = any(w.get("open_plan") for w in pw)
+    tail = (" Its levels follow where it matters." if n == 1 else " Their levels follow where it matters.") if plan else ""
+    return [f"DELIVERY WARNING: {n} alert{'s were' if n > 1 else ' was'} NOT delivered ({'; '.join(items)}{more}).{tail}"], \
+        [w["id"] for w in pw]
+
+
+def _actions_warning(msg: str) -> None:
+    """A GitHub Actions annotation (parsed from the pipeline's output) and a line in the run's summary."""
+    m = msg.replace("%", "%25").replace("\r", " ").replace("\n", " ")[:400]
+    print(f"::warning title=phone alert not delivered::{m}", flush=True)
+    p = os.environ.get("GITHUB_STEP_SUMMARY", "").strip()
+    if p:
+        try:
+            with open(p, "a") as f:
+                f.write(f"- phone alert not delivered: {m}\n")
+        except OSError:
+            pass
+
+
+def _record(R: dict, recs: list[dict]) -> None:
+    """Every attempt: to the run's buffer (alerts_delivery.json, without the text) and, with the full text, appended at
+    once to <store>/notifications/<YYYY-MM-DD>.jsonl (so a crash later in the run cannot lose it)."""
+    for r in recs:
+        _DELIVERIES.append({k: v for k, v in r.items() if k != "text"})
+    if not R["store"] or not recs:
+        return
+    try:
+        os.makedirs(os.path.join(R["store"], NOTIF_DIR), exist_ok=True)
+        by = {}
+        for r in recs:
+            by.setdefault(_day(r.get("t_run") or r["t"]), []).append(r)
+        for day, rs in by.items():
+            with open(os.path.join(R["store"], NOTIF_DIR, f"{day}.jsonl"), "a") as f:
+                f.write("".join(json.dumps(json_safe(r), sort_keys=True) + "\n" for r in rs))
+    except OSError as e:                                   # the buffer still has them; say so, never stop the alerts
+        _actions_warning(f"notification record not written ({type(e).__name__})")
+
+
+def _arrived(seen: set, key: str, parts: int) -> bool:
+    if parts <= 1:
+        return f"xq-{key}" in seen
+    return all(f"xq-{key}-{i}" in seen for i in range(1, parts + 1))
+
+
+def _reconcile(R: dict) -> None:
+    """Once per run, before its first message: an earlier failure whose tag ntfy's cache now holds DID arrive (an
+    uncertain error: e.g. a timeout after the server had it). Its undelivered-plan entry and its pending warning are
+    removed, so no message claims it was not delivered; the finding is recorded."""
+    if R["reconciled"]:
+        return
+    R["reconciled"] = True
+    ns = R["state"]
+    if not retry_on() or not (ns["open"] or ns["pending_warnings"]) or not os.environ.get("NTFY_TOPIC", "").strip():
+        return
+    seen = _run_cache(R)
+    if not seen:
+        return
+    found = {}
+    for pid, u in list(ns["open"].items()):
+        if _arrived(seen, u["notif_key"], u.get("parts", 1)):
+            found[u["notif_key"]] = u.get("stream", "plan")
+            del ns["open"][pid]
+    keep = []
+    for w in ns["pending_warnings"]:
+        if _arrived(seen, w["notif_key"], w.get("parts", 1)):
+            found.setdefault(w["notif_key"], w.get("stream", "?"))
+        else:
+            keep.append(w)
+    ns["pending_warnings"] = keep
+    now = int(time.time())
+    _record(R, [{"t": now, "t_run": R["t_run"], "channel": "ntfy", "tag": f"xq-{k}", "notif_key": k, "stream": st, "attempt": 0,
+                 "http": None, "id": None, "exception": None, "ok": True, "t_start": now * 1000, "t_end": now * 1000,
+                 "request": False, "cache_check": "hit", "state": "SERVER_ACCEPTED", "final_state": FINAL_OK, "rid": f"xq-{k}:reconcile:{R['t_run']}",
+                 "note": "recorded as failed by an earlier run, but found in ntfy's cache: it had arrived"}
+                for k, st in sorted(found.items())])
 
 
 def send(lines: list[str]) -> list[str]:
-    sent = []
-    if not lines or requests is None:
-        return sent
-    text = "\n".join(lines)
-    meta = {"t": int(datetime.now(timezone.utc).timestamp()), "sha16": hashlib.sha256(text.encode()).hexdigest()[:16],
-            "lines": len(lines), "first": lines[0][:80]}
-    topic = os.environ.get("NTFY_TOPIC", "").strip()
-    chans = []
-    if topic:
-        chans.append(("ntfy", lambda: requests.post(f"https://ntfy.sh/{topic}", data=text.encode(), timeout=15,
-                                                    headers={"Title": "XAUUSD Quantum"})))
-    tok, chat = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip(), os.environ.get("TELEGRAM_CHAT_ID", "").strip()
-    if tok and chat:
-        chans.append(("telegram", lambda: requests.post(f"https://api.telegram.org/bot{tok}/sendMessage",
-                                                        json={"chat_id": chat, "text": text}, timeout=15)))
-    hook = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
-    if hook:
-        chans.append(("discord", lambda: requests.post(hook, json={"content": text[:1900]}, timeout=15)))
-    for name, fn in chans:
-        ok, rec = _post(name, text, fn)
-        if ok:
-            sent.append(name)
-        _DELIVERIES.append({**meta, **rec, "ok": ok})
+    """Send one phone message on every configured channel; returns the channels whose server accepted it (accepted:
+    DELIVERY_UNCONFIRMED -- not proof that the phone showed it). The events it carries come from _EVENTS (set by
+    _say() in run()), which is cleared whatever happens, so a later send never inherits them."""
+    global _EVENTS
+    ctx, _EVENTS = (_EVENTS or {}), None
+    try:
+        return _send(list(lines or []), ctx)
+    finally:
+        _EVENTS = None
+
+
+def _send(lines: list[str], ctx: dict) -> list[str]:
+    if not lines:
+        return []
+    R = _ctx()
+    stream = ctx.get("stream") or "unlabelled"
+    base = "\n".join(lines)
+    events = sorted(set(ctx.get("events") or [f"CONTENT:{stream}:{R['t_run']}:{_sha(base, 10)}"]))   # unique to this run
+    key = notif_key(events)
+    _reconcile(R)
+    warn, wids = _warning_lines(R, key)
+    body = warn + lines
+    meta = {"t": int(time.time()), "t_run": R["t_run"], "sha16": _sha(base), "lines": len(lines), "first": lines[0][:80],
+            "notif_key": key, "event_keys": events, "plan_ids": list(ctx.get("plan_ids") or []), "stream": stream,
+            "warnings_carried": len(wids), "retry_on": retry_on()}
+    chans = _channels_cfg() if requests is not None else []
+    recs, states, parts_n = [], {}, 1
+    if not chans:
+        why = "no channel configured" if requests is not None else "requests not installed"
+        r = {"channel": None, "tag": f"xq-{key}", "attempt": 0, "http": None, "id": None, "ok": False, "exception": why,
+             "state": "SEND_FAILED", "trail": ["SIGNAL_GENERATED", "SEND_FAILED"], "cache_check": "none", "resent": False,
+             "request": False, "t_start": None, "t_end": None, "part": "1/1"}
+        r.update(_body("\n".join(body)))
+        recs.append(r)
+        final = "SEND_FAILED"
+        _actions_warning(f"{stream}: nothing sent ({why})")
+    else:
+        for name, post in chans:
+            parts = split_parts(body, name)
+            parts_n = max(parts_n, len(parts)) if name == "ntfy" else parts_n
+            got = []
+            for i, part in enumerate(parts, 1):
+                tag = f"xq-{key}" if len(parts) == 1 else f"xq-{key}-{i}"
+                st, rr, tr = _deliver(R, name, post, part, tag)
+                tr = tr + ([FINAL_OK] if st in ACCEPTED else [])
+                for r in rr:
+                    r.update(part=f"{i}/{len(parts)}", trail=tr)
+                recs += rr
+                got.append(st)
+            states[name] = FINAL_OK if all(x in ACCEPTED for x in got) else "RETRY_FAILED" if "RETRY_FAILED" in got else "SEND_FAILED"
+        final = FINAL_OK if FINAL_OK in states.values() else "RETRY_FAILED" if "RETRY_FAILED" in states.values() else "SEND_FAILED"
+    for r in recs:
+        r.update(meta)
+        r["final_state"], r["channel_final"] = final, states.get(r["channel"], final)
+        r["rid"] = f"{r['tag']}:{r['channel']}:{r['attempt']}:{r.get('t_start') or r['t']}:{R['t_run']}"
+    _record(R, recs)
+    fails = [r for r in recs if not r["ok"]]
+    http_n = max([sum(1 for r in recs if r["channel"] == c and r.get("request")) for c in states] or [0])   # requests made
+    why = _whys(fails)
+    ctx["outcome"] = {"notif_key": key, "final_state": final, "attempts": http_n, "why": why, "no_channel": not chans,
+                      "t": R["t_run"], "parts": parts_n, "channels": dict(states),
+                      "accepted_texts": [r["text"] for r in recs if r["ok"]]}   # this run's or an earlier run's acceptance
+    ns = R["state"]
+    shown = any(r["ok"] and r["attempt"] >= 1 and str(r.get("part", "")).startswith("1/") for r in recs)
+    if final == FINAL_OK:
+        gone = set(wids) if shown else set()               # a warning counts as shown only if part 1 went out THIS run
+        ns["pending_warnings"] = [w for w in ns["pending_warnings"] if w["id"] not in gone and w.get("notif_key") != key]
+        for c, st in states.items():
+            if st != FINAL_OK:
+                _actions_warning(f"{stream} on {c}: {st} ({_whys(fails, c)}{_hint(fails, c)}); accepted on "
+                                 f"{', '.join(x for x, y in states.items() if y == FINAL_OK)}")
+    elif chans:                                            # no channel at all: Actions warning only (no phone to tell)
+        partly = any(r["ok"] for r in recs)
+        ns["pending_warnings"] = (ns["pending_warnings"] + [{
+            "id": f"{key}:{R['t_run']}", "t": R["t_run"], "stream": stream,
+            "desc": (ctx.get("desc") or stream) + (" (only partly delivered)" if partly else ""),
+            "attempts": ctx["outcome"]["attempts"], "why": why, "notif_key": key, "parts": parts_n,
+            "open_plan": bool(ctx.get("open_plan_ids")), "events": events}])[-PENDING_MAX:]
+        _actions_warning(f"{stream} {' '.join(events)[:200]}: {final} ({why}{_hint(fails, None)})")
+    return [c for c, st in states.items() if st == FINAL_OK]
+
+
+def _whys(fails: list[dict], channel=None) -> str:
+    out = []
+    for r in fails:
+        if (channel is None or r["channel"] == channel) and _why(r) not in out:
+            out.append(_why(r))
+    return ", then ".join(out) or "-"
+
+
+def _hint(fails: list[dict], channel=None) -> str:
+    codes = {r.get("http") for r in fails if channel is None or r["channel"] == channel}
+    return "; credentials or topic rejected" if codes & {401, 403, 404} else ""
+
+
+def _say(stream: str, lines: list[str], events: list[str] | None = None, desc: str | None = None,
+         plan_ids: list | None = None, open_plan_ids: list | None = None, out: dict | None = None) -> list[str]:
+    """send(lines) with the events the message carries (P-0). The module-level context is cleared after the call even
+    when send() is replaced (tests) or fails; `out` receives the delivery outcome (absent when send() was replaced)."""
+    global _EVENTS
+    ctx = {"stream": stream, "events": list(events or []), "desc": desc, "plan_ids": list(plan_ids or []),
+           "open_plan_ids": list(open_plan_ids or [])}
+    _EVENTS = ctx
+    try:
+        return send(lines)
+    finally:
+        _EVENTS = None
+        if out is not None and ctx.get("outcome"):
+            out.update(ctx["outcome"])
+
+
+# ---------------- P-0: plans whose opening alert was not delivered ----------------
+UNDELIVERED_PREFIX = "UNDELIVERED PLAN #{pid} (its alert never reached you; if you did not enter it, there is nothing to manage): "
+
+
+def undelivered_block(u: dict, off: float, t_now: int) -> list[str]:
+    """The two lines that precede every later message of a plan whose opening alert failed on every channel. The
+    levels are the plan record's own (copied when it opened), never recomputed from the current configuration."""
+    n = u["attempts"]
+    fail = "failed twice" if n == 2 else "failed" if n <= 1 else f"failed {n} times"
+    l1 = (f"ORIGINAL ALERT NOT DELIVERED — plan #{u['id']}: {u['tf']} {u['side']}, bar closed {_hm(u['t_dec'], t_now)}; "
+          f"the {_hm(u['first_attempt_t'], t_now)} alert {fail} ({u['why']})")
+    if u.get("tp2") is not None:
+        l2 = (f"PLAN #{u['id']} LEVELS: entry {_fmt(u['entry'], off)} | SL {_fmt(u['sl'], off)} (-${u['sl_usd']:,.0f}) | "
+              f"TP1 {_fmt(u['tp'], off)} (+${u['tp_usd'] / 2:,.0f} on half, then SL to entry) | "
+              f"TP2 {_fmt(u['tp2'], off)} (+${(u.get('tp2_usd') or 0) / 2:,.0f})")
+    else:
+        l2 = (f"PLAN #{u['id']} LEVELS: entry {_fmt(u['entry'], off)} | SL {_fmt(u['sl'], off)} (-${u['sl_usd']:,.0f}) | "
+              f"TP {_fmt(u['tp'], off)} (+${u['tp_usd']:,.0f})")
+    return [l1, l2]
+
+
+def _say_tf(tf: str, phone_lines: list[str], upd_refs: list, msg_refs: list, n_upd: int, opened: dict, repeats: dict,
+            plans: list[dict], off: float, last_t: int) -> list[str]:
+    """The timeframe's phone message (plan follow-ups + its signals) with its events. A plan whose opening alert was
+    not delivered gets the undelivered block before its first line here and the UNDELIVERED PLAN prefix on its REPEAT /
+    follow-up lines; a new plan's opening that fails on every channel is registered. Lines are otherwise unchanged."""
+    R = _ctx()
+    if phone_lines:
+        _reconcile(R)                                      # before any block is written: it may show one is not needed
+    ref: dict[int, list] = {}
+    for i, pid, ek in upd_refs:
+        ref.setdefault(i, []).append(("FOLLOW", pid, ek))
+    for i, kind, m in msg_refs:
+        side = "BUY" if m["dir"] == 1 else "SELL"
+        rp = repeats.get(m["t"])
+        if kind == "STALE":
+            ref.setdefault(i + n_upd, []).append(("STALE", (rp or {}).get("id") if rp else opened.get(m["t"]),
+                                                  event_key("STALE", tf, m["t"], side)))
+        elif rp is not None:
+            ref.setdefault(i + n_upd, []).append(("REPEAT" if kind == "REPEAT" else "REPEAT_BODY", rp.get("id"),
+                                                  event_key("REPEAT", tf, m["t"], side)))
+        elif m["t"] in opened:
+            ref.setdefault(i + n_upd, []).append(("OPEN" if kind == "HEAD" else "OPEN_BODY", opened[m["t"]],
+                                                  event_key("OPEN", tf, m["t"], side)))
+        else:
+            ref.setdefault(i + n_upd, []).append(("SIGNAL", None, event_key("SIGNAL", tf, m["t"], side)))
+    allowed, j, pairs = phone_only(phone_lines), 0, []     # phone_only stays the one rule; refs follow the lines it keeps
+    for i, ln in enumerate(phone_lines):
+        if j < len(allowed) and allowed[j] == ln:
+            pairs.append((ln, ref.get(i, [])))
+            j += 1
+    if not pairs:
+        return _say(tf, [])
+    events = {ek for _, rs in pairs for _, _, ek in rs}
+    loose = [ln for ln, rs in pairs if not rs]             # DECISION / structure / liquidity lines (not in sixty mode)
+    if loose:                                          # no event of their own: a key unique to this run (no cross-run
+        events.add(f"CONTENT:LINES:{tf}:{R['t_run']}:{_sha(chr(10).join(loose), 10)}")   # de-duplication, as before)
+    und = R["state"]["open"]
+    out, blocked = [], []
+    for ln, rs in pairs:
+        for kind, pid, _ in rs:                            # a later message of that plan (never its own opening)
+            if kind not in ("OPEN", "OPEN_BODY", "SIGNAL") and pid is not None and str(pid) in und and pid not in blocked:
+                out += undelivered_block(und[str(pid)], off, R["t_run"])
+                blocked.append(pid)
+        hit = next((pid for kind, pid, _ in rs if kind in ("REPEAT", "FOLLOW") and pid is not None and str(pid) in und), None)
+        out.append(UNDELIVERED_PREFIX.format(pid=hit) + ln if hit is not None else ln)
+    opens = [(pid, ek) for _, rs in pairs for kind, pid, ek in rs if kind == "OPEN"]
+    pids = sorted({pid for _, rs in pairs for _, pid, _ in rs if pid is not None})
+    desc = " + ".join(_event_desc(ek, pid) for ek, pid in sorted({ek: pid for _, rs in pairs for _, pid, ek in rs}.items())[:3]) \
+        or f"{tf} alert"
+    oc: dict = {}
+    sent = _say(tf, out, sorted(events), desc, pids, [p for p, _ in opens], out=oc)
+    if oc.get("final_state") in ("SEND_FAILED", "RETRY_FAILED") and not oc.get("no_channel"):
+        by_id = {p.get("id"): p for p in plans}
+        heads = {pid: ln for ln, rs in pairs for kind, pid, _ in rs if kind == "OPEN"}   # never decorated: sent as is
+        for pid, ek in opens:                              # the plan opened, its alert did not reach any server
+            pl = by_id.get(pid)
+            if pl is None or any(heads.get(pid, "\0") in t for t in oc.get("accepted_texts") or []):
+                continue                                   # (a split message whose opening part did arrive counts)
+            und[str(pid)] = {"id": pid, "open_key": ek, "notif_key": oc["notif_key"], "parts": oc.get("parts", 1), "tf": tf,
+                             "bar": pl["t"], "t_dec": pl.get("t_dec", int(pl["t"]) + TF_SEC.get(tf, 0)),
+                             "side": "BUY" if pl["dir"] == 1 else "SELL", "entry": pl["entry"], "sl": pl["sl"], "tp": pl["tp"],
+                             "tp2": pl.get("tp2"), "sl_usd": pl.get("sl_usd"), "tp_usd": pl.get("tp_usd"), "tp2_usd": pl.get("tp2_usd"),
+                             "first_attempt_t": oc["t"], "first_attempt_utc": datetime.fromtimestamp(oc["t"], timezone.utc).isoformat(),
+                             "final_state": oc["final_state"], "attempts": oc["attempts"], "why": oc["why"],
+                             "redelivered_utc": None, "closed_t": None}
+    elif oc.get("final_state") == FINAL_OK:
+        for pid, _ in opens:                               # an opening sent again (a crash before the state was saved)
+            und.pop(str(pid), None)
+        for pid in blocked:                                # its levels reached a server at last (the block stays: D3)
+            u = und.get(str(pid))
+            if u is not None and not u.get("redelivered_utc"):
+                u["redelivered_utc"] = datetime.fromtimestamp(R["t_run"], timezone.utc).isoformat()
     return sent
+
+
+def _event_desc(ek: str, pid) -> str:
+    kind, tf, _, side = (ek.split(":") + ["", "", "", ""])[:4]
+    if kind == "OPEN":
+        return f"{tf} {side} plan #{pid}"
+    if kind == "REPEAT":
+        return f"{tf} {side} REPEAT of plan #{pid}"
+    if kind in ("TP1", "TP2", "BE", "TP", "SL", "BOTH", "EXPIRED"):
+        return f"plan #{pid} {kind}"
+    if kind == "STALE":
+        return f"{tf} not-actionable notice"
+    if kind == "SIGNAL":
+        return f"{tf} {side} signal"
+    return f"{tf} alert lines"
+
+
+def _close_undelivered(open_plans: list[dict], t_now: int) -> None:
+    """An undelivered plan's entry lives until its plan closes (the block is in every message until then), then three
+    more days (the record of what happened); plans themselves are untouched."""
+    und = (_ctx()["state"]).get("open") or {}
+    ids = {str(p.get("id")) for p in open_plans}
+    for pid, u in list(und.items()):
+        if pid in ids:
+            continue
+        if not u.get("closed_t"):
+            u["closed_t"] = int(t_now)
+        elif t_now - u["closed_t"] > UNDELIVERED_KEEP_SEC:
+            del und[pid]
+
+
+def load_notify(store_dir: str | None) -> dict:
+    path = os.path.join(store_dir, NOTIFY_STATE) if store_dir else None
+    if path and os.path.exists(path):
+        try:
+            with open(path) as f:
+                st = json.load(f)
+            if isinstance(st, dict):
+                return {"open": dict(st.get("open") or {}), "pending_warnings": list(st.get("pending_warnings") or [])}
+        except (OSError, ValueError):
+            _actions_warning("alerts_notify.json unreadable: undelivered-plan entries and pending warnings were lost")
+    return {"open": {}, "pending_warnings": []}
+
+
+def save_notify(store_dir: str | None, st: dict) -> None:
+    """Written only when there is something to keep (or a file to update): a run with no failure adds no file."""
+    path = os.path.join(store_dir, NOTIFY_STATE) if store_dir else None
+    if not path or (not st["open"] and not st["pending_warnings"] and not os.path.exists(path)):
+        return
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(json_safe(st), f, indent=0, sort_keys=True)
+    os.replace(tmp, path)
 
 
 def save_deliveries(store_dir: str | None) -> list[dict]:
@@ -1812,6 +2501,44 @@ def save_deliveries(store_dir: str | None) -> list[dict]:
         json.dump((old + got)[-DELIVERY_MAX:], f, indent=0)
     os.replace(tmp, path)
     return got
+
+
+def merge_ledger(src: str, dst: str) -> int:
+    """The store's notification records merged into the forward ledger's (the workflow's ledger step): a union by
+    record id, appended in order, so a store that went back (a lost save) never removes a record the ledger holds.
+    Returns the number of records added."""
+    os.makedirs(dst, exist_ok=True)
+    added = 0
+    for nm in sorted(os.listdir(src)):
+        if not nm.endswith(".jsonl"):
+            continue
+        dp = os.path.join(dst, nm)
+        have = set()
+        if os.path.exists(dp):
+            with open(dp) as f:
+                for ln in f:
+                    if ln.strip():
+                        have.add(_rid(ln.rstrip("\n")))
+        new = []
+        with open(os.path.join(src, nm)) as f:
+            for ln in f:
+                ln = ln.rstrip("\n")
+                if ln.strip() and _rid(ln) not in have:
+                    have.add(_rid(ln))
+                    new.append(ln)
+        if new:
+            with open(dp, "a") as f:
+                f.write("".join(x + "\n" for x in new))
+            added += len(new)
+    return added
+
+
+def _rid(line: str) -> str:
+    try:
+        r = json.loads(line)
+        return str(r.get("rid") or line) if isinstance(r, dict) else line
+    except ValueError:
+        return line
 
 
 GATE_NAMES = {"Trend": "trend", "HTF": "higher-timeframe gate", "Sess": "session", "Trig": "no trigger", "Recent": "old bar",
@@ -1881,7 +2608,21 @@ def engine_line(state: dict, day: str, tfs: list[str], last: dict | None) -> str
 
 
 def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | None = None) -> dict:
-    """sent_t: the send time (tests); None = the clock when the alerts go out."""
+    """sent_t: the send time (tests); None = the clock when the alerts go out. The delivery context (P-0: undelivered
+    plans, pending warnings, this run's caches) lives for the run and is saved even if the run fails half-way."""
+    global _RUN
+    t_send = int(sent_t if sent_t is not None else datetime.now(timezone.utc).timestamp())
+    _RUN = _new_ctx(store_dir, t_send, load_notify(store_dir))
+    try:
+        return _run(store_dir, payloads, tfs, t_send)
+    finally:
+        try:
+            save_notify(store_dir, _RUN["state"])
+        finally:
+            _RUN = None
+
+
+def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | None = None) -> dict:
     path = os.path.join(store_dir, STATE) if store_dir else None
     state = {}
     if path and os.path.exists(path):
@@ -1914,7 +2655,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         now = {"t": t_send, **({"px": pn["px"], "t_px": pn["t"], "live": pn["live"]} if pn else {})}
         ev = liquidity_events(p, since, seen) if liq_on() else []   # liquidity grabs / breaks on this timeframe's new bars
         liq_log += ev
-        upd, repeats = [], {}
+        upd, repeats, upd_refs, opened = [], {}, [], {}      # refs / opened: which plan each phone line belongs to (P-0)
         p5g = payloads.get("5m")
         p5g = p5g if p5g is not None and (p5g.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
         fresh = {}                                         # stale-signal protection: each new signal, before it is shown
@@ -1930,7 +2671,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             p5 = payloads.get("5m")
             same = p5 is not None and (p5.get("meta") or {}).get("price_source") == p["meta"].get("price_source")
             upd, plans, done = plan_updates(plans, tf, p["chart"], last_t, off, p5 if same else None,
-                                            quiet=gate_quiet(state, "plan"))
+                                            quiet=gate_quiet(state, "plan"), refs=upd_refs)
             for c in done:
                 tally[c["result"]] = tally.get(c["result"], 0) + 1
             log = (log + done)[-PLAN_LOG:]
@@ -1965,17 +2706,20 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                               "session": session_of(t_dec), "dow": date.fromisoformat(trading_day(t_dec)).strftime("%a"),
                               "tq": m.get("tq"), "t_alert": tm.get("t_alert"), "px_alert": tm.get("px_now"),
                               "move_alert": tm.get("move"), "late": tm.get("late")})
+                opened[m["t"]] = state["plan_seq"]
                 if fresh.get(m["t"], {}).get("state", "FRESH") != "FRESH":
                     gate_note(state, f"plan:{state['plan_seq']}", fresh[m["t"]])
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf),
                "fresh": fresh, "quiet": gate_quiet(state, "plan")}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
-        lines = upd + messages(p, since, now, ctx) + ([] if quality() else ll)
+        msg_refs = []
+        lines = upd + messages(p, since, now, ctx, refs=None if sixty() else msg_refs) + ([] if quality() else ll)
         if sixty():                                        # the phone: 15m signals and their plan follow-ups only
-            phone_lines = upd + messages(p, since, now, ctx, signals_only=True) if tf in PHONE_TFS_SIXTY else []
+            phone_lines = upd + messages(p, since, now, ctx, signals_only=True, refs=msg_refs) if tf in PHONE_TFS_SIXTY else []
         else:
             phone_lines = lines
-        report[tf] = {"lines": lines, "sent": send(phone_only(phone_lines))}
+        report[tf] = {"lines": lines, "sent": _say_tf(tf, phone_lines, upd_refs, msg_refs, len(upd), opened, repeats, plans,
+                                                      off, last_t)}
         if tf == "15m" and setups_on():                    # SETUP alerts: the operator's level rules (B16)
             p5s = payloads.get("5m")
             p5s = p5s if p5s is not None and (p5s.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
@@ -2003,15 +2747,17 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                     continue
                 if fz["state"] == "DELAYED":
                     sl_ = sl_[:1] + [delayed_line(fz, off)] + sl_[1:]
-                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if s_open[-1]["phone"] else []})
+                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": _say(
+                    "setup", sl_, [f"SETUP:{sid}:15m:{int(e['t'])}:{'BUY' if d == 1 else 'SELL'}:{e['kind']}"], f"15m SETUP #{sid}")
+                    if s_open[-1]["phone"] else []})
             if stale_s:
                 ls_ = [stale_line("setup alert" + ("s" if len(stale_s) > 1 else ""), stale_s)]
-                report["setup_stale"] = {"lines": ls_, "sent": send(ls_)}
+                report["setup_stale"] = {"lines": ls_, "sent": _say("setup_stale", ls_, desc="setup not-actionable notice")}
             if s_upd:                                      # results only for setups that reached the phone
                 shown = {c_["id"] for c_ in s_done if c_.get("phone", True)} - gate_quiet(state, "setup")
                 s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]
                 if s_upd:
-                    report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
+                    report["setup_updates"] = {"lines": s_upd, "sent": _say("setup_updates", s_upd, desc="setup results")}
             state["setups"], state["setup_log"] = s_open[-60:], s_log
             keep_s = trading_day(t_send - 3 * 86400)
             state["setup_seen"] = {k: v for k, v in sseen.items() if v >= keep_s}
@@ -2042,10 +2788,12 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                     continue
                 if fz["state"] == "DELAYED":
                     hl = hl[:1] + [delayed_line(fz, off)] + hl[1:]
-                report.setdefault("h4_alerts", []).append({"lines": hl, "sent": send(hl) if phone else []})
+                report.setdefault("h4_alerts", []).append({"lines": hl, "sent": _say(
+                    "h4", hl, [f"H4:{sid}:4h:{int(e['t_close'])}:{'BUY' if d == 1 else 'SELL'}"], f"4h CANDLE BREAKOUT #{sid}")
+                    if phone else []})
             if stale_h:
                 lh_ = [stale_line("4h breakout alert" + ("s" if len(stale_h) > 1 else ""), stale_h)]
-                report["h4_stale"] = {"lines": lh_, "sent": send(lh_)}
+                report["h4_stale"] = {"lines": lh_, "sent": _say("h4_stale", lh_, desc="4h not-actionable notice")}
             state["setups"] = s_open[-60:]
         state[tf] = last_t
     if pl_cfg:
@@ -2063,11 +2811,12 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         tl = turn_lines(state, payloads, tfs, liq_log, [x for x in plans + log if trading_day(_decision_t(x)) == today],
                         t_send, off)
         if tl:
-            report["turn_warning"] = {"lines": tl, "sent": [] if sixty() else send(tl)}
+            report["turn_warning"] = {"lines": tl, "sent": [] if sixty() else _say("turn_warning", tl, desc="trend-change warning")}
     report["turn_log"] = state.get("turn_log", [])[::-1][:10]
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
-        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else send(phone_only(glines))}   # trades and results
+        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else _say("grab_test", phone_only(glines),
+                                                                                      desc="grab test")}   # trades and results
     if setups_on():                                        # the live SETUP record (descriptive) and the site block
         srec = setup_record(store_dir, state.get("setup_log", []), t_send)
         report["setups"] = {"on": True, "quality": quality(), "sixty": sixty(), "hist_confirmed": list(SETUP_HIST_CONFIRMED) if SETUP_HIST_CONFIRMED else None,
@@ -2078,12 +2827,13 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     if pl_cfg:                                             # B15-ENGINE-FWD, every run (reads the plans' results)
         elines, report["engine_test"] = eng_run(store_dir, vlog, plans, t_send)
         if elines:
-            report["engine_test_alert"] = {"lines": elines, "sent": send(elines)}
+            report["engine_test_alert"] = {"lines": elines, "sent": _say("engine_test", elines, desc="engine test check")}
     if liq_on() and alerted:                               # price near a pool: once per run, not per timeframe
         ev = liquidity_near(payloads, tfs, seen, t_send)
         if ev:
             lines = [liq_text(r, off) for r in ev]
-            report["liquidity_near"] = {"lines": lines, "sent": [] if quality() else send(lines)}
+            report["liquidity_near"] = {"lines": lines, "sent": [] if quality() else _say("liquidity_near", lines,
+                                                                                          desc="liquidity alert")}
             liq_log += ev
     keep_from = trading_day(t_send - 3 * 86400)
     state["liq_seen"] = {k: v for k, v in seen.items() if v >= keep_from}
@@ -2150,14 +2900,16 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         et = report.get("engine_test")
         if lines and et:                                   # and the engine test's (B15-ENGINE-FWD)
             lines.append(f"ENGINE TEST ({ENG_ID}): {et['status']} | open {et['open']} | break-even {ENG_BE:.0%}")
+        rkey = f"REPORT:{state.get('report_day')}>{day}:{state.get('report_week')}>{week}"   # once per day change
         state["report_day"], state["report_week"] = day, week
         if lines:
-            report["validation_report"] = {"lines": lines, "sent": send(lines)}
+            report["validation_report"] = {"lines": lines, "sent": _say("report", lines, [rkey], "daily / weekly report")}
     if first is not None:                                  # news is per release, not per timeframe: once per event
         now_t = int(datetime.fromisoformat(first["meta"]["generated_utc"]).timestamp())
         lines, state["news"] = news_lines(first.get("news"), now_t, state.get("news"))
         if lines:
-            report["news"] = {"lines": lines, "sent": send(lines)}
+            report["news"] = {"lines": lines, "sent": _say("news", lines, [f"NEWS:{state['news']}"], "news window")}
+    _close_undelivered(state.get("plans", []) if pl_cfg else [], t_send)   # P-0: entries end with their plan (+3 days)
     if path:
         with open(path, "w") as f:
             json.dump(state, f)
@@ -2168,3 +2920,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         with open(vpath, "w") as f:
             json.dump(vlog, f)
     return json_safe(report)
+
+
+if __name__ == "__main__":       # the workflow's ledger step: python -m quantum.notify --merge-ledger <store dir> <ledger dir>
+    if sys.argv[1:2] != ["--merge-ledger"] or len(sys.argv) != 4:
+        sys.exit("usage: python -m quantum.notify --merge-ledger <store>/notifications <ledger>/notifications")
+    print(f"notification records added to the ledger: {merge_ledger(sys.argv[2], sys.argv[3])}")
