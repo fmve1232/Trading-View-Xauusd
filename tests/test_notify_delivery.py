@@ -450,13 +450,15 @@ def test_t8_two_channels_ntfy_fails_telegram_accepts_so_it_counts_as_delivered_t
 
 
 def test_t9_no_channel_configured_is_send_failed_and_said(tmp_path, monkeypatch, capsys):
+    """No channel at all: recorded SEND_FAILED and an Actions warning every time, but no phone-facing state (no
+    pending DELIVERY WARNING, no UNDELIVERED block): there is no phone to tell, and a later setup must not open with a
+    flood of stale warnings (review finding, 2026-11-14)."""
     monkeypatch.delenv("NTFY_TOPIC")
     timeline(str(tmp_path), Net(monkeypatch), upto=2)
     rows = records(str(tmp_path))
     assert [(r["channel"], r["state"], r["exception"], r["request"]) for r in rows] == [(None, "SEND_FAILED", "no channel configured", False)]
     assert "no channel configured" in capsys.readouterr().out
-    und = json.loads((tmp_path / N.NOTIFY_STATE).read_text())["open"]["12"]
-    assert und["why"] == "no channel configured" and und["attempts"] == 0
+    assert not (tmp_path / N.NOTIFY_STATE).exists()
 
 
 def test_t9_invalid_credentials_401_is_not_retried(tmp_path, monkeypatch, capsys):
@@ -508,6 +510,85 @@ def test_kill_switch_delivery_retry_0_one_attempt_no_cache_reads_blocks_still_sh
     res = timeline(str(tmp_path), net, upto=3)
     assert len(res[1][1]) == 1 and net.polls == [] and net.sleeps == []
     assert res[2][1][0]["text"].split("\n")[1] == BLOCK[0].replace("failed twice", "failed")
+
+
+# ---------------- review findings of 2026-11-14 (each test fails on the code before its fix) ----------------------
+
+def _ctx_with_warning(store, t_run, key="zzzzzzzzzz"):
+    R = N._new_ctx(store, t_run)
+    R["state"]["pending_warnings"] = [{"id": f"{key}:1", "t": SENT_OPEN, "stream": "15m", "desc": "15m SELL plan #12",
+                                       "attempts": 2, "why": "ConnectionError", "notif_key": key, "parts": 1, "open_plan": True}]
+    return R
+
+
+def test_a_message_skipped_as_already_delivered_does_not_clear_a_warning_it_never_showed(tmp_path, monkeypatch):
+    net = Net(monkeypatch)
+    net.cache.append("xq-" + N.notif_key(["OPEN:15m:1:SELL"]))           # an earlier run delivered this one
+    N._RUN = _ctx_with_warning(str(tmp_path), SENT_OPEN)
+    try:
+        N._say("15m", ["regenerated opening"], ["OPEN:15m:1:SELL"])        # skipped: nothing posted
+        assert net.posts == [] and len(N._RUN["state"]["pending_warnings"]) == 1
+        N._say("news", ["XAUUSD NEWS WINDOW"], ["NEWS:1"])                 # really sent: carries the warning, then clears it
+        assert net.posts[0]["text"].startswith("DELIVERY WARNING: 1 alert was NOT delivered")
+        assert N._RUN["state"]["pending_warnings"] == []
+    finally:
+        N._RUN = None
+
+
+def test_a_message_never_carries_a_warning_about_itself_and_its_acceptance_clears_it(tmp_path, monkeypatch):
+    net = Net(monkeypatch)
+    key = N.notif_key(["OPEN:15m:1:SELL"])
+    N._RUN = _ctx_with_warning(str(tmp_path), SENT_OPEN, key)             # its own failure, from a run that crashed
+    try:
+        N._say("15m", ["the opening, sent again"], ["OPEN:15m:1:SELL"])
+        assert not net.posts[0]["text"].startswith("DELIVERY WARNING") and N._RUN["state"]["pending_warnings"] == []
+    finally:
+        N._RUN = None
+
+
+def test_a_cache_hit_recorded_by_an_earlier_run_counts_as_delivered_in_the_stores_record(tmp_path, monkeypatch):
+    net = Net(monkeypatch, ntfy=[("arrived", N.requests.exceptions.ReadTimeout("read timed out"))])
+    for t_run in (SENT_OPEN, SENT_OPEN + 120):                            # the second run: the state was lost, the cache
+        if t_run != SENT_OPEN:                                            # cannot be read; only the store's record knows
+            net.poll = "fail"
+        N._RUN = N._new_ctx(str(tmp_path), t_run)
+        try:
+            N._say("15m", ["the opening"], ["OPEN:15m:1:SELL"])
+        finally:
+            N._RUN = None
+    assert len(net.posts) == 1                                            # never re-sent as "RESENT (... ReadTimeout)"
+    assert records(str(tmp_path))[-1]["found_in"] == "record"
+
+
+def test_a_split_opening_whose_first_part_arrived_is_not_registered_as_undelivered(tmp_path, monkeypatch):
+    net = Net(monkeypatch, ntfy=["ok", CE("a"), CE("b")])                 # part 1 accepted, part 2 fails twice
+    head = "XAUUSD 15m SELL (confirmed close) | entry 3897.97 SL 3909.51 TP1 3875.22 TP2 — TP3 — | TQ 68"
+    lines = [head, "YOUR PLAN 0.5 lot: SL 3910.97 (-$650)"] + [f"filler {i:03d} " + "x" * 90 for i in range(45)]
+    plan = {"id": 12, "tf": "15m", "t": T07, "dir": -1, "entry": ENTRY, "sl": SL, "tp": TP1, "tp2": TP2, "sl_usd": 650.0,
+            "tp_usd": 650.0, "tp2_usd": 1000.0, "t_dec": T07 + 900}
+    N._RUN = N._new_ctx(str(tmp_path), SENT_OPEN)
+    try:
+        N._say_tf("15m", lines, [], [(0, "HEAD", OPEN), (1, "BODY", OPEN)], 0, {T07: 12}, {}, [plan], 0.0, T07)
+        assert len(net.posts) == 3 and N._RUN["state"]["open"] == {}
+        assert N._RUN["state"]["pending_warnings"][0]["desc"].endswith("(only partly delivered)")
+    finally:
+        N._RUN = None
+
+
+def test_the_run_budget_stops_retries_and_cache_reads_once_spent(tmp_path, monkeypatch):
+    monkeypatch.setattr(N, "DELIVERY_BUDGET_SEC", 0)
+    net = Net(monkeypatch, ntfy=[CE("a")])
+    N._RUN = N._new_ctx(str(tmp_path), SENT_OPEN)
+    try:
+        N._say("15m", ["one message"], ["OPEN:15m:1:SELL"])
+    finally:
+        N._RUN = None
+    assert len(net.posts) == 1 and net.polls == [] and N._DELIVERIES[-1]["no_retry"] == "delivery time budget of this run used up"
+
+
+def test_records_are_one_file_per_run_day(tmp_path, monkeypatch):
+    timeline(str(tmp_path), Net(monkeypatch), upto=2)
+    assert os.listdir(tmp_path / N.NOTIF_DIR) == ["2026-11-13.jsonl"]
 
 
 # ---------------- T10: length limits ---------------------------------------------------------------------------------

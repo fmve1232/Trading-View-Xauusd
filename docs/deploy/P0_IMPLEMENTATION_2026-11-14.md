@@ -14,11 +14,11 @@ has no device acknowledgement, which is why an accepted message ends `DELIVERY_U
 
 | File | Change |
 |---|---|
-| `quantum/notify.py` | `send()` rewritten (per-attempt states, one retry, ntfy tags and cache checks, records, splitting); `_say()` / `_say_tf()` pass each message's events; undelivered-plan block, prefix and DELIVERY WARNING; `alerts_notify.json`; `notifications/<YYYY-MM>.jsonl`; `merge_ledger()` + `python -m quantum.notify --merge-ledger`; optional `refs` argument on `messages()` and `plan_updates()` (output unchanged) |
+| `quantum/notify.py` | `send()` rewritten (per-attempt states, one retry, ntfy tags and cache checks, records, splitting); `_say()` / `_say_tf()` pass each message's events; undelivered-plan block, prefix and DELIVERY WARNING; `alerts_notify.json`; `notifications/<YYYY-MM-DD>.jsonl` (one file per run day); `merge_ledger()` + `python -m quantum.notify --merge-ledger`; optional `refs` argument on `messages()` and `plan_updates()` (output unchanged) |
 | `.github/workflows/quantum-site.yml` | `DELIVERY_RETRY: ${{ vars.DELIVERY_RETRY }}` in the Run pipeline env; one guarded merge line in "Save the forward ledger" (a failure only prints a warning) |
-| `tests/test_notify_delivery.py` (new) | 54 tests: T1–T14 and the cases below |
+| `tests/test_notify_delivery.py` (new) | 60 tests: T1–T14, the cases below and one regression test per review finding (§2a) |
 | `tests/test_stale_signals.py` | the one test that drives the real `send()` now pins the kill-switch path (`DELIVERY_RETRY=0` = exactly the old single attempt) and forbids any cache read |
-| `audit/tools/mutation_notify_delivery.py` (new) | 34 mutants; a mutant that does not compile counts as INVALID, never as killed |
+| `audit/tools/mutation_notify_delivery.py` (new) | 41 mutants; a mutant that does not compile counts as INVALID, never as killed |
 | `audit/tools/alert_replay_transport.py` (new) | the replay harness with the tree's real `send()` and a stand-in ntfy (`--fail` / `--arrive` inject failures) |
 | `audit/tools/alert_replay_transport_check.py` (new) | posted bytes vs a send-captured replay of the deployed tree |
 | `audit/tools/offline_payloads.py` (new) | rebuilds past site payloads offline (used for 13 Nov, whose payloads had expired) |
@@ -36,15 +36,29 @@ unchanged), `config.py`, `holdout.py`, `fwd_b24.py` (B24 stays OFF), `outage_not
 | 3 | T5 "with an empty cache it resends marked RESENT" | when only the alert state was lost (a crash before it was written), the store's own record stops the resend on **every** channel, Telegram included, cache or no cache; an earlier run's *failed* attempt is resent marked `RESENT (an earlier run's attempt failed: …)`. When the **whole store** is lost **and** ntfy's cache is empty, nothing the run can read remembers the first send: the message goes out again, unmarked | pinned by `test_t5_limitation_…` (named as a limitation, not a pass) |
 | 4 | — | **reconcile**: an earlier failure whose tag ntfy's cache later shows (an uncertain error: the server had it) is reclassified; its block and warning are removed, so no message claims it "never reached you" | `test_t4b_…`; mutant D14 |
 | 5 | ledger step `cp -r store/notifications/. ledger/notifications/` | a union by record id (`merge_ledger`), so a store that went back (a lost save) never removes a record from the ledger's current tree | `test_ledger_merge_is_a_union_…` |
-| 6 | records in `alerts_delivery.json` and the ledger | the full text (D1) only in `notifications/*.jsonl` (the ledger); `alerts_delivery.json` and the site payload carry the same records without the text | `test_t6_the_opening_attempts_…` |
+| 6 | records in `alerts_delivery.json` and the ledger | the full text (D1) only in `notifications/<YYYY-MM-DD>.jsonl` (the ledger); `alerts_delivery.json` and the site payload carry the same records without the text | `test_t6_the_opening_attempts_…` |
 | 7 | — | an opening re-sent after a crash never carries the block of its own plan; once it is accepted its entry is removed | `test_t5_an_earlier_runs_failed_attempt_…`; mutants D18, D28 |
+
+## 2a. Independent review (14 Nov 2026, before any merge): 9 findings, 7 fixed, 2 left as they are
+
+| # | Finding | Verdict | Change (each has a regression test that fails on the code before it, and a mutant) |
+|---|---|---|---|
+| 1 | a message skipped as already delivered by an earlier run cleared a pending warning it never showed | real bug | a warning counts as shown only if part 1 was sent and accepted in this run |
+| 2 | with no channel configured, every message built phone-facing state (warnings, UNDELIVERED blocks) that would flood the first real message | real | no channel: a record and an Actions warning only |
+| 3 | the store's own record ignored a cache-hit acceptance, so after a crash an arrived message could be resent | real bug | the record check accepts every accepted state |
+| 4 | a message regenerated after a crash could carry a warning about itself | real (crash case) | excluded from its own body, cleared when it is accepted |
+| 5 | a split message with part 1 (the opening) accepted and part 2 failed marked the plan undelivered | real (bodies over 3,985 bytes only) | judged by the part that holds the opening headline; the warning says "only partly delivered" |
+| 6 | hanging channels could make the retry path slow (unbounded in total) | real risk | 120 s delivery budget per run, then no retries or cache reads |
+| 7 | one month file re-read and re-uploaded every run (about 21 MB a month in all mode) | real | one file per run day |
+| 8 | module-level context instead of arguments | design preference, no defect | kept: preserves `send(lines)` for the 24 existing fakes and the replay harness |
+| 9 | the ntfy poll duplicates `outage_notice.py`; the topic is not URL-quoted | ntfy topics are `[-_A-Za-z0-9]` only; `outage_notice.py` is out of P-0's scope | no change |
 
 ## 3. Verification (local runs on this container, Python 3.11.18 / numpy 2.4.6 / pandas 3.1.1; **not** GitHub CI)
 
 | Check | Result |
 |---|---|
-| full suite `python -m pytest -q tests` | **727 passed, 2 skipped** (base `30a3da10d`: 673 passed, 2 skipped; +54 new) |
-| P-0 mutation test (`mutation_notify_delivery.py`) | **34 of 34 killed**, each by a failing test, 0 invalid |
+| full suite `python -m pytest -q tests` | **733 passed, 2 skipped** (base `30a3da10d`: 673 passed, 2 skipped; +60 new) |
+| P-0 mutation test (`mutation_notify_delivery.py`) | **41 of 41 killed**, each by a failing test, 0 invalid |
 | stale-gate mutation test (existing) | 24 of 24 killed |
 | outage-notice mutation test (existing) | 24 of 24 killed |
 | pyflakes on every changed / new Python file | clean |
@@ -88,10 +102,12 @@ The replay's TP1 message is at 13:35 rather than production's 13:21: the harness
    readable cache, so their cross-run protection is the store's own record.
 4. **Mixed messages** in the all / quality modes (an event plus lines with no event) get a run-unique key, so they have
    no cross-run de-duplication. Sixty-mode phone messages (production) consist of events only.
-5. **Run time.** One ntfy cache read per run that sends; when ntfy is down, up to about 15 s per message, and a failed
-   channel gets one attempt for the rest of the run.
-6. **Store growth.** `notifications/<YYYY-MM>.jsonl` with full text grows about 10 KB/day in sixty mode (about 0.3 MB a
-   month), but about 0.7 MB/day if ALERT_MODE=all. Nothing prunes it yet; the ledger keeps the history.
+5. **Run time.** One ntfy cache read per run that sends. Once a run has spent 120 s in requests and cache reads, it
+   makes no more retries or cache reads (one attempt per message, at most 15 s each), so hanging channels cannot use up
+   the job's 20-minute limit.
+6. **Store growth.** One `notifications/<YYYY-MM-DD>.jsonl` per day with full text: about 10 KB a day in sixty mode,
+   about 0.7 MB a day if ALERT_MODE=all. Only the current day's file changes in a run. Nothing prunes the store copy
+   yet; the ledger keeps the history.
 7. **No CI on this PR yet.** The pull-request checks workflow is PR #99, which is not merged. Every result above is
    local.
 

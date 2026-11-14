@@ -2,9 +2,9 @@
 
 Usage: python audit/tools/mutation_notify_delivery.py <empty scratch dir>
 Each mutant is applied to a COPY of quantum/notify.py in the scratch dir; tests/test_notify_delivery.py must fail on
-it. D01-D10 are the specification's list (docs/deploy/P0_NOTIFICATION_INTEGRITY_SPEC.md §10); D11-D30 break the rest of
+it. D01-D10 are the specification's list (docs/deploy/P0_NOTIFICATION_INTEGRITY_SPEC.md §10); D11-D31 break the rest of
 the design one piece at a time (idempotency across runs, the reconcile, the warnings, the records, the line references,
-the redaction, the per-run budget). A mutant is a list of (old, new) replacements, each of which must occur exactly once.
+the redaction, the per-run budget); D32-D38 undo the fixes of the independent review of 2026-11-14. A mutant is a list of (old, new) replacements, each of which must occur exactly once.
 No request leaves the tests (their transport is a stand-in). Exit status 1 if any mutant survives."""
 import json
 import os
@@ -24,7 +24,7 @@ M = {
                                                 'rec["retryable"], rec["uncertain"] = not ok, rec["http"] in (502, 504)')],
     "D03 resend without the cache check": [("        if tags is not None and tag in tags:               # attempt 1 had arrived: nothing is sent twice",
                                             "        if False and tags is not None and tag in tags:")],
-    "D04 the resend carries a different tag": [("    a2 = _attempt(name, post, text2, tag)", '    a2 = _attempt(name, post, text2, tag + "-r")')],
+    "D04 the resend carries a different tag": [("    a2 = _timed(R, _attempt, name, post, text2, tag)", '    a2 = _timed(R, _attempt, name, post, text2, tag + "-r")')],
     "D05 no tag on ntfy messages": [('headers={"Title": "XAUUSD Quantum", "Tags": tag}', 'headers={"Title": "XAUUSD Quantum"}')],
     "D06 an accepted message called DELIVERED": [('FINAL_OK = "DELIVERY_UNCONFIRMED"', 'FINAL_OK = "DELIVERED"')],
     "D07 undelivered block dropped": [('                out += undelivered_block(und[str(pid)], off, R["t_run"])', "                pass")],
@@ -33,7 +33,8 @@ M = {
          '    pc = plan_cfg()\n    u = {**u, "sl": u["entry"] + (1 if u["side"] == "SELL" else -1) * pc["sl_px"], "sl_usd": pc["sl_usd"],\n'
          '         "tp": u["entry"] - (1 if u["side"] == "SELL" else -1) * pc["tp_px"], "tp_usd": pc["tp_usd"]}\n'
          '    n = u["attempts"]\n    fail = ')],
-    "D09a warning never cleared": [('            ns["pending_warnings"] = [w for w in ns["pending_warnings"] if w["id"] not in wids]', "            pass")],
+    "D09a warning never cleared": [('        ns["pending_warnings"] = [w for w in ns["pending_warnings"] if w["id"] not in gone and w.get("notif_key") != key]',
+                                    "        pass")],
     "D09b warning never shown": [("    body = warn + lines\n", "    body = lines\n")],
     "D10a _EVENTS not cleared by _say": [("        _EVENTS = None\n        if out is not None and ctx.get(\"outcome\"):",
                                           "        if out is not None and ctx.get(\"outcome\"):")],
@@ -47,7 +48,8 @@ M = {
     "D13 the store's own record ignored": [("    loc = _local(R).get((tag, name))", "    loc = None")],
     "D14 no reconcile (a failure that arrived still claimed lost)": [('    if R["reconciled"]:\n        return', "    if True:\n        return")],
     "D15 no Actions annotation": [('    print(f"::warning title=phone alert not delivered::{m}", flush=True)', "    pass")],
-    "D16 a failed opening not registered": [('    if oc.get("final_state") in ("SEND_FAILED", "RETRY_FAILED"):', "    if False:")],
+    "D16 a failed opening not registered": [('    if oc.get("final_state") in ("SEND_FAILED", "RETRY_FAILED") and not oc.get("no_channel"):',
+                                              "    if False:")],
     "D17 UNDELIVERED PLAN prefix dropped": [("        out.append(UNDELIVERED_PREFIX.format(pid=hit) + ln if hit is not None else ln)",
                                              "        out.append(ln)")],
     "D18 the block put on an opening's own lines": [('            if kind not in ("OPEN", "OPEN_BODY", "SIGNAL") and pid is not None',
@@ -73,6 +75,23 @@ M = {
     "D31 content keys not unique to the run (identical later messages suppressed)": [
         ("""[f"CONTENT:{stream}:{R['t_run']}:{_sha(base, 10)}"]""", """[f"CONTENT:{stream}:{trading_day(R['t_run'])}:{_sha(base, 10)}"]"""),
         ("""events.add(f"CONTENT:LINES:{tf}:{R['t_run']}:""", """events.add(f"CONTENT:LINES:{tf}:{int(last_t)}:""")],
+    # --- the independent review of 2026-11-14 (findings 1-7), one mutant per fix ---
+    "D32 a warning cleared by a message that was only skipped": [("        gone = set(wids) if shown else set()", "        gone = set(wids)")],
+    "D33 a message warns about itself": [
+        ('    pw = [w for w in (R["state"].get("pending_warnings") or []) if w.get("notif_key") != key]',
+         '    pw = list(R["state"].get("pending_warnings") or [])')],
+    "D34 a cache-hit acceptance missing from the store's record": [
+        ('                    if not r.get("request") and r.get("state") not in ACCEPTED:',
+         '                    if not r.get("request") and r.get("state") != "SERVER_ACCEPTED":')],
+    "D35 a split opening whose first part arrived called undelivered": [
+        ('            if pl is None or any(heads.get(pid, "\\0") in t for t in oc.get("accepted_texts") or []):', "            if pl is None:")],
+    "D36 the run's delivery time budget ignored": [('    return R.get("spent", 0.0) >= DELIVERY_BUDGET_SEC', "    return False")],
+    "D37 phone-facing state built with no channel at all": [
+        ("    elif chans:                                            # no channel at all", "    else:  # mutant"),
+        ('    if oc.get("final_state") in ("SEND_FAILED", "RETRY_FAILED") and not oc.get("no_channel"):',
+         '    if oc.get("final_state") in ("SEND_FAILED", "RETRY_FAILED"):')],
+    "D38 one record file per month again": [('    return datetime.fromtimestamp(int(t), timezone.utc).strftime("%Y-%m-%d")',
+                                              '    return datetime.fromtimestamp(int(t), timezone.utc).strftime("%Y-%m")')],
     "D30 the kill switch ignored": [('    return os.environ.get("DELIVERY_RETRY", "1").strip() != "0"', "    return True")],
 }
 
