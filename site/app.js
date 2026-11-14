@@ -14,6 +14,7 @@ const S = {
   mt5: store.get("mt5", 0),
   tz: store.get("tz", "local"),
   account: store.get("account", null),
+  riskPct: store.get("risk_pct", null),
   cfRisk: store.get("cf_risk", 1),          // the confirmation card's risk % (default 1%; display only)
   costProfile: store.get("cost_profile", "engine"),
   costCustom: store.get("cost_custom", null),
@@ -927,6 +928,17 @@ function pbLine(x, tf, primary, ov) {
     (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span title="Measured from the trigger level"><i>Reward:risk at trigger</i><b>${f(x.rr, 1)} : 1</b></span>${re ? `<span title="${esc(re.how)}"><i>From entry</i><b class="${re.v < 1 ? "warn" : ""}">${f(re.v, 1)} : 1</b></span>` : ""}<span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
     (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") + `</div>`;
 }
+// IA-13 (audit 2026-11-14): position size = a FIXED risk % of the account (the viewer's choice, default the config's
+// risk_percent). Kelly needs a validated win rate and the engine's is not (43 live trades: p 62.5% on average, 34.9% won),
+// so Kelly is shown for reference only and never sizes a trade.
+const RISK_MAX = 5;
+function riskPctFixed() {
+  const v = Number(S.riskPct), cfg = S.data && S.data.meta && S.data.meta.config;
+  return isNum(v) && v > 0 && v <= RISK_MAX ? v : cfg && isNum(cfg.risk_percent) && cfg.risk_percent > 0 ? cfg.risk_percent : 1.0;
+}
+function fixedLots(acct, perLot) {
+  return perLot > 0 && acct > 0 ? Math.floor((acct * riskPctFixed() / 100 / perLot) / 0.01 + 1e-9) * 0.01 : 0;
+}
 function renderBrief() {
   const el = $("#brief"), D = S.data; if (!el || !D) return;
   const d = D.dashboard, ch = D.chart, p = d.plan || {}, M = D.meta;
@@ -985,7 +997,7 @@ function renderBrief() {
     : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
     <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
     <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
-    <div class="bs">Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
+    <div class="bs">Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")} · risk ${f(riskPctFixed(), 2)}% of the account (fixed)</div></div>`;
   el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="lpill" id="brief-live"></span><span class="bpx">${px(price)}</span>` +
     `<span class="dim">XAUUSD · ${esc(M.tf)} · analysis as of the candle that closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</span><span class="dim clk" id="brief-clock"></span></div>
     <div class="bgrid">${t1}${t2}${t3}${t4}${t5}${t6}</div>`;
@@ -1130,21 +1142,23 @@ function renderSide() {
   const BASIS = { per_side: "per side (charged twice)", round_turn: "round turn", open_only: "on opening only", unconfirmed: "basis not published: sized as per side (higher)" };
   const profSel = profs.length ? `<select id="cost-prof" style="width:100%;max-width:260px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)">${profs.map((x) => `<option value="${esc(x.id)}"${prof && x.id === prof.id ? " selected" : ""}>${esc(x.firm)} · ${esc(x.account)}</option>`).join("")}</select>` : "—";
   const customRow = prof && prof.id === "custom" ? `<span class="dim">type</span> <select id="cc-type"><option value="fixed"${prof.commission.type === "fixed" ? " selected" : ""}>$ / lot</option><option value="pct"${prof.commission.type === "pct" ? " selected" : ""}>% notional</option></select> <input id="cc-rate" type="number" step="0.0001" value="${prof.commission.rate}" style="width:70px"> <select id="cc-basis">${["round_turn", "per_side", "open_only"].map((b) => `<option value="${b}"${prof.commission.basis === b ? " selected" : ""}>${b.replace("_", " ")}</option>`).join("")}</select> <span class="dim">spread</span> <input id="cc-spread" type="number" step="0.01" placeholder="engine" value="${prof.spread.mode === "fixed" ? prof.spread.value : ""}" style="width:60px"> <span class="dim">slip/side</span> <input id="cc-slip" type="number" step="0.01" value="${prof.slippage}" style="width:55px">` : "";
-  const lots = sig && p.dist > 0 ? Math.floor((acct * Math.max(k.kelly_pct, 0) / 100 / perLot) / 0.01 + 1e-9) * 0.01 : 0;
+  const lots = sig && p.dist > 0 ? fixedLots(acct, perLot) : 0;
   $("#risk-state").textContent = d.risk.lock ? "LOCKED" : "open";
   $("#risk-state").className = "pill " + (d.risk.lock ? "bear" : "bull");
   $("#risk").innerHTML = kv([
     ["Tracker today", esc(d.risk.lock_str || "—")],
     ["Open tracked plan", isNum(d.risk.open_entry) ? `${d.risk.open_long ? "BUY" : "SELL"} ${px(d.risk.open_entry)} → SL ${px(d.risk.open_sl)} / TP1 ${px(d.risk.open_tp)}` : "none"],
-    ["Kelly (half, Wilson LB)", sig ? `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span>` : '<span class="dim">no signal: nothing to size</span>'],
+    ["Risk per trade (fixed)", `<input id="riskpct" type="number" step="0.1" min="0.1" max="${RISK_MAX}" value="${riskPctFixed()}" style="width:64px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"> % of the account <span class="dim">(sizes every trade)</span>`],
+    ["Kelly (half, Wilson LB)", `${sig ? `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span> · ` : ""}<span class="warn">not used for sizing: the win rate it needs is not validated</span>`],
     ["Account", `<input id="acct" type="number" value="${acct}" style="width:90px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"> USD`],
-    ["Lots (100 oz)", lots >= 0.01 ? f(lots, 2) : (k.kelly_pct > 0 ? "below 0.01 minimum" : "0 (no edge sized)")],
+    ["Lots (100 oz)", !sig ? '<span class="dim">no signal: nothing to size</span>' : lots >= 0.01 ? `${f(lots, 2)} <span class="dim">at ${f(riskPctFixed(), 2)}% risk</span>` : "below 0.01 minimum"],
     ["Cost profile", profSel],
     ...(customRow ? [["Custom costs", customRow]] : []),
     ["Commission (round trip, 1 lot)", prof && isNum(commLot) ? `$${f(commLot, 2)} <span class="dim">${esc(BASIS[prof.commission.basis] || prof.commission.basis)} · <b class="${prof.status === "FROZEN" ? "" : "warn"}">${esc(prof.status)}</b></span>` : "—"],
     ["Loss at stop per lot", sig && perLot > 0 ? `$${f(perLot, 0)} <span class="dim">stop ${f(p.dist, 2)} + costs ${isNum(costOz) ? f(costOz, 2) : "—"} per oz × 100 oz${newsMult > 1 ? ` (spread + slippage ×${newsMult}: news window)` : ""}</span>` : "—"],
   ]) + checksHtml(D, NW, costOz) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot) and includes spread, slippage and commission for the selected account, so the loss at the stop stays within the risk %. <b>UNVERIFIED</b> rates are the firm's published figures, not yet confirmed from your MT5 history; the forward test always uses the frozen engine costs.${prof && prof.note ? " " + esc(prof.note) : ""} The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
   $("#acct").onchange = (e) => { S.account = Number(e.target.value) || null; store.set("account", S.account); renderSide(); };
+  $("#riskpct").onchange = (e) => { const v = Number(e.target.value); S.riskPct = isNum(v) && v > 0 && v <= RISK_MAX ? v : null; store.set("risk_pct", S.riskPct); renderSide(); };
   const capIn = (q, key) => { const el = $(q); if (el) el.onchange = (e) => { const v = Number(e.target.value); S[key] = isNum(v) ? v : null; store.set(key === "todayR" ? "today_r" : "cap_r", S[key]); renderSide(); }; };
   capIn("#today-r", "todayR"); capIn("#cap-r", "capR");
   const cp = $("#cost-prof"); if (cp) cp.onchange = (e) => { S.costProfile = e.target.value; store.set("cost_profile", S.costProfile); renderSide(); };
@@ -1943,7 +1957,7 @@ function renderStrip() {
     cell("Liquidity draw", esc(d.liquidity ? d.liquidity.dest : "—"), `PDH ${px(lq.PDH)} · PDL ${px(lq.PDL)}`),
     cell("Price", px(d.close), `VWAP D ${px(vw)}`),
     cell("Macro", esc(d.macro ? d.macro.label : "—"), d.macro ? `${fs(d.macro.strength, 0)} · votes ${d.macro.bull_votes}/${d.macro.bear_votes}` : ""),
-    cell("Risk", isNum(p.rr1) ? `1:${f(p.rr1, 1)} · SL ${f(p.dist, 2)}` : "—", `Kelly ${d.kelly ? f(d.kelly.kelly_pct, 2) : "—"}%${sig ? "" : " · no signal"}`),
+    cell("Risk", isNum(p.rr1) ? `1:${f(p.rr1, 1)} · SL ${f(p.dist, 2)}` : "—", `risk ${f(riskPctFixed(), 2)}% fixed${sig ? "" : " · no signal"}`),
     cell("Decision", `${esc(dec)} · TQ ${d.trade_quality}${esc(d.tq_grade || "")}`, `${esc(d.bias_label)} · ${esc(d.session.label)} ${d.session.quality}/30`, dec === "NO TRADE" || dec === "RISK LOCK" ? "warn" : ""),
   ].join("");
 }
