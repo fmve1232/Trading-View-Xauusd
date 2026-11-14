@@ -4,7 +4,6 @@ changes: not the alert's own lines, not the website's lines, not the plans, the 
 The scenario is the daily-validation one of test_notify_plan.py: a 15m BUY, its TP1 follow-up, then the daily and weekly
 reports after the New York close. Every test runs in sixty mode (the production default: ALERT_MODE unset) and in
 quality mode (the mode tests/conftest.py gives every other test)."""
-import json
 import os
 from datetime import datetime, timezone
 
