@@ -3734,3 +3734,34 @@ two switches before 159 existing inputs and 123 moved, so the saved v102 values 
   sources (RUNBOOK Step 1a). The files are not changed: moving the inputs again would scramble the settings a second time.
 - `input_order_check.py` (new, a gate): each input of a file's previous build keeps its position, name and type; new
   inputs are appended only; v103 Visuals recorded as ACCEPTED. Control: an input inserted at the top is detected.
+
+# v104 — Master dashboard one row shorter, POC shown once, every value kept (2026-11-14)
+
+Operator: redesign / re-align the dashboard with the Master's, optimise the Master's dashboard to save space ("POC lines
+have multiple"), all values kept, a clear chart. Chosen (AskUserQuestion): "Re-wrap, keep every value" and "Repeated POC
+text".
+
+**Why the dashboard was tall:** table rows share one height. Row 3 held a single cell, the H2 block under DECISION, six
+lines tall; row 2 is seven lines from SIGNAL's detail while its DECISION footer used three. The nine columns already
+span the chart width and lines over ~32 characters clip (v39 / v55), so joining detail lines would hide values.
+
+**Master (`fix_v104.py`):**
+- The H2 text is re-wrapped to four lines of at most 32 characters and follows the DECISION footer in row 2 (3 + 4 = 7
+  lines, the row's existing height): **row 3 is gone, about six tiny lines of dashboard height**. Same values (trend,
+  last time, swept level, side, entry, SL, TP1, TP2), the H2 colour while a signal fires.
+- The POC number is no longer repeated in the H2 text.
+- Model: 99,242 / 98,768, **177 tokens fewer** than v103 (one cell call removed); main body + strings 27,878.
+
+**Visuals:** the strip cell under the Master's PRICE column is now "VALUE · POC", e.g. "under POC 3882.22" (MT5
+price): the POC number appears once on the screen. Dock gap default 24% → 16% of the chart height.
+
+**Checks:** `v104_check.py` (new): the H2 text executed on 18 worst-case states (BUY / SELL / none, 5-digit prices,
+MIXED): ≤ 4 lines of ≤ 32 characters, every value present, the POC number not repeated; the DECISION cell; no desktop
+row 3; Visuals' cell prints the POC number with no NaN; control: v103's text fails. `refactor_check` chain +
+`fix_v104.master`; `v94_check` 2 anchored to its own commit; `input_order_check` passes (no input moved). Every checker passes.
+
+**Visible on the chart:** the Master's dashboard is about a third shorter; the H2 lines sit under the DECISION footer;
+Visuals' strip shows the POC under PRICE. If the strip sits too low, set Visuals → Settings → "Dock gap below the
+Master dashboard" (a saved 24 stays 24).
+
+**Not run:** the TradingView compile and rendering of v104 (the Master changed: please report the compile).

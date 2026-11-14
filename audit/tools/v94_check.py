@@ -59,7 +59,8 @@ def fbody(t):
     while b < len(L) and (L[b].startswith(" ") or not L[b].strip()):
         b += 1
     return L[a:b]
-old, new = fbody(v93m), [l for l in fbody("\n".join(ML)) if "color _cn = color(na)" not in l and "v94: one transparent colour" not in l]
+v94m = subprocess.run(["git", "show", "c18c4f765:" + M], capture_output=True, text=True, check=True).stdout   # v104 changed f_dashRender again
+old, new = fbody(v93m), [l for l in fbody(v94m) if "color _cn = color(na)" not in l and "v94: one transparent colour" not in l]
 NZ = (("na(avgCorrHealth) ? 50 : avgCorrHealth", "nz(avgCorrHealth, 50)"), ("na(liqReachScore) ? 50 : liqReachScore", "nz(liqReachScore, 50)"))
 def _v94(o):
     o = o.replace("color(na)", "_cn")
@@ -67,7 +68,6 @@ def _v94(o):
         o = o.replace(x, y)
     return o
 same = len(old) == len(new) and all(_v94(o) == n for o, n in zip(old, new))
-v94m = subprocess.run(["git", "show", "c18c4f765:" + M], capture_output=True, text=True, check=True).stdout   # v99 changed the Master
 report(bad2 == 0 and same and F94.master(v93m) == v94m,
        f"2 the Master's rewrites: nz(x, 50) == na(x) ? 50 : x (na incl.): mismatches {bad2}; f_dashRender == v93 with color(na) -> _cn and the 2 nz rewrites, nothing else: {same}; "
        "Master @ v94 (c18c4f765) == fix_v94.master(v93 @ ee6085672), byte for byte")

@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v100  (one BUY / SELL alert per run) ║
+// ║  BUILD STAMP — this file last CHANGED in v104  (H2 into row 2, POC once)      ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -5224,13 +5224,14 @@ float h2Tp2 = h2Long ? math.max(h2Vah, close + 2.0 * h2R) : h2Short ? math.min(h
 // H2-END
 // v37 H2 SETUP on the Master -- display and alert only. The DECISION above is unchanged; H2 is the
 // separate, pre-registered sweep-to-value idea (PREREGISTRATION A3), shown beside it, MT5 prices.
-string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + str.tostring(close + mt5Offset, "#.##") + "\nSL " + str.tostring(h2Sl + mt5Offset, "#.##") + "\nTP1 " + str.tostring(h2Tp1 + mt5Offset, "#.##") + " TP2 " + str.tostring(h2Tp2 + mt5Offset, "#.##") : ""
+string h2Plan = h2Long or h2Short ? (h2Long ? "BUY" : "SELL") + " entry " + str.tostring(close + mt5Offset, "#.##") + " SL " + str.tostring(h2Sl + mt5Offset, "#.##") + "\nTP1 " + str.tostring(h2Tp1 + mt5Offset, "#.##") + " · TP2 " + str.tostring(h2Tp2 + mt5Offset, "#.##") : ""
 var string h2Last = "none yet"
 if h2Long or h2Short
     h2Last := str.format_time(time, "MM-dd HH:mm", "UTC") + "\nswept " + str.tostring(h2SweptLvl + mt5Offset, "#.##") + "\n" + h2Plan
 // v39: short lines (the desktop footer cell clipped one long line at both ends on the chart);
 // v55: every line <= ~32 characters, so the mobile card fits a phone-width chart.
-string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · POC " + (na(h2Poc) ? "—" : str.tostring(h2Poc + mt5Offset, "#.##")) + "\nlast " + h2Last
+// v104: four lines <= 32 characters; the POC number is shown once, in Visuals' strip under PRICE (same H2 code)
+string h2Line = "H2 " + (h2TrendUp ? "UP" : h2TrendDn ? "DOWN" : "MIXED") + " · last " + h2Last
 
 // ══════════════════════════════════════════════════════════════════════
 // BLOOMBERG TERMINAL DASHBOARD — 9-col x 4-row strip (UI only; no trading logic here)
@@ -5698,9 +5699,9 @@ f_dashRender() =>
         string _lotStr = _lots < 0.0 ? "<min" : str.tostring(_lots, "0.00") + "L"
         string _riskDisp = showTradePlan and _riskUSD > 0.5 ? " $" + _si(_riskUSD) + " " + _lotStr : ""
         string _decFoot = _rrStr + _riskDisp + "\n" + decisionLog + "\n" + _agreePct
-        tcb(8, 2, _decFoot, C_TEXT, _cn, _seSize, _w8)
-        // v57: H2 in its own cell under DECISION (it crowded and clipped the footer)
-        tcb(8, 3, h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, _cn, _seSize, _w8)
+        // v57: H2 had its own cell under DECISION (long lines clipped the footer). v104: its lines are <= 32 characters,
+        // so it follows the footer again and the dashboard loses its row 3 (six lines of height); same values, same colour
+        tcb(8, 2, _decFoot + "\n" + h2Line, h2Long ? cBloomBull : h2Short ? cBloomBear : C_TEXT, _cn, _seSize, _w8)
         // v25: hand the composite strings to the Mobile card (slots 25-34), so the phone shows
         // exactly what the desktop cells show, built once.
         array.set(gDashS, 25, _mktLine)
