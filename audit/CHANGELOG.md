@@ -3693,3 +3693,33 @@ against web.8 (@ 30a3da10d).
 2026-11-14 00:55 UTC)"; Visuals' banner: H4 · 15m N 95, H3 · 1H N 0, the new notes. Nothing else changes.
 
 **Not run:** the TradingView compile of v101 / v102; `level_check` and `tf_check` (no engine or session code changed).
+
+# v103 — Visuals: a strip aligned under the Master's dashboard; the panel, ticker and dock cards switched off by default (2026-11-14)
+
+Operator (screenshot, 2026-11-14): "Too much text on Visuals chart please optimize it as i can't see candles now. Make it
+more professional and add bars like master but placement shouldn't overlap with master" → "please ensure real switches
+exist in visuals but display with the master file. Alignment & design". The same screenshot confirms **Visuals v102
+compiles and loads** (the v101 CE10295 fix works).
+
+**The default view (`fix_v103.py`, Visuals only):**
+- **Strip under the Master's dashboard:** two rows in the docks' table (the Master's anchor, its nine column widths x
+  Density, the dock gap), one cell under each Master column: MARKET daily regime · BIAS trend · SIGNAL H2 ·
+  STRUCTURE last sweep · LIQUIDITY room · PRICE value · MACRO macro (= the Master's) · RISK checks · DECISION forward
+  record. Grey header, coloured one-line value; the long explanations are hover tooltips.
+- **One source:** `f_tk` draws each tile into the bottom ticker and / or the strip from the same value and colour.
+- **Off by default, each with its own switch:** the detail panel (new LAYOUT switch "Detail panel (bottom left)"),
+  the bottom ticker (Glance placement "Bottom ticker"), and the full dock cards (liquidity "Under the Master's
+  LIQUIDITY", drivers "Under the Master's MACRO", H2 "Under the Master's DECISION"). Every option still restores
+  the v102 layout; nothing is removed. Drawings (lines, zones, labels) are unchanged.
+- The optional dock cards start two rows lower while the strip is on.
+
+**Checks:** `v103_check.py` (new): each strip cell under the Master column it belongs to, read from the Master's code,
+all nine used once; the Master's anchor; one source; one-line values; the default view executed from the inputs'
+defaults (strip on, panel / ticker / dock cards off); 14 section switches; controls (a tile under the wrong column,
+the panel on by default). `panel_check` 9 and `v86_check` 8 execute the new headers and the strip RECORD cell with
+missing data: 0 NaN. `compile_est`: Visuals main body + strings 23,502 (≤ 30,568), best-fit 84,369.
+
+**Visible on the chart:** the bottom-left panel and the liquidity text block are gone by default; a two-row strip sits
+under the Master's dashboard. To bring back anything: Visuals → Settings → LAYOUT / TERMINAL PANEL / DOCK.
+
+**Not run:** the TradingView compile and rendering of v103.

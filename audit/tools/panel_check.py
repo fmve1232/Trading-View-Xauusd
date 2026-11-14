@@ -46,7 +46,7 @@ def args(line, name):
     return out + [cur.strip()]
 
 
-a = L.index(next(l for l in L if l.startswith("if not vSep and barstate.islast and (")))
+a = L.index(next(l for l in L if l.startswith(("if not vSep and barstate.islast and (", "if pnShow and not vSep and barstate.islast and ("))))   # v103: + the detail-panel switch
 blk = []
 for l in L[a + 1:]:
     if l and not l.startswith(" "):
@@ -293,7 +293,7 @@ for l in L:
         a_ = args(st, "f_tk")
         if not a_[0].isdigit():
             continue                 # v86 tiles 6 / 7 (column _c): executed with missing data by v86_check.py
-        texts += [("tile " + a_[0], a_[k]) for k in (1, 3, 4)]
+        texts += [("tile " + a_[0], a_[k]) for k in (2, 3, 5, 6)]   # v103: f_tk(c, sc, sh, v, vc, lbl, tip)
     for name, key in (("_h2Row", '"TREND"'), ("_tmRow", '"TREND"')):
         if st.startswith(name + "(") and "=>" not in st and args(st, name)[1] == key:
             texts.append((name + " TREND", args(st, name)[2]))
@@ -322,7 +322,8 @@ for _ in range(1500):
                 nan9.append((who, str(out)[:50]))
         except Exception as ex:
             err9.add((who, str(ex)[:60]))
-report(not nan9 and not err9 and len(texts) == 22, f"tiles + TREND rows executed with missing data: {len(texts)} texts, {n9} evaluations, "
+report(not nan9 and not err9 and len(texts) == 28,   # v103: + each tile's strip header (6)
+       f"tiles + TREND rows executed with missing data: {len(texts)} texts, {n9} evaluations, "
        f"{len(nan9)} showed NaN, {len(err9)} could not be evaluated" + (f" -- e.g. {nan9[:2]} {sorted(err9)[:2]}" if nan9 or err9 else ""))
 # ---- 10 (v85): Visuals' sweep alerts (the Master is at its token limit, F-A72): the H2 swing-sweep and the ✕ pivot-sweep
 # alert() messages EXECUTED -- the right side, the swept level (MT5 via _h2p for H2), bar-close frequency, no NaN

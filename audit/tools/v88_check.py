@@ -166,7 +166,7 @@ dock = next(l.strip() for l in V if l.strip().startswith("table.cell(dkT, 6, 1, 
 okd = ("mxGlyph" in tile3.split('"macro')[0] and "f_tmC(_tNet)" not in tile3 and '"macro · = Master"' in tile3
        and '"OTHER DRIVERS · context"' in dock and "f_tmG(_net)" not in dock.split("tooltip")[0]
        and '_tmRow(r, "MACRO", mxVerdict + " (= the Master\'s MACRO cell)"' in txt and "mxGlyph + \" \" + (macroIntelLabel" in txt
-       and "the Master's MACRO: \" + mxVerdict" in txt and '"daily regime · untested"' in txt and 'f_tk(_c, rgTxt, ' in txt)
+       and "the Master's MACRO: \" + mxVerdict" in txt and '"daily regime · untested"' in txt and 'f_tk(_c, 0, "DAILY REGIME", rgTxt, ' in txt)   # v103 signature
 report(okd, "5 display: ticker macro tile, panel MACRO row, glance rows show the Master's verdict; the five extra drivers are "
        "'OTHER DRIVERS · context' with their net only in tooltips; the daily-regime tile carries no macro mark")
 

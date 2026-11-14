@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v102  (records: web.8 live)          ║
+// ║  BUILD STAMP — this file last CHANGED in v103  (strip under the Master)       ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -120,6 +120,12 @@ candlePos    = input.string("Top Right", "Panel position", options = ["Top Right
 // v73: ONE terminal panel (candle + H2 + gold drivers, one style) is the default; the three separate v72 cards stay
 // selectable. The panel's sections follow the cards' own switches: Show candle info panel, Show H2 signals and card,
 // Gold drivers panel = Hidden; the H2 card layout "Full" adds the session rows and its text size sets the panel's.
+// v103 (operator 2026-11-14: "too much text ... can't see candles"; "real switches in Visuals but display with the
+// Master file. Alignment & design"): a strip under the Master's dashboard is the default view; the detail panel,
+// the bottom ticker and the full dock cards are off by default and each has its own switch (nothing removed).
+grpLy = "LAYOUT (v103): what shows on the chart"
+stShow = input.bool(true, "Strip under the Master's dashboard (one cell per Master column)", group = grpLy, tooltip = "Two rows directly under the Master's dashboard, on its nine columns: daily regime, trend, H2, last sweep, room, value, macro, checks, forward record. Hover a cell for the detail. Set Dash Mode / Text Size / Density as in the Master; the gap is 'Dock gap below the Master dashboard'.")
+pnShow = input.bool(false, "Detail panel (bottom left)", group = grpLy, tooltip = "The full terminal panel: market at a glance, candle, H2 card, drivers, liquidity, checks & risk, bracket, record. Its sections keep their own switches.")
 grpTm = "TERMINAL PANEL (v73)"
 vLayout = input.string("Terminal (one panel)", "Panel layout", options = ["Terminal (one panel)", "Separate cards (v72)"], group = grpTm, tooltip = "Terminal: market, H2 and gold drivers in one docked panel, one style. Separate cards: the three v72 cards, each at its own position.")
 vPos = input.string("Bottom Left", "Terminal position", options = ["Bottom Left", "Middle Left", "Top Left", "Middle Right"], group = grpTm, tooltip = "The Master's dashboard sits top right and its trade plan bottom right (Desktop); bottom left keeps both and the newest candles clear. With the Master on Tablet its plan is bottom left: pick Middle Left (not Top Left: the docks take that corner then; TradingView shows one table per corner).")
@@ -133,7 +139,7 @@ glMoveA = input.float(10.0, "Move to plan for: at least ($)", minval = 0.5, maxv
 glMoveB = input.float(20.0, "Move to plan for: target ($)", minval = 0.5, maxval = 500.0, step = 0.5, group = grpTm)
 // v81: the glance as a BOTTOM TICKER (operator's choice B): six tiles in one strip at the bottom centre, lifted above
 // the Master's plan strip; the panel keeps only what is not docked. "In the panel" restores the v79 / v80 section.
-glPlace = input.string("Bottom ticker", "Glance placement", options = ["Bottom ticker", "In the panel"], group = grpTm, tooltip = "Bottom ticker: six tiles along the bottom (trend, value, room, macro, last sweep, H2), the price area stays clear. In the panel: the glance section of the bottom-left panel.")
+glPlace = input.string("In the panel", "Glance placement", options = ["Bottom ticker", "In the panel"], group = grpTm, tooltip = "Bottom ticker: six tiles along the bottom (trend, value, room, macro, last sweep, H2), the price area stays clear. In the panel: the glance section of the bottom-left panel.")
 tkLift = input.int(5, "Ticker lift above the Master's plan strip (% of chart height)", minval = 0, maxval = 40, group = grpTm, tooltip = "Raise it if the ticker overlaps the Master's plan strip; 0 = on the bottom edge.")
 tkSize = input.string("Normal", "Ticker text size", options = ["Small", "Normal", "Large"], group = grpTm)
 bool tkOn = glShow and glPlace == "Bottom ticker"
@@ -143,7 +149,7 @@ gdPos = input.string("Bottom Right", "Gold drivers panel", options=["Bottom Righ
 // dashboard has fixed geometry: top right (Desktop / Auto) or top left (Tablet), no border, no frame, column widths
 // 10/10/12/11/13/10/11/11/13 % of the chart x its Density. These three inputs are the Master's own (same names,
 // options, defaults; inputs_check.py holds them equal) -- set them as in the Master. Only the gap is free.
-gdDock = input.string("Under the Master's MACRO", "Gold drivers placement", options=["Under the Master's MACRO", "In the panel / card"], group="GOLD DRIVERS (display only)", tooltip="Under the Master's MACRO: a column aligned under the Master dashboard's MACRO cell (Desktop / Tablet; not with the Master on Mobile). In the panel / card: inside the terminal panel, or the separate drivers card.")
+gdDock = input.string("In the panel / card", "Gold drivers placement", options=["Under the Master's MACRO", "In the panel / card"], group="GOLD DRIVERS (display only)", tooltip="Under the Master's MACRO: a column aligned under the Master dashboard's MACRO cell (Desktop / Tablet; not with the Master on Mobile). In the panel / card: inside the terminal panel, or the separate drivers card.")
 gdGap = input.int(24, "Dock gap below the Master dashboard (% of chart height)", minval=0, maxval=70, group="GOLD DRIVERS (display only)", tooltip="All docks (liquidity, gold drivers, H2) start this far down: raise it until they clear the Master's tallest column (DECISION, with its H2 SETUP cell).")
 dashMode = input.string("Auto", "Dash Mode", options=["Auto", "Desktop", "Tablet", "Mobile"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
 textSize = input.string("Auto", "Text Size", options=["Auto", "Small", "Medium", "Large"], group="GOLD DRIVERS (display only)", tooltip="Set as in the Master (its Layout group).")
@@ -154,13 +160,14 @@ bool gdDocked = gdDock == "Under the Master's MACRO" and gdPos != "Hidden" and d
 // shows one table per position per script: v76's three top-right tables showed only the last one), so they share one
 // gap below the Master's tallest column. These inputs moved up here so the cards can read them.
 grpDk = "DOCK UNDER THE MASTER (v75)"
-h2Dock = input.string("Under the Master's DECISION", "H2 card placement", options=["Under the Master's DECISION", "In the panel / card"], group=grpDk, tooltip="The H2 sweep-to-value card (the website records the same rule as arm H3) under the Master dashboard's DECISION column, or in the terminal panel / its own card.")
-lqDock = input.string("Under the Master's LIQUIDITY", "Liquidity & sweeps placement", options=["Under the Master's LIQUIDITY", "In the panel", "Hidden"], group=grpDk, tooltip="PDH/PDL, PWH/PWL, PMH/PML, CDH/CDL with distance from price, the unswept swings and the last sweeps, under the Master's LIQUIDITY column or in the terminal panel. Display only.")
+h2Dock = input.string("In the panel / card", "H2 card placement", options=["Under the Master's DECISION", "In the panel / card"], group=grpDk, tooltip="The H2 sweep-to-value card (the website records the same rule as arm H3) under the Master dashboard's DECISION column, or in the terminal panel / its own card.")
+lqDock = input.string("Hidden", "Liquidity & sweeps placement", options=["Under the Master's LIQUIDITY", "In the panel", "Hidden"], group=grpDk, tooltip="PDH/PDL, PWH/PWL, PMH/PML, CDH/CDL with distance from price, the unswept swings and the last sweeps, under the Master's LIQUIDITY column or in the terminal panel. Display only.")
 bool h2Docked = h2Dock == "Under the Master's DECISION" and dashMode != "Mobile"
 bool lqDocked = lqDock == "Under the Master's LIQUIDITY" and dashMode != "Mobile"
 // v77: the separate candle card's "Top Right" would share the docks' corner (one table per position): it moves to
 // middle right while any dock is on
-bool dkOn = gdDocked or lqDocked or h2Docked
+bool stOn = stShow and dashMode != "Mobile"   // v103: the strip follows the docks' rule (no dock on a phone layout)
+bool dkOn = gdDocked or lqDocked or h2Docked or stOn
 bool lqInPanel = lqDock == "In the panel" or lqDock == "Under the Master's LIQUIDITY" and dashMode == "Mobile"
 
 grpSess = "Sessions (UTC)"
@@ -2209,7 +2216,7 @@ if not vSep and barstate.islast
 // v75: drawn only while it has a section (everything docked under the Master + candle panel off = no empty frame)
 // v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
 f_v101Panel() =>
-    if not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel or ckPanel)
+    if pnShow and not vSep and barstate.islast and (glShow and not tkOn or showCandle or h2Show and not h2Docked or gdPos != "Hidden" and not gdDocked or lqInPanel or ckPanel)
         bool _cmp = vDetail == "Compact"
         int r = 0
         _tmHead(r, "XAUUSD · " + timeframe.period, "VISUALS · " + str.format_time(time, "dd MMM HH:mm", "UTC") + " UTC", color.new(#1F3A5F, 0))
@@ -2389,14 +2396,14 @@ f_dock(table t, int col, int gap) =>
     for [c, w] in _dkW
         table.cell(t, c, 0, "", width = int(w * _dw), height = c == col ? gap : 0)
 f_dkCell(table t, int col, int r, string txt, color tc) =>
-    table.cell(t, col, r, txt, text_color = tc, bgcolor = _dbg, text_size = _dsz, width = int(array.get(_dkW, col) * _dw), text_halign = text.align_left)
+    table.cell(t, col, r + (stOn ? 2 : 0), txt, text_color = tc, bgcolor = _dbg, text_size = _dsz, width = int(array.get(_dkW, col) * _dw), text_halign = text.align_left)   // v103: below the strip
 // v78: the band's rows share heights, so every cell is kept to the same 2 lines (headers 1): the H2 header is one line
 // and its 4-line SIGNAL is split into two 2-line cells (same text, same colour). No gaps between the liquidity and the
 // driver lines; nothing removed.
-var table dkT = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 10, border_width = 0, frame_width = 0)
+var table dkT = table.new(dashMode == "Tablet" ? position.top_left : position.top_right, 9, 12, border_width = 0, frame_width = 0)
 if barstate.islast
-    table.clear(dkT, 0, 0, 8, 9)
-if (gdDocked or lqDocked or h2Docked and h2Show) and barstate.islast
+    table.clear(dkT, 0, 0, 8, 11)
+if (gdDocked or lqDocked or h2Docked and h2Show or stOn) and barstate.islast
     f_dock(dkT, 0, gdGap)
 // v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
 f_v101GdDock() =>
@@ -2448,14 +2455,19 @@ f_v101H2Dock()
 // v86: row 0 is the forward-record banner (merged across the tiles), rows 1-2 the tiles, row 3 the spacer; tile 6 the
 // daily regime (untested) and tile 7 the checks (news, cost, churn, daily cap).
 var table tkT = table.new(position.bottom_center, 8, 4, border_color = color.new(#0B0F14, 0), border_width = 2, frame_width = 0)
-f_tk(int c, string v, color vc, string lbl, string tip) =>
-    table.cell(tkT, c, 1, v, text_color = vc, bgcolor = color.new(#0F141B, 0), text_size = tkSize == "Large" ? size.large : tkSize == "Small" ? size.small : size.normal, tooltip = tip)
-    table.cell(tkT, c, 2, lbl, text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#0F141B, 0), text_size = size.tiny, tooltip = tip)
+// v103: one tile, two places: the bottom ticker (tkOn) and the strip under the Master (stOn), column sc, header sh
+f_tk(int c, int sc, string sh, string v, color vc, string lbl, string tip) =>
+    if stOn
+        table.cell(dkT, sc, 1, sh, text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#131A24, 20), text_size = size.tiny, width = int(array.get(_dkW, sc) * _dw), tooltip = lbl + "\n" + tip)
+        table.cell(dkT, sc, 2, v, text_color = vc, bgcolor = _dbg, text_size = _dsz, width = int(array.get(_dkW, sc) * _dw), tooltip = lbl + "\n" + tip)
+    if tkOn
+        table.cell(tkT, c, 1, v, text_color = vc, bgcolor = color.new(#0F141B, 0), text_size = tkSize == "Large" ? size.large : tkSize == "Small" ? size.small : size.normal, tooltip = tip)
+        table.cell(tkT, c, 2, lbl, text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#0F141B, 0), text_size = size.tiny, tooltip = tip)
 if barstate.islast
     table.clear(tkT, 0, 0, 7, 3)
 // v101 (F-A92): display-only block wrapped in a function (CE10295, main body too long); same code, same order
 f_v101Ticker() =>
-    if tkOn and barstate.islast
+    if (tkOn or stOn) and barstate.islast
         [_tUpP, _tUpN] = f_glNear(true, close)
         [_tDnP, _tDnN] = f_glNear(false, close)
         float _tUpR = na(_tUpP) ? na : _tUpP - close
@@ -2463,23 +2475,27 @@ f_v101Ticker() =>
         float _tNet = nz(brJd) + nz(brOd) + nz(brRd) + nz(brBd) + nz(br2d)
         string _ok = "✓"
         string _no = "✗"
-        f_tk(0, h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and scores: the Master's BIAS / SIGNAL cells (scores, not calibrated odds).")
-        f_tk(1, na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
-        f_tk(2, "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
-        f_tk(3, mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV), "macro · = Master", mxWhy + "\nOther drivers (context, not in the score), net " + f_tmG(_tNet) + ": USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
-        f_tk(4, na(pvLastLvl) ? "none yet" : (pvLastUp ? "HIGH " : "LOW ") + str.tostring(pvLastLvl, format.mintick), na(pvLastLvl) ? _tmV : pvLastUp ? _tmDn : _tmUp, "last sweep" + (na(pvLastTime) ? "" : " · " + str.tostring((time - pvLastTime) / 3600000.0, "#.#") + " h ago"), "Pivot sweep (the ✕ markers): " + pvLastSweep + "\nH2 sweep: " + str.replace_all(h2LastSweep, "\n", "  "))
-        f_tk(5, h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " ○" : " ●"), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV, "H2 · " + (h2SigDir == 0 ? "no signal" : (h2Stale ? "stale" : "live") + (h2SigOut != "" ? " · " + h2SigOut : "")), h2SigCard + h2SigStat)
+        f_tk(0, 1, "TREND 1H·4H·1D", h2TrendUp ? "▲ UP" : h2TrendDn ? "▼ DOWN" : "◆ MIXED", h2TrendUp ? _tmUp : h2TrendDn ? _tmDn : _tmV, "trend 1H·4H·1D" + (na(ema200) ? "" : close > ema200 ? " · ▲EMA200" : " · ▼EMA200"), "1H " + f_sc(h2S1) + " · 4H " + f_sc(h2S4) + " · 1D " + f_sc(h2SD) + " (>=60 up, <=40 down; 2 of 3 decide)\nBias and scores: the Master's BIAS / SIGNAL cells (scores, not calibrated odds).")
+        f_tk(1, 5, "VALUE", na(h2Poc) ? "building" : close > h2Vah ? "above value" : close < h2Val ? "below value" : close >= h2Poc ? "over POC" : "under POC", na(h2Poc) ? _tmV : close < h2Val ? _tmUp : close > h2Vah ? _tmDn : _tmV, "value · POC " + _h2p(h2Poc), "VAL " + _h2p(h2Val) + " · POC " + _h2p(h2Poc) + " · VAH " + _h2p(h2Vah) + " (100 bars)\n" + h2Next)
+        f_tk(2, 4, "ROOM $" + str.tostring(glMoveA, "#"), "↓" + (na(_tDnR) ? "—" : str.tostring(_tDnR, "#.#") + (_tDnR >= glMoveA ? _ok : _no)) + "  ↑" + (na(_tUpR) ? "—" : str.tostring(_tUpR, "#.#") + (_tUpR >= glMoveA ? _ok : _no)), _tmV, "room $" + str.tostring(glMoveA, "#") + " · " + (na(_tDnP) ? "—" : _tDnN) + " / " + (na(_tUpP) ? "—" : _tUpN), "Space to the nearest tagged level: below " + (na(_tDnP) ? "none" : _tDnN + " " + str.tostring(_tDnP, format.mintick)) + ", above " + (na(_tUpP) ? "none" : _tUpN + " " + str.tostring(_tUpP, format.mintick)) + "\n✓ = at least $" + str.tostring(glMoveA, "#") + (na(_tUpR) and na(_tDnR) ? "" : "; $" + str.tostring(glMoveB, "#") + " target: " + (not na(_tUpR) and _tUpR >= glMoveB ? "up ✓ " : "up ✗ ") + (not na(_tDnR) and _tDnR >= glMoveB ? "down ✓" : "down ✗")))
+        f_tk(3, 6, "MACRO · = Master", mxGlyph + " " + (macroIntelLabel == "N/A" ? "—" : str.tostring(macroIntelScore)), (mxDir > 0 ? _tmUp : mxDir < 0 ? _tmDn : _tmV), "macro · = Master", mxWhy + "\nOther drivers (context, not in the score), net " + f_tmG(_tNet) + ": USDJPY " + f_tmG(brJd) + " · OIL " + f_tmG(brOd) + " · REAL YLD " + f_tmG(brRd) + " · BREAKEVEN " + f_tmG(brBd) + " · US 2Y " + f_tmG(br2d) + "\nDisplay only: no vote, weight or gate.")
+        f_tk(4, 3, "LAST SWEEP", na(pvLastLvl) ? "none yet" : (pvLastUp ? "HIGH " : "LOW ") + str.tostring(pvLastLvl, format.mintick), na(pvLastLvl) ? _tmV : pvLastUp ? _tmDn : _tmUp, "last sweep" + (na(pvLastTime) ? "" : " · " + str.tostring((time - pvLastTime) / 3600000.0, "#.#") + " h ago"), "Pivot sweep (the ✕ markers): " + pvLastSweep + "\nH2 sweep: " + str.replace_all(h2LastSweep, "\n", "  "))
+        f_tk(5, 2, "H2 SIGNAL", h2SigDir == 0 ? "none yet" : (h2SigDir == 1 ? "BUY" : "SELL") + (h2Stale ? " ○" : " ●"), h2SigState == 1 ? _tmUp : h2SigState == -1 ? _tmDn : h2SigState == 2 ? _tmS : _tmV, "H2 · " + (h2SigDir == 0 ? "no signal" : (h2Stale ? "stale" : "live") + (h2SigOut != "" ? " · " + h2SigOut : "")), h2SigCard + h2SigStat)
         int _c = 6
         if rgShow
-            f_tk(_c, rgTxt, rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (a 20-day daily reading, not the Master's MACRO)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
+            f_tk(_c, 0, "DAILY REGIME", rgTxt, rgUp ? _tmUp : rgDn ? _tmDn : _tmV, "daily regime · untested", "12-month return " + (na(rgRet12) ? "—" : str.tostring(rgRet12, "#.#") + "%") + " · " + (na(rgSma1) or na(rgC1) ? "SMA200 —" : rgC1 > rgSma1 ? "above" : "below") + " the 200-day average\nreal yield 20d " + (na(rgRyD) ? "—" : str.tostring(rgRyD, "#.##")) + " · DXY 20d " + (na(rgDxD) ? "—" : str.tostring(rgDxD, "#.##")) + " → " + rgMacTxt + " (a 20-day daily reading, not the Master's MACRO)\nAn UNTESTED hypothesis (Phase 1 report R1 / R2): context, never a signal.")
             _c += 1
         int _ckLv = math.max(nwLv, ckCostLv, rkLocked ? 2 : 0, ckChurn ? 1 : 0)
         string _ckTx = (rkLocked ? "STOP DAY · " : "") + (nwLv == 2 ? "NEWS · " : nwLv == 1 ? nwKName + " " + f_dur(nwMs) + " · " : "") + (ckCostLv >= 1 ? "COST " + str.tostring(ckCostPct, "#") + "% · " : "") + (ckChurn ? "CHURN · " : "") + (lkOn ? "" : "LINK the Master · ")
-        f_tk(_c, _ckTx == "" ? "OK ✓" : str.substring(_ckTx, 0, str.length(_ckTx) - 3), _ckLv == 2 ? _tmDn : _ckLv == 1 ? color.new(#FFB74D, 0) : _tmUp, "checks · next " + nwNext, "NEWS " + (nwNowIn ? "in the window: " : "next: ") + nwNext + (na(nwMs) or nwNowIn ? "" : " in " + f_dur(nwMs)) + "\nCOST " + str.tostring(ckCost, "#.##") + " pts = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (red > 25%, amber > 15%)\nCHURN " + str.tostring(ckFlips) + " structure flips in 20 bars (2+ = churn) · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\nTODAY " + str.tostring(rkToday, "#.##") + "R of the " + str.tostring(rkCap, "#.#") + "R cap\nScores in the Master are not win odds.")
-        if lgShow
+        f_tk(_c, 7, "CHECKS", _ckTx == "" ? "OK ✓" : str.substring(_ckTx, 0, str.length(_ckTx) - 3), _ckLv == 2 ? _tmDn : _ckLv == 1 ? color.new(#FFB74D, 0) : _tmUp, "checks · next " + nwNext, "NEWS " + (nwNowIn ? "in the window: " : "next: ") + nwNext + (na(nwMs) or nwNowIn ? "" : " in " + f_dur(nwMs)) + "\nCOST " + str.tostring(ckCost, "#.##") + " pts = " + (na(ckCostPct) ? "—" : str.tostring(ckCostPct, "#") + "%") + " of 1 ATR (red > 25%, amber > 15%)\nCHURN " + str.tostring(ckFlips) + " structure flips in 20 bars (2+ = churn) · efficiency " + (na(ckER) ? "—" : str.tostring(ckER, "#.##")) + "\nTODAY " + str.tostring(rkToday, "#.##") + "R of the " + str.tostring(rkCap, "#.#") + "R cap\nScores in the Master are not win odds.")
+        if lgShow and stOn
+            table.cell(dkT, 8, 1, "RECORD · " + str.replace_all(lgArm, " (deciding)", ""), text_color = color.new(#7D8FA3, 0), bgcolor = color.new(#131A24, 20), text_size = size.tiny, width = int(array.get(_dkW, 8) * _dw), tooltip = lgLine + " · " + tfNote + (lg2Show ? "\n" + lg2Line + (lg2Note != "" ? " · " + lg2Note : "") : ""))
+            table.cell(dkT, 8, 2, lgVerdict, text_color = lgLv == -1 ? _tmDn : lgLv == 1 ? _tmUp : color.new(#FFB74D, 0), bgcolor = _dbg, text_size = _dsz, width = int(array.get(_dkW, 8) * _dw), tooltip = lgLine + " · " + tfNote)
+        if lgShow and tkOn
             table.cell(tkT, 0, 0, "● " + lgLine + " · " + tfNote + (lg2Show ? "\n● " + lg2Line + (lg2Note != "" ? " · " + lg2Note : "") : ""), text_color = color.white, bgcolor = lgLv == -1 ? color.new(#B71C1C, 15) : lgLv == 1 ? color.new(#1B5E20, 15) : color.new(#6D4C00, 15), text_size = size.tiny, tooltip = "Typed in from the website's forward ledger as of " + lgAsof + " (Visuals settings, CHECKS & RISK). Rule: N >= 50, 95% t-interval of mean R above 0, PF >= 1.2.\n" + lgArm + " note: " + lgNote)
             table.merge_cells(tkT, 0, 0, _c, 0)
-        for c = 0 to 7
-            table.cell(tkT, c, 3, "", height = tkLift, bgcolor = color(na))
+        if tkOn
+            for c = 0 to 7
+                table.cell(tkT, c, 3, "", height = tkLift, bgcolor = color(na))
     0
 f_v101Ticker()

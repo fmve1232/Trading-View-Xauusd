@@ -491,9 +491,11 @@ for r_ in rows8:
 for l in tk_lines:
     if l.startswith("f_tk(_c, "):
         a_ = args(l, "f_tk")
-        texts += [("tile " + a_[0] + " #" + str(k), a_[k]) for k in (1, 3, 4)]
+        texts += [("tile " + a_[0] + " #" + str(k), a_[k]) for k in (2, 3, 5, 6)]   # v103: f_tk(c, sc, sh, v, vc, lbl, tip)
     if l.startswith("table.cell(tkT, 0, 0, "):
         texts.append(("banner", args(l, "table.cell")[3]))
+    if l.startswith(("table.cell(dkT, 8, 1, ", "table.cell(dkT, 8, 2, ")):     # v103: the strip's RECORD cell
+        texts.append(("strip record " + l[19], args(l, "table.cell")[3]))
 n0 = L.index("int nwK = -1")
 n1 = next(i for i in range(n0, len(L)) if L[i].startswith("int nwLv = "))
 NW = [l for l in L[n0:n1 + 1] if l.strip()]
@@ -546,7 +548,7 @@ for _ in range(1500):
                 nan8.append((who, str(out)[:60]))
         except Exception as ex:          # noqa: BLE001
             err8.add((who, str(ex)[:60]))
-report(not nan8 and not err8 and len(rows8) == 12 and len(texts) == 19,   # v93: + the BRACKET row; v99: + NOT A GATE (B-14)
+report(not nan8 and not err8 and len(rows8) == 12 and len(texts) == 23,   # v93: + the BRACKET row; v99: + NOT A GATE (B-14); v103: + 2 strip headers, the strip RECORD cell
        f"8 new texts (panel CHECKS rows {len(rows8)}, tiles 6 / 7, banner) executed with missing data, every derived value from "
        f"the Pine's own lines: {len(texts)} texts, {n8} evaluations, {len(nan8)} showed NaN, {len(err8)} could not be evaluated"
        + (f" -- e.g. {nan8[:2]} {sorted(err8)[:2]}" if nan8 or err8 else ""))
