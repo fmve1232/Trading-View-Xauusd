@@ -142,7 +142,7 @@ def test_run_records_alerts_follows_up_and_keeps_the_record(tmp_path, monkeypatc
     assert len(test_msg) == 1
     msg = test_msg[0]
     assert msg[0].startswith("XAUUSD 15m GRAB FORWARD TEST #1: BUY after PDL 3990.00 swept, closed back above at 4000.00")
-    assert any(x.startswith("TEST TRADE: entry 4000.00 TP 4013.00 (+$650) SL 3987.00 (-$650) | ON MT5: BUY at market, "
+    assert any(x.startswith("TEST TRADE: entry 4000.00 TP 4013.00 (+$650) SL 3987.00 (-$650) | ON MT5, ONLY IF YOU TAKE IT ANYWAY (not a validated signal): BUY at market, "
                             "then SL = your fill - 13.00, TP = your fill + 13.00") for x in msg)
     assert any(x.startswith("TIMING: bar closed 08:15 UTC") for x in msg)
     assert msg[-1].startswith("Registered test B9-GRAB-FWD, not a proven signal: COLLECTING: no result yet")
