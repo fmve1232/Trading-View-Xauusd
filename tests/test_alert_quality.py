@@ -47,7 +47,7 @@ def test_a1_replay_of_the_3_november_cluster_gives_one_plan_not_eight(tmp_path, 
     # rightly call the oldest of them NOT ACTIONABLE) is tested on its own in tests/test_stale_signals.py
     monkeypatch.setattr(N, "FRESH_SEC", 10**9)
     sent = []
-    monkeypatch.setattr(N, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(N, "send", lambda lines: sent.append(N.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     sig = lambda t, px: {"t": t, "type": "SIGNAL", "dir": -1, "px": px, "tq": 70, "sl": px + 10, "tp1": px - 10, "tp2": px, "tp3": px}
     N.run(store, {"5m": _pay("5m", NOV3_0800 - 300), "15m": _pay("15m", NOV3_0800 - 900)}, ["5m", "15m"], sent_t=NOV3_0800)

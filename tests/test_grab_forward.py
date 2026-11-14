@@ -128,7 +128,7 @@ def test_verdict_is_checked_only_at_the_registered_looks():
 
 def test_run_records_alerts_follows_up_and_keeps_the_record(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(N, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(N, "send", lambda lines: sent.append(N.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     t = T0
     base = {"15m": _tf("15m", t - 900), "1h": _tf("1h", t - 3600), "5m": _p5(t - 3000, [(4000, 4001, 3999, 4000)] * 10)}

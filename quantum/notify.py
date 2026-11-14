@@ -294,6 +294,25 @@ def phone_only(lines: list[str]) -> list[str]:
     return [x for x in lines if not x.startswith(RECORD_ONLY)]
 
 
+# Operator, 2026-11-13 (approved wording): every phone trading alert and follow-up opens with this disclaimer. Wording
+# only: it is added to the phone text after every gate and filter, never to the website's alert lines, the plans, the
+# plan validation or any research record, so no scoring and no historical record changes.
+TRADE_DISCLAIMER = ("RECORD \u2014 NOT A VALIDATED SIGNAL \u2014 NO TRADE",
+                    "This is a research-engine alert, not a trading recommendation. The strategy has not yet demonstrated "
+                    "a validated live trading edge.")
+
+
+def trade_msg(lines: list[str]) -> list[str]:
+    """A phone trading alert or follow-up with the disclaimer on top; nothing at all when there is nothing to send
+    (a disclaimer is never sent on its own)."""
+    return [*TRADE_DISCLAIMER, *lines] if lines else []
+
+
+def without_disclaimer(lines: list[str]) -> list[str]:
+    """The alert's own lines, without the disclaimer (the delivery log names the alert by its first own line)."""
+    return [x for x in lines if x not in TRADE_DISCLAIMER]
+
+
 def mt5_line(d: int, pl: dict) -> str:
     s, side = ("+", "-") if d == -1 else ("-", "+")
     if pl.get("tp2_px"):
@@ -1772,7 +1791,7 @@ def send(lines: list[str]) -> list[str]:
         return sent
     text = "\n".join(lines)
     meta = {"t": int(datetime.now(timezone.utc).timestamp()), "sha16": hashlib.sha256(text.encode()).hexdigest()[:16],
-            "lines": len(lines), "first": lines[0][:80]}
+            "lines": len(lines), "first": (without_disclaimer(lines) or lines)[0][:80]}
     topic = os.environ.get("NTFY_TOPIC", "").strip()
     chans = []
     if topic:
@@ -1975,7 +1994,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             phone_lines = upd + messages(p, since, now, ctx, signals_only=True) if tf in PHONE_TFS_SIXTY else []
         else:
             phone_lines = lines
-        report[tf] = {"lines": lines, "sent": send(phone_only(phone_lines))}
+        report[tf] = {"lines": lines, "sent": send(trade_msg(phone_only(phone_lines)))}
         if tf == "15m" and setups_on():                    # SETUP alerts: the operator's level rules (B16)
             p5s = payloads.get("5m")
             p5s = p5s if p5s is not None and (p5s.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None
@@ -2003,15 +2022,15 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                     continue
                 if fz["state"] == "DELAYED":
                     sl_ = sl_[:1] + [delayed_line(fz, off)] + sl_[1:]
-                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(sl_) if s_open[-1]["phone"] else []})
+                report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": send(trade_msg(sl_)) if s_open[-1]["phone"] else []})
             if stale_s:
                 ls_ = [stale_line("setup alert" + ("s" if len(stale_s) > 1 else ""), stale_s)]
-                report["setup_stale"] = {"lines": ls_, "sent": send(ls_)}
+                report["setup_stale"] = {"lines": ls_, "sent": send(trade_msg(ls_))}
             if s_upd:                                      # results only for setups that reached the phone
                 shown = {c_["id"] for c_ in s_done if c_.get("phone", True)} - gate_quiet(state, "setup")
                 s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]
                 if s_upd:
-                    report["setup_updates"] = {"lines": s_upd, "sent": send(s_upd)}
+                    report["setup_updates"] = {"lines": s_upd, "sent": send(trade_msg(s_upd))}
             state["setups"], state["setup_log"] = s_open[-60:], s_log
             keep_s = trading_day(t_send - 3 * 86400)
             state["setup_seen"] = {k: v for k, v in sseen.items() if v >= keep_s}
@@ -2042,10 +2061,10 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
                     continue
                 if fz["state"] == "DELAYED":
                     hl = hl[:1] + [delayed_line(fz, off)] + hl[1:]
-                report.setdefault("h4_alerts", []).append({"lines": hl, "sent": send(hl) if phone else []})
+                report.setdefault("h4_alerts", []).append({"lines": hl, "sent": send(trade_msg(hl)) if phone else []})
             if stale_h:
                 lh_ = [stale_line("4h breakout alert" + ("s" if len(stale_h) > 1 else ""), stale_h)]
-                report["h4_stale"] = {"lines": lh_, "sent": send(lh_)}
+                report["h4_stale"] = {"lines": lh_, "sent": send(trade_msg(lh_))}
             state["setups"] = s_open[-60:]
         state[tf] = last_t
     if pl_cfg:
@@ -2067,7 +2086,7 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
     report["turn_log"] = state.get("turn_log", [])[::-1][:10]
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
-        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else send(phone_only(glines))}   # trades and results
+        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else send(trade_msg(phone_only(glines)))}   # trades and results
     if setups_on():                                        # the live SETUP record (descriptive) and the site block
         srec = setup_record(store_dir, state.get("setup_log", []), t_send)
         report["setups"] = {"on": True, "quality": quality(), "sixty": sixty(), "hist_confirmed": list(SETUP_HIST_CONFIRMED) if SETUP_HIST_CONFIRMED else None,

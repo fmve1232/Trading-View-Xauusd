@@ -83,7 +83,7 @@ def test_run_end_to_end(tmp_path, monkeypatch):
     # sent_t: each run 5 minutes after its newest bar, as in production (the stale-signal gate reads the delay)
     monkeypatch.setenv("PLAN_TP2_USD", "0")                  # the one-TP plan (two targets: test_two_targets_end_to_end)
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"])                      # first run: position only
     assert sent == []
@@ -164,7 +164,7 @@ def test_summary_counts_money_and_flags_only_clear_evidence():
 def test_daily_and_weekly_reports_are_sent_once_at_the_close(tmp_path, monkeypatch):
     monkeypatch.setenv("PLAN_TP2_USD", "0")
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
 
     def pay(t_last, now, markers=(), bars=()):
@@ -275,7 +275,7 @@ def test_follow_ups_decided_by_cents_say_confirm_in_mt5():
 
 def test_run_records_when_each_alert_went_out_and_the_move_by_then(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"])
     sig = {"t": 1900, "type": "SIGNAL", "dir": -1, "px": 4000.0, "tq": 70, "sl": 4010.0, "tp1": 3990.0, "tp2": 3980.0, "tp3": 3970.0}
@@ -358,7 +358,7 @@ def test_near_is_the_untaken_side_on_a_live_price_once_per_day(monkeypatch):
 def test_run_sends_liquidity_alerts_publishes_them_and_can_be_turned_off(tmp_path, monkeypatch):
     monkeypatch.setenv("ALERT_MODE", "all")                     # liquidity lines reach the phone only in the 'all' mode
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     notify.run(store, {"15m": _liq_payload(bars=[(T0 - 900, 3990, 3980, 3985, 4069.89, 3975.83)])}, ["15m"], sent_t=T0)
     sw = {"t": T0, "type": "SWEEP", "dir": 1, "px": 3971.5, "lvl": [{"name": "PDL", "px": 3975.83}]}
@@ -462,7 +462,7 @@ def test_engine_status_counts_the_first_blocking_gate_once_per_bar():
 
 def test_a_silent_weekday_still_gets_the_engine_line_in_the_daily_report(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
 
     def pay(t_last, now):
@@ -499,7 +499,7 @@ def test_two_targets_mt5_line_and_the_stage_after_tp1():
 
 def test_two_targets_end_to_end(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     notify.run(store, {"15m": _payload(1000, [], [])}, ["15m"], sent_t=1300)
     sig = {"t": 1900, "type": "SIGNAL", "dir": 1, "px": 4000.0, "tq": 70, "sl": 3990.0, "tp1": 4010.0, "tp2": 4020.0, "tp3": 4030.0}
