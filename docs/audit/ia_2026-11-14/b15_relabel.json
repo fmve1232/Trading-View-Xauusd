@@ -1,0 +1,193 @@
+[
+ {
+  "id": 1,
+  "tf": "15m",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794354900,
+  "t_res_mine": 1794354900,
+  "mfe_before_res": 11.17,
+  "mae_before_res": 12.98,
+  "min_to": {
+   "10": 20,
+   "15": 1370,
+   "20": 1380
+  }
+ },
+ {
+  "id": 2,
+  "tf": "1h",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794360600,
+  "t_res_mine": 1794360600,
+  "mfe_before_res": 7.09,
+  "mae_before_res": 10.31,
+  "min_to": {
+   "10": 1055,
+   "15": 1055,
+   "20": 1100
+  }
+ },
+ {
+  "id": 3,
+  "tf": "30m",
+  "dir": -1,
+  "rec": "TP",
+  "mine": "TP",
+  "t_res_rec": 1794404100,
+  "t_res_mine": 1794404100,
+  "mfe_before_res": 12.92,
+  "mae_before_res": 5.91,
+  "min_to": {
+   "10": 105,
+   "15": 155,
+   "20": 180
+  }
+ },
+ {
+  "id": 4,
+  "tf": "30m",
+  "dir": -1,
+  "rec": "TP",
+  "mine": "TP",
+  "t_res_rec": 1794411000,
+  "t_res_mine": 1794411000,
+  "mfe_before_res": 11.31,
+  "mae_before_res": 2.75,
+  "min_to": {
+   "10": 25,
+   "15": 50,
+   "20": 170
+  }
+ },
+ {
+  "id": 5,
+  "tf": "30m",
+  "dir": -1,
+  "rec": "TP",
+  "mine": "TP",
+  "t_res_rec": 1794440100,
+  "t_res_mine": 1794440100,
+  "mfe_before_res": 12.97,
+  "mae_before_res": 1.67,
+  "min_to": {
+   "10": 85,
+   "15": 350,
+   "20": 365
+  }
+ },
+ {
+  "id": 6,
+  "tf": "4h",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794492900,
+  "t_res_mine": 1794492900,
+  "mfe_before_res": 7.69,
+  "mae_before_res": 5.29,
+  "min_to": {
+   "10": 55,
+   "15": 55,
+   "20": 55
+  }
+ },
+ {
+  "id": 8,
+  "tf": "15m",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794498000,
+  "t_res_mine": 1794498000,
+  "mfe_before_res": 0.0,
+  "mae_before_res": 11.94,
+  "min_to": {}
+ },
+ {
+  "id": 7,
+  "tf": "15m",
+  "dir": -1,
+  "rec": "TP",
+  "mine": "TP",
+  "t_res_rec": 1794496200,
+  "t_res_mine": 1794496200,
+  "mfe_before_res": 10.05,
+  "mae_before_res": 0.42,
+  "min_to": {
+   "10": 5,
+   "15": 15
+  }
+ },
+ {
+  "id": 9,
+  "tf": "30m",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794502200,
+  "t_res_mine": 1794502200,
+  "mfe_before_res": 2.87,
+  "mae_before_res": 8.93,
+  "min_to": {}
+ },
+ {
+  "id": 10,
+  "tf": "30m",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794531000,
+  "t_res_mine": 1794531000,
+  "mfe_before_res": 8.6,
+  "mae_before_res": 11.48,
+  "min_to": {
+   "10": 1380
+  }
+ },
+ {
+  "id": 11,
+  "tf": "4h",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794530700,
+  "t_res_mine": 1794530700,
+  "mfe_before_res": 2.26,
+  "mae_before_res": 12.65,
+  "min_to": {}
+ },
+ {
+  "id": 12,
+  "tf": "15m",
+  "dir": -1,
+  "rec": "TP",
+  "mine": "TP",
+  "t_res_rec": 1794575700,
+  "t_res_mine": 1794575700,
+  "mfe_before_res": 12.46,
+  "mae_before_res": 7.06,
+  "min_to": {
+   "10": 250,
+   "15": 360,
+   "20": 395
+  }
+ },
+ {
+  "id": 13,
+  "tf": "4h",
+  "dir": -1,
+  "rec": "SL",
+  "mine": "SL",
+  "t_res_rec": 1794580200,
+  "t_res_mine": 1794580200,
+  "mfe_before_res": 0.0,
+  "mae_before_res": 11.68,
+  "min_to": {
+   "10": 120
+  }
+ }
+]

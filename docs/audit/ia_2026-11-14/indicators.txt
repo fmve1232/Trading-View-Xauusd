@@ -1,0 +1,48 @@
+--- 15m (1500 bars) ---
+EMA20                          compared   300  max|diff| 0.01  >tol    0  PASS
+EMA100                         compared   300  max|diff| 0.01  >tol    0  PASS
+EMA200                         compared   300  max|diff| 0.01  >tol    0  PASS
+RSI14 (Wilder)                 compared   300  max|diff| 0.1  >tol    0  PASS
+ADX14 (Wilder DMI)             compared   300  max|diff| 0.1  >tol    0  PASS
+BB basis SMA20                 compared  1480  max|diff| 0.01  >tol    0  PASS
+BB upper (+2 sd, population)   compared  1480  max|diff| 0.01  >tol    0  PASS
+BB lower                       compared  1480  max|diff| 0.01  >tol    0  PASS
+VWAP (NY day)                  compared  1472  max|diff| 0.01  >tol    0  PASS
+Weekly VWAP                    compared  1380  max|diff| 0.01  >tol    0  PASS
+Monthly VWAP                   compared   920  max|diff| 0.01  >tol    0  PASS
+PDH (NY 17:00 day)             compared  1380  max|diff| 0.0  >tol    0  PASS
+PDL                            compared  1380  max|diff| 0.0  >tol    0  PASS
+PWH                            compared   920  max|diff| 0.0  >tol    0  PASS
+PWL                            compared   920  max|diff| 0.0  >tol    0  PASS
+--- 1h (1500 bars) ---
+EMA20                          compared   300  max|diff| 0.01  >tol    0  PASS
+EMA100                         compared   300  max|diff| 0.01  >tol    0  PASS
+EMA200                         compared   300  max|diff| 0.01  >tol    0  PASS
+RSI14 (Wilder)                 compared   300  max|diff| 0.1  >tol    0  PASS
+ADX14 (Wilder DMI)             compared   300  max|diff| 0.1  >tol    0  PASS
+BB basis SMA20                 compared  1480  max|diff| 0.01  >tol    0  PASS
+BB upper (+2 sd, population)   compared  1480  max|diff| 0.01  >tol    0  PASS
+BB lower                       compared  1480  max|diff| 0.01  >tol    0  PASS
+VWAP (NY day)                  compared  1417  max|diff| 0.01  >tol    0  PASS
+Weekly VWAP                    compared  1466  max|diff| 0.01  >tol    0  PASS
+Monthly VWAP                   compared  1240  max|diff| 0.01  >tol    0  PASS
+PDH (NY 17:00 day)             compared  1472  max|diff| 0.0  >tol    0  PASS
+PDL                            compared  1472  max|diff| 0.0  >tol    0  PASS
+PWH                            compared  1380  max|diff| 0.0  >tol    0  PASS
+PWL                            compared  1380  max|diff| 0.0  >tol    0  PASS
+--- 4h (1106 bars) ---
+EMA20                          compared   300  max|diff| 0.01  >tol    0  PASS
+EMA100                         compared   300  max|diff| 0.01  >tol    0  PASS
+EMA200                         compared   300  max|diff| 0.01  >tol    0  PASS
+RSI14 (Wilder)                 compared   300  max|diff| 0.1  >tol    0  PASS
+ADX14 (Wilder DMI)             compared   300  max|diff| 0.1  >tol    0  PASS
+BB basis SMA20                 compared  1086  max|diff| 0.01  >tol    0  PASS
+BB upper (+2 sd, population)   compared  1086  max|diff| 0.01  >tol    0  PASS
+BB lower                       compared  1086  max|diff| 0.01  >tol    0  PASS
+VWAP (NY day)                  compared  1084  max|diff| 0.01  >tol    0  PASS
+Weekly VWAP                    compared  1066  max|diff| 0.01  >tol    0  PASS
+Monthly VWAP                   compared   978  max|diff| 0.01  >tol    0  PASS
+PDH (NY 17:00 day)             compared  1098  max|diff| 0.0  >tol    0  PASS
+PDL                            compared  1098  max|diff| 0.0  >tol    0  PASS
+PWH                            compared  1050  max|diff| 18.61  >tol  210  FAIL
+PWL                            compared  1050  max|diff| 30.29  >tol   30  FAIL

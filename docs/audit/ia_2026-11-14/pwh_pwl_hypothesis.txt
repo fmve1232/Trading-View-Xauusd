@@ -1,0 +1,9 @@
+15m  all bars (correct definition)                 PWH bars differing    0 / 920   PWL    0
+15m  first bar of non-week-start days excluded     PWH bars differing    0 / 920   PWL    0
+     weeks whose true high or low is set by a day's first bar: 0 of 4 (largest understatement $0.00)
+1h   all bars (correct definition)                 PWH bars differing    0 / 1380   PWL    0
+1h   first bar of non-week-start days excluded     PWH bars differing    0 / 1380   PWL    0
+     weeks whose true high or low is set by a day's first bar: 0 of 14 (largest understatement $0.00)
+4h   all bars (correct definition)                 PWH bars differing  210 / 1050   PWL   30
+4h   first bar of non-week-start days excluded     PWH bars differing    0 / 1050   PWL    0
+     weeks whose true high or low is set by a day's first bar: 9 of 37 (largest understatement $30.29)

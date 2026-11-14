@@ -1,0 +1,77 @@
+quantum/arm_h2.py:89:5: F841 Local variable `o` is assigned to but never used
+quantum/arm_h4.py:19:17: F401 [*] `numpy` imported but unused
+quantum/backtest.py:44:35: B023 Function definition does not bind loop variable `oi`
+quantum/backtest.py:44:70: B023 Function definition does not bind loop variable `oi`
+quantum/backtest.py:45:36: B023 Function definition does not bind loop variable `oi`
+quantum/backtest.py:45:71: B023 Function definition does not bind loop variable `oi`
+quantum/data/market.py:171:67: B023 Function definition does not bind loop variable `fn`
+quantum/data/sources.py:67:16: BLE001 Do not catch blind exception: `Exception`
+quantum/engine.py:363:40: B023 Function definition does not bind loop variable `ci`
+quantum/engine.py:363:54: B023 Function definition does not bind loop variable `c1`
+quantum/engine.py:366:40: B023 Function definition does not bind loop variable `ci`
+quantum/engine.py:366:54: B023 Function definition does not bind loop variable `c1`
+quantum/engine.py:660:47: B023 Function definition does not bind loop variable `ci`
+quantum/engine.py:660:65: B023 Function definition does not bind loop variable `ci`
+quantum/engine.py:719:24: B023 Function definition does not bind loop variable `ci`
+quantum/engine.py:722:20: B023 Function definition does not bind loop variable `a`
+quantum/engine.py:722:24: B023 Function definition does not bind loop variable `eff_prox`
+quantum/engine.py:722:37: B023 Function definition does not bind loop variable `a`
+quantum/engine.py:723:41: B023 Function definition does not bind loop variable `a`
+quantum/engine.py:723:55: B023 Function definition does not bind loop variable `eff_prox`
+quantum/engine.py:729:25: B023 Function definition does not bind loop variable `hgb`
+quantum/engine.py:731:25: B023 Function definition does not bind loop variable `al_l`
+quantum/engine.py:733:25: B023 Function definition does not bind loop variable `hgs`
+quantum/engine.py:735:25: B023 Function definition does not bind loop variable `al_s`
+quantum/engine.py:737:29: B023 Function definition does not bind loop variable `hgs`
+quantum/engine.py:739:29: B023 Function definition does not bind loop variable `al_s`
+quantum/engine.py:741:29: B023 Function definition does not bind loop variable `hgb`
+quantum/engine.py:743:29: B023 Function definition does not bind loop variable `al_l`
+quantum/engine.py:750:25: B023 Function definition does not bind loop variable `bt`
+quantum/engine.py:752:29: B023 Function definition does not bind loop variable `brt`
+quantum/engine.py:754:25: B023 Function definition does not bind loop variable `brt`
+quantum/engine.py:756:29: B023 Function definition does not bind loop variable `bt`
+quantum/engine.py:1660:9: B007 Loop control variable `d` not used within loop body
+quantum/features.py:505:24: B023 Function definition does not bind loop variable `sign`
+quantum/manifest.py:146:13: S112 `try`-`except`-`continue` detected, consider logging the exception
+quantum/mt5.py:129:39: B905 `zip()` without an explicit `strict=` parameter
+quantum/mt5.py:161:17: B007 Loop control variable `sec` not used within loop body
+quantum/notify.py:969:90: B905 `zip()` without an explicit `strict=` parameter
+quantum/notify.py:973:19: B905 `zip()` without an explicit `strict=` parameter
+quantum/notify.py:1364:62: B905 `zip()` without an explicit `strict=` parameter
+quantum/notify.py:1744:63: B905 `zip()` without an explicit `strict=` parameter
+quantum/notify.py:1745:63: B905 `zip()` without an explicit `strict=` parameter
+quantum/reference.py:169:51: B905 `zip()` without an explicit `strict=` parameter
+quantum/report.py:282:91: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b1.py:132:59: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b1.py:188:57: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b10.py:192:12: B007 Loop control variable `p` not used within loop body
+quantum/research/b2.py:347:32: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b2.py:414:19: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b2.py:420:59: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b20.py:86:70: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b21.py:35:109: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b3.py:257:19: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b3.py:263:59: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b4.py:106:39: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b4.py:200:19: B007 Loop control variable `a` not used within loop body
+quantum/research/b4.py:200:22: B007 Loop control variable `b` not used within loop body
+quantum/research/b4.py:200:32: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b4.py:277:20: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b4.py:282:60: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b5_flow_proxy.py:96:27: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b5_flow_proxy.py:128:49: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b5_orderflow.py:321:22: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b5_orderflow.py:437:19: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b5_orderflow.py:442:58: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b6_mtf_live.py:113:22: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b7_macro.py:134:22: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b7_macro.py:143:40: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b7_macro.py:171:19: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b7_macro.py:176:58: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b8_news.py:111:22: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b8_news.py:148:73: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b8_news.py:178:19: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/b8_news.py:183:58: B905 `zip()` without an explicit `strict=` parameter
+quantum/research/harness.py:128:17: B905 `zip()` without an explicit `strict=` parameter
+Found 75 errors.
+[*] 1 fixable with the `--fix` option (37 hidden fixes can be enabled with the `--unsafe-fixes` option).

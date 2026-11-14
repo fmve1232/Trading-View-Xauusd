@@ -1,0 +1,321 @@
+{
+ "quantum.reference": [],
+ "quantum.arm_h4": [
+  "quantum.backtest"
+ ],
+ "quantum.news_calendar": [],
+ "quantum.trade_race": [
+  "quantum.arm_h2",
+  "quantum.arm_h3",
+  "quantum.arm_h4",
+  "quantum.arm_h5",
+  "quantum.arm_h6",
+  "quantum.data",
+  "quantum.ta"
+ ],
+ "quantum.sessions": [],
+ "quantum.arm_h2": [
+  "quantum.backtest"
+ ],
+ "quantum.confirm_panel": [
+  "quantum.notify",
+  "quantum.ta"
+ ],
+ "quantum.macro_panel": [
+  "quantum.data"
+ ],
+ "quantum.contract": [],
+ "quantum.report": [
+  "quantum.arm_h2",
+  "quantum.arm_h3",
+  "quantum.arm_h4",
+  "quantum.arm_h5",
+  "quantum.arm_h6",
+  "quantum.backtest",
+  "quantum.config",
+  "quantum.confirm",
+  "quantum.cost_profiles",
+  "quantum.holdout",
+  "quantum.news_calendar",
+  "quantum.ta",
+  "quantum.trade_race"
+ ],
+ "quantum.config": [],
+ "quantum.holdout": [
+  "quantum.config"
+ ],
+ "quantum": [],
+ "quantum.backtest": [],
+ "quantum.confirm": [
+  "quantum.contract",
+  "quantum.data",
+  "quantum.news_calendar",
+  "quantum.ta"
+ ],
+ "quantum.ta": [],
+ "quantum.arm_h6": [
+  "quantum.backtest"
+ ],
+ "quantum.engine": [
+  "quantum.analog",
+  "quantum.config",
+  "quantum.features",
+  "quantum.ta"
+ ],
+ "quantum.arm_h3": [
+  "quantum.backtest",
+  "quantum.data.market",
+  "quantum.ta"
+ ],
+ "quantum.fwd_b24": [
+  "quantum.confirm_panel",
+  "quantum.notify"
+ ],
+ "quantum.outage_notice": [],
+ "quantum.features": [
+  "quantum.config",
+  "quantum.data.market",
+  "quantum.sessions",
+  "quantum.ta"
+ ],
+ "quantum.mt5": [
+  "quantum.data",
+  "quantum.reference"
+ ],
+ "quantum.arm_h5": [
+  "quantum.backtest"
+ ],
+ "quantum.notify": [
+  "quantum.confirm_panel",
+  "quantum.data.sources",
+  "quantum.fwd_b24"
+ ],
+ "quantum.events": [
+  "quantum.data"
+ ],
+ "quantum.cost_profiles": [],
+ "quantum.pipeline": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.holdout",
+  "quantum.notify",
+  "quantum.report"
+ ],
+ "quantum.manifest": [],
+ "quantum.analog": [
+  "quantum.ta"
+ ],
+ "quantum.research.b17": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.notify",
+  "quantum.research.b10",
+  "quantum.research.b13",
+  "quantum.research.b16",
+  "quantum.research.harness",
+  "quantum.ta"
+ ],
+ "quantum.research.b4": [
+  "quantum.research.b2",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.history": [
+  "quantum.data"
+ ],
+ "quantum.research.b19": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.research.b10",
+  "quantum.research.b13",
+  "quantum.research.b8_news",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.b23": [
+  "quantum.research.b13",
+  "quantum.research.b22",
+  "quantum.research.harness",
+  "quantum.research.history"
+ ],
+ "quantum.research.b25": [
+  "quantum.data",
+  "quantum.notify",
+  "quantum.research.b13",
+  "quantum.research.b19",
+  "quantum.research.b21",
+  "quantum.research.harness",
+  "quantum.ta"
+ ],
+ "quantum.research": [],
+ "quantum.research.b22": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.research.b10",
+  "quantum.research.b13",
+  "quantum.research.b19",
+  "quantum.research.b20",
+  "quantum.research.harness",
+  "quantum.sessions",
+  "quantum.ta"
+ ],
+ "quantum.research.b10": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.data.market",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.notify",
+  "quantum.report",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.b7_macro": [
+  "quantum.data",
+  "quantum.research.b2",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.b21": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.notify",
+  "quantum.research.b10",
+  "quantum.research.b13",
+  "quantum.research.b16",
+  "quantum.research.b19",
+  "quantum.research.harness",
+  "quantum.ta"
+ ],
+ "quantum.research.harness": [
+  "quantum.sessions",
+  "quantum.ta"
+ ],
+ "quantum.research.b5c_dukascopy": [
+  "quantum.research.b5_orderflow",
+  "quantum.research.harness",
+  "quantum.research.history"
+ ],
+ "quantum.research.b13": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.research.b10",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.sessions",
+  "quantum.ta"
+ ],
+ "quantum.research.b5_orderflow": [
+  "quantum.research.b2",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.b14": [
+  "quantum.config",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.research.b10",
+  "quantum.research.b13",
+  "quantum.research.harness",
+  "quantum.ta"
+ ],
+ "quantum.research.b2": [
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.sessions",
+  "quantum.ta"
+ ],
+ "quantum.research.validate_rn": [
+  "quantum.research.b2",
+  "quantum.research.b4",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.b1": [
+  "quantum.data.sources",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.sessions",
+  "quantum.ta"
+ ],
+ "quantum.research.b18": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.notify",
+  "quantum.research.b10",
+  "quantum.research.b13",
+  "quantum.research.b16",
+  "quantum.research.b17",
+  "quantum.research.harness",
+  "quantum.ta"
+ ],
+ "quantum.research.b3": [
+  "quantum.research.b2",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.b20": [
+  "quantum.research.b13",
+  "quantum.research.harness",
+  "quantum.sessions",
+  "quantum.ta"
+ ],
+ "quantum.research.b5_flow_proxy": [
+  "quantum.data",
+  "quantum.research.b2",
+  "quantum.research.harness",
+  "quantum.ta"
+ ],
+ "quantum.research.b8_news": [
+  "quantum.research.b2",
+  "quantum.research.harness",
+  "quantum.research.history",
+  "quantum.ta"
+ ],
+ "quantum.research.b6_mtf_live": [
+  "quantum.data",
+  "quantum.research.b2",
+  "quantum.research.harness"
+ ],
+ "quantum.research.b16": [
+  "quantum.config",
+  "quantum.data",
+  "quantum.engine",
+  "quantum.features",
+  "quantum.notify",
+  "quantum.research.b10",
+  "quantum.research.b13",
+  "quantum.research.harness",
+  "quantum.ta"
+ ],
+ "quantum.data.market": [
+  "quantum.config",
+  "quantum.data.sources",
+  "quantum.data.store",
+  "quantum.ta"
+ ],
+ "quantum.data": [],
+ "quantum.data.sources": [],
+ "quantum.data.store": []
+}

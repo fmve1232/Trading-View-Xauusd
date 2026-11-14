@@ -1,0 +1,6 @@
+quantum/arm_h4.py:19:1: 'numpy as np' imported but unused
+quantum/arm_h2.py:89:5: local variable 'o' is assigned to but never used
+tests/test_integrity.py:9:1: 'pytest' imported but unused
+tests/test_confirm.py:19:1: 'tests.test_live_path.fake_net' imported but unused
+tests/test_confirm.py:176:65: redefinition of unused 'fake_net' from line 19
+tests/test_confirm.py:219:75: redefinition of unused 'fake_net' from line 19

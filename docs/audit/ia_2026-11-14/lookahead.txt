@@ -1,0 +1,6 @@
+15m cut 2026-11-10T12:00:00Z: 1184 common closed bars; chart series compared 34; series with differences 0; markers only-full 0 only-cut 0 (of 120); decisions only-full 0 only-cut 0 (of 20)
+1h cut 2026-11-10T12:00:00Z: 1421 common closed bars; chart series compared 34; series with differences 0; markers only-full 0 only-cut 0 (of 324); decisions only-full 0 only-cut 5 (of 40)
+4h cut 2026-11-10T12:00:00Z: 1085 common closed bars; chart series compared 34; series with differences 0; markers only-full 0 only-cut 0 (of 434); decisions only-full 0 only-cut 6 (of 40)
+15m cut 2026-11-05T15:30:00Z: 922 common closed bars; chart series compared 34; series with differences 0; markers only-full 0 only-cut 0 (of 81); decisions only-full 0 only-cut 0 (of 16)
+1h cut 2026-11-05T15:30:00Z: 1355 common closed bars; chart series compared 34; series with differences 0; markers only-full 0 only-cut 0 (of 305); decisions only-full 0 only-cut 7 (of 40)
+4h cut 2026-11-05T15:30:00Z: 1068 common closed bars; chart series compared 34; series with differences 0; markers only-full 0 only-cut 0 (of 424); decisions only-full 0 only-cut 9 (of 40)
