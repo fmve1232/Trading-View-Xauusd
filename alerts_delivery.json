@@ -1,0 +1,183 @@
+[
+{
+"t": 1794436164,
+"sha16": "af7c9b2bfe014103",
+"lines": 7,
+"first": "XAUUSD DAILY VALIDATION Wed 11 Nov: 2 signals closed, TP first 2/2 = 100% (targe",
+"channel": "ntfy",
+"http": 200,
+"id": "jhdwImUqCgSm",
+"ok": true
+},
+{
+"t": 1794495993,
+"sha16": "dbccca40ad04fcd0",
+"lines": 8,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3871.20 SL 3910.34 TP1 3832.07 TP2 379",
+"channel": "ntfy",
+"http": 200,
+"id": "KoiM3tHwHJ06",
+"ok": true
+},
+{
+"t": 1794496889,
+"sha16": "9a0ae1667c0fbe4f",
+"lines": 3,
+"first": "XAUUSD 15m YOUR PLAN SELL from 3871.20: TP1 3858.20 HIT +$325 on half -- close h",
+"channel": "ntfy",
+"http": 200,
+"id": "elxBgIIi9T0F",
+"ok": true
+},
+{
+"t": 1794497749,
+"sha16": "8ee38c3eee28acac",
+"lines": 8,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3854.59 SL 3879.66 TP1 3829.52 TP2 380",
+"channel": "ntfy",
+"http": 200,
+"id": "Wzk8ZToCbqLW",
+"ok": true
+},
+{
+"t": 1794498619,
+"sha16": "4f524e7510024018",
+"lines": 1,
+"first": "XAUUSD 15m YOUR PLAN SELL from 3854.59: SL 3867.59 HIT -$650 -- trade closed at ",
+"channel": "ntfy",
+"http": 200,
+"id": "hBA01GtLY66Z",
+"ok": true
+},
+{
+"t": 1794499467,
+"sha16": "9f21486e8dbb5aac",
+"lines": 1,
+"first": "XAUUSD 15m YOUR PLAN SELL from 3871.20: back at entry 3871.20 after TP1 -- the r",
+"channel": "ntfy",
+"http": 200,
+"id": "QxoNfnluPVrQ",
+"ok": true
+},
+{
+"t": 1794524725,
+"sha16": "0b019c2e5d0c20ca",
+"lines": 7,
+"first": "XAUUSD DAILY VALIDATION Thu 12 Nov: 4 signals closed, TP first 1/4 = 25% (target",
+"channel": "ntfy",
+"http": 200,
+"id": "9uxN6FtENqrH",
+"ok": true
+},
+{
+"t": 1794554375,
+"sha16": "4fa379914fff0a40",
+"lines": 7,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3897.97 SL 3909.51 TP1 3875.22 TP2 387",
+"channel": "ntfy",
+"http": null,
+"id": null,
+"error": "ConnectionError",
+"ok": false
+},
+{
+"t": 1794555290,
+"sha16": "96ac265298e4ee59",
+"lines": 2,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3895.24 SL 3906.01 TP1 3875.22 TP2 387",
+"channel": "ntfy",
+"http": 200,
+"id": "0Cu42ooAXJOJ",
+"ok": true
+},
+{
+"t": 1794556265,
+"sha16": "5decd626f0055263",
+"lines": 2,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3898.36 SL 3905.42 TP1 3875.22 TP2 387",
+"channel": "ntfy",
+"http": 200,
+"id": "6HpBk8f8Ghj9",
+"ok": true
+},
+{
+"t": 1794557951,
+"sha16": "9eaac47d61cf1df4",
+"lines": 2,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3897.10 SL 3905.41 TP1 3875.22 TP2 387",
+"channel": "ntfy",
+"http": 200,
+"id": "WVDxNNrIGQqA",
+"ok": true
+},
+{
+"t": 1794558972,
+"sha16": "887ff9a0e38c386c",
+"lines": 2,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3892.70 SL 3904.79 TP1 3876.63 TP2 387",
+"channel": "ntfy",
+"http": 200,
+"id": "cuB4yiBKeWR0",
+"ok": true
+},
+{
+"t": 1794559869,
+"sha16": "f601c8bfd8e4c16e",
+"lines": 2,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3894.53 SL 3904.79 TP1 3875.22 TP2 387",
+"channel": "ntfy",
+"http": 200,
+"id": "wNT5WJ21Rn66",
+"ok": true
+},
+{
+"t": 1794560766,
+"sha16": "9a7d384249d8e6bd",
+"lines": 2,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3896.92 SL 3904.78 TP1 3875.22 TP2 387",
+"channel": "ntfy",
+"http": 200,
+"id": "Bmb8OtuATfTN",
+"ok": true
+},
+{
+"t": 1794576092,
+"sha16": "8ceefa6ff923ac3c",
+"lines": 1,
+"first": "XAUUSD 15m YOUR PLAN SELL from 3897.97: TP1 3884.97 HIT +$325 on half -- close h",
+"channel": "ntfy",
+"http": 200,
+"id": "cfzU00apBK60",
+"ok": true
+},
+{
+"t": 1794577868,
+"sha16": "4ca9ea7b01c3dc1f",
+"lines": 1,
+"first": "XAUUSD 15m YOUR PLAN SELL from 3897.97: back at entry 3897.97 after TP1 -- the r",
+"channel": "ntfy",
+"http": 200,
+"id": "UW8I0wSikMxr",
+"ok": true
+},
+{
+"t": 1794580582,
+"sha16": "9d52d69e5b5f3294",
+"lines": 2,
+"first": "XAUUSD 15m SELL (confirmed close) | entry 3887.12 SL 3898.55 TP1 3872.69 TP2 386",
+"channel": "ntfy",
+"http": 200,
+"id": "t5HmrCvn868U",
+"ok": true
+},
+{
+"t": 1794617704,
+"sha16": "b7c6d2416b9c13e0",
+"lines": 10,
+"first": "XAUUSD DAILY VALIDATION Fri 13 Nov: 3 signals closed, TP first 1/3 = 33% (target",
+"channel": "ntfy",
+"http": 200,
+"id": "LhKouZquISPV",
+"ok": true
+}
+]
