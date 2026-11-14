@@ -1720,6 +1720,34 @@ def report_lines(kind: str, label: str, sm: dict, open_n: int = 0) -> list[str]:
     return [head] + [x for x in sm["advice"][1:3]] + ["Details: website > Your plan alerts > Validation."]
 
 
+def period_report_lines(kind: str, label: str, recs: list[dict], open_plans: list[dict], cost_per_lot: float) -> list[str]:
+    """The daily / weekly phone summary, split by where the alerts go (operator approval 2026-11-13, audit F-05).
+
+    In sixty mode (production) only the 15m engine alerts reach the phone; the 30m / 1h / 4h plans are opened and scored
+    on the website only. The summary then reports the phone's timeframe first and the website-only records on their own
+    line, so the headline count is no longer mixed with plans the phone was never sent. The 15m count is by timeframe:
+    a 15m signal held back by the stale-signal gate (NOT ACTIONABLE, record only) is still a 15m record, as before. In
+    the other modes every alerted timeframe reaches the phone and the summary is unchanged. Wording only: the records
+    and the website's validation block are computed exactly as before."""
+    if not sixty():
+        return report_lines(kind, label, summarize(recs, cost_per_lot), len(open_plans))
+    phone = [r for r in recs if r.get("tf") in PHONE_TFS_SIXTY]
+    web = [r for r in recs if r.get("tf") not in PHONE_TFS_SIXTY]
+    p_open = sum(1 for p in open_plans if p.get("tf") in PHONE_TFS_SIXTY)
+    w_open = len(open_plans) - p_open
+    out = report_lines(kind, f"{label} \u2014 {', '.join(PHONE_TFS_SIXTY)} (your phone's timeframe)", summarize(phone, cost_per_lot),
+                       p_open)
+    if web or w_open:
+        sw = summarize(web, cost_per_lot)
+        tfs = sorted({r.get("tf") for r in web} | {p.get("tf") for p in open_plans if p.get("tf") not in PHONE_TFS_SIXTY},
+                     key=lambda x: TF_SEC.get(x, 0))
+        line = (f"WEBSITE ONLY ({', '.join(tfs)}; not sent to your phone): "
+                + (f"{sw['n']} closed, TP first {sw['tp']}/{sw['n']} = {sw['rate']:.0%}" if sw["n"] else "none closed")
+                + (f" | still open {w_open}" if w_open else ""))
+        out.insert(1, line)
+    return out
+
+
 def validation_block(log: list[dict], plans: list[dict], now_t: int, cost_per_lot: float) -> dict:
     """Today / this week / all time, for the website."""
     day, week = trading_day(now_t), trading_week(now_t)
@@ -2121,9 +2149,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         if state.get("report_day") and state["report_day"] != day:
             prev = state["report_day"]
             recs = [r for r in vlog if trading_day(_decision_t(r)) == prev]
-            n_open = sum(1 for p in plans if trading_day(_decision_t(p)) == prev)
-            if recs or n_open:                             # a day without alerted signals (weekends) sends nothing
-                lines += report_lines("DAILY", date.fromisoformat(prev).strftime("%a %d %b"), summarize(recs, cpl), n_open)
+            open_d = [p for p in plans if trading_day(_decision_t(p)) == prev]
+            if recs or open_d:                             # a day without alerted signals (weekends) sends nothing
+                lines += period_report_lines("DAILY", date.fromisoformat(prev).strftime("%a %d %b"), recs, open_d, cpl)
             last = state.get("last_signal") or next(({"tf": r["tf"], "dir": r["dir"], "t_dec": _decision_t(r)} for r in vlog[::-1]), None)
             el = engine_line(state, prev, tfs, last)       # also on a silent weekday: why there was no signal
             if el:
@@ -2131,9 +2159,9 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
         if state.get("report_week") and state["report_week"] != week:
             prev = state["report_week"]
             recs = [r for r in vlog if trading_week(_decision_t(r)) == prev]
-            n_open = sum(1 for p in plans if trading_week(_decision_t(p)) == prev)
-            if recs or n_open:
-                lines += report_lines("WEEKLY", prev, summarize(recs, cpl), n_open)
+            open_w = [p for p in plans if trading_week(_decision_t(p)) == prev]
+            if recs or open_w:
+                lines += period_report_lines("WEEKLY", prev, recs, open_w, cpl)
         gt = report["grab_test"]
         g_prev = [x for x in gt["recent"] + gt["open"]
                   if state.get("report_day") and state["report_day"] != day and trading_day(x["t_close"]) == state["report_day"]]
