@@ -533,6 +533,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
                 out.append(late)                           # second line: visible in the phone's preview
             if pl and m.get("px") is not None:
                 out.append(plan_line(m["px"], m["dir"], pl, off))
+                out.append(sizing_line(pl))
                 out.append(mt5_line(m["dir"], pl))
                 out.append(ladder_line(pl))
             if timing:
@@ -1489,8 +1490,24 @@ def cost_note(pl: dict) -> str:
             f"${COST_MODEL_OZ[0]:.2f}-{COST_MODEL_OZ[1]:.2f}/oz; neither broker-verified)")
 
 
+PLAN_RISK_PCT_DEFAULT = 2.6            # operator, 2026-11-14: "Use 2.6% of $25,000" ($650 risk budget per trade)
+PLAN_ACCOUNT_DEFAULT = 25000.0         # ACCOUNT_USD (the same account the daily-limit check uses)
+PLAN_LOT_MAX_DEFAULT = 50.0            # PLAN_LOT_MAX: the broker's maximum volume is UNVERIFIED (audit D1); a cap, not a target
+
+
 def plan_cfg() -> dict | None:
-    """The operator's plan from the environment (defaults 0.5 lot, SL $650, TP $650); None when PLAN=0."""
+    """The operator's plan from the environment; None when PLAN=0.
+
+    GEOMETRY (price distances) as before: SL = PLAN_SL_USD / (PLAN_LOT x 100 oz), TP1 = PLAN_TP_USD / (PLAN_LOT x 100),
+    TP2 = PLAN_TP2_USD the same way (defaults $650 / $650 at 0.5 lot = $13 / $13, TP2 $20). B15-ENGINE-FWD and
+    B9-GRAB-FWD count plans by these $ of price, so sizing never changes them.
+
+    SIZE (remediation N1, operator 2026-11-14): lot = the largest volume step whose loss at the stop INCLUDING the
+    round-trip cost stays within the risk budget ACCOUNT_USD x PLAN_RISK_PCT / 100 (defaults $25,000 x 2.6% = $650).
+    The cost used for sizing is the HIGHER of the operator's cost (PLAN_COST_PER_LOT) and the research cost model,
+    because neither is broker-verified (IA-06). With two targets the lot is a multiple of 0.02 so it splits into two
+    equal halves. A lot below the minimum (0.01, or 0.02 with two targets) is flagged over_budget (the alert says NO
+    TRADE for this size); a lot above PLAN_LOT_MAX is capped. PLAN_SIZING=fixed restores the fixed PLAN_LOT."""
     if os.environ.get("PLAN", "1").strip() == "0":
         return None
 
@@ -1500,16 +1517,45 @@ def plan_cfg() -> dict | None:
         except ValueError:
             return d
         return v if v > 0 else d
-    lot, sl, tp, cpl = num("PLAN_LOT", 0.5), num("PLAN_SL_USD", 650.0), num("PLAN_TP_USD", 650.0), num("PLAN_COST_PER_LOT", PLAN_COST_PER_LOT_DEFAULT)
-    oz = lot * 100.0
+    ref_lot, sl, tp, cpl = num("PLAN_LOT", 0.5), num("PLAN_SL_USD", 650.0), num("PLAN_TP_USD", 650.0), num("PLAN_COST_PER_LOT", PLAN_COST_PER_LOT_DEFAULT)
+    ref_oz = ref_lot * 100.0
     raw = os.environ.get("PLAN_TP2_USD", "").strip()
     try:
-        tp2 = float(raw) if raw else PLAN_TP2_DEFAULT_PX * oz
+        tp2 = float(raw) if raw else PLAN_TP2_DEFAULT_PX * ref_oz
     except ValueError:
-        tp2 = PLAN_TP2_DEFAULT_PX * oz
+        tp2 = PLAN_TP2_DEFAULT_PX * ref_oz
     tp2 = tp2 if tp2 > tp else 0.0                      # 0 (or not beyond TP1): one TP
-    return {"lot": lot, "sl_usd": sl, "tp_usd": tp, "cost_usd": cpl * lot, "sl_px": sl / oz, "tp_px": tp / oz,
-            "tp2_usd": tp2, "tp2_px": tp2 / oz if tp2 else None}
+    sl_px, tp_px, tp2_px = sl / ref_oz, tp / ref_oz, (tp2 / ref_oz if tp2 else None)
+    acct, risk_pct = num("ACCOUNT_USD", PLAN_ACCOUNT_DEFAULT), num("PLAN_RISK_PCT", PLAN_RISK_PCT_DEFAULT)
+    budget = acct * risk_pct / 100.0
+    size_cost = max(cpl / 100.0, COST_MODEL_OZ[1])
+    step = 0.02 if tp2_px else 0.01
+    if os.environ.get("PLAN_SIZING", "").strip().lower() == "fixed":
+        lot, sizing = ref_lot, "fixed"
+    else:
+        sizing = "risk"
+        k = math.floor(budget / ((sl_px + size_cost) * 100.0) / step + 1e-9)
+        lot = round(k * step, 2)
+        if lot < step:                                  # below the minimum: the smallest lot, flagged over_budget below
+            lot = step
+        lot = min(lot, num("PLAN_LOT_MAX", PLAN_LOT_MAX_DEFAULT))
+    oz = lot * 100.0
+    loss_max = oz * (sl_px + size_cost)
+    return {"lot": lot, "sl_usd": sl_px * oz, "tp_usd": tp_px * oz, "cost_usd": cpl * lot, "sl_px": sl_px, "tp_px": tp_px,
+            "tp2_usd": tp2_px * oz if tp2_px else 0.0, "tp2_px": tp2_px, "sizing": sizing, "account": acct,
+            "risk_pct": risk_pct, "budget": budget, "size_cost_oz": size_cost, "loss_at_stop_max": loss_max,
+            "risk_pct_actual": 100.0 * loss_max / acct, "over_budget": loss_max > budget + 1e-6}
+
+
+def sizing_line(pl: dict) -> str:
+    """How the lot was chosen, and NO TRADE when even the minimum lot exceeds the budget (N1)."""
+    if pl.get("sizing") != "risk":
+        return (f"SIZE: fixed {pl['lot']:g} lot (PLAN_SIZING=fixed): loss at the stop up to ${pl['loss_at_stop_max']:,.0f} = "
+                f"{pl['risk_pct_actual']:.2f}% of ${pl['account']:,.0f}")
+    head = (f"SIZE: {pl['lot']:g} lot = risk budget {pl['risk_pct']:g}% of ${pl['account']:,.0f} (${pl['budget']:,.0f}); loss at the "
+            f"stop incl. cost up to ${pl['loss_at_stop_max']:,.0f} = {pl['risk_pct_actual']:.2f}% (sized at ${pl['size_cost_oz']:.2f}/oz, "
+            f"the higher of your cost and the research model)")
+    return ("NO TRADE at this size: " + head + " -- the minimum lot exceeds the budget") if pl.get("over_budget") else head
 
 
 def plan_levels(entry: float, d: int, pl: dict) -> tuple[float, float]:

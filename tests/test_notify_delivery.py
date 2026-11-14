@@ -60,6 +60,7 @@ def _env(monkeypatch):
     for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_TP2_USD", "MT5_PRICE_OFFSET", "PLAN_LATE_FRAC", "ALERT_MODE",
               "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "DISCORD_WEBHOOK_URL", "DELIVERY_RETRY", "FWD_B24", "GITHUB_STEP_SUMMARY"):
         monkeypatch.delenv(k, raising=False)                # ALERT_MODE unset = sixty, the production mode
+    monkeypatch.setenv("PLAN_SIZING", "fixed")              # plan #12 (13 Nov) was sent at the fixed 0.5 lot (before N1)
     for k in ("ALERT_STRUCTURE", "ALERT_LIQUIDITY", "ALERT_SETUPS", "CONFIRM_PANEL"):
         monkeypatch.setenv(k, "0")
     monkeypatch.setenv("NTFY_TOPIC", TOPIC)
