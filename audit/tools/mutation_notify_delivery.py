@@ -35,7 +35,7 @@ M = {
          '    n = u["attempts"]\n    fail = ')],
     "D09a warning never cleared": [('        ns["pending_warnings"] = [w for w in ns["pending_warnings"] if w["id"] not in gone and w.get("notif_key") != key]',
                                     "        pass")],
-    "D09b warning never shown": [("    body = warn + lines\n", "    body = lines\n")],
+    "D09b warning never shown": [("    body = lines[:top] + warn + lines[top:]", "    body = lines")],
     "D10a _EVENTS not cleared by _say": [("        _EVENTS = None\n        if out is not None and ctx.get(\"outcome\"):",
                                           "        if out is not None and ctx.get(\"outcome\"):")],
     "D10b Discord truncation restored (no split)": [('"discord": (2000, False)}', '"discord": (10 ** 9, False)}'),
@@ -63,7 +63,7 @@ M = {
     "D23 full text not kept in the ledger (D1)": [
         ('f.write("".join(json.dumps(json_safe(r), sort_keys=True) + "\\n" for r in rs))',
          'f.write("".join(json.dumps(json_safe({k: v for k, v in r.items() if k != "text"}), sort_keys=True) + "\\n" for r in rs))')],
-    "D24 resend not marked RESENT": [("    return [f\"RESENT ({'; '.join(notes)})\"[:RESENT_MAX]] + lines + ", "    return lines + ")],
+    "D24 resend not marked RESENT": [("    return lines[:top] + [f\"RESENT ({'; '.join(notes)})\"[:RESENT_MAX]] + lines[top:] + ", "    return lines + ")],
     "D25 any HTTP answer counts as accepted": [("        ok = rec[\"http\"] is not None and 200 <= rec[\"http\"] < 300\n",
                                                 "        ok = rec[\"http\"] is not None\n")],
     "D26 line references not shifted by the NOT ACTIONABLE line": [

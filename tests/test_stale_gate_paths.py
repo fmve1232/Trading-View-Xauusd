@@ -30,7 +30,7 @@ def _env(monkeypatch):
 @pytest.fixture
 def sent(monkeypatch):
     out = []
-    monkeypatch.setattr(N, "send", lambda lines: out.append(list(lines)) or (["test"] if lines else []))
+    monkeypatch.setattr(N, "send", lambda lines: out.append(N.without_disclaimer(lines)) or (["test"] if lines else []))
     return out
 
 

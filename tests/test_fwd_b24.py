@@ -165,7 +165,7 @@ def test_the_phone_and_the_state_are_identical_with_the_recorder_on_or_off(tmp_p
     for flag in ("0", "1"):
         monkeypatch.setenv("FWD_B24", flag)
         sent: list = []
-        monkeypatch.setattr(notify, "send", lambda lines, sent=sent: sent.append(list(lines)) or [])
+        monkeypatch.setattr(notify, "send", lambda lines, sent=sent: sent.append(notify.without_disclaimer(lines)) or [])
         store = tmp_path / flag
         store.mkdir()
         for n15, gen in ((30, _close(29)), (41, _close(40)), (42, _close(41) + 420)):
@@ -375,7 +375,7 @@ def test_a2_the_void_runs_inside_the_alerts_without_changing_the_phone(tmp_path,
             _, _, st0 = _void_store(store, other=False)
             (store / notify.STATE).write_text(json.dumps({"b24": st0["b24"]}))
         sent: list = []
-        monkeypatch.setattr(notify, "send", lambda lines, sent=sent: sent.append(list(lines)) or [])
+        monkeypatch.setattr(notify, "send", lambda lines, sent=sent: sent.append(notify.without_disclaimer(lines)) or [])
         for n15, gen in ((30, _close(29)), (41, _close(40)), (42, _close(41) + 420)):
             rep = notify.run(str(store), _payloads(n15, gen, forming_c=4017.5 if n15 == 42 else None), ["15m"], sent_t=gen)
         st = json.loads((store / notify.STATE).read_text())

@@ -306,6 +306,25 @@ def phone_only(lines: list[str]) -> list[str]:
     return [x for x in lines if not x.startswith(RECORD_ONLY)]
 
 
+# Operator, 2026-11-13 (approved wording): every phone trading alert and follow-up opens with this disclaimer. Wording
+# only: it is added to the phone text after every gate and filter, never to the website's alert lines, the plans, the
+# plan validation or any research record, so no scoring and no historical record changes.
+TRADE_DISCLAIMER = ("RECORD \u2014 NOT A VALIDATED SIGNAL \u2014 NO TRADE",
+                    "This is a research-engine alert, not a trading recommendation. The strategy has not yet demonstrated "
+                    "a validated live trading edge.")
+
+
+def trade_msg(lines: list[str]) -> list[str]:
+    """A phone trading alert or follow-up with the disclaimer on top; nothing at all when there is nothing to send
+    (a disclaimer is never sent on its own)."""
+    return [*TRADE_DISCLAIMER, *lines] if lines else []
+
+
+def without_disclaimer(lines: list[str]) -> list[str]:
+    """The alert's own lines, without the disclaimer (the delivery log names the alert by its first own line)."""
+    return [x for x in lines if x not in TRADE_DISCLAIMER]
+
+
 def mt5_line(d: int, pl: dict) -> str:
     s, side = ("+", "-") if d == -1 else ("-", "+")
     if pl.get("tp2_px"):
@@ -2079,7 +2098,8 @@ def _marked(lines: list[str], notes: list[str], name: str, tag: str) -> list[str
     """A resend: RESENT first, the same tag (ntfy) or a ref line (Telegram / Discord, which carry no tag)."""
     if not notes:
         return lines
-    return [f"RESENT ({'; '.join(notes)})"[:RESENT_MAX]] + lines + ([] if name == "ntfy" else [f"ref {tag}"[:REF_MAX]])
+    top = len(TRADE_DISCLAIMER) if tuple(lines[:len(TRADE_DISCLAIMER)]) == TRADE_DISCLAIMER else 0   # #101: stays first
+    return lines[:top] + [f"RESENT ({'; '.join(notes)})"[:RESENT_MAX]] + lines[top:] + ([] if name == "ntfy" else [f"ref {tag}"[:REF_MAX]])
 
 
 def _body(text: str) -> dict:
@@ -2290,8 +2310,10 @@ def _send(lines: list[str], ctx: dict) -> list[str]:
     key = notif_key(events)
     _reconcile(R)
     warn, wids = _warning_lines(R, key)
-    body = warn + lines
-    meta = {"t": int(time.time()), "t_run": R["t_run"], "sha16": _sha(base), "lines": len(lines), "first": lines[0][:80],
+    top = len(TRADE_DISCLAIMER) if tuple(lines[:len(TRADE_DISCLAIMER)]) == TRADE_DISCLAIMER else 0
+    body = lines[:top] + warn + lines[top:]                # the disclaimer (#101), when present, stays first
+    meta = {"t": int(time.time()), "t_run": R["t_run"], "sha16": _sha(base), "lines": len(lines),
+            "first": (without_disclaimer(lines) or lines)[0][:80],
             "notif_key": key, "event_keys": events, "plan_ids": list(ctx.get("plan_ids") or []), "stream": stream,
             "warnings_carried": len(wids), "retry_on": retry_on()}
     chans = _channels_cfg() if requests is not None else []
@@ -2451,7 +2473,7 @@ def _say_tf(tf: str, phone_lines: list[str], upd_refs: list, msg_refs: list, n_u
     desc = " + ".join(_event_desc(ek, pid) for ek, pid in sorted({ek: pid for _, rs in pairs for _, pid, ek in rs}.items())[:3]) \
         or f"{tf} alert"
     oc: dict = {}
-    sent = _say(tf, out, sorted(events), desc, pids, [p for p, _ in opens], out=oc)
+    sent = _say(tf, trade_msg(out), sorted(events), desc, pids, [p for p, _ in opens], out=oc)   # #101: disclaimer first
     if oc.get("final_state") in ("SEND_FAILED", "RETRY_FAILED") and not oc.get("no_channel"):
         by_id = {p.get("id"): p for p in plans}
         heads = {pid: ln for ln, rs in pairs for kind, pid, _ in rs if kind == "OPEN"}   # never decorated: sent as is
@@ -2795,16 +2817,16 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                 if fz["state"] == "DELAYED":
                     sl_ = sl_[:1] + [delayed_line(fz, off)] + sl_[1:]
                 report.setdefault("setup_alerts", []).append({"lines": sl_, "sent": _say(
-                    "setup", sl_, [f"SETUP:{sid}:15m:{int(e['t'])}:{'BUY' if d == 1 else 'SELL'}:{e['kind']}"], f"15m SETUP #{sid}")
+                    "setup", trade_msg(sl_), [f"SETUP:{sid}:15m:{int(e['t'])}:{'BUY' if d == 1 else 'SELL'}:{e['kind']}"], f"15m SETUP #{sid}")
                     if s_open[-1]["phone"] else []})
             if stale_s:
                 ls_ = [stale_line("setup alert" + ("s" if len(stale_s) > 1 else ""), stale_s)]
-                report["setup_stale"] = {"lines": ls_, "sent": _say("setup_stale", ls_, desc="setup not-actionable notice")}
+                report["setup_stale"] = {"lines": ls_, "sent": _say("setup_stale", trade_msg(ls_), desc="setup not-actionable notice")}
             if s_upd:                                      # results only for setups that reached the phone
                 shown = {c_["id"] for c_ in s_done if c_.get("phone", True)} - gate_quiet(state, "setup")
                 s_upd = [x for x in s_upd if any(f" #{k} " in x for k in shown)]
                 if s_upd:
-                    report["setup_updates"] = {"lines": s_upd, "sent": _say("setup_updates", s_upd, desc="setup results")}
+                    report["setup_updates"] = {"lines": s_upd, "sent": _say("setup_updates", trade_msg(s_upd), desc="setup results")}
             state["setups"], state["setup_log"] = s_open[-60:], s_log
             keep_s = trading_day(t_send - 3 * 86400)
             state["setup_seen"] = {k: v for k, v in sseen.items() if v >= keep_s}
@@ -2836,11 +2858,11 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                 if fz["state"] == "DELAYED":
                     hl = hl[:1] + [delayed_line(fz, off)] + hl[1:]
                 report.setdefault("h4_alerts", []).append({"lines": hl, "sent": _say(
-                    "h4", hl, [f"H4:{sid}:4h:{int(e['t_close'])}:{'BUY' if d == 1 else 'SELL'}"], f"4h CANDLE BREAKOUT #{sid}")
+                    "h4", trade_msg(hl), [f"H4:{sid}:4h:{int(e['t_close'])}:{'BUY' if d == 1 else 'SELL'}"], f"4h CANDLE BREAKOUT #{sid}")
                     if phone else []})
             if stale_h:
                 lh_ = [stale_line("4h breakout alert" + ("s" if len(stale_h) > 1 else ""), stale_h)]
-                report["h4_stale"] = {"lines": lh_, "sent": _say("h4_stale", lh_, desc="4h not-actionable notice")}
+                report["h4_stale"] = {"lines": lh_, "sent": _say("h4_stale", trade_msg(lh_), desc="4h not-actionable notice")}
             state["setups"] = s_open[-60:]
         state[tf] = last_t
     if pl_cfg:
@@ -2862,7 +2884,7 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
     report["turn_log"] = state.get("turn_log", [])[::-1][:10]
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
     if glines:
-        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else _say("grab_test", phone_only(glines),
+        report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else _say("grab_test", trade_msg(phone_only(glines)),
                                                                                       desc="grab test")}   # trades and results
     if setups_on():                                        # the live SETUP record (descriptive) and the site block
         srec = setup_record(store_dir, state.get("setup_log", []), t_send)

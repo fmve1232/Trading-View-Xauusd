@@ -39,7 +39,7 @@ def test_the_default_is_sixty_and_keeps_quality_filters(monkeypatch):
 
 def test_only_15m_signals_reach_the_phone_and_every_plan_is_still_recorded(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(N, "send", lambda lines: sent.append(list(lines)) or ["test"] if lines else [])
+    monkeypatch.setattr(N, "send", lambda lines: sent.append(N.without_disclaimer(lines)) or ["test"] if lines else [])
     store = str(tmp_path)
     N.run(store, {"15m": _pay("15m", T - 900), "1h": _pay("1h", T - 3600)}, ["15m", "1h"], sent_t=T)   # position only
     # the 15m signal is on the bar that closes at T + 3600, like the 1h one: both are 5 minutes old at the send
@@ -57,7 +57,7 @@ def test_only_15m_signals_reach_the_phone_and_every_plan_is_still_recorded(tmp_p
 def test_quality_mode_still_sends_every_alerted_timeframe(tmp_path, monkeypatch):
     monkeypatch.setenv("ALERT_MODE", "quality")
     sent = []
-    monkeypatch.setattr(N, "send", lambda lines: sent.append(list(lines)) or ["test"] if lines else [])
+    monkeypatch.setattr(N, "send", lambda lines: sent.append(N.without_disclaimer(lines)) or ["test"] if lines else [])
     store = str(tmp_path)
     N.run(store, {"15m": _pay("15m", T - 900), "1h": _pay("1h", T - 3600)}, ["15m", "1h"], sent_t=T)
     pay = {"15m": _pay("15m", T, [_sig(T, 3906.34, -1)]), "1h": _pay("1h", T, [_sig(T, 3950.0, 1)])}

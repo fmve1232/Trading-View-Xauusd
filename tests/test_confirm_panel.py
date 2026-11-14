@@ -253,7 +253,7 @@ def test_the_phone_and_the_state_are_identical_with_the_panel_on_or_off(tmp_path
     for flag in ("0", "1"):
         monkeypatch.setenv("CONFIRM_PANEL", flag)
         sent: list = []
-        monkeypatch.setattr(notify, "send", lambda lines, sent=sent: sent.append(list(lines)) or ["test"])
+        monkeypatch.setattr(notify, "send", lambda lines, sent=sent: sent.append(notify.without_disclaimer(lines)) or ["test"])
         store = tmp_path / flag
         store.mkdir()
         reps = [notify.run(str(store), {"15m": _p15(b)}, ["15m"], sent_t=T0 + 1000 + k * 900) for k, b in enumerate(runs)]

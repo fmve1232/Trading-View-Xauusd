@@ -46,6 +46,13 @@ WARNING = ("DELIVERY WARNING: 1 alert was NOT delivered (13 Nov 07:19 UTC, 15m S
 PREFIX = "UNDELIVERED PLAN #12 (its alert never reached you; if you did not enter it, there is nothing to manage): "
 REPEAT_LINE = "REPEAT of #12 (15m SELL from 3897.97 at 07:15 UTC, still open): the same idea -- don't add a trade (no new plan)"
 CE = N.requests.exceptions.ConnectionError
+DISC = tuple(getattr(N, "TRADE_DISCLAIMER", ()))           # #101: every trading message opens with these two lines
+
+
+def own(text: str) -> list[str]:
+    """A posted message's lines without the #101 disclaimer on top (the P-0 lines follow it)."""
+    ls = text.split("\n")
+    return ls[len(DISC):] if DISC and tuple(ls[:len(DISC)]) == DISC else ls
 
 
 @pytest.fixture(autouse=True)
@@ -185,15 +192,17 @@ def test_t6_plan12_failed_opening_then_six_repeats_and_tp1_carry_the_plan_levels
     assert p0 == []                                                      # the position run sends nothing
     key = N.notif_key([N.event_key("OPEN", "15m", T07, "SELL")])
     assert [p["tag"] for p in p1] == [f"xq-{key}"] * 2 and rep1["15m"]["sent"] == []
-    h = p1[0]["text"].split("\n")[0]                                     # the headline (its wording may vary: #103)
+    h = own(p1[0]["text"])[0]                                           # the headline (its wording may vary: #103)
     assert h.startswith("XAUUSD 15m SELL (confirmed close) | entry 3897.97") and "SL 3909.51 TP1 3875.22" in h
-    assert p1[1]["text"] == "RESENT (first attempt failed: ConnectionError)\n" + p1[0]["text"]
+    assert own(p1[1]["text"]) == ["RESENT (first attempt failed: ConnectionError)"] + own(p1[0]["text"])
+    assert p1[1]["text"].split("\n")[:len(DISC)] == list(DISC)          # the disclaimer (#101), if any, stays first
     assert p1[0]["timeout"] == (5, 10) and p1[0]["headers"]["Title"] == "XAUUSD Quantum"
     assert "::warning title=phone alert not delivered::15m OPEN:15m:" in capsys.readouterr().out
     und = json.loads((tmp_path / "s" / N.NOTIFY_STATE).read_text())["open"]["12"]
     assert (und["entry"], und["sl"], und["tp"], und["tp2"], und["final_state"], und["attempts"]) == \
         (ENTRY, SL, TP1, TP2, "RETRY_FAILED", 2)
-    msgs = [p[0]["text"].split("\n") for _, p in res[2:] if p]
+    msgs = [own(p[0]["text"]) for _, p in res[2:] if p]
+    assert all(p[0]["text"].split("\n")[:len(DISC)] == list(DISC) for _, p in res[2:] if p)
     assert len(msgs) == 7                                                # six REPEATs and the TP1 follow-up
     assert msgs[0] == [WARNING] + BLOCK + [msgs[0][3], PREFIX + REPEAT_LINE]       # the first accepted one: the warning
     assert msgs[0][3].startswith("XAUUSD 15m SELL (confirmed close) | entry 3895.24") and "SL 3906.01 TP1 3875.22" in msgs[0][3]
@@ -242,11 +251,24 @@ def test_t6_a_not_actionable_repeat_then_a_fresh_one_the_block_and_prefix_land_o
     k = len(net.posts)
     N.run(store, {"15m": pay15(ts("2026-11-13 08:45"), [OPEN, late, fresh], gen=sent - 60), "5m": pay5(sent - sent % 300 - 300)},
           ["15m"], sent_t=sent)
-    lines = net.posts[k]["text"].split("\n")
+    lines = own(net.posts[k]["text"])
     assert lines[0].startswith("DELIVERY WARNING") and lines[1:3] == BLOCK
     assert "NOT ACTIONABLE" in lines[3] and not lines[3].startswith(PREFIX)
     assert lines[4].startswith("XAUUSD 15m SELL (confirmed close) | entry 3896.92") and lines[5] == PREFIX + REPEAT_LINE
     assert len(lines) == 6
+
+
+def test_with_the_disclaimer_the_order_is_disclaimer_then_warning_then_block(tmp_path, monkeypatch):
+    """#101 x P-0: the approved disclaimer stays the first two lines of a trading message; the DELIVERY WARNING and
+    the undelivered block follow it; a RESENT marker on a trading message also sits under the disclaimer."""
+    if not DISC:
+        pytest.skip("no disclaimer in this build")
+    net = Net(monkeypatch, ntfy=[CE("aborted"), CE("aborted")])
+    res = timeline(str(tmp_path), net, upto=3)
+    resend = res[1][1][1]["text"].split("\n")
+    assert resend[:3] == list(DISC) + ["RESENT (first attempt failed: ConnectionError)"]
+    nxt = res[2][1][0]["text"].split("\n")
+    assert nxt[:2] == list(DISC) and nxt[2] == WARNING and nxt[3:5] == BLOCK
 
 
 # ---------------- T1-T5: the send path ----------------------------------------------------------------------------
@@ -270,8 +292,8 @@ def test_t2_connection_error_cache_miss_then_the_retry_succeeds_marked_resent(tm
     net = Net(monkeypatch, ntfy=[CE("Connection aborted.")])
     res = timeline(str(tmp_path), net, upto=2)
     assert len(net.posts) == 2 and net.posts[0]["tag"] == net.posts[1]["tag"] == "xq-" + N.notif_key([N.event_key("OPEN", "15m", T07, "SELL")])
-    assert net.posts[1]["text"].split("\n")[0] == "RESENT (first attempt failed: ConnectionError)"
-    assert net.posts[1]["text"].split("\n")[1:] == net.posts[0]["text"].split("\n")
+    assert own(net.posts[1]["text"])[0] == "RESENT (first attempt failed: ConnectionError)"
+    assert own(net.posts[1]["text"])[1:] == own(net.posts[0]["text"])
     rows = records(str(tmp_path))
     assert [(r["state"], r["cache_check"], r["resent"]) for r in rows] == [("SEND_FAILED", "none", False), ("RETRY_SUCCEEDED", "miss", True)]
     assert {r["final_state"] for r in rows} == {"DELIVERY_UNCONFIRMED"} and res[1][0]["15m"]["sent"] == ["ntfy"]
@@ -286,7 +308,7 @@ def test_t3_both_attempts_fail_warning_on_actions_and_on_the_next_accepted_messa
     out = capsys.readouterr().out
     assert out.count("::warning title=phone alert not delivered::") == 1 and "RETRY_FAILED (HTTP 503)" in out
     assert "phone alert not delivered" in summ.read_text() and TOPIC not in out + summ.read_text()
-    first, second = res[2][1][0]["text"].split("\n"), res[3][1][0]["text"].split("\n")
+    first, second = own(res[2][1][0]["text"]), own(res[3][1][0]["text"])
     w = "DELIVERY WARNING: 1 alert was NOT delivered (13 Nov 07:19 UTC, 15m SELL plan #12, 2 attempts, HTTP 503)."
     assert first[0] == w + " Its levels follow where it matters." and not any(x.startswith("DELIVERY WARNING") for x in second)
     assert json.loads((tmp_path / "s" / N.NOTIFY_STATE).read_text())["pending_warnings"] == []
@@ -309,7 +331,7 @@ def test_t4b_an_earlier_failure_that_ntfys_cache_shows_did_arrive_is_reclassifie
     its warning, so no message claims the alert never reached the phone."""
     net = Net(monkeypatch, ntfy=[CE("aborted"), ("arrived", N.requests.exceptions.ReadTimeout("read timed out"))])
     res = timeline(str(tmp_path), net, upto=3)
-    nxt = res[2][1][0]["text"].split("\n")
+    nxt = own(res[2][1][0]["text"])
     assert not any(x.startswith(("DELIVERY WARNING", "ORIGINAL ALERT")) for x in nxt) and nxt[-1] == REPEAT_LINE
     st = json.loads((tmp_path / N.NOTIFY_STATE).read_text())
     assert st == {"open": {}, "pending_warnings": []}
@@ -355,7 +377,7 @@ def test_t5_limitation_a_lost_store_save_with_an_empty_cache_resends_unmarked(tm
     survives anywhere the run can read, so the message goes out again and cannot be marked as a resend."""
     net = Net(monkeypatch)
     store, rep, posts = _lost_save_runs(tmp_path, net, "store", clear_cache=True)
-    assert len(posts) == 1 and not posts[0]["text"].startswith("RESENT") and rep["15m"]["sent"] == ["ntfy"]
+    assert len(posts) == 1 and not own(posts[0]["text"])[0].startswith("RESENT") and rep["15m"]["sent"] == ["ntfy"]
 
 
 def test_t5_crash_before_the_state_was_written_the_stores_own_record_stops_a_resend_on_every_channel(tmp_path, monkeypatch):
@@ -372,7 +394,7 @@ def test_t5_crash_before_the_state_was_written_the_stores_own_record_stops_a_res
 def test_t5_an_earlier_runs_failed_attempt_is_resent_marked(tmp_path, monkeypatch):
     net = Net(monkeypatch, ntfy=[CE("aborted"), CE("aborted")])
     store, rep, posts = _lost_save_runs(tmp_path, net, "state")
-    assert len(posts) == 1 and posts[0]["text"].startswith("RESENT (an earlier run's attempt failed: ConnectionError)\n")
+    assert len(posts) == 1 and own(posts[0]["text"])[0] == "RESENT (an earlier run's attempt failed: ConnectionError)"
     assert rep["15m"]["sent"] == ["ntfy"] and "ORIGINAL ALERT" not in posts[0]["text"]     # an opening never gets the block
     assert json.loads(open(os.path.join(store, N.NOTIFY_STATE)).read()) == {"open": {}, "pending_warnings": []}
 
@@ -400,7 +422,7 @@ def test_t7_sl_after_a_failed_opening_carries_the_block_and_the_result_is_record
     net = Net(monkeypatch, ntfy=[CE("aborted"), CE("aborted")])
     t_hit = ts("2026-11-13 09:00")
     rep, posts = _one_plan(str(tmp_path / "f"), net, -1, {t_hit: (3895.0, 3911.5)}, ts("2026-11-13 09:21"))
-    lines = posts[0]["text"].split("\n")
+    lines = own(posts[0]["text"])
     assert lines[1:3] == BLOCK and lines[3].startswith(PREFIX + "XAUUSD 15m YOUR PLAN SELL from 3897.97: SL 3910.97 HIT -$650")
     ok = Net(monkeypatch)
     _one_plan(str(tmp_path / "ok"), ok, -1, {t_hit: (3895.0, 3911.5)}, ts("2026-11-13 09:21"))
@@ -430,7 +452,7 @@ def test_t7_tp1_after_a_failed_opening_and_the_levels_are_the_plans_not_the_curr
     k = len(net.posts)
     N.run(store, {"15m": pay15(ts("2026-11-13 09:00"), [sig], low={ts("2026-11-13 09:00"): 3884.0}, gen=ts("2026-11-13 09:16"))},
           ["15m"], sent_t=ts("2026-11-13 09:19"))
-    lines = net.posts[k]["text"].split("\n")
+    lines = own(net.posts[k]["text"])
     assert lines[1:3] == BLOCK and lines[3].startswith(PREFIX + "XAUUSD 15m YOUR PLAN SELL from 3897.97: TP1 3884.97 HIT +$325 on half")
 
 
@@ -444,7 +466,7 @@ def test_t8_two_channels_ntfy_fails_telegram_accepts_so_it_counts_as_delivered_t
     assert {r["final_state"] for r in rows} == {"DELIVERY_UNCONFIRMED"}
     assert {(r["channel"], r["channel_final"]) for r in rows} == {("ntfy", "RETRY_FAILED"), ("telegram", "DELIVERY_UNCONFIRMED")}
     assert "15m on ntfy: RETRY_FAILED" in capsys.readouterr().out
-    nxt = res[2][1][0]["text"].split("\n")
+    nxt = own(res[2][1][0]["text"])
     assert not any(x.startswith(("DELIVERY WARNING", "ORIGINAL ALERT", "UNDELIVERED")) for x in nxt)
     tg = [p for p in net.posts if p["ch"] == "telegram"]
     assert "123456:telegram-token-not-real" in tg[0]["url"] and not any("telegram-token-not-real" in json.dumps(r) for r in records(str(tmp_path)))
@@ -510,7 +532,7 @@ def test_kill_switch_delivery_retry_0_one_attempt_no_cache_reads_blocks_still_sh
     net = Net(monkeypatch, ntfy=[CE("aborted")])
     res = timeline(str(tmp_path), net, upto=3)
     assert len(res[1][1]) == 1 and net.polls == [] and net.sleeps == []
-    assert res[2][1][0]["text"].split("\n")[1] == BLOCK[0].replace("failed twice", "failed")
+    assert own(res[2][1][0]["text"])[1] == BLOCK[0].replace("failed twice", "failed")
 
 
 # ---------------- review findings of 2026-11-14 (each test fails on the code before its fix) ----------------------

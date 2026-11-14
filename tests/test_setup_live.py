@@ -37,7 +37,7 @@ def _p5(bars):
 
 def test_setup_alert_is_sent_alone_then_scored_once(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     base = [(T0, 4066.0, 4061.0, 4062.0)]
     notify.run(store, {"15m": _p15(base)}, ["15m"], sent_t=T0 + 1000)                   # first run: position only
@@ -65,7 +65,7 @@ def test_setup_alert_is_sent_alone_then_scored_once(tmp_path, monkeypatch):
 
 def test_setups_can_be_turned_off(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     monkeypatch.setenv("ALERT_SETUPS", "0")
     store = str(tmp_path)
     base = [(T0, 4066.0, 4061.0, 4062.0)]
@@ -76,7 +76,7 @@ def test_setups_can_be_turned_off(tmp_path, monkeypatch):
 
 def test_record_line_and_major_levels_switch(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     store = str(tmp_path)
     base = [(T0, 4066.0, 4061.0, 4062.0)]
     notify.run(store, {"15m": _p15(base)}, ["15m"], sent_t=T0 + 1000)
@@ -110,7 +110,7 @@ def _trend_up_payloads(bars, bull=60.0, bear=30.0):
 
 def _quality_15m_run(store, monkeypatch, bull=60.0, bear=30.0, mode="quality"):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     monkeypatch.setenv("ALERT_MODE", mode)
     base = [(T0, 4147.0, 4140.0, 4146.0)]
     pay = _trend_up_payloads(base, bull, bear)
@@ -149,7 +149,7 @@ def _p4(n, last_close=None, bull=60.0, bear=30.0):
 
 def test_4h_breakout_with_all_four_is_sent(tmp_path, monkeypatch):
     sent = []
-    monkeypatch.setattr(notify, "send", lambda lines: sent.append(list(lines)) or ["test"])
+    monkeypatch.setattr(notify, "send", lambda lines: sent.append(notify.without_disclaimer(lines)) or ["test"])
     monkeypatch.setenv("ALERT_MODE", "quality")
     store = str(tmp_path)
     up = _trend_up_payloads([(T0, 4147.0, 4140.0, 4146.0)])
