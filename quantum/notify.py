@@ -441,6 +441,26 @@ def turn_lines(state: dict, payloads: dict, tfs: list[str], liq_log: list[dict],
     return out
 
 
+ENGINE_REF = "engine reference only"
+
+
+def signal_head(m: dict, tf: str, d: str, pl: dict | None, off: float = 0.0) -> str:
+    """The SIGNAL alert's first line (operator approval 2026-11-13, audit F-06). The engine's own SL / TP1-3 are
+    reference levels: the plan the alert offers trades the fixed money stop, $13 from the entry by default, while the
+    engine's stop is often far wider (12 Nov 15:00: $39). So the line names the plan stop first, the stop YOUR PLAN
+    uses, and labels the engine's levels as reference, not the plan. pl is None when no plan is offered (a REPEAT of an
+    open idea, or no plan configured): the engine's levels are then still labelled reference, and no stop is named.
+    Wording only: the levels themselves, the plan and every record are unchanged."""
+    head = f"XAUUSD {tf} {d} (confirmed close) | entry {_fmt(m['px'], off)}"
+    ref = ENGINE_REF
+    if pl and m.get("px") is not None:
+        sl, _ = plan_levels(m["px"], m["dir"], pl)
+        head += f" | plan stop SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f})"
+        ref += ", not the plan"
+    return (f"{head} | {ref}: SL {_fmt(m['sl'], off)} TP1 {_fmt(m['tp1'], off)} TP2 {_fmt(m['tp2'], off)} "
+            f"TP3 {_fmt(m['tp3'], off)} | TQ {m['tq']}")
+
+
 def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: dict | None = None,
              signals_only: bool = False) -> list[str]:
     """Alert lines for bars closed after since_t. `now` ({'t' send time, 'px', 't_px', 'live'}) adds the MT5 and
@@ -459,15 +479,14 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
                 stale_at = len(out) if stale_at is None else stale_at
                 stale.append(stale_item(d, f"{tf} signal", int(m["t"]) + TF_SEC.get(tf, 0), m["px"], fz, off))
                 continue
-            out.append(f"XAUUSD {tf} {d} (confirmed close) | entry {_fmt(m['px'], off)} SL {_fmt(m['sl'], off)} "
-                       f"TP1 {_fmt(m['tp1'], off)} TP2 {_fmt(m['tp2'], off)} TP3 {_fmt(m['tp3'], off)} | TQ {m['tq']}")
+            rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
+            pl = plan_cfg()
+            out.append(signal_head(m, tf, d, pl if rp is None else None, off))
             if fz and fz["state"] == "DELAYED":
                 out.append(delayed_line(fz, off))                  # second line: visible in the phone's preview
-            rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
             if rp is not None:
                 out.append(repeat_line(m, tf, rp, off, quiet=rp.get("id") in ((ctx or {}).get("quiet") or ())))
                 continue
-            pl = plan_cfg()
             late, timing = timing_lines(alert_timing(m, tf, now, pl), off)
             if late:
                 out.append(late)                           # second line: visible in the phone's preview
