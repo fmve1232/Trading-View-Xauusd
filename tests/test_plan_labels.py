@@ -45,3 +45,7 @@ def test_engine_levels_are_named_and_the_phone_plan_is_shown_with_them():
     assert '<div class="k">Engine stop · ${esc(p.sl_basis)}</div>' in s and '<div class="k">Engine TP1 · ' in s
     assert 'myPlanHtml(p.long ? 1 : -1, p.entry, "Your plan (what the phone sends):")' in s
     assert "the engine's EV check is computed on the engine levels, not on your plan" in s
+    brief = s[s.index("function renderBrief("):]
+    brief = brief[:brief.index("\nfunction ")]
+    assert "<i>Stop</i>" not in brief and "<i>Engine stop</i>" in brief and "<i>Engine TP1</i>" in brief
+    assert brief.count('myPlanHtml(p.long ? 1 : -1, p.entry, "Your plan (what the phone sends):")') == 1
