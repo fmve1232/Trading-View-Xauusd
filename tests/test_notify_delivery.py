@@ -185,7 +185,8 @@ def test_t6_plan12_failed_opening_then_six_repeats_and_tp1_carry_the_plan_levels
     assert p0 == []                                                      # the position run sends nothing
     key = N.notif_key([N.event_key("OPEN", "15m", T07, "SELL")])
     assert [p["tag"] for p in p1] == [f"xq-{key}"] * 2 and rep1["15m"]["sent"] == []
-    assert p1[0]["text"].startswith("XAUUSD 15m SELL (confirmed close) | entry 3897.97 SL 3909.51 TP1 3875.22")
+    h = p1[0]["text"].split("\n")[0]                                     # the headline (its wording may vary: #103)
+    assert h.startswith("XAUUSD 15m SELL (confirmed close) | entry 3897.97") and "SL 3909.51 TP1 3875.22" in h
     assert p1[1]["text"] == "RESENT (first attempt failed: ConnectionError)\n" + p1[0]["text"]
     assert p1[0]["timeout"] == (5, 10) and p1[0]["headers"]["Title"] == "XAUUSD Quantum"
     assert "::warning title=phone alert not delivered::15m OPEN:15m:" in capsys.readouterr().out
@@ -195,11 +196,11 @@ def test_t6_plan12_failed_opening_then_six_repeats_and_tp1_carry_the_plan_levels
     msgs = [p[0]["text"].split("\n") for _, p in res[2:] if p]
     assert len(msgs) == 7                                                # six REPEATs and the TP1 follow-up
     assert msgs[0] == [WARNING] + BLOCK + [msgs[0][3], PREFIX + REPEAT_LINE]       # the first accepted one: the warning
-    assert msgs[0][3].startswith("XAUUSD 15m SELL (confirmed close) | entry 3895.24 SL 3906.01 TP1 3875.22")
+    assert msgs[0][3].startswith("XAUUSD 15m SELL (confirmed close) | entry 3895.24") and "SL 3906.01 TP1 3875.22" in msgs[0][3]
     for i, ((t, px, sl, tp, _), m) in enumerate(zip(REPEATS, msgs[:6], strict=True)):
         m = m[1:] if i == 0 else m                                       # only the first one carries the warning
         assert len(m) == 4 and m[:2] == BLOCK and m[3] == PREFIX + REPEAT_LINE and WARNING not in m
-        assert m[2].startswith(f"XAUUSD 15m SELL (confirmed close) | entry {px:.2f} SL {sl:.2f} TP1 {tp:.2f}")
+        assert m[2].startswith(f"XAUUSD 15m SELL (confirmed close) | entry {px:.2f}") and f"SL {sl:.2f} TP1 {tp:.2f}" in m[2]
     assert msgs[6][:2] == BLOCK and msgs[6][2].startswith(PREFIX + "XAUUSD 15m YOUR PLAN SELL from 3897.97: TP1 3884.97 HIT +$325 on half")
     assert len(msgs[6]) == 3 and "13 Nov 13:15 UTC" in msgs[6][2]
     st = json.loads((tmp_path / "s" / N.STATE).read_text())               # the plan itself: opened once, TP1, tracked
