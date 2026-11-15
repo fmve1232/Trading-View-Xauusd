@@ -13,9 +13,11 @@ from quantum import holdout, notify
 def _env(monkeypatch):
     for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_COST_PER_LOT", "MT5_PRICE_OFFSET", "ALERT_STRUCTURE",
               "PLAN_LATE_FRAC", "MT5_SERVER_UTC_OFFSET", "ALERT_LOCAL_TZ", "ALERT_LIQUIDITY", "LIQ_NEAR_USD",
-              "ACCOUNT_USD", "DAILY_LIMIT_PCT", "PLAN_TP2_USD"):
+              "ACCOUNT_USD", "DAILY_LIMIT_PCT", "PLAN_TP2_USD", "PLAN_RISK_PCT", "PLAN_LOT_MAX"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
+    monkeypatch.setenv("PLAN_SIZING", "fixed")    # this module tests the plan's text and levels at the fixed reference lot;
+    #                                               the default risk sizing (N1, 2026-11-14) is tested in test_risk_sizing.py
 
 
 def test_defaults_are_the_operators_650_plan_and_levels_follow_the_direction(monkeypatch):
@@ -243,11 +245,12 @@ def test_signal_alert_has_fill_based_levels_timing_and_a_late_warning(monkeypatc
     pay = {"meta": {"tf": "15m"}, "markers": [_sig(-1, t=1800)], "decisions": []}
     t_sent = 1800 + 900 + 380                                                    # 6.3 min after the bar close
     on_time = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
-    assert [x.split(":")[0].split(" ")[0] for x in on_time] == ["XAUUSD", "YOUR", "ON", "LADDER", "TIMING"]
-    assert on_time[2] == ("ON MT5: SELL at market, then SL = your fill + 13.00, TP = your fill - 13.00 "
+    assert [x.split(":")[0].split(" ")[0] for x in on_time] == ["XAUUSD", "YOUR", "SIZE", "ON", "LADDER", "TIMING"]
+    assert on_time[2].startswith("SIZE: fixed 0.5 lot (PLAN_SIZING=fixed)")                       # N1: how the lot was set
+    assert on_time[3] == ("ON MT5, ONLY IF YOU TAKE IT ANYWAY (not a validated signal): SELL at market, then SL = your fill + 13.00, TP = your fill - 13.00 "
                           "(= -$650 / +$650 at 0.5 lot, at any broker price)")
-    assert on_time[3].startswith("LADDER before -$13.00")
-    assert "alert 6 min after the close" in on_time[4] and "$1.17 toward SL since the signal" in on_time[4]
+    assert on_time[4].startswith("LADDER before -$13.00")
+    assert "alert 6 min after the close" in on_time[5] and "$1.17 toward SL since the signal" in on_time[5]
     late = notify.messages(pay, 1000, {"t": t_sent, "px": 4003.90, "t_px": t_sent - 50, "live": True})
     assert late[1].startswith("LATE: price already moved $3.90 toward SL") and "limit $3.90 = 30% of the stop" in late[1]
     toward_tp = notify.messages(pay, 1000, {"t": t_sent, "px": 3995.0, "t_px": t_sent - 50, "live": True})
@@ -255,10 +258,10 @@ def test_signal_alert_has_fill_based_levels_timing_and_a_late_warning(monkeypatc
     monkeypatch.setenv("PLAN_LATE_FRAC", "0.5")                                 # the limit is a variable
     assert not notify.messages(pay, 1000, {"t": t_sent, "px": 3995.0, "t_px": t_sent - 50, "live": True})[1].startswith("LATE")
     buy = notify.messages({**pay, "markers": [_sig(1)]}, 1000, {"t": t_sent})    # no price known: no move, no LATE
-    assert "BUY at market, then SL = your fill - 13.00, TP = your fill + 13.00" in buy[2] and buy[4].endswith("after the close")
+    assert "BUY at market, then SL = your fill - 13.00, TP = your fill + 13.00" in buy[3] and buy[5].endswith("after the close")
     monkeypatch.setenv("MT5_PRICE_OFFSET", "-2.61")                             # offsets move prices, never the distances
     off = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
-    assert "SL = your fill + 13.00" in off[2] and "price 3998.56" in off[4] and "$1.17 toward SL" in off[4]
+    assert "SL = your fill + 13.00" in off[3] and "price 3998.56" in off[5] and "$1.17 toward SL" in off[5]
 
 
 def test_follow_ups_decided_by_cents_say_confirm_in_mt5():
@@ -484,7 +487,7 @@ def test_a_silent_weekday_still_gets_the_engine_line_in_the_daily_report(tmp_pat
 # ---------------- two targets (operator, 2026-11-06: "TP1 +$13, TP2 +$20") ----------------
 def test_two_targets_mt5_line_and_the_stage_after_tp1():
     pl = notify.plan_cfg()
-    assert notify.mt5_line(1, pl) == ("ON MT5: BUY 2 x 0.25 lot at market; SL on both = your fill - 13.00; TP = your fill + 13.00 "
+    assert notify.mt5_line(1, pl) == ("ON MT5, ONLY IF YOU TAKE IT ANYWAY (not a validated signal): BUY 2 x 0.25 lot at market; SL on both = your fill - 13.00; TP = your fill + 13.00 "
                                       "on one and + 20.00 on the other; when the first closes at TP, move the other's SL to your fill "
                                       "(= -$650 total / +$325 then +$500, at any broker price)")
     plan = {"dir": 1, "entry": 4000.0, "tp2": 4020.0}

@@ -47,7 +47,7 @@ def test_setup_alert_is_sent_alone_then_scored_once(tmp_path, monkeypatch):
     assert len(alert) == 1
     a = alert[0]
     assert "liquidity sweep: previous day low 4058.44 swept (low 4055.22), closed back above at 4060.10 | at POC 4059.00" in a[0]
-    assert any(x.startswith("ENTRY 4060.10 | SL 4047.10 (-$650) | TP1 4073.10 (close half, SL to entry) | +$15 at 4075.10 | TP2 4080.10")
+    assert any(x.startswith("ENTRY 4060.10 | SL 4047.10 (-$598) | TP1 4073.10 (close half, SL to entry) | +$15 at 4075.10 | TP2 4080.10")
                for x in a)
     assert any("information, not a confirmed signal" in x for x in a)
     st = json.loads((tmp_path / notify.STATE).read_text())

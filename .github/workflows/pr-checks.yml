@@ -33,8 +33,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install (requirements.txt only, the production gate's set)
-        run: pip install -r requirements.txt
+      - name: Install (requirements.lock, the production gate's exact set)
+        run: pip install -r requirements.lock
 
       - name: Record the versions this check ran on
         run: |

@@ -26,6 +26,7 @@ def _env(monkeypatch):
               "PLAN_LATE_FRAC", "PLAN_TP2_USD", "NTFY_TOPIC", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID", "DISCORD_WEBHOOK_URL"):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
+    monkeypatch.setenv("PLAN_SIZING", "fixed")    # the 12 Nov alert was sent at the fixed 0.5 lot (before N1)
 
 
 def _old_head(m, tf, d, pl, off=0.0):
