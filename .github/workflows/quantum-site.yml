@@ -85,7 +85,7 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install (requirements.lock: the exact versions, audit IA-21)
+      - name: "Install (requirements.lock: the exact versions, audit IA-21)"
         run: pip install -r requirements.lock
 
       - name: Unit tests (engine, no-look-ahead, execution model)
