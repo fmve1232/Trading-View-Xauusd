@@ -103,8 +103,8 @@ def test_sweep_alert_names_the_level_and_news_alert_fires_once():
 def test_report_payload_carries_checks_and_news_and_keys_are_unchanged():
     from quantum import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6
     k = holdout.freeze_key(DEFAULT)
-    assert k == "5e4630924d663fc5:a6f2be58c74887ed"                       # web.8 (Amendment 15)
+    assert k == "1f88aad357497da4:4440d52587f5cc6b"   # PROPOSED Amendment F (not in force); production: 5e4630924d663fc5:a6f2be58c74887ed
     assert [m.freeze_key(k)[-16:] for m in (arm_h2, arm_h3, arm_h4, arm_h5, arm_h6)] == \
-        ["19433c9889d94f09", "0eb650f81d99803e", "090418672c210848", "40d438ea0c144199", "7c4ac023578836c6"]
+        ["19433c9889d94f09", "0eb650f81d99803e", "090418672c210848", "40d438ea0c144199", "3ffb9bdf4fb149c1"]   # H6: Amendment F (proposed); production 7c4ac023578836c6
     for f in ("report.py", "notify.py", "news_calendar.py", "cost_profiles.py"):
         assert f not in holdout.ENGINE_SOURCES

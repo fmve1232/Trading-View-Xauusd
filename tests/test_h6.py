@@ -23,8 +23,10 @@ def test_only_the_score_veto_is_removed():
     assert arm_h6.evaluate(_res(), cfg)["exec_buy"] == [0, 0, 1]
     ev = arm_h6.evaluate(_res(cal=True), cfg)
     assert ev["exec_buy"] == [0, 0, 1] and ev["score_vetoed"] == [0, 0, 1]          # the score veto does not block H6
-    for kw in ({"tqf": True}, {"ev": True}, {"buy": 0}):                              # every other veto / gate still does
+    for kw in ({"tqf": True}, {"buy": 0}):                                             # every applied veto / gate still does
         assert not any(arm_h6.evaluate(_res(**kw), cfg)["exec_buy"]), kw
+    # PROPOSED Amendment F (F3): the EV flag is a shadow value the engine no longer applies, so H6 does not apply it either
+    assert arm_h6.evaluate(_res(ev=True), cfg)["exec_buy"] == [0, 0, 1]
     assert arm_h6.evaluate(_res(buy=0, sell=1), cfg)["exec_sell"] == [0, 0, 1]
     locked = arm_h6.evaluate(_res(lock=True), cfg)["exec_buy"][-1]
     assert locked == (0 if cfg.use_risk_limits else 1)                                  # the risk lock as the engine applies it
@@ -35,34 +37,20 @@ def test_plan_is_the_engines_own():
     assert (ev["plan_sl"][2], ev["plan_tp1"][2], ev["plan_tp2"][2]) == (1990.0, 2010.0, 2020.0)
 
 
-def test_equals_the_engine_except_where_the_score_vetoed():
-    """On the real engine: H6 == exec_buy / exec_sell on every bar where cal_veto is off; where it is on, H6 is the
-    engine's should_buy / should_sell unless another veto or the risk lock blocks it."""
-    vetoed_all = 0
-    for seed in (6, 7):                       # seed 7 has a bar the score veto blocked and no other veto did
-        vetoed_all += _equivalence(seed)
-    assert vetoed_all >= 1, "no bar where H6 differs from the engine: the test would not see a broken rule"
-
-
-def _equivalence(seed):
-    m = load_synthetic("15m", bars=1500, seed=seed)
-    res = engine.run(m, DEFAULT)
-    ev = arm_h6.evaluate(res, DEFAULT)
-    R = res.rows
-    n = len(res.F["c"])
-    vetoed = 0
-    for i in range(n):
-        cal = bool(R["cal_veto"][i])
-        if not cal:
-            assert ev["exec_buy"][i] == int(bool(R["exec_buy"][i])) and ev["exec_sell"][i] == int(bool(R["exec_sell"][i])), i
-        else:
-            other = bool(R["tq_floor_veto"][i]) or bool(R["ev_veto"][i]) or (DEFAULT.use_risk_limits and bool(R["risk_lock"][i]))
-            assert ev["exec_buy"][i] == int(bool(R["should_buy"][i]) and not other), i
-            assert ev["exec_sell"][i] == int(bool(R["should_sell"][i]) and not other), i
-            vetoed += ev["exec_buy"][i] + ev["exec_sell"][i]
-        assert not (ev["exec_buy"][i] and ev["exec_sell"][i])
-    assert sum(ev["score_vetoed"]) == vetoed
-    return vetoed
+def test_equals_the_engine_on_every_bar():
+    """PROPOSED Amendment F (F3): the engine applies no calibration veto, so H6 (the engine without it) equals the
+    treatment arm on every bar and no trade is 'score-vetoed'. The amendment closes H6 at merge."""
+    taken = 0
+    for seed in (6, 7):
+        m = load_synthetic("15m", bars=1500, seed=seed)
+        res = engine.run(m, DEFAULT)
+        ev = arm_h6.evaluate(res, DEFAULT)
+        R = res.rows
+        for i in range(len(res.F["c"])):
+            assert ev["exec_buy"][i] == int(bool(R["exec_buy"][i])) and ev["exec_sell"][i] == int(bool(R["exec_sell"][i])), (seed, i)
+            taken += ev["exec_buy"][i] + ev["exec_sell"][i]
+        assert sum(ev["score_vetoed"]) == 0
+    assert taken >= 1, "no signal taken: the comparison would be empty"
 
 
 def test_no_lookahead():

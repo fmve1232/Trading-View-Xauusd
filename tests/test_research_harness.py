@@ -136,7 +136,7 @@ def test_reality_check_pbo_dsr_bh():
 
 def test_harness_is_outside_the_engine():
     assert all("research" not in f for f in holdout.ENGINE_SOURCES)
-    assert holdout.freeze_key(__import__("quantum.config", fromlist=["DEFAULT"]).DEFAULT) == "5e4630924d663fc5:a6f2be58c74887ed"   # web.8 (Amendment 15)
+    assert holdout.freeze_key(__import__("quantum.config", fromlist=["DEFAULT"]).DEFAULT) == "1f88aad357497da4:4440d52587f5cc6b"   # PROPOSED Amendment F (not in force); production: 5e4630924d663fc5:a6f2be58c74887ed
 
 
 def test_purged_folds_never_overlap_label_windows():
