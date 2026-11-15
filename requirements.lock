@@ -1,0 +1,20 @@
+# Exact package versions the production run and the PR checks install (audit IA-21, 2026-11-14).
+# Resolved from requirements.txt on Python 3.11 with
+#   pip install -r requirements.txt --dry-run --ignore-installed --report report.json
+# numpy and pandas equal the versions production run 43606137153 recorded (manifest env: numpy 2.4.6, pandas 3.1.1),
+# so pinning changes nothing in the current runs. To upgrade: edit requirements.txt, re-resolve, review the diff, and
+# say so in the PR; every run's manifest records the versions it used.
+certifi==2026.10.23
+charset-normalizer==3.5.2
+idna==3.20
+iniconfig==2.3.1
+numpy==2.4.6
+packaging==26.3
+pandas==3.1.1
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==9.2.0
+python-dateutil==4.0.0
+requests==2.34.2
+tzdata==2026.6
+urllib3==2.8.0

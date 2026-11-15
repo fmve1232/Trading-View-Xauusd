@@ -508,6 +508,7 @@ footer a { color: var(--muted); }
 .toggle:not(.on) .sw { opacity: 0.4; }
 
 .pb .pbx { font-size: 11.5px; margin-top: 4px; }
+.myplan { font-size: 11.5px; margin-top: 4px; }   /* IA-04: the phone's plan beside the engine's levels */
 
 /* ═══ gold sentiment: one gauge, three category bars, the full list on demand ═══════════════════════════ */
 .ga-card { margin: 0; }
