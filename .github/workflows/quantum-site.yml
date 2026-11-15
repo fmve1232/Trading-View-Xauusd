@@ -181,10 +181,21 @@ jobs:
           MT5_SYMBOL: ${{ vars.MT5_SYMBOL }}
         run: python -m quantum.mt5 --out site/data/mt5.json --store store --data site/data
 
+      - name: Archive this run's payloads (decision traceability, audit IA-12; never fails the run)
+        if: always() && hashFiles('site/data/index.json') != ''
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: payloads-${{ github.run_id }}-${{ github.run_attempt }}
+          path: site/data/*.json
+          retention-days: ${{ vars.PAYLOAD_RETENTION_DAYS || 90 }}
+          compression-level: 9
+          if-no-files-found: warn
+
       - name: Data-versioning manifest (bookkeeping only; before the store's orphan commit)
         if: always() && hashFiles('store-loaded.flag') != '' && hashFiles('ledger-loaded.flag') != ''
         continue-on-error: true
-        run: python -m quantum.manifest --store store --ledger ledger
+        run: python -m quantum.manifest --store store --ledger ledger --payloads site/data --artifact "payloads-${{ github.run_id }}-${{ github.run_attempt }}"
 
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
         id: savestore

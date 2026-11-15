@@ -13,6 +13,11 @@ earlier versions of a bar are not kept there. This module records, on the never-
                              only, so a library upgrade would otherwise leave no trace)
   revisions/<series>/YYYY-MM.csv  the OLD values of every bar that a later download changed
                              after that bar had closed (a forming bar finishing is not a revision)
+  `payloads` / `payload_artifact` in the run line (audit IA-12, 2026-11-14): SHA-256 and size of every
+                             site payload this run published (site/data/*.json) and the name of the
+                             Actions artifact that keeps their bytes (quantum-site.yml, 90 days by
+                             default), so a past decision can be replayed from the exact payload and
+                             the copy checked against this line (audit/tools/payload_archive_check.py)
 
 So a counted trade can be traced to the exact bars the engine saw (the run's tree hash), and a
 silently revised bar leaves a record instead of disappearing. Nothing here reads or changes
@@ -112,8 +117,23 @@ def revisions(old_csv: str, new_csv: str, bar_sec: int, prev_commit_utc: pd.Time
     return out, forming
 
 
+def payload_digests(payload_dir: str) -> dict:
+    """{file name: [sha256 of the bytes, size in bytes]} for every *.json the run published in payload_dir."""
+    out = {}
+    for name in sorted(os.listdir(payload_dir)):
+        p = os.path.join(payload_dir, name)
+        if not name.endswith(".json") or not os.path.isfile(p):
+            continue
+        h = hashlib.sha256()
+        with open(p, "rb") as f:
+            for chunk in iter(lambda: f.read(1 << 20), b""):
+                h.update(chunk)
+        out[name] = [h.hexdigest(), os.path.getsize(p)]
+    return out
+
+
 def record(store_dir: str, ledger_dir: str, run_id: str = "", sha: str = "", freeze_key: str = "",
-           now: datetime | None = None) -> dict:
+           now: datetime | None = None, payload_dir: str | None = None, artifact: str = "") -> dict:
     now = now or datetime.now(timezone.utc)
     stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     state = scan(store_dir)
@@ -167,6 +187,9 @@ def record(store_dir: str, ledger_dir: str, run_id: str = "", sha: str = "", fre
             "n_files": len(state), "changed": changed, "removed": removed,
             "revised_closed_bars": n_rev, "revised_files": rev_files, "forming_bar_updates": n_forming,
             "env": env_versions()}
+    if payload_dir and os.path.isdir(payload_dir):
+        line["payloads"] = payload_digests(payload_dir)
+        line["payload_artifact"] = artifact
     with open(os.path.join(mdir, f"runs-{now:%Y-%m}.jsonl"), "a") as f:
         f.write(json.dumps(line, sort_keys=True) + "\n")
     return line
@@ -178,16 +201,19 @@ def main() -> None:
     ap.add_argument("--ledger", required=True)
     ap.add_argument("--run-id", default=os.environ.get("GITHUB_RUN_ID", ""))
     ap.add_argument("--sha", default=os.environ.get("GITHUB_SHA", ""))
+    ap.add_argument("--payloads", default=None, help="directory of the payloads this run published (site/data)")
+    ap.add_argument("--artifact", default="", help="name of the Actions artifact that archives them")
     a = ap.parse_args()
     key = ""
     mp = os.path.join(a.store, "holdout_manifest.json")
     if os.path.exists(mp):
         with open(mp) as f:
             key = json.load(f).get("freeze_key", "")
-    line = record(a.store, a.ledger, a.run_id, a.sha, key)
+    line = record(a.store, a.ledger, a.run_id, a.sha, key, payload_dir=a.payloads, artifact=a.artifact)
     print(f"manifest: tree {line['tree_sha256'][:16]} · {line['n_files']} files · {len(line['changed'])} changed · "
           f"{line['revised_closed_bars']} revised closed bars · {line['forming_bar_updates']} forming-bar updates · "
-          + " ".join(f"{k} {v}" for k, v in line["env"].items()))
+          + " ".join(f"{k} {v}" for k, v in line["env"].items())
+          + (f" · {len(line['payloads'])} payloads -> {line['payload_artifact'] or 'no artifact'}" if "payloads" in line else ""))
 
 
 if __name__ == "__main__":
