@@ -1,5 +1,24 @@
 # Working conventions for this repo
 
+## The operator's target and working rule (operator instruction, 2026-11-15)
+
+**Target.** Phone alerts that give the best XAUUSD entry price: from the alert, price moves at least **$10**, preferably
+**$15–$20**, in the alert's direction before the stop. The entry weighs market bias and trend, macro and micro
+indicators, volume, order blocks, liquidity sweeps, reversals, pullbacks and breakouts, with historical probability and
+the major liquidity areas. Maximum planned loss per trade: $650 including costs. Alerts must be accurate, validated and
+calibrated.
+
+**Working rule** (the operator, 2026-11-15: "do not deviate from the instructions which I have given to you, and do not
+suggest an alternative ... put your best effort to achieve my target"):
+
+- Work to this target and to the operator's instructions as given. Do not propose a different objective, a substitute
+  rule or a list of options.
+- When an instructed step is finished, go on to the next instructed step.
+- Report what was measured, as measured. The non-negotiables below still apply: nothing is called accurate, validated,
+  calibrated or PASS unless it was executed and the evidence supports it.
+- The operator's own limits stay in force: no signal without sufficient evidence, no artificial signals to raise the
+  frequency, no stop or target moved to improve a hit rate, B24 OFF.
+
 ## Production vs reference (operator decision, 2026-09-27)
 
 **The Python website (`quantum/`, `site/`) is the production system and the primary forward
