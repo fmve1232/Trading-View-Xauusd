@@ -52,7 +52,7 @@ def test_no_deployment_upload_push_or_notification():
 
 def test_runs_the_production_gate_suite_and_the_reference_checks():
     code = _code(_wf())
-    assert "pip install -r requirements.txt" in code            # the production gate's dependency set, nothing more
+    assert "pip install -r requirements.lock" in code           # the production gate's exact dependency set (IA-21)
     assert "python -m pytest -q tests" in code                  # the same command as quantum-site.yml's gate
     assert "sha256sum -c audit/MANIFEST.sha256" in code
     assert re.search(r"for t in precheck pinelimits; do[^\n]*\n[^\n]*python audit/tools/\$t\.py artefacts/\*\.pine", code)
