@@ -1245,12 +1245,11 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
             tq_sum += tq_hist * tq_hw; tq_w += tq_hw
         tq_timing = 100.0 if in_kz[i] else 60.0 if (in_london[i] or in_ny[i]) else 25.0
         tq_sum += tq_timing * 0.05; tq_w += 0.05
-        if not isn(plan_ev):
-            tx = clamp(plan_ev / 0.75, -10.0, 10.0)
-            e2 = math.exp(2.0 * tx)
-            tq_sum += (50.0 + 50.0 * ((e2 - 1.0) / (e2 + 1.0))) * 0.10; tq_w += 0.10
+        # F3 (proposed amendment, docs/PLATFORM.md D-15): the race-grid EV no longer enters trade quality (it fed the TQ
+        # floor gate). The engine already scored TQ without it whenever the EV was unavailable (the old "-F" basis); that
+        # path now applies on every bar, so no weight is added or changed.
         trade_quality = int(pround(clamp(tq_sum / tq_w, 0.0, 100.0))) if tq_w > 0 else 50
-        tq_basis = ("" if tq_has_hist else "-H") + ("" if not isn(plan_ev) else "-F")
+        tq_basis = "" if tq_has_hist else "-H"
 
         # ================= auction intelligence =================
         if crossed_day[i]:
