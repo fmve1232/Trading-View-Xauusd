@@ -79,3 +79,33 @@ def test_every_trade_opens_on_an_h6_signal():
     trades, ev = arm_h6.simulate(res, DEFAULT)
     assert all(ev["exec_buy"][t["entry_i"]] or ev["exec_sell"][t["entry_i"]] for t in trades)
     assert all((t["dir"] == "LONG") == bool(ev["exec_buy"][t["entry_i"]]) for t in trades)
+
+
+def test_amendment_f_closes_h6_read_only(tmp_path):
+    """Amendment F closes H6: the page shows its final record; no manifest or ledger is written, restarted or archived."""
+    import json
+    import os
+    from quantum import report
+    hd = tmp_path / "holdout"
+    hd.mkdir()
+    key = "5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6"
+    man = {"arm": "h6", "freeze_key": key, "freeze_utc": "2026-11-03T23:47:43+00:00", "status": "ACTIVE", "history": []}
+    led = [{"freeze_key": key, "entry_time": "2026-11-05T10:00:00+00:00", "dir": "LONG", "r": 1.0, "pts": 13.0, "tp1_hit": True, "bars": 4},
+           {"freeze_key": key, "entry_time": "2026-11-06T10:00:00+00:00", "dir": "SHORT", "r": -1.0, "pts": -13.0, "tp1_hit": False, "bars": 2},
+           {"freeze_key": key, "entry_time": "2026-11-07T10:00:00+00:00", "dir": "LONG", "r": 2.0, "pts": 26.0, "tp1_hit": True, "bars": 9}]
+    (hd / "manifest_h6.json").write_text(json.dumps(man))
+    (hd / "15m_h6.json").write_text(json.dumps(led))
+    before = {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in hd.rglob("*")}
+    mk = SimpleNamespace(synthetic=False, tf="15m")
+    out = report.h6_section(mk, None, DEFAULT, {"freeze_key": "1f88aad357497da4:4440d52587f5cc6b"},
+                            datetime(2026, 11, 16, tzinfo=timezone.utc), str(tmp_path), None)
+    assert out["closed"].startswith("Closed by Amendment F") and "no verdict" in out["closed"]
+    assert out["freeze"] == man and out["forward"]["n"] == 3 and abs(out["forward"]["win_rate"] - 200 / 3) < 1e-9
+    assert "signals" not in out and "signal_now" not in out                         # H6's signals are the engine's now
+    assert {p: (p.read_bytes(), p.stat().st_mtime_ns) for p in hd.rglob("*")} == before     # nothing written or moved
+    assert not os.path.exists(hd / "archive")
+    empty = report.h6_section(mk, None, DEFAULT, {}, datetime(2026, 11, 16, tzinfo=timezone.utc), str(tmp_path / "none"), None)
+    assert empty["freeze"] is None and empty["forward"] == {"n": 0}
+    syn = report.h6_section(SimpleNamespace(synthetic=True, tf="15m"), None, DEFAULT, {}, datetime(2026, 11, 16, tzinfo=timezone.utc),
+                            str(tmp_path), None)
+    assert syn["freeze"] is None and syn["forward"] == {"n": 0}                        # a synthetic run reads no store

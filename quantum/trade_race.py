@@ -150,7 +150,7 @@ def build(market, res, res_chal, cfg, man: dict, store_dir: str | None) -> dict:
     evs = [("engine", "Engine signal (treatment)", res.rows), ("challenger", "Challenger (H1)", res_chal.rows if res_chal is not None else None),
            ("h2", "H2 Sweep and Value", lambda: arm_h2.evaluate(res)), ("h3", "H3 Sweep-to-Value", lambda: arm_h3.evaluate(res, market)),
            ("h4", "H4 Playbook (level break)", lambda: arm_h4.evaluate(res)), ("h5", "H5 High confidence", lambda: arm_h5.evaluate(res, market.tf_sec)),
-           ("h6", "H6 No score veto", lambda: arm_h6.evaluate(res, cfg))]
+           ("h6", "H6 No score veto (closed by Amendment F: equals the engine)", lambda: arm_h6.evaluate(res, cfg))]
     out = []
     for key, label, ev in evs:
         if ev is None:

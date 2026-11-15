@@ -48,7 +48,7 @@ EPS = 1e-9
 FINAL = ("INVALIDATED", "EXPIRED", "REJECTED", "TP2", "BE", "SL", "AMBIGUOUS", "TIMEOUT")
 EVIDENCE = ("Confirmation is your rule, not a proven edge: B19 and B30 found no $10 / $15 / $20 threshold that raises the "
             "chance of TP before SL out of sample.")
-B15_PREFIX = "ENGINE RECORD, NOT YOUR TRADE (B15 measures the signal from its close; act only on ENTRY ELIGIBLE alerts): "
+B15_PREFIX = "ENGINE RECORD, NOT YOUR TRADE (the engine test B15b measures the signal from its close; act only on ENTRY ELIGIBLE alerts): "
 
 
 def b15_line(x: str) -> str:

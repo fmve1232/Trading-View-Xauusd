@@ -73,3 +73,50 @@ def test_run_publishes_the_engine_test(tmp_path, monkeypatch):
     rep = notify.run(str(tmp_path), pay, ["15m"], sent_t=T0 + 60)
     assert rep["engine_test"]["id"] == "B15-ENGINE-FWD" and rep["engine_test"]["n"] == 0
     assert (tmp_path / "research_forward" / "B15-ENGINE-FWD.json").exists()
+
+
+# ---- Amendment F (audit/PREREGISTRATION.md, 2026-11-15): B15 ends where the amended engine starts; B15b continues ----
+def test_amendment_f_b15_ends_where_b15b_starts_and_the_end_never_moves(tmp_path):
+    store = str(tmp_path)
+    notify.eng_run(store, [], [], T0)                                                     # B15 running before the change
+    switch = T0 + 3 * 86400                                                               # first run of the amended engine
+    old = [_rec(i, "TP" if i % 2 else "SL") for i in range(1, 6)]                         # 3 TP / 2 SL, before the switch
+    new = [_rec(100 + i, "TP", t_dec=switch + 900 * i) for i in range(3)]                 # the amended engine's
+    plans = [_rec(7, None, t_dec=switch - 30), _rec(8, None, t_dec=switch + 30), _rec(9, None, t_dec=switch + 60)]
+    _, b = notify.eng_run(store, old + new, plans, switch, notify.ENG_B_ID)
+    _, a = notify.eng_run(store, old + new, plans, switch, notify.ENG_ID, ended=b["started_utc"])
+    assert (b["started_utc"], b["ended_utc"], b["n"], b["tp"], b["open"]) == (switch, None, 3, 3, 2)
+    assert (a["started_utc"], a["ended_utc"], a["n"], a["tp"], a["open"]) == (T0, switch, 5, 3, 1)
+    assert a["status"] == "ENDED at the engine change (Amendment F): 5 results, 3/5 TP1 first; no verdict"
+    assert a["next_check"] is None and b["status"] == "COLLECTING: 3 results, 100% TP1 first; first check at 30"
+    late = [_rec(6, "TP", t_dec=switch - 60)]                     # a signal from before the switch that resolves later
+    _, a2 = notify.eng_run(store, old + new + late, [], switch + 86400, notify.ENG_ID, ended=switch + 86400)
+    assert a2["ended_utc"] == switch and a2["n"] == 6 and a2["tp"] == 4                   # counted; the end did not move
+    with open(tmp_path / notify.GRAB_DIR / notify.ENG_FILE) as f:
+        sa = json.load(f)
+    with open(tmp_path / notify.GRAB_DIR / notify.ENG_B_FILE) as f:
+        sb = json.load(f)
+    assert sa["ended_utc"] == switch and sa["registration"] == "research/registrations/B15-ENGINE-FWD.json"
+    assert sb["id"] == "B15b-ENGINE-FWD" and "ended_utc" not in sb and sb["registration"] == "research/registrations/B15b-ENGINE-FWD.json"
+    assert {x["id"] for x in sa["trades"]}.isdisjoint({x["id"] for x in sb["trades"]})    # never pooled
+
+
+def test_an_ended_test_keeps_its_checks_but_the_deadline_gives_it_no_verdict():
+    tr, _ = notify.eng_trades([_rec(i, "TP" if i < 20 else "SL") for i in range(30)], T0)   # 20/30: not proven at 30
+    after = int(notify.datetime(2027, 7, 1, tzinfo=notify.timezone.utc).timestamp())
+    assert notify.eng_verdict(tr, {}, after)["verdict"]["verdict"] == "NOT PROVEN"         # a running test: the deadline
+    v = notify.eng_verdict(tr, {}, after, ended=T0 + 10**6)
+    assert v["verdict"] is None and [c["n"] for c in v["checks"]] == [30] and v["status"].startswith("ENDED")
+    tr100, _ = notify.eng_trades([_rec(i, "TP" if i % 2 else "SL") for i in range(100)], T0)
+    assert notify.eng_verdict(tr100, {}, T0, ended=T0)["verdict"]["verdict"] == "NOT PROVEN"   # its rule at 100 still holds
+
+
+def test_b15b_registration_is_b15s_rule_on_the_amended_engine():
+    with open("research/registrations/B15-ENGINE-FWD.json") as f:
+        a = json.load(f)
+    with open("research/registrations/B15b-ENGINE-FWD.json") as f:
+        b = json.load(f)
+    assert b["id"] == notify.ENG_B_ID and b["approved_by_operator"] is True
+    assert {k: v for k, v in b["rule"].items() if k != "stream"} == {k: v for k, v in a["rule"].items() if k != "stream"}
+    assert b["primary_test"] == a["primary_test"] and b["error_rates_stated_in_advance"] == a["error_rates_stated_in_advance"]
+    assert "1f88aad357497da4:4440d52587f5cc6b" in b["rule"]["stream"] and "B15-ENGINE-FWD" in b["source_of_hypothesis"]

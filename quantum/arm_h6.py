@@ -15,10 +15,12 @@ trades at random, H6 differs from the treatment arm only in the number of trades
 H6 reads only published values and adds no threshold. Do not change a rule here without a new amendment: H6's freeze
 key includes the SHA-256 of this file.
 
-PROPOSED AMENDMENT F (F3, not in force; docs/audit/AMENDMENT_F_PROPOSAL.md): the engine itself no longer applies the
-calibration veto or the negative-EV veto (both stay published as shadow flags). H6 therefore reads the engine's APPLIED
-blocks only (TQ floor, risk lock), equals the treatment arm on every bar, and `score_vetoed` (a trade H6 took that the
-engine did not) is 0. The amendment closes H6 at merge: its question cannot be asked when no arm applies the veto.
+AMENDMENT F (in force since 2026-11-15; audit/PREREGISTRATION.md, docs/audit/AMENDMENT_F_PROPOSAL.md): the engine
+itself no longer applies the calibration veto or the negative-EV veto (both stay published as shadow flags). H6 therefore
+reads the engine's APPLIED blocks only (TQ floor, risk lock), equals the treatment arm on every bar, and `score_vetoed` (a
+trade H6 took that the engine did not) is 0. H6 is CLOSED: its question cannot be asked when no arm applies the veto, so
+quantum/report.py publishes its final live record read only and writes no H6 ledger. `evaluate` / `simulate` remain for
+the "Your trade" panel (quantum/trade_race.py) and audit/tools/exec_sensitivity.py.
 """
 from __future__ import annotations
 

@@ -12,7 +12,7 @@ import numpy as np
 
 import pandas as pd
 
-from . import arm_h2, arm_h3, arm_h4, arm_h5, arm_h6, backtest, confirm, cost_profiles, holdout, news_calendar, ta, trade_race
+from . import arm_h2, arm_h3, arm_h4, arm_h5, backtest, confirm, cost_profiles, holdout, news_calendar, ta, trade_race
 from .config import ENGINE_VERSION, SCHEMA_BUILD
 
 CHART_BARS = 1500
@@ -441,24 +441,32 @@ def h5_section(market, res, cfg, man, now, store_dir, idx) -> dict:
             "forward_trades": post[-100:], "in_sample_trades": pre[-30:], "signals_per_bar": len(sig) / n if n else None}
 
 
-def h6_section(market, res, cfg, man, now, store_dir, idx) -> dict:
-    """Arm H6 "No score veto" (Amendment 12): the engine's own signal without the calibration (score) veto."""
-    trades, ev = arm_h6.simulate(res, cfg)
-    key = arm_h6.freeze_key(man.get("freeze_key") or holdout.freeze_key(cfg))
-    man6, pre, post = _arm_record("h6", key, market, trades, cfg, now, store_dir)
-    n = len(idx)
-    sig = [i for i in range(n) if ev["exec_buy"][i] or ev["exec_sell"][i]]
+H6_CLOSED = ("Closed by Amendment F (audit/PREREGISTRATION.md, 2026-11-15): the engine no longer applies the score veto, so H6 "
+             "equals the treatment arm on every bar and its question cannot be asked. Its live record up to the engine change "
+             "is final; it closed before its 50-trade decision point, so it has no verdict.")
 
-    def plan(i):
-        return {"t": int(pd.Timestamp(idx[i]).timestamp()), "dir": "LONG" if ev["exec_buy"][i] else "SHORT", "entry": _f(res.F["c"][i]),
-                "sl": _f(ev["plan_sl"][i]), "tp1": _f(ev["plan_tp1"][i]), "tp2": _f(ev["plan_tp2"][i]),
-                "score_vetoed": bool(ev["score_vetoed"][i])}
-    return {"freeze": man6, "signal_now": plan(n - 1) if sig and sig[-1] == n - 1 else None,
-            "last_signal": plan(sig[-1]) if sig else None, "signals": [plan(i) for i in sig[-200:]],
-            "open": [t for t in trades if t.get("open")],
-            "in_sample": backtest.metrics(pre, cfg.risk_percent), "forward": backtest.metrics(post, cfg.risk_percent),
-            "forward_trades": post[-100:], "signals_per_bar": len(sig) / n if n else None,
-            "score_vetoed_share": (sum(ev["score_vetoed"][i] for i in sig) / len(sig)) if sig else None}
+
+def h6_final(store_dir: str | None, tf: str) -> tuple[dict | None, list[dict]]:
+    """H6's manifest and ledger as they stood when Amendment F closed it. Read only: nothing is written, so the record is
+    neither restarted under a new key nor moved to the archive."""
+    def read(rel):
+        path = os.path.join(store_dir, "holdout", rel) if store_dir else None
+        if not path or not os.path.exists(path):
+            return None
+        try:
+            with open(path) as f:
+                return json.load(f)
+        except (OSError, ValueError):
+            return None
+    led = read(f"{tf}_h6.json")
+    return read("manifest_h6.json"), [t for t in led if isinstance(t, dict)] if isinstance(led, list) else []
+
+
+def h6_section(market, res, cfg, man, now, store_dir, idx) -> dict:
+    """Arm H6 "No score veto" (Amendment 12), closed by Amendment F: its final live record, read only. No signals are
+    published, because H6's signals are now the engine's own."""
+    fr, led = h6_final(None if market.synthetic else store_dir, market.tf)
+    return {"closed": H6_CLOSED, "freeze": fr, "forward": backtest.metrics(led, cfg.risk_percent), "forward_trades": led[-100:]}
 
 
 def h2_section(market, res, cfg, man, now, store_dir, idx) -> dict:

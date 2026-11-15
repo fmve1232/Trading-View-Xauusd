@@ -552,7 +552,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             if cl:
                 out.append(cl)
             if sixty() and tf in SIGNAL_RECORD_TFS:
-                out.append(signal_record_line((ctx or {}).get("eng")))
+                out.append(signal_record_line((ctx or {}).get("eng"), (ctx or {}).get("eng_old")))
             mark(i0, m)
         elif signals_only:
             continue
@@ -1066,10 +1066,10 @@ SIGNAL_RECORD_TFS = ("15m",)
 SIGNAL_RECORD_HIST = (("2020-22 15m", 12, 23), ("2023-24 15m-4h", 11, 24))   # (period, TP1 first, ideas) at +/-$13
 
 
-def eng_snapshot(store_dir: str | None) -> dict | None:
-    """The registered engine test's decided results so far (B15-ENGINE-FWD, as saved by the last run): n, TP1 first,
-    verdict. None when the record does not exist yet."""
-    path = os.path.join(store_dir, GRAB_DIR, ENG_FILE) if store_dir else None
+def eng_snapshot(store_dir: str | None, tid: str = "B15-ENGINE-FWD") -> dict | None:
+    """A registered engine test's decided results so far (B15-ENGINE-FWD or B15b-ENGINE-FWD, as saved by the last
+    run): n, TP1 first, verdict, whether it has ended. None when the record does not exist yet."""
+    path = os.path.join(store_dir, GRAB_DIR, ENG_TESTS[tid][0]) if store_dir else None
     if not path or not os.path.exists(path):
         return None
     try:
@@ -1081,22 +1081,27 @@ def eng_snapshot(store_dir: str | None) -> dict | None:
     st = book.get("started_utc")
     d0 = datetime.fromtimestamp(int(st), timezone.utc) if st else None
     return {"n": len(dec), "tp": sum(1 for x in dec if x["status"] == "TP"), "verdict": book.get("verdict"),
-            "since": f"{d0.day} {d0:%b}" if d0 else None}
+            "since": f"{d0.day} {d0:%b}" if d0 else None, "label": tid.split("-")[0], "ended": book.get("ended_utc") is not None}
 
 
-def signal_record_line(eng: dict | None) -> str:
+def signal_record_line(eng: dict | None, old: dict | None = None) -> str:
     """The RECORD line under each 15m engine signal (sixty mode): history counted once per trade idea, the live test,
-    each with its Wilson 95% interval, against no edge (50%) and break-even."""
+    each with its Wilson 95% interval, against no edge (50%) and break-even. `eng` is the live test (B15b since
+    Amendment F); `old`, when given and ended, is B15's final record of the engine before the change, shown apart and
+    never pooled with the live one."""
     def part(label: str, k: int, n: int) -> str:
         lo, hi = _wilson(k, n)
         return f"{label} {k} of {n} = {k / n:.0%} (95% {lo:.0%}-{hi:.0%})"
     hist = " | ".join(part(*h) for h in SIGNAL_RECORD_HIST)
+    lab = (eng or {}).get("label") or "B15b"                 # the live test since Amendment F
     v = (eng or {}).get("verdict")
     if eng and eng.get("n"):
-        live = part(f"live B15{' since ' + eng['since'] if eng.get('since') else ''}, 15m-4h", int(eng["tp"]), int(eng["n"]))
+        live = part(f"live {lab}{' since ' + eng['since'] if eng.get('since') else ''}, 15m-4h", int(eng["tp"]), int(eng["n"]))
     else:
-        live = "live B15: no result yet"
-    status = (f"B15 {v['verdict']} at {v['at_n']} results" if v else "B15 collecting, no verdict") + \
+        live = f"live {lab}: no result yet"
+    if old and old.get("ended") and old.get("n"):
+        live += " | " + part(f"{old.get('label') or 'B15'}, engine before Amendment F (ended)", int(old["tp"]), int(old["n"]))
+    status = (f"{lab} {v['verdict']} at {v['at_n']} results" if v else f"{lab} collecting, no verdict") + \
         ("" if v and v.get("verdict") == "PROVEN" else "; no edge shown")
     return (f"RECORD of engine signals, one count per trade idea, TP1 +$13 before SL -$13 (no edge 50%, break-even "
             f"{ENG_BE:.0%}): {hist} | {live} | {status}")
@@ -1308,18 +1313,26 @@ def setup_record(store_dir: str | None, log: list[dict], now_t: int) -> dict:
 
 # ---------------- B15-ENGINE-FWD: the registered live test of the engine's own signal alerts ----------------
 ENG_ID, ENG_FILE = "B15-ENGINE-FWD", "B15-ENGINE-FWD.json"   # in <store>/research_forward/, copied to forward-ledger
+# Amendment F (audit/PREREGISTRATION.md, 2026-11-15): B15 measured the engine before F1-F4 and ends where the amended
+# engine starts; B15b applies B15's rule unchanged to the amended engine. The switch is B15b's start: the first site run
+# carrying this code, which is also the first run of the amended engine (both ship in the same merge).
+ENG_B_ID, ENG_B_FILE = "B15b-ENGINE-FWD", "B15b-ENGINE-FWD.json"
+ENG_TESTS = {ENG_ID: (ENG_FILE, "research/registrations/B15-ENGINE-FWD.json"),
+             ENG_B_ID: (ENG_B_FILE, "research/registrations/B15b-ENGINE-FWD.json")}
 ENG_LOOKS = (30, 40, 50, 60, 70, 80, 90, 100)
 ENG_PX = 13.0                            # TP1 and SL in price $ (registered)
 ENG_BE = (13.0 + 0.26) / 26.0            # 51.0%
 ENG_DEADLINE = "2027-06-30"
 
 
-def eng_trades(vlog: list[dict], started: int) -> tuple[list[dict], int]:
-    """The test's trades: closed alert plans whose signal closed at / after the start, with TP1 and SL $13 of price.
-    TP1 first = TP; SL or both-in-one-bar = SL; no result in 3 days = EXPIRED (not counted). Returns (trades, excluded)."""
+def eng_trades(vlog: list[dict], started: int, ended: int | None = None) -> tuple[list[dict], int]:
+    """The test's trades: closed alert plans whose signal closed at / after the start (and before the end, for a test
+    that has ended), with TP1 and SL $13 of price. TP1 first = TP; SL or both-in-one-bar = SL; no result in 3 days =
+    EXPIRED (not counted). Returns (trades, excluded)."""
     out, excluded = [], 0
     for r in vlog:
-        if _decision_t(r) < started or r.get("result") not in ("TP", "SL", "BOTH", "EXPIRED"):
+        if _decision_t(r) < started or (ended is not None and _decision_t(r) >= ended) or \
+                r.get("result") not in ("TP", "SL", "BOTH", "EXPIRED"):
             continue
         if abs(abs(r["tp"] - r["entry"]) - ENG_PX) > 0.011 or abs(abs(r["entry"] - r["sl"]) - ENG_PX) > 0.011:
             excluded += 1
@@ -1332,10 +1345,11 @@ def eng_trades(vlog: list[dict], started: int) -> tuple[list[dict], int]:
     return out, excluded
 
 
-def eng_verdict(trades: list[dict], book: dict, now_t: int) -> dict:
+def eng_verdict(trades: list[dict], book: dict, now_t: int, ended: int | None = None) -> dict:
     """The registered rule (that of B9-GRAB-FWD): checks only at 30, 40 ... 100 decided results in the order they
     resolved; PROVEN when the Wilson 95% lower bound is above 51.0% at a check; NOT PROVEN at 100 or after the
-    deadline. A verdict is final."""
+    deadline. A verdict is final. A test ended by an amendment (B15 at Amendment F) still applies its checks to the
+    trades it took, but the deadline gives it no verdict: it stopped collecting, it was not refuted."""
     dec = sorted((x for x in trades if x["status"] in ("TP", "SL")), key=lambda x: (x["t_res"], x["t_dec"]))
     checks = list(book.get("checks") or [])
     verdict = book.get("verdict")
@@ -1349,42 +1363,50 @@ def eng_verdict(trades: list[dict], book: dict, now_t: int) -> dict:
             if lo > ENG_BE:
                 verdict = {"verdict": "PROVEN", "at_n": look, "utc": now_t}
                 break
-        if verdict is None and (len(dec) >= ENG_LOOKS[-1] or
-                                datetime.fromtimestamp(now_t, timezone.utc).date() > date.fromisoformat(ENG_DEADLINE)):
+        if verdict is None and (len(dec) >= ENG_LOOKS[-1] or (ended is None and
+                                datetime.fromtimestamp(now_t, timezone.utc).date() > date.fromisoformat(ENG_DEADLINE))):
             verdict = {"verdict": "NOT PROVEN", "at_n": len(dec), "utc": now_t}
     n, k = len(dec), sum(x["status"] == "TP" for x in dec)
     lo, hi = _wilson(k, n)
     nxt = next((x for x in ENG_LOOKS if x > n), None)
     status = (f"{verdict['verdict']} at {verdict['at_n']} results" if verdict else
+              f"ENDED at the engine change (Amendment F): {n} results, {k}/{n} TP1 first; no verdict" if ended is not None and n else
+              "ENDED at the engine change (Amendment F): no result; no verdict" if ended is not None else
               f"COLLECTING: {n} results, {k / n:.0%} TP1 first; {'first' if n < ENG_LOOKS[0] else 'next'} check at {nxt}" if n else
               f"COLLECTING: no result yet; first check at {ENG_LOOKS[0]}")
     return {"checks": checks, "verdict": verdict, "n": n, "tp": k, "sl": n - k, "rate": k / n if n else None,
-            "wilson": [lo, hi] if n else None, "next_check": None if verdict else nxt, "status": status}
+            "wilson": [lo, hi] if n else None, "next_check": None if verdict or ended is not None else nxt, "status": status}
 
 
-def eng_run(store_dir: str | None, vlog: list[dict], plans: list[dict], now_t: int) -> tuple[list[str], dict]:
+def eng_run(store_dir: str | None, vlog: list[dict], plans: list[dict], now_t: int, tid: str = ENG_ID,
+            ended: int | None = None) -> tuple[list[str], dict]:
     """Every run: rebuild the test's trades from the plan log, apply the rule, save the record (every trade and every
-    check) to <store>/research_forward/, and return a phone line for each new check and for the verdict."""
-    path = os.path.join(store_dir, GRAB_DIR, ENG_FILE) if store_dir else None
+    check) to <store>/research_forward/, and return a phone line for each new check and for the verdict.
+    `tid` names the test (B15 or B15b, ENG_TESTS); `ended`, once given, ends it: signals from then on are not its
+    trades. The end is saved with the record and never moved afterwards."""
+    fname, reg = ENG_TESTS[tid]
+    path = os.path.join(store_dir, GRAB_DIR, fname) if store_dir else None
     book: dict = {}
     if path and os.path.exists(path):
         with open(path) as f:
             book = json.load(f)
     started = int(book.get("started_utc") or now_t)
-    trades, excluded = eng_trades(vlog, started)
-    v = eng_verdict(trades, book, now_t)
+    end = book.get("ended_utc")
+    end = int(end) if end is not None else (None if ended is None else int(ended))
+    trades, excluded = eng_trades(vlog, started, end)
+    v = eng_verdict(trades, book, now_t, end)
     old = {c["n"] for c in book.get("checks") or []}
     lines = []
     for c in v["checks"]:
         if c["n"] not in old:
-            lines.append(f"ENGINE TEST ({ENG_ID}) CHECK at {c['n']} results: TP1 first {c['tp']}/{c['n']} = {c['tp'] / c['n']:.0%} "
+            lines.append(f"ENGINE TEST ({tid}) CHECK at {c['n']} results: TP1 first {c['tp']}/{c['n']} = {c['tp'] / c['n']:.0%} "
                          f"(95% {c['wilson'][0]:.0%}-{c['wilson'][1]:.0%}; break-even {ENG_BE:.0%}) -> "
                          + ("PROVEN" if c["proven"] else "not proven yet"))
     if v["verdict"] and not book.get("verdict"):
-        lines.append(f"ENGINE TEST ({ENG_ID}): {v['verdict']['verdict']} at {v['verdict']['at_n']} results. "
+        lines.append(f"ENGINE TEST ({tid}): {v['verdict']['verdict']} at {v['verdict']['at_n']} results. "
                      + ("The engine's signal alerts beat break-even on new data; an average, not a guarantee for one trade."
                         if v["verdict"]["verdict"] == "PROVEN" else "Not confirmed: treat the engine's alerts as unproven."))
-    rec = {"id": ENG_ID, "registration": "research/registrations/B15-ENGINE-FWD.json", "started_utc": started,
+    rec = {"id": tid, "registration": reg, "started_utc": started, **({"ended_utc": end} if end is not None else {}),
            "trades": trades, "excluded": excluded, "checks": v["checks"], "verdict": v["verdict"]}
     if path:
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -1397,9 +1419,11 @@ def eng_run(store_dir: str | None, vlog: list[dict], plans: list[dict], now_t: i
             g[0] += 1
             g[1] += x["status"] == "TP"
     tp1 = [x for x in trades if x["status"] == "TP" and x.get("tp2_result")]
-    block = {"id": ENG_ID, "started_utc": started, "break_even": ENG_BE, "looks": list(ENG_LOOKS), "deadline": ENG_DEADLINE,
+    block = {"id": tid, "registration": reg, "started_utc": started, "ended_utc": end, "break_even": ENG_BE,
+             "looks": list(ENG_LOOKS), "deadline": ENG_DEADLINE,
              **{k: v[k] for k in ("n", "tp", "sl", "rate", "wilson", "status", "next_check", "verdict", "checks")},
-             "open": sum(1 for p in plans if _decision_t(p) >= started), "excluded": excluded,
+             "open": sum(1 for p in plans if _decision_t(p) >= started and (end is None or _decision_t(p) < end)),
+             "excluded": excluded,
              "expired": sum(1 for x in trades if x["status"] == "EXPIRED"),
              "by_tf": {k: {"n": a, "tp": b} for k, (a, b) in sorted(by_tf.items())},
              "tp2": {"of_tp1": len(tp1), "hit": sum(1 for x in tp1 if x["tp2_result"] == "TP2")},
@@ -2822,7 +2846,8 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
     if vpath and os.path.exists(vpath):
         with open(vpath) as f:
             vlog = json.load(f)
-    eng_snap = eng_snapshot(store_dir)                     # IA-01: the RECORD line's live part (last saved B15 record)
+    eng_snap = eng_snapshot(store_dir, ENG_B_ID)           # IA-01: the RECORD line's live part (last saved B15b record)
+    eng_old = eng_snapshot(store_dir, ENG_ID)              # B15, ended at Amendment F: shown apart, never pooled
     for tf in tfs:
         p = payloads.get(tf)
         if not p or p["meta"]["synthetic"]:
@@ -2897,7 +2922,8 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
             if not sixty() or tf in PHONE_TFS_SIXTY:      # only signals the phone announces as a SETUP
                 C1.open_from(state, p, since, skip=set(repeats) | {t_ for t_, fz in fresh.items() if fz["state"] == "NOT ACTIONABLE"})
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf),
-               "fresh": fresh, "quiet": gate_quiet(state, "plan"), "eng": eng_snap}
+               "fresh": fresh, "quiet": gate_quiet(state, "plan"), "eng": eng_snap,
+               "eng_old": eng_old}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
         msg_refs = []
         lines = upd + messages(p, since, now, ctx, refs=None if sixty() else msg_refs) + ([] if quality() else ll)
@@ -3018,8 +3044,11 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                             "started_utc": srec["started_utc"], "live": srec["live"], "open": state.get("setups", []),
                             "recent": state.get("setup_log", [])[::-1][:12], "hist": {k: list(v) for k, v in SETUP_HIST.items()},
                             "rule": "research/registrations/B16.json", "tp_px": SETUP_TP_PX, "sl_px": SETUP_SL_PX}
-    if pl_cfg:                                             # B15-ENGINE-FWD, every run (reads the plans' results)
-        elines, report["engine_test"] = eng_run(store_dir, vlog, plans, t_send)
+    if pl_cfg:                                             # B15b and B15 (ended at Amendment F), every run (reads the plans' results)
+        blines, report["engine_test_b"] = eng_run(store_dir, vlog, plans, t_send, ENG_B_ID)
+        elines, report["engine_test"] = eng_run(store_dir, vlog, plans, t_send, ENG_ID,
+                                                ended=report["engine_test_b"]["started_utc"])
+        elines = blines + elines
         if elines:
             report["engine_test_alert"] = {"lines": elines, "sent": _say("engine_test", elines, desc="engine test check")}
     if liq_on() and alerted:                               # price near a pool: once per run, not per timeframe
@@ -3091,9 +3120,10 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
             won = sum(v[1] for v in su["live"].values())
             lines.append(f"SETUPS (your rules) {date.fromisoformat(prev_d):%a %d %b}: {len(dd_)} decided, "
                          f"{sum(r['result'] == 'TP' for r in dd_)} reached +$15 first | since start {won}/{tot}")
-        et = report.get("engine_test")
-        if lines and et:                                   # and the engine test's (B15-ENGINE-FWD)
-            lines.append(f"ENGINE TEST ({ENG_ID}): {et['status']} | open {et['open']} | break-even {ENG_BE:.0%}")
+        for key in ("engine_test_b", "engine_test"):        # and the engine tests' (B15b; B15, ended at Amendment F)
+            et = report.get(key)
+            if lines and et:
+                lines.append(f"ENGINE TEST ({et['id']}): {et['status']} | open {et['open']} | break-even {ENG_BE:.0%}")
         rkey = f"REPORT:{state.get('report_day')}>{day}:{state.get('report_week')}>{week}"   # once per day change
         state["report_day"], state["report_week"] = day, week
         if lines:
