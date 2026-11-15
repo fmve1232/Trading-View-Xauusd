@@ -72,6 +72,7 @@ import time
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
+from . import confirm_entry as C1
 from .data.sources import redact as _src_redact
 from .data.sources import requests
 
@@ -521,7 +522,9 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             i0 = len(out)                                  # P-0: where this signal's lines start
             rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
             pl = plan_cfg()
-            out.append(signal_head(m, tf, d, pl if rp is None else None, off))
+            c1 = C1.on() and m.get("px") is not None       # C1: a SETUP, not an entry, until confirmed
+            out.append((C1.setup_head(m, tf, off) if rp is None else C1.repeat_head(m, tf, off)) if c1
+                       else signal_head(m, tf, d, pl if rp is None else None, off))
             if fz and fz["state"] == "DELAYED":
                 out.append(delayed_line(fz, off))                  # second line: visible in the phone's preview
             if rp is not None:
@@ -531,7 +534,9 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             late, timing = timing_lines(alert_timing(m, tf, now, pl), off)
             if late:
                 out.append(late)                           # second line: visible in the phone's preview
-            if pl and m.get("px") is not None:
+            if c1:                                         # a REPEAT returned above: only a new idea gets these lines
+                out += C1.setup_lines(m, off)
+            elif pl and m.get("px") is not None:
                 out.append(plan_line(m["px"], m["dir"], pl, off))
                 out.append(sizing_line(pl))
                 out.append(mt5_line(m["dir"], pl))
@@ -2843,6 +2848,10 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                 opened[m["t"]] = state["plan_seq"]
                 if fresh.get(m["t"], {}).get("state", "FRESH") != "FRESH":
                     gate_note(state, f"plan:{state['plan_seq']}", fresh[m["t"]])
+        if C1.on():                                        # C1: B15's plans still open at the signal close (unchanged record)
+            upd = [C1.b15_line(x) for x in upd]           # but their follow-ups are the engine's record, not your entry
+            if not sixty() or tf in PHONE_TFS_SIXTY:      # only signals the phone announces as a SETUP
+                C1.open_from(state, p, since, skip=set(repeats) | {t_ for t_, fz in fresh.items() if fz["state"] == "NOT ACTIONABLE"})
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf),
                "fresh": fresh, "quiet": gate_quiet(state, "plan")}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
@@ -2854,6 +2863,11 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
             phone_lines = lines
         report[tf] = {"lines": lines, "sent": _say_tf(tf, phone_lines, upd_refs, msg_refs, len(upd), opened, repeats, plans,
                                                       off, last_t)}
+        if tf == "15m" and C1.on():                        # C1: confirmation, eligibility, the recalculated plan, results
+            c1_lines = C1.advance_all(state, p, t_send, pl_cfg, off)
+            if c1_lines:
+                report["confirm_entry"] = {"lines": c1_lines, "sent": _say("confirm_entry", trade_msg(c1_lines),
+                                                                         desc="confirmation alerts")}
         if tf == "15m" and setups_on():                    # SETUP alerts: the operator's level rules (B16)
             p5s = payloads.get("5m")
             p5s = p5s if p5s is not None and (p5s.get("meta") or {}).get("price_source") == p["meta"].get("price_source") else None

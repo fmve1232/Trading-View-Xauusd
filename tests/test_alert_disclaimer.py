@@ -24,6 +24,7 @@ def _set_env(monkeypatch, mode):
         monkeypatch.delenv(k, raising=False)
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
     monkeypatch.setenv("PLAN_TP2_USD", "0")
+    monkeypatch.setenv("CONFIRM_MIN_USD", "0")             # the pre-C1 alerts (conftest; undo() clears it)
     if mode == "sixty":
         monkeypatch.delenv("ALERT_MODE", raising=False)    # unset: sixty, as in production
     else:
@@ -153,7 +154,7 @@ def test_every_trading_send_site_wraps_and_no_report_site_does():
     for m in re.finditer(r'report(?:\[(\w+|"[a-z_0-9]+")\]|\.setdefault\("([a-z_0-9]+)")[^\n]*?(_say_tf|_say)\(\s*(?:"[a-z_0-9]+",\s*)?([^\n]*)', src):
         key = (m.group(1) or m.group(2)).strip('"')
         sites.setdefault(key, []).append(m.group(4).startswith("trade_msg(") or (m.group(3) == "_say_tf" and tf_wraps))
-    trading = {"tf", "setup_alerts", "setup_stale", "setup_updates", "h4_alerts", "h4_stale", "grab_test_alert"}
+    trading = {"tf", "setup_alerts", "setup_stale", "setup_updates", "h4_alerts", "h4_stale", "grab_test_alert", "confirm_entry"}
     other = {"turn_warning", "engine_test_alert", "liquidity_near", "validation_report", "news"}
     assert set(sites) == trading | other, set(sites) ^ (trading | other)
     for k in trading:
