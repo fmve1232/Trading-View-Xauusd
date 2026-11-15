@@ -1,0 +1,42 @@
+{
+  "id": "B15b-ENGINE-FWD",
+  "title": "The amended engine's own signal alerts (Amendment F), TP1 +$13 before SL -$13, live forward test: B15's rule unchanged",
+  "status": "APPROVED by the operator 2026-11-15; recorded from the first site run that carries Amendment F (the same merge ships the amended engine and this tracker)",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-15 (chat), asked which pull requests to merge after being told that only #114 (engine fixes F1-F4) changes the forward-test freeze key and \"would restart B15 and the forward arms from zero (old records are kept)\": answered \"All 13, including #114\". Earlier the same day: \"Merge all PRS before starting\". Registered before the merge and before any B15b result exists.",
+  "partitions": [
+    "live forward (new data only): alert plans whose signal bar closes at or after the first site run that carries Amendment F"
+  ],
+  "created_utc": "2026-11-15",
+  "source_of_hypothesis": "B15-ENGINE-FWD measured the engine before Amendment F; Amendment F (audit/PREREGISTRATION.md) changes the engine (F1 weekly range; F3 / F2 calibration and EV vetoes no longer block a signal; F3b EV out of trade quality; F4 dead definitions), so B15's object ends at the merge with its record final. B15b asks B15's question of the amended engine. The offline impact replay (docs/audit/AMENDMENT_F_PROPOSAL.md section 4) kept every production signal on 15m-4h and about doubled the phone's ideas per day (0.36 to 0.80); signals the removed vetoes had blocked did not do worse on the live record (section 2), and none has shown an edge. No B15 result is pooled into B15b.",
+  "rule": {
+    "stream": "every plan the alerts open: a SIGNAL event of the amended treatment engine (freeze key 1f88aad357497da4:4440d52587f5cc6b) on 15m, 30m, 1h or 4h (ALERT_TFS), as published in the site payload; signals sent as REPEAT (same direction within 4 hours and $15 of an open plan, part A) open no plan and are not counted",
+    "entry": "the signal bar's close (the plan's entry), not the alert time; the alert-time price, delay and LATE flag are recorded beside it",
+    "take_profit_1_price": 13.0,
+    "stop_loss_price": 13.0,
+    "outcome": "TP1 (+$13) before SL (-$13) from the entry: the plan's own result (quantum/notify.py), on the same feed's 5-minute bars when they cover the signal's close (a bar reaching both levels is a loss unless it opened beyond TP1), otherwise on the signal's own timeframe (recorded per trade)",
+    "no_result": "neither level within 3 days: EXPIRED, reported, not counted",
+    "excluded": "plans whose TP1 or SL is not $13 of price (the plan variables changed): reported, not counted",
+    "costs": "break-even = (13 + 0.26) / 26 = 51.0%"
+  },
+  "primary_test": {
+    "looks": "only when the number of decided results (TP1 or SL, in the order they resolved) first reaches 30, 40, 50, 60, 70, 80, 90 and 100",
+    "proven": "at a look, the Wilson 95% lower bound of the TP1-first rate is above 51.0% (needs 21/30, 27/40, 33/50, 39/60, 44/70, 50/80, 56/90, 61/100): the B9-GRAB-FWD rule",
+    "not_proven": "not proven by 100 decided results, or by 2027-06-30, whichever comes first",
+    "between_looks": "the site and the reports show the running count and rate as COLLECTING, never a verdict"
+  },
+  "error_rates_stated_in_advance": "Simulated (200,000 runs, independent trades): with no edge (true rate 50%) the rule says PROVEN 5.5% of the time (49%: 3.9%). A true 55% proves 22.6% of the time, 58% 41.5%, 60% 56.6%, 64% (the development estimate) 82.7%. NOT PROVEN means 'not confirmed', not 'proven absent'.",
+  "expected_pace": "uncertain: the impact replay gave about 0.8 phone ideas a day on 15m and 1h (all alert timeframes open plans); at 3-8 decided results a week, 30 results take about 4-10 weeks; the deadline is B15's, 2027-06-30",
+  "secondary_reported_not_decisive": [
+    "the rate by timeframe, by direction and by session",
+    "TP2 (+$20) reached after TP1 (the two-target plan, 2026-11-06), and the result in money at the plan after costs",
+    "the rate measured from the alert-time price instead of the bar close, and without LATE alerts",
+    "at the verdict: random 5-minute entries in the same directions over the same weeks"
+  ],
+  "unchanged": "B15's rule, looks, break-even and deadline; the alerts and the plan validation (this test reads the plans' recorded results only); B9-GRAB-FWD (continues, with Amendment F's dated note); B24 stays OFF",
+  "relation_to_B15": "B15-ENGINE-FWD stops taking trades at B15b's start (quantum/notify.py: eng_run, ended = B15b's started_utc, saved once and never moved); signals before it that resolve later still count for B15. B15 ended before its first check, so it has no verdict. The two records are shown apart and never pooled.",
+  "decision": {
+    "if_proven": "Report it with the secondary checks and propose (never adopt automatically) that the phone receive the engine's signals as the confirmed stream. Still not a guarantee: a PROVEN rate is an average, and any single trade can lose.",
+    "if_not_proven": "The engine-signal lead is closed for the alerts; recorded in research/trials.jsonl and the write-up. No re-run with changed distances, timeframes or filters on the same data."
+  }
+}

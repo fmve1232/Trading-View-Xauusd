@@ -1,9 +1,12 @@
-# Amendment F (F1–F4): PROPOSED — NOT IN FORCE
+# Amendment F (F1–F4): APPROVED 2026-11-15 — in force from the merge of PR #114
 
-**Status:** a proposal on an unmerged branch.
-- Nothing here applies to production until the operator approves it and merges this branch.
-- Production keeps the frozen engine and the freeze key `5e4630924d663fc5:a6f2be58c74887ed`.
-- On approval, the text in section 7 is appended to `audit/PREREGISTRATION.md` as the next amendment.
+**Status:** approved by the operator on 2026-11-15 (the approval is quoted in `audit/PREREGISTRATION.md`, Amendment F).
+- The amendment text is in `audit/PREREGISTRATION.md`; this file is the proposal it was approved from, kept as written
+  below this header (sections 1–6). Section 7 was filled in and appended there.
+- Freeze key `5e4630924d663fc5:a6f2be58c74887ed` → `1f88aad357497da4:4440d52587f5cc6b` at the first site run after the
+  merge.
+- Section 3's open choices, as decided: H6 closes (read only); B15 ends, its record final; **B15b is registered**
+  (`research/registrations/B15b-ENGINE-FWD.json`); **B9 continues** with a dated note.
 
 **Sources:**
 - `docs/audit/INSTITUTIONAL_AUDIT_2026-11-14.md`: findings IA-02, IA-04, IA-05 and IA-20, plus the dead-code list;
