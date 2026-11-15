@@ -1095,3 +1095,49 @@ challenger, H2–H6). The other timeframes ran on the same bar counts as the run
   19:00 UTC, stopped at 23:00, −1.105 R.
 - No web.7 trade remains in a live ledger.
 - Archive files went from 21 to 24, and none shrank.
+
+## Amendment F (2026-11-15, operator approval "All 13, including #114"; written and committed before PR #114 is merged): engine defect fixes F1–F4
+
+**Approval record.**
+
+1. 2026-11-14, the operator: "build F1–F4 unmerged". PR #114 was opened as a draft marked DO NOT MERGE, with the
+   proposal `docs/audit/AMENDMENT_F_PROPOSAL.md` (what changes, why, impact on every record, impact replay).
+2. 2026-11-15, the operator: "Merge all PRS before starting".
+3. The reply listed the 13 open pull requests, stated that only #114 changes the freeze key, that it "would restart B15
+   and the forward arms from zero (old records are kept)", and that the operator's own message also listed the key as
+   protected; it asked which to merge. The operator chose **"All 13, including #114"**.
+
+**What changes:** exactly the proposal's section 1:
+- F1, the weekly high / low (IA-05);
+- F3 / F2, the calibration and EV vetoes become shadow flags (IA-02, IA-04);
+- F3b, EV out of trade quality;
+- F4, two dead definitions.
+
+No threshold or weight changes. The Pine artefacts are unchanged; the differences are D-14 and D-15 in `docs/PLATFORM.md`.
+
+**Freeze key:** `5e4630924d663fc5:a6f2be58c74887ed` → `1f88aad357497da4:4440d52587f5cc6b`.
+- `ENGINE_VERSION` keeps its label `Q7.2-web.8`. Renaming it would change `config.py`, and with it the key that was
+  approved. The freeze key is what tells the two engines apart in every record.
+
+**Records.** Nothing is deleted or rewritten.
+
+| Record | At the first site run of the amended engine |
+|---|---|
+| Holdout, §7 arms (treatment / control / challenger), H2–H5 | Restart under the new key. Entries under the old key move to `holdout/archive/` (`holdout.update_ledger`), and the old key goes to each manifest's `history` |
+| H6 "No score veto" (Amendment 12) | **Closed.** `quantum/report.py` reads its manifest and ledgers and writes nothing, so they stay as they were at the change. Record to 2026-11-15 04:28 UTC: 5m 3 trades, 15m 4, 30m 3, 1h 2, 4h 1. **No verdict**: it closed before its 50-trade decision point on 1h |
+| B15-ENGINE-FWD | **Ends.** It takes no signal decided at or after B15b's start, which is saved once as `ended_utc` and never moved. Signals decided before it that resolve later still count. Record to 2026-11-15 04:28 UTC: 13 decided, 5 TP1 first (38%), started 2026-11-06 12:56 UTC, no check reached. **No verdict**: it ended before its first check at 30. The registered deadline gives an ended test no verdict |
+| B15b-ENGINE-FWD (new, `research/registrations/B15b-ENGINE-FWD.json`) | **Starts**, with B15's rule, looks, break-even and deadline unchanged, on the amended engine. Never pooled with B15. On the phone's RECORD line and on the site, B15's final record is shown apart |
+| B9-GRAB-FWD | **Continues**, as the operator listed ("B9 Continue running"). Dated note: from the amended engine's first run, B9's SWEEP events use the corrected weekly range (F1). In the replay F1 removed 3 and added 1 of 285 4h sweeps; other timeframes were unchanged. B9's record is not split |
+| B24-CONFIRM-FWD | OFF, unchanged |
+| Research registrations B4–B31 | Unchanged |
+
+**Procedure.**
+1. Commit this amendment and the B15b registration before the merge.
+2. Merge the other 12 pull requests first, then #114 last.
+3. Before market open on 2026-11-15 (22:00 UTC), dispatch `quantum-site.yml`.
+4. Verify:
+   - the new key is published, with the old key in `history`;
+   - old-key entries are in `holdout/archive/`, and no file is shrunk or deleted;
+   - B15 has `ended_utc` equal to B15b's `started_utc`;
+   - the H6 files are byte-identical to before the run.
+5. Record the start here (key, time, run ID), as for Amendments 9, 14 and 15.

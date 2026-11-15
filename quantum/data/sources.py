@@ -70,10 +70,6 @@ def _get(url: str, params: dict | None = None, timeout: int = 30, tries: int = 4
     raise FetchError(redact(f"{url} -> {last}"))
 
 
-def _empty() -> pd.DataFrame:
-    return pd.DataFrame(columns=COLS, index=pd.DatetimeIndex([], tz="UTC"), dtype=float)
-
-
 def yahoo(symbol: str, interval: str, rng: str) -> pd.DataFrame:
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
     params = {"interval": interval, "range": rng, "includePrePost": "true", "events": "div,splits"}

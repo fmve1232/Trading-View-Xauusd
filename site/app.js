@@ -719,22 +719,16 @@ function renderH5() {
     `<div class="why"><b>Live record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${rec(fw)}.<br><span class="dim">Past data (${esc(D.meta.tf)}): ${rec(is)}.</span></div>` +
     `<div class="why note-h5"><b>Read this before trading.</b> H5 takes a trade only when all five agree, so it is rare: a few per month at most, often none. No rule wins every trade, and a 90% win rate is not promised. It is judged on its 1-hour live record after 30 trades: average R above 0 and profit factor at least 1.2. Risk only what a stop-out can cost you.</div>`;
 }
-/* ---------- arm H6 "No score veto" (Amendment 12; quantum/arm_h6.py): the engine's own signal without the calibration (score) veto ---------- */
+/* ---------- arm H6 "No score veto" (Amendment 12; quantum/arm_h6.py), closed by Amendment F: its final live record ---------- */
 function renderH6() {
   const D = S.data, el = $("#h6"), st = $("#h6-state"); if (!el || !D) return;
   const H = D.h6;
-  if (!H || H.error) { el.innerHTML = `<span class="muted">${H ? "H6 error: " + esc(H.error) : "Appears after the next pipeline run."}</span>`; st.textContent = "—"; return; }
-  const now = H.signal_now, last = H.last_signal, p = now || last;
-  st.textContent = now ? `${now.dir === "LONG" ? "BUY" : "SELL"} NOW` : "NO TRADE"; st.className = "pill " + (now ? (now.dir === "LONG" ? "bull" : "bear") : "");
-  const vt = (x) => x && x.score_vetoed ? ' · <span class="warn">the main model vetoed this one on its score</span>' : "";
-  const plan = p ? `<div class="why"><b>${now ? "Signal now" : "Last signal"}:</b> ${esc(p.dir)} ${tfmt(p.t)} · entry ${px(p.entry)} · stop ${px(p.sl)} · target 1 ${px(p.tp1)} · target 2 ${px(p.tp2)}${vt(p)}</div>` : `<div class="why dim">No H6 signal on this timeframe in the chart's history yet.</div>`;
-  const fw = H.forward || {}, is = H.in_sample || {}, fr = H.freeze || {};
-  const rec = (m) => m.n ? `${m.n} trades · ${f(m.win_rate, 0)}% won · average ${fs(m.avg_r, 2)} R · profit factor ${f(m.profit_factor, 2)}` : "no closed trades yet";
-  el.innerHTML = `<div class="why">The model's own BUY / SELL after all its checks <b>except one</b>: the long / short score veto. ` +
-    `That score did not rank outcomes when it was measured (Amendment 12), so H6 tests whether the veto helps.` +
-    (isNum(H.score_vetoed_share) ? ` <span class="dim">${f(H.score_vetoed_share * 100, 0)}% of H6's signals in this history were vetoed by the score.</span>` : "") + `</div>` + plan +
-    `<div class="why"><b>Live record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${rec(fw)}.<br><span class="dim">Past data (${esc(D.meta.tf)}): ${rec(is)}.</span></div>` +
-    `<div class="why note-h5"><b>Read this before trading.</b> H6 is a test, not a recommendation. It is judged on its 1-hour live record after 50 trades: average R above 0 (95% interval) and profit factor at least 1.2, by 2027-03-31.</div>`;
+  if (!H || H.error || !H.closed) { el.innerHTML = `<span class="muted">${H && H.error ? "H6 error: " + esc(H.error) : "Appears after the next pipeline run."}</span>`; st.textContent = "—"; return; }
+  const fw = H.forward || {}, fr = H.freeze || {};
+  st.textContent = "CLOSED"; st.className = "pill";
+  el.innerHTML = `<div class="why"><b>Closed.</b> ${esc(H.closed)}</div>` +
+    `<div class="why"><b>Final live record</b> (from ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}): ` +
+    `${fw.n ? `${fw.n} trades · ${f(fw.win_rate, 0)}% won · average ${fs(fw.avg_r, 2)} R · profit factor ${f(fw.profit_factor, 2)}` : "no closed trades"}.</div>`;
 }
 function renderH2() {
   const D = S.data, el = $("#h2"), st = $("#h2-state"); if (!el || !D) return;
@@ -908,7 +902,10 @@ function h4rec(D) {
   return `<span title="${esc(full)}">${rec}${prevTxt}${is.n ? ` In past data (in-sample): ${is.n} trades from these triggers, ${f(is.win_rate, 0)}% ended positive, ${fs(is.avg_r, 2)} R per trade after costs.` : ""}</span>` +
     (neg ? ' <b class="warn">On average they have lost money: treat them as levels to watch, not as signals.</b>' : "");
 }
-const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "score below minimum (a score without measured skill, Amendment 12)" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
+// F3 / F2 (proposed amendment, docs/PLATFORM.md D-15): only the TQ floor and the risk lock block a signal; the EV and score
+// flags are shadow values (computed, not applied), so they are never given as the reason for NO TRADE.
+const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
+const shadowVetoes = (d) => [d.ev_veto ? "EV<0" : "", d.cal_veto ? "P<min" : ""].filter(Boolean).join(" · ");
 // Reward:risk from the expected ENTRY (research/03 §2): the trade enters at the close beyond the trigger, so the stop
 // is farther and the target nearer than from the trigger. Live price when it is already through; otherwise the trigger
 // plus the median overshoot of this chart's past triggers (h4.entry_overshoot, in stop distances).
@@ -1140,7 +1137,8 @@ function renderSide() {
   $("#tq-grade").className = "pill " + (tq >= d.eff_tq_min ? "bull" : "warn");
   $("#tq").innerHTML = `<div style="display:flex;align-items:baseline;gap:8px"><div style="font:800 26px var(--mono)">${tq}</div><div class="muted">/100 ${esc(d.tq_basis || "")}</div></div>
     <div class="meter" style="margin:6px 0 10px"><span style="width:${tq}%"></span></div>` +
-    kv([["Vetoes", esc([d.tq_floor_veto ? "TQ<floor" : "", d.ev_veto ? "EV<0" : "", d.cal_veto ? "P<min" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(" · ")) || '<span class="bull">none</span>'],
+    kv([["Vetoes", (esc([d.tq_floor_veto ? "TQ<floor" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(" · ")) || '<span class="bull">none</span>') +
+        (shadowVetoes(d) ? ` <span class="muted">· shadow, not applied: ${esc(shadowVetoes(d))}</span>` : "")],
       ["Confidence", `${d.confidence}/100 ${esc(d.conf_label)}`], ["Structure", esc(structStr(d.struct))], ["Auction", `${esc(d.auction.state)} ${d.auction.prob}% ${esc(d.auction.cycle)}`]]);
 
   const k = d.kelly;
@@ -2203,28 +2201,34 @@ function renderPlanAlerts() {
         from the bar's close, +$13 / −$13 on 5-minute bars for one trading day. Rules fixed before any data
         (research/registrations/B9-GRAB-FWD.json). It is not a proven signal until the verdict says PROVEN; NOT PROVEN means not confirmed.</p>`;
   })();
-  // B15-ENGINE-FWD (research/registrations/B15-ENGINE-FWD.json): the engine's own signal alerts, TP1 +$13 before SL -$13
-  const E = A.engine_test;
-  const engHtml = (() => {
+  // B15b-ENGINE-FWD (Amendment F, research/registrations/B15b-ENGINE-FWD.json): the amended engine's signal alerts, TP1 +$13
+  // before SL -$13; B15-ENGINE-FWD (the engine before Amendment F) ended at the change, its record final, shown apart
+  const engCard = (E) => {
     if (!E) return "";
-    const v = E.verdict && E.verdict.verdict, pill = v === "PROVEN" ? "bull" : v === "NOT PROVEN" ? "bear" : "warn";
+    const ended = isNum(E.ended_utc);
+    const v = E.verdict && E.verdict.verdict, pill = v === "PROVEN" ? "bull" : v === "NOT PROVEN" ? "bear" : ended ? "" : "warn";
     const rate = isNum(E.rate) ? `${pct(100 * E.rate, 1)} of ${E.n}${E.wilson ? ` <span class="dim">(95% ${pct(100 * E.wilson[0])}–${pct(100 * E.wilson[1])})</span>` : ""}` : "no result yet";
     const tfs = Object.entries(E.by_tf || {}).map(([k, g]) => `${esc(k)} ${g.tp}/${g.n}`).join(" · ") || "—";
     const chk = (E.checks || []).map((c) => `${c.n}: ${c.tp}/${c.n} ${c.proven ? "✓" : "✗"}`).join(" · ") || "none yet";
     const t2 = E.tp2 && E.tp2.of_tp1 ? `${E.tp2.hit} of ${E.tp2.of_tp1} TP1 winners went on to TP2` : "—";
-    return `<h4>Engine signal test (registered ${esc(E.id)})</h4>
-      <div class="kv"><div>Status</div><div><span class="pill ${pill}">${esc(v || "COLLECTING")}</span> ${esc(String(E.status || "").replace(/^COLLECTING: /, ""))}</div>
+    const reg = esc(E.registration || "research/registrations/B15-ENGINE-FWD.json");
+    return `<h4>${ended ? "Engine signal test before Amendment F, ended" : "Engine signal test"} (registered ${esc(E.id)})</h4>
+      <div class="kv"><div>Status</div><div><span class="pill ${pill}">${esc(v || (ended ? "ENDED" : "COLLECTING"))}</span> ${esc(String(E.status || "").replace(/^(COLLECTING|ENDED[^:]*): /, ""))}</div>
         <div>TP1 +$13 before SL −$13</div><div>${rate}</div>
         <div>Break-even</div><div>${pct(100 * E.break_even, 1)}</div>
         <div>By timeframe</div><div>${tfs}</div>
         <div>TP2 +$20 after TP1</div><div>${t2}</div>
         <div>Counted</div><div>${E.tp || 0} TP1 · ${E.sl || 0} SL · open ${E.open || 0} · not counted: ${E.expired || 0} expired, ${E.excluded || 0} other sizes</div>
         <div>Verdict checks</div><div>${esc(chk)} <span class="dim">(only at ${esc((E.looks || []).join(", "))} results; deadline ${esc(E.deadline)})</span></div>
-        <div>Started</div><div>${isNum(E.started_utc) ? tfmt(E.started_utc) : "—"}</div></div>
-      <p class="muted pa-note">Every engine signal alert that opens a plan (15m / 30m / 1h / 4h; repeats excluded), scored from the signal's close:
-        did price reach +$13 before −$13? Rules fixed before any result (research/registrations/B15-ENGINE-FWD.json). PROVEN needs the 95% range above
-        break-even at a check; until then the signals are unproven, however the running rate looks.</p>`;
-  })();
+        <div>Started</div><div>${isNum(E.started_utc) ? tfmt(E.started_utc) : "—"}</div>${ended ? `
+        <div>Ended</div><div>${tfmt(E.ended_utc)} <span class="dim">(the amended engine's first run; signals from then on are B15b's)</span></div>` : ""}</div>
+      <p class="muted pa-note">${ended
+        ? `This test measured the engine before Amendment F. It stopped taking signals when the amended engine started; signals sent before then still resolve here. It ended before its first check, so it has no verdict, and it is never pooled with B15b.`
+        : `Every engine signal alert that opens a plan (15m / 30m / 1h / 4h; repeats excluded), scored from the signal's close:
+        did price reach +$13 before −$13? Rules fixed before any result (${reg}). PROVEN needs the 95% range above
+        break-even at a check; until then the signals are unproven, however the running rate looks.`}</p>`;
+  };
+  const engHtml = engCard(A.engine_test_b) + engCard(A.engine_test);
   // SETUP alerts (operator's level rules, research/registrations/B16.json): sweeps / breakouts of PD/PW/PM/today/4h/1h levels
   const SU = A.setups;
   const setHtml = (() => {

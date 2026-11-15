@@ -102,7 +102,6 @@ class Config:
     # ---- Strategy twin (backtest) ----
     backtest_all_bars: bool = True    # F-A29: the arms trade every bar, not the last 120
     recent_bars_len: int = 120
-    commission_per_oz: float = 0.385  # Pine strategy(): cash_per_contract 0.385, qty 1 oz
 
     # ---- Data-source switches (opt-in; each changes signals, so each needs a new freeze) ----
     tips_source: str = "us10y"        # Pine default TVC:US10Y. "fred_dfii10" = real 10y yield.

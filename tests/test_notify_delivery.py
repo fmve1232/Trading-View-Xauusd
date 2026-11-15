@@ -664,7 +664,7 @@ def test_t11_the_plans_and_every_record_are_identical_whatever_the_delivery(tmp_
 
 
 def test_t12_engine_sources_freeze_key_and_b24_untouched():
-    assert holdout.freeze_key(DEFAULT) == "5e4630924d663fc5:a6f2be58c74887ed"   # every engine source, pipeline included
+    assert holdout.freeze_key(DEFAULT) == "1f88aad357497da4:4440d52587f5cc6b"   # PROPOSED Amendment F (not in force); production: 5e4630924d663fc5:a6f2be58c74887ed
     assert "notify.py" not in holdout.ENGINE_SOURCES and fwd_b24.on() is False
 
 

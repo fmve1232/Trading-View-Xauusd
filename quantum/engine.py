@@ -299,6 +299,11 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
             if crossed_week[i]:
                 prev_ny_wh, prev_ny_wl = ny_wh, ny_wl
                 ny_wh, ny_wl = hi_, li
+            else:
+                # F1 (IA-05, proposed amendment, docs/PLATFORM.md D-14): the first bar of each trading day that is not the
+                # week's first belongs to the week too. Pine Master 657-666 (frozen reference) omits it.
+                ny_wh = max(nz(ny_wh, hi_), hi_)
+                ny_wl = min(nz(ny_wl, li), li)
         else:
             ny_dh = max(nz(ny_dh, hi_), hi_)
             ny_dl = min(nz(ny_dl, li), li)
@@ -1240,12 +1245,11 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
             tq_sum += tq_hist * tq_hw; tq_w += tq_hw
         tq_timing = 100.0 if in_kz[i] else 60.0 if (in_london[i] or in_ny[i]) else 25.0
         tq_sum += tq_timing * 0.05; tq_w += 0.05
-        if not isn(plan_ev):
-            tx = clamp(plan_ev / 0.75, -10.0, 10.0)
-            e2 = math.exp(2.0 * tx)
-            tq_sum += (50.0 + 50.0 * ((e2 - 1.0) / (e2 + 1.0))) * 0.10; tq_w += 0.10
+        # F3 (proposed amendment, docs/PLATFORM.md D-15): the race-grid EV no longer enters trade quality (it fed the TQ
+        # floor gate). The engine already scored TQ without it whenever the EV was unavailable (the old "-F" basis); that
+        # path now applies on every bar, so no weight is added or changed.
         trade_quality = int(pround(clamp(tq_sum / tq_w, 0.0, 100.0))) if tq_w > 0 else 50
-        tq_basis = ("" if tq_has_hist else "-H") + ("" if not isn(plan_ev) else "-F")
+        tq_basis = "" if tq_has_hist else "-H"
 
         # ================= auction intelligence =================
         if crossed_day[i]:
@@ -1342,7 +1346,11 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
         eff_tq_min_cot = min(eff_tq_min + cot_damp, 95)
         tq_floor_veto = eff_tq_min_cot > 0 and trade_quality < eff_tq_min_cot
         ev_veto = (not isn(plan_ev)) and plan_ev < 0.0
-        tq_veto = tq_floor_veto or ev_veto or cal_veto
+        # F3 / F2 (IA-02, IA-04; proposed amendment, docs/PLATFORM.md D-15): the calibration veto rests on an uncalibrated
+        # p (34.9% won vs 62.5% predicted, 43 unique forward trades) and the EV veto on the same self-estimated race grid,
+        # evaluated on the engine's ATR plan rather than the plan the phone sends. Neither blocks a signal any more; both
+        # are still computed and published (cal_veto / ev_veto, the funnel) as shadow flags.
+        tq_veto = tq_floor_veto
 
         # ================= account-state risk limits (virtual-R tracker) =================
         if crossed_day[i]:
@@ -1389,7 +1397,7 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
                            "sl": plan["sl"], "tp1": plan["tp1"], "tp2": plan["tp2"], "tp3": plan["tp3"]})
         elif should_buy or should_sell:
             events.append({"i": i, "type": "VETO", "dir": 1 if should_buy else -1, "px": ci,
-                           "why": "RISK" if rk_blocked else "P" if cal_veto else "EV" if ev_veto else "TQ"})
+                           "why": "RISK" if rk_blocked else "TQ"})
         if cfg.use_risk_limits and risk_lock and not prev_risk_lock:
             events.append({"i": i, "type": "RISK_LOCK", "why": risk_lock_str})
         prev_conf_label = conf_dir_label

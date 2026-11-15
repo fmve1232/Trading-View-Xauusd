@@ -10,7 +10,7 @@ import pandas as pd
 from quantum import holdout, manifest
 from quantum.config import DEFAULT
 
-FROZEN_KEY = "5e4630924d663fc5:a6f2be58c74887ed"
+FROZEN_KEY = "1f88aad357497da4:4440d52587f5cc6b"   # PROPOSED Amendment F (not in force); production: 5e4630924d663fc5:a6f2be58c74887ed
 FROZEN_SOURCES = ("ta.py", "sessions.py", "features.py", "analog.py", "engine.py", "backtest.py",
                   "config.py", "pipeline.py", "data/sources.py", "data/market.py", "data/store.py")
 
