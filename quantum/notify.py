@@ -1513,6 +1513,25 @@ def grab_run(store_dir: str | None, state: dict, payloads: dict, t_send: int, of
 PLAN_TP2_DEFAULT_PX = 20.0            # TP2 in price $ (the operator's choice, 2026-11-06): $1,000 at 0.5 lot
 
 
+# IA-06 (audit 2026-11-14): two cost figures are in use and neither is broker-verified: the operator's plan cost
+# (PLAN_COST_PER_LOT, default $26 per lot = $0.26/oz round trip) and the research cost model (session spread + 2 x $0.20
+# slippage + $7 per lot = $0.77-0.97/oz). One definition of each, here; every plan break-even on the phone and the site
+# shows both. The registered tests (B15 ENG_BE, B9 GRAB_BE, B24) keep the constants they were registered with.
+PLAN_COST_PER_LOT_DEFAULT = 26.0
+COST_MODEL_OZ = (0.77, 0.97)
+
+
+def break_even_at(pl: dict, cost_oz: float) -> float:
+    """P(TP1 first) at which the plan breaks even with a round-trip cost of cost_oz $ per oz."""
+    return (pl["sl_usd"] + cost_oz * pl["lot"] * 100.0) / (pl["sl_usd"] + pl["tp_usd"])
+
+
+def cost_note(pl: dict) -> str:
+    lo, hi = (break_even_at(pl, c) for c in COST_MODEL_OZ)
+    return (f"at your ${pl['cost_usd'] / (pl['lot'] * 100.0):.2f}/oz cost ({lo:.0%}-{hi:.0%} at the research cost model "
+            f"${COST_MODEL_OZ[0]:.2f}-{COST_MODEL_OZ[1]:.2f}/oz; neither broker-verified)")
+
+
 def plan_cfg() -> dict | None:
     """The operator's plan from the environment (defaults 0.5 lot, SL $650, TP $650); None when PLAN=0."""
     if os.environ.get("PLAN", "1").strip() == "0":
@@ -1524,7 +1543,7 @@ def plan_cfg() -> dict | None:
         except ValueError:
             return d
         return v if v > 0 else d
-    lot, sl, tp, cpl = num("PLAN_LOT", 0.5), num("PLAN_SL_USD", 650.0), num("PLAN_TP_USD", 650.0), num("PLAN_COST_PER_LOT", 26.0)
+    lot, sl, tp, cpl = num("PLAN_LOT", 0.5), num("PLAN_SL_USD", 650.0), num("PLAN_TP_USD", 650.0), num("PLAN_COST_PER_LOT", PLAN_COST_PER_LOT_DEFAULT)
     oz = lot * 100.0
     raw = os.environ.get("PLAN_TP2_USD", "").strip()
     try:
@@ -1550,9 +1569,9 @@ def plan_line(entry: float, d: int, pl: dict, off: float = 0.0) -> str:
         return (f"YOUR PLAN {pl['lot']:g} lot: SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f}) | TP1 {_fmt(tp, off)}: close half "
                 f"(+${pl['tp_usd'] / 2:,.0f}), move SL to entry | TP2 {_fmt(tp2, off)}: the rest (+${pl['tp2_usd'] / 2:,.0f}) | "
                 f"odds with no edge: SL {1 - first:.0%} · TP1 then entry {first * (1 - p2):.0%} · TP2 {first * p2:.0%} "
-                f"(no signal beats these) | break-even {be:.0%} TP1 first")
+                f"(no signal beats these) | break-even {be:.0%} TP1 first {cost_note(pl)}")
     return (f"YOUR PLAN {pl['lot']:g} lot: SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f}) TP {_fmt(tp, off)} (+${pl['tp_usd']:,.0f}) | "
-            f"TP first ~{first:.0%} (measured; no signal beats it) | break-even {be:.0%}")
+            f"TP first ~{first:.0%} (measured; no signal beats it) | break-even {be:.0%} {cost_note(pl)}")
 
 
 def plan_path(plan: dict, chart: dict) -> dict:
@@ -2915,6 +2934,8 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
         report["plans"] = {"cfg": {k: pl_cfg[k] for k in ("lot", "sl_usd", "tp_usd", "cost_usd", "tp2_usd")},
                            "tp_first": pl_cfg["sl_px"] / (pl_cfg["sl_px"] + pl_cfg["tp_px"]),
                            "break_even": (pl_cfg["sl_usd"] + pl_cfg["cost_usd"]) / (pl_cfg["sl_usd"] + pl_cfg["tp_usd"]),
+                           "cost_oz": pl_cfg["cost_usd"] / (pl_cfg["lot"] * 100.0), "cost_model_oz": list(COST_MODEL_OZ),
+                           "break_even_model": [break_even_at(pl_cfg, c) for c in COST_MODEL_OZ],
                            "open": state["plans"], "recent": log[::-1], "tally": tally, "tfs": list(tfs),
                            "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC),
                            "repeats": state.get("plan_repeats", [])[::-1][:10], "repeat_rule": {"sec": REPEAT_SEC, "usd": REPEAT_USD},
