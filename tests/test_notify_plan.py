@@ -244,7 +244,7 @@ def test_signal_alert_has_fill_based_levels_timing_and_a_late_warning(monkeypatc
     t_sent = 1800 + 900 + 380                                                    # 6.3 min after the bar close
     on_time = notify.messages(pay, 1000, {"t": t_sent, "px": 4001.17, "t_px": t_sent - 50, "live": True})
     assert [x.split(":")[0].split(" ")[0] for x in on_time] == ["XAUUSD", "YOUR", "ON", "LADDER", "TIMING"]
-    assert on_time[2] == ("ON MT5: SELL at market, then SL = your fill + 13.00, TP = your fill - 13.00 "
+    assert on_time[2] == ("ON MT5, ONLY IF YOU TAKE IT ANYWAY (not a validated signal): SELL at market, then SL = your fill + 13.00, TP = your fill - 13.00 "
                           "(= -$650 / +$650 at 0.5 lot, at any broker price)")
     assert on_time[3].startswith("LADDER before -$13.00")
     assert "alert 6 min after the close" in on_time[4] and "$1.17 toward SL since the signal" in on_time[4]
@@ -484,7 +484,7 @@ def test_a_silent_weekday_still_gets_the_engine_line_in_the_daily_report(tmp_pat
 # ---------------- two targets (operator, 2026-11-06: "TP1 +$13, TP2 +$20") ----------------
 def test_two_targets_mt5_line_and_the_stage_after_tp1():
     pl = notify.plan_cfg()
-    assert notify.mt5_line(1, pl) == ("ON MT5: BUY 2 x 0.25 lot at market; SL on both = your fill - 13.00; TP = your fill + 13.00 "
+    assert notify.mt5_line(1, pl) == ("ON MT5, ONLY IF YOU TAKE IT ANYWAY (not a validated signal): BUY 2 x 0.25 lot at market; SL on both = your fill - 13.00; TP = your fill + 13.00 "
                                       "on one and + 20.00 on the other; when the first closes at TP, move the other's SL to your fill "
                                       "(= -$650 total / +$325 then +$500, at any broker price)")
     plan = {"dir": 1, "entry": 4000.0, "tp2": 4020.0}

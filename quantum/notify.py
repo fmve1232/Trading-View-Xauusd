@@ -325,15 +325,20 @@ def without_disclaimer(lines: list[str]) -> list[str]:
     return [x for x in lines if x not in TRADE_DISCLAIMER]
 
 
+# IA-07 (audit 2026-11-14): every trading alert opens with "NOT A VALIDATED SIGNAL — NO TRADE" (TRADE_DISCLAIMER), so the
+# order mapping is a condition, never an instruction: it says how to place the plan IF the operator takes it anyway.
+MT5_PREFIX = "ON MT5, ONLY IF YOU TAKE IT ANYWAY (not a validated signal):"
+
+
 def mt5_line(d: int, pl: dict) -> str:
     s, side = ("+", "-") if d == -1 else ("-", "+")
     if pl.get("tp2_px"):
         half = round(pl["lot"] / 2, 2)
-        return (f"ON MT5: {'BUY' if d == 1 else 'SELL'} 2 x {half:g} lot at market; SL on both = your fill {s} {pl['sl_px']:.2f}; "
+        return (f"{MT5_PREFIX} {'BUY' if d == 1 else 'SELL'} 2 x {half:g} lot at market; SL on both = your fill {s} {pl['sl_px']:.2f}; "
                 f"TP = your fill {side} {pl['tp_px']:.2f} on one and {side} {pl['tp2_px']:.2f} on the other; when the first "
                 f"closes at TP, move the other's SL to your fill (= -${pl['sl_usd']:,.0f} total / +${pl['tp_usd'] / 2:,.0f} "
                 f"then +${pl['tp2_usd'] / 2:,.0f}, at any broker price)")
-    return (f"ON MT5: {'BUY' if d == 1 else 'SELL'} at market, then SL = your fill {s} {pl['sl_px']:.2f}, "
+    return (f"{MT5_PREFIX} {'BUY' if d == 1 else 'SELL'} at market, then SL = your fill {s} {pl['sl_px']:.2f}, "
             f"TP = your fill {side} {pl['tp_px']:.2f} (= -${pl['sl_usd']:,.0f} / +${pl['tp_usd']:,.0f} at {pl['lot']:g} lot, "
             "at any broker price)")
 
@@ -1407,7 +1412,7 @@ def grab_lines_new(tr: dict, now: dict | None, off: float = 0.0) -> list[str]:
     if late:
         out.append(late)
     out.append(f"TEST TRADE: entry {_fmt(tr['entry'], off)} TP {_fmt(tr['tp'], off)} (+$650) SL {_fmt(tr['sl'], off)} (-$650) | "
-               f"ON MT5: {side} at market, then SL = your fill {s1} {GRAB_SL:.2f}, TP = your fill {s2} {GRAB_TP:.2f}")
+               f"{MT5_PREFIX} {side} at market, then SL = your fill {s1} {GRAB_SL:.2f}, TP = your fill {s2} {GRAB_TP:.2f}")
     if timing:
         out.append(timing)
     return out
