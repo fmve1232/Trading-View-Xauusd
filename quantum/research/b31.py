@@ -494,7 +494,7 @@ def eng_setups(X: Ctx, trigs: list[dict]) -> list[dict]:
 def matched_random(X: Ctx, trades: list[dict], lo_bar: int, cost_kind: str = "model", k: int = RND_K, seed: int = SEED) -> dict:
     """For each trade: k random 15m closes with the same session label and direction, the same scaled stop distance and
     targets, outcomes by the same race."""
-    rng = np.random.default_rng(seed)
+    rng = H.seeded_rng(seed)
     n = len(X.c)
     by_sess = {}
     for s_ in set(X.sess[lo_bar:n - HOLD - 1].tolist()):
@@ -695,7 +695,7 @@ def calibration(parts: dict) -> dict:
         base = yd.mean()
         q = pd.qcut(pr + 1e-9 * np.arange(len(pr)), 5, labels=False, duplicates="drop")
         rel = [{"pred": float(pr[q == b].mean()), "obs": float(yo[q == b].mean()), "n": int((q == b).sum())} for b in sorted(set(q))]
-        rng = np.random.default_rng(SEED)
+        rng = H.seeded_rng(SEED)
         bs = [auc(so[ii], yo[ii]) for ii in (rng.integers(0, len(so), len(so)) for _ in range(1000))]
         out[key] = {"auc_dev": auc(sd, yd), "auc_oos": auc(so, yo), "auc_oos_95": [float(np.nanpercentile(bs, 2.5)), float(np.nanpercentile(bs, 97.5))],
                     "brier_oos": float(np.mean((pr - yo) ** 2)), "brier_base_oos": float(np.mean((base - yo) ** 2)),
