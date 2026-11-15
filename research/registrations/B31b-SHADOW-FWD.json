@@ -1,0 +1,43 @@
+{
+  "id": "B31b-SHADOW-FWD",
+  "title": "Forward shadow test of B31's five entry modules (sweep reversal, continuation after a grab, breakout and retest, VWAP mean reversion, Asian-range session expansion) on live data: structural stops, the +$10 / +$15 / +$20 ladder, $650 risk, a same-moment coin-flip control; no alerts",
+  "status": "APPROVED by the operator 2026-11-15; written and committed before any of its code; records from the first site run that carries its code",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-15 (chat), on B31: \"Register B31b with a volume-free detector or independently sourced volume. Adopt the full $10/$15/$20 target ladder as the research objective. Start a separate forward shadow tracker.\" Workstream 3: \"Collect genuine live XAUUSD market data. Generate A–E signals without sending trading alerts. Record entry, stop, $10, $15 and $20 targets. Record actual chronological price movement. Include execution costs. Preserve immutable signal records. Evaluate results only against future observations.\" Acceptance gates: \"Independent forward sample: at least 100 completed trades ... Net expectancy: positive after actual costs ... No duplicate or retrospective signals ... No interference with B9/B15.\" After the reply proposing exactly this forward test (\"Reply go and I'll build the forward test: registration first, then the code, in one pull request\"), the operator answered: \"Go and give me best\".",
+  "partitions": [
+    "live forward only: 15m bars whose order bar closes at or after the first site run that carries this code; nothing before it is ever scored"
+  ],
+  "created_utc": "2026-11-15",
+  "why_forward": "Every historical period has been read by earlier studies (B31 registration, prior_evidence). B31 found no module supported out of sample (research/B31_RESULTS.md) and could not test A / B fairly because the engine's BOS needs volume, which the 2020-25 history lacks. Live data has COMEX futures volume, so the engine's own structure events work as designed. Only new data can answer the question without contamination.",
+  "workstreams": {
+    "3 forward shadow tracker": "this registration: implemented now",
+    "1 detector correction": "in the forward record the engine's own volume-based BOS / MSS / CHoCH run on live futures volume, so no substitute rule is needed. The detector firing rate (setups per trading day per module) is reported from the first week, before any outcome is read. A volume-free historical re-test is NOT part of this registration: it would be another look at data already read and needs its own registration (development partition only).",
+    "2 C / D / E": "definitions unchanged from B31; every setup and every rejection reason is recorded in the forward record, so the sample-size question is answered on new data"
+  },
+  "data_per_run": "the site run's own payloads, nothing fetched: 15m chart (open, high, low, close, the engine's ATR14 and aATR, VWAP and its +/-2 sd bands, regime label, equal highs / lows, PDH / PDL / PWH / PWL, order blocks, session label, COMEX futures volume) and the engine's 15m BOS / MSS / CHoCH markers; the 1h and 4h payloads' EMA20 / EMA100. quantum/report.py publishes the six extra 15m rows (display path, outside the freeze key).",
+  "modules": "exactly B31's (research/registrations/B31.json `modules`, `liquidity_pools`, `events`), with the engine's structure events from the payload markers and its rows as above. Sessions, trading dates and the Asian / London / New York pools from quantum/sessions.py on the 15m bars. ATR14 and aATR are the engine's.",
+  "changes_from_B31": {
+    "eligibility (operator's option a)": "net reward / net risk on the LADDER, not on TP1 alone: (15 - cost) / (D + cost) >= 1.0, where 15 is the mean of the thirds at +10 / +15 / +20. The other checks are B31's: stop D >= $5, cost <= 15% of D, no opposing pool closer than TP1 (+$10), and for D the VWAP beyond TP1. Every rejection and its reason is recorded.",
+    "control": "for every executed trade, the same bar, entry, stop distance and targets with the direction chosen by a fair coin. Its expected outcome is the exact mean of the two directions (the trade and its mirror), so no random number is drawn.",
+    "score": "B31's 100-point score is not computed: its out-of-sample AUC was 0.47 (research/B31_RESULTS.md section 4)",
+    "volume (recorded, not a filter)": "the futures volume of the structure / break bar relative to its 20-bar mean, for a secondary with / without volume comparison",
+    "distances (clarified before any code, 2026-11-15)": "literal dollars, unscaled (s = 1): TP1 +$10.00, TP2 +$15.00, TP3 +$20.00, the $5 minimum stop and the $15 / 4 h REPEAT window are prices in $, as the operator's objective states them. B31 scaled distances by price / 4000 only to compare 2020-25 price levels; over a forward test the level barely moves."
+  },
+  "timeliness_and_integrity": {
+    "timely": "a setup is PRIMARY only if the run that first records it ran no later than 30 minutes after its order bar closed; later ones are recorded as LATE and reported apart (no retrospective signals in the primary)",
+    "immutable": "a setup is appended once, keyed by module, order bar, direction, pool and level, and never removed or edited; its outcome is written once, when decided, and then frozen (later data revisions change nothing)",
+    "no backfill": "nothing before the first run with this code is scored",
+    "isolation": "no phone message, no change to the engine, config, freeze key 1f88aad357497da4:4440d52587f5cc6b, B9-GRAB-FWD, B15b-ENGINE-FWD or B24 (OFF). It runs inside the alert step behind a guard: a failure is reported and changes nothing else."
+  },
+  "outcomes": "B31's, on the 15m bars after the fill: TP1 +10, TP2 +15, TP3 +20 each raced against the stop; a bar touching both = AMBIGUOUS, scored as the stop; a bar opening beyond a level fills at its open; the fill bar can only stop; time stop 96 bars. Money plan (primary): thirds at +10 / +15 / +20, stop to the entry after TP1, minus the round-trip cost, at a size where the stop costs $650 including costs: lots = 650 / (100 x (D + cost)). MFE, MAE, minutes to TP1. Cost: the engine's session model ($0.77-0.97 / oz); the operator's $0.26 / oz reported as a sensitivity. Broker costs are not verified (audit D1).",
+  "primary_test": {
+    "units": "A, B, C, D, E and ALL (A-E pooled, chronological): 6 hypotheses",
+    "look": "once, when a unit first has 100 decided timely trades",
+    "rule": "SUPPORTED only if both hold: (1) mean ladder net R per trade > 0 with the 95% t-interval over trading-day means above 0; (2) TP1-first more often than the coin-flip control: on the trades where the trade and its mirror disagree, a one-sided exact sign test p < 0.05 after Holm over the 6 units. Otherwise NOT SUPPORTED.",
+    "deadline": "2027-06-30: a unit without 100 decided timely trades by then is INSUFFICIENT",
+    "between_looks": "the site shows counts, TP1 / TP2 / TP3-first rates with Wilson 95% intervals and the control's rates as COLLECTING, never as a verdict or a probability to trade on"
+  },
+  "power_stated_in_advance": "unknown until the firing rate is seen; B31's historical rate was low (C 24 and D 23 trades in 2.5 years under the stricter TP1 rule). If a unit fires less than about once a week, 100 trades will not be reached by the deadline and it will read INSUFFICIENT.",
+  "decision": "SUPPORTED: proposed (never adopted automatically) for phone alerts, after the operator's own gates are checked with the broker's actual costs. NOT SUPPORTED / INSUFFICIENT: reported as such; the phone keeps NO TRADE for signals without validated edge.",
+  "not_done_by_design": "No parameter, distance, threshold or window is searched or tuned; every constant is B31's, B19's, the engine's or the operator's. No rule changes after any result."
+}

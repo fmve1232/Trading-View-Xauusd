@@ -73,6 +73,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from . import confirm_entry as C1
+from . import shadow
 from .data.sources import redact as _src_redact
 from .data.sources import requests
 
@@ -3034,6 +3035,10 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
             report["turn_warning"] = {"lines": tl, "sent": [] if sixty() else _say("turn_warning", tl, desc="trend-change warning")}
     report["turn_log"] = state.get("turn_log", [])[::-1][:10]
     glines, report["grab_test"] = grab_run(store_dir, state, payloads, t_send, off)   # B9-GRAB-FWD, every run
+    try:   # B31b-SHADOW-FWD: forward shadow test of B31's modules; records only, sends nothing, never breaks this run
+        report["shadow"] = shadow.run(store_dir, payloads, t_send)
+    except Exception as e:  # noqa: BLE001 - a research record must never stop the alerts
+        report["shadow"] = {"id": shadow.ID, "error": f"{type(e).__name__}: {e}"[:200]}
     if glines:
         report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else _say("grab_test", trade_msg(phone_only(glines)),
                                                                                       desc="grab test")}   # trades and results

@@ -531,6 +531,10 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "ob_bear_lo": _arr(R["ob_bear_lo"], 2, s), "ob_bear_hi": _arr(R["ob_bear_hi"], 2, s),
         "session": [str(x) for x in F["session_label"][s:]],
     }
+    if market.tf == "15m":   # B31b-SHADOW-FWD (quantum/shadow.py) reads these engine rows; display path, outside the freeze key
+        chart.update({"atr": _arr(F["atr"], 3, s), "aatr": _arr(F["aatr"], 3, s), "vwap_lo2": _arr(F["vwap_lo2"], 2, s),
+                      "vwap_up2": _arr(F["vwap_up2"], 2, s), "eqh": _arr(R["eqh"], 2, s), "eql": _arr(R["eql"], 2, s),
+                      "regime": [str(x) for x in list(R["regime_label"])[s:]]})
     cal = F["cal"]
     brk = {"vwap": cal["crossed_day"].to_numpy(), "wvwap": cal["crossed_week"].to_numpy(), "mvwap": cal["crossed_month"].to_numpy()}
     chart["anchor"] = {k: [int(j - s) for j in np.flatnonzero(v) if j >= s] for k, v in brk.items()}
