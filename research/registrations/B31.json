@@ -1,0 +1,88 @@
+{
+  "id": "B31",
+  "title": "Liquidity-aware opportunity selection: five independent strategy modules (sweep reversal, continuation after a liquidity grab, breakout and retest, VWAP mean reversion, Asian-range session expansion) with structural stops, a +$10 / +$15 / +$20 target ladder, a $650 risk budget and a room-to-opposing-liquidity check; against the production engine, the F1-F4 engine and a matched random control",
+  "status": "APPROVED by the operator 2026-11-15 (directive quoted below); written and committed before any of its code; research only, no production change",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-15 (chat), Strategic Engineering Directive, section 9: \"Register and commit the complete research protocol before running the study. Compare the five strategy modules independently and together against the existing engine and appropriate controls. Use chronological development, validation and untouched holdout data. Measure TP1/TP2/TP3-first rates, SL-first rates, net expectancy, profit factor, drawdown, MAE, MFE, time to target, costs and confidence intervals. Account for overlapping signals, multiple testing, sample-size limitations and same-bar ambiguity. Do not change strategy rules after observing holdout results. If there is insufficient evidence, report insufficient evidence.\" Section 10: \"My recommendation is to begin B31 as a registered, independent research project, while keeping production unchanged.\"",
+  "partitions": ["development", "validation", "holdout"],
+  "unsealed_data_also_used": "recent: 2026-01-01 to the end of the research history, scored after a 59-day warm-up (as B19 / B30); reported, not decisive",
+  "created_utc": "2026-11-15",
+  "prior_evidence_disclosed_before_running": [
+    "Components of every module were tested before and none survived out of sample (research/STRATEGY_CATALOGUE.md): B2 / B2b / B2c nine SMC setups incl. FVG retest, order block, BOS, CHoCH, liquidity sweep (REJECT); B3 trend + confirmation + SMC sequences, 210 trials (REJECT); B16 / B17 / B21 sweeps and breakouts of PD / PW / PM and intraday levels with OB / value area / confirmations (FAIL); B1 session breakouts, mean reversion, Bollinger (REJECT); B4 session-open momentum (FAIL on validation); B12 the operator's multi-timeframe level criteria (REJECT); B22 calibrated ML on all confirmations (FAIL); B30 favourable-move confirmation (no threshold supported).",
+    "NOT A FIRST LOOK: the validation (2023-01-24 -> 2024-06-30) and holdout (2024-07-01 -> 2025-12-31) partitions have been read by B10, B13, B19, B20-B23 and B30. No historical period is untouched. The only genuinely unseen test is prospective: any module this study SUPPORTS goes to a separately registered forward shadow record before it may reach the phone.",
+    "New in B31: the full sequence (sweep -> rejection -> structure shift -> FVG / OB retracement entry), stops at the structural invalidation instead of a fixed $13 / $10, risk-normalised sizing, the room-to-opposing-liquidity rejection, session (Asian / London / New York) highs and lows as liquidity pools, five separately reported modules, a matched random control per trade, and the operator's 100-point quality score tested for discrimination and calibration."
+  ],
+  "unchanged": "Production alerts, the engine, config.py, the freeze key 5e4630924d663fc5:a6f2be58c74887ed, B9-GRAB-FWD, B15-ENGINE-FWD, B24 (OFF), every PR (#105-#116) and every other registration. B31 is research code (quantum/research/b31.py), never imported by production.",
+  "data": "Twelve Data XAU/USD 15min and 1h from the research-data branch; the SHA-256 of each partition is recorded with the results. Execution, structure and outcomes on 15m bars; trend on 1h and 4h (4h = NY-session 4h bars from 1h, sources.resample_ny_session). Distances are $ at $4,000 scaled by s = price / 4000 (B19 / B30 convention); costs are $ per oz, unscaled.",
+  "not_testable_with_this_data": {
+    "volume (Layer 3)": "the 2020-25 research history has no volume (b10.make_market runs the engine without it); relative volume, volume expansion / contraction and volume profile cannot be measured historically. The engine's own displacement rule needs volume and never fires here, so displacement is the engine's FVG rule (below). The score's volume part is constant.",
+    "cross-market intraday (Layer 6)": "no intraday DXY / US10Y / EURUSD / XAGUSD / S&P / COMEX history in the research data; the score's cross-market part is constant.",
+    "news after 2023-01 (Layer 5)": "quantum/research/b8_news.py has CPI / NFP / FOMC dates for 2020-02 -> 2023-01 only and no PCE / PPI / jobless claims / Fed speeches; the news-window effect is reported on development only; the score's news part is constant.",
+    "5m entry refinement": "no 5m history before 2026",
+    "broker spread, contract size, tick value, volume step": "not verified (audit D1); costs are the engine's session cost model ($0.77-0.97 / oz) and the operator's $0.26 / oz as a sensitivity; 1 lot = 100 oz, $100 per $1 move, assumed"
+  },
+  "liquidity_pools": {
+    "PDH / PDL": "previous NY trading day's high / low (17:00 NY day), all of its 15m bars",
+    "PWH / PWL": "previous ISO week (of the NY trading day) high / low, ALL of its 15m bars (the correct definition; the production engine's PWH / PWL omit day-opening bars, IA-05)",
+    "ASH / ASL, LOH / LOL, NYH / NYL": "the most recently COMPLETED Asian / London / New York session's high / low (quantum/sessions.py flags in_asian / in_london / in_ny); a session's levels become a pool only after it ends",
+    "EQH / EQL": "the frozen engine's own equal highs / lows (rows eqh / eql, its eq_atr_mult tolerance)",
+    "CDH / CDL": "the current trading day's high / low before the bar: used for the room check only, never as a swept pool"
+  },
+  "events": {
+    "sweep": "a pool is crossed when a 15m bar trades beyond it (sell-side: low < pool); REJECTED if a 15m close comes back inside within 3 bars of that first bar (inclusive); the sweep extreme is the furthest price over those bars; penetration ($) and bars beyond are recorded. One event per pool level per trading day.",
+    "acceptance (break)": "the first 2 closes after the crossing are both beyond the pool (and it was not rejected)",
+    "structure": "the frozen engine's 15m BOS / MSS / CHoCH events (quantum/engine.py)",
+    "FVG (displacement)": "the engine's rule computed on every bar (the engine keeps one active gap): bullish at bar i if low[i] > high[i-2] and the gap exceeds 0.3 x ATR14[i]; zone [high[i-2], low[i]]; bearish mirrored",
+    "order block": "the frozen engine's active order block rows (ob_bull_lo / hi, ob_bear_lo / hi)",
+    "HTF trend": "1h EMA20 vs EMA100 and 4h EMA20 vs EMA100 on the last bars COMPLETED before the 15m bar's close; aligned = both on the trade's side",
+    "regime": "the frozen engine's regime_label; ranging = RANGE or COMPRESS (b10.RANGE_REGIMES)",
+    "VWAP bands": "the engine's features vwap, vwap_lo2, vwap_up2 (VWAP +/- 2 sd)"
+  },
+  "modules": {
+    "A sweep reversal": "a REJECTED sweep; trade = away from the swept side (sell-side swept -> BUY); HTF NOT aligned with the trade (countertrend or mixed: reversal evidence required); an MSS or CHoCH in the trade's direction within 8 bars of the sweep's first bar; entry zone = the first trade-direction FVG formed from the sweep's first bar to 2 bars after the shift, else the engine's order block at the shift bar; LIMIT at the zone's near edge (BUY: FVG top / OB high), valid 8 bars after the shift (B19 LIMIT_BARS), filled at the limit or at a bar's open beyond it; INVALIDATED before the fill if price trades beyond the sweep extreme or an opposite structure event prints; stop = sweep extreme -/+ 0.2 x ATR14 (B19 SSTR_BUF)",
+    "B continuation after a liquidity grab": "a REJECTED sweep of the pool the pullback ran into, trade away from the swept side as in A (in a bearish HTF trend a buy-side pool swept -> SELL; in a bullish trend a sell-side pool swept -> BUY); HTF ALIGNED with the trade; any engine structure event (BOS / MSS / CHoCH) in the trade's direction within 8 bars; entry, invalidation and stop as A. A and B are disjoint (by HTF alignment).",
+    "C breakout and retest": "an ACCEPTED break of a pool, trade in the break's direction; a trade-direction FVG formed within the bars from the crossing to the acceptance (displacement); LIMIT at the pool level, valid 8 bars after the acceptance; stop = the breakout leg's extreme (BUY: the lowest low from the crossing to the acceptance, or the level if lower) -/+ 0.2 x ATR14; a close back through the level before the fill is recorded as a FALSE BREAKOUT (INVALIDATED)",
+    "D VWAP mean reversion": "ranging regime at the deviation bar; deviation: low <= VWAP - 2 sd (BUY) / high >= VWAP + 2 sd (SELL); rejection: the first close back inside the band within 3 bars; skipped when a bar from the deviation to the rejection has a body >= 2.5 x ATR14 against the trade (the engine's disp_mult: no fading a strong displacement); entry at the rejection close (market); stop = the deviation extreme -/+ 0.2 x ATR14; the VWAP must be at least TP1 away in the trade's direction (else REJECTED: no room to the mean)",
+    "E session expansion": "the first interaction of each trading day, during London or New York (in_london or in_ny), with that day's completed Asian high or low: a REJECTED sweep -> the A or B sequence (by HTF alignment), an ACCEPTED break -> the C sequence; reported as its own module (its trades can also appear in A / B / C)"
+  },
+  "arms_compared": {
+    "PROD-ENG": "the frozen production engine's SIGNAL events on 15m / 30m / 1h / 4h pooled with the live REPEAT rule (b19.dedupe), entry at the signal close, stop = the engine's own SL, the same targets and checks",
+    "F-ENG": "the same from the unmerged F1-F4 engine (branch claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-f1f4-engine, commit 4232dea8e), run from that tree with this registration's seal",
+    "RND (matched control)": "for every executed trade of a module or arm: 20 random 15m closes from the same partition with the same session label (Asian / London / New York / off) and direction, the same scaled stop distance and targets (seed 31)",
+    "COMBINED": "the union of A-E, chronological, one position at a time, identical (time, direction) entries once",
+    "COMBINED-Q75": "COMBINED restricted to quality score >= 75 (the operator's provisional 'qualified' threshold)"
+  },
+  "checks_before_a_trade_counts_as_executed": {
+    "stop": "stop distance D >= 5 (scaled; B19 D_MIN: tighter stops sit inside the noise); a stop that is not beyond the structure is impossible by construction",
+    "reward": "net reward / net risk on TP1 = (10 - cost) / (D + cost) >= 1.0 (operator: eligibility at 1.0). With cost about $0.8-0.97 this admits D up to about $8.4: the report counts the rejections",
+    "cost": "cost <= 15% of D (B19 COST_FRAC)",
+    "room": "no opposing pool (BUY: PDH, PWH, ASH, LOH, NYH, EQH, CDH above the entry; SELL mirrored) closer than TP1 (+10); for D the VWAP must also lie beyond TP1",
+    "overlap and duplicates": "one open position per module; a setup whose fill comes while the module's previous trade is open is skipped; the REPEAT rule (same direction within 4 h and $15 of a kept setup of the same module) drops duplicates",
+    "size (reported, not a filter)": "lots = 650 / (D x 100 + cost x 100) per lot of 100 oz, i.e. the loss at the stop including costs equals $650; this equals the operator's (650 - C) / (D x V) with C = lots x cost x 100 (the cost grows with the lot)"
+  },
+  "outcomes": "on the 15m bars after the fill (the fill bar can only stop: the order inside it is unknown): TP1 +10 vs the stop (primary, single target, time stop 96 bars = 24 h at that bar's close); TP2 +15 and TP3 +20 each raced against the same stop (rates); a bar touching the stop and the target = AMBIGUOUS, scored as the stop and reported apart; a bar opening beyond a level fills at its open. Secondary plan: thirds at +10 / +15 / +20, stop to the entry after TP1.",
+  "metrics": "per module / arm x partition: setups, rejected by reason (stop, reward, cost, room), invalidated (incl. false breakouts), limit not filled (missed), overlap skips, executed; TP1 / TP2 / TP3-first and SL-first rates with Wilson 95% intervals; AMBIGUOUS and TIMEOUT rates; net R per trade (primary plan) with a t interval and a day-clustered bootstrap 95% interval (2,000 resamples, seed 31), $ per trade at $650; profit factor; maximum drawdown ($ at $650 per trade, entry order); MAE / MFE ($ at $4,000); time to TP1 (minutes); stop-distance distribution; the matched RND's TP1-first rate and net R; per direction, session and regime (secondary)",
+  "quality_score": {
+    "weights": "liquidity & sweep 20, structure & trend 20, entry location 20, volume & volatility 15, session & news 10, cross-market 5, target space & risk 10 (the operator's; hypotheses, not calibrated)",
+    "components (0-1, declared before running)": {
+      "liquidity": "pool rank (PW 1.0, PD 0.8, session 0.6, EQ 0.6) x rejection speed (closed back inside on the 1st bar 1.0, 2nd 0.75, 3rd 0.5); C: pool rank; D: 0.5; arms: 0",
+      "structure": "share of 15m (EMA20 vs EMA100), 1h and 4h trends on the trade's side (0, 1/3, 2/3, 1)",
+      "entry": "FVG limit 1.0, order-block limit 0.7, retest limit 0.8, market entry 0.4",
+      "volume & volatility": "volume constant 0.5 (not available); ATR14 within its own 20th-80th percentile over the previous 30 trading days 1.0, else 0.5; part = mean of the two",
+      "session & news": "London, New York or their overlap 1.0, Asian / off 0.4; news constant (not available after 2023-01)",
+      "cross-market": "constant 0.5 (not available)",
+      "target space & risk": "0.5 x min(room to the opposing pool / 20, 1) + 0.5 x min(net R:R on TP1 / 1.5, 1)"
+    },
+    "classes": "85-100 high-quality, 75-84 qualified, 65-74 watchlist, below 65 reject (provisional; tested, not used to select except COMBINED-Q75)",
+    "tests": "out-of-sample AUC of the score for TP1-first with a bootstrap 95% interval; TP1-first by class; probabilities: isotonic (PAV) fits of TP1 / TP2 / TP3-before-SL on the development trades (all modules pooled), applied out of sample: Brier score against the constant base-rate Brier, and a quintile reliability table. A score is never shown as a probability."
+  },
+  "primary_test": {
+    "units": "A, B, C, D, E, COMBINED, COMBINED-Q75 (7 hypotheses)",
+    "sample": "out of sample = validation + holdout pooled; primary plan (TP1 +10 or the stop), model cost",
+    "rule": "SUPPORTED only if all hold: (1) mean net R > 0 with the day-clustered bootstrap 95% lower bound > 0; (2) TP1-first rate above the matched RND's with a one-sided two-proportion z-test p < 0.05 after Holm over the 7; (3) development mean net R > 0. Fewer than 30 out-of-sample trades = INSUFFICIENT. Otherwise NOT SUPPORTED."
+  },
+  "power_stated_in_advance": "unknown until the setups are counted: the stop / reward / room checks are strict (D between 5 and about 8.4). With 100 out-of-sample trades and a matched random TP1-first rate near 40%, a 14-point improvement is detectable at 80% power; with 30 trades only about 25 points. Small modules will read INSUFFICIENT.",
+  "not_done_by_design": "No parameter, threshold, weight, window or distance is searched or tuned; every constant is the engine's, B19's or the operator's. No rule changes after any result. Stop and target grids were explored in B19 / B27 / B29 and are cited, not re-run.",
+  "trials_log": "every module / arm x partition x cost evaluated is appended to research/trials.jsonl",
+  "decision": "SUPPORTED: the module is proposed (never adopted) for a registered forward shadow test with its exact rules before any alert; NOT SUPPORTED / INSUFFICIENT: reported as such; the phone keeps NO TRADE for signals without validated edge."
+}
