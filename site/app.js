@@ -719,6 +719,27 @@ function renderH5() {
     `<div class="why"><b>Live record</b> (since ${fr.freeze_utc ? tfmt(Date.parse(fr.freeze_utc) / 1000) : "—"}; only this counts): ${rec(fw)}.<br><span class="dim">Past data (${esc(D.meta.tf)}): ${rec(is)}.</span></div>` +
     `<div class="why note-h5"><b>Read this before trading.</b> H5 takes a trade only when all five agree, so it is rare: a few per month at most, often none. No rule wins every trade, and a 90% win rate is not promised. It is judged on its 1-hour live record after 30 trades: average R above 0 and profit factor at least 1.2. Risk only what a stop-out can cost you.</div>`;
 }
+/* ---------- B31b-SHADOW-FWD (research/registrations/B31b-SHADOW-FWD.json): forward shadow test of B31's entry modules ---------- */
+function shadowCard(SH) {
+  if (!SH) return "";
+  if (SH.error || SH.status) return `<h4>Entry-module forward test (B31b)</h4><p class="muted">${esc(SH.error || SH.status)}</p>`;
+  const NAME = { A: "A sweep reversal", B: "B continuation after a grab", C: "C breakout and retest", D: "D VWAP reversion",
+                 E: "E session expansion", ALL: "All modules" };
+  const rate = (u, k) => (isNum(u.tp_rate && u.tp_rate[k]) ? pct(100 * u.tp_rate[k]) : "—");
+  const rows = ["A", "B", "C", "D", "E", "ALL"].map((k) => { const u = SH.units[k] || {};
+    const pill = u.verdict === "SUPPORTED" ? "bull" : (u.verdict === "NOT SUPPORTED" || u.verdict === "INSUFFICIENT") ? "bear" : "warn";
+    return `<tr><td>${esc(NAME[k])}</td><td>${u.setups || 0} <span class="dim">(${isNum(u.per_day) ? u.per_day : 0}/day)</span></td>
+      <td>${u.n || 0} / ${SH.look}</td><td>${rate(u, 0)} · ${rate(u, 1)} · ${rate(u, 2)}</td>
+      <td>${isNum(u.control_tp1_rate) ? pct(100 * u.control_tp1_rate) : "—"}</td>
+      <td>${isNum(u.ladder_usd) ? (u.ladder_usd >= 0 ? "+" : "−") + "$" + Math.abs(u.ladder_usd).toFixed(0) : "—"}</td>
+      <td><span class="pill ${pill}">${esc(u.verdict || "COLLECTING")}</span></td></tr>`; }).join("");
+  return `<h4>Entry-module forward test (registered ${esc(SH.id)})</h4>
+    <div class="scroll"><table class="yt"><tr><th>Module</th><th>Setups</th><th>Trades decided</th><th>+$10 · +$15 · +$20 first</th>
+      <th>Coin-flip control +$10</th><th>Ladder per trade at $650 risk</th><th>Verdict</th></tr>${rows}</table></div>
+    <p class="muted pa-note">B31's five entry modules, recorded live since ${isNum(SH.started_utc) ? tfmt(SH.started_utc) : "—"} (${SH.trading_days || 0} trading days),
+      with no alerts. Each trade is compared with the same moment, stop and targets in a coin-flip direction. A module is judged once,
+      at ${SH.look} decided trades (deadline ${esc(SH.deadline)}). Until then these are counts, not probabilities to trade on.</p>`;
+}
 /* ---------- arm H6 "No score veto" (Amendment 12; quantum/arm_h6.py), closed by Amendment F: its final live record ---------- */
 function renderH6() {
   const D = S.data, el = $("#h6"), st = $("#h6-state"); if (!el || !D) return;
@@ -2228,7 +2249,7 @@ function renderPlanAlerts() {
         did price reach +$13 before −$13? Rules fixed before any result (${reg}). PROVEN needs the 95% range above
         break-even at a check; until then the signals are unproven, however the running rate looks.`}</p>`;
   };
-  const engHtml = engCard(A.engine_test_b) + engCard(A.engine_test);
+  const engHtml = engCard(A.engine_test_b) + engCard(A.engine_test) + shadowCard(A.shadow);
   // SETUP alerts (operator's level rules, research/registrations/B16.json): sweeps / breakouts of PD/PW/PM/today/4h/1h levels
   const SU = A.setups;
   const setHtml = (() => {
