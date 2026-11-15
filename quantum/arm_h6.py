@@ -14,6 +14,11 @@ Brier worse than a constant base rate, 15m and 1h, before and after the forward 
 trades at random, H6 differs from the treatment arm only in the number of trades; if it removes worse ones, H6 does worse.
 H6 reads only published values and adds no threshold. Do not change a rule here without a new amendment: H6's freeze
 key includes the SHA-256 of this file.
+
+PROPOSED AMENDMENT F (F3, not in force; docs/audit/AMENDMENT_F_PROPOSAL.md): the engine itself no longer applies the
+calibration veto or the negative-EV veto (both stay published as shadow flags). H6 therefore reads the engine's APPLIED
+blocks only (TQ floor, risk lock), equals the treatment arm on every bar, and `score_vetoed` (a trade H6 took that the
+engine did not) is 0. The amendment closes H6 at merge: its question cannot be asked when no arm applies the veto.
 """
 from __future__ import annotations
 
@@ -55,14 +60,15 @@ def evaluate(res, cfg) -> dict:
     out = {"exec_buy": [0] * n, "exec_sell": [0] * n, "plan_sl": list(nan), "plan_tp1": list(nan), "plan_tp2": list(nan),
            "score_vetoed": [0] * n}
     for i in range(n):
-        blocked = _b(R, "tq_floor_veto", i) or _b(R, "ev_veto", i) or (cfg.use_risk_limits and _b(R, "risk_lock", i))
+        blocked = _b(R, "tq_floor_veto", i) or (cfg.use_risk_limits and _b(R, "risk_lock", i))   # the engine's applied blocks (F3)
         if blocked:
             continue
         buy, sell = _b(R, "should_buy", i), _b(R, "should_sell", i)
         if not (buy or sell):
             continue
         out["exec_buy" if buy else "exec_sell"][i] = 1
-        out["score_vetoed"][i] = int(_b(R, "cal_veto", i))     # a trade the treatment arm did not take
+        took = ("exec_buy" in R and _b(R, "exec_buy", i)) or ("exec_sell" in R and _b(R, "exec_sell", i))
+        out["score_vetoed"][i] = int(_b(R, "cal_veto", i) and not took)   # a trade the treatment arm did not take
         for k in ("plan_sl", "plan_tp1", "plan_tp2"):
             out[k][i] = _f(R[k][i])
     return out

@@ -1347,7 +1347,11 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
         eff_tq_min_cot = min(eff_tq_min + cot_damp, 95)
         tq_floor_veto = eff_tq_min_cot > 0 and trade_quality < eff_tq_min_cot
         ev_veto = (not isn(plan_ev)) and plan_ev < 0.0
-        tq_veto = tq_floor_veto or ev_veto or cal_veto
+        # F3 / F2 (IA-02, IA-04; proposed amendment, docs/PLATFORM.md D-15): the calibration veto rests on an uncalibrated
+        # p (34.9% won vs 62.5% predicted, 43 unique forward trades) and the EV veto on the same self-estimated race grid,
+        # evaluated on the engine's ATR plan rather than the plan the phone sends. Neither blocks a signal any more; both
+        # are still computed and published (cal_veto / ev_veto, the funnel) as shadow flags.
+        tq_veto = tq_floor_veto
 
         # ================= account-state risk limits (virtual-R tracker) =================
         if crossed_day[i]:
@@ -1394,7 +1398,7 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
                            "sl": plan["sl"], "tp1": plan["tp1"], "tp2": plan["tp2"], "tp3": plan["tp3"]})
         elif should_buy or should_sell:
             events.append({"i": i, "type": "VETO", "dir": 1 if should_buy else -1, "px": ci,
-                           "why": "RISK" if rk_blocked else "P" if cal_veto else "EV" if ev_veto else "TQ"})
+                           "why": "RISK" if rk_blocked else "TQ"})
         if cfg.use_risk_limits and risk_lock and not prev_risk_lock:
             events.append({"i": i, "type": "RISK_LOCK", "why": risk_lock_str})
         prev_conf_label = conf_dir_label

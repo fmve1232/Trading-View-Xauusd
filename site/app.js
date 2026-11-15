@@ -907,7 +907,10 @@ function h4rec(D) {
   return `<span title="${esc(full)}">${rec}${prevTxt}${is.n ? ` In past data (in-sample): ${is.n} trades from these triggers, ${f(is.win_rate, 0)}% ended positive, ${fs(is.avg_r, 2)} R per trade after costs.` : ""}</span>` +
     (neg ? ' <b class="warn">On average they have lost money: treat them as levels to watch, not as signals.</b>' : "");
 }
-const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.ev_veto ? "race EV < 0" : "", d.cal_veto ? "score below minimum (a score without measured skill, Amendment 12)" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
+// F3 / F2 (proposed amendment, docs/PLATFORM.md D-15): only the TQ floor and the risk lock block a signal; the EV and score
+// flags are shadow values (computed, not applied), so they are never given as the reason for NO TRADE.
+const vetoes = (d) => [d.tq_floor_veto ? "TQ below floor" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(", ");
+const shadowVetoes = (d) => [d.ev_veto ? "EV<0" : "", d.cal_veto ? "P<min" : ""].filter(Boolean).join(" · ");
 // Reward:risk from the expected ENTRY (research/03 §2): the trade enters at the close beyond the trigger, so the stop
 // is farther and the target nearer than from the trigger. Live price when it is already through; otherwise the trigger
 // plus the median overshoot of this chart's past triggers (h4.entry_overshoot, in stop distances).
@@ -1110,7 +1113,8 @@ function renderSide() {
   $("#tq-grade").className = "pill " + (tq >= d.eff_tq_min ? "bull" : "warn");
   $("#tq").innerHTML = `<div style="display:flex;align-items:baseline;gap:8px"><div style="font:800 26px var(--mono)">${tq}</div><div class="muted">/100 ${esc(d.tq_basis || "")}</div></div>
     <div class="meter" style="margin:6px 0 10px"><span style="width:${tq}%"></span></div>` +
-    kv([["Vetoes", esc([d.tq_floor_veto ? "TQ<floor" : "", d.ev_veto ? "EV<0" : "", d.cal_veto ? "P<min" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(" · ")) || '<span class="bull">none</span>'],
+    kv([["Vetoes", (esc([d.tq_floor_veto ? "TQ<floor" : "", d.risk && d.risk.lock ? "risk lock" : ""].filter(Boolean).join(" · ")) || '<span class="bull">none</span>') +
+        (shadowVetoes(d) ? ` <span class="muted">· shadow, not applied: ${esc(shadowVetoes(d))}</span>` : "")],
       ["Confidence", `${d.confidence}/100 ${esc(d.conf_label)}`], ["Structure", esc(structStr(d.struct))], ["Auction", `${esc(d.auction.state)} ${d.auction.prob}% ${esc(d.auction.cycle)}`]]);
 
   const k = d.kelly;
