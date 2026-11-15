@@ -945,7 +945,7 @@ function renderBrief() {
   const rs = (d.liquidity && d.liquidity.reach_scores) || {};
   const lean = Math.abs(d.bull_score - d.bear_score) < 5 ? "No clear lean" : up ? "Leaning up" : "Leaning down";
   const t2 = tile(lean === "No clear lean" ? "" : up ? "bull" : "bear", lean === "No clear lean" ? "side" : up ? "up" : "dn", `Where it is heading · ${esc(M.tf)}`, lean,
-    `Model scores: long ${f(d.bull_score, 0)} · short ${f(d.bear_score, 0)} · range ${f(d.range_score, 0)}<br>${isNum(rs.PDH) ? `More likely next: ${rs.PDL > rs.PDH ? `yesterday's low (${f(rs.PDL, 0)}%) before the high (${f(rs.PDH, 0)}%)` : `yesterday's high (${f(rs.PDH, 0)}%) before the low (${f(rs.PDL, 0)}%)`}<br>` : ""}<span class="dim">model scores, not a forecast</span>`);
+    `Model scores: long ${f(d.bull_score, 0)} · short ${f(d.bear_score, 0)} · range ${f(d.range_score, 0)}<br>${isNum(rs.PDH) ? `Reach scores (0–100, not probabilities): ${rs.PDL > rs.PDH ? `yesterday's low ${f(rs.PDL, 0)} · high ${f(rs.PDH, 0)}` : `yesterday's high ${f(rs.PDH, 0)} · low ${f(rs.PDL, 0)}`}<br>` : ""}<span class="dim">model scores, not a forecast · </span><b class="warn uncal">NOT CALIBRATED</b>`);
   // 3 last liquidity sweep
   const sw = lastSweep(D);
   const t3 = sw ? tile(sw.dir < 0 ? "bear" : "bull", "drop", "Last liquidity taken", `${sw.dir < 0 ? "Buy-side" : "Sell-side"} @ ${px(sw.px)}`,
@@ -1065,7 +1065,7 @@ function renderSide() {
   $("#plan-dir").title = sig ? "Side of the current signal." : "No signal on the last closed bar, so no entry, stop or target is published.";
   $("#plan-mt5").textContent = Number(S.mt5) ? `(MT5 ${fs(Number(S.mt5))})` : "";
   const planTxt = `XAUUSD ${M.tf} ${p.long ? "BUY" : "SELL"} | entry ${px(p.entry)} SL ${px(p.sl)} TP1 ${px(p.tp1)} TP2 ${px(p.tp2)} TP3 ${px(p.tp3)}`;
-  const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}%` : "—";
+  const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}% <b class="warn uncal">NOT CALIBRATED</b>` : "—";
   if (!sig) {
     const lp = livePrice(), pb = playbook(D, isNum(lp) ? lp : d.close);
     const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
@@ -1091,8 +1091,10 @@ function renderSide() {
   }
 
   const fitted = d.cal_fit && isNum(d.cal_fit[0]);
-  $("#p-state").textContent = fitted ? (d.cal_drift ? "DRIFT → raw" : "fitted in-sample") : "unfitted";
-  $("#p-state").className = "pill " + (fitted && !d.cal_drift ? "" : "warn");
+  // IA-02 (audit 2026-11-14): on 43 unique live trades the engine's p averaged 62.5% and 34.9% won (exact p 0.00017),
+  // worse than the no-edge geometry; every p / score on this page is labelled NOT CALIBRATED whatever the fit state.
+  $("#p-state").textContent = "NOT CALIBRATED · " + (fitted ? (d.cal_drift ? "drift → raw" : "fitted in-sample only") : "unfitted");
+  $("#p-state").className = "pill warn uncal";
   $("#p-state").title = "A calibration curve fitted on the development history. It is not validated out of sample, and on that history the scores did not separate winners from losers (F-A34). Measured against the event it is defined on (Amendment 12), the score did not rank outcomes (AUC about 0.5) and scored worse than a constant base rate: read it as a score, not a probability.";
   $("#prob").innerHTML = kv([
     ["Long score (0–100)", isNum(d.p_long) ? f(d.p_long * 100, 0) : "—"],
@@ -2039,7 +2041,7 @@ function renderConfirm() {
       <div class="dim">${esc(r.what || "")}</div>
       <div class="cf-stage">${(STAGE[r.status] || ((x) => esc(x.status || "")))(r)}</div>
       ${plan}
-      ${full ? `<div class="cf-prob"><b>Target-before-stop probability</b> (the chance that decides profit), measured after a $15 confirmation: +$15 before −$13 ${prob(r.kind, "X15 T15")} · +$20 before −$13 ${prob(r.kind, "X15 T20")} · ${stLabel(r.kind)}${hold}</div>
+      ${full ? `<div class="cf-prob"><b>Target-before-stop historical rate</b> (what decides profit; measured on past data, period shown on each figure; not a forecast and not a calibrated probability), after a $15 confirmation: +$15 before −$13 ${prob(r.kind, "X15 T15")} · +$20 before −$13 ${prob(r.kind, "X15 T20")} · ${stLabel(r.kind)}${hold}</div>
         <div class="dim">Target touch, stop ignored (not a profit measure): ${touch(r.kind)}</div>` : ""}
       ${full && ck ? `<div class="dim" title="${esc(ckTip)}">Confidence score ${ckn} / ${ckt} checks <span class="warn">(a count of conditions met, not a probability and not validated; B19 measured no gain from these checks)</span></div>` : ""}
       <div class="cf-verdict"><b class="${r.verdict === "TRADE" ? "bull" : r.verdict === "WAIT" ? "" : "warn"}">${esc(r.verdict || "")}</b>${vwhy ? ` · ${vwhy}` : ""}</div>
