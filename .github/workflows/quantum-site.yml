@@ -239,6 +239,13 @@ jobs:
       - id: deploy
         uses: actions/deploy-pages@v4
 
+      - name: "Smoke test: the live site answers and serves this run's files (a failure fails the run; alerts were already sent)"
+        # quantum/smoke.py: every built file is fetched from the live URL and must be byte-identical, and the data fresh.
+        # A failure here is allowed to fail the run: a site that does not serve the run's data is a real failure. The
+        # outage notice below is not triggered by it (the pipeline and the store save succeeded, so no alert is missing).
+        timeout-minutes: 6
+        run: python -m quantum.smoke --url "${{ steps.deploy.outputs.page_url }}" --site site
+
       - name: Outage notice (one phone message when alerts may be missing or repeated; never fails the run)
         # Added after the 2026-11-10 outage: 37 runs failed their test gate over 9 hours and nothing told the operator.
         # Runs after a failed step or a cancellation (a job timeout: a hung pipeline must not stay silent) and only when
