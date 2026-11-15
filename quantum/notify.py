@@ -325,15 +325,20 @@ def without_disclaimer(lines: list[str]) -> list[str]:
     return [x for x in lines if x not in TRADE_DISCLAIMER]
 
 
+# IA-07 (audit 2026-11-14): every trading alert opens with "NOT A VALIDATED SIGNAL — NO TRADE" (TRADE_DISCLAIMER), so the
+# order mapping is a condition, never an instruction: it says how to place the plan IF the operator takes it anyway.
+MT5_PREFIX = "ON MT5, ONLY IF YOU TAKE IT ANYWAY (not a validated signal):"
+
+
 def mt5_line(d: int, pl: dict) -> str:
     s, side = ("+", "-") if d == -1 else ("-", "+")
     if pl.get("tp2_px"):
         half = round(pl["lot"] / 2, 2)
-        return (f"ON MT5: {'BUY' if d == 1 else 'SELL'} 2 x {half:g} lot at market; SL on both = your fill {s} {pl['sl_px']:.2f}; "
+        return (f"{MT5_PREFIX} {'BUY' if d == 1 else 'SELL'} 2 x {half:g} lot at market; SL on both = your fill {s} {pl['sl_px']:.2f}; "
                 f"TP = your fill {side} {pl['tp_px']:.2f} on one and {side} {pl['tp2_px']:.2f} on the other; when the first "
                 f"closes at TP, move the other's SL to your fill (= -${pl['sl_usd']:,.0f} total / +${pl['tp_usd'] / 2:,.0f} "
                 f"then +${pl['tp2_usd'] / 2:,.0f}, at any broker price)")
-    return (f"ON MT5: {'BUY' if d == 1 else 'SELL'} at market, then SL = your fill {s} {pl['sl_px']:.2f}, "
+    return (f"{MT5_PREFIX} {'BUY' if d == 1 else 'SELL'} at market, then SL = your fill {s} {pl['sl_px']:.2f}, "
             f"TP = your fill {side} {pl['tp_px']:.2f} (= -${pl['sl_usd']:,.0f} / +${pl['tp_usd']:,.0f} at {pl['lot']:g} lot, "
             "at any broker price)")
 
@@ -541,8 +546,8 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             cl = context_line(payload, m["dir"], (ctx or {}).get("breaks") or []) if ctx is not None else None
             if cl:
                 out.append(cl)
-            if sixty() and tf in SIGNAL_RECORD:
-                out.append(SIGNAL_RECORD[tf])
+            if sixty() and tf in SIGNAL_RECORD_TFS:
+                out.append(signal_record_line((ctx or {}).get("eng")))
             mark(i0, m)
         elif signals_only:
             continue
@@ -1046,12 +1051,50 @@ def h4_events(t4: list, h4: list, l4: list, c4: list, bull4: list, bear4: list, 
 
 
 PHONE_TFS_SIXTY = ("15m",)
-# Operator, 2026-11-06: "ALERTS WITH MORE THAN 60% SUCCESSFUL TRADES ONLY". The one alert stream whose measured record is
-# above 60% (stop -$13): the engine's 15m signals, 64.3% of 70 at +$13 (B10, 2020-22) and 61.4% of 44 (B13-1, 2023-24,
-# not passed after Holm). 1h signals 40.0% of 25 (B10); 30m / 4h signals never measured; setups 51.6% (B17) / 45.8% (B18);
-# liquidity grabs 49.4% of 913 (B10). Live Sep-Nov 2026 the 15m signals did 31.8% of 22 (B9-explore): not proven.
-SIGNAL_RECORD = {"15m": "RECORD of 15m engine signals (stop -$13): 64% of 70 (2020-22), 61% of 44 (2023-24); live Sep-Nov 2026 "
-                        "32% of 22 | live test B15 running | the only alert above 60% on history, not proven"}
+# Operator, 2026-11-06: "ALERTS WITH MORE THAN 60% SUCCESSFUL TRADES ONLY". The 15m engine signals were chosen because,
+# counted once per SIGNAL, they did 64.3% of 70 at +$13 (B10, 2020-22) and 61.4% of 44 (B13-1, 2023-24). Counted once per
+# trade IDEA (the live REPEAT rule: same direction within 4 hours and $15), the research corrected these to 52.2% of 23
+# (research/B10_DEVELOPMENT_RESULTS.md) and 45.8% of 24, 15m-4h pooled (research/B13_RESULTS.md): no stream is above 60%.
+# Audit 2026-11-14 (IA-01): the phone's RECORD line is built from those per-idea counts and the live registered test
+# (B15-ENGINE-FWD), each with its Wilson 95% interval, never from fixed rate text.
+SIGNAL_RECORD_TFS = ("15m",)
+SIGNAL_RECORD_HIST = (("2020-22 15m", 12, 23), ("2023-24 15m-4h", 11, 24))   # (period, TP1 first, ideas) at +/-$13
+
+
+def eng_snapshot(store_dir: str | None) -> dict | None:
+    """The registered engine test's decided results so far (B15-ENGINE-FWD, as saved by the last run): n, TP1 first,
+    verdict. None when the record does not exist yet."""
+    path = os.path.join(store_dir, GRAB_DIR, ENG_FILE) if store_dir else None
+    if not path or not os.path.exists(path):
+        return None
+    try:
+        with open(path) as f:
+            book = json.load(f)
+    except (OSError, ValueError):
+        return None
+    dec = [x for x in book.get("trades") or [] if x.get("status") in ("TP", "SL")]
+    st = book.get("started_utc")
+    d0 = datetime.fromtimestamp(int(st), timezone.utc) if st else None
+    return {"n": len(dec), "tp": sum(1 for x in dec if x["status"] == "TP"), "verdict": book.get("verdict"),
+            "since": f"{d0.day} {d0:%b}" if d0 else None}
+
+
+def signal_record_line(eng: dict | None) -> str:
+    """The RECORD line under each 15m engine signal (sixty mode): history counted once per trade idea, the live test,
+    each with its Wilson 95% interval, against no edge (50%) and break-even."""
+    def part(label: str, k: int, n: int) -> str:
+        lo, hi = _wilson(k, n)
+        return f"{label} {k} of {n} = {k / n:.0%} (95% {lo:.0%}-{hi:.0%})"
+    hist = " | ".join(part(*h) for h in SIGNAL_RECORD_HIST)
+    v = (eng or {}).get("verdict")
+    if eng and eng.get("n"):
+        live = part(f"live B15{' since ' + eng['since'] if eng.get('since') else ''}, 15m-4h", int(eng["tp"]), int(eng["n"]))
+    else:
+        live = "live B15: no result yet"
+    status = (f"B15 {v['verdict']} at {v['at_n']} results" if v else "B15 collecting, no verdict") + \
+        ("" if v and v.get("verdict") == "PROVEN" else "; no edge shown")
+    return (f"RECORD of engine signals, one count per trade idea, TP1 +$13 before SL -$13 (no edge 50%, break-even "
+            f"{ENG_BE:.0%}): {hist} | {live} | {status}")
 
 
 def alert_mode() -> str:
@@ -1370,7 +1413,7 @@ def grab_lines_new(tr: dict, now: dict | None, off: float = 0.0) -> list[str]:
     if late:
         out.append(late)
     out.append(f"TEST TRADE: entry {_fmt(tr['entry'], off)} TP {_fmt(tr['tp'], off)} (+$650) SL {_fmt(tr['sl'], off)} (-$650) | "
-               f"ON MT5: {side} at market, then SL = your fill {s1} {GRAB_SL:.2f}, TP = your fill {s2} {GRAB_TP:.2f}")
+               f"{MT5_PREFIX} {side} at market, then SL = your fill {s1} {GRAB_SL:.2f}, TP = your fill {s2} {GRAB_TP:.2f}")
     if timing:
         out.append(timing)
     return out
@@ -2774,6 +2817,7 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
     if vpath and os.path.exists(vpath):
         with open(vpath) as f:
             vlog = json.load(f)
+    eng_snap = eng_snapshot(store_dir)                     # IA-01: the RECORD line's live part (last saved B15 record)
     for tf in tfs:
         p = payloads.get(tf)
         if not p or p["meta"]["synthetic"]:
@@ -2844,7 +2888,7 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                 if fresh.get(m["t"], {}).get("state", "FRESH") != "FRESH":
                     gate_note(state, f"plan:{state['plan_seq']}", fresh[m["t"]])
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf),
-               "fresh": fresh, "quiet": gate_quiet(state, "plan")}
+               "fresh": fresh, "quiet": gate_quiet(state, "plan"), "eng": eng_snap}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
         msg_refs = []
         lines = upd + messages(p, since, now, ctx, refs=None if sixty() else msg_refs) + ([] if quality() else ll)

@@ -14,6 +14,7 @@ const S = {
   mt5: store.get("mt5", 0),
   tz: store.get("tz", "local"),
   account: store.get("account", null),
+  riskPct: store.get("risk_pct", null),
   cfRisk: store.get("cf_risk", 1),          // the confirmation card's risk % (default 1%; display only)
   costProfile: store.get("cost_profile", "engine"),
   costCustom: store.get("cost_custom", null),
@@ -918,14 +919,40 @@ function rrEntry(x, ov, through, price) {
   const v = (Math.abs(x.tp1 - x.trigger) / D - ov) / (1 + ov);
   return { v, how: `from a typical entry (the close lands a median ${f(ov, 2)} stop distances past the trigger)` };
 }
+// IA-04 (audit 2026-11-14): the engine's levels (structure / ATR stop, liquidity targets; the engine's EV gate is computed
+// on them) are not the plan the phone sends (fixed dollars, index.json -> alerts.plans.cfg). Wherever levels are shown,
+// the engine's are named "engine" and the phone's plan is shown beside them.
+function myPlanPx(dir, entry) {
+  const c = S.index && S.index.alerts && S.index.alerts.plans && S.index.alerts.plans.cfg;
+  if (!c || !isNum(entry) || !(c.lot > 0) || !(c.sl_usd > 0) || !(c.tp_usd > 0)) return null;
+  const oz = c.lot * 100, d = dir < 0 ? -1 : 1;
+  return { sl: entry - d * c.sl_usd / oz, tp1: entry + d * c.tp_usd / oz, tp2: c.tp2_usd > c.tp_usd ? entry + d * c.tp2_usd / oz : null, lot: c.lot };
+}
+function myPlanHtml(dir, entry, lead) {
+  const m = myPlanPx(dir, entry);
+  return m ? `<div class="pbx myplan"><b>${lead}</b> stop ${px(m.sl)} · TP1 ${px(m.tp1)}${isNum(m.tp2) ? ` · TP2 ${px(m.tp2)}` : ""} ` +
+    `<span class="dim">(${f(m.lot, 2)} lot, fixed $ from the entry; the engine levels are a reference, not your plan)</span></div>` : "";
+}
 function pbLine(x, tf, primary, ov) {
   if (!x) return "";
   const s = x.dir < 0, through = isNum(x.dist) && (s ? x.dist > 0 : x.dist < 0);   // live price already beyond the trigger
   const re = rrEntry(x, ov, through, isNum(x.dist) ? x.trigger - x.dist : null);
   return `<div class="pb ${s ? "bear" : "bull"}${primary ? " prim" : ""}"><div class="pbh"><b>${s ? "▼ SELL" : "▲ BUY"}</b> if a ${esc(tf)} bar closes ${s ? "below" : "above"} <b>${px(x.trigger)}</b> <span class="dim">${esc(lvl(x.tname))}</span>${primary ? '<span class="tagp">primary</span>' : ""}</div>` +
-    `<div class="pl"><span><i>Stop</i><b class="bear">${px(x.stop)}</b></span><span title="${esc(lvl(x.tp1n))}"><i>Target 1 · ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
-    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span title="Measured from the trigger level"><i>Reward:risk at trigger</i><b>${f(x.rr, 1)} : 1</b></span>${re ? `<span title="${esc(re.how)}"><i>From entry</i><b class="${re.v < 1 ? "warn" : ""}">${f(re.v, 1)} : 1</b></span>` : ""}<span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
-    (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") + `</div>`;
+    `<div class="pl"><span><i>Engine stop</i><b class="bear">${px(x.stop)}</b></span><span title="${esc(lvl(x.tp1n))}"><i>Engine target 1 · ${esc(x.tp1n)}</i><b class="bull">${px(x.tp1)}</b></span>` +
+    (isNum(x.tp2) && x.tp2 !== x.tp1 ? `<span title="${esc(lvl(x.tp2n))}"><i>Engine target 2 · ${esc(x.tp2n)}</i><b class="bull">${px(x.tp2)}</b></span>` : "") + `<span title="Measured from the trigger level"><i>Reward:risk at trigger</i><b>${f(x.rr, 1)} : 1</b></span>${re ? `<span title="${esc(re.how)}"><i>From entry</i><b class="${re.v < 1 ? "warn" : ""}">${f(re.v, 1)} : 1</b></span>` : ""}<span title="trigger minus live price"><i>Distance</i><b>${fs(x.dist, 2)}</b></span></div>` +
+    (through ? `<div class="pbx warn">Price is through it: fires if this ${esc(tf)} bar closes here.</div>` : "") +
+    myPlanHtml(x.dir, x.trigger, "Your plan if it fires (what the phone sends):") + `</div>`;
+}
+// IA-13 (audit 2026-11-14): position size = a FIXED risk % of the account (the viewer's choice, default the config's
+// risk_percent). Kelly needs a validated win rate and the engine's is not (43 live trades: p 62.5% on average, 34.9% won),
+// so Kelly is shown for reference only and never sizes a trade.
+const RISK_MAX = 5;
+function riskPctFixed() {
+  const v = Number(S.riskPct), cfg = S.data && S.data.meta && S.data.meta.config;
+  return isNum(v) && v > 0 && v <= RISK_MAX ? v : cfg && isNum(cfg.risk_percent) && cfg.risk_percent > 0 ? cfg.risk_percent : 1.0;
+}
+function fixedLots(acct, perLot) {
+  return perLot > 0 && acct > 0 ? Math.floor((acct * riskPctFixed() / 100 / perLot) / 0.01 + 1e-9) * 0.01 : 0;
 }
 function renderBrief() {
   const el = $("#brief"), D = S.data; if (!el || !D) return;
@@ -945,7 +972,7 @@ function renderBrief() {
   const rs = (d.liquidity && d.liquidity.reach_scores) || {};
   const lean = Math.abs(d.bull_score - d.bear_score) < 5 ? "No clear lean" : up ? "Leaning up" : "Leaning down";
   const t2 = tile(lean === "No clear lean" ? "" : up ? "bull" : "bear", lean === "No clear lean" ? "side" : up ? "up" : "dn", `Where it is heading · ${esc(M.tf)}`, lean,
-    `Model scores: long ${f(d.bull_score, 0)} · short ${f(d.bear_score, 0)} · range ${f(d.range_score, 0)}<br>${isNum(rs.PDH) ? `More likely next: ${rs.PDL > rs.PDH ? `yesterday's low (${f(rs.PDL, 0)}%) before the high (${f(rs.PDH, 0)}%)` : `yesterday's high (${f(rs.PDH, 0)}%) before the low (${f(rs.PDL, 0)}%)`}<br>` : ""}<span class="dim">model scores, not a forecast</span>`);
+    `Model scores: long ${f(d.bull_score, 0)} · short ${f(d.bear_score, 0)} · range ${f(d.range_score, 0)}<br>${isNum(rs.PDH) ? `Reach scores (0–100, not probabilities): ${rs.PDL > rs.PDH ? `yesterday's low ${f(rs.PDL, 0)} · high ${f(rs.PDH, 0)}` : `yesterday's high ${f(rs.PDH, 0)} · low ${f(rs.PDL, 0)}`}<br>` : ""}<span class="dim">model scores, not a forecast · </span><b class="warn uncal">NOT CALIBRATED</b>`);
   // 3 last liquidity sweep
   const sw = lastSweep(D);
   const t3 = sw ? tile(sw.dir < 0 ? "bear" : "bull", "drop", "Last liquidity taken", `${sw.dir < 0 ? "Buy-side" : "Sell-side"} @ ${px(sw.px)}`,
@@ -984,8 +1011,8 @@ function renderBrief() {
     <div class="bs">Model decision: <b>${esc(dec)}</b>. ${h4rec(D)}${pb && pb.lowSession ? ' <b class="warn">Thin trading hours now.</b>' : ""}</div></div>`
     : `<div class="bt plan ${p.long ? "bull" : "bear"}"><div class="bk">${IC.plan}Trade plan · ${p.long ? "LONG" : "SHORT"}</div>
     <div class="bv"><span class="${p.long ? "bull" : "bear"}">${p.long ? "BUY" : "SELL"}</span> ${px(p.entry)}</div>
-    <div class="pl"><span><i>Stop</i><b class="bear">${px(p.sl)}</b></span><span><i>TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>
-    <div class="bs">Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")}${d.kelly ? ` · risk ${f(d.kelly.kelly_pct, 2)}%` : ""}</div></div>`;
+    <div class="pl"><span><i>Engine stop</i><b class="bear">${px(p.sl)}</b></span><span><i>Engine TP1</i><b class="bull">${px(p.tp1)}</b></span><span><i>Engine TP2</i><b class="bull">${px(p.tp2)}</b></span><span><i>Engine TP3</i><b class="bull">${px(p.tp3)}</b></span><span><i>R:R</i><b>1:${f(p.rr1, 1)}</b></span></div>${myPlanHtml(p.long ? 1 : -1, p.entry, "Your plan (what the phone sends):")}
+    <div class="bs">Price ${px(price)} · to stop <b class="bear">${fs(p.sl - price, 2)}</b> · to TP1 <b class="bull">${fs(p.tp1 - price, 2)}</b><br>${esc((p.tp_basis || []).length ? `Targets ${p.tp_basis.join(" / ")} · stop ${p.sl_basis || ""}` : "")} · risk ${f(riskPctFixed(), 2)}% of the account (fixed)</div></div>`;
   el.innerHTML = `<div class="bhd"><span class="btitle">Market brief</span><span class="lpill" id="brief-live"></span><span class="bpx">${px(price)}</span>` +
     `<span class="dim">XAUUSD · ${esc(M.tf)} · analysis as of the candle that closed ${tfmt(Date.parse(M.last_bar_close) / 1000)}</span><span class="dim clk" id="brief-clock"></span></div>
     <div class="bgrid">${t1}${t2}${t3}${t4}${t5}${t6}</div>`;
@@ -1065,23 +1092,24 @@ function renderSide() {
   $("#plan-dir").title = sig ? "Side of the current signal." : "No signal on the last closed bar, so no entry, stop or target is published.";
   $("#plan-mt5").textContent = Number(S.mt5) ? `(MT5 ${fs(Number(S.mt5))})` : "";
   const planTxt = `XAUUSD ${M.tf} ${p.long ? "BUY" : "SELL"} | entry ${px(p.entry)} SL ${px(p.sl)} TP1 ${px(p.tp1)} TP2 ${px(p.tp2)} TP3 ${px(p.tp3)}`;
-  const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}%` : "—";
+  const touch = isNum(p.p_tp1) ? `~${f(p.p_tp1, 0)} / ${f(p.p_tp2, 0)} / ${f(p.p_tp3, 0)}% · SL ~${f(p.p_sl, 0)}% <b class="warn uncal">NOT CALIBRATED</b>` : "—";
   if (!sig) {
     const lp = livePrice(), pb = playbook(D, isNum(lp) ? lp : d.close);
     const order = pb ? [pb.buy, pb.sell] : [];       // price order, as on the chart: BUY trigger above price, SELL below
     $("#plan").innerHTML = `<div class="noplan"><b>No model signal right now</b> (decision: ${esc(dec)}). If-then plan from the current levels:</div>` +
       (pb ? order.map((x) => pbLine(x, M.tf, x && pb.primary === x.dir, D.h4 && D.h4.entry_overshoot ? D.h4.entry_overshoot.median : null)).join("") : "") +
-      `<p class="note">Act only when a ${esc(M.tf)} candle closes beyond the trigger. The stop sits ${pb ? f(pb.stopD, 2) : "—"} beyond it (the model's volatility-based stop); targets are the next liquidity levels at least one stop distance further. ${h4rec(D)}</p>`;
+      `<p class="note">Act only when a ${esc(M.tf)} candle closes beyond the trigger. The engine's stop sits ${pb ? f(pb.stopD, 2) : "—"} beyond it (the model's volatility-based stop) and its targets are the next liquidity levels at least one stop distance further: <b>reference levels; the phone sends your fixed plan (shown on each line), and the engine's EV check is computed on the engine levels, not on your plan</b>. ${h4rec(D)}</p>`;
   } else {
   $("#plan").innerHTML = `
     <div class="plan-grid">
       <div class="cell"><div class="k">Entry</div><div class="v">${px(p.entry)}</div></div>
-      <div class="cell sl"><div class="k">Stop · ${esc(p.sl_basis)}</div><div class="v">${px(p.sl)}</div></div>
+      <div class="cell sl"><div class="k">Engine stop · ${esc(p.sl_basis)}</div><div class="v">${px(p.sl)}</div></div>
       <div class="cell"><div class="k">Risk</div><div class="v">${f(p.dist, 2)}</div></div>
-      <div class="cell tp"><div class="k">TP1 · ${esc(p.tp_basis[0])}</div><div class="v">${px(p.tp1)}</div></div>
-      <div class="cell tp"><div class="k">TP2 · ${esc(p.tp_basis[1])}</div><div class="v">${px(p.tp2)}</div></div>
-      <div class="cell tp"><div class="k">TP3 · ${esc(p.tp_basis[2])}</div><div class="v">${px(p.tp3)}</div></div>
+      <div class="cell tp"><div class="k">Engine TP1 · ${esc(p.tp_basis[0])}</div><div class="v">${px(p.tp1)}</div></div>
+      <div class="cell tp"><div class="k">Engine TP2 · ${esc(p.tp_basis[1])}</div><div class="v">${px(p.tp2)}</div></div>
+      <div class="cell tp"><div class="k">Engine TP3 · ${esc(p.tp_basis[2])}</div><div class="v">${px(p.tp3)}</div></div>
     </div>
+    ${myPlanHtml(p.long ? 1 : -1, p.entry, "Your plan (what the phone sends):")}
     ${kv([["R multiples", `1:${f(p.rr1, 1)} / 1:${f(p.rr2, 1)} / 1:${f(p.rr3, 1)}`],
       ["Race EV (TP1 vs SL)", isNum(p.ev) ? `<span class="${p.ev >= 0 ? "bull" : "bear"}">${fs(p.ev, 2)} R</span> <span class="dim">n${f(p.race_n, 0)}</span>` : "—"],
       [`Touch within ${p.horizon_bars} bars`, touch]])}
@@ -1091,8 +1119,10 @@ function renderSide() {
   }
 
   const fitted = d.cal_fit && isNum(d.cal_fit[0]);
-  $("#p-state").textContent = fitted ? (d.cal_drift ? "DRIFT → raw" : "fitted in-sample") : "unfitted";
-  $("#p-state").className = "pill " + (fitted && !d.cal_drift ? "" : "warn");
+  // IA-02 (audit 2026-11-14): on 43 unique live trades the engine's p averaged 62.5% and 34.9% won (exact p 0.00017),
+  // worse than the no-edge geometry; every p / score on this page is labelled NOT CALIBRATED whatever the fit state.
+  $("#p-state").textContent = "NOT CALIBRATED · " + (fitted ? (d.cal_drift ? "drift → raw" : "fitted in-sample only") : "unfitted");
+  $("#p-state").className = "pill warn uncal";
   $("#p-state").title = "A calibration curve fitted on the development history. It is not validated out of sample, and on that history the scores did not separate winners from losers (F-A34). Measured against the event it is defined on (Amendment 12), the score did not rank outcomes (AUC about 0.5) and scored worse than a constant base rate: read it as a score, not a probability.";
   $("#prob").innerHTML = kv([
     ["Long score (0–100)", isNum(d.p_long) ? f(d.p_long * 100, 0) : "—"],
@@ -1130,21 +1160,23 @@ function renderSide() {
   const BASIS = { per_side: "per side (charged twice)", round_turn: "round turn", open_only: "on opening only", unconfirmed: "basis not published: sized as per side (higher)" };
   const profSel = profs.length ? `<select id="cost-prof" style="width:100%;max-width:260px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)">${profs.map((x) => `<option value="${esc(x.id)}"${prof && x.id === prof.id ? " selected" : ""}>${esc(x.firm)} · ${esc(x.account)}</option>`).join("")}</select>` : "—";
   const customRow = prof && prof.id === "custom" ? `<span class="dim">type</span> <select id="cc-type"><option value="fixed"${prof.commission.type === "fixed" ? " selected" : ""}>$ / lot</option><option value="pct"${prof.commission.type === "pct" ? " selected" : ""}>% notional</option></select> <input id="cc-rate" type="number" step="0.0001" value="${prof.commission.rate}" style="width:70px"> <select id="cc-basis">${["round_turn", "per_side", "open_only"].map((b) => `<option value="${b}"${prof.commission.basis === b ? " selected" : ""}>${b.replace("_", " ")}</option>`).join("")}</select> <span class="dim">spread</span> <input id="cc-spread" type="number" step="0.01" placeholder="engine" value="${prof.spread.mode === "fixed" ? prof.spread.value : ""}" style="width:60px"> <span class="dim">slip/side</span> <input id="cc-slip" type="number" step="0.01" value="${prof.slippage}" style="width:55px">` : "";
-  const lots = sig && p.dist > 0 ? Math.floor((acct * Math.max(k.kelly_pct, 0) / 100 / perLot) / 0.01 + 1e-9) * 0.01 : 0;
+  const lots = sig && p.dist > 0 ? fixedLots(acct, perLot) : 0;
   $("#risk-state").textContent = d.risk.lock ? "LOCKED" : "open";
   $("#risk-state").className = "pill " + (d.risk.lock ? "bear" : "bull");
   $("#risk").innerHTML = kv([
     ["Tracker today", esc(d.risk.lock_str || "—")],
     ["Open tracked plan", isNum(d.risk.open_entry) ? `${d.risk.open_long ? "BUY" : "SELL"} ${px(d.risk.open_entry)} → SL ${px(d.risk.open_sl)} / TP1 ${px(d.risk.open_tp)}` : "none"],
-    ["Kelly (half, Wilson LB)", sig ? `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span>` : '<span class="dim">no signal: nothing to size</span>'],
+    ["Risk per trade (fixed)", `<input id="riskpct" type="number" step="0.1" min="0.1" max="${RISK_MAX}" value="${riskPctFixed()}" style="width:64px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"> % of the account <span class="dim">(sizes every trade)</span>`],
+    ["Kelly (half, Wilson LB)", `${sig ? `${f(k.kelly_pct, 2)}% <span class="dim">${esc(k.detail)}</span> · ` : ""}<span class="warn">not used for sizing: the win rate it needs is not validated</span>`],
     ["Account", `<input id="acct" type="number" value="${acct}" style="width:90px;background:var(--bg-2);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:2px 5px;font:12px var(--mono)"> USD`],
-    ["Lots (100 oz)", lots >= 0.01 ? f(lots, 2) : (k.kelly_pct > 0 ? "below 0.01 minimum" : "0 (no edge sized)")],
+    ["Lots (100 oz)", !sig ? '<span class="dim">no signal: nothing to size</span>' : lots >= 0.01 ? `${f(lots, 2)} <span class="dim">at ${f(riskPctFixed(), 2)}% risk</span>` : "below 0.01 minimum"],
     ["Cost profile", profSel],
     ...(customRow ? [["Custom costs", customRow]] : []),
     ["Commission (round trip, 1 lot)", prof && isNum(commLot) ? `$${f(commLot, 2)} <span class="dim">${esc(BASIS[prof.commission.basis] || prof.commission.basis)} · <b class="${prof.status === "FROZEN" ? "" : "warn"}">${esc(prof.status)}</b></span>` : "—"],
     ["Loss at stop per lot", sig && perLot > 0 ? `$${f(perLot, 0)} <span class="dim">stop ${f(p.dist, 2)} + costs ${isNum(costOz) ? f(costOz, 2) : "—"} per oz × 100 oz${newsMult > 1 ? ` (spread + slippage ×${newsMult}: news window)` : ""}</span>` : "—"],
   ]) + checksHtml(D, NW, costOz) + `<p class="note">Sizing is a ceiling (floored to 0.01 lot) and includes spread, slippage and commission for the selected account, so the loss at the stop stays within the risk %. <b>UNVERIFIED</b> rates are the firm's published figures, not yet confirmed from your MT5 history; the forward test always uses the frozen engine costs.${prof && prof.note ? " " + esc(prof.note) : ""} The tracker follows the engine's own signals in virtual R; it cannot see your broker account.</p>`;
   $("#acct").onchange = (e) => { S.account = Number(e.target.value) || null; store.set("account", S.account); renderSide(); };
+  $("#riskpct").onchange = (e) => { const v = Number(e.target.value); S.riskPct = isNum(v) && v > 0 && v <= RISK_MAX ? v : null; store.set("risk_pct", S.riskPct); renderSide(); };
   const capIn = (q, key) => { const el = $(q); if (el) el.onchange = (e) => { const v = Number(e.target.value); S[key] = isNum(v) ? v : null; store.set(key === "todayR" ? "today_r" : "cap_r", S[key]); renderSide(); }; };
   capIn("#today-r", "todayR"); capIn("#cap-r", "capR");
   const cp = $("#cost-prof"); if (cp) cp.onchange = (e) => { S.costProfile = e.target.value; store.set("cost_profile", S.costProfile); renderSide(); };
@@ -1943,7 +1975,7 @@ function renderStrip() {
     cell("Liquidity draw", esc(d.liquidity ? d.liquidity.dest : "—"), `PDH ${px(lq.PDH)} · PDL ${px(lq.PDL)}`),
     cell("Price", px(d.close), `VWAP D ${px(vw)}`),
     cell("Macro", esc(d.macro ? d.macro.label : "—"), d.macro ? `${fs(d.macro.strength, 0)} · votes ${d.macro.bull_votes}/${d.macro.bear_votes}` : ""),
-    cell("Risk", isNum(p.rr1) ? `1:${f(p.rr1, 1)} · SL ${f(p.dist, 2)}` : "—", `Kelly ${d.kelly ? f(d.kelly.kelly_pct, 2) : "—"}%${sig ? "" : " · no signal"}`),
+    cell("Risk", isNum(p.rr1) ? `1:${f(p.rr1, 1)} · SL ${f(p.dist, 2)}` : "—", `risk ${f(riskPctFixed(), 2)}% fixed${sig ? "" : " · no signal"}`),
     cell("Decision", `${esc(dec)} · TQ ${d.trade_quality}${esc(d.tq_grade || "")}`, `${esc(d.bias_label)} · ${esc(d.session.label)} ${d.session.quality}/30`, dec === "NO TRADE" || dec === "RISK LOCK" ? "warn" : ""),
   ].join("");
 }
@@ -2039,7 +2071,7 @@ function renderConfirm() {
       <div class="dim">${esc(r.what || "")}</div>
       <div class="cf-stage">${(STAGE[r.status] || ((x) => esc(x.status || "")))(r)}</div>
       ${plan}
-      ${full ? `<div class="cf-prob"><b>Target-before-stop probability</b> (the chance that decides profit), measured after a $15 confirmation: +$15 before −$13 ${prob(r.kind, "X15 T15")} · +$20 before −$13 ${prob(r.kind, "X15 T20")} · ${stLabel(r.kind)}${hold}</div>
+      ${full ? `<div class="cf-prob"><b>Target-before-stop historical rate</b> (what decides profit; measured on past data, period shown on each figure; not a forecast and not a calibrated probability), after a $15 confirmation: +$15 before −$13 ${prob(r.kind, "X15 T15")} · +$20 before −$13 ${prob(r.kind, "X15 T20")} · ${stLabel(r.kind)}${hold}</div>
         <div class="dim">Target touch, stop ignored (not a profit measure): ${touch(r.kind)}</div>` : ""}
       ${full && ck ? `<div class="dim" title="${esc(ckTip)}">Confidence score ${ckn} / ${ckt} checks <span class="warn">(a count of conditions met, not a probability and not validated; B19 measured no gain from these checks)</span></div>` : ""}
       <div class="cf-verdict"><b class="${r.verdict === "TRADE" ? "bull" : r.verdict === "WAIT" ? "" : "warn"}">${esc(r.verdict || "")}</b>${vwhy ? ` · ${vwhy}` : ""}</div>
@@ -2248,7 +2280,7 @@ function renderPlanAlerts() {
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
       <div>Break-even after costs</div><div>${pct(100 * P.break_even)}${isNum(P.cost_oz) ? ` at your $${f(P.cost_oz, 2)}/oz cost` : ""}${P.break_even_model && P.cost_model_oz ? ` · ${pct(100 * P.break_even_model[0])}–${pct(100 * P.break_even_model[1])} at the research cost model ($${f(P.cost_model_oz[0], 2)}–${f(P.cost_model_oz[1], 2)}/oz) · <span class="warn">neither broker-verified</span>` : ""}</div>
       <div>Phone alerts</div><div class="${on ? "bull" : "warn"}">${on ? "ON via " + esc(ch.join(", ")) : "OFF · add the NTFY_TOPIC secret"}</div>
-      <div>Signals alerted</div><div>${P.mode === "sixty" ? `<b>phone: ${esc((P.phone_tfs || []).join(", ") || "none")} only</b> (the one alert with a record above 60%: 64% of 70 and 61% of 44, not proven) · tracked: ${esc((P.tfs || []).join(", ") || "—")}` : esc((P.tfs || []).join(", ") || "—")}</div>
+      <div>Signals alerted</div><div>${P.mode === "sixty" ? `<b>phone: ${esc((P.phone_tfs || []).join(", ") || "none")} only</b> (chosen on 64% of 70 and 61% of 44 counted per signal; counted once per trade idea 52% of 23 and 46% of 24: no stream is above 60%, none proven) · tracked: ${esc((P.tfs || []).join(", ") || "—")}` : esc((P.tfs || []).join(", ") || "—")}</div>
       <div>On MT5</div><div>SL ${isNum(dSl) ? "$" + f(dSl, 2) : "—"} and TP ${isNum(dTp) ? "$" + f(dTp, 2) : "—"}${c.tp2_usd && c.lot > 0 ? ` (TP2 $${f(c.tp2_usd / (c.lot * 100), 2)} on the second half)` : ""} from <b>your fill</b>: right at any broker price</div>
       <div>Alert delay</div><div>${delay}</div>
       <div>Liquidity alerts</div><div>${L.on === false ? "OFF" : L.on ? `ON · near = within $${f(L.near_usd, 2)} · grab / break once per pool per day` : "—"}</div></div>
