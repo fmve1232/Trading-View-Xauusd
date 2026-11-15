@@ -20,7 +20,8 @@
     "eligibility (operator's option a)": "net reward / net risk on the LADDER, not on TP1 alone: (15 - cost) / (D + cost) >= 1.0, where 15 is the mean of the thirds at +10 / +15 / +20. The other checks are B31's: stop D >= $5, cost <= 15% of D, no opposing pool closer than TP1 (+$10), and for D the VWAP beyond TP1. Every rejection and its reason is recorded.",
     "control": "for every executed trade, the same bar, entry, stop distance and targets with the direction chosen by a fair coin. Its expected outcome is the exact mean of the two directions (the trade and its mirror), so no random number is drawn.",
     "score": "B31's 100-point score is not computed: its out-of-sample AUC was 0.47 (research/B31_RESULTS.md section 4)",
-    "volume (recorded, not a filter)": "the futures volume of the structure / break bar relative to its 20-bar mean, for a secondary with / without volume comparison"
+    "volume (recorded, not a filter)": "the futures volume of the structure / break bar relative to its 20-bar mean, for a secondary with / without volume comparison",
+    "distances (clarified before any code, 2026-11-15)": "literal dollars, unscaled (s = 1): TP1 +$10.00, TP2 +$15.00, TP3 +$20.00, the $5 minimum stop and the $15 / 4 h REPEAT window are prices in $, as the operator's objective states them. B31 scaled distances by price / 4000 only to compare 2020-25 price levels; over a forward test the level barely moves."
   },
   "timeliness_and_integrity": {
     "timely": "a setup is PRIMARY only if the run that first records it ran no later than 30 minutes after its order bar closed; later ones are recorded as LATE and reported apart (no retrospective signals in the primary)",
