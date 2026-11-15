@@ -63,6 +63,11 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Workflow files (actionlint; a workflow file GitHub cannot parse stops every run of it, with no log)
+        run: |
+          pip install --quiet actionlint-py==1.7.7.23
+          actionlint -shellcheck= -pyflakes= .github/workflows/*.yml && echo "actionlint: all workflow files OK"
+
       - name: Frozen-file manifest (audit/MANIFEST.sha256)
         run: sha256sum -c audit/MANIFEST.sha256 --quiet && echo "MANIFEST all OK"
 
