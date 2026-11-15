@@ -299,6 +299,11 @@ def run(market, cfg: Config, arm: str = "treatment", F: dict | None = None) -> R
             if crossed_week[i]:
                 prev_ny_wh, prev_ny_wl = ny_wh, ny_wl
                 ny_wh, ny_wl = hi_, li
+            else:
+                # F1 (IA-05, proposed amendment, docs/PLATFORM.md D-14): the first bar of each trading day that is not the
+                # week's first belongs to the week too. Pine Master 657-666 (frozen reference) omits it.
+                ny_wh = max(nz(ny_wh, hi_), hi_)
+                ny_wl = min(nz(ny_wl, li), li)
         else:
             ny_dh = max(nz(ny_dh, hi_), hi_)
             ny_dl = min(nz(ny_dl, li), li)
