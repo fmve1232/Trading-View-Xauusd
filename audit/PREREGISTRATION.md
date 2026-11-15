@@ -1141,3 +1141,39 @@ No threshold or weight changes. The Pine artefacts are unchanged; the difference
    - B15 has `ended_utc` equal to B15b's `started_utc`;
    - the H6 files are byte-identical to before the run.
 5. Record the start here (key, time, run ID), as for Amendments 9, 14 and 15.
+
+**Amendment F start record (2026-11-15 UTC; facts only, nothing decided here).**
+
+Merges:
+- PR #114 was merged as `5e336040564d9984ef3a76f6261ffae9b7a85a66`, last of the 13 open pull requests (#105–#117). The production tree
+  after it equals the tree tested locally (`e3d34b33…`).
+- The first site run then failed to start. PR #112's workflow change had made `quantum-site.yml` invalid YAML (an unquoted
+  `: ` in a step name), so every run had failed when it was created since 09:38 UTC. The market was closed and no run
+  was lost while it was open.
+- The operator approved the one-line fix: PR #118, merged as `7717c7de9b3d6ea9756626d349c9934e38032013`. It also adds actionlint to the
+  pull-request checks.
+
+The run: `quantum-site` #3290 (Actions run 43710244436, workflow_dispatch, all steps green). It recorded the following
+on `forward-ledger` @ `07431676c17c8013c1f14fd9ed1dc2be41f36421`.
+
+| Item | Value |
+|---|---|
+| Main key | `1f88aad357497da4:4440d52587f5cc6b` |
+| Engine label | Q7.2-web.8 (unchanged; the key distinguishes the engines) |
+| Freeze (start) | **2026-11-15 11:46:48.501212 UTC** |
+| Status | RESET |
+
+- The web.8 key `5e4630924d663fc5:a6f2be58c74887ed` (2026-11-03 23:47:43 → 2026-11-15 11:46:48) is in `history`.
+- H2, H3, H4 and H5 restarted at the same time, under the new key and their unchanged arm hashes. Each keeps its old key in
+  its manifest's `history`.
+
+**Records, checked against the `forward-ledger` snapshot before the run (`d7f39d43…`, 04:28 UTC):**
+
+- 1,876 ledger entries before and 1,876 after, none lost. Every old-key entry is now in `holdout/archive/`. Archive
+  files went from 24 to 29, and none shrank. Every live ledger except H6's holds only new-key entries.
+- H6's manifest and its five ledgers are byte-identical to before (closed, read only).
+- B15-ENGINE-FWD has `ended_utc` 1794743289 (2026-11-15 11:48:09 UTC), equal to B15b-ENGINE-FWD's `started_utc`.
+  B15's final record is 13 decided, 5 TP1 first, no verdict. B15b has no trade yet.
+- B9-GRAB-FWD continues: 12 trades, no verdict.
+- Run checks: 0 problems on 15m, 30m, 1h, 4h and 5m. 11 payloads were archived as `payloads-43710244436-1`, with their SHA-256 in
+  the run manifest.
