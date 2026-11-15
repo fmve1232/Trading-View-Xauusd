@@ -833,7 +833,7 @@
 26
 ],
 "GC_F_1d/2026-11.csv": [
-"40c2b72443c47d3a9f38144f6a92ec2d5a2ef60f186a3f5b37a625f6bdd94d47",
+"b3c69b12ffbee66293ce19d053f6674dff9408fbeee689c1ecea82d6239fe6fd",
 12
 ],
 "GC_F_30m/2026-08.csv": [
@@ -877,7 +877,7 @@
 454
 ],
 "GC_F_60m/2024-06.csv": [
-"32d2da5b0772ff4fdf07df0c4e933a6e5f99ecc7b5fe6b28b949d55a404be851",
+"144f449d414ddd05dc28b0b6889680e3c9a4cd1f40364fd6704c75b62fa5655c",
 439
 ],
 "GC_F_60m/2024-07.csv": [
@@ -1057,7 +1057,7 @@
 454
 ],
 "SI_F_60m/2024-06.csv": [
-"d60a41184f851b4132dc356e43323e86e32fd896e33446ac63ae5a28e1c7710c",
+"4e63eafe81e2f6ce92a618c74d65927a6e680da947968275560734ed2ce3d50c",
 439
 ],
 "SI_F_60m/2024-07.csv": [
@@ -1189,8 +1189,8 @@
 2976
 ],
 "XAU_USD_15m/2026-11.csv": [
-"434030381891e0420b49bccb6f78aac7ebb24cf9230056b0b074396a89682e22",
-1362
+"f8bda7d5a7fecbc64a56483758262f48fbf7cbb3543c664f9268f9a6cfe29551",
+1392
 ],
 "XAU_USD_1d/2007-08.csv": [
 "35bd40893380f88d5f32a5e2a347f9aecef781ef205059d540011eb7759df765",
@@ -2117,7 +2117,7 @@
 31
 ],
 "XAU_USD_1d/2026-11.csv": [
-"532c30717262f6da11e2d3d88669ea3640b1c684e28f4e5737cdc2f9ca2c1c41",
+"a416b94426b19209bad99900bfb12f5db5551c212ed9e2e9516f9eb0ba39c630",
 15
 ],
 "XAU_USD_30m/2026-07.csv": [
@@ -2137,8 +2137,8 @@
 1488
 ],
 "XAU_USD_30m/2026-11.csv": [
-"ff48595d334f04b49b72f5681b16b7ec015b224ba7c7e2962ce579a71fdd973c",
-681
+"cb6996e453dba1322b0016f558287d2979a7bf0371f627673823ae7aafecfd60",
+696
 ],
 "XAU_USD_5m/2026-09.csv": [
 "d0e3b4b7e28d1e1209e7c5e534c76d139d5fddc455914f7dd9a6a5c4b4283aea",
@@ -2149,8 +2149,8 @@
 8928
 ],
 "XAU_USD_5m/2026-11.csv": [
-"b5c03122a9140ccd75ea04be9c31d2931cc05f1af72e7209e4af9c442e1025e0",
-4086
+"1179fb777db862d6acb71b881cf7c6a44a04d68dc4f238a2070bf386f611e9dd",
+4174
 ],
 "XAU_USD_60m/2026-03.csv": [
 "7f64443bf61634a6d8c91194a91ab35d22d6e6d4ce0cf2cce2abdbf067a81eea",
@@ -2185,8 +2185,8 @@
 744
 ],
 "XAU_USD_60m/2026-11.csv": [
-"0b36f5f8ec1d5400a2d6c5eee39da0cffc4c174056fae6240a4b28dd2c4009b1",
-341
+"9d1c213a5e5801db3f548012d108dff6b7f0eb79cedcb062f4c56ff9aba531ff",
+348
 ],
 "_GSPC_15m/2026-07.csv": [
 "b647857755202a566197fa3098ea9fa6f9301d5f866575bc2218188b30ba2685",
@@ -3017,44 +3017,44 @@
 225
 ],
 "alerts_state.json": [
-"e9b591b4be7f9b1f3bdac453b910e2bb2c0fc55fbbb553e149eace2ab99a65c5",
+"2779edcd2db3a5184867dac3cda3392e295ac2ba2d344c1b59239a1d4dcaeef4",
 0
 ],
 "holdout/15m_challenger.json": [
-"5d52cc1347dc6bb26f5f892825604c526803cebf618bb82fb3118ab6e8af5c55",
-113
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/15m_control.json": [
-"c753a3c07519fe8b9ae6b2b5908d65d74c96c8e7f6577052f5320e2fb8fb8649",
-29
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/15m_h2.json": [
 "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
 0
 ],
 "holdout/15m_h3.json": [
-"e020d56eed8e2c6d4cc008355ab5f3fd20ed3e8b8f26204743261715b56c87f7",
-141
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/15m_h4.json": [
-"1e4d529633b2ccd39d14380433d168244997347c2d66219d2fdbc8e05a1adf9c",
-2661
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/15m_h5.json": [
-"fc876f16a749e7680ac8d1df39395e3d755e77371863271771fec2c17b35e2b9",
-57
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/15m_h6.json": [
 "71bb6052257419839a353795ad59e4b5dc42b06a4389d1975ec26338c3d05cab",
 113
 ],
 "holdout/15m_treatment.json": [
-"93e138ff899c331a3419cccfa911196cb58cc5dbd08f2217f1846f25b4e170a0",
-113
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/1h_challenger.json": [
-"00bf444c2d3dc37d3de50737e85814d9039bf9ad23bb55f06b7c53ef14b85ce1",
-57
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/1h_control.json": [
 "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -3069,8 +3069,8 @@
 0
 ],
 "holdout/1h_h4.json": [
-"93341c1d968fcd0a800c659f557136655bf81ee23d2c79a12c2fbb32716e18af",
-813
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/1h_h5.json": [
 "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -3081,12 +3081,12 @@
 57
 ],
 "holdout/1h_treatment.json": [
-"cd024eaf2f7ba7dcb58c2a9f3b853e53710cef9c0d93baaa008b2e31143cbf10",
-29
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/30m_challenger.json": [
-"50cd1f05c60adf108e03939d412ffc97fdb7bd34c8c1bc5fde20c9c6a8d36974",
-85
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/30m_control.json": [
 "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -3097,24 +3097,24 @@
 0
 ],
 "holdout/30m_h3.json": [
-"a9bda8de5f516c940199994e4f83377e3bf2ec97329dc5527e3c50816f65c98d",
-29
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/30m_h4.json": [
-"ac068f11bd5e29ca4b3dd1c8b0d34cf33cf1a3132d7332fb1551229d26378c58",
-1513
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/30m_h5.json": [
-"058f5eea5c1e291bc15f7c40195ddc7d1400294c7ac90217ce2bcabf95de48bc",
-29
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/30m_h6.json": [
 "142466cd7525d07d03a220d76128741b00bcb49bd55dd0e8169f0fcafa1bf02b",
 85
 ],
 "holdout/30m_treatment.json": [
-"1b71c2f3d0bcd2756d997b1e0897d405aa731b180ce51c3ba7d3c52c149eb2cf",
-85
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/4h_challenger.json": [
 "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -3133,8 +3133,8 @@
 0
 ],
 "holdout/4h_h4.json": [
-"b1d10e952aa9ee4c60d33f7f825d67be269a00421a42b0a8a3ac954568650a21",
-365
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/4h_h5.json": [
 "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
@@ -3149,84 +3149,104 @@
 0
 ],
 "holdout/5m_challenger.json": [
-"626ed3965ce31d954c59550bed45109409ce0c6956dc9471eca5877d37c779a8",
-85
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/5m_control.json": [
-"a492bdbdfef876b069928653139ed028aa6eeabbba3acd02757c9fd581b91b75",
-57
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/5m_h2.json": [
-"192ce091baf8e2fcc853906eb8df40bcfa2804dd2f1760c20fc91068ee945af5",
-85
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/5m_h3.json": [
-"5146621b81a36cad776fa6c59e5acc0a4f3031daa23440191b05063c9daa493e",
-337
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/5m_h4.json": [
-"49ebc6d535ec3c4a480dd9ba4be33d83d93f29b491700938fa54b983965e9ac6",
-9353
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/5m_h5.json": [
-"4841b9601ef81b9b96f728ccea5c8f5ded89c281e61b1a62630bada1de68736a",
-57
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/5m_h6.json": [
 "e9a9a4abc7c735c58698f0f7497e7bbd5228bb00546145e46a830ec812122880",
 85
 ],
 "holdout/5m_treatment.json": [
-"820fae772fd5b8199769a2603ae9528dff0b84ff10c335b0d3ceb25f24c777f3",
-85
+"4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+0
 ],
 "holdout/archive/15m_challenger.json": [
-"01029b041a1be3f03ab4473003758c2b7f655aaaf61638d7f9eff14550cc2b5f",
-141
+"2d010bd21be21c70cd249ff00e998fd784d44542446eb1bbbabdc90b959e0a61",
+253
 ],
 "holdout/archive/15m_control.json": [
-"0fdcd4e31a37975708e336d8e14e47bffcc6e19eedf1d39f82a1e421e26cfb74",
-57
+"50de3e428de69e079952f2396874d6615cdb779f9f62020a375dd641a0923115",
+85
 ],
 "holdout/archive/15m_h2.json": [
 "dfdbfffde3bd73cd2f9ab0170b3aaf3669890ea04873a2d76827086aad2d1f5b",
 57
 ],
 "holdout/archive/15m_h3.json": [
-"c2542aca052db85e32144d287e2a546dfa55d4134439c9df185fe19866fa5043",
-309
+"c101135a17dcf93320f42fa296ea15c9042d3d1bb4f729956d3892a00124d307",
+449
 ],
 "holdout/archive/15m_h4.json": [
-"bc01b8fe23cac74d817bbbc20fb23a151372a259668f641476ddfeb233fffc5c",
-7449
+"65669e227868709441ec5166a1a5e21f188a48a4a5b9e227b9ed34e5ae3af881",
+10109
 ],
 "holdout/archive/15m_h5.json": [
-"488a9a547a06c67dda202559b646b26f9dcd7d36f28594e86ab619c944bc6d25",
-29
+"08ad3682cad5d53deb7e5613ff954eceba22f9a966a63aae86e538fc8426e53c",
+85
 ],
 "holdout/archive/15m_h6.json": [
 "2f4894f3a41b8eede10d8d84267af0f91a74c8698040a283efcfb964fcf690c2",
 29
 ],
 "holdout/archive/15m_treatment.json": [
-"91fcce5d369e006eae0d4833d115356cc9578c15db31418ba7d2ed8bb4fc2cf5",
-141
+"8f2c8be3ebb45f82372d6c7495189a889e40a34759247a8f8cf0f35f566f0aff",
+253
 ],
 "holdout/archive/1h_challenger.json": [
-"8e64296aad00e8a9a471af9e0efbda509f97272c68cda0a1121b0b8ff21f51a7",
-113
+"322bc369cd60d086883641325878d763f68d025f7c593473c069c0ec82aea752",
+169
 ],
 "holdout/archive/1h_h3.json": [
 "d5f1024438820ed5805f5c59c3987c23d5b4b01bc6832c39d7596caa78447aea",
 113
 ],
 "holdout/archive/1h_h4.json": [
-"2d3722d1091c3dc529ea83b2b64dfc0cdb3a31281de9c2bda78140208f07d578",
-1905
+"20e82a7f01bcc575e86f75f88946ca790e05e7899e4c7f895ce7a6a7a4fcefa2",
+2717
 ],
 "holdout/archive/1h_treatment.json": [
-"395de668b4d2b8cc32d572d9583727e7feec6d8f35a7ce17c55a3194b283de8f",
-141
+"deb4c8a2136f88f43750cf7f565eadcc55950dbe93482abc2a3b3233da3a9bbd",
+169
+],
+"holdout/archive/30m_challenger.json": [
+"50cd1f05c60adf108e03939d412ffc97fdb7bd34c8c1bc5fde20c9c6a8d36974",
+85
+],
+"holdout/archive/30m_h3.json": [
+"a9bda8de5f516c940199994e4f83377e3bf2ec97329dc5527e3c50816f65c98d",
+29
+],
+"holdout/archive/30m_h4.json": [
+"ac068f11bd5e29ca4b3dd1c8b0d34cf33cf1a3132d7332fb1551229d26378c58",
+1513
+],
+"holdout/archive/30m_h5.json": [
+"058f5eea5c1e291bc15f7c40195ddc7d1400294c7ac90217ce2bcabf95de48bc",
+29
+],
+"holdout/archive/30m_treatment.json": [
+"1b71c2f3d0bcd2756d997b1e0897d405aa731b180ce51c3ba7d3c52c149eb2cf",
+85
 ],
 "holdout/archive/4h_challenger.json": [
 "fd334a955d4614b72dafe31602739f59d82603032ba7ae22af7bc667e292c8dd",
@@ -3237,68 +3257,68 @@
 29
 ],
 "holdout/archive/4h_h4.json": [
-"eeca50f2c9e96a5bce14406c93b02a25ffe3fe8a3bb3589e608855bb655b7356",
-645
+"2e7017a8a3bc8d83aaea76431c234cae2a93ef702ae03a2299307bbc30d1859f",
+1009
 ],
 "holdout/archive/4h_treatment.json": [
 "6dc4eb71011d70657cb9e0f02b6f4d8b735aeb61fdbb7ae7ed1ebf3ac52d8a07",
 29
 ],
 "holdout/archive/5m_challenger.json": [
-"027a7229aadf25671460f64c3208d4fe6fee27ea2455aad8af49f40aaf3de65a",
-561
+"5d8aed9e7fc5c10eca20d718dac3b510f95b3abb2a093d3214813c47e0d7e2dd",
+645
 ],
 "holdout/archive/5m_control.json": [
-"f886d80a3a0c75d6dd0cd9984009e0a39563a64def6513bbcc006bf08e50d45f",
-169
+"aa44c9b957f469e04b0eca33243354172f1272b4057ba5d3418c0436a60d4107",
+225
 ],
 "holdout/archive/5m_h2.json": [
-"2c4c80848a44b4b91a90dc3048a2112e596dc0b1f435f92c499f2349c7aeea2d",
-281
+"834ea167246a0f619a29db01c1e3d2d0263195de7ed3b809fb85b87891a9dd91",
+365
 ],
 "holdout/archive/5m_h3.json": [
-"eda1dd6786afbf0439db559f0da77260f0d7a10eb6659518d11550f6d847e98f",
-561
+"03b2ea15726c13b1c0afbbf24abc8aa5d6ec2009b06b231d2d733c8f61504341",
+897
 ],
 "holdout/archive/5m_h4.json": [
-"a91bd50da46f736eb832d6c898ff92e928ef984a547598525aced1ba2399f6d8",
-22541
+"63eee05bf356f61b6fa1f7deebdeb21da4e7af070a9de52e8640404c87d2bee5",
+31893
 ],
 "holdout/archive/5m_h5.json": [
-"6a2c36c58737f383a9db0911c8c11f38c325a657b145e27b49c01f727caf0e14",
-85
+"b9f1461971e66cf2f934287f48ae14c7d99101352e55feb122ec57dbf9bc6e78",
+141
 ],
 "holdout/archive/5m_h6.json": [
 "b85e6f6c99452141d73a4f779333bbacefd0ad680a65de5e07c769dcd93a234a",
 29
 ],
 "holdout/archive/5m_treatment.json": [
-"16b28d1ee4504d31513f604bc48db21879e03214222e094f9e31f54894d3d6cf",
-589
+"ba7e0a74d20d8a922103fbdffec8c019ea040f1fdb9df1e229a29129be7b3b59",
+673
 ],
 "holdout/manifest_h2.json": [
-"35b4b8521421a0b6e9293f2282906257aed5c157d31ff02e9fbcfd343af3ea8b",
-27
+"f053214c9934232d68082beaf94f9b8bfda78b9409d289675a9a454f7eab6e1c",
+32
 ],
 "holdout/manifest_h3.json": [
-"c7ef8581ae8f4fa8e73f3aa437cca9d323c1fc5d7a891ed2aad8effaa0485635",
-22
+"10cfa11057fe535c1d549719b132c888a01a0f3d3021906623b6684362ed52b4",
+27
 ],
 "holdout/manifest_h4.json": [
-"756b8061b8634acbda142604357f61069163fcd544693d8b4f93f8423df2fbef",
-22
+"1fd9ba42d6b969807bfde13b11ebb78296b265422a356a04b22e5737a4e7f59d",
+27
 ],
 "holdout/manifest_h5.json": [
-"56dd053ff2dccf955a1cf70b5305204dd37184f42cc13ebc0d28dad737b16f6f",
-17
+"1f27bba53d6300cd96ad59de5fc8987a8a3a04ca0c8f5b30a8a985ef70ecec7d",
+22
 ],
 "holdout/manifest_h6.json": [
 "4fc2312256efea861cc4125fe92d6576cdc54a09649e6d0af06c0c92f731ac25",
 17
 ],
 "holdout_manifest.json": [
-"5caa528e260f1439e3dff54f8c5d88415ad42b7ce742cd6b1aee767c15ee3c6c",
-57
+"71711bead42f753d0378898ed2a5e4336750c161c9331aa102ba6d7d92b428b3",
+65
 ],
 "notifications/2026-11-15.jsonl": [
 "c3890dd047f81a2cc1a37bcab2bcaf368f1f29c4647c0b28e048550afd4ec095",
@@ -3309,8 +3329,12 @@
 0
 ],
 "research_forward/B15-ENGINE-FWD.json": [
-"61aa048506e9c364cd343e9c88f57dd2f708deb00932f8303307a8929dd68633",
-204
+"c27be41c085059fefaac916783680bb0a60d1a0b8517cfadf5859602d2b84610",
+205
+],
+"research_forward/B15b-ENGINE-FWD.json": [
+"05c587ed646bdf6163d72e546cd3af9117768e825229a54227655c88151e5fad",
+8
 ],
 "research_forward/B24-CONFIRM-FWD.json": [
 "c73ca6044be2cbcd58a0da7ab3972430dab6ae8137f1e5e6614f98cb98a2b9a0",
@@ -3325,18 +3349,18 @@
 355
 ],
 "research_forward/CONFIRM-EVENTS.jsonl": [
-"64070a1fd207c9d4accbddc44ad22e450d96b86045bae46cf28dcf0129488e5e",
-342
+"a1f367834779489f212ef9158f8b71234551b9aaf57371adebb9475f8afa0856",
+399
 ],
 "research_forward/CONFIRM-LIVE.json": [
-"4c7032c5b06996c62c2a7d167cd8e8427c5e5eafcc93366ee5c6f3107ac950db",
-4204
+"7c7ad00d733df7eeb0e59b4bb48f0f739b485ff48cc2feb7f16d51eab976eff1",
+4878
 ],
 "research_forward/SETUP-LIVE.json": [
 "0688781f8c21620a3ae99c540feee80024e97582372164eacbce7c01beb6eaa3",
 3564
 ]
 },
-"run_utc": "2026-11-15T04:28:24Z",
-"tree_sha256": "1bc9d7642af8f07107bfdf43c492f2abe01398fddeb58af1139c985e1ccc9524"
+"run_utc": "2026-11-15T11:48:15Z",
+"tree_sha256": "ba62f6421d716ca4a0b77a92c054dec2269c87fe4a9e9fc584bf2722a0aceeb8"
 }
