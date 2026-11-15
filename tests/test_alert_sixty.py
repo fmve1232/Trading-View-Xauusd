@@ -1,5 +1,6 @@
 """ALERTS WITH MORE THAN 60% SUCCESSFUL TRADES ONLY (operator, 2026-11-06): ALERT_MODE "sixty", the default, sends the
-phone only the engine's 15m signals (the one stream above 60% on history) with their plan follow-ups. The other
+phone only the engine's 15m signals (chosen on a per-signal record above 60%; counted once per trade idea no stream is
+above 60%, audit IA-01) with their plan follow-ups. The other
 timeframes' signals still open plans, so the registered B15 test records them exactly as before."""
 import pytest
 
@@ -47,7 +48,8 @@ def test_only_15m_signals_reach_the_phone_and_every_plan_is_still_recorded(tmp_p
     rep = N.run(store, pay, ["15m", "1h"], sent_t=T + 3600 + 300)
     flat = [x for b in sent for x in b]
     assert any(x.startswith("XAUUSD 15m SELL (confirmed close) | entry 3906.34") for x in flat)
-    assert N.SIGNAL_RECORD["15m"] in flat and N.SIGNAL_RECORD["15m"].startswith("RECORD of 15m engine signals")
+    rec = [x for x in flat if x.startswith("RECORD of engine signals, one count per trade idea")]
+    assert len(rec) == 1 and "12 of 23" in rec[0] and "11 of 24" in rec[0] and "64%" not in rec[0]
     assert not any(x.startswith("XAUUSD 1h") for x in flat) and rep["1h"]["sent"] == []
     assert any(x.startswith("XAUUSD 1h BUY (confirmed close)") for x in rep["1h"]["lines"])          # still on the website
     assert sorted(p["tf"] for p in rep["plans"]["open"]) == ["15m", "1h"]                          # B15 sees both plans
@@ -64,4 +66,4 @@ def test_quality_mode_still_sends_every_alerted_timeframe(tmp_path, monkeypatch)
     N.run(store, pay, ["15m", "1h"], sent_t=T + 3600 + 300)
     flat = [x for b in sent for x in b]
     assert any(x.startswith("XAUUSD 1h BUY (confirmed close)") for x in flat)
-    assert N.SIGNAL_RECORD["15m"] not in flat                                                       # sixty-mode line only
+    assert not any(x.startswith("RECORD of engine signals") for x in flat)                         # sixty-mode line only
