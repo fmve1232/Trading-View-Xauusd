@@ -5351,6 +5351,67 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1794809700
+  },
+  {
+   "key": "BREAK|15m|1792717200|-1",
+   "kind": "BREAK",
+   "tf": "15m",
+   "t": 1792717200,
+   "t_close": 1792718100,
+   "dir": -1,
+   "p0": 4012.44,
+   "what": "PDL 4020.47 broken",
+   "id": 151,
+   "seen": 1794817215,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 3997.44,
+   "invalid_at": 4025.44,
+   "cap_at": 3992.44,
+   "confirm20_at": 3992.44,
+   "status": "CONFIRMED",
+   "bars": 96,
+   "scan_t": null,
+   "t_conf": 1792720800,
+   "entry": 3994.9,
+   "entry_px": 3994.9,
+   "move_usd": 17.54,
+   "sl": 4007.9,
+   "tp1": 3979.9,
+   "tp2": 3974.9,
+   "rr1": 1.1538461538461537,
+   "rr2": 1.5384615384615385,
+   "x20": {
+    "status": "INVALIDATED",
+    "scan_t": null
+   },
+   "result": {
+    "T15": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 7.18,
+     "mae": 13.0,
+     "mfe_px": 7.180000000000291,
+     "mae_px": 13.0,
+     "t": 1792721700,
+     "scan_t": null
+    },
+    "T20": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 7.18,
+     "mae": 13.0,
+     "mfe_px": 7.180000000000291,
+     "mae_px": 13.0,
+     "t": 1792721700,
+     "scan_t": null
+    }
+   },
+   "t_done": 1792721700,
+   "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
+   "reason": "confirmed, but NOT VALIDATED: its registered test failed: +$15 before -$13 after a $15 confirmation was 44% of 277 trades (2020-22, 95% 38%-50%) against a break-even of 47.4%; FAIL (B21 H3 / H4)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
