@@ -219,6 +219,31 @@
 "vol_ratio": 0.0,
 "cost": 0.97,
 "status": "REPEAT"
+},
+{
+"key": "C|1794809700|-1|PWL|3853.27",
+"module": "C",
+"dir": -1,
+"kind": "PWL",
+"lv": 3853.27,
+"order_t": 1794809700,
+"order_close": 1794810600,
+"recorded_utc": 1794810962,
+"timely": true,
+"entry_type": "RETEST",
+"limit": 3853.27,
+"market": null,
+"p_ref": 3853.27,
+"stop": 3870.1023999999998,
+"inval": null,
+"false_break": true,
+"vwap": null,
+"session": "ASIAN",
+"ranging": false,
+"vol_ratio": 4.962,
+"cost": 0.97,
+"status": "REJECTED",
+"why": "reward"
 }
 ],
 "days": [
