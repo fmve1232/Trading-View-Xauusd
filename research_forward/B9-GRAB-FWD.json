@@ -369,16 +369,18 @@
    "tp": 3889.15,
    "sl": 3863.15,
    "src": "twelvedata:XAU/USD",
-   "status": "OPEN",
+   "status": "SL",
    "mfe": 12.15,
-   "mae": 12.31,
+   "mae": 13.65,
    "id": 13,
    "alert": {
     "t": 1794792081,
     "px": 3875.19,
     "t_px": 1794792021,
     "live": true
-   }
+   },
+   "t_res": 1794807300,
+   "bars": 53
   }
  ],
  "checks": [],
