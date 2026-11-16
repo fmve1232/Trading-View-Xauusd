@@ -117,3 +117,41 @@ def test_step_2_refuses_to_run_when_the_gate_did_not_pass(tmp_path, capsys):
     f.write_text(json.dumps({"gate": {"needs": 30, "passed": False}}))
     assert W.main(["--rd", "nowhere", "--step", "2", "--step1", str(f), "--out", str(tmp_path / "o.json")]) == 2
     assert "step 2 is not run" in capsys.readouterr().out and not (tmp_path / "o.json").exists()
+
+
+def test_run_module_passes_the_ladder_reward_through():
+    from tests.test_research_b31 import BASE, WIN, _a
+    wide = {**BASE, **WIN, 10: (3992, 3993, 3984.0, 3991)}          # the sweep reaches 3984: stop 3983, D = 12 from the 3995 limit
+    X, evs = _a(wide)
+    sets = b31.setups(X, "A", evs)
+    r10 = b31.run_module(X, sets, 0)
+    r15 = b31.run_module(X, sets, 0, "model", W.LADDER)
+    assert r10["stat"]["rejected"] == {"reward": 1} and r10["stat"]["executed"] == 0       # B31: (10 - .8) / 12.8 < 1
+    assert r15["stat"]["executed"] == 1 and r15["trades"][0]["D"] == pytest.approx(12.0, abs=0.05)
+
+
+def test_step_1_returns_counts_only_and_step_2_runs_end_to_end(monkeypatch):
+    import pandas as pd
+    m15 = load_synthetic("15m", bars=3000, seed=5).base.assign(volume=0.0)
+    h1 = load_synthetic("1h", bars=1500, seed=5).base
+    start = m15.index[0] + pd.Timedelta(days=5)
+    monkeypatch.setattr(W, "load_part", lambda rd, part: (m15, h1, start))
+    quiet = lambda *_: None
+    s1 = W.step1("unused", quiet)
+    assert s1["structure_as_is"]["BOS"]["n"] == 0 and s1["structure_volume_neutral"]["events"] > s1["structure_as_is"]["events"]
+    assert set(s1["modules"]) == {"A", "B", "E"} and all(isinstance(v["executed"], int) for v in s1["modules"].values())
+    flat = json.dumps(s1)
+    assert not any(k in flat for k in ('"trades"', '"out"', "r_thirds", "ladder_r", "tp1_first", "mean_r", "mfe"))   # no outcome leaves step 1
+    assert s1["executed_A_plus_B"] == s1["modules"]["A"]["executed"] + s1["modules"]["B"]["executed"]
+    assert s1["gate"] == {"needs": 30, "passed": s1["executed_A_plus_B"] >= 30}
+    f = s1["funnel"]
+    assert f["rejected_sweeps"] >= f["any_structure_within_8"] >= f["shift_within_8"] >= 0 and f["rejected_sweeps"] > 0
+    _, X, t_from, _ = W.context(m15, h1, start)
+    evs = b31.crossings(X, b31.SELL_SIDE + b31.BUY_SIDE)
+    assert W.sweep_funnel(X, evs, 0)["rejected_sweeps"] > W.sweep_funnel(X, evs, t_from)["rejected_sweeps"] == f["rejected_sweeps"]
+    part = W.run("unused", "development", None, quiet)
+    assert set(part["trades"]) == {"A", "B", "E", "AB"}
+    assert all(f"{u}|{c}" in part["results"] for u in ("A", "B", "E", "AB") for c in ("model", "operator"))
+    assert part["results"]["A|model"]["stat"] == s1["modules"]["A"]                        # step 1 counted the same orders
+    d = W.decide({"development": part, "validation": part, "holdout": part})
+    assert set(d) == set(W.UNITS) and all(v["verdict"] in ("SUPPORTED", "NOT SUPPORTED", "INSUFFICIENT") for v in d.values())
