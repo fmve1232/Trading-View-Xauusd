@@ -314,14 +314,15 @@ def setups(X: Ctx, mod: str, evs: list[dict] | None = None) -> list[dict]:
 
 
 # ---------------- the order's life: checks, fill, outcome ----------------
-def check(X: Ctx, s: dict, e: float, i: int, cost: float) -> str | None:
+def check(X: Ctx, s: dict, e: float, i: int, cost: float, reward: float = TP[0]) -> str | None:
+    """`reward` is the target the net R:R check uses: TP1 (+10) in B31; the ladder's mean (+15) in B31b-W1."""
     d, sc = s["dir"], e / 4000.0
     D = (e - s["stop"]) * d / sc
     if not np.isfinite(D) or D <= 0:
         return "stop on the wrong side"
     if D < D_MIN - EPS:
         return "stop"
-    if (TP[0] - cost) / (D + cost) < RR_MIN - EPS:
+    if (reward - cost) / (D + cost) < RR_MIN - EPS:
         return "reward"
     if cost > COST_FRAC * D + EPS:
         return "cost"
@@ -371,7 +372,7 @@ def thirds(X: Ctx, b0: int, d: int, e: float, stop: float, sc: float) -> float:
     return float(np.mean(got))
 
 
-def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model") -> dict:
+def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model", reward: float = TP[0]) -> dict:
     """Every setup through repeat -> checks -> fill or invalidation -> outcome, one position at a time."""
     n = len(X.c)
     stat = {"setups": 0, "repeat": 0, "rejected": {}, "invalidated": 0, "false_breakout": 0, "missed": 0, "overlap": 0}
@@ -388,7 +389,7 @@ def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model") 
             continue
         kept.append({"dir": s["dir"], "order_bar": i0, "p": p_ref})
         cost = X.cost[i0] if cost_kind == "model" else OP_COST
-        why = check(X, s, p_ref, i0, cost)
+        why = check(X, s, p_ref, i0, cost, reward)
         if why:
             stat["rejected"][why] = stat["rejected"].get(why, 0) + 1
             continue

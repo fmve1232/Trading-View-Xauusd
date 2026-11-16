@@ -1549,3 +1549,4 @@
 {"utc": "2026-11-15T08:28:27.087473+00:00", "reg": "B31", "part": "recent", "key": "E|operator", "n": 4, "mean_r": 0.15037282859963702}
 {"utc": "2026-11-15T08:28:27.088387+00:00", "reg": "B31", "part": "recent", "key": "PROD-ENG|operator", "n": 1, "mean_r": 1.0705374422578429}
 {"utc": "2026-11-15T08:28:27.089252+00:00", "reg": "B31", "part": "recent", "key": "F-ENG|operator", "n": 2, "mean_r": 0.03526872112892143}
+{"utc": "2026-11-16T02:40:21.103553+00:00", "reg": "B31b-W1", "step": 1, "part": "development", "key": "A+B|firing-rates", "data_hash_15m": "f113f97ad2105ff9", "executed_A": 2, "executed_B": 5, "executed_E": 11, "n": 7, "gate_needs": 30, "gate_passed": false, "result": "DETECTOR INSUFFICIENT", "outcomes_inspected": false, "step_2": "not run; validation and holdout stay sealed"}
