@@ -2,7 +2,33 @@
 "id": "B31b-SHADOW-FWD",
 "registration": "research/registrations/B31b-SHADOW-FWD.json",
 "started_utc": 1794749015,
-"setups": [],
+"setups": [
+{
+"key": "D|1794798900|1|VWAP|3866.25",
+"module": "D",
+"dir": 1,
+"kind": "VWAP",
+"lv": 3866.25,
+"order_t": 1794798900,
+"order_close": 1794799800,
+"recorded_utc": 1794800165,
+"timely": true,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3872.74,
+"p_ref": 3872.74,
+"stop": 3864.1684,
+"inval": null,
+"false_break": false,
+"vwap": 3880.24,
+"session": "ASIAN",
+"ranging": true,
+"vol_ratio": 0.421,
+"cost": 0.97,
+"status": "REJECTED",
+"why": "room"
+}
+],
 "days": [
 "2026-11-16"
 ],
