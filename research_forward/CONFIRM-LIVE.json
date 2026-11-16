@@ -4955,6 +4955,33 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1794787200
+  },
+  {
+   "key": "BREAKOUT|15m|1794786300|1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1794786300,
+   "t_close": 1794787200,
+   "dir": 1,
+   "p0": 3900.5,
+   "what": "breakout at TDH 3890.45",
+   "id": 138,
+   "seen": 1794787619,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3915.5,
+   "invalid_at": 3887.5,
+   "cap_at": 3920.5,
+   "confirm20_at": 3920.5,
+   "status": "INVALIDATED",
+   "bars": 3,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794789900
   }
  ]
 }
