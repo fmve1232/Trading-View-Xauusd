@@ -27,6 +27,30 @@
 "cost": 0.97,
 "status": "REJECTED",
 "why": "room"
+},
+{
+"key": "D|1794799800|1|VWAP|3866.61",
+"module": "D",
+"dir": 1,
+"kind": "VWAP",
+"lv": 3866.61,
+"order_t": 1794799800,
+"order_close": 1794800700,
+"recorded_utc": 1794801156,
+"timely": true,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3872.02,
+"p_ref": 3872.02,
+"stop": 3862.0681999999997,
+"inval": null,
+"false_break": false,
+"vwap": 3880.0,
+"session": "ASIAN",
+"ranging": true,
+"vol_ratio": 0.557,
+"cost": 0.97,
+"status": "REPEAT"
 }
 ],
 "days": [
