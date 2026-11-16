@@ -236,8 +236,29 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
-      - id: deploy
+      # Publishing is tried twice. 9 of the 300 runs before 2026-11-16 (3038, 3094, 3101, 3192, 3206, 3212, 3254, 3273,
+      # 3328) failed in actions/deploy-pages and nowhere else: within a second of the upload the action lists the run's
+      # artifacts and "github-pages" is not in GitHub's list yet ("No artifacts named github-pages were found"). The
+      # site then stayed one run (15 min) behind. The first attempt is the only step here that may fail without failing
+      # the run, and only because the second attempt must then publish: if it fails too the run fails, and the smoke
+      # test below reads the live page in every case, so a page that was not published is never reported as success.
+      - id: deploy_first
+        name: Publish the site (first attempt; a failure is retried by the next two steps, never ignored)
+        continue-on-error: true
         uses: actions/deploy-pages@v4
+      - name: First publish attempt failed (warning on the run; wait for GitHub to list the uploaded page)
+        if: steps.deploy_first.outcome == 'failure'
+        run: |
+          echo "::warning title=site publish::The first publish attempt failed. Publishing again after 20 s; a second failure fails this run."
+          echo "- the first publish attempt failed; publishing again after 20 s" >> "$GITHUB_STEP_SUMMARY"
+          sleep 20
+      - id: deploy_retry
+        name: Publish the site (second attempt, only after a failed first attempt; a failure here fails the run)
+        if: steps.deploy_first.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+      - id: deploy
+        name: The published address (from the attempt that published)
+        run: echo "page_url=${{ steps.deploy_first.outputs.page_url || steps.deploy_retry.outputs.page_url }}" >> "$GITHUB_OUTPUT"
 
       - name: "Smoke test: the live site answers and serves this run's files (a failure fails the run; alerts were already sent)"
         # quantum/smoke.py: every built file is fetched from the live URL and must be byte-identical, and the data fresh.

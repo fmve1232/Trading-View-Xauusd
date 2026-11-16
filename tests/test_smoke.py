@@ -84,6 +84,18 @@ def test_main_retries_then_passes_or_fails_the_step(site, monkeypatch, capsys, t
 def test_the_workflow_runs_the_smoke_test_right_after_the_deploy_and_does_not_hide_a_failure():
     with open(".github/workflows/quantum-site.yml") as f:
         wf = f.read()
-    i, j = wf.index("uses: actions/deploy-pages@v4"), wf.index("python -m quantum.smoke")
-    assert i < j and "continue-on-error" not in wf[i:j] and wf[i:j].count("- name:") == 1     # the very next step
+    up, first, retry, addr, smoke = (wf.index(x) for x in ("uses: actions/upload-pages-artifact@v3", "- id: deploy_first",
+                                                           "- id: deploy_retry", "- id: deploy\n", "python -m quantum.smoke"))
+    assert up < first < retry < addr < smoke and wf.count("uses: actions/deploy-pages@v4") == 2
+    assert wf[addr:smoke].count("- name:") == 1                                # the smoke test is the very next step
     assert 'python -m quantum.smoke --url "${{ steps.deploy.outputs.page_url }}" --site site' in wf
+    # the publish is tried twice (runs 3038 ... 3328 failed here only: GitHub had not listed the uploaded page yet)
+    one, two = wf[first:retry], wf[retry:addr]
+    assert one.count("continue-on-error: true") == 1 and one.index("continue-on-error: true") < one.index("uses: actions/deploy-pages@v4")
+    assert "if: steps.deploy_first.outcome == 'failure'" in one[one.index("uses: actions/deploy-pages@v4"):]   # the wait step
+    assert "::warning title=site publish::" in one and "sleep 20" in one       # the failed attempt is shown on the run
+    # the second attempt runs only after a failed first one and is not allowed to fail; nor is anything after it
+    assert "if: steps.deploy_first.outcome == 'failure'" in two and "uses: actions/deploy-pages@v4" in two
+    assert "continue-on-error" not in wf[retry:smoke] and "continue-on-error" not in wf[smoke:wf.index("- name: Outage notice")]
+    assert 'page_url=${{ steps.deploy_first.outputs.page_url || steps.deploy_retry.outputs.page_url }}' in wf[addr:smoke]
+    assert "url: ${{ steps.deploy.outputs.page_url }}" in wf                   # the environment link follows the same address
