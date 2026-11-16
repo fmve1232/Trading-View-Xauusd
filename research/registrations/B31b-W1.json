@@ -1,0 +1,40 @@
+{
+  "id": "B31b-W1",
+  "title": "B31b workstream 1: modules A (sweep reversal) and B (continuation after a liquidity grab) re-tested on the 2020-25 history with the engine's own structure rules made volume-neutral; eligibility on the +$10 / +$15 / +$20 ladder; matched random control",
+  "status": "APPROVED by the operator 2026-11-15; written and committed before any of its code and before any run",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-15 (chat), on B31: \"Workstream 1 — A/B detector correction: Investigate volume-free break-of-structure detection. Preserve the original structural logic wherever possible. Alternatively, independently validate historical tick-volume data. Test detector firing rates before running strategy performance tests. Do not change registered rules after observing evaluation results.\" and \"Register B31b with a volume-free detector or independently sourced volume. Adopt the full $10/$15/$20 target ladder as the research objective.\" The same day: \"Go and give me best\", then \"do not deviate from the instructions which I have given to you ... put your best effort to achieve my target\".",
+  "partitions": [
+    "development",
+    "validation",
+    "holdout"
+  ],
+  "unsealed_data_also_used": "recent: 2026-01-01 to the end of the research history, scored after a 59-day warm-up (as B31); reported, not decisive",
+  "created_utc": "2026-11-15",
+  "why": "B31 could not test A and B: the engine's structure rules need volume in three places (quantum/engine.py:363 strong_vol for a BOS, :386 vol_ok for retiring a broken level, :445 vol_ok13 for displacement) and the 2020-25 research history has none (quantum/research/b10.py make_market). B31 found 0 A and 0 B trades out of sample (research/B31_RESULTS.md section 2.2). On live data the volume exists, but the sequence is rare (PR #120: 3 of 86 rejected sweeps in 7 days had a trade-direction structure event within 8 bars).",
+  "detector": {
+    "rule": "the frozen engine, unchanged, run on a copy of its feature set in which the three volume conditions are always met: v = 1 and vol_sma20 = 0 on every bar, so strong_vol, vol_ok and vol_ok13 are true and every other clause of the BOS / MSS / CHoCH / displacement / order-block logic (pivot break, close beyond the level, body above 0.30 x ATR, body share above 70%, the ADX gate, the break buffer) is the engine's own",
+    "why this one": "it removes volume and nothing else, so the original structural logic is preserved exactly; no other detector is tried and none is selected by its results",
+    "scope": "every engine row and event the modules read (structure events, order blocks, equal highs / lows, regime) comes from this volume-neutral run; indicators (EMA, ATR, aATR, VWAP) are the engine's features as B31 used them",
+    "not production": "research code only; the production engine and its volume rules are untouched"
+  },
+  "step_1_firing_rates_before_any_outcome": {
+    "what": "on the development partition only: structure events per 1,000 bars by type, as-is (no volume) and volume-neutral, beside the live rate (PR #120: 47 per 1,500 bars); rejected sweeps; sweeps followed by a trade-direction structure event within 8 bars; A and B setups; rejections by reason; orders invalidated, missed, overlapping; executed trades. Counts only: no outcome is printed, saved or inspected in step 1.",
+    "gate": "step 2 runs only if development has at least 30 executed A + B trades. Otherwise the result is DETECTOR INSUFFICIENT and validation and holdout stay sealed for this question.",
+    "committed": "the step-1 counts are committed before step 2 is run"
+  },
+  "modules": "A and B exactly as registered in B31 (research/registrations/B31.json `modules`, `liquidity_pools`, `events`): a REJECTED sweep, a structure event in the trade's direction within 8 bars (A: MSS / CHoCH with the higher timeframes not aligned; B: any structure event with them aligned), a limit at the first trade-direction FVG's near edge, else the engine's order block; stop = the sweep extreme -/+ 0.2 x ATR14; invalidation, the 8-bar limit validity, one position at a time and the REPEAT rule as B31. Distances scaled by price / 4000 as B31 (the history runs from about $1,500 to $4,400).",
+  "units": "A, B and AB (A and B pooled in time order, one position at a time, an identical bar and direction once): 3 hypotheses. E (session expansion), whose sweep branch reads the same detector, is reported as secondary only.",
+  "eligibility": "B31's checks with the operator's ladder objective, as in B31b-SHADOW-FWD: stop D >= 5; net reward / net risk on the ladder (15 - cost) / (D + cost) >= 1.0, where 15 is the mean of the thirds at +10 / +15 / +20; cost <= 15% of D; no opposing pool closer than TP1 (+10). Every rejection and its reason is counted.",
+  "outcomes": "B31's race on 15m bars: TP1 +10, TP2 +15, TP3 +20 each against the stop; a bar touching both = AMBIGUOUS, scored as the stop; the fill bar can only stop; time stop 96 bars. Money plan (primary): thirds at +10 / +15 / +20, the stop moved to the entry after TP1, minus the round-trip cost, in R of the $650 risk. MFE, MAE, minutes to TP1. Costs: the engine's session model; the operator's $0.26 / oz as a sensitivity.",
+  "control": "B31's matched random control: for every executed trade, 20 random 15m closes from the same partition with the same session label and direction, the same scaled stop distance and targets (seed 31)",
+  "primary_test": {
+    "sample": "out of sample = validation + holdout pooled; model cost",
+    "rule": "SUPPORTED only if all hold: (1) the mean ladder net R is above 0 and its day-clustered bootstrap 95% lower bound (2,000 resamples, seed 31) is above 0; (2) the TP1-first rate is above the matched random control's, one-sided two-proportion z-test, p < 0.05 after Holm over the 3 units; (3) the development mean ladder net R is above 0. Fewer than 30 out-of-sample trades = INSUFFICIENT. Otherwise NOT SUPPORTED."
+  },
+  "disclosure": "Not a first look at these periods: B2, B3, B16, B17, B21 and B31 read them, and B31 read C / D / E outcomes on all four. A and B themselves produced 0 to 1 trades in B31, so their outcomes are unseen. The detector differs from the live engine (which requires volume), so a SUPPORTED result would still need the live forward record (B31b-SHADOW-FWD) before any alert.",
+  "unchanged": "production alerts, the engine, config.py, the freeze key 1f88aad357497da4:4440d52587f5cc6b, B9-GRAB-FWD, B15b-ENGINE-FWD, B31b-SHADOW-FWD, B24 (OFF) and every other registration",
+  "not_done_by_design": "No parameter, threshold, window or distance is searched or tuned. One detector, declared here. No rule changes after any result.",
+  "trials_log": "every unit x partition x cost evaluated is appended to research/trials.jsonl",
+  "decision": "SUPPORTED: reported with the forward record's requirement above; never adopted automatically. NOT SUPPORTED / INSUFFICIENT / DETECTOR INSUFFICIENT: reported as such; the phone keeps NO TRADE for signals without validated edge."
+}

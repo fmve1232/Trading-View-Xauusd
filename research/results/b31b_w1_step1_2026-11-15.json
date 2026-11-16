@@ -1,0 +1,99 @@
+{
+ "registration": "B31b-W1",
+ "step": 1,
+ "partition": "development",
+ "bars_15m": 70173,
+ "scored_from": "2020-04-01 00:00:00+00:00",
+ "data_hash_15m": "f113f97ad2105ff9",
+ "structure_as_is": {
+  "bars": 70173,
+  "events": 1561,
+  "per_1000": 22.25,
+  "BOS": {
+   "n": 0,
+   "per_1000": 0.0
+  },
+  "MSS": {
+   "n": 937,
+   "per_1000": 13.35
+  },
+  "CHoCH": {
+   "n": 624,
+   "per_1000": 8.89
+  }
+ },
+ "structure_volume_neutral": {
+  "bars": 70173,
+  "events": 2793,
+  "per_1000": 39.8,
+  "BOS": {
+   "n": 1232,
+   "per_1000": 17.56
+  },
+  "MSS": {
+   "n": 937,
+   "per_1000": 13.35
+  },
+  "CHoCH": {
+   "n": 624,
+   "per_1000": 8.89
+  }
+ },
+ "funnel": {
+  "rejected_sweeps": 4067,
+  "any_structure_within_8": 351,
+  "shift_within_8": 101
+ },
+ "modules": {
+  "A": {
+   "setups": 15,
+   "repeat": 4,
+   "rejected": {
+    "room": 4,
+    "stop": 5
+   },
+   "invalidated": 0,
+   "false_breakout": 0,
+   "missed": 0,
+   "overlap": 0,
+   "executed": 2
+  },
+  "B": {
+   "setups": 54,
+   "repeat": 15,
+   "rejected": {
+    "room": 14,
+    "reward": 13,
+    "cost": 3,
+    "stop": 2,
+    "stop on the wrong side": 1
+   },
+   "invalidated": 0,
+   "false_breakout": 0,
+   "missed": 1,
+   "overlap": 0,
+   "executed": 5
+  },
+  "E": {
+   "setups": 180,
+   "repeat": 0,
+   "rejected": {
+    "stop": 71,
+    "room": 69,
+    "cost": 5,
+    "reward": 13,
+    "stop on the wrong side": 1
+   },
+   "invalidated": 0,
+   "false_breakout": 0,
+   "missed": 10,
+   "overlap": 0,
+   "executed": 11
+  }
+ },
+ "executed_A_plus_B": 7,
+ "gate": {
+  "needs": 30,
+  "passed": false
+ }
+}
