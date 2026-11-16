@@ -5864,6 +5864,33 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "GRAB|15m|1792749600|1",
+   "kind": "GRAB",
+   "tf": "15m",
+   "t": 1792749600,
+   "t_close": 1792750500,
+   "dir": 1,
+   "p0": 4023.62,
+   "what": "PDL 4020.47 swept and rejected",
+   "id": 165,
+   "seen": 1794848827,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 4038.62,
+   "invalid_at": 4010.62,
+   "cap_at": 4043.62,
+   "confirm20_at": 4043.62,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1792764900,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
