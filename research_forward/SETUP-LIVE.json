@@ -4161,6 +4161,111 @@
    "mae": 14.519999999999982,
    "bars": 10,
    "path": "5m"
+  },
+  {
+   "id": 119,
+   "tf": "15m",
+   "t": 1794830400,
+   "t_dec": 1794831300,
+   "dir": -1,
+   "entry": 3869.94,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "1HL",
+     3869.98
+    ]
+   ],
+   "zones": [
+    "below value-area low 3870.22"
+   ],
+   "sl": 3882.94,
+   "tp": 3854.94,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794831769,
+   "result": "SL",
+   "t_res": 1794839700,
+   "mfe": 8.039999999999964,
+   "mae": 14.159999999999854,
+   "bars": 29,
+   "path": "5m"
+  },
+  {
+   "id": 122,
+   "tf": "15m",
+   "t": 1794835800,
+   "t_dec": 1794836700,
+   "dir": -1,
+   "entry": 3866.87,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "1HH",
+     3876.12
+    ]
+   ],
+   "zones": [
+    "POC 3875.57"
+   ],
+   "sl": 3879.87,
+   "tp": 3851.87,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794837058,
+   "result": "SL",
+   "t_res": 1794839700,
+   "mfe": 4.9699999999998,
+   "mae": 17.230000000000018,
+   "bars": 11,
+   "path": "5m"
+  },
+  {
+   "id": 123,
+   "tf": "15m",
+   "t": 1794836700,
+   "t_dec": 1794837600,
+   "dir": -1,
+   "entry": 3863.94,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "1HL",
+     3865.46
+    ]
+   ],
+   "zones": [
+    "below value-area low 3868.43"
+   ],
+   "sl": 3876.94,
+   "tp": 3848.94,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794837996,
+   "result": "SL",
+   "t_res": 1794839700,
+   "mfe": 2.0399999999999636,
+   "mae": 20.159999999999854,
+   "bars": 8,
+   "path": "5m"
   }
  ],
  "live": {
@@ -4169,11 +4274,11 @@
    7
   ],
   "SWEEP": [
-   44,
+   45,
    19
   ],
   "BREAKOUT": [
-   52,
+   54,
    33
   ],
   "4H CONFIRMED": [
