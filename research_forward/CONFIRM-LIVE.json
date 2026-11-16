@@ -5637,6 +5637,34 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1794825900
+  },
+  {
+   "key": "BREAK|15m|1792764000|-1",
+   "kind": "BREAK",
+   "tf": "15m",
+   "t": 1792764000,
+   "t_close": 1792764900,
+   "dir": -1,
+   "p0": 4008.76,
+   "what": "PDL 4020.47 broken",
+   "id": 162,
+   "seen": 1794837996,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 3993.76,
+   "invalid_at": 4021.76,
+   "cap_at": 3988.76,
+   "confirm20_at": 3988.76,
+   "status": "EXPIRED",
+   "bars": 96,
+   "scan_t": null,
+   "overshoot_usd": 27.31,
+   "why": "the first 15m close $15 beyond was $27.31 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1792765800,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $27.31 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
