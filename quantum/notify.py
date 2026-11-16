@@ -529,7 +529,12 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             rp = ((ctx or {}).get("repeats") or {}).get(m["t"])
             pl = plan_cfg()
             c1 = C1.on() and m.get("px") is not None       # C1: a SETUP, not an entry, until confirmed
-            out.append((C1.setup_head(m, tf, off) if rp is None else C1.repeat_head(m, tf, off)) if c1
+            c1s = ((ctx or {}).get("c1") or {}).get(m["t"]) if c1 else None    # the setup this signal opened or joined
+            if c1 and rp is None and c1s is not None and (c1s["t"], c1s["tf"]) != (int(m["t"]), tf):
+                out += C1.joined_lines(m, tf, c1s, off)    # the same idea as an open setup: that setup's levels, no new ones
+                mark(i0, m)
+                continue
+            out.append((C1.setup_head(m, tf, off, c1s["id"] if c1s else None) if rp is None else C1.repeat_head(m, tf, off)) if c1
                        else signal_head(m, tf, d, pl if rp is None else None, off))
             if fz and fz["state"] == "DELAYED":
                 out.append(delayed_line(fz, off))                  # second line: visible in the phone's preview
@@ -541,7 +546,7 @@ def messages(payload: dict, since_t: int | None, now: dict | None = None, ctx: d
             if late:
                 out.append(late)                           # second line: visible in the phone's preview
             if c1:                                         # a REPEAT returned above: only a new idea gets these lines
-                out += C1.setup_lines(m, off)
+                out += C1.setup_lines(m, off, c1s)
             elif pl and m.get("px") is not None:
                 out.append(plan_line(m["px"], m["dir"], pl, off))
                 out.append(sizing_line(pl))
@@ -1550,6 +1555,15 @@ PLAN_TP2_DEFAULT_PX = 20.0            # TP2 in price $ (the operator's choice, 2
 # shows both. The registered tests (B15 ENG_BE, B9 GRAB_BE, B24) keep the constants they were registered with.
 PLAN_COST_PER_LOT_DEFAULT = 26.0
 COST_MODEL_OZ = (0.77, 0.97)
+# The upper bound's parts, $ per oz round trip (research/harness.cost_pts): the off-session spread, 2 x $0.20 slippage,
+# $7 commission per 100-oz lot. The feed has no bid / ask, so this is a model, not the broker's live spread.
+COST_MODEL_PARTS = {"spread": 0.50, "slippage": 0.40, "commission": 0.07}
+
+
+def cost_parts(cost_oz: float) -> dict | None:
+    """The spread / slippage / commission split of the sizing cost when it is the research model's upper bound; None
+    when the operator's own cost is the higher one (one figure, no split)."""
+    return dict(COST_MODEL_PARTS) if abs(cost_oz - COST_MODEL_OZ[1]) < 1e-9 else None
 
 
 def break_even_at(pl: dict, cost_oz: float) -> float:
@@ -1616,7 +1630,8 @@ def plan_cfg() -> dict | None:
     loss_max = oz * (sl_px + size_cost)
     return {"lot": lot, "sl_usd": sl_px * oz, "tp_usd": tp_px * oz, "cost_usd": cpl * lot, "sl_px": sl_px, "tp_px": tp_px,
             "tp2_usd": tp2_px * oz if tp2_px else 0.0, "tp2_px": tp2_px, "sizing": sizing, "account": acct,
-            "risk_pct": risk_pct, "budget": budget, "size_cost_oz": size_cost, "loss_at_stop_max": loss_max,
+            "risk_pct": risk_pct, "budget": budget, "size_cost_oz": size_cost, "cost_parts": cost_parts(size_cost),
+            "loss_at_stop_max": loss_max,
             "risk_pct_actual": 100.0 * loss_max / acct, "over_budget": loss_max > budget + 1e-6}
 
 
@@ -2918,13 +2933,20 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                 opened[m["t"]] = state["plan_seq"]
                 if fresh.get(m["t"], {}).get("state", "FRESH") != "FRESH":
                     gate_note(state, f"plan:{state['plan_seq']}", fresh[m["t"]])
+        c1_of = {}                                         # C1: bar time -> the setup that signal opened or joined
         if C1.on():                                        # C1: B15's plans still open at the signal close (unchanged record)
             upd = [C1.b15_line(x) for x in upd]           # but their follow-ups are the engine's record, not your entry
             if not sixty() or tf in PHONE_TFS_SIXTY:      # only signals the phone announces as a SETUP
-                C1.open_from(state, p, since, skip=set(repeats) | {t_ for t_, fz in fresh.items() if fz["state"] == "NOT ACTIONABLE"})
+                skip = set(repeats) | {t_ for t_, fz in fresh.items() if fz["state"] == "NOT ACTIONABLE"}
+                C1.open_from(state, p, since, skip=skip)
+                for m_ in p["markers"]:                    # so the alert names its setup (id, expiry, source), and a signal
+                    if m_["type"] == "SIGNAL" and m_["t"] > since:                            # joining an open setup says so
+                        s_ = C1.same_idea(state, m_, tf)
+                        if s_ is not None:
+                            c1_of[m_["t"]] = s_
         ctx = {"repeats": repeats, "breaks": _breaks_today(liq_log, trading_day(t_send)), "h_records": h_records(store_dir, tf),
                "fresh": fresh, "quiet": gate_quiet(state, "plan"), "eng": eng_snap,
-               "eng_old": eng_old}
+               "eng_old": eng_old, "c1": c1_of}
         ll = liq_lines(ev, seen, off)                     # always marks the pools seen; sent unless quality mode
         msg_refs = []
         lines = upd + messages(p, since, now, ctx, refs=None if sixty() else msg_refs) + ([] if quality() else ll)
@@ -2935,7 +2957,7 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
         report[tf] = {"lines": lines, "sent": _say_tf(tf, phone_lines, upd_refs, msg_refs, len(upd), opened, repeats, plans,
                                                       off, last_t)}
         if tf == "15m" and C1.on():                        # C1: confirmation, eligibility, the recalculated plan, results
-            c1_lines = C1.advance_all(state, p, t_send, pl_cfg, off)
+            c1_lines = C1.advance_all(state, p, t_send, pl_cfg, off, now)
             if c1_lines:
                 report["confirm_entry"] = {"lines": c1_lines, "sent": _say("confirm_entry", trade_msg(c1_lines),
                                                                          desc="confirmation alerts")}
@@ -3027,6 +3049,8 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                            "late_frac": _env_float("PLAN_LATE_FRAC", LATE_FRAC),
                            "repeats": state.get("plan_repeats", [])[::-1][:10], "repeat_rule": {"sec": REPEAT_SEC, "usd": REPEAT_USD},
                            "mode": alert_mode(), "phone_tfs": [x for x in tfs if x in PHONE_TFS_SIXTY] if sixty() else list(tfs)}
+    if C1.on():                                            # index.json -> alerts.c1: the website shows the phone's decision
+        report["c1"] = C1.snapshot(state, t_send, off)
     if liq_on() and alerted:                               # A2: trend-change warning, once per direction per trading day
         today = trading_day(t_send)
         tl = turn_lines(state, payloads, tfs, liq_log, [x for x in plans + log if trading_day(_decision_t(x)) == today],

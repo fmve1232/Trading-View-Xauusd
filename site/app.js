@@ -720,6 +720,59 @@ function renderH5() {
     `<div class="why note-h5"><b>Read this before trading.</b> H5 takes a trade only when all five agree, so it is rare: a few per month at most, often none. No rule wins every trade, and a 90% win rate is not promised. It is judged on its 1-hour live record after 30 trades: average R above 0 and profit factor at least 1.2. Risk only what a stop-out can cost you.</div>`;
 }
 /* ---------- B31b-SHADOW-FWD (research/registrations/B31b-SHADOW-FWD.json): forward shadow test of B31's entry modules ---------- */
+/* ---------- C1 (quantum/confirm_entry.py snapshot): the phone's decision, from the same records and with the same text ----------
+   index.json -> alerts.c1. The decision word is computed once, in Python, for the phone and for this card; an ENTRY ELIGIBLE
+   alert is valid for fresh_sec after its confirming close, so a page left open past that time shows NO TRADE like the next run. */
+function c1Card(C) {
+  if (!C || !C.on) return "";
+  const D = C.decision || {}, nowS = Date.now() / 1000;
+  const passed = (D.word === "BUY" || D.word === "SELL") && isNum(D.until) && nowS > D.until;
+  const word = passed ? "NO TRADE" : D.word || "NO TRADE";
+  const why = passed ? `no new entry: the entry window of setup #${D.id} passed at ${tfmt(D.until)}` : D.why || "";
+  const pill = word === "BUY" ? "bull" : word === "SELL" ? "bear" : word === "WAIT" ? "warn" : "";
+  const sd = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
+  const usd0 = (x) => (isNum(x) ? "$" + Math.round(x).toLocaleString("en-US") : "—");
+  const ladder = (x) => [10, 15, 20].map((lv) => { const cf = x.conf, t = (x.touch || {})[String(lv)];
+    const st = cf && cf.move >= lv - 1e-9 ? '<b class="bull">closed beyond</b>' : isNum(t) ? `touched ${tfmt(t, false)}, no close beyond` : "not reached";
+    return `+$${lv} ${px(x.p0 + x.dir * lv)} ${st}`; }).join(" · ");
+  const R = C.record || {}, V = C.validation || {}, v = (V.rows || {})[String(C.min_usd)];
+  const rec = R.decided ? `TP1 first ${R.tp1} of ${R.decided} decided${R.wilson ? ` (95% ${pct(100 * R.wilson[0])}–${pct(100 * R.wilson[1])})` : ""}` : "none decided yet";
+  const val = v ? `${esc(V.ref)}: a $${f(C.min_usd, 0)} confirming close reached TP1 first in ${v.tp1} of ${v.n} (${pct(100 * v.tp1 / v.n)}; break-even about ${pct(100 * V.break_even)}), net ${fs(v.net_r, 2)} R (${fs(v.boot95[0], 2)} to ${fs(v.boot95[1], 2)}), p ${f(v.holm_p, 2)}: <b>not supported</b>`
+    : `no validation run at a $${f(C.min_usd, 0)} confirming close`;
+  const phone = (x) => (x.phone && x.phone.length ? `<details class="cf-ev" data-k="c1-${x.id}"><summary class="dim">The phone alert, as sent</summary><p class="muted pa-note">${x.phone.map(esc).join("<br>")}</p></details>` : "");
+  const block = (x) => { const p = x.plan, cf = x.conf, nw = cf && cf.now, parts = p && p.cost_parts;
+    const pend = x.status === "PENDING";
+    return `<div class="kv"><div>Setup</div><div>#${x.id} · ${esc(x.tf)} ${sd(x.dir)} · signal bar closed ${tfmt(x.t_close)} · <b>${pend ? "WAIT, not an entry" : esc(x.status === "ACTIVE" ? "ENTRY ELIGIBLE" : x.status)}</b></div>
+      <div>Trigger price</div><div>${px(x.p0)}</div>
+      <div>Confirmation price</div><div>${cf ? `${px(cf.px)} at ${tfmt(cf.t)} · +$${f(cf.move, 2)} (${esc(cf.tier)})` : `needs a 15m close at or ${x.dir === 1 ? "above" : "below"} ${px(x.p0 + x.dir * x.x)} (+$${f(x.x, 0)}); cancelled at ${px(x.p0 - x.dir * C.inv_usd)} (−$${f(C.inv_usd, 0)}) or on a 15m structure break the other way`}</div>
+      <div>+$10 / +$15 / +$20</div><div>${ladder(x)}</div>${p ? `
+      <div>Entry</div><div><b>${px(p.entry)}</b> <span class="dim">(the confirming close)</span></div>
+      <div>Stop-loss / invalidation</div><div>${px(p.sl)}</div>
+      <div>Targets</div><div>TP1 ${px(p.tp1)}${isNum(p.tp2) ? ` (close half) · TP2 ${px(p.tp2)} (the rest; stop to the entry after TP1)` : ""}</div>
+      <div>Latest price at the alert</div><div>${nw ? `${px(nw.px)} <span class="dim">(${nw.live ? "live quote" : "last closed bar"} read ${tfmt(nw.t_px, false)})</span> · left from it: TP1 $${f((p.tp1 - nw.px) * x.dir, 2)}${isNum(p.tp2) ? `, TP2 $${f((p.tp2 - nw.px) * x.dir, 2)}` : ""}, the stop $${f((nw.px - p.sl) * x.dir, 2)}` : "not available in that run"}</div>
+      <div>Lot · largest loss</div><div>${f(p.lot, 2)} lot · ${usd0(p.risk_usd)} at the stop, costs included <span class="dim">(budget ${usd0(p.budget)} = ${f(p.risk_pct, 1)}% of ${usd0(p.account)})</span></div>
+      <div>Net reward · R:R</div><div>${usd0(p.reward_both_usd)} if every target is reached${isNum(p.tp2) ? `, ${usd0(p.reward_tp1_usd)} if TP1 then back to the entry` : ""} · net R:R ${f(p.rr_net, 2)}</div>
+      <div>Costs per oz, round trip</div><div>${parts ? `spread $${f(parts.spread, 2)} + slippage $${f(parts.slippage, 2)} + commission $${f(parts.commission, 2)} = ` : ""}$${f(p.size_cost_oz, 2)} = ${usd0(p.cost_usd)} <span class="dim">(${parts ? "research model" : "the higher of your cost and the research model"}; not broker-verified; the feed has no bid / ask)</span></div>
+      <div>Valid until</div><div>${tfmt(cf.t + C.fresh_sec)} <span class="dim">(${Math.round(C.fresh_sec / 60)} min after the confirming close; later: NO TRADE on this alert)</span></div>` : `
+      <div>Expires</div><div>after 96 15m bars without a confirming close <span class="dim">(24 market hours: not before ${tfmt(x.expires_not_before)})</span></div>`}
+      <div>Data source</div><div>${esc(x.src || "not recorded")}, 15m bars</div>${x.why ? `
+      <div>Result</div><div>${esc(x.why)}</div>` : ""}</div>${phone(x)}`; };
+  const open = (C.open || []).map(block).join("");
+  const RS = { TP2: "bull", BE: "", SL: "bear", AMBIGUOUS: "bear", TIMEOUT: "", INVALIDATED: "", EXPIRED: "", REJECTED: "warn" };
+  const rows = (C.recent || []).map((x) => `<tr><td>#${x.id} ${esc(x.tf)} ${sd(x.dir)}<div>${tfmt(x.t_close)}</div></td><td>${px(x.p0)}</td>
+    <td>${x.conf ? `${px(x.conf.px)} (+$${f(x.conf.move, 2)})` : "—"}</td><td><b class="${RS[x.status] || ""}">${esc(x.status === "INVALIDATED" ? "CANCELLED" : x.status)}</b><div>${esc(x.why || "")}</div></td></tr>`).join("");
+  return `<h4>The phone's decision now</h4>
+    <div class="kv"><div>Decision</div><div><span class="pill ${pill}">${esc(word)}</span> ${esc(why)}${!passed && isNum(D.until) ? ` · valid until ${tfmt(D.until)}` : ""}</div>
+      <div>Status of every alert</div><div><b class="warn">RECORD — NOT A VALIDATED SIGNAL</b> <span class="dim">(the first line of every phone alert)</span></div>
+      <div>Probability</div><div>none shown: <b>not calibrated</b></div>
+      <div>Validation reference</div><div>${val}</div>
+      <div>Live record of these entries</div><div>${rec} <span class="dim">(${R.entries || 0} entered, ${R.open || 0} open, ${R.timeout || 0} timed out; descriptive, no verdict)</span></div>
+      <div>As of</div><div>${isNum(C.t) ? tfmt(C.t) : "—"} <span class="dim">(the engine run that wrote this page)</span></div></div>
+    ${open || '<p class="muted pa-note">No setup is open: no qualifying opportunity. The phone is silent until the engine signals.</p>'}
+    ${rows ? `<h4>Finished setups</h4><div class="scroll"><table class="yt"><tr><th>Setup</th><th>Trigger</th><th>Confirmed</th><th>Result</th></tr>${rows}</table></div>` : ""}
+    <p class="muted pa-note">A setup is not an entry. Only a 15m close $${f(C.min_usd, 0)} beyond the trigger, with every check passed, is ENTRY ELIGIBLE; the plan is then
+      recalculated from that close. ${esc(C.evidence || "")}</p>`;
+}
 function shadowCard(SH) {
   if (!SH) return "";
   if (SH.error || SH.status) return `<h4>Entry-module forward test (B31b)</h4><p class="muted">${esc(SH.error || SH.status)}</p>`;
@@ -2300,7 +2353,10 @@ function renderPlanAlerts() {
     <p class="muted pa-note">Price closed beyond a previous day / week high or low on 2+ timeframes while the engine's slow higher-timeframe gate (or today's signals) pointed the other way. Information, not a trade signal.</p>` : "";
   const T = P.tally || {}, tp = T.TP || 0, sl = (T.SL || 0) + (T.BOTH || 0), n = tp + sl;
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
-  el.innerHTML = `
+  // this card is redrawn on live ticks (open plans' P/L): keep the "phone alert, as sent" blocks the reader has opened
+  const openK = new Set([...el.querySelectorAll("details[open][data-k]")].map((d) => d.dataset.k));
+  el.innerHTML = `${c1Card(A.c1)}
+    <h4>Your plan</h4>
     <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}${c.tp2_usd ? ` · two targets: TP1 +$${f(c.tp_usd / 2, 0)} on half, then SL to entry, TP2 +$${f(c.tp2_usd / 2, 0)} on the rest` : ""}</div>
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
       <div>Break-even after costs</div><div>${pct(100 * P.break_even)}${isNum(P.cost_oz) ? ` at your $${f(P.cost_oz, 2)}/oz cost` : ""}${P.break_even_model && P.cost_model_oz ? ` · ${pct(100 * P.break_even_model[0])}–${pct(100 * P.break_even_model[1])} at the research cost model ($${f(P.cost_model_oz[0], 2)}–${f(P.cost_model_oz[1], 2)}/oz) · <span class="warn">neither broker-verified</span>` : ""}</div>
@@ -2325,6 +2381,7 @@ function renderPlanAlerts() {
     ${grabHtml}
     ${validationHtml(P.validation)}`;
   el.querySelectorAll("button[data-vp]").forEach((b) => { b.onclick = () => { S.vp = b.dataset.vp; store.set("vp", S.vp); renderPlanAlerts(); }; });
+  el.querySelectorAll("details[data-k]").forEach((d) => { if (openK.has(d.dataset.k)) d.open = true; });
 }
 /* Validation: how the market answered the alerted signals, today / this week / all time (quantum/notify.py summarize).
    A group is called WEAK or STRONG only with 30+ results and a 95% interval that excludes break-even. */

@@ -27,12 +27,20 @@ Checks before ENTRY_ELIGIBLE (operator section 5):
 Evidence (stated on every alert): B19 and B30 found no confirmation threshold that raises the chance of TP before SL out
 of sample; the rule is the operator's risk preference, not a validated edge. No probability is shown.
 
+Fields on every alert (operator directive 2026-11-15, priority 6): the decision (WAIT / BUY or SELL ENTRY ELIGIBLE / NO
+TRADE), the setup's id and times, the data source and the latest price with its age, the trigger price (P0), the
+confirmation price, the entry, the +$10 / +$15 / +$20 status, the stop, the targets, what is left to each from the latest
+price, net R:R, the lot, the largest loss, the cost split (spread / slippage / commission), the probability status (none:
+not calibrated) with the validation reference and its sample size, the live record of these entries, and the expiry.
+snapshot() gives the website the same setups and the same phone text, so both show one decision.
+
 Alerts and display only: not an ENGINE_SOURCES file. B15's plans, B9 and every record are unchanged (the B15 plan still
 opens at the signal close; its follow-ups are labelled as the engine's record, not an entry). CONFIRM_MIN_USD=0 restores
 the previous alerts.
 """
 from __future__ import annotations
 
+import math
 import os
 
 INV_USD = 13.0
@@ -48,6 +56,15 @@ EPS = 1e-9
 FINAL = ("INVALIDATED", "EXPIRED", "REJECTED", "TP2", "BE", "SL", "AMBIGUOUS", "TIMEOUT")
 EVIDENCE = ("Confirmation is your rule, not a proven edge: B19 and B30 found no $10 / $15 / $20 threshold that raises the "
             "chance of TP before SL out of sample.")
+# The validation reference printed with the probability status: B30's models A / B / C (a $10 / $15 / $20 confirming
+# close, the plan recalculated from the entry), engine signals, validation + holdout pooled, model cost. Copied from
+# research/B30_RESULTS.md section 2; tests/test_confirm_entry.py checks every number against the results file
+# research/results/b30_all_partitions_2026-11-15.json. None was supported.
+VALIDATION = {10.0: {"model": "A", "n": 48, "tp1": 27, "net_r": 0.00, "boot95": (-0.28, 0.27), "holm_p": 0.81},
+              15.0: {"model": "B", "n": 42, "tp1": 23, "net_r": 0.03, "boot95": (-0.26, 0.30), "holm_p": 0.81},
+              20.0: {"model": "C", "n": 34, "tp1": 21, "net_r": 0.17, "boot95": (-0.17, 0.46), "holm_p": 0.52}}
+VALIDATION_REF = "B30, engine signals out of sample 2023-25, the engine before Amendment F"
+VALIDATION_BE = 0.527                  # B30's break-even TP1-first rate for this plan at the model cost
 B15_PREFIX = "ENGINE RECORD, NOT YOUR TRADE (the engine test B15b measures the signal from its close; act only on ENTRY ELIGIBLE alerts): "
 
 
@@ -97,9 +114,24 @@ def _hm(t: int) -> str:
     return datetime.fromtimestamp(t, timezone.utc).strftime("%d %b %H:%M UTC")
 
 
+def wilson(k: int, n: int, z: float = 1.959964) -> tuple[float, float] | None:
+    """The Wilson 95% interval of k successes in n; None without a sample."""
+    if n <= 0:
+        return None
+    p, den = k / n, 1 + z * z / n
+    mid, half = (p + z * z / (2 * n)) / den, z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / den
+    return max(0.0, mid - half), min(1.0, mid + half)
+
+
+TF_SEC = {"15m": 900, "30m": 1800, "1h": 3600, "4h": 14400}
+
+
 # ---------------- the SETUP alert (replaces the entry lines of a SIGNAL alert) ----------------
-def setup_head(m: dict, tf: str, off: float = 0.0) -> str:
-    return f"XAUUSD {tf} {_side(m['dir'])} SETUP DETECTED (signal bar closed) | NOT AN ENTRY | reference {_px(m['px'], off)}"
+def setup_head(m: dict, tf: str, off: float = 0.0, sid: int | None = None) -> str:
+    """sid: the C1 setup this signal opened (None on a line that opens none, e.g. a website-only timeframe)."""
+    num = f" #{sid}" if sid is not None else ""
+    return (f"XAUUSD {tf} {_side(m['dir'])} SETUP DETECTED{num} (signal bar closed {_hm(int(m['t']) + TF_SEC.get(tf, 900))}) | "
+            f"WAIT, NOT AN ENTRY | trigger {_px(m['px'], off)}")
 
 
 def repeat_head(m: dict, tf: str, off: float = 0.0) -> str:
@@ -107,16 +139,36 @@ def repeat_head(m: dict, tf: str, off: float = 0.0) -> str:
     return f"XAUUSD {tf} {_side(m['dir'])} signal again (signal bar closed) at {_px(m['px'], off)} | NOT AN ENTRY"
 
 
-def setup_lines(m: dict, off: float = 0.0) -> list[str]:
+def joined_lines(m: dict, tf: str, s: dict, off: float = 0.0) -> list[str]:
+    """A new signal that is the same idea as an open C1 setup (same side, within 4 h and $15): it opens no second
+    setup, so the phone names the setup that is being followed and shows that setup's levels, not new ones."""
+    d = s["dir"]
+    if s["status"] == "PENDING":
+        word = "above" if d == 1 else "below"
+        now = (f"still waiting for a 15m close at or {word} {_px(s['p0'] + d * s['x'], off)} (+${s['x']:g} beyond its trigger "
+               f"{_px(s['p0'], off)})")
+    else:
+        now = f"already confirmed at {_px(s['conf']['px'], off)}, {_hm(s['conf']['t'])}: its entry alert was sent then"
+    return [f"XAUUSD {tf} {_side(d)} signal again (signal bar closed {_hm(int(m['t']) + TF_SEC.get(tf, 900))}) at "
+            f"{_px(m['px'], off)} | SAME IDEA AS SETUP #{s['id']}: no new setup | NOT AN ENTRY",
+            f"SETUP #{s['id']} is {now}. NO TRADE on this signal."]
+
+
+def setup_lines(m: dict, off: float = 0.0, s: dict | None = None) -> list[str]:
+    """s: the C1 setup the signal opened; with it the lines carry the expiry time and the data source."""
     d, p0, X = m["dir"], m["px"], min_usd()
     word = "above" if d == 1 else "below"
     lv = lambda x: _px(p0 + d * x, off)
     tail = f" | +$15 {lv(15)} preferred | +$20 {lv(20)} ideal" if X < 15 else ""
     cap = f" | a first close more than ${cap_usd():g} beyond expires it" if cap_usd() else ""
-    return [f"WAIT FOR CONFIRMATION: a 15m close at or {word} {lv(X)} (+${X:g} minimum){tail}{cap} | a touch is not a confirmation",
-            f"CANCELLED if price trades {_px(p0 - d * INV_USD, off)} (-${INV_USD:g}) or the 15m structure breaks the other way "
-            f"first; expires after 24 h",
-            "NO TRADE until an ENTRY ELIGIBLE alert arrives. " + EVIDENCE]
+    exp = (f"expires after {WIN} 15m bars without a confirming close (24 market hours: not before {_hm(s['t_close'] + WIN * 900)})"
+           if s else "expires after 24 h")
+    out = [f"WAIT FOR CONFIRMATION: a 15m close at or {word} {lv(X)} (+${X:g} minimum){tail}{cap} | a touch is not a confirmation",
+           f"CANCELLED if price trades {_px(p0 - d * INV_USD, off)} (-${INV_USD:g}) or the 15m structure breaks the other way "
+           f"first; {exp}"]
+    if s and s.get("src"):
+        out.append(f"DATA: {s['src']}, {s['tf']} bars; the trigger is the signal bar's close")
+    return out + ["NO TRADE until an ENTRY ELIGIBLE alert arrives. " + EVIDENCE]
 
 
 # ---------------- state ----------------
@@ -124,19 +176,31 @@ def book(state: dict) -> dict:
     return state.setdefault("c1", {"seq": 0, "open": [], "log": []})
 
 
-def open_setup(state: dict, m: dict, tf: str) -> dict | None:
-    """A new setup from a SIGNAL marker, or None when it repeats an open setup (one idea, one setup)."""
+def same_idea(state: dict, m: dict, tf: str) -> dict | None:
+    """The open setup this SIGNAL marker belongs to: the one it opened, or the earlier one it repeats (same side,
+    within REPEAT_SEC and REPEAT_USD). None when there is none."""
     if m.get("px") is None or m.get("dir") not in (1, -1):
         return None
-    bk = book(state)
-    t_close = int(m["t"]) + 900 if tf == "15m" else int(m["t"]) + {"30m": 1800, "1h": 3600, "4h": 14400}.get(tf, 900)
-    for s in bk["open"]:
+    t_close = int(m["t"]) + TF_SEC.get(tf, 900)
+    for s in book(state)["open"]:
         if s["dir"] == m["dir"] and t_close - s["t_close"] <= REPEAT_SEC and abs(m["px"] - s["p0"]) <= REPEAT_USD:
-            return None
+            return s
+    return None
+
+
+def open_setup(state: dict, m: dict, tf: str, src: str | None = None) -> dict | None:
+    """A new setup from a SIGNAL marker, or None when it repeats an open setup (one idea, one setup). src: the
+    payload's price source, kept on the setup so every later alert names where its prices came from."""
+    if m.get("px") is None or m.get("dir") not in (1, -1) or same_idea(state, m, tf) is not None:
+        return None
+    bk = book(state)
+    t_close = int(m["t"]) + TF_SEC.get(tf, 900)
     bk["seq"] = int(bk.get("seq", 0)) + 1
     s = {"id": bk["seq"], "tf": tf, "t": int(m["t"]), "t_close": t_close, "dir": int(m["dir"]), "p0": float(m["px"]),
          "status": "PENDING", "scanned": t_close - 900, "touch": {}, "x": min_usd(),
          "events": [["SETUP_DETECTED", t_close, float(m["px"])], ["REFERENCE_SET", t_close, float(m["px"])]]}
+    if src:
+        s["src"] = str(src)
     bk["open"].append(s)
     return s
 
@@ -153,7 +217,8 @@ def plan_at(entry: float, d: int, pl: dict) -> dict:
             "tp2": round(entry + d * tp2, 2) if tp2 else None, "lot": lot, "cost_usd": cost, "risk_usd": risk,
             "reward_both_usd": reward_both, "reward_tp1_usd": reward_tp1, "rr_net": reward_both / risk if risk > 0 else 0.0,
             "account": pl["account"], "risk_pct": pl["risk_pct"], "budget": pl["budget"], "size_cost_oz": pl["size_cost_oz"],
-            "over_budget": bool(pl.get("over_budget"))}
+            "over_budget": bool(pl.get("over_budget")), "cost_parts": pl.get("cost_parts"),
+            "own_cost_oz": pl["cost_usd"] / oz if oz > 0 and pl.get("cost_usd") is not None else None}
 
 
 def checks(ch: dict, j: int, d: int, plan: dict, t_now: int, off: float = 0.0) -> list[str]:
@@ -180,8 +245,11 @@ def _markers_at(markers: list, kinds: tuple, d: int) -> set:
     return {int(m["t"]) for m in markers if m["type"] in kinds and m.get("dir") == d}
 
 
-def advance(s: dict, ch: dict, markers: list, t_now: int, pl: dict | None, off: float = 0.0) -> list[str]:
-    """Moves `s` along its lifecycle on the closed 15m bars it has not seen; returns the phone lines for what changed."""
+def advance(s: dict, ch: dict, markers: list, t_now: int, pl: dict | None, off: float = 0.0, now: dict | None = None,
+            rec: dict | None = None) -> list[str]:
+    """Moves `s` along its lifecycle on the closed 15m bars it has not seen; returns the phone lines for what changed.
+    now: this run's latest price {'px', 't_px', 'live'} (notify.price_now); rec: the live record of earlier entries
+    (record()). Both are kept on the confirmation, so the alert and the website print the same figures."""
     t, o, h, l, c = (ch.get(k) or [] for k in ("t", "o", "h", "l", "c"))
     d, p0 = s["dir"], s["p0"]
     opp_struct = _markers_at(markers, STRUCT, -d)
@@ -215,7 +283,11 @@ def advance(s: dict, ch: dict, markers: list, t_now: int, pl: dict | None, off: 
                 if cap_usd() and move > cap_usd() + EPS:
                     out.append(_final(s, "EXPIRED", tj + 900, c[j], f"the first close was ${move:.2f} beyond, past the ${cap_usd():g} cap", off))
                     break
-                s["conf"] = {"t": tj + 900, "px": float(c[j]), "move": round(move, 2), "tier": tier(move)}
+                s["conf"] = {"t": tj + 900, "px": float(c[j]), "move": round(move, 2), "tier": tier(move), "t_alert": int(t_now)}
+                if now and now.get("px") is not None and now.get("t_px") is not None:
+                    s["conf"]["now"] = {"px": float(now["px"]), "t_px": int(now["t_px"]), "live": bool(now.get("live"))}
+                if rec:
+                    s["conf"]["rec"] = [int(rec["tp1"]), int(rec["decided"])]
                 s["events"].append(["CONFIRMED", tj + 900, float(c[j])])
                 if pl is None:
                     out.append(_final(s, "REJECTED", tj + 900, c[j], "no plan is configured (PLAN=0)", off))
@@ -284,22 +356,108 @@ def _final(s: dict, status: str, t: int, px: float, why: str, off: float) -> str
     s["events"].append([status, int(t), float(px)])
     d = s["dir"]
     if status in ("INVALIDATED", "EXPIRED"):
-        return (f"XAUUSD {s['tf']} {_side(d)} SETUP {'CANCELLED' if status == 'INVALIDATED' else 'EXPIRED'} (reference "
-                f"{_px(s['p0'], off)}): {why} | NO TRADE")
+        return (f"XAUUSD {s['tf']} {_side(d)} SETUP #{s['id']} {'CANCELLED' if status == 'INVALIDATED' else 'EXPIRED'} (trigger "
+                f"{_px(s['p0'], off)}, {_hm(s['t_close'])}): {why} | NO TRADE")
     if status == "REJECTED":
         cf = s.get("conf") or {}
-        return (f"XAUUSD {s['tf']} {_side(d)} confirmed +${cf.get('move', 0):.2f} ({cf.get('tier', '')}) at "
+        return (f"XAUUSD {s['tf']} {_side(d)} SETUP #{s['id']} confirmed +${cf.get('move', 0):.2f} ({cf.get('tier', '')}) at "
                 f"{_px(cf.get('px', px), off)} but NOT ELIGIBLE: {why} | NO TRADE")
     return f"XAUUSD {s['tf']} {_side(d)} confirmed setup #{s['id']} {status}: {why}"
 
 
-def eligible_lines(s: dict, off: float = 0.0) -> list[str]:
+def ladder_status(s: dict, off: float = 0.0) -> str:
+    """The +$10 / +$15 / +$20 status of a setup: closed beyond (the confirming close), touched only, or not reached."""
+    d, p0, cf = s["dir"], s["p0"], s.get("conf") or {}
+    out = []
+    for lv in (10, 15, 20):
+        if cf and cf["move"] >= lv - EPS:
+            st = "CLOSED BEYOND"
+        elif str(lv) in s["touch"]:
+            st = f"touched {_hm(s['touch'][str(lv)])[-9:]}, no close beyond"
+        else:
+            st = "not reached"
+        out.append(f"+${lv} {_px(p0 + d * lv, off)} {st}")
+    return "CONFIRMATION STATUS: " + " | ".join(out)
+
+
+def data_line(s: dict, off: float = 0.0) -> str:
+    """Where the prices came from, the latest price of the alert's run with its age, and what is left from it to each
+    target and to the stop (the plan itself is measured from the entry = the confirming close)."""
     d, p, cf = s["dir"], s["plan"], s["conf"]
-    touched = ", ".join(f"+${k} {_hm(v)[-9:]}" for k, v in sorted(s["touch"].items(), key=lambda kv: int(kv[0])))
+    base = f"DATA: {s.get('src') or 'price source not recorded'}, 15m bars | confirming close {_px(cf['px'], off)} at {_hm(cf['t'])}"
+    nw = cf.get("now")
+    if not nw:
+        return base + " | latest price: not available in this run, check your platform"
+    mv = (nw["px"] - p["entry"]) * d
+    where = "toward TP" if mv > 0 else "toward the stop" if mv < 0 else "unchanged"
+    left = [f"TP1 ${(p['tp1'] - nw['px']) * d:.2f}"] + ([f"TP2 ${(p['tp2'] - nw['px']) * d:.2f}"] if p["tp2"] is not None else [])
+    return (f"{base} | latest price {_px(nw['px'], off)} ({'live quote' if nw['live'] else 'last closed bar'} read "
+            f"{_hm(nw['t_px'])[-9:]}): ${abs(mv):.2f} {where} from the entry | left from it: {', '.join(left)}, "
+            f"the stop ${(nw['px'] - p['sl']) * d:.2f}")
+
+
+def cost_line(p: dict) -> str:
+    """The round-trip cost the lot was sized with (the higher of the operator's cost and the research model), split into
+    spread, slippage and commission when it is the research model (the feed has no bid / ask, so no live spread exists),
+    beside the operator's stated cost. A plan recorded without the split prints the one figure."""
+    oz, c = p["lot"] * 100.0, p["size_cost_oz"]
+    parts = p.get("cost_parts")
+    split = (f"spread ${parts['spread']:.2f} + slippage ${parts['slippage']:.2f} + commission ${parts['commission']:.2f} = "
+             if parts else "")
+    own = (f" | at your stated ${p['own_cost_oz']:.2f}/oz: ${p['own_cost_oz'] * oz:,.0f}"
+           if p.get("own_cost_oz") is not None and abs(p["own_cost_oz"] - c) > EPS else "")
+    return (f"COSTS per oz, round trip ({'research model' if parts else 'the higher of your cost and the research model'}; not "
+            f"broker-verified; the feed has no bid / ask): {split}${c:.2f} = ${p['cost_usd']:,.0f} at {p['lot']:g} lot{own}")
+
+
+def valid_line(s: dict) -> str:
+    cf = s["conf"]
+    return (f"VALID until {_hm(cf['t'] + FRESH_SEC)} ({FRESH_SEC // 60} min after the confirming close; later the price has moved "
+            f"on: NO TRADE on this alert) | the record follows the plan for {HOLD} 15m bars (48 market hours), then closes it")
+
+
+def record(state: dict) -> dict:
+    """The live record of ENTRY ELIGIBLE alerts, from the book: an entry is decided when TP1 or the stop came first
+    (AMBIGUOUS counts as the stop); a time stop before either is neither. Descriptive: no registered verdict."""
+    bk = book(state)
+    ent = [x for x in bk["log"] + bk["open"] if x.get("entry_bar") is not None]
+    tp1 = sum(1 for x in ent if any(e[0] == "TP1" for e in x["events"]))
+    sl = sum(1 for x in ent if x["status"] in ("SL", "AMBIGUOUS"))
+    return {"entries": len(ent), "tp1": tp1, "sl": sl, "decided": tp1 + sl,
+            "timeout": sum(1 for x in ent if x["status"] == "TIMEOUT" and not any(e[0] == "TP1" for e in x["events"])),
+            "open": sum(1 for x in ent if x["status"] == "ACTIVE"), "wilson": wilson(tp1, tp1 + sl)}
+
+
+def record_text(rec: list | None) -> str:
+    """rec: [TP1 first, decided] of the earlier entries, as kept on the confirmation when its alert was written."""
+    if not rec or not rec[1]:
+        return "live record of these entries: none decided yet"
+    lo, hi = wilson(rec[0], rec[1])
+    return (f"live record of these entries: TP1 first {rec[0]} of {rec[1]} decided (95% {lo:.0%}-{hi:.0%}); "
+            f"descriptive, no verdict")
+
+
+def probability_line(x: float, rec: list | None = None) -> str:
+    """No probability is shown: none is calibrated. The line names that status, the validation reference for this
+    confirmation threshold with its sample size, and the live record of these entries."""
+    v = VALIDATION.get(float(x))
+    if v:
+        lo, hi = wilson(v["tp1"], v["n"])
+        hist = (f"validation {VALIDATION_REF}: a ${x:g} confirming close reached TP1 first in {v['tp1']} of {v['n']} = "
+                f"{v['tp1'] / v['n']:.0%} (95% {lo:.0%}-{hi:.0%}; break-even about {VALIDATION_BE:.0%}), net {v['net_r']:+.2f} R "
+                f"({v['boot95'][0]:+.2f} to {v['boot95'][1]:+.2f}), p {v['holm_p']:.2f}: NOT SUPPORTED")
+    else:
+        hist = f"validation: none at a ${x:g} confirming close (B30 tested $10 / $15 / $20; none was supported)"
+    return f"PROBABILITY: none shown, NOT CALIBRATED | {hist} | {record_text(rec)}"
+
+
+def eligible_lines(s: dict, off: float = 0.0) -> list[str]:
+    """The ENTRY ELIGIBLE alert, from the setup alone (so the website prints the same text from the same record)."""
+    d, p, cf = s["dir"], s["plan"], s["conf"]
     tp2 = f" | TP2 {_px(p['tp2'], off)} (the rest; stop to the entry after TP1)" if p["tp2"] is not None else ""
     return [
-        f"XAUUSD {s['tf']} {_side(d)} ENTRY ELIGIBLE: confirmed +${cf['move']:.2f} ({cf['tier']}) at the 15m close "
-        f"{_px(cf['px'], off)}, {_hm(cf['t'])} | reference {_px(s['p0'], off)} | touched {touched or '-'}",
+        f"XAUUSD {s['tf']} {_side(d)} ENTRY ELIGIBLE, SETUP #{s['id']}: entry {_px(p['entry'], off)} = the 15m close at "
+        f"{_hm(cf['t'])}, +${cf['move']:.2f} ({cf['tier']}) beyond the trigger {_px(s['p0'], off)} ({_hm(s['t_close'])})",
         f"PLAN (recalculated from this entry): entry {_px(p['entry'], off)} | SL {_px(p['sl'], off)} | TP1 {_px(p['tp1'], off)}"
         f"{' (close half)' if p['tp2'] is not None else ''}{tp2}",
         f"RISK: account ${p['account']:,.0f} | {p['risk_pct']:g}% = max ${p['budget']:,.0f} | lot {p['lot']:g} | est. cost "
@@ -307,6 +465,11 @@ def eligible_lines(s: dict, off: float = 0.0) -> list[str]:
         f"NET: reward ${p['reward_both_usd']:,.0f} if every target is reached"
         + (f", ${p['reward_tp1_usd']:,.0f} if TP1 then back to the entry" if p["tp2"] is not None else "")
         + f" | net R:R {p['rr_net']:.2f} | a ${p['risk_usd']:,.0f} loss is possible on this trade",
+        ladder_status(s, off),
+        data_line(s, off),
+        cost_line(p),
+        valid_line(s),
+        probability_line(s["x"], cf.get("rec")),
         "CHECKS passed: fresh close, no opposite structure or signal since the setup, room to TP1, size within the budget. "
         + EVIDENCE]
 
@@ -316,20 +479,68 @@ def open_from(state: dict, payload: dict, since: int | None, skip: set | None = 
     """Setups from a payload's new SIGNAL markers (confirmation is always read on 15m bars). skip: the bar times of
     signals the phone did not announce as a SETUP (a REPEAT of an open plan, or a NOT ACTIONABLE one), so every later
     CONFIRMED / CANCELLED alert belongs to a SETUP the operator was shown."""
-    tf = payload["meta"]["tf"]
+    tf, src = payload["meta"]["tf"], payload["meta"].get("price_source")
     new = sorted((m for m in payload.get("markers") or [] if m["type"] == "SIGNAL" and (since is None or m["t"] > since)
                   and m["t"] not in (skip or ())), key=lambda m: m["t"])
-    return [s for s in (open_setup(state, m, tf) for m in new) if s is not None]
+    return [s for s in (open_setup(state, m, tf, src) for m in new) if s is not None]
 
 
-def advance_all(state: dict, p15: dict, t_now: int, pl: dict | None, off: float = 0.0) -> list[str]:
-    """Move every open setup along the 15m payload's closed bars; archive the finished ones."""
+def advance_all(state: dict, p15: dict, t_now: int, pl: dict | None, off: float = 0.0, now: dict | None = None) -> list[str]:
+    """Move every open setup along the 15m payload's closed bars; archive the finished ones. now: this run's latest
+    price (see advance)."""
     bk = book(state)
     markers, ch = p15.get("markers") or [], p15.get("chart") or {}
     out = []
+    rec = record(state)                                    # the record before this run's changes: what the alert prints
     for s in list(bk["open"]):
-        out += advance(s, ch, markers, t_now, pl, off)
+        out += advance(s, ch, markers, t_now, pl, off, now, rec)
     done = [s for s in bk["open"] if s["status"] in FINAL]
     bk["open"] = [s for s in bk["open"] if s["status"] not in FINAL][-OPEN_MAX:]
     bk["log"] = (bk["log"] + done)[-LOG_MAX:]
     return out
+
+
+# ---------------- the website's copy: the same setups, the same decision, the same phone text ----------------
+SNAP_RECENT = 12
+
+
+def decision(state: dict, t_now: int) -> dict:
+    """The one decision the phone and the website show now. An entry is offered only while its ENTRY ELIGIBLE alert is
+    valid (FRESH_SEC after the confirming close); a setup waiting for its close is WAIT; anything else is NO TRADE."""
+    op = book(state)["open"]
+    live = [x for x in op if x["status"] == "ACTIVE" and t_now - x["conf"]["t"] <= FRESH_SEC]
+    if live:
+        x = max(live, key=lambda x: x["conf"]["t"])
+        return {"word": _side(x["dir"]), "id": x["id"], "until": x["conf"]["t"] + FRESH_SEC,
+                "why": f"ENTRY ELIGIBLE, setup #{x['id']}: every check passed at the confirming close"}
+    wait = [x for x in op if x["status"] == "PENDING"]
+    if wait:
+        ids = ", ".join(f"#{x['id']} {_side(x['dir'])}" for x in wait)
+        return {"word": "WAIT", "id": wait[-1]["id"], "why": f"waiting for a confirming 15m close: setup {ids}. Not an entry"}
+    run = [x for x in op if x["status"] in ("ACTIVE", "TP1")]
+    if run:
+        return {"word": "NO TRADE", "id": None,
+                "why": "no new entry: the entry window of setup " + ", ".join(f"#{x['id']}" for x in run) + " has passed"}
+    return {"word": "NO TRADE", "id": None, "why": "no setup is open: no qualifying opportunity"}
+
+
+def _row(x: dict, off: float) -> dict:
+    out = {k: x.get(k) for k in ("id", "tf", "dir", "p0", "t_close", "status", "x", "touch", "conf", "plan", "why", "t_done", "src")}
+    out["expires_not_before"] = x["t_close"] + WIN * 900   # WIN bars are counted, so a market break moves the expiry later
+    out["ladder"] = ladder_status(x, off)
+    if x["status"] == "PENDING":
+        m = {"dir": x["dir"], "px": x["p0"], "t": x["t"]}
+        out["phone"] = [setup_head(m, x["tf"], off, x["id"]), *setup_lines(m, off, x)]
+    elif x.get("entry_bar") is not None:
+        out["phone"] = eligible_lines(x, off)
+    return out
+
+
+def snapshot(state: dict, t_now: int, off: float = 0.0) -> dict:
+    """index.json -> alerts.c1: the open setups, the last finished ones, the live record and the decision."""
+    bk = book(state)
+    return {"on": on(), "min_usd": min_usd(), "inv_usd": INV_USD, "fresh_sec": FRESH_SEC, "t": int(t_now),
+            "decision": decision(state, t_now), "open": [_row(x, off) for x in bk["open"]][::-1],
+            "recent": [_row(x, off) for x in bk["log"][::-1][:SNAP_RECENT]], "record": record(state),
+            "validation": {"ref": VALIDATION_REF, "break_even": VALIDATION_BE, "rows": {f"{k:g}": v for k, v in VALIDATION.items()}},
+            "evidence": EVIDENCE}
