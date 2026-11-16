@@ -371,6 +371,30 @@
 "entry": 3850.96,
 "D": 11.45,
 "lots": 0.532
+},
+{
+"key": "D|1794852900|1|VWAP|3851.35",
+"module": "D",
+"dir": 1,
+"kind": "VWAP",
+"lv": 3851.35,
+"order_t": 1794852900,
+"order_close": 1794853800,
+"recorded_utc": 1794857902,
+"timely": false,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3850.96,
+"p_ref": 3850.96,
+"stop": 3839.5088,
+"inval": null,
+"false_break": false,
+"vwap": 3865.69,
+"session": "NEW YORK",
+"ranging": true,
+"vol_ratio": 2.011,
+"cost": 0.77,
+"status": "REPEAT"
 }
 ],
 "days": [
