@@ -4655,6 +4655,189 @@
    "mae": 13.11999999999989,
    "bars": 62,
    "path": "5m"
+  },
+  {
+   "id": 130,
+   "tf": "15m",
+   "t": 1794854700,
+   "t_dec": 1794855600,
+   "dir": 1,
+   "entry": 3854.86,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "PWL",
+     3853.27
+    ]
+   ],
+   "zones": [
+    "value-area low 3853.04"
+   ],
+   "sl": 3841.86,
+   "tp": 3869.86,
+   "checks": {
+    "major": true,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794855916,
+   "result": "TP",
+   "t_res": 1794879600,
+   "mfe": 15.5,
+   "mae": 11.220000000000255,
+   "bars": 69,
+   "path": "5m"
+  },
+  {
+   "id": 132,
+   "tf": "15m",
+   "t": 1794861000,
+   "t_dec": 1794861900,
+   "dir": -1,
+   "entry": 3853.16,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "1HL",
+     3853.56
+    ]
+   ],
+   "zones": [
+    "below value-area low 3856.42"
+   ],
+   "sl": 3866.16,
+   "tp": 3838.16,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794862225,
+   "result": "SL",
+   "t_res": 1794879600,
+   "mfe": 9.519999999999982,
+   "mae": 17.200000000000273,
+   "bars": 48,
+   "path": "5m"
+  },
+  {
+   "id": 134,
+   "tf": "15m",
+   "t": 1794871800,
+   "t_dec": 1794872700,
+   "dir": -1,
+   "entry": 3852.03,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "PWL",
+     3853.27
+    ],
+    [
+     "TDL",
+     3852.66
+    ]
+   ],
+   "zones": [
+    "below value-area low 3853.04"
+   ],
+   "sl": 3865.03,
+   "tp": 3837.03,
+   "checks": {
+    "major": true,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794873208,
+   "result": "SL",
+   "t_res": 1794879600,
+   "mfe": 8.390000000000327,
+   "mae": 18.329999999999927,
+   "bars": 24,
+   "path": "5m"
+  },
+  {
+   "id": 135,
+   "tf": "15m",
+   "t": 1794877200,
+   "t_dec": 1794878100,
+   "dir": 1,
+   "entry": 3852.57,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "TDL",
+     3851.64
+    ],
+    [
+     "1HL",
+     3852.53
+    ]
+   ],
+   "zones": [
+    "value-area low 3853.04"
+   ],
+   "sl": 3839.57,
+   "tp": 3867.57,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794878604,
+   "result": "TP",
+   "t_res": 1794879600,
+   "mfe": 17.789999999999964,
+   "mae": 8.930000000000291,
+   "bars": 6,
+   "path": "5m"
+  },
+  {
+   "id": 136,
+   "tf": "15m",
+   "t": 1794878100,
+   "t_dec": 1794879000,
+   "dir": -1,
+   "entry": 3849.36,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "1HL",
+     3852.53
+    ]
+   ],
+   "zones": [
+    "below value-area low 3853.04"
+   ],
+   "sl": 3862.36,
+   "tp": 3834.36,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794879385,
+   "result": "SL",
+   "t_res": 1794879600,
+   "mfe": 3.2100000000000364,
+   "mae": 21.0,
+   "bars": 3,
+   "path": "5m"
   }
  ],
  "live": {
@@ -4663,11 +4846,11 @@
    7
   ],
   "SWEEP": [
-   53,
-   21
+   55,
+   23
   ],
   "BREAKOUT": [
-   57,
+   60,
    35
   ],
   "4H CONFIRMED": [
