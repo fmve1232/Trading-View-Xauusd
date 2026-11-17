@@ -2,7 +2,23 @@
  "id": "B15b-ENGINE-FWD",
  "registration": "research/registrations/B15b-ENGINE-FWD.json",
  "started_utc": 1794743289,
- "trades": [],
+ "trades": [
+  {
+   "id": 14,
+   "tf": "30m",
+   "dir": -1,
+   "entry": 3860.17,
+   "t_dec": 1794925800,
+   "status": "SL",
+   "result": "SL",
+   "t_res": 1794929700,
+   "tp2_result": null,
+   "path": "5m",
+   "late": true,
+   "move_alert": -8.3,
+   "session": "London+NY"
+  }
+ ],
  "excluded": 0,
  "checks": [],
  "verdict": null
