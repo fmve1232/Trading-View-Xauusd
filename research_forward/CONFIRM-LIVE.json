@@ -6108,6 +6108,33 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "BREAKOUT|15m|1792785600|-1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1792785600,
+   "t_close": 1792786500,
+   "dir": -1,
+   "p0": 3996.66,
+   "what": "breakout at TDL 3998.08",
+   "id": 179,
+   "seen": 1794890278,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 3981.66,
+   "invalid_at": 4009.66,
+   "cap_at": 3976.66,
+   "confirm20_at": 3976.66,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1792984500,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
