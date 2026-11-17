@@ -6482,6 +6482,33 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1794916800
+  },
+  {
+   "key": "4H|4h|1794909600|-1",
+   "kind": "4H",
+   "tf": "4h",
+   "t": 1794909600,
+   "t_close": 1794924000,
+   "dir": -1,
+   "p0": 3851.6,
+   "what": "4h close below the previous 4h low 3860.08",
+   "id": 185,
+   "seen": 1794924316,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3836.6,
+   "invalid_at": 3864.6,
+   "cap_at": 3831.6,
+   "confirm20_at": 3831.6,
+   "status": "INVALIDATED",
+   "bars": 3,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1794926700
   }
  ]
 }
