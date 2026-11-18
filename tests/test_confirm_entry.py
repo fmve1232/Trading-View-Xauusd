@@ -6,6 +6,7 @@ import json
 import os
 
 import pytest
+from datetime import datetime, timezone
 
 from quantum import confirm_entry as C1
 from quantum import notify as N
@@ -111,7 +112,8 @@ def test_a_touch_is_not_a_confirmation_and_the_close_recalculates_the_plan_and_r
                         "before Amendment F: a $10 confirming close reached TP1 first in 27 of 48 = 56% (95% 42%-69%; break-even "
                         "about 53%), net +0.00 R (-0.28 to +0.27), p 0.81: NOT SUPPORTED | live record of these entries: none "
                         "decided yet")
-    assert lines[9].startswith("CHECKS passed: fresh close") and "not a proven edge" in lines[9] and len(lines) == 10
+    assert lines[9].startswith("CHECKS passed: fresh close") and "not a proven edge" in lines[9] and len(lines) == 11
+    assert lines[10].startswith("GAP RISK: the $") and "NOT guaranteed" in lines[10] and "90 of 9,335" in lines[10]
     assert s["conf"]["t"] + C1.FRESH_SEC == T0 + 2700 + 1200 and s["conf"]["t_alert"] == t_now   # 14:45 + 20 min = 15:05
     assert s["conf"]["now"] == {"px": 4013.10, "t_px": T0 + 2700 + 240, "live": True} and s["conf"]["rec"] == [0, 0]
 
@@ -384,7 +386,7 @@ def test_a_setup_recorded_before_this_build_still_prints():
                     "available in this run, check your platform")
     assert L[6] == ("COSTS per oz, round trip (the higher of your cost and the research model; not broker-verified; the feed has no "
                     "bid / ask): $0.97 = $45 at 0.46 lot")
-    assert L[8].endswith("live record of these entries: none decided yet") and len(L) == 10
+    assert L[8].endswith("live record of these entries: none decided yet") and len(L) == 11 and L[10].startswith("GAP RISK")
     assert C1.snapshot(st, T0 + 1800 + 60)["open"][0]["phone"] == L
 
 
@@ -404,7 +406,7 @@ def test_the_website_copy_carries_the_same_decision_and_the_same_text_as_the_pho
     snap = C1.snapshot(st, t_now)
     assert snap["decision"] == {"word": "BUY", "id": 1, "until": T0 + 2700 + 1200,
                                 "why": "ENTRY ELIGIBLE, setup #1: every check passed at the confirming close"}
-    assert snap["open"][0]["phone"] == lines and len(lines) == 10              # the alert the phone received, line for line
+    assert snap["open"][0]["phone"] == lines and len(lines) == 11              # the alert the phone received, line for line
     assert snap["open"][0]["ladder"] == lines[4] and snap["record"]["open"] == 1
     assert C1.snapshot(st, T0 + 2700 + 1200)["decision"]["word"] == "BUY"      # valid up to 20 min after the close
     late = C1.snapshot(st, T0 + 2700 + 1201)["decision"]
@@ -564,7 +566,7 @@ def test_a_new_entry_leads_the_message_when_another_setup_reports_in_the_same_ru
     lines = C1.advance_all(st, {"meta": {"tf": "15m"}, "chart": full, "markers": [SIG, sig2]}, full["t"][-1] + 960, N.plan_cfg())
     tp1 = "XAUUSD 15m BUY confirmed setup #1: TP1 4025.40 reached: close half, move the stop to the entry 4012.40"
     assert lines[0].startswith("XAUUSD 15m BUY ENTRY ELIGIBLE, SETUP #2: entry 4026.50") and tp1 in lines
-    assert lines.index(tp1) == len(lines) - 1 == 10                                        # #2's ten lines, then #1's news
+    assert lines.index(tp1) == len(lines) - 1 == 11                                        # #2's eleven lines, then #1's news
     assert all("SETUP #2" in x or not x.startswith("XAUUSD") for x in lines[:10])
     # with no entry in the run the order is the setups' own
     st2 = {}
@@ -572,3 +574,30 @@ def test_a_new_entry_leads_the_message_when_another_setup_reports_in_the_same_ru
     out = C1.advance_all(st2, {"meta": {"tf": "15m"}, "chart": _chart(3, {2: (4030, 4031, 3986.0, 3990)}), "markers": []},
                          T0 + 3 * 900 + 60, N.plan_cfg())
     assert [x.split(" (")[0] for x in out] == ["XAUUSD 15m BUY SETUP #1 CANCELLED", "XAUUSD 15m BUY SETUP #2 CANCELLED"]
+
+
+def test_gap_risk_line_names_the_weekend_close_and_news_inside_the_plan_window():
+    """Workstream 4: the planned loss is a plan, not a ceiling. The ENTRY ELIGIBLE alert says so with the measured gap
+    record, and names a weekend close or high-impact news that falls inside the plan's window."""
+    fri = int(datetime(2026, 11, 20, 18, 0, tzinfo=timezone.utc).timestamp())          # Fri 13:00 New York
+    s = {"conf": {"t": fri, "news": [{"name": "NFP", "t": fri + 1800}]}, "plan": {"risk_usd": 643.0}}
+    line = C1.gap_line(s)
+    assert line.startswith("GAP RISK: the $643 loss at the stop is planned, NOT guaranteed")
+    assert "WEEKEND CLOSE 20 Nov 22:00 UTC" in line and "HIGH-IMPACT NEWS within 4 h: NFP 20 Nov 18:30 UTC" in line
+    tue = int(datetime(2026, 11, 17, 14, 0, tzinfo=timezone.utc).timestamp())
+    plain = C1.gap_line({"conf": {"t": tue}, "plan": {"risk_usd": 600.0}})
+    assert "WEEKEND" not in plain and "NEWS" not in plain                         # Tue + 48 h does not reach Friday 22:00
+    assert C1.weekend_close_after(tue, 3 * 86400 + 8 * 3600) == int(datetime(2026, 11, 20, 22, 0, tzinfo=timezone.utc).timestamp())
+    # 192 market bars are ~50 clock hours (two daily 1 h breaks): Wed 21:00 UTC + 49 h reaches Friday's close
+    wed = int(datetime(2026, 11, 18, 21, 0, tzinfo=timezone.utc).timestamp())
+    assert "48-market-hour follow-up spans the WEEKEND CLOSE 20 Nov 22:00 UTC" in C1.gap_line({"conf": {"t": wed}, "plan": {"risk_usd": 600.0}})
+
+
+def test_the_confirmation_keeps_only_news_inside_the_next_four_hours():
+    st = {}
+    C1.open_from(st, {"meta": {"tf": "15m"}, "markers": [SIG]}, None)
+    ch = _chart(2, {1: (4000, 4013, 3999, 4012.40)})
+    t_conf = ch["t"][1] + 900
+    news = {"events": [{"name": "CPI", "t": t_conf + 3600}, {"name": "FOMC", "t": t_conf + 6 * 3600}, {"name": "old", "t": t_conf - 60}]}
+    C1.advance_all(st, {"meta": {"tf": "15m"}, "chart": ch, "markers": [SIG], "news": news}, ch["t"][-1] + 960, N.plan_cfg())
+    assert C1.book(st)["open"][0]["conf"]["news"] == [{"name": "CPI", "t": t_conf + 3600}]

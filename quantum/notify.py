@@ -73,7 +73,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from . import confirm_entry as C1
-from . import shadow
+from . import keyzones, shadow
 from .data.sources import redact as _src_redact
 from .data.sources import requests
 
@@ -2844,6 +2844,41 @@ def run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | Non
             _RUN = None
 
 
+# ---------------- Workstream 4: key zones (monitoring only) ----------------
+def zones_mode() -> str:
+    """ALERT_ZONES: unset / 'phone' = zone watch messages to the phone (at most keyzones.WATCH_DAY_CAP a day); 'site' =
+    the website only; '0' / 'off' = no zone watch (the website still shows the zones)."""
+    v = (os.environ.get("ALERT_ZONES") or "").strip().lower()
+    return "off" if v in ("0", "off", "no", "false") else ("site" if v == "site" else "phone")
+
+
+def zones_run(state: dict, payloads: dict, t_send: int, off: float) -> tuple[dict, list[str], list[str]]:
+    """The zones for the website, and this run's zone-watch message (fresh bars only, capped per day). Returns (report
+    block, phone lines, event ids)."""
+    pn = price_now(payloads, "15m")
+    price = ({"px": pn["px"], "t": pn["t"], "source": "Twelve Data mid, " + ("live 5m bar" if pn["live"] else "last closed bar")
+              + "; not an executable bid / ask"} if pn else None)
+    zb = keyzones.build(payloads, t_send, price)
+    if not zb.get("ok"):
+        return zb, [], []
+    mode = zones_mode()
+    st = state.setdefault("zone_watch", {})
+    evs = keyzones.watch(st, zb, keyzones.bars(payloads.get("15m")), t_send) if mode != "off" else []
+    fresh = [e for e in evs if e["fresh"]]
+    lines, ids = [], []
+    if fresh and mode == "phone" and not zb["stale"]:
+        if st.get("n", 0) < keyzones.WATCH_DAY_CAP:
+            lines = keyzones.watch_lines(fresh, zb, lambda x: _fmt(x, off), clocks)
+            ids = [f"ZONE:{e['zone']['id']}:{e['kind']}:{e['bar_t']}" for e in fresh[:2]]
+            st["n"] = st.get("n", 0) + 1
+        else:
+            st["capped"] = st.get("capped", 0) + 1
+    zb["watch"] = {"mode": mode, "cap": keyzones.WATCH_DAY_CAP, "today": st.get("n", 0), "day": st.get("day"),
+                   "log": st.get("log", [])[::-1][:10]}
+    zb["mt5_offset"] = off
+    return zb, lines, ids
+
+
 def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | None = None) -> dict:
     path = os.path.join(store_dir, STATE) if store_dir else None
     state = {}
@@ -3063,6 +3098,13 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
         report["shadow"] = shadow.run(store_dir, payloads, t_send)
     except Exception as e:  # noqa: BLE001 - a research record must never stop the alerts
         report["shadow"] = {"id": shadow.ID, "error": f"{type(e).__name__}: {e}"[:200]}
+    try:   # Workstream 4: key zones and structure; NON-DIRECTIONAL monitoring, never breaks this run
+        zrep, zl, zev = zones_run(state, payloads, t_send, off)
+        report["zones"] = zrep
+        if zl:
+            report["zones_alert"] = {"lines": zl, "sent": _say("zones", zl, zev, desc="key zone watch")}
+    except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
+        report["zones"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
     if glines:
         report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else _say("grab_test", trade_msg(phone_only(glines)),
                                                                                       desc="grab test")}   # trades and results

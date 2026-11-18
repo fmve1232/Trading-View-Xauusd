@@ -723,6 +723,46 @@ function renderH5() {
 /* ---------- C1 (quantum/confirm_entry.py snapshot): the phone's decision, from the same records and with the same text ----------
    index.json -> alerts.c1. The decision word is computed once, in Python, for the phone and for this card; an ENTRY ELIGIBLE
    alert is valid for fresh_sec after its confirming close, so a page left open past that time shows NO TRADE like the next run. */
+/* ---------- Workstream 4: key zones and structure (NON-DIRECTIONAL MONITORING; quantum/keyzones.py) ---------- */
+// The price the distances are measured from, best first: the MT5 broker's bid / ask (when MetaApi is connected), a
+// reference provider's bid / ask, the live chip's mid, else the run's own price. Only the broker's is executable.
+function zonePrice(Z) {
+  const k = S.mt5feed && S.mt5feed.status === "OK" ? S.mt5feed.tick || {} : {};
+  if (isNum(k.bid) && isNum(k.ask)) return { bid: k.bid, ask: k.ask, mid: (k.bid + k.ask) / 2, broker: true, src: "your MT5 broker's bid / ask (MetaApi): executable" };
+  const o = ((S.ref && S.ref.observations) || []).find((x) => isNum(x.bid) && isNum(x.ask) && String(x.status).toUpperCase() === "OK");
+  if (o) return { bid: o.bid, ask: o.ask, mid: (o.bid + o.ask) / 2, src: `${o.provider_id} bid / ask: a reference, not your broker's executable price` };
+  if (isNum(LIVE.px)) return { mid: LIVE.px, src: (LIVE.src === "stream" ? "streaming mid" : "gold-api mid") + ": not an executable bid / ask" };
+  return { mid: Z.price.px, src: Z.price.source };
+}
+function zonesCard(Z) {
+  if (!Z) return "";
+  if (!Z.ok) return `<h4>Key zones · monitoring only</h4><p class="muted pa-note">Not available in this run${Z.error || Z.why ? ": " + esc(Z.error || Z.why) : ""}.</p>`;
+  const P = zonePrice(Z), off = P.broker ? Number(S.mt5 || 0) : 0, m = P.mid;      // broker prices: compare with the offset applied
+  const all = [...(Z.above || []), ...(Z.at || []), ...(Z.below || [])].map((z) => {
+    const lo = z.lo + off, hi = z.hi + off, where = lo > m ? "above" : hi < m ? "below" : "at";
+    return { ...z, where, d: where === "above" ? lo - m : where === "below" ? m - hi : 0 };
+  }).sort((a, b) => b.lo - a.lo);
+  const role = (z) => (z.where === "above" ? '<b class="bear">resistance</b>' : z.where === "below" ? '<b class="bull">support</b>' : "<b>price inside</b>");
+  const stCls = { FRESH: "bull", TESTED: "", WEAKENED: "warn", BROKEN: "warn", INVALIDATED: "bear" };
+  const rows = all.map((z) => `<tr><td>${px(z.lo)}–${px(z.hi)}<div class="dim">${esc(z.label)} · since ${tfmt(z.t_known, true)}</div></td>
+    <td>${role(z)}<div class="${stCls[z.state] || "dim"}">${esc(z.state.toLowerCase())}</div><div class="dim">${z.touches} visit${z.touches === 1 ? "" : "s"}${z.inside ? " (one in progress)" : ""}: ${z.rejections} rejected, ${z.acceptances} accepted</div></td>
+    <td>${z.d ? "$" + f(z.d, 2) : "inside"}<div class="dim">${isNum(Z.atr15) && Z.atr15 > 0 ? f(z.d / Z.atr15, 2) + " ATR" : ""}</div></td>
+    <td>$${f(z.width, 2)} <span class="dim">(${f(z.width_atr, 2)} ATR)</span><div class="dim">beyond: ${isNum(z.room_beyond) ? "$" + f(z.room_beyond, 2) + " to the next zone" : "no further zone"}</div></td></tr>`).join("");
+  const S_ = Z.structure || {}, st = Object.values(S_).filter(Boolean).map((x) => `${esc(x.tf)} ${esc(x.pattern)}, EMA ${esc(x.stack || "—")}${x.last_structure ? ` · last ${esc(x.last_structure.type)}${x.last_structure.dir === 1 ? "▲" : "▼"} ${tfmt(x.last_structure.t, false)}` : ""}`).join(" · ");
+  const ctx = Z.context || {}, W = Z.watch || {};
+  const bid = isNum(P.bid) ? `${px(P.bid - off)} / ${px(P.ask - off)}` : px(m - off);
+  const wl = (W.log || []).slice(0, 4).map((e) => `${tfmt(e.bar_t + 900, false)} ${esc(e.kind.toLowerCase())} ${px(e.lo)}–${px(e.hi)}${e.fresh ? "" : " (late: not sent)"}`).join(" · ");
+  return `<h4>Key zones · monitoring only, not an entry</h4>
+    ${kv([["Price used", `${bid} <span class="dim">${esc(P.src)}${Z.stale ? ' · <b class="warn">zones STALE: the newest 15m bar is old</b>' : ""}</span>`],
+      ["Room", `${isNum(Z.room_up) ? "$" + f(Z.room_up, 2) : "—"} to the nearest resistance · ${isNum(Z.room_down) ? "$" + f(Z.room_down, 2) : "—"} to the nearest support <span class="dim">(at the run's price)</span>`],
+      ["Bearish context", (ctx.bearish || []).length ? `<b class="bear">${esc(ctx.bearish.join(", "))}</b>` : "none"],
+      ["Bullish context", (ctx.bullish || []).length ? `<b class="bull">${esc(ctx.bullish.join(", "))}</b>` : "none"],
+      ["Structure", st || "—"],
+      ["Directional entries", `<b class="warn">DISABLED</b> <span class="dim">${esc(Z.directional || "")}</span>`],
+      ["Zone watch", `${W.mode === "phone" ? `phone ON (at most ${W.cap} a day; today ${W.today || 0})` : W.mode === "site" ? "website only" : "OFF"}${wl ? " · " + wl : ""}`]])}
+    <div class="scroll"><table class="yt"><tr><th>Zone</th><th>Role · state</th><th>Distance</th><th>Width · room</th></tr>${rows}</table></div>
+    <p class="muted pa-note">${esc(Z.rules || "")}</p>`;
+}
 function c1Card(C) {
   if (!C || !C.on) return "";
   const D = C.decision || {}, nowS = Date.now() / 1000;
@@ -739,6 +779,7 @@ function c1Card(C) {
   const rec = R.decided ? `TP1 first ${R.tp1} of ${R.decided} decided${R.wilson ? ` (95% ${pct(100 * R.wilson[0])}–${pct(100 * R.wilson[1])})` : ""}` : "none decided yet";
   const val = v ? `${esc(V.ref)}: a $${f(C.min_usd, 0)} confirming close reached TP1 first in ${v.tp1} of ${v.n} (${pct(100 * v.tp1 / v.n)}; break-even about ${pct(100 * V.break_even)}), net ${fs(v.net_r, 2)} R (${fs(v.boot95[0], 2)} to ${fs(v.boot95[1], 2)}), p ${f(v.holm_p, 2)}: <b>not supported</b>`
     : `no validation run at a $${f(C.min_usd, 0)} confirming close`;
+  const gapOf = (x) => (x.phone || []).find((l) => l.indexOf("GAP RISK: ") === 0);
   const phone = (x) => (x.phone && x.phone.length ? `<details class="cf-ev" data-k="c1-${x.id}"><summary class="dim">The phone alert, as sent</summary><p class="muted pa-note">${x.phone.map(esc).join("<br>")}</p></details>` : "");
   const block = (x) => { const p = x.plan, cf = x.conf, nw = cf && cf.now, parts = p && p.cost_parts;
     const pend = x.status === "PENDING";
@@ -751,6 +792,7 @@ function c1Card(C) {
       <div>Targets</div><div>TP1 ${px(p.tp1)}${isNum(p.tp2) ? ` (close half) · TP2 ${px(p.tp2)} (the rest; stop to the entry after TP1)` : ""}</div>
       <div>Latest price at the alert</div><div>${nw ? `${px(nw.px)} <span class="dim">(${nw.live ? "live quote" : "last closed bar"} read ${tfmt(nw.t_px, false)})</span> · left from it: TP1 $${f((p.tp1 - nw.px) * x.dir, 2)}${isNum(p.tp2) ? `, TP2 $${f((p.tp2 - nw.px) * x.dir, 2)}` : ""}, the stop $${f((nw.px - p.sl) * x.dir, 2)}` : "not available in that run"}</div>
       <div>Lot · largest loss</div><div>${f(p.lot, 2)} lot · ${usd0(p.risk_usd)} at the stop, costs included <span class="dim">(budget ${usd0(p.budget)} = ${f(p.risk_pct, 1)}% of ${usd0(p.account)})</span></div>
+      ${gapOf(x) ? `<div>Gap risk</div><div class="warn">${esc(gapOf(x).slice(10))}</div>` : ""}
       <div>Net reward · R:R</div><div>${usd0(p.reward_both_usd)} if every target is reached${isNum(p.tp2) ? `, ${usd0(p.reward_tp1_usd)} if TP1 then back to the entry` : ""} · net R:R ${f(p.rr_net, 2)}</div>
       <div>Costs per oz, round trip</div><div>${parts ? `spread $${f(parts.spread, 2)} + slippage $${f(parts.slippage, 2)} + commission $${f(parts.commission, 2)} = ` : ""}$${f(p.size_cost_oz, 2)} = ${usd0(p.cost_usd)} <span class="dim">(${parts ? "research model" : "the higher of your cost and the research model"}; not broker-verified; the feed has no bid / ask)</span></div>
       <div>Valid until</div><div>${tfmt(cf.t + C.fresh_sec)} <span class="dim">(${Math.round(C.fresh_sec / 60)} min after the confirming close; later: NO TRADE on this alert)</span></div>` : `
@@ -2355,7 +2397,7 @@ function renderPlanAlerts() {
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   // this card is redrawn on live ticks (open plans' P/L): keep the "phone alert, as sent" blocks the reader has opened
   const openK = new Set([...el.querySelectorAll("details[open][data-k]")].map((d) => d.dataset.k));
-  el.innerHTML = `${c1Card(A.c1)}
+  el.innerHTML = `${c1Card(A.c1)}${zonesCard(A.zones)}
     <h4>Your plan</h4>
     <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}${c.tp2_usd ? ` · two targets: TP1 +$${f(c.tp_usd / 2, 0)} on half, then SL to entry, TP2 +$${f(c.tp2_usd / 2, 0)} on the rest` : ""}</div>
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
