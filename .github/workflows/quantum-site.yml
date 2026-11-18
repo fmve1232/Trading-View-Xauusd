@@ -38,9 +38,16 @@ concurrency:
 
 jobs:
   gate:
-    # A scheduled (backup) run stands down if a dispatched run started in the last 10 minutes, so
-    # one 15-minute slot never spends Twelve Data's free 800 calls a day twice. Without the
-    # scheduler there are no dispatched runs and every scheduled run proceeds, as before.
+    # A scheduled (backup) run stands down if a dispatched run started in the last 15 minutes: the
+    # dispatcher (scheduler/) starts one every 15 minutes, so a backup run is needed only when it has
+    # missed its slot. One 15-minute slot then never spends Twelve Data's free 800 calls a day twice,
+    # and the site is never deployed twice a few minutes apart. Until 2026-11-18 the window was 10
+    # minutes: GitHub's cron fires late, and runs 3442 (11:26, 17 Nov, last dispatch 11:16) and 3477
+    # (19:57, last dispatch 19:46) passed it and were deployed 9 and 6 minutes before the next
+    # dispatched run; both times the following smoke test found one data file still served from the
+    # earlier deployment (3442: data/mt5.json; 3478: data/events.json), and those were the only two
+    # smoke-test failures in 191 runs. Without the scheduler there are no dispatched runs and every
+    # scheduled run proceeds, as before.
     runs-on: ubuntu-latest
     timeout-minutes: 3
     permissions:
@@ -61,7 +68,7 @@ jobs:
               | python3 -c "import json,sys; r=json.load(sys.stdin).get('workflow_runs') or []; print(r[0]['created_at'] if r else '')" || true)
             if [ -n "$last" ]; then
               age=$(( $(date -u +%s) - $(date -u -d "$last" +%s) ))
-              if [ "$age" -lt 600 ]; then
+              if [ "$age" -lt 900 ]; then
                 run=false
                 echo "A dispatched run started ${age}s ago, so this scheduled backup run stands down." >> "$GITHUB_STEP_SUMMARY"
               fi

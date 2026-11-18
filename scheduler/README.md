@@ -7,7 +7,7 @@ behind TradingView.
 This Cloudflare Worker (free plan) starts the `quantum-site` workflow one minute after each
 15-minute bar closes, and only while gold trades. It uses `workflow_dispatch`, which starts within
 seconds. GitHub's cron stays as the backup, and its runs stand down when a dispatched run started
-in the last 10 minutes, so Twelve Data's free 800 calls a day are not spent twice (about 384 a day
+in the last 15 minutes (the dispatcher's own period: a backup run is needed only when it missed a slot), so Twelve Data's free 800 calls a day are not spent twice (about 384 a day
 are used).
 
 ## Set-up
