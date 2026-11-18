@@ -4,7 +4,7 @@
 // Why: GitHub's own cron starts scheduled runs late or drops them (1-2 Oct 2026: 100 of 153 runs,
 // median gap 23 min), so on the NFP release of 2 Oct the site was 25 minutes behind. A
 // workflow_dispatch call starts a run within seconds. GitHub's cron stays as the backup; its runs
-// stand down when a dispatched run started in the last 10 minutes (the `gate` job).
+// stand down when a dispatched run started in the last 15 minutes (the `gate` job).
 //
 // Secret (Worker): GH_DISPATCH_TOKEN, a fine-grained GitHub token for THIS repository only, with
 // "Actions: Read and write" and nothing else. It never reaches the site or the repository.
