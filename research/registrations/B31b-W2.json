@@ -1,0 +1,30 @@
+{
+  "id": "B31b-W2",
+  "title": "B31b workstream 2: why modules C (breakout and retest), D (VWAP reversion) and E (session expansion) produce so few trades. Every setup, its fate and the reason; counts and measured distances only, no trade outcome",
+  "status": "APPROVED by the operator 2026-11-15; written and committed before any of its code and before any run",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-15 (chat), on B31: \"Workstream 2 - C/D/E: Retain original strategy definitions. Investigate why the available sample sizes are low. Do not loosen filters merely to generate more trades. Report every rejected setup and rejection reason.\" The same day: \"do not deviate from the instructions which I have given to you ... put your best effort to achieve my target\".",
+  "partitions": [
+    "development",
+    "validation",
+    "holdout"
+  ],
+  "unsealed_data_also_used": "recent: 2026-01-01 to the end of the research history, scored after a 59-day warm-up (as B31)",
+  "created_utc": "2026-11-16",
+  "why": "B31 executed 23 / 36 / 4 trades for C / D / E on development (2.8 years) and 7 / 2 / 0 on validation, from 1,542 / 2,003 / 174 setups on development (research/results/b31_all_partitions_2026-11-15.json). The operator asked why, without changing any rule.",
+  "what_is_counted": {
+    "definitions": "modules C, D and E exactly as registered in B31 (research/registrations/B31.json) and coded in quantum/research/b31.py: the same context (b31.make_ctx on the engine's 15m run, no volume-neutral detector), the same crossings, sequences, orders, REPEAT rule, checks, fills and one-position rule. No threshold, window or distance is changed, added or searched.",
+    "upstream_funnel": "per module, on the scored bars: C: first crossings of a pool level per day, how many were ACCEPTED (3 closes beyond), how many of those had an FVG in the breakout leg (= a C setup). D: ranging bars, first bars of a deviation beyond the 2-sigma VWAP band, how many closed back inside within 3 bars, how many were vetoed by a strong displacement body, the rest (= a D setup). E: trading days, days whose first Asia-range crossing came in London or New York, split REJECTED (sweep) / ACCEPTED (break), how many of each produced an order (= an E setup).",
+    "order_life": "per setup, its fate in b31.run_module: repeat; rejected with the reason (stop below $5; net reward / risk below 1; cost above 15% of the stop; an opposing pool or, for D, VWAP inside +$10; stop on the wrong side); limit invalidated; false breakout; limit not filled in 8 bars; overlap with an open position; executed.",
+    "two_eligibility_rules_side_by_side": "the reward check is counted twice, nothing else differs: (1) B31's original rule, net R:R at TP1 +$10: (10 - cost) / (D + cost) >= 1; (2) the ladder rule the operator adopted on 2026-11-15 (option a) and the live B31b-SHADOW-FWD uses: (15 - cost) / (D + cost) >= 1. Neither is new and neither is tuned.",
+    "measured_per_setup": "the quantities the checks compare, in $ at $4,000 (scaled by price / 4000 as B31): the stop distance D, the cost, the net R:R under each rule, cost / D, the distance to the nearest opposing pool, and for D the distance to VWAP"
+  },
+  "no_outcomes": "No trade outcome (TP / SL, R, MFE, MAE, time to target) is printed, saved or inspected. run_module computes exits internally because the one-position rule needs to know when a position closed (the overlap count); those values are discarded. The saved rows carry the fate 'executed' and nothing about the result. A test asserts that no outcome field leaves the run.",
+  "output": "research/results/b31b_w2_<date>.json (counts per partition, module and rule; distributions of the stop distance) and research/results/b31b_w2_setups_<date>.csv (one row per setup: partition, module, bar-close time, direction, pool or kind, entry type, the measured distances, the fate and the reason under each rule). Distances only: no price level and no bar is written, so no vendor data is committed.",
+  "cost": "the engine's session cost model (as B31's primary); the operator's $0.26 / oz is not run: W2 is about counts, and B31 reported both",
+  "disclosure": "Not a first look at these periods: B2, B3, B16, B17, B21, B31 and B31b-W1 read them, and B31 read C / D / E outcomes on all four. W2 reads no outcome.",
+  "unchanged": "production alerts, the engine, config.py, the freeze key 1f88aad357497da4:4440d52587f5cc6b, B9-GRAB-FWD, B15b-ENGINE-FWD, B31b-SHADOW-FWD, B24 (OFF) and every other registration",
+  "not_done_by_design": "No filter is loosened, no alternative threshold is evaluated, no performance is measured, and nothing is selected by a result.",
+  "trials_log": "one line per partition is appended to research/trials.jsonl (counts only)",
+  "decision": "Descriptive. W2 produces no verdict on any strategy and changes no alert."
+}

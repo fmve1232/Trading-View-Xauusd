@@ -372,11 +372,30 @@ def thirds(X: Ctx, b0: int, d: int, e: float, stop: float, sc: float) -> float:
     return float(np.mean(got))
 
 
-def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model", reward: float = TP[0]) -> dict:
-    """Every setup through repeat -> checks -> fill or invalidation -> outcome, one position at a time."""
+def measure(X: Ctx, s: dict, e: float, i: int, cost: float) -> dict:
+    """The quantities check() compares, in $ at $4,000: the stop distance D, the cost, cost / D, the distance to the
+    nearest opposing pool and (module D) to VWAP. For the rejection listing (B31b-W2); check() is unchanged."""
+    d, sc = s["dir"], e / 4000.0
+    D = float((e - s["stop"]) * d / sc)
+    room = opposing_room(X, i, d, e) / sc
+    return {"D": D, "cost": float(cost), "cost_frac": float(cost / D) if D > 0 else None,
+            "room": float(room) if np.isfinite(room) else None,
+            "vwap_room": float((s["vwap"] - e) * d / sc) if s.get("vwap") is not None else None}
+
+
+def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model", reward: float = TP[0],
+               trace: list | None = None) -> dict:
+    """Every setup through repeat -> checks -> fill or invalidation -> outcome, one position at a time. trace (B31b-W2):
+    when a list is given, one row per counted setup is appended with its fate, the reason and measure(); never an
+    outcome. The run itself is the same with or without it."""
     n = len(X.c)
     stat = {"setups": 0, "repeat": 0, "rejected": {}, "invalidated": 0, "false_breakout": 0, "missed": 0, "overlap": 0}
     trades, kept, busy = [], [], -1
+
+    def note(s: dict, i0: int, fate: str, why: str | None = None, m: dict | None = None) -> None:
+        if trace is not None:
+            trace.append({"t": int(X.t[i0]) + 900, "dir": int(s["dir"]), "kind": s["ev"]["kind"], "entry_type": s["entry_type"],
+                          "fate": fate, "why": why, **(m or {})})
     for s in sets:
         i0 = s["order_bar"]
         if X.t[i0] + 900 < t_from or i0 + 1 >= n:
@@ -386,12 +405,15 @@ def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model", 
         if any(k["dir"] == s["dir"] and X.t[i0] - X.t[k["order_bar"]] <= REPEAT_SEC and abs(p_ref - k["p"]) <= REPEAT_USD * p_ref / 4000
                for k in kept[-50:]):
             stat["repeat"] += 1
+            note(s, i0, "repeat")
             continue
         kept.append({"dir": s["dir"], "order_bar": i0, "p": p_ref})
         cost = X.cost[i0] if cost_kind == "model" else OP_COST
         why = check(X, s, p_ref, i0, cost, reward)
+        ms = measure(X, s, p_ref, i0, cost) if trace is not None else None
         if why:
             stat["rejected"][why] = stat["rejected"].get(why, 0) + 1
+            note(s, i0, "rejected", why, ms)
             continue
         d = s["dir"]
         if s.get("limit") is None:                                 # market at the order bar's close
@@ -403,9 +425,11 @@ def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model", 
                 o = X.o[b]
                 if s["inval"] is not None and (o - s["inval"]) * d < 0:
                     stat["invalidated"] += 1
+                    note(s, i0, "invalidated", "opened beyond the sweep extreme", ms)
                     break
                 if s.get("false_break_level") is not None and (o - s["limit"]) * d < 0:
                     stat["false_breakout"] += 1
+                    note(s, i0, "false_breakout", "opened back through the broken level", ms)
                     break
                 touch = (X.l[b] <= s["limit"]) if d == 1 else (X.h[b] >= s["limit"])
                 if touch:
@@ -413,19 +437,24 @@ def run_module(X: Ctx, sets: list[dict], t_from: int, cost_kind: str = "model", 
                     break
                 if s["inval"] is not None and ((X.l[b] < s["inval"]) if d == 1 else (X.h[b] > s["inval"])):
                     stat["invalidated"] += 1
+                    note(s, i0, "invalidated", "traded beyond the sweep extreme", ms)
                     break
                 if s["inval"] is not None and (X.dn_any[b] if d == 1 else X.up_any[b]):   # sweep setups only
                     stat["invalidated"] += 1
+                    note(s, i0, "invalidated", "structure broke the other way", ms)
                     break
             else:
                 stat["missed"] += 1
+                note(s, i0, "missed", f"limit not reached in {LIMIT_BARS} bars", ms)
                 continue
             if fill_bar is None:
                 continue
             first = fill_bar + 1
         if fill_bar <= busy:
             stat["overlap"] += 1
+            note(s, i0, "overlap", "a position was still open", ms)
             continue
+        note(s, i0, "executed", None, ms)
         sc = e / 4000.0
         stop = s["stop"]
         D = (e - stop) * d / sc
