@@ -4,7 +4,11 @@
   "status": "APPROVED by the operator 2026-11-18 (directive 'CLAUDE DIRECTIVE - QUANTUM WORKSTREAM 3'); written and committed before any of its code and before any run",
   "approved_by_operator": true,
   "approval": "Operator, 2026-11-18 (chat): \"Start with historical event discovery and statistical analysis. Only then develop the formula and shadow-testing implementation.\" ... \"Use chronological, leakage-free testing. Required structure: Development dataset. Validation dataset. Untouched holdout dataset. Prospective live shadow testing.\" ... \"Preserve chronological separation between development, validation, holdout and forward-testing periods.\" ... \"This is a research directive, not authorization to modify production.\" ... \"Production remains frozen until I explicitly authorize a change.\"",
-  "partitions": ["development", "validation", "holdout"],
+  "partitions": [
+    "development",
+    "validation",
+    "holdout"
+  ],
   "partition_order_enforced_in_code": {
     "development": "open: discovery, every descriptive table, the univariate and model analysis, the selection of at most one candidate per engine",
     "validation": "opened ONCE, only after the freeze amendment (research/registrations/B31b-W3-FREEZE.json, holding the frozen formula and the sha256 of the code that computes it) is committed; the code refuses to open it otherwise and refuses a second opening (a results file for validation already present)",
@@ -36,7 +40,10 @@
     "not_events": "the current day's running high / low (CDH / CDL) is used only for the distance to opposing liquidity, never as an event level"
   },
   "events": {
-    "timeframes": ["M15", "M30"],
+    "timeframes": [
+      "M15",
+      "M30"
+    ],
     "crossing": "at bar i: high_i > L (buy-side level above price) or low_i < L (sell-side level below price) for a live level L. All levels on one side crossed by the same bar form ONE event. Its reference level is the crossed level nearest to the previous close (closing back beyond it = back inside all of them); the event also records the outermost crossed level, the number of levels and every kind. Primary kind = highest rank: PW > PD > previous session > AS / LO / NY session > EQ > SW",
     "disposition_at_the_crossing_close": "SWEEP: the crossing bar closes back inside the reference level. BREAK: it closes beyond.",
     "types": {
@@ -128,5 +135,13 @@
   "unchanged": "production alerts, the engine, config.py, the freeze key 1f88aad357497da4:4440d52587f5cc6b, the workflows, B9-GRAB-FWD, B15b-ENGINE-FWD, B31b-SHADOW-FWD, B24 (OFF), every other registration and every existing results file (B31b-W2's included)",
   "not_done_by_design": "no threshold or window is searched on the data; no rule is changed after validation or holdout is read; no probability is displayed that is not calibrated and validated; nothing is promoted to production",
   "trials_log": "one line per partition and per selection / validation run is appended to research/trials.jsonl",
-  "decision": "Descriptive findings (Deliverables A, B, E) plus, per engine, CANDIDATE PASS / FAIL / NO CANDIDATE on validation (and holdout when opened). A PASS is not authorization to alert."
+  "decision": "Descriptive findings (Deliverables A, B, E) plus, per engine, CANDIDATE PASS / FAIL / NO CANDIDATE on validation (and holdout when opened). A PASS is not authorization to alert.",
+  "amendment_A1_before_any_run": {
+    "utc": "2026-11-18, committed with the code and before any development run (a 3-month smoke run printed counts only)",
+    "why": "three points of the registration were ambiguous or, read literally, would mislabel events; fixed before any outcome was computed or read",
+    "level_on_the_wrong_side_at_the_open": "a level the crossing bar OPENS at or beyond (a gap through it) is consumed without an event and counted as 'gapped' (the registration says 'a buy-side level above price')",
+    "types_11_12": "type 11 = a BREAK with a close back inside at bar i+1 or i+2; type 12 = closes beyond at i, i+1 and i+2; the two are exclusive (B31's ACCEPTED / REJECTED windows)",
+    "class_F": "read literally ('price crosses a live level on the other side before either +$10') every reversal with less than $10 of room would be F. F is therefore: before either +$10 barrier, BOTH the event's own side is pushed again (the sweep extreme exceeded, or for a BREAK a close back inside) AND the nearest live level on the other side is crossed",
+    "unchanged": "every threshold, window, method, model setting and gate of the registration"
+  }
 }
