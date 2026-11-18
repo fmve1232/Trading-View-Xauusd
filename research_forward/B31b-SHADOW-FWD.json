@@ -755,13 +755,35 @@
 "ranging": true,
 "vol_ratio": 0.91,
 "cost": 0.77,
-"status": "OPEN",
+"status": "DONE",
 "fill_t": 1794946500,
 "fill_bar_t": 1794945600,
 "day": "2026-11-17",
 "entry": 3847.52,
 "D": 7.04,
-"lots": 0.833
+"lots": 0.833,
+"out": [
+"TP",
+"SL",
+"SL"
+],
+"exit_t": 1794951900,
+"exit_bar_t": 1794951000,
+"r1": 1.1824,
+"ladder_r": 0.3284,
+"ladder_usd": 213.44,
+"ladder_r_op": 0.4212,
+"mfe": 10.5,
+"mae": 2.99,
+"min_to_tp1": 90,
+"mirror": {
+"out": [
+"SL",
+"SL",
+"SL"
+],
+"ladder_r": -1.0
+}
 },
 {
 "key": "D|1794945600|1|VWAP|3843.68",
