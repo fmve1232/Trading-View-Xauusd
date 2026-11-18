@@ -451,12 +451,15 @@ def probability_line(x: float, rec: list | None = None) -> str:
     return f"PROBABILITY: none shown, NOT CALIBRATED | {hist} | {record_text(rec)}"
 
 
+ENTRY_HEAD = " ENTRY ELIGIBLE, SETUP #"                    # the head of an entry alert (eligible_lines)
+
+
 def eligible_lines(s: dict, off: float = 0.0) -> list[str]:
     """The ENTRY ELIGIBLE alert, from the setup alone (so the website prints the same text from the same record)."""
     d, p, cf = s["dir"], s["plan"], s["conf"]
     tp2 = f" | TP2 {_px(p['tp2'], off)} (the rest; stop to the entry after TP1)" if p["tp2"] is not None else ""
     return [
-        f"XAUUSD {s['tf']} {_side(d)} ENTRY ELIGIBLE, SETUP #{s['id']}: entry {_px(p['entry'], off)} = the 15m close at "
+        f"XAUUSD {s['tf']} {_side(d)}{ENTRY_HEAD}{s['id']}: entry {_px(p['entry'], off)} = the 15m close at "
         f"{_hm(cf['t'])}, +${cf['move']:.2f} ({cf['tier']}) beyond the trigger {_px(s['p0'], off)} ({_hm(s['t_close'])})",
         f"PLAN (recalculated from this entry): entry {_px(p['entry'], off)} | SL {_px(p['sl'], off)} | TP1 {_px(p['tp1'], off)}"
         f"{' (close half)' if p['tp2'] is not None else ''}{tp2}",
@@ -487,13 +490,15 @@ def open_from(state: dict, payload: dict, since: int | None, skip: set | None = 
 
 def advance_all(state: dict, p15: dict, t_now: int, pl: dict | None, off: float = 0.0, now: dict | None = None) -> list[str]:
     """Move every open setup along the 15m payload's closed bars; archive the finished ones. now: this run's latest
-    price (see advance)."""
+    price (see advance). A setup that became ENTRY ELIGIBLE in this run leads the message, so the entry is the first
+    line the phone shows (found live 18 Nov 00:36: setup #2's entry came after setup #1's TP1 line); every setup's
+    lines stay together and otherwise keep their order."""
     bk = book(state)
     markers, ch = p15.get("markers") or [], p15.get("chart") or {}
-    out = []
     rec = record(state)                                    # the record before this run's changes: what the alert prints
-    for s in list(bk["open"]):
-        out += advance(s, ch, markers, t_now, pl, off, now, rec)
+    groups = [advance(s, ch, markers, t_now, pl, off, now, rec) for s in list(bk["open"])]
+    entry = [g for g in groups if any(ENTRY_HEAD in x for x in g)]
+    out = [x for g in entry + [g for g in groups if not any(ENTRY_HEAD in x for x in g)] for x in g]
     done = [s for s in bk["open"] if s["status"] in FINAL]
     bk["open"] = [s for s in bk["open"] if s["status"] not in FINAL][-OPEN_MAX:]
     bk["log"] = (bk["log"] + done)[-LOG_MAX:]
