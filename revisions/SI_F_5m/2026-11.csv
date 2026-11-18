@@ -97139,3 +97139,4 @@ bar_open,run_utc,old_open,old_high,old_low,old_close,new_open,new_high,new_low,n
 2026-11-18 01:25:00+00:00,2026-11-18T01:52:51Z,656 closed bars revised (series re-based); not listed
 2026-11-18 01:40:00+00:00,2026-11-18T02:06:03Z,656 closed bars revised (series re-based); not listed
 2026-11-18 01:55:00+00:00,2026-11-18T02:21:28Z,656 closed bars revised (series re-based); not listed
+2026-11-18 02:10:00+00:00,2026-11-18T02:38:04Z,46.174999,46.235001,46.105000,46.235001,46.174999,46.270000,46.105000,46.180000,changed
