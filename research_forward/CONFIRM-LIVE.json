@@ -7317,6 +7317,33 @@
     }
    },
    "t_done": 1794987900
+  },
+  {
+   "key": "SWEEP|15m|1793061000|1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1793061000,
+   "t_close": 1793061900,
+   "dir": 1,
+   "p0": 4011.91,
+   "what": "sweep at 4HL 4008.66",
+   "id": 206,
+   "seen": 1794989286,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 4026.91,
+   "invalid_at": 3998.91,
+   "cap_at": 4031.91,
+   "confirm20_at": 4031.91,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1793083500,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
