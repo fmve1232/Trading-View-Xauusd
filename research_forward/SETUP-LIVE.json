@@ -5982,12 +5982,53 @@
    "mae": 5.200000000000273,
    "bars": 14,
    "path": "5m"
+  },
+  {
+   "id": 169,
+   "tf": "15m",
+   "t": 1794980700,
+   "t_dec": 1794981600,
+   "dir": -1,
+   "entry": 3789.43,
+   "kind": "4H BREAKOUT",
+   "levels": [
+    [
+     "PDL",
+     3837.09
+    ],
+    [
+     "PWL",
+     3853.27
+    ],
+    [
+     "PML",
+     3871.19
+    ]
+   ],
+   "zones": [],
+   "sl": 3802.43,
+   "tp": 3774.43,
+   "checks": {
+    "major": true,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1794981972,
+   "result": "TP",
+   "t_res": 1794985200,
+   "mfe": 15.58999999999969,
+   "mae": 0.19000000000005457,
+   "bars": 13,
+   "path": "5m"
   }
  ],
  "live": {
   "4H BREAKOUT": [
-   24,
-   9
+   25,
+   10
   ],
   "SWEEP": [
    67,
