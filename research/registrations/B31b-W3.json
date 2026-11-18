@@ -143,5 +143,13 @@
     "types_11_12": "type 11 = a BREAK with a close back inside at bar i+1 or i+2; type 12 = closes beyond at i, i+1 and i+2; the two are exclusive (B31's ACCEPTED / REJECTED windows)",
     "class_F": "read literally ('price crosses a live level on the other side before either +$10') every reversal with less than $10 of room would be F. F is therefore: before either +$10 barrier, BOTH the event's own side is pushed again (the sweep extreme exceeded, or for a BREAK a close back inside) AND the nearest live level on the other side is crossed",
     "unchanged": "every threshold, window, method, model setting and gate of the registration"
+  },
+  "corrections_after_the_first_development_run": {
+    "utc": "2026-11-18, after the first development run (code f76b5065...), before the second; labels only",
+    "what_the_first_run_showed": "22% of SWEEP events (633 M15, 366 M30) were class G 'tie': two barriers touched inside the same 5-minute bar were treated as unorderable even when they lie in the same direction, where price must pass the nearer one first. The registration defines G as an order that is genuinely unknown.",
+    "C1": "same-direction barriers touched in one (M5-refined) bar are ordered by their distance from the event close; only opposite-direction ties are G",
+    "C2": "amendment A1 counted, for a BREAK, a close back inside as 'its own side pushed again'. A close back inside is what defines a false breakout, so every false breakout whose reversal passed a level less than $10 away became F, the mislabelling A1 was written to prevent. Corrected to the symmetric rule: the break extreme exceeded again AND the nearest level on the other side crossed, both before either +$10",
+    "not_affected": "classes are research labels: no feature, entry, race, eligibility, model, selection or verdict reads them. Every trade result of the second run must equal the first run's (checked and reported)",
+    "both_runs_kept": "the first run's trial line stays in research/trials.jsonl"
   }
 }

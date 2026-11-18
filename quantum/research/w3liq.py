@@ -11,8 +11,9 @@ never features. Distances are $ at $4,000 (divided by s = price / 4000, as B31);
 Implementation notes fixed before any run (amendment A1 in the registration):
   * a level the crossing bar OPENS beyond (a gap) is consumed without an event and counted as gapped;
   * type 11 = a BREAK with a close back inside at bar i+1 or i+2; type 12 = closes beyond at i, i+1 and i+2 (exclusive);
-  * class F = before either +$10 barrier, BOTH the event's own side is pushed again (the sweep extreme exceeded, or for
-    a BREAK a close back inside) AND the nearest live level on the other side is crossed.
+  * class F = before either +$10 barrier, BOTH the event's own side is pushed again (the sweep or break extreme
+    exceeded; corrections C1 / C2 after the first development run, labels only) AND the nearest live level on the other
+    side is crossed.
 
 Research code: never imported by production.
 """
@@ -782,25 +783,47 @@ def m_ratio(F: Frame, p: int) -> float:
     return F.atr[p] / F.atr100[p] if F.atr100[p] > 0 else math.nan
 
 
+def before(a: tuple, b: tuple) -> bool | None:
+    """Barrier a = (touch time, direction, distance from the close) reached before barrier b? Two barriers touched in the
+    same (M5-refined) bar in the SAME direction are ordered by distance (price passes the nearer one first); in opposite
+    directions the order is unknown (None)."""
+    if a[0] != b[0]:
+        return a[0] < b[0]
+    if not math.isfinite(a[0]):
+        return False
+    return a[2] < b[2] if a[1] == b[1] else None
+
+
 def classify(P: Path, F: Frame, ev: dict, fu: dict, k0: int, k1: int, tr: float, tc: float) -> tuple[str, str]:
     """Classes A-G (registration 'classes' and amendment A1). Times are touch times (M5-refined where possible); a TF
-    close counts at the end of its bar."""
+    close counts at the end of its bar. G only where the order of two deciding barriers is genuinely unknown (correction
+    C1: same-direction barriers in one bar are ordered by distance). F for a BREAK: the break extreme exceeded again AND
+    the nearest level on the other side crossed, both before either +$10 (correction C2: a close back inside is what
+    defines a false breakout, so A1's BREAK clause labelled every false breakout with < $10 of room F)."""
     i, side, L = ev["i"], ev["side"], ev["L"]
     trunc = k1 > len(P.c)
-    first10 = min(tr, tc)
+    s = ev["c"] / 4000.0
+    R, C = (tr, -side, TP[0] * s), (tc, side, TP[0] * s)
     if math.isfinite(tr) and tr == tc:
         return "G", "tie at +$10"
+    first = R if before(R, C) else C
     to = first_touch(P, k0, k1, ev["opp"], -side) if np.isfinite(ev["opp"]) else math.inf
+    O = (to, -side, abs(ev["c"] - ev["opp"]) if np.isfinite(ev["opp"]) else math.inf)
     if ev["disp"] == "SWEEP":
         tx = first_touch(P, k0, k1, ev["ext"] + side * 0.01, side)
-        if math.isfinite(to) and math.isfinite(tx) and max(to, tx) < first10:
-            return "F", "both sides taken"
-        if any(math.isfinite(a) and a == b for a, b in ((tr, tx), (to, first10), (tx, first10))):
+        X = (tx, side, abs(ev["ext"] - ev["c"]))
+        f1, f2 = before(O, first), before(X, first)
+        if f1 is None or f2 is None:
             return "G", "tie"
-        if tr < tx:
+        if f1 and f2:
+            return "F", "both sides taken"
+        rx = before(R, X)
+        if rx is None:
+            return "G", "tie"
+        if rx:
             return "A", "A1"
-        if tx < tr:
-            if tc < tr:
+        if math.isfinite(tx):
+            if before(C, R):
                 return "D", "D"
             if math.isfinite(tr):
                 return "A", "A2"
@@ -815,7 +838,11 @@ def classify(P: Path, F: Frame, ev: dict, fu: dict, k0: int, k1: int, tr: float,
         if side * (F.c[j] - L) < 0:
             tb, jb = float(int(F.t[j]) + F.sec - 1), j
             break
-    if math.isfinite(to) and math.isfinite(tb) and max(to, tb) < first10:
+    txe = first_touch(P, k0, k1, ev["ext"] + side * 0.01, side)
+    f1, f2 = before(O, first), before((txe, side, abs(ev["ext"] - ev["c"])), first)
+    if f1 is None or f2 is None:
+        return "G", "tie"
+    if f1 and f2:
         return "F", "both sides taken"
     if tc < tb:
         return "B", "B"
@@ -823,7 +850,10 @@ def classify(P: Path, F: Frame, ev: dict, fu: dict, k0: int, k1: int, tr: float,
         xb = ext_since(F, side, i, jb)
         kb = k_at(P, int(F.t[jb]) + F.sec)
         txb = first_touch(P, kb, k1, xb + side * 0.01, side)
-        if tr < min(txb, tc):
+        rb = before(R, (txb, side, abs(xb - ev["c"])))
+        if rb is None:
+            return "G", "tie"
+        if rb and before(R, C):
             return "C", "C"
         return ("G", "data end") if trunc and not math.isfinite(tc) else ("E", "E")
     return ("G", "data end") if trunc else ("E", "E")

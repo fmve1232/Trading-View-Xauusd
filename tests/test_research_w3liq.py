@@ -298,3 +298,22 @@ def test_no_lookahead_each_event_rebuilt_from_data_ending_at_its_own_bar():
         for f in keys:
             va, vb = x[f], y[0][f]
             assert (isinstance(va, float) and math.isnan(va) and math.isnan(vb)) or va == vb, (x["i"], f, va, vb)
+
+
+def test_correction_c1_same_direction_barriers_in_one_bar_are_ordered_by_distance_not_g():
+    rows = [FLAT] * 40 + [(4000.0, 4005.0, 3999.5, 4000.0)] + [FLAT] * (128 - 41)
+    rows += [(4000.0, 4006.5, 3999.5, 4000.2)]                                  # the sweep (extreme 4006.5)
+    rows += [(4000.2, 4011.0, 4000.0, 4010.8)] + [(4010.8, 4011.0, 4010.5, 4010.8)] * 120   # one bar: extreme then +$10 up
+    P, F, ev, tr, _ = build_all(frame_of(rows))
+    e = [x for x in ev if x["disp"] == "SWEEP" and x["side"] == 1 and x["primary"] == "PD"][0]
+    assert e["cls"] == "D"
+
+
+def test_correction_c2_break_is_f_only_when_both_sides_are_taken_again():
+    rows = [FLAT] * 40 + [(4000.0, 4005.0, 3999.5, 4000.0)] + [FLAT] * (128 - 41)
+    rows += [(4000.0, 4006.0, 3999.8, 4005.6), (4005.6, 4005.8, 4000.1, 4000.3)]        # break, back inside
+    rows += [(4000.3, 4006.4, 4000.2, 4005.0), (4005.0, 4005.2, 3998.0, 3998.5)]        # new high above 4006, then below 3999.5
+    rows += [(3998.5, 3998.6, 3994.0, 3994.5)] + [(3994.5, 3995.0, 3994.0, 3994.5)] * 120
+    P, F, ev, tr, _ = build_all(frame_of(rows))
+    e = [x for x in ev if x["side"] == 1 and "PDH" in x["names"]][0]
+    assert e["disp"] == "BREAK" and e["cls"] == "F"
