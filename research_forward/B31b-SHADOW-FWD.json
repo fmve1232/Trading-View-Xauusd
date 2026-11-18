@@ -1079,6 +1079,30 @@
 "vol_ratio": 2.42,
 "cost": 0.77,
 "status": "REPEAT"
+},
+{
+"key": "D|1795012200|1|VWAP|3764.69",
+"module": "D",
+"dir": 1,
+"kind": "VWAP",
+"lv": 3764.69,
+"order_t": 1795012200,
+"order_close": 1795013100,
+"recorded_utc": 1795016215,
+"timely": false,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3771.76,
+"p_ref": 3771.76,
+"stop": 3759.2018,
+"inval": null,
+"false_break": false,
+"vwap": 3785.35,
+"session": "LONDON",
+"ranging": true,
+"vol_ratio": 2.417,
+"cost": 0.77,
+"status": "REPEAT"
 }
 ],
 "days": [
