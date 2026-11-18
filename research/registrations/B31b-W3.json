@@ -150,6 +150,7 @@
     "C1": "same-direction barriers touched in one (M5-refined) bar are ordered by their distance from the event close; only opposite-direction ties are G",
     "C2": "amendment A1 counted, for a BREAK, a close back inside as 'its own side pushed again'. A close back inside is what defines a false breakout, so every false breakout whose reversal passed a level less than $10 away became F, the mislabelling A1 was written to prevent. Corrected to the symmetric rule: the break extreme exceeded again AND the nearest level on the other side crossed, both before either +$10",
     "not_affected": "classes are research labels: no feature, entry, race, eligibility, model, selection or verdict reads them. Every trade result of the second run must equal the first run's (checked and reported)",
-    "both_runs_kept": "the first run's trial line stays in research/trials.jsonl"
+    "both_runs_kept": "the first run's trial line stays in research/trials.jsonl",
+    "R1_reproducibility": "comparing runs 1 and 2 showed 21 events whose 'primary' label differed: a tie in rank between Asia / London / New York session levels was broken by Python's string-hash order, which changes per process. Ties now break alphabetically (tested under three hash seeds). It touched only the descriptive by-primary-level table (the model's level feature groups AS / LO / NY together)."
   }
 }

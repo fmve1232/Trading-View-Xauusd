@@ -312,7 +312,7 @@ def find_events(F: Frame, score_from: int) -> tuple[list[dict], dict]:
             vals = [x[2] for x in crossed]
             ref = min(vals) if side == 1 else max(vals)
             outer = max(vals) if side == 1 else min(vals)
-            kinds = sorted({level_kind(x[1]) for x in crossed}, key=lambda k: -RANK[k])
+            kinds = sorted({level_kind(x[1]) for x in crossed}, key=lambda k: (-RANK[k], k))      # deterministic ties
             names = sorted({x[1] for x in crossed})
             # live levels on the OTHER side at this bar (for room and class F); the current-day extreme counts
             other = [x[2] for x in per_side[-side] if (F.c[i] - x[2]) * side > EPS]

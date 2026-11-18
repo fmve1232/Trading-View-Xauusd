@@ -317,3 +317,17 @@ def test_correction_c2_break_is_f_only_when_both_sides_are_taken_again():
     P, F, ev, tr, _ = build_all(frame_of(rows))
     e = [x for x in ev if x["side"] == 1 and "PDH" in x["names"]][0]
     assert e["disp"] == "BREAK" and e["cls"] == "F"
+
+
+def test_events_are_identical_under_different_hash_seeds():
+    """Reproducibility: no set or dict iteration order leaks into an event (a tie between session levels once did)."""
+    import subprocess
+    import sys
+    code = ("import json, sys; sys.path.insert(0, '.'); import tests.test_research_w3liq as T; "
+            "_, _, ev, tr, _ = T.build_all(T.random_walk(1400, seed=17)); "
+            "print(json.dumps([[e['i'], e['side'], e['primary'], e['kinds'], e['names'], e['cls']] for e in ev] + "
+            "[[r['ev_id'], r['m'], r['status']] for r in tr]))")
+    root = os.path.join(os.path.dirname(__file__), "..")
+    outs = [subprocess.run([sys.executable, "-c", code], cwd=root, capture_output=True, text=True,
+                           env={**os.environ, "PYTHONHASHSEED": str(s)}).stdout for s in (1, 2, 3)]
+    assert outs[0] and outs[0] == outs[1] == outs[2]
