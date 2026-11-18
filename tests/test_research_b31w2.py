@@ -68,7 +68,7 @@ def test_each_reason_agrees_with_the_distance_that_was_measured(synth):
     *_, X, t_from, evs = synth
     n = 0
     for mod in W.MODS:
-        _, rows = W.order_life(X, b31.setups(X, mod, evs), t_from)
+        _, rows, _raw = W.order_life(X, b31.setups(X, mod, evs), t_from)
         for r in rows:
             for rule, reward in W.RULES.items():
                 fate, why = r[f"fate_{rule}"], r[f"why_{rule}"]
@@ -98,7 +98,7 @@ def test_each_reason_agrees_with_the_distance_that_was_measured(synth):
 def test_the_ladder_rule_moves_only_the_reward_check(synth):
     *_, X, t_from, evs = synth
     for mod in W.MODS:
-        stats, rows = W.order_life(X, b31.setups(X, mod, evs), t_from)
+        stats, rows, _raw = W.order_life(X, b31.setups(X, mod, evs), t_from)
         a, b = stats["tp1_10"], stats["ladder_15"]
         assert a["setups"] == b["setups"] == len(rows) and a["repeat"] == b["repeat"]
         assert a["rejected"].get("stop", 0) == b["rejected"].get("stop", 0)    # checked before the reward
@@ -161,6 +161,10 @@ def test_the_run_writes_counts_and_distances_and_no_outcome(synth, monkeypatch, 
         assert sum(r["fate_ladder_15"] == "executed" for r in mine) == st["ladder_15"]["executed"]
         assert sum(r["fate_tp1_10"] == "rejected" for r in mine) == sum(st["tp1_10"]["rejected"].values())
     assert all(r["part"] == "development" for r in rows) and len(rows) > 50
+    *_, X, t_from, evs = synth
+    for m in W.MODS:                                                           # the tables come from the unrounded distances
+        _, _, raw = W.order_life(X, b31.setups(X, m, evs), t_from)
+        assert P["modules"][m]["stop_distance"] == W.distances(raw) and P["modules"][m]["checks"] == W.failures(raw)
     (line,) = [json.loads(x) for x in tr.read_text().splitlines()]
     assert line["reg"] == "B31b-W2" and line["outcomes_inspected"] is False and set(line["setups"]) == {"C", "D", "E"}
     assert not any(k in json.dumps(line) for k in OUTCOME_KEYS)
@@ -239,3 +243,51 @@ def test_the_d_funnel_counts_each_stage_on_a_hand_worked_market():
                  "vetoed_by_a_strong_displacement_body": 1, "setups": 1, "all_setups": 1}
     (s,) = b31.setups(X, "D", [])
     assert s["ev"]["j"] == s["order_bar"] == 5                                # it closed back inside on the same bar
+
+
+def test_the_tables_use_unrounded_distances_and_agree_with_the_check_order(synth):
+    *_, X, t_from, evs = synth
+    for mod in W.MODS:
+        stats, rows, raw = W.order_life(X, b31.setups(X, mod, evs), t_from)
+        a = stats["tp1_10"]
+        assert len(raw) == a["setups"] - a["repeat"] == sum(r["D"] is not None for r in rows)
+        sd = W.distances(raw)
+        assert sd["below_5"] == a["rejected"].get("stop", 0) == stats["ladder_15"]["rejected"].get("stop", 0)   # exactly
+        f = W.failures(raw)
+        for rule in W.RULES:
+            st = stats[rule]
+            assert f[rule]["measured"] == len(raw)
+            assert f[rule]["pass_every_check"] == len(raw) - sum(st["rejected"].values())       # passed check() = reached the order
+            assert f[rule]["fail"]["stop"] == st["rejected"].get("stop", 0)
+            for c in W.CHECKS:
+                assert f[rule]["fail_only"][c] <= f[rule]["fail"][c] >= st["rejected"].get(c, 0)
+            for m in raw:
+                x = W.fails(m, rule)
+                if m[f"fate_{rule}"] == "rejected":
+                    assert x                                                  # the first failed check is the reason recorded
+                else:
+                    assert not x
+        r = [m for m in raw if m["fate_tp1_10"] == "rejected"]
+        tr: list = []
+        b31.run_module(X, b31.setups(X, mod, evs), t_from, "model", W.RULES["tp1_10"], tr)
+        why = [z["why"] for z in tr if z["fate"] == "rejected"]
+        assert [W.fails(m, "tp1_10")[0] for m in r] == why                    # in the order b31.check tests them
+
+
+def test_fails_lists_every_failed_check():
+    m = {"D": 4.0, "cost": 0.8, "room": 6.0, "vwap_room": None, "rr_tp1_10": (10 - 0.8) / 4.8, "rr_ladder_15": (15 - 0.8) / 4.8}
+    assert W.fails(m, "tp1_10") == ["stop", "cost", "room"] and W.fails(m, "ladder_15") == ["stop", "cost", "room"]   # 0.8 > 0.6
+    m = {"D": 12.0, "cost": 0.8, "room": None, "vwap_room": 25.0, "rr_tp1_10": 9.2 / 12.8, "rr_ladder_15": 14.2 / 12.8}
+    assert W.fails(m, "tp1_10") == ["reward"] and W.fails(m, "ladder_15") == []
+    assert W.fails(dict(m, D=-1.0), "tp1_10") == ["stop on the wrong side"]
+    assert W.fails(dict(m, vwap_room=9.9), "ladder_15") == ["room"]
+    assert W.fails(dict(m, D=5.0, cost=0.5, rr_ladder_15=14.5 / 5.5), "ladder_15") == []      # exactly $5 is allowed
+    assert W.fails(dict(m, D=4.99, cost=0.5, rr_ladder_15=14.5 / 5.49), "ladder_15") == ["stop"]
+    raw = [{"D": 4.0, "cost": 0.8, "room": 6.0, "vwap_room": None, "rr_tp1_10": 1.9, "rr_ladder_15": 2.9},      # stop, cost, room
+           {"D": 12.0, "cost": 0.8, "room": None, "vwap_room": None, "rr_tp1_10": 0.72, "rr_ladder_15": 1.11},   # reward at +10 only
+           {"D": 7.0, "cost": 0.8, "room": 8.0, "vwap_room": None, "rr_tp1_10": 1.18, "rr_ladder_15": 1.82},     # room only
+           {"D": 7.0, "cost": 0.8, "room": 30.0, "vwap_room": None, "rr_tp1_10": 1.18, "rr_ladder_15": 1.82}]    # passes
+    f = W.failures(raw)
+    assert f["tp1_10"] == {"measured": 4, "pass_every_check": 1, "fail": {"stop": 1, "reward": 1, "cost": 1, "room": 2, "stop on the wrong side": 0},
+                           "fail_only": {"stop": 0, "reward": 1, "cost": 0, "room": 1}}
+    assert f["ladder_15"]["pass_every_check"] == 2 and f["ladder_15"]["fail"]["reward"] == 0

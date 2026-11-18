@@ -114,8 +114,10 @@ def _rr(m: dict, reward: float) -> float | None:
     return float((reward - m["cost"]) / (m["D"] + m["cost"])) if m.get("D") is not None and m["D"] + m["cost"] > 0 else None
 
 
-def order_life(X: b31.Ctx, sets: list[dict], t_from: int) -> tuple[dict, list[dict]]:
-    """({rule: stat}, one row per setup with its fate under each rule). The outcomes run_module computes are dropped."""
+def order_life(X: b31.Ctx, sets: list[dict], t_from: int) -> tuple[dict, list[dict], list[dict]]:
+    """({rule: stat}, one row per setup with its fate under each rule (distances rounded to the cent, for the CSV), the
+    unrounded measurements of every setup that was not a repeat (for the tables)). The outcomes run_module computes are
+    dropped."""
     stats, traces = {}, {}
     for rule, reward in RULES.items():
         tr: list = []
@@ -123,7 +125,7 @@ def order_life(X: b31.Ctx, sets: list[dict], t_from: int) -> tuple[dict, list[di
         traces[rule] = tr
     a, b = traces["tp1_10"], traces["ladder_15"]
     assert len(a) == len(b) == stats["tp1_10"]["setups"] == stats["ladder_15"]["setups"]
-    rows = []
+    rows, raw = [], []
     for x, y in zip(a, b, strict=True):
         assert (x["t"], x["dir"], x["kind"]) == (y["t"], y["dir"], y["kind"])     # the same setups in the same order
         row = {"t": x["t"], "dir": x["dir"], "kind": x["kind"], "entry_type": x["entry_type"],
@@ -132,11 +134,47 @@ def order_life(X: b31.Ctx, sets: list[dict], t_from: int) -> tuple[dict, list[di
             r = _rr(x, RULES[rule]) if x.get("D") is not None else None
             row.update({f"rr_{rule}": round(r, 2) if r is not None else None, f"fate_{rule}": z["fate"], f"why_{rule}": z["why"]})
         rows.append(row)
-    return stats, rows
+        if x.get("D") is not None:
+            raw.append({**{k: x.get(k) for k in ("D", "cost", "cost_frac", "room", "vwap_room")},
+                        **{f"rr_{rule}": _rr(x, rw) for rule, rw in RULES.items()},
+                        **{f"fate_{rule}": z["fate"] for rule, z in (("tp1_10", x), ("ladder_15", y))}})
+    return stats, rows, raw
+
+
+CHECKS = ("stop", "reward", "cost", "room")                # b31.check's order (after "stop on the wrong side")
+
+
+def fails(m: dict, rule: str) -> list[str]:
+    """Every check this setup fails under `rule`, in b31.check's order (b31.check reports only the first)."""
+    if m["D"] <= 0:
+        return ["stop on the wrong side"]
+    out = []
+    if m["D"] < b31.D_MIN - b31.EPS:
+        out.append("stop")
+    if m[f"rr_{rule}"] < b31.RR_MIN - b31.EPS:
+        out.append("reward")
+    if m["cost"] > b31.COST_FRAC * m["D"] + b31.EPS:
+        out.append("cost")
+    if any(m.get(k) is not None and m[k] < b31.TP[0] - b31.EPS for k in ("room", "vwap_room")):
+        out.append("room")
+    return out
+
+
+def failures(raw: list[dict]) -> dict:
+    """Per rule, over the setups that were not repeats: how many fail each check on its own (a setup can fail several),
+    how many fail that check and no other, and how many pass every check."""
+    res = {}
+    for rule in RULES:
+        f = [fails(m, rule) for m in raw]
+        res[rule] = {"measured": len(raw), "pass_every_check": sum(not x for x in f),
+                     "fail": {c: sum(c in x for x in f) for c in CHECKS + ("stop on the wrong side",)},
+                     "fail_only": {c: sum(x == [c] for x in f) for c in CHECKS}}
+    return res
 
 
 def distances(rows: list[dict]) -> dict:
-    """Where the measured stop distances lie (setups that were not repeats), beside the windows the rules allow."""
+    """Where the measured stop distances lie (setups that were not repeats; unrounded), beside the windows the rules
+    allow."""
     D = np.array([r["D"] for r in rows if r["D"] is not None and r["D"] > 0], float)
     if not len(D):
         return {"n": 0}
@@ -159,8 +197,8 @@ def run(rd: str, part: str, log=print) -> dict:
                     "years_scored": round((X.t[-1] + 900 - t_from) / (365.25 * 86400), 2)},
            "upstream": up, "modules": {}, "rows": []}
     for m in MODS:
-        stats, rows = order_life(X, sets[m], t_from)
-        out["modules"][m] = {"rules": stats, "stop_distance": distances(rows)}
+        stats, rows, raw = order_life(X, sets[m], t_from)
+        out["modules"][m] = {"rules": stats, "stop_distance": distances(raw), "checks": failures(raw)}
         out["rows"] += [dict(r, part=part, mod=m) for r in rows]
         log(f"[B31b-W2] {part} {m}: setups {stats['tp1_10']['setups']}, executed {stats['tp1_10']['executed']} (TP1 rule) / "
             f"{stats['ladder_15']['executed']} (ladder rule)")
