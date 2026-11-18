@@ -25,10 +25,10 @@ def h1_of(m15):
         subset=["open"])
 
 
-def pdh_sweep_series():
-    """Monday: flat at 4000 with one spike to 4005 at 10:00 UTC (the PDH for Tuesday). Tuesday 08:00 UTC: a bar runs
-    to 4006.5 and closes back at 4000.2 (below every level it crossed), then price falls to 3988."""
-    rows = [FLAT] * 40 + [(4000.0, 4005.0, 3999.5, 4000.0)] + [FLAT] * (128 - 41)        # Mon 00:00 .. Tue 07:45
+def pdh_sweep_series(at=128):
+    """Monday: flat at 4000 with one spike to 4005 at 10:00 UTC (the PDH for Tuesday). Tuesday 08:00 UTC (bar `at`): a
+    bar runs to 4006.5 and closes back at 4000.2 (below every level it crossed), then price falls to 3988."""
+    rows = [FLAT] * 40 + [(4000.0, 4005.0, 3999.5, 4000.0)] + [FLAT] * (at - 41)         # Mon 00:00 .. the bar before
     rows += [(4000.0, 4006.5, 3999.5, 4000.2)]                                              # Tue 08:00 sweep
     rows += [(4000.2, 4000.4, 3996.0, 3996.5), (3996.5, 3996.8, 3991.0, 3991.2), (3991.2, 3991.5, 3988.0, 3988.5)]
     rows += [(3988.5, 3989.0, 3988.0, 3988.5)] * 120
@@ -98,8 +98,8 @@ def test_no_lookahead_events_and_their_before_during_measures_do_not_change_with
     keys = ("i", "side", "L", "L_out", "n_lv", "names", "primary", "ext", "disp", "opp", "next_same", "age", "b_dist", "b_atrr",
             "b_comp", "b_e20", "b_e200", "b_stack", "b_twap", "b_mom", "room_rev", "room_cont", "d_pen", "d_wick", "d_close",
             "fvg_rev", "fvg_cont", "two_sided", "b_h1", "b_h4", "b_m30")
-    a = {(x["i"], x["side"]): x for x in e1 if x["i"] < cut - 3}
-    b = {(x["i"], x["side"]): x for x in e2 if x["i"] < cut - 3}
+    a = {(x["i"], x["side"]): x for x in e1 if x["i"] < cut}
+    b = {(x["i"], x["side"]): x for x in e2 if x["i"] < cut}
     assert a.keys() == b.keys() and len(a) > 50
     for k in a:
         for f in keys:
@@ -236,3 +236,65 @@ def test_walk_forward_never_trains_on_trades_whose_outcome_window_reaches_the_te
     p = W.walk_forward(rows, W.FEATURES, int(t[0]), int(t[-1]) + 1)
     edges = np.linspace(t[0], t[-1] + 1, 7)
     assert np.isnan(p[t < edges[1]]).all() and np.isfinite(p[t >= edges[1]]).all()
+
+
+def test_a_gap_through_the_stop_fills_at_the_open_in_both_races():
+    m15 = frame_of([FLAT, FLAT, (3990.0, 3991.0, 3989.0, 3990.5), FLAT])
+    P = W.make_path(m15, None)
+    for fn in (W.race, W.race_fast):
+        out, t, px, _ = fn(P, 2, 1, 4000.0, 3995.0, 4010.0)
+        assert out == "SL" and px == 3990.0 and t == int(m15.index[2].timestamp())
+        out, t, px, _ = fn(P, 2, -1, 4000.0, 4005.0, 3992.0)                     # a short whose target is gapped through
+        assert out == "TP" and px == 3990.0
+
+
+def test_false_breakout_closing_back_on_the_second_bar_is_type_11():
+    rows = [FLAT] * 40 + [(4000.0, 4005.0, 3999.5, 4000.0)] + [FLAT] * (128 - 41)
+    rows += [(4000.0, 4006.0, 3999.8, 4005.6), (4005.6, 4006.2, 4005.2, 4005.5), (4005.5, 4005.8, 4000.1, 4000.3)]
+    rows += [(4000.3, 4000.4, 3994.0, 3994.5), (3994.5, 3994.6, 3989.0, 3989.5)] + [(3989.5, 3990.0, 3989.0, 3989.5)] * 120
+    P, F, ev, tr, _ = build_all(frame_of(rows))
+    e = [x for x in ev if x["side"] == 1 and "PDH" in x["names"]][0]
+    assert 11 in e["types"] and 12 not in e["types"]
+
+
+def test_cost_comes_from_the_bar_that_closes_at_the_decision():
+    m15 = pdh_sweep_series(at=96 + 27)                                          # the sweep bar opens Tue 06:45 (Asia)
+    P, F, ev, tr, _ = build_all(m15)
+    e = [x for x in ev if x["disp"] == "SWEEP" and x["side"] == 1 and x["primary"] == "PD"][0]
+    imm = [r for r in tr if r["ev_id"] == e["id"] and r["m"] == "A-IMM"][0]
+    assert imm["cost"] == pytest.approx(0.97)                                   # off-session, not the London bar after it
+
+
+def test_walk_forward_training_rows_end_before_each_fold(monkeypatch):
+    t = np.arange(0, 600) * 86400 // 2
+    rows = [{"t_fill": int(x), "tp10": "TP" if (k % 3) else "SL", "tt": float(x)} for k, x in enumerate(t)]
+    edges = np.linspace(t[0], t[-1] + 1, 7)
+    seen = []
+    real = W.standardize
+
+    def spy(Xtr, Xte):
+        seen.append((float(np.nanmax(Xtr[:, 0])), float(np.nanmin(Xte[:, 0]))))
+        return real(Xtr, Xte)
+    monkeypatch.setattr(W, "standardize", spy)
+    W.walk_forward(rows, ("tt",), int(t[0]), int(t[-1]) + 1)
+    assert len(seen) == 5
+    for (tr_max, te_min), edge in zip(seen, edges[1:6]):
+        assert tr_max + W.HOLD_SEC < edge <= te_min
+
+
+def test_no_lookahead_each_event_rebuilt_from_data_ending_at_its_own_bar():
+    full = random_walk(1400, seed=11)
+    _, F1, e1, _, _ = build_all(full)
+    keys = ("L", "L_out", "names", "ext", "disp", "opp", "next_same", "age", "b_dist", "b_atrr", "b_comp", "b_e20", "b_e200",
+            "b_stack", "b_twap", "b_mom", "room_rev", "room_cont", "d_pen", "d_wick", "d_close", "fvg_rev", "fvg_cont", "two_sided",
+            "b_h1", "b_h4", "b_m30")
+    rng = H.seeded_rng(13)
+    cand = [x for x in e1 if x["i"] > 300]
+    for k in rng.choice(len(cand), size=20, replace=False):
+        x = cand[int(k)]
+        _, _, e2, _, _ = build_all(full.iloc[:x["i"] + 1])
+        y = [z for z in e2 if z["i"] == x["i"] and z["side"] == x["side"]]
+        assert len(y) == 1
+        for f in keys:
+            va, vb = x[f], y[0][f]
+            assert (isinstance(va, float) and math.isnan(va) and math.isnan(vb)) or va == vb, (x["i"], f, va, vb)
