@@ -547,3 +547,28 @@ def test_every_field_of_the_operators_list_is_on_the_phone_alert_and_on_the_webs
     assert "probability" not in phone.lower().replace("probability: none shown, not calibrated", "")   # no number is called one
     assert '"until"' not in js and "D.until" in js and "nowS > D.until" in js  # a page left open drops an expired entry
 
+
+
+def test_a_new_entry_leads_the_message_when_another_setup_reports_in_the_same_run():
+    """Found live 18 Nov 00:36: setup #1's TP1 line came first and setup #2's ENTRY ELIGIBLE alert second, so the phone
+    preview showed the old trade's news, not the new entry. The entry now leads; each setup's lines stay together."""
+    st = {}
+    C1.open_from(st, {"meta": {"tf": "15m"}, "markers": [SIG]}, None)                       # setup #1, trigger 4000
+    ch1 = _chart(2, {1: (4000, 4013, 3999, 4012.40)})
+    C1.advance_all(st, {"meta": {"tf": "15m"}, "chart": ch1, "markers": [SIG]}, ch1["t"][-1] + 960, N.plan_cfg())
+    assert C1.book(st)["open"][0]["status"] == "ACTIVE"                                   # entered at 4012.40, TP1 4025.40
+    sig2 = dict(SIG, t=T0 + 1800, px=4016.0)                                               # $16 away: a new idea, setup #2
+    C1.open_from(st, {"meta": {"tf": "15m"}, "markers": [SIG, sig2]}, T0)
+    assert [x["id"] for x in C1.book(st)["open"]] == [1, 2]
+    full = _chart(4, {1: (4000, 4013, 3999, 4012.40), 2: (4012.4, 4016.5, 4011, 4016.0), 3: (4016, 4027, 4015, 4026.5)})
+    lines = C1.advance_all(st, {"meta": {"tf": "15m"}, "chart": full, "markers": [SIG, sig2]}, full["t"][-1] + 960, N.plan_cfg())
+    tp1 = "XAUUSD 15m BUY confirmed setup #1: TP1 4025.40 reached: close half, move the stop to the entry 4012.40"
+    assert lines[0].startswith("XAUUSD 15m BUY ENTRY ELIGIBLE, SETUP #2: entry 4026.50") and tp1 in lines
+    assert lines.index(tp1) == len(lines) - 1 == 10                                        # #2's ten lines, then #1's news
+    assert all("SETUP #2" in x or not x.startswith("XAUUSD") for x in lines[:10])
+    # with no entry in the run the order is the setups' own
+    st2 = {}
+    C1.open_from(st2, {"meta": {"tf": "15m"}, "markers": [SIG, dict(SIG, t=T0 + 900, px=4040.0)]}, None)
+    out = C1.advance_all(st2, {"meta": {"tf": "15m"}, "chart": _chart(3, {2: (4030, 4031, 3986.0, 3990)}), "markers": []},
+                         T0 + 3 * 900 + 60, N.plan_cfg())
+    assert [x.split(" (")[0] for x in out] == ["XAUUSD 15m BUY SETUP #1 CANCELLED", "XAUUSD 15m BUY SETUP #2 CANCELLED"]
