@@ -6440,6 +6440,45 @@
    "mae": 15.519999999999982,
    "bars": 9,
    "path": "5m"
+  },
+  {
+   "id": 178,
+   "tf": "15m",
+   "t": 1795018500,
+   "t_dec": 1795019400,
+   "dir": 1,
+   "entry": 3742.83,
+   "kind": "SWEEP",
+   "levels": [
+    [
+     "TDL",
+     3742.26
+    ],
+    [
+     "4HL",
+     3742.26
+    ]
+   ],
+   "zones": [
+    "bull order block 3742.26-3754.25"
+   ],
+   "sl": 3729.83,
+   "tp": 3757.83,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1795019783,
+   "result": "SL",
+   "t_res": 1795024200,
+   "mfe": 7.829999999999927,
+   "mae": 13.429999999999836,
+   "bars": 17,
+   "path": "5m"
   }
  ],
  "live": {
@@ -6448,7 +6487,7 @@
    10
   ],
   "SWEEP": [
-   67,
+   68,
    25
   ],
   "BREAKOUT": [
