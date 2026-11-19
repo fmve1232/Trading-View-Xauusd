@@ -815,6 +815,61 @@ function c1Card(C) {
     <p class="muted pa-note">A setup is not an entry. Only a 15m close $${f(C.min_usd, 0)} beyond the trigger, with every check passed, is ENTRY ELIGIBLE; the plan is then
       recalculated from that close. ${esc(C.evidence || "")}</p>`;
 }
+/* ---------- W5 Entry Price Intelligence (quantum/entry_intel.py; index.json -> alerts.entry_intel) ----------
+   The band is computed in Python from the alert's own stop, targets and lot (the same rules as the phone alert); this card
+   only prints it. It is not recomputed from the browser's live price: that is another feed, and the band is often under $1. */
+function entryIntelCard(EI) {
+  if (!EI || !EI.on) return "";
+  if (!EI.ok) return `<h4>Entry price check</h4><p class="muted pa-note">Not available in this run${EI.error || EI.why ? ": " + esc(EI.error || EI.why) : ""}.</p>`;
+  const sd = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
+  const usd0 = (x) => (isNum(x) ? "$" + Math.round(x).toLocaleString("en-US") : "—");
+  const W = { "WITHIN PLAN": "bull", RESIZE: "warn", "OUTSIDE PLAN": "bear", "NOT CHECKED": "" };
+  const nowS = Date.now() / 1000;
+  const live = (EI.live || []).map((a) => {
+    const b = a.band || {}, buy = a.dir === 1, worse = buy ? "above" : "below";
+    const passed = isNum(a.until) && nowS > a.until;
+    const farWhy = b.far_by === "budget"
+      ? `$${f(b.budget_worse_usd, 2)} ${worse} the entry: beyond it the loss at the stop exceeds ${usd0(a.budget)}, costs included`
+      : `beyond it net R:R falls below ${f(EI.rr_min, 1)}`;
+    const at = isNum(a.px)
+      ? `${px(a.px)} <span class="dim">(feed mid, ${a.live ? "live 5m bar" : "last closed bar"}, ${Math.round(a.age_sec / 60)} min old)</span> · <span class="pill ${W[a.word] || ""}">${esc(a.word)}</span>${(a.why || []).length ? " " + esc(a.why.join("; ")) : ""}`
+      : `<span class="pill">${esc(a.word)}</span> ${esc((a.why || []).join("; "))}`;
+    const rows = [["Setup", `#${a.id} · ${esc(a.tf)} ${sd(a.dir)} · alert entry ${px(a.entry)} · valid until ${tfmt(a.until)}${passed ? ' · <b class="warn">window passed: NO TRADE on this alert</b>' : ""}`],
+      [`${buy ? "Highest BUY" : "Lowest SELL"} price that keeps the plan`, `${px(b.far_px)} at the alert's ${f(a.lot_alert, 2)} lot <span class="dim">(${farWhy})</span> · ${px(b.far_resized_px)} with the lot resized <span class="dim">(beyond it net R:R falls below ${f(EI.rr_min, 1)} with the alert's targets, or TP1 is reached)</span>`],
+      ["Stop / TP1 of the alert", `${px(b.stop)} / ${px(b.tp1)} <span class="dim">(fixed at the confirming close; a ${buy ? "lower" : "higher"} entry keeps them and risks less)</span>`],
+      ["At this run's price", at]];
+    if (isNum(a.dist_usd)) {
+      const dev = a.dev_usd >= 0 ? `$${f(a.dev_usd, 2)} better` : `$${f(-a.dev_usd, 2)} worse`;
+      const loss = isNum(a.loss_alert_lot) ? ` · loss at the stop ${usd0(a.loss_alert_lot)} at ${f(a.lot_alert, 2)} lot · ${f(a.lot_budget, 2)} lot keeps ${usd0(a.loss_lot_budget)} · net R:R ${f(a.rr_now, 2)} · costs ${pct(100 * a.cost_share)} of that loss` : "";
+      rows.push(["Entered at that price", `stop $${f(a.dist_usd, 2)} away · ${dev} than the alert${loss}`]);
+    }
+    return kv(rows);
+  }).join("");
+  const RES = { TP: "bull", SL: "bear", AMBIGUOUS: "bear" };
+  const race = (r) => (r ? ["10", "15", "20"].map((k) => { const v = r.res[k];
+    return v ? `<b class="${RES[v[0]] || ""}">${v[0] === "AMBIGUOUS" ? "AMB" : v[0]}</b>` : '<span class="dim">open</span>'; }).join(" · ") +
+    `<div class="dim">MFE $${f(r.mfe, 2)} · MAE $${f(r.mae, 2)}</div>` : '<span class="dim">no entry</span>');
+  const rows = (EI.paths || []).map((x) => `<tr><td>#${x.id} ${esc(x.tf)} ${sd(x.dir)}<div>${tfmt(x.t_close)}</div></td><td>${px(x.p0)}<div>${race(x.p0_race)}</div></td>
+    <td>${x.entry_race ? px(x.entry_race.e) : "—"}<div>${race(x.entry_race)}</div></td><td>${esc(x.c1 === "INVALIDATED" ? "CANCELLED" : x.c1 || "")}${isNum(x.used_share) ? `<div class="dim">${pct(100 * x.used_share)} of the move from the signal used before the entry</div>` : ""}</td></tr>`).join("");
+  const SM = EI.summary || {};
+  const one = (k, lbl) => { const s = (SM[k] || {}).per || {};
+    return `${lbl}: ` + ["10", "15", "20"].map((t) => { const u = s[t] || {};
+      return u.n ? `+$${t} first ${u.tp} of ${u.n}${u.wilson ? ` (95% ${pct(100 * u.wilson[0])}–${pct(100 * u.wilson[1])})` : ""}, ${fs(u.mean_r, 2)} R` : `+$${t}: none decided`; }).join(" · "); };
+  const wt = SM.waiting_10 || {};
+  const log = (EI.log || []).slice(0, 5).map((e) => `${tfmt(e.t, false)} #${e.id} ${esc(e.word.toLowerCase())}${isNum(e.px) ? " at " + px(e.px) : ""}`).join(" · ");
+  const info = [["Record so far", `${one("p0_race", "From the signal close")}<br>${one("entry_race", "From the alert entry")}`],
+    ["Waiting for confirmation", wt.n ? `${wt.n} confirmed setup${wt.n === 1 ? "" : "s"}: the alert entry minus the signal close, at +$10, ${fs(wt.mean_diff_r, 2)} R on average` : "no confirmed setup decided yet"],
+    ["Status", `<b class="warn">RECORD, NOT A VALIDATED SIGNAL</b> <span class="dim">(since ${isNum(EI.since) ? tfmt(EI.since) : "—"}; descriptive, no verdict, no probability)</span>`]];
+  if (log) info.push(["Decision record", log]);
+  return `<h4>Entry price check · arithmetic of the alert's plan, not a forecast</h4>
+    ${live || '<p class="muted pa-note">No ENTRY ELIGIBLE alert is inside its window: nothing to check.</p>'}
+    <p class="muted pa-note">Compare these limits with your platform's <b>ask</b> for a BUY and <b>bid</b> for a SELL. The run's price is the
+      data feed's mid and the costs are a model: no broker bid / ask is connected, so no spread is measured. A fill beyond the limit means the
+      alert's plan no longer holds at that price: resize, or NO TRADE. The planned loss is not a maximum: a gap through the stop loses more.</p>
+    ${rows ? `<h4>Path record: from the signal close and from the alert entry</h4><div class="scroll"><table class="yt"><tr><th>Setup</th><th>From the signal close (+$10 · +$15 · +$20)</th><th>From the alert entry</th><th>C1 result</th></tr>${rows}</table></div>` : ""}
+    ${kv(info)}
+    <p class="muted pa-note">${esc(EI.rules || "")} ${esc(EI.evidence || "")}</p>`;
+}
 function shadowCard(SH) {
   if (!SH) return "";
   if (SH.error || SH.status) return `<h4>Entry-module forward test (B31b)</h4><p class="muted">${esc(SH.error || SH.status)}</p>`;
@@ -2397,7 +2452,7 @@ function renderPlanAlerts() {
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   // this card is redrawn on live ticks (open plans' P/L): keep the "phone alert, as sent" blocks the reader has opened
   const openK = new Set([...el.querySelectorAll("details[open][data-k]")].map((d) => d.dataset.k));
-  el.innerHTML = `${c1Card(A.c1)}${zonesCard(A.zones)}
+  el.innerHTML = `${c1Card(A.c1)}${entryIntelCard(A.entry_intel)}${zonesCard(A.zones)}
     <h4>Your plan</h4>
     <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}${c.tp2_usd ? ` · two targets: TP1 +$${f(c.tp_usd / 2, 0)} on half, then SL to entry, TP2 +$${f(c.tp2_usd / 2, 0)} on the rest` : ""}</div>
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
