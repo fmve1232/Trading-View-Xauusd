@@ -73,7 +73,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from . import confirm_entry as C1
-from . import entry_intel, keyzones, shadow
+from . import breakouts, entry_intel, keyzones, shadow
 from .data.sources import redact as _src_redact
 from .data.sources import requests
 
@@ -2880,6 +2880,39 @@ def zones_run(state: dict, payloads: dict, t_send: int, off: float) -> tuple[dic
     return zb, lines, ids
 
 
+# ---------------- Workstream 7: M15 / M30 breakout monitoring ----------------
+def short_clock(t: int) -> str:
+    """'05:00 MT5 / 08:00 PKT' for the short breakout messages."""
+    loc = local_clock(t)
+    return f"{mt5_clock(t):%H:%M} MT5 / {loc:%H:%M} {loc.tzname()}"
+
+
+def breakouts_run(state: dict, payloads: dict, t_send: int, off: float, pl: dict | None) -> tuple[dict, list[dict]]:
+    """ALERT_BREAKOUTS (unset = phone, site = website only, 0 = off). Returns the website block and the phone messages
+    sent in this run; each stage's phone result is recorded on its event (SENT, SEND_FAILED, SITE, LATE)."""
+    m = breakouts.mode()
+    if m == "off":
+        return {"id": breakouts.ID, "on": False}, []
+    due = breakouts.scan(state, payloads, t_send, pl["budget"] if pl else 650.0)
+    evs = state["brk"]["events"]
+    if m == "site":
+        for d in due:
+            evs[d["id"]]["phone"][d["stage"]] = "SITE"
+        return {**breakouts.snapshot(state, t_send), "ok": True}, []
+    msgs = [breakouts.message(d["ev"], d["tf"], d["stage"], d["bar"], lambda x: _fmt(x, off), short_clock) for d in due]
+    keys = [f"{d['id']}:{d['stage']}" for d in due]
+    sent = []
+    groups = breakouts.bundle(msgs)
+    for gi, lines in enumerate(groups):
+        part = list(range(len(due))) if len(groups) < len(msgs) else [gi]
+        ok = _say("breakouts", lines, [keys[k] for k in part],
+                  desc="breakout" if len(part) == 1 else f"{len(part)} breakout updates")
+        for k in part:
+            evs[due[k]["id"]]["phone"][due[k]["stage"]] = "SENT" if ok else "SEND_FAILED"
+        sent.append({"lines": lines, "sent": ok, "events": [keys[k] for k in part]})
+    return {**breakouts.snapshot(state, t_send), "ok": True}, sent
+
+
 def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | None = None) -> dict:
     path = os.path.join(store_dir, STATE) if store_dir else None
     state = {}
@@ -3110,6 +3143,10 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
             report["zones_alert"] = {"lines": zl, "sent": _say("zones", zl, zev, desc="key zone watch")}
     except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
         report["zones"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+    try:   # Workstream 7: M15 / M30 breakout monitoring (every session, both directions); never breaks this run
+        report["breakouts"], report["breakout_alerts"] = breakouts_run(state, payloads, t_send, off, pl_cfg)
+    except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
+        report["breakouts"] = {"id": breakouts.ID, "on": True, "ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
     if glines:
         report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else _say("grab_test", trade_msg(phone_only(glines)),
                                                                                       desc="grab test")}   # trades and results
