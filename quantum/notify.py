@@ -73,7 +73,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from . import confirm_entry as C1
-from . import keyzones, shadow
+from . import entry_intel, keyzones, shadow
 from .data.sources import redact as _src_redact
 from .data.sources import requests
 
@@ -1617,6 +1617,7 @@ def plan_cfg() -> dict | None:
     budget = acct * risk_pct / 100.0
     size_cost = max(cpl / 100.0, COST_MODEL_OZ[1])
     step = 0.02 if tp2_px else 0.01
+    lot_max = num("PLAN_LOT_MAX", PLAN_LOT_MAX_DEFAULT)
     if os.environ.get("PLAN_SIZING", "").strip().lower() == "fixed":
         lot, sizing = ref_lot, "fixed"
     else:
@@ -1625,13 +1626,13 @@ def plan_cfg() -> dict | None:
         lot = round(k * step, 2)
         if lot < step:                                  # below the minimum: the smallest lot, flagged over_budget below
             lot = step
-        lot = min(lot, num("PLAN_LOT_MAX", PLAN_LOT_MAX_DEFAULT))
+        lot = min(lot, lot_max)
     oz = lot * 100.0
     loss_max = oz * (sl_px + size_cost)
     return {"lot": lot, "sl_usd": sl_px * oz, "tp_usd": tp_px * oz, "cost_usd": cpl * lot, "sl_px": sl_px, "tp_px": tp_px,
             "tp2_usd": tp2_px * oz if tp2_px else 0.0, "tp2_px": tp2_px, "sizing": sizing, "account": acct,
             "risk_pct": risk_pct, "budget": budget, "size_cost_oz": size_cost, "cost_parts": cost_parts(size_cost),
-            "loss_at_stop_max": loss_max,
+            "loss_at_stop_max": loss_max, "lot_step": step, "lot_max": lot_max,
             "risk_pct_actual": 100.0 * loss_max / acct, "over_budget": loss_max > budget + 1e-6}
 
 
@@ -3086,6 +3087,10 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
                            "mode": alert_mode(), "phone_tfs": [x for x in tfs if x in PHONE_TFS_SIXTY] if sixty() else list(tfs)}
     if C1.on():                                            # index.json -> alerts.c1: the website shows the phone's decision
         report["c1"] = C1.snapshot(state, t_send, off)
+        try:   # W5 Entry Price Intelligence: arithmetic and records for C1's setups; sends nothing, never breaks this run
+            report["entry_intel"] = entry_intel.run(state, payloads.get("15m"), pl_cfg, price_now(payloads, "15m"), t_send)
+        except Exception as e:  # noqa: BLE001 - a display record must never stop the alerts
+            report["entry_intel"] = {"id": entry_intel.ID, "on": True, "ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
     if liq_on() and alerted:                               # A2: trend-change warning, once per direction per trading day
         today = trading_day(t_send)
         tl = turn_lines(state, payloads, tfs, liq_log, [x for x in plans + log if trading_day(_decision_t(x)) == today],
