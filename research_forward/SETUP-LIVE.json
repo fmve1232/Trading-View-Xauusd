@@ -7189,6 +7189,115 @@
    "mae": 4.989999999999782,
    "bars": 21,
    "path": "5m"
+  },
+  {
+   "id": 199,
+   "tf": "15m",
+   "t": 1795117500,
+   "t_dec": 1795118400,
+   "dir": -1,
+   "entry": 3666.87,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDL",
+     3669.19
+    ],
+    [
+     "4HL",
+     3669.19
+    ]
+   ],
+   "zones": [
+    "below value-area low 3696.98"
+   ],
+   "sl": 3679.87,
+   "tp": 3651.87,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1795118959,
+   "result": "TP",
+   "t_res": 1795123200,
+   "mfe": 20.889999999999873,
+   "mae": 6.360000000000127,
+   "bars": 17,
+   "path": "5m"
+  },
+  {
+   "id": 200,
+   "tf": "15m",
+   "t": 1795120200,
+   "t_dec": 1795121100,
+   "dir": -1,
+   "entry": 3664.03,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "1HL",
+     3665.82
+    ]
+   ],
+   "zones": [
+    "below value-area low 3675.27"
+   ],
+   "sl": 3677.03,
+   "tp": 3649.03,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": true
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1795121603,
+   "result": "TP",
+   "t_res": 1795123200,
+   "mfe": 18.050000000000182,
+   "mae": 3.0,
+   "bars": 8,
+   "path": "5m"
+  },
+  {
+   "id": 201,
+   "tf": "15m",
+   "t": 1795121100,
+   "t_dec": 1795122000,
+   "dir": -1,
+   "entry": 3659.27,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "TDL",
+     3662.06
+    ]
+   ],
+   "zones": [
+    "below value-area low 3675.09"
+   ],
+   "sl": 3672.27,
+   "tp": 3644.27,
+   "checks": {
+    "major": false,
+    "trend": true,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1795122556,
+   "result": "TP",
+   "t_res": 1795123500,
+   "mfe": 25.550000000000182,
+   "mae": 2.980000000000018,
+   "bars": 6,
+   "path": "5m"
   }
  ],
  "live": {
@@ -7201,8 +7310,8 @@
    27
   ],
   "BREAKOUT": [
-   96,
-   53
+   99,
+   56
   ],
   "4H CONFIRMED": [
    8,
