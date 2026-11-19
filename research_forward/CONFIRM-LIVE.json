@@ -8274,6 +8274,33 @@
    "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
    "reason": "confirmed, but NOT VALIDATED: its registered test failed: +$15 before -$13 after a $15 confirmation was 43% of 302 trades (2020-22, 95% 38%-49%) against a break-even of 47.4%; FAIL (B21 H1 / H2)",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "GRAB|15m|1793213100|-1",
+   "kind": "GRAB",
+   "tf": "15m",
+   "t": 1793213100,
+   "t_close": 1793214000,
+   "dir": -1,
+   "p0": 4041.47,
+   "what": "PDH 4065.54 swept and rejected",
+   "id": 232,
+   "seen": 1795079174,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 4026.47,
+   "invalid_at": 4054.47,
+   "cap_at": 4021.47,
+   "confirm20_at": 4021.47,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1793214900,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
