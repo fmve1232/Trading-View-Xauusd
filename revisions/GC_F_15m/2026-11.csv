@@ -128753,3 +128753,4 @@ bar_open,run_utc,old_open,old_high,old_low,old_close,new_open,new_high,new_low,n
 2026-11-19 14:30:00+00:00,2026-11-19T15:06:19Z,592 closed bars revised (series re-based); not listed
 2026-11-19 14:45:00+00:00,2026-11-19T15:22:22Z,593 closed bars revised (series re-based); not listed
 2026-11-19 15:00:00+00:00,2026-11-19T15:38:03Z,594 closed bars revised (series re-based); not listed
+2026-11-19 15:15:00+00:00,2026-11-19T15:54:25Z,3703.500000,3704.000000,3696.199951,3697.500000,3703.500000,3704.000000,3686.600098,3688.100098,changed
