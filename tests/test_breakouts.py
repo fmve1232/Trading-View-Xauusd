@@ -13,7 +13,7 @@ from quantum import breakouts as B
 from quantum import holdout
 from quantum import notify as N
 
-T0 = 1795219200                        # 2026-11-23 00:00 UTC (Mon); a trading day rolls at 22:00 UTC (17:00 New York)
+T0 = 1795392000                        # 2026-11-23 00:00 UTC (Mon); a trading day rolls at 22:00 UTC (17:00 New York)
 KEYS = ("ALERT_BREAKOUTS", "ALERT_STRUCTURE", "ALERT_MODE", "ALERT_ZONES", "CONFIRM_MIN_USD", "PLAN", "MT5_PRICE_OFFSET",
         "ENTRY_INTEL")
 
