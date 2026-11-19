@@ -1,0 +1,81 @@
+{
+ "id": "B31b-W7",
+ "title": "M15 / M30 breakout monitoring (live phone notifications, every session, both directions) and the development study of breakout detection, false breakouts and shadow entry prices against matched random entries",
+ "status": "Written and committed before any W7 code; operator directive 2026-11-19 (Quantum Workstream 7). The live part is monitoring: DETECTED / CONFIRMED / RETEST HELD / FAILED messages. ENTRY READY is computed in SHADOW only (recorded, website, never sent) because the directive keeps unvalidated directional entries disabled and B31b-W3 found no breakout entry better than matched random.",
+ "approval": "Operator directive 2026-11-19: \"Every confirmed breakout must generate a phone notification\" ... \"Do not restrict monitoring alerts to London and New York\" ... \"M15 and M30 must be monitored independently\" ... \"You are authorised to implement and deploy the monitoring and notification improvements after all checks pass. New directional entry strategies must remain disabled until independently validated.\"",
+ "created_utc": "2026-11-19",
+ "partitions": {
+  "used": "development only (harness.DEV 2020-01-24 .. 2023-01-24) for the study; live forward records from the first production run that carries the code",
+  "sealed": "validation (2023-01-24 .. 2024-07-01) and holdout (2024-07-01 .. 2026-01-01) are NOT opened without the operator's explicit approval"
+ },
+ "levels": {
+  "per_timeframe": "M15 and M30 each use only their own closed bars (live: the 15m and 30m payloads; development: M15 history and M30 resampled from it as in B31b-W3). ATR = ATR14 (Wilder) of that timeframe",
+  "PDH_PDL_PWH_PWL": "previous trading day / week high and low (sessions.calendar trading days; shadow.build_pools)",
+  "ASH_ASL_LOH_LOL_NYH_NYL": "high / low of the last completed Asia / London / New York session (shadow.build_pools)",
+  "SWH_SWL": "pivot high / low, 3 bars each side; known at the close of the 3rd bar after the pivot; live for 5 trading days after it is known",
+  "EQH_EQL": "two live swing highs (lows) whose prices differ by at most max($0.50, 0.10 x ATR) and whose pivots are at least 4 bars apart; the level is the higher (lower) of the two, known when the later one is known, live while both are",
+  "RANGE": "at bar i: the box of bars i-12 .. i-1 when its high - low <= 1.5 x ATR[i-1]; its high and low are levels at bar i only",
+  "one_break_per_level": "each level instance (kind, value, the time it became known) produces at most one breakout; it is consumed by that breakout"
+ },
+ "breakout": {
+  "rule": "at the close of bar i, side up (down): a live level L with close[i] > L (< L) and close[i-1] <= L (>= L). A wick through L without a close beyond is NOT a breakout",
+  "event": "one event per bar and side; every level crossed by that close is listed; the REFERENCE level is the crossed level nearest to close[i-1] (the first one crossed); the primary label is the crossed level of highest rank (PW > PD > session > EQ > RANGE > swing)",
+  "id": "BRK:<tf>:<bar open epoch>:<UP|DN>"
+ },
+ "stages": {
+  "DETECTED": "at the close of bar i (phone)",
+  "CONFIRMED": "the first of: displacement = the breakout bar's body in the breakout direction >= 1.0 x ATR[i-1] (confirmed at bar i; the phone then gets CONFIRMED instead of DETECTED); acceptance = closes i+1 and i+2 both beyond L (confirmed at i+2) (phone)",
+  "RETEST_HELD": "after confirmation, the first bar within the watch whose low (up; high for down) reaches L and that closes beyond L (phone, once)",
+  "FAILED": "the first close back inside L (close <= L for up, >= L for down) within the watch, before or after confirmation (phone)",
+  "watch": "16 bars after the breakout bar (4 h on M15, 8 h on M30); after it the event is CLOSED without a message",
+  "freshness": "a stage is sent only when its bar is the newest closed bar of the payload and the run is within 20 minutes of that bar's close; otherwise it is recorded as LATE (not sent) and counted by the delivery monitor",
+  "dedupe": "one message per event id and stage, ever"
+ },
+ "shadow_entry_ready": {
+  "status": "SHADOW: computed and recorded live and on development; never sent to the phone until a variant is validated and the operator approves",
+  "variants": {
+   "E0": "market at the breakout close (bar i)",
+   "E1": "market at the confirmation close",
+   "E2": "retest limit at L, placed at the confirmation close, valid 8 bars, cancelled by a close back inside before the fill",
+   "E3": "M5 resume: after the confirmation close, within 4 bars of the timeframe, the first M5 bar whose previous M5 bar made a pullback (a lower high for up, a higher low for down) and which closes beyond that previous bar's high (low); market at its close",
+   "E4": "displacement pullback: when the breakout bar is a displacement bar, a limit at the middle of its body, placed at its close, valid 4 bars"
+  },
+  "stop": "beyond the breakout structure: the opposite extreme of the bars from i to the order's placement bar, minus (plus) 0.2 x ATR; E0 uses bar i alone",
+  "targets": "+$10 / +$15 / +$20 from the fill (TP1 / TP2 / TP3), raced separately against the stop; development distances are $ at $4,000 (scaled by price / 4,000) as in B31b-W3 .. W5; live uses $ at the live price",
+  "sizing": "$650 planned loss at the stop including the modelled round-trip cost; 100 oz per lot ASSUMED (no validated broker specification); the planned loss is not a maximum (gaps)",
+  "checks_for_entry_ready": "lot >= 0.01; cost <= 15% of the stop distance; extension: entry no more than 1.0 x ATR beyond L in the breakout direction; room: no unbroken level of the same side (an opposing obstacle) within $10 of the entry in the trade direction; fresh data. A failed check is recorded with its reason (the website's NO TRADE reason)"
+ },
+ "study": {
+  "detection_accuracy": "(a) implementation: an independent reference implementation in the research code must reproduce the production detector's events exactly on development bars (any difference is a defect, fixed before results are reported); (b) breakout quality: the share of breakouts that do not FAIL within the watch. Neither is a trading success rate",
+  "rates": "per timeframe, direction, session (Asia / London / New York / other) and level kind: breakouts, displacement, acceptance, retest held, failed before confirmation (false breakout), failed after confirmation",
+  "entries": "E0-E4: fills, eligible trades, TP1 / TP2 / TP3-first and stop-first rates (Wilson 95%), net expectancy in R and USD (day-clustered bootstrap 95%), by timeframe, direction and session",
+  "controls": "R1 (primary): 20 market entries at random closes inside the same watch window, same direction, same stop distance and targets; R2: the same moment, stop distance and targets in the opposite direction",
+  "test": "per variant and timeframe (10 tests): the paired difference of the +$10-first rate vs R1 (day-clustered bootstrap), Holm-adjusted; a CANDIDATE needs Holm p < 0.05 AND mean net R > 0 with its bootstrap lower bound > 0; otherwise NO CANDIDATE",
+  "features": "section 4 of the directive, known at the breakout close or at the order: penetration / ATR, body / range, wick with and against, body / ATR, M15-M30 alignment (a same-direction breakout on the other timeframe within 1 h), retest depth (E2), distance to the opposing level / ATR, room in $, cost / stop, ATR percentile (100 bars), efficiency ratio (20), session, level kind, number of levels crossed. Outcomes: no FAILED within the watch; +$10-first for E1. Walk-forward (6 folds, purged) logistic models: baseline (stop distance, cost, ATR, session) vs each group added; out-of-sample log-loss gain with bootstrap 95%",
+  "not_run": "volume / tick volume (the feed has none); spread and executable-price deviation (no bid / ask: cost model only); broker contract size"
+ },
+ "live_forward_record": "every live breakout, stage, delivery result and shadow entry with its outcome is kept in alerts_state.json -> brk; outcomes evaluated only on bars after each record; descriptive until each variant has 100 decided shadow trades; no verdict, no probability on the phone",
+ "phone_format": "the operator's short templates (BREAKOUT DETECTED / CONFIRMED / FAILED; ENTRY READY and NO TRADE are not sent while ENTRY READY is shadow): direction, level, price, status, action, the bar time; no probability",
+ "switch": "repository variable ALERT_BREAKOUTS: unset = phone, site = website only, 0 = off (no code revert)",
+ "preserved": "the production freeze key, the engine, every existing alert and record, B31b-W3 / W4 / W5 findings",
+ "amendments": [
+  {
+   "id": "A1",
+   "date_utc": "2026-11-19",
+   "when": "Written after the live code (quantum/breakouts.py) and its unit tests, before the regression replay and before any study run. Disclosure: a smoke count of events on the live store's 15m / 30m bars of 17-19 Nov was made while writing the code (event counts and the stages of the 19 Nov 03:00 UTC previous-day-low break); no shadow entry outcome was computed. None of the items below changes a level, a threshold, a stage rule, a stop, a target or a check value.",
+   "changes": {
+    "range_rule": "A range box that holds the bar of an earlier range breakout is not a level: at bar i a range exists only when the last range breakout bar is before i-12. Without it, the 12-bar boxes that follow a range breakout still contain that bar and fire the same move again as new range breakouts (each bar's box is a new level instance, so one-break-per-level does not catch it).",
+    "e2_cancel_clause": "The E2 clause 'cancelled by a close back inside before the fill' cannot occur: a close back inside the level trades through a limit placed AT the level, so the limit fills first. It is not coded; E2 is otherwise unchanged.",
+    "live_races": "Live shadow entries are raced on closed 15m bars for both timeframes (the finest bars the monitor reads for both); a limit fills on the first 15m bar reaching it (at the open when the bar opens through it); a fill bar that also reaches the stop counts as the stop and a target reached on the fill bar is not counted (conservative); a bar touching target and stop = AMBIGUOUS, counted as the stop; a bar opening through the stop = the stop. The development study keeps the registered M5 race (B31b-W3 execute). Live results are therefore coarser than development results and are reported separately, never pooled.",
+    "fresh_data_check": "The registered 'fresh data' check of ENTRY READY: a shadow entry is not ready when its confirmation was not seen fresh (its bar the newest closed bar and the run within 20 minutes of its close); the reason is recorded with the minutes elapsed.",
+    "invalid_stop": "A shadow entry whose stop is not beyond its entry (D <= 0; possible only for E2 after a gap breakout) is recorded NO TRADE with that reason and is not raced.",
+    "room_check_levels": "The room check reads up to 10 nearest unbroken same-side levels beyond the breakout close, as known at the breakout close.",
+    "start": "The live record starts at the first production run carrying the code (alerts_state.json -> brk.since); a breakout that closed before it is never recorded or sent (no backlog).",
+    "retest_message": "RETEST HELD is sent under the CONFIRMED header with 'Status: Retest held' (the directive's stage B names a valid retest as a confirmation).",
+    "time_line": "Every phone message ends with 'Time: HH:MM MT5 / HH:MM <local zone>' (the stage bar's close).",
+    "bundling": "More than 5 breakout messages in one run (a fast market or a data burst) go as one message that carries them all; every event key is in the P-0 delivery log either way.",
+    "delivery": "One message per event id and stage, ever. A stage whose send fails on every channel after the P-0 retry is recorded SEND_FAILED and not re-sent by a later run (it would no longer be fresh). Server acceptance (SENT) is not proof the phone showed it."
+   }
+  }
+ ]
+}
