@@ -69,5 +69,15 @@
   "case_study": "17-18 Nov 2026 (the operator's M15 / M30 screenshots): every Module A / B / C order and its fate, trade by trade, from the recent period; descriptive only",
   "outputs": "research/results/b31b_w4_development_<date>.json (summaries, family table), research/results/b31b_w4_trades_development_<date>.csv (trade by trade: method, direction, decision time, entry, stop, D, cost, lots, outcomes, net R, MFE / MAE, minutes to target; prices kept because they are derived research records, no vendor rows), research/results/b31b_w4_case_study_2026-11-17_18.json, research/B31B_W4_RESULTS.md, research/trials.jsonl lines",
   "unchanged": "production engine, configuration and freeze key; every alert; W3's registration, code, results and verdict; validation and holdout stay sealed",
-  "not_done_by_design": "no parameter tuning, no filter or threshold search, no model, no probability shown as a win rate, nothing wired to alerts or shadow"
+  "not_done_by_design": "no parameter tuning, no filter or threshold search, no model, no probability shown as a win rate, nothing wired to alerts or shadow",
+  "amendment_A1_before_any_run": {
+    "why": "clarifications found while writing quantum/research/w4pull.py, before it was run on any data",
+    "atr": "every ATR-scaled quantity of an episode / event (zone width, approach, EMA tolerance, displacement, stop buffer, retest tolerance) uses ATR14 at the episode's or event's first bar (the BREAK, the SWEEP, the break bar of Module C), as w3liq.orders uses the event bar",
+    "first_completion": "A2, A5 and A6 fire on the first EMA reach / pullback-swing sweep / reclaim that the rest of the pattern completes; B2, B3 and B4 on the first qualifying bar",
+    "A3_start": "the M5 search starts at the first M5 bar of the approach bar that reaches the approach distance",
+    "B3_swings": "minor swings confirmed from bar i - 7 to bar i (the sweep bar) and during the window count",
+    "C_cancel": "Module C's retest is cancelled by an M15 close back across the level before the retest (as w3liq B-RETEST's cancel_back); Module C has no episode de-duplication: one position at a time per method still applies",
+    "C_levels": "candidate levels in order: the previous day's extreme, then the last confirmed H1 swing, then the last confirmed M30 swing (each known at the bar before the break); the first that the bar breaks and the next bar accepts is the level",
+    "csv": "the development trade-by-trade CSV carries no absolute prices (times, direction, D, cost, lots, outcomes, net R, MFE / MAE, minutes), as W3's CSVs; the 17-18 Nov case-study JSON keeps prices, as W3's did"
+  }
 }
