@@ -1,0 +1,45 @@
+{
+ "id": "B31b-W8",
+ "title": "Quality-selected M15 / M30 breakout entries (E0 / E1) at the operator's measured execution cost: +$10 / +$15 / +$20 before the structural stop, $650 planned loss including costs",
+ "status": "Written and committed before any W8 code and before any W8 run. Operator approval 2026-11-19 of Phase 1 (measure the broker's real costs) and Phase 2 (this study, development data only).",
+ "approval": "Operator, 2026-11-19: \"phase 1 & 2 is approved\" (the plan: Phase 1 = measured broker costs; Phase 2 = a registered development study; Phase 3 validation only with a separate explicit approval).",
+ "created_utc": "2026-11-19",
+ "honesty": {
+  "selection_disclosure": "These hypotheses were chosen AFTER seeing the B31b-W7 development results: E0:M15 had the smallest gap to break-even (+$10-first 51.3% vs 52.7% needed at the modelled cost), and the breakout candle was the only feature group that predicted out of sample whether a breakout holds (AUC 0.626 -> 0.668). The development data therefore cannot confirm W8 independently; it can only reject it. Only the sealed validation partition (opened once, with the operator's approval) can confirm it.",
+  "accuracy": "No accuracy target is promised or reported as achievable: a rule that reaches +$10 before the stop on every trade does not exist in this data, and gaps can make a loss larger than the $650 planned. Results are reported as measured rates with 95% intervals."
+ },
+ "partitions": {
+  "selection": "development only (harness.DEV 2020-01-24 .. 2023-01-24)",
+  "validation": "2023-01-24 .. 2024-07-01: opened ONCE, only for a development CANDIDATE, only after the operator's explicit approval, with the rule frozen by a committed freeze record (code sha256) before it is opened",
+  "holdout": "2024-07-01 .. 2026-01-01: not opened in this registration"
+ },
+ "events": "the production breakout detector quantum/breakouts.py (B31b-W7, live since PR #133), M15 and M30 each on their own, on the same development bars and frames as B31b-W7 (quantum.research.w7breakout.events)",
+ "entries": {
+  "E0": "market at the breakout close (bar i); stop = the opposite extreme of bar i - 0.2 x ATR[i-1] (B31b-W7 E0, unchanged)",
+  "E1": "market at the confirmation close (bar k); stop = the opposite extreme of bars i .. k - 0.2 x ATR[i-1] (B31b-W7 E1, unchanged); only confirmed breakouts",
+  "targets": "+$10 / +$15 / +$20 from the fill ($ at $4,000, scaled by price / 4,000 as in W3-W7), each raced on its own against the stop on 15m bars refined on M5, 24 h time stop (B31b-W3 execution, unchanged)",
+  "sizing": "$650 at the stop including the round-trip cost; lots floored to 0.01; the contract size of the operator's broker when measured (else 100 oz, labelled ASSUMED)",
+  "entry_ready_checks": "B31b-W7, unchanged: lot >= 0.01, cost <= 15% of the stop distance, entry at most 1.0 x ATR beyond the level, no unbroken same-side level within $10 ahead",
+  "no_tuning": "no stop, target, buffer, check or threshold is changed or searched; there is no parameter grid"
+ },
+ "quality_selection": {
+  "score": "the probability that the breakout does NOT close back inside its level within the 16-bar watch (B31b-W7 outcome A), from a logistic model on the registered W7 baseline (stop distance at the breakout close, cost, ATR, session) plus the W7 candle group (penetration / ATR, body / range, wick with, wick against, body / ATR), all known at the breakout close",
+  "fitting": "walk-forward on development, 6 folds by time, purged (a training event's watch must end before the fold starts); every scored event gets its out-of-fold score; fold 1 events have no score and are not traded",
+  "selected": "an event is selected when its out-of-fold score is at or above the 80th percentile of the scores of that fold's TRAINING events (the top quintile; computed from training rows only, never from the fold being scored)",
+  "frozen_for_validation": "one model fitted on all development events and the 80th percentile of its in-sample development scores; written to the freeze record with the code hash"
+ },
+ "cost": {
+  "decision_cost": "the operator's measured round-trip execution cost per oz, fixed by a committed cost amendment BEFORE the development run: priority (1) the broker's spread measured through MetaApi (median per session over at least 5 complete trading days) plus the account's commission per lot / contract size; (2) the contract size, commission and per-session spread reported by the operator from the MT5 terminal (specification and statement). The amendment records the figures and their source.",
+  "fallback": "if neither is available by 2026-12-03 (UTC), the B31b-W3 cost model, labelled as such",
+  "sensitivity": "always reported, never decisive: the B31b-W3 cost model, and the decision cost x 1.5 and x 2"
+ },
+ "tests": {
+  "candidates": "4: {E0, E1} x {M15, M30}, quality-selected trades only, ENTRY READY, one position at a time per candidate",
+  "controls": "R1 (primary): for each trade, 20 market entries at random 15m closes from the breakout close to the end of its watch, same direction, stop distance and targets, the same cost; R2: the same moment, stop distance and targets in the opposite direction; R3: the same entry on the NON-selected breakouts (does the quality selection add anything)",
+  "decision": "per candidate: the paired difference of the +$10-first rate vs R1 (day-clustered bootstrap, one-sided), Holm-adjusted over the 4. A development CANDIDATE needs ALL of: Holm p < 0.05; mean net R (+$10 race, after the decision cost) > 0 with its day-clustered bootstrap 95% lower bound > 0; at least 100 decided trades; and the selected trades' +$10-first rate above the non-selected trades' (R3) by a one-sided bootstrap p < 0.05",
+  "validation_pass": "(only if opened) the frozen candidate, once: mean net R > 0 with its day-clustered bootstrap 95% lower bound > 0, the +$10-first rate above its break-even rate (D + cost) / (T + D), and at least 50 decided trades. Anything else is FAIL, with no re-tuning"
+ },
+ "reported": "per candidate and target: fills, ENTRY READY trades, +$10 / +$15 / +$20-first and stop-first rates (Wilson 95%), break-even rates, net R and USD per trade (day-clustered bootstrap 95%), realised losses beyond $650 (gaps), by direction and session; the quality model's out-of-fold AUC, log-loss and reliability table (calibration), labelled NOT a validated probability",
+ "after": "a validated candidate goes to a forward SHADOW record (never sent) until 100 decided trades; ENTRY READY on the phone only after that, the holdout and the operator's explicit approval",
+ "preserved": "the production engine, configuration, freeze key, every live alert and record; B31b-W3 .. W7 registrations and results"
+}
