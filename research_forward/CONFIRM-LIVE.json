@@ -8094,6 +8094,33 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "SWEEP|15m|1793142000|1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1793142000,
+   "t_close": 1793142900,
+   "dir": 1,
+   "p0": 4062.39,
+   "what": "sweep at TDL 4061.89",
+   "id": 227,
+   "seen": 1795070283,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 4077.39,
+   "invalid_at": 4049.39,
+   "cap_at": 4082.39,
+   "confirm20_at": 4082.39,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1793152800,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
