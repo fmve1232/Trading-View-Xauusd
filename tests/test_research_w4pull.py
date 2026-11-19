@@ -229,3 +229,30 @@ def test_registration_precedes_the_code_and_names_the_family():
     for m in X.METHODS:
         assert f"{m}_" in defined, m
     assert "NO CANDIDATE" in r["statistics"]["candidate"]
+
+
+def test_reconstruction_zones_are_point_in_time():
+    """w4recon.zones_at sees only bars closed by its time: appending later bars changes nothing, no zone is known later."""
+    from quantum.research import w4recon as R
+    m15, _ = walk(n5=4800, seed=3)
+    raw = {"15m": m15, "30m": agg(m15, "30min"), "1h": agg(m15, "1h"), "4h": agg(m15, "4h")}
+    now = int(m15.index[900].timestamp()) + 60
+    cut = {k: v[v.index < pd.Timestamp(now - 60, unit="s", tz="UTC")] for k, v in raw.items()}
+    _, _, full = R.zones_at(raw, now)
+    _, _, past = R.zones_at(cut, now)
+    assert full == past and full
+    assert all(z["t_known"] <= now for z in full)
+
+
+def test_the_break_uses_only_swings_confirmed_before_its_bar():
+    """A wick to 3988 two bars before the break becomes a swing low only one bar AFTER the break (pivot 3 / 3): the break
+    of the older 3995 swing at bar 161 must stand, judged with what was known then."""
+    rows = [FLAT] * 150 + [(4000.0, 4000.5, 3995.0, 3999.0)] + [FLAT] * 8
+    rows += [(4000.0, 4000.3, 3988.0, 3996.0)]                      # 159: wick to 3988, close back above 3995
+    rows += [(3996.0, 3996.5, 3994.0, 3996.0)]                      # 160
+    rows += [(3996.0, 3996.2, 3990.0, 3991.0)]                      # 161: closes below 3995 (the known swing)
+    rows += [(3991.0, 3992.0, 3989.0, 3990.0)]                      # 162: 159 becomes a pivot low only now
+    rows += [(3990.0, 3990.5, 3989.5, 3990.0)] * 60
+    P, F, _, _ = frames_of(frame_of(rows))
+    eps = [e for e in X.a_episodes(F, np.full(len(F.c), -1), int(F.t[0])) if e["i"] == 161]
+    assert len(eps) == 1 and eps[0]["L"] == 3995.0
