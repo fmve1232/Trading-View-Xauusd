@@ -1,0 +1,6727 @@
+{
+ "methods": {
+  "A1": {
+   "name": "zone rejection close",
+   "n": 226,
+   "tp10": {
+    "tp_first": {
+     "k": 118,
+     "n": 226,
+     "rate": 0.522124,
+     "wilson95": [
+      0.457176,
+      0.586332
+     ]
+    },
+    "sl_first": {
+     "k": 108,
+     "n": 226,
+     "rate": 0.477876,
+     "wilson95": [
+      0.413668,
+      0.542824
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 1,
+    "mean_net_r": -0.05269,
+    "mean_net_r_boot95": [
+     -0.176661,
+     0.062876
+    ],
+    "usd_per_trade": -34.248669,
+    "profit_factor": 0.890118,
+    "max_drawdown_usd": 14148.821329,
+    "geometric_baseline": 0.498541,
+    "break_even": 0.538862,
+    "median_min_to_tp": 50.0,
+    "random": {
+     "tp_first": {
+      "k": 2228,
+      "n": 4520,
+      "rate": 0.49292,
+      "wilson95": [
+       0.478358,
+       0.507495
+      ]
+     },
+     "mean_net_r": -0.085981,
+     "z": 0.856945,
+     "p_one_sided": 0.195738
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 97,
+     "n": 226,
+     "rate": 0.429204,
+     "wilson95": [
+      0.366387,
+      0.494387
+     ]
+    },
+    "sl_first": {
+     "k": 127,
+     "n": 226,
+     "rate": 0.561947,
+     "wilson95": [
+      0.496761,
+      0.625062
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 2,
+    "m5_resolved": 1,
+    "mean_net_r": -0.020173,
+    "mean_net_r_boot95": [
+     -0.175934,
+     0.133756
+    ],
+    "usd_per_trade": -13.112602,
+    "profit_factor": 0.964206,
+    "max_drawdown_usd": 10998.418593,
+    "geometric_baseline": 0.403542,
+    "break_even": 0.435528,
+    "median_min_to_tp": 80.0,
+    "random": {
+     "tp_first": {
+      "k": 1770,
+      "n": 4520,
+      "rate": 0.391593,
+      "wilson95": [
+       0.377461,
+       0.405909
+      ]
+     },
+     "mean_net_r": -0.092332,
+     "z": 1.129548,
+     "p_one_sided": 0.129333
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 82,
+     "n": 226,
+     "rate": 0.362832,
+     "wilson95": [
+      0.302922,
+      0.427327
+     ]
+    },
+    "sl_first": {
+     "k": 141,
+     "n": 226,
+     "rate": 0.623894,
+     "wilson95": [
+      0.559164,
+      0.684482
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 3,
+    "m5_resolved": 0,
+    "mean_net_r": -0.01771,
+    "mean_net_r_boot95": [
+     -0.198943,
+     0.158998
+    ],
+    "usd_per_trade": -11.511604,
+    "profit_factor": 0.971688,
+    "max_drawdown_usd": 14152.22496,
+    "geometric_baseline": 0.339907,
+    "break_even": 0.366462,
+    "median_min_to_tp": 132.5,
+    "random": {
+     "tp_first": {
+      "k": 1428,
+      "n": 4520,
+      "rate": 0.315929,
+      "wilson95": [
+       0.302538,
+       0.329633
+      ]
+     },
+     "mean_net_r": -0.108895,
+     "z": 1.477379,
+     "p_one_sided": 0.069787
+    }
+   },
+   "median_D": 9.028774,
+   "mean_cost": 0.805398,
+   "median_lots": 0.65,
+   "mfe_median": 24.421802,
+   "mae_median": 24.206751,
+   "realised_loss_usd": {
+    "n": 108,
+    "max": 888.141993,
+    "over_650": 1,
+    "mean": 647.293337
+   },
+   "weeks": 149.284226,
+   "per_direction": {
+    "1": {
+     "n": 132,
+     "tp10": {
+      "tp_first": {
+       "k": 62,
+       "n": 132,
+       "rate": 0.469697,
+       "wilson95": [
+        0.386622,
+        0.554486
+       ]
+      },
+      "sl_first": {
+       "k": 70,
+       "n": 132,
+       "rate": 0.530303,
+       "wilson95": [
+        0.445514,
+        0.613378
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.14213,
+      "mean_net_r_boot95": [
+       -0.303354,
+       0.026297
+      ],
+      "usd_per_trade": -92.38452,
+      "profit_factor": 0.733397,
+      "max_drawdown_usd": 13694.282705,
+      "geometric_baseline": 0.497436,
+      "break_even": 0.538081,
+      "median_min_to_tp": 57.5
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 49,
+       "n": 132,
+       "rate": 0.371212,
+       "wilson95": [
+        0.293528,
+        0.45618
+       ]
+      },
+      "sl_first": {
+       "k": 81,
+       "n": 132,
+       "rate": 0.613636,
+       "wilson95": [
+        0.528478,
+        0.692367
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 2,
+      "m5_resolved": 0,
+      "mean_net_r": -0.133826,
+      "mean_net_r_boot95": [
+       -0.324303,
+       0.078039
+      ],
+      "usd_per_trade": -86.986758,
+      "profit_factor": 0.782908,
+      "max_drawdown_usd": 14170.255841,
+      "geometric_baseline": 0.402207,
+      "break_even": 0.434445,
+      "median_min_to_tp": 155.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 43,
+       "n": 132,
+       "rate": 0.325758,
+       "wilson95": [
+        0.25172,
+        0.40965
+       ]
+      },
+      "sl_first": {
+       "k": 86,
+       "n": 132,
+       "rate": 0.651515,
+       "wilson95": [
+        0.566988,
+        0.727473
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 3,
+      "m5_resolved": 0,
+      "mean_net_r": -0.094785,
+      "mean_net_r_boot95": [
+       -0.316012,
+       0.150496
+      ],
+      "usd_per_trade": -61.610004,
+      "profit_factor": 0.855142,
+      "max_drawdown_usd": 14273.566635,
+      "geometric_baseline": 0.338522,
+      "break_even": 0.365279,
+      "median_min_to_tp": 245.0
+     },
+     "median_D": 8.887486,
+     "mean_cost": 0.809394,
+     "median_lots": 0.66,
+     "mfe_median": 25.80707,
+     "mae_median": 22.814754,
+     "realised_loss_usd": {
+      "n": 70,
+      "max": 888.141993,
+      "over_650": 1,
+      "mean": 648.033552
+     },
+     "weeks": 147.3125
+    },
+    "-1": {
+     "n": 94,
+     "tp10": {
+      "tp_first": {
+       "k": 56,
+       "n": 94,
+       "rate": 0.595745,
+       "wilson95": [
+        0.494673,
+        0.689298
+       ]
+      },
+      "sl_first": {
+       "k": 38,
+       "n": 94,
+       "rate": 0.404255,
+       "wilson95": [
+        0.310702,
+        0.505327
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": 0.072906,
+      "mean_net_r_boot95": [
+       -0.117489,
+       0.259572
+      ],
+      "usd_per_trade": 47.388909,
+      "profit_factor": 1.180346,
+      "max_drawdown_usd": 5845.623036,
+      "geometric_baseline": 0.500094,
+      "break_even": 0.539959,
+      "median_min_to_tp": 35.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 48,
+       "n": 94,
+       "rate": 0.510638,
+       "wilson95": [
+        0.411169,
+        0.609272
+       ]
+      },
+      "sl_first": {
+       "k": 46,
+       "n": 94,
+       "rate": 0.489362,
+       "wilson95": [
+        0.390728,
+        0.588831
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": 0.139424,
+      "mean_net_r_boot95": [
+       -0.101421,
+       0.380346
+      ],
+      "usd_per_trade": 90.625574,
+      "profit_factor": 1.28491,
+      "max_drawdown_usd": 4550.0,
+      "geometric_baseline": 0.405416,
+      "break_even": 0.437049,
+      "median_min_to_tp": 65.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 39,
+       "n": 94,
+       "rate": 0.414894,
+       "wilson95": [
+        0.32055,
+        0.51592
+       ]
+      },
+      "sl_first": {
+       "k": 55,
+       "n": 94,
+       "rate": 0.585106,
+       "wilson95": [
+        0.48408,
+        0.67945
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.090522,
+      "mean_net_r_boot95": [
+       -0.196073,
+       0.376102
+      ],
+      "usd_per_trade": 58.83934,
+      "profit_factor": 1.15471,
+      "max_drawdown_usd": 6966.624539,
+      "geometric_baseline": 0.341851,
+      "break_even": 0.368124,
+      "median_min_to_tp": 80.0
+     },
+     "median_D": 9.617992,
+     "mean_cost": 0.799787,
+     "median_lots": 0.62,
+     "mfe_median": 23.770026,
+     "mae_median": 28.399685,
+     "realised_loss_usd": {
+      "n": 38,
+      "max": 649.527141,
+      "over_650": 0,
+      "mean": 645.929783
+     },
+     "weeks": 144.302083
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 31,
+     "tp10_first": 19
+    },
+    "LDN_CONT": {
+     "n": 101,
+     "tp10_first": 55
+    },
+    "LDN_OPEN": {
+     "n": 28,
+     "tp10_first": 15
+    },
+    "NY_CONT": {
+     "n": 28,
+     "tp10_first": 8
+    },
+    "NY_OPEN": {
+     "n": 27,
+     "tp10_first": 14
+    },
+    "OFF": {
+     "n": 9,
+     "tp10_first": 5
+    },
+    "OVERLAP": {
+     "n": 2,
+     "tp10_first": 2
+    }
+   }
+  },
+  "A2": {
+   "name": "EMA band + displacement",
+   "n": 251,
+   "tp10": {
+    "tp_first": {
+     "k": 145,
+     "n": 251,
+     "rate": 0.577689,
+     "wilson95": [
+      0.515864,
+      0.637172
+     ]
+    },
+    "sl_first": {
+     "k": 104,
+     "n": 251,
+     "rate": 0.414343,
+     "wilson95": [
+      0.35514,
+      0.476128
+     ]
+    },
+    "ambiguous": 2,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.026628,
+    "mean_net_r_boot95": [
+     -0.126082,
+     0.075664
+    ],
+    "usd_per_trade": -17.308043,
+    "profit_factor": 0.937178,
+    "max_drawdown_usd": 10872.446274,
+    "geometric_baseline": 0.560917,
+    "break_even": 0.596438,
+    "median_min_to_tp": 80.0,
+    "random": {
+     "tp_first": {
+      "k": 2730,
+      "n": 5020,
+      "rate": 0.543825,
+      "wilson95": [
+       0.530018,
+       0.557564
+      ]
+     },
+     "mean_net_r": -0.091912,
+     "z": 1.051521,
+     "p_one_sided": 0.14651
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 122,
+     "n": 251,
+     "rate": 0.486056,
+     "wilson95": [
+      0.424902,
+      0.54763
+     ]
+    },
+    "sl_first": {
+     "k": 126,
+     "n": 251,
+     "rate": 0.501992,
+     "wilson95": [
+      0.440575,
+      0.563349
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 2,
+    "m5_resolved": 0,
+    "mean_net_r": -0.009208,
+    "mean_net_r_boot95": [
+     -0.145925,
+     0.123531
+    ],
+    "usd_per_trade": -5.984876,
+    "profit_factor": 0.981906,
+    "max_drawdown_usd": 12698.735614,
+    "geometric_baseline": 0.465179,
+    "break_even": 0.494024,
+    "median_min_to_tp": 110.0,
+    "random": {
+     "tp_first": {
+      "k": 2257,
+      "n": 5020,
+      "rate": 0.449602,
+      "wilson95": [
+       0.435884,
+       0.463396
+      ]
+     },
+     "mean_net_r": -0.082225,
+     "z": 1.132625,
+     "p_one_sided": 0.128686
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 105,
+     "n": 251,
+     "rate": 0.418327,
+     "wilson95": [
+      0.358982,
+      0.480134
+     ]
+    },
+    "sl_first": {
+     "k": 141,
+     "n": 251,
+     "rate": 0.561753,
+     "wilson95": [
+      0.499897,
+      0.621747
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 5,
+    "m5_resolved": 1,
+    "mean_net_r": 0.013188,
+    "mean_net_r_boot95": [
+     -0.146002,
+     0.166552
+    ],
+    "usd_per_trade": 8.57193,
+    "profit_factor": 1.023355,
+    "max_drawdown_usd": 12267.687977,
+    "geometric_baseline": 0.398473,
+    "break_even": 0.422805,
+    "median_min_to_tp": 200.0,
+    "random": {
+     "tp_first": {
+      "k": 1890,
+      "n": 5020,
+      "rate": 0.376494,
+      "wilson95": [
+       0.36319,
+       0.389986
+      ]
+     },
+     "mean_net_r": -0.086402,
+     "z": 1.333544,
+     "p_one_sided": 0.091177
+    }
+   },
+   "median_D": 11.740276,
+   "mean_cost": 0.809044,
+   "median_lots": 0.51,
+   "mfe_median": 24.173773,
+   "mae_median": 23.636965,
+   "realised_loss_usd": {
+    "n": 106,
+    "max": 825.136425,
+    "over_650": 2,
+    "mean": 646.482663
+   },
+   "weeks": 149.389881,
+   "per_direction": {
+    "1": {
+     "n": 150,
+     "tp10": {
+      "tp_first": {
+       "k": 88,
+       "n": 150,
+       "rate": 0.586667,
+       "wilson95": [
+        0.506659,
+        0.662347
+       ]
+      },
+      "sl_first": {
+       "k": 61,
+       "n": 150,
+       "rate": 0.406667,
+       "wilson95": [
+        0.331341,
+        0.486653
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.020268,
+      "mean_net_r_boot95": [
+       -0.12777,
+       0.159226
+      ],
+      "usd_per_trade": 13.17391,
+      "profit_factor": 1.048951,
+      "max_drawdown_usd": 8185.870295,
+      "geometric_baseline": 0.544699,
+      "break_even": 0.581403,
+      "median_min_to_tp": 117.5
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 75,
+       "n": 150,
+       "rate": 0.5,
+       "wilson95": [
+        0.42099,
+        0.57901
+       ]
+      },
+      "sl_first": {
+       "k": 74,
+       "n": 150,
+       "rate": 0.493333,
+       "wilson95": [
+        0.414497,
+        0.572503
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": 0.060821,
+      "mean_net_r_boot95": [
+       -0.135514,
+       0.255875
+      ],
+      "usd_per_trade": 39.533628,
+      "profit_factor": 1.122974,
+      "max_drawdown_usd": 9413.616581,
+      "geometric_baseline": 0.448801,
+      "break_even": 0.478433,
+      "median_min_to_tp": 170.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 64,
+       "n": 150,
+       "rate": 0.426667,
+       "wilson95": [
+        0.350321,
+        0.506675
+       ]
+      },
+      "sl_first": {
+       "k": 82,
+       "n": 150,
+       "rate": 0.546667,
+       "wilson95": [
+        0.466828,
+        0.624175
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 4,
+      "m5_resolved": 0,
+      "mean_net_r": 0.092534,
+      "mean_net_r_boot95": [
+       -0.133504,
+       0.319544
+      ],
+      "usd_per_trade": 60.146973,
+      "profit_factor": 1.168882,
+      "max_drawdown_usd": 10182.267948,
+      "geometric_baseline": 0.382708,
+      "break_even": 0.407602,
+      "median_min_to_tp": 200.0
+     },
+     "median_D": 11.227858,
+     "mean_cost": 0.807333,
+     "median_lots": 0.53,
+     "mfe_median": 23.931867,
+     "mae_median": 23.303405,
+     "realised_loss_usd": {
+      "n": 62,
+      "max": 713.595698,
+      "over_650": 1,
+      "mean": 645.434123
+     },
+     "weeks": 147.416667
+    },
+    "-1": {
+     "n": 101,
+     "tp10": {
+      "tp_first": {
+       "k": 57,
+       "n": 101,
+       "rate": 0.564356,
+       "wilson95": [
+        0.467056,
+        0.65694
+       ]
+      },
+      "sl_first": {
+       "k": 43,
+       "n": 101,
+       "rate": 0.425743,
+       "wilson95": [
+        0.333777,
+        0.52315
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.096274,
+      "mean_net_r_boot95": [
+       -0.253091,
+       0.060324
+      ],
+      "usd_per_trade": -62.57827,
+      "profit_factor": 0.780424,
+      "max_drawdown_usd": 6861.561566,
+      "geometric_baseline": 0.585004,
+      "break_even": 0.618768,
+      "median_min_to_tp": 35.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 47,
+       "n": 101,
+       "rate": 0.465347,
+       "wilson95": [
+        0.371129,
+        0.562103
+       ]
+      },
+      "sl_first": {
+       "k": 52,
+       "n": 101,
+       "rate": 0.514851,
+       "wilson95": [
+        0.418639,
+        0.609975
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.11321,
+      "mean_net_r_boot95": [
+       -0.300814,
+       0.081539
+      ],
+      "usd_per_trade": -73.586613,
+      "profit_factor": 0.786434,
+      "max_drawdown_usd": 8452.768733,
+      "geometric_baseline": 0.489504,
+      "break_even": 0.517179,
+      "median_min_to_tp": 95.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 41,
+       "n": 101,
+       "rate": 0.405941,
+       "wilson95": [
+        0.315324,
+        0.50345
+       ]
+      },
+      "sl_first": {
+       "k": 59,
+       "n": 101,
+       "rate": 0.584158,
+       "wilson95": [
+        0.486681,
+        0.675468
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 1,
+      "mean_net_r": -0.104653,
+      "mean_net_r_boot95": [
+       -0.317503,
+       0.12808
+      ],
+      "usd_per_trade": -68.024669,
+      "profit_factor": 0.822471,
+      "max_drawdown_usd": 10758.829227,
+      "geometric_baseline": 0.421886,
+      "break_even": 0.445383,
+      "median_min_to_tp": 245.0
+     },
+     "median_D": 13.075163,
+     "mean_cost": 0.811584,
+     "median_lots": 0.46,
+     "mfe_median": 24.342951,
+     "mae_median": 25.891101,
+     "realised_loss_usd": {
+      "n": 44,
+      "max": 825.136425,
+      "over_650": 1,
+      "mean": 647.960152
+     },
+     "weeks": 142.971726
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 40,
+     "tp10_first": 22
+    },
+    "LDN_CONT": {
+     "n": 104,
+     "tp10_first": 63
+    },
+    "LDN_OPEN": {
+     "n": 54,
+     "tp10_first": 28
+    },
+    "NY_CONT": {
+     "n": 7,
+     "tp10_first": 6
+    },
+    "NY_OPEN": {
+     "n": 36,
+     "tp10_first": 20
+    },
+    "OFF": {
+     "n": 9,
+     "tp10_first": 5
+    },
+    "OVERLAP": {
+     "n": 1,
+     "tp10_first": 1
+    }
+   }
+  },
+  "A3": {
+   "name": "M5 MSS after the approach",
+   "n": 172,
+   "tp10": {
+    "tp_first": {
+     "k": 85,
+     "n": 172,
+     "rate": 0.494186,
+     "wilson95": [
+      0.420416,
+      0.56821
+     ]
+    },
+    "sl_first": {
+     "k": 86,
+     "n": 172,
+     "rate": 0.5,
+     "wilson95": [
+      0.426098,
+      0.573902
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 1,
+    "m5_resolved": 0,
+    "mean_net_r": -0.121726,
+    "mean_net_r_boot95": [
+     -0.256611,
+     0.009613
+    ],
+    "usd_per_trade": -79.121877,
+    "profit_factor": 0.757823,
+    "max_drawdown_usd": 16192.535413,
+    "geometric_baseline": 0.527552,
+    "break_even": 0.567296,
+    "median_min_to_tp": 85.0,
+    "random": {
+     "tp_first": {
+      "k": 1847,
+      "n": 3440,
+      "rate": 0.536919,
+      "wilson95": [
+       0.520224,
+       0.553531
+      ]
+     },
+     "mean_net_r": -0.054497,
+     "z": -1.096524,
+     "p_one_sided": 0.863575
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 70,
+     "n": 172,
+     "rate": 0.406977,
+     "wilson95": [
+      0.336369,
+      0.481649
+     ]
+    },
+    "sl_first": {
+     "k": 98,
+     "n": 172,
+     "rate": 0.569767,
+     "wilson95": [
+      0.495048,
+      0.641438
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 4,
+    "m5_resolved": 0,
+    "mean_net_r": -0.092048,
+    "mean_net_r_boot95": [
+     -0.253987,
+     0.066373
+    ],
+    "usd_per_trade": -59.831488,
+    "profit_factor": 0.839892,
+    "max_drawdown_usd": 17784.867515,
+    "geometric_baseline": 0.43208,
+    "break_even": 0.463907,
+    "median_min_to_tp": 135.0,
+    "random": {
+     "tp_first": {
+      "k": 1508,
+      "n": 3440,
+      "rate": 0.438372,
+      "wilson95": [
+       0.421869,
+       0.455013
+      ]
+     },
+     "mean_net_r": -0.053021,
+     "z": -0.810128,
+     "p_one_sided": 0.791067
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 58,
+     "n": 172,
+     "rate": 0.337209,
+     "wilson95": [
+      0.2708,
+      0.410732
+     ]
+    },
+    "sl_first": {
+     "k": 109,
+     "n": 172,
+     "rate": 0.633721,
+     "wilson95": [
+      0.559529,
+      0.70207
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 5,
+    "m5_resolved": 0,
+    "mean_net_r": -0.11829,
+    "mean_net_r_boot95": [
+     -0.295247,
+     0.06287
+    ],
+    "usd_per_trade": -76.888227,
+    "profit_factor": 0.814845,
+    "max_drawdown_usd": 23558.311003,
+    "geometric_baseline": 0.367046,
+    "break_even": 0.393634,
+    "median_min_to_tp": 177.5,
+    "random": {
+     "tp_first": {
+      "k": 1276,
+      "n": 3440,
+      "rate": 0.37093,
+      "wilson95": [
+       0.35494,
+       0.387208
+      ]
+     },
+     "mean_net_r": -0.043,
+     "z": -0.894256,
+     "p_one_sided": 0.814408
+    }
+   },
+   "median_D": 9.724929,
+   "mean_cost": 0.836279,
+   "median_lots": 0.605,
+   "mfe_median": 26.748425,
+   "mae_median": 22.556711,
+   "realised_loss_usd": {
+    "n": 86,
+    "max": 819.215617,
+    "over_650": 1,
+    "mean": 646.278719
+   },
+   "weeks": 148.945933,
+   "per_direction": {
+    "1": {
+     "n": 98,
+     "tp10": {
+      "tp_first": {
+       "k": 49,
+       "n": 98,
+       "rate": 0.5,
+       "wilson95": [
+        0.402892,
+        0.597108
+       ]
+      },
+      "sl_first": {
+       "k": 48,
+       "n": 98,
+       "rate": 0.489796,
+       "wilson95": [
+        0.393092,
+        0.58727
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.088786,
+      "mean_net_r_boot95": [
+       -0.268201,
+       0.088791
+      ],
+      "usd_per_trade": -57.711058,
+      "profit_factor": 0.820421,
+      "max_drawdown_usd": 10239.096632,
+      "geometric_baseline": 0.516195,
+      "break_even": 0.556504,
+      "median_min_to_tp": 110.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 40,
+       "n": 98,
+       "rate": 0.408163,
+       "wilson95": [
+        0.316108,
+        0.507146
+       ]
+      },
+      "sl_first": {
+       "k": 54,
+       "n": 98,
+       "rate": 0.55102,
+       "wilson95": [
+        0.452475,
+        0.645716
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 4,
+      "m5_resolved": 0,
+      "mean_net_r": -0.043152,
+      "mean_net_r_boot95": [
+       -0.262577,
+       0.184684
+      ],
+      "usd_per_trade": -28.048991,
+      "profit_factor": 0.92295,
+      "max_drawdown_usd": 9631.939152,
+      "geometric_baseline": 0.420543,
+      "break_even": 0.452722,
+      "median_min_to_tp": 170.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 32,
+       "n": 98,
+       "rate": 0.326531,
+       "wilson95": [
+        0.241763,
+        0.424385
+       ]
+      },
+      "sl_first": {
+       "k": 61,
+       "n": 98,
+       "rate": 0.622449,
+       "wilson95": [
+        0.523566,
+        0.712095
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 5,
+      "m5_resolved": 0,
+      "mean_net_r": -0.104001,
+      "mean_net_r_boot95": [
+       -0.345687,
+       0.145786
+      ],
+      "usd_per_trade": -67.600719,
+      "profit_factor": 0.835306,
+      "max_drawdown_usd": 15949.952646,
+      "geometric_baseline": 0.355831,
+      "break_even": 0.382655,
+      "median_min_to_tp": 200.0
+     },
+     "median_D": 9.137655,
+     "mean_cost": 0.831224,
+     "median_lots": 0.645,
+     "mfe_median": 23.881503,
+     "mae_median": 20.429327,
+     "realised_loss_usd": {
+      "n": 48,
+      "max": 819.215617,
+      "over_650": 1,
+      "mean": 648.306564
+     },
+     "weeks": 147.87004
+    },
+    "-1": {
+     "n": 74,
+     "tp10": {
+      "tp_first": {
+       "k": 36,
+       "n": 74,
+       "rate": 0.486486,
+       "wilson95": [
+        0.376118,
+        0.598189
+       ]
+      },
+      "sl_first": {
+       "k": 38,
+       "n": 74,
+       "rate": 0.513514,
+       "wilson95": [
+        0.401811,
+        0.623882
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.165349,
+      "mean_net_r_boot95": [
+       -0.360758,
+       0.04326
+      ],
+      "usd_per_trade": -107.476746,
+      "profit_factor": 0.678005,
+      "max_drawdown_usd": 10562.278518,
+      "geometric_baseline": 0.542591,
+      "break_even": 0.581589,
+      "median_min_to_tp": 60.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 30,
+       "n": 74,
+       "rate": 0.405405,
+       "wilson95": [
+        0.300906,
+        0.519242
+       ]
+      },
+      "sl_first": {
+       "k": 44,
+       "n": 74,
+       "rate": 0.594595,
+       "wilson95": [
+        0.480758,
+        0.699094
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.156803,
+      "mean_net_r_boot95": [
+       -0.386459,
+       0.088755
+      ],
+      "usd_per_trade": -101.921822,
+      "profit_factor": 0.736286,
+      "max_drawdown_usd": 10713.12699,
+      "geometric_baseline": 0.447359,
+      "break_even": 0.478719,
+      "median_min_to_tp": 105.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 26,
+       "n": 74,
+       "rate": 0.351351,
+       "wilson95": [
+        0.252382,
+        0.464992
+       ]
+      },
+      "sl_first": {
+       "k": 48,
+       "n": 74,
+       "rate": 0.648649,
+       "wilson95": [
+        0.535008,
+        0.747618
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.137212,
+      "mean_net_r_boot95": [
+       -0.40524,
+       0.150207
+      ],
+      "usd_per_trade": -89.187899,
+      "profit_factor": 0.788465,
+      "max_drawdown_usd": 10911.304951,
+      "geometric_baseline": 0.381898,
+      "break_even": 0.408173,
+      "median_min_to_tp": 165.0
+     },
+     "median_D": 10.854782,
+     "mean_cost": 0.842973,
+     "median_lots": 0.55,
+     "mfe_median": 27.877452,
+     "mae_median": 24.608757,
+     "realised_loss_usd": {
+      "n": 38,
+      "max": 649.146159,
+      "over_650": 0,
+      "mean": 643.717231
+     },
+     "weeks": 142.119048
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 47,
+     "tp10_first": 24
+    },
+    "LDN_CONT": {
+     "n": 52,
+     "tp10_first": 27
+    },
+    "LDN_OPEN": {
+     "n": 20,
+     "tp10_first": 11
+    },
+    "NY_CONT": {
+     "n": 26,
+     "tp10_first": 10
+    },
+    "NY_OPEN": {
+     "n": 15,
+     "tp10_first": 8
+    },
+    "OFF": {
+     "n": 10,
+     "tp10_first": 4
+    },
+    "OVERLAP": {
+     "n": 2,
+     "tp10_first": 1
+    }
+   }
+  },
+  "A4": {
+   "name": "retest limit at the broken level",
+   "n": 46,
+   "tp10": {
+    "tp_first": {
+     "k": 18,
+     "n": 46,
+     "rate": 0.391304,
+     "wilson95": [
+      0.263932,
+      0.535432
+     ]
+    },
+    "sl_first": {
+     "k": 28,
+     "n": 46,
+     "rate": 0.608696,
+     "wilson95": [
+      0.464568,
+      0.736068
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 1,
+    "mean_net_r": -0.12458,
+    "mean_net_r_boot95": [
+     -0.451753,
+     0.2383
+    ],
+    "usd_per_trade": -80.976883,
+    "profit_factor": 0.795333,
+    "max_drawdown_usd": 5679.466784,
+    "geometric_baseline": 0.426082,
+    "break_even": 0.470933,
+    "median_min_to_tp": 27.5,
+    "random": {
+     "tp_first": {
+      "k": 400,
+      "n": 920,
+      "rate": 0.434783,
+      "wilson95": [
+       0.403086,
+       0.467021
+      ]
+     },
+     "mean_net_r": -0.078172,
+     "z": -0.580838,
+     "p_one_sided": 0.719325
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 16,
+     "n": 46,
+     "rate": 0.347826,
+     "wilson95": [
+      0.22681,
+      0.492299
+     ]
+    },
+    "sl_first": {
+     "k": 30,
+     "n": 46,
+     "rate": 0.652174,
+     "wilson95": [
+      0.507701,
+      0.77319
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": 0.026257,
+    "mean_net_r_boot95": [
+     -0.398121,
+     0.497891
+    ],
+    "usd_per_trade": 17.067315,
+    "profit_factor": 1.040261,
+    "max_drawdown_usd": 3900.0,
+    "geometric_baseline": 0.333502,
+    "break_even": 0.368238,
+    "median_min_to_tp": 35.0,
+    "random": {
+     "tp_first": {
+      "k": 301,
+      "n": 920,
+      "rate": 0.327174,
+      "wilson95": [
+       0.29763,
+       0.358156
+      ]
+     },
+     "mean_net_r": -0.115566,
+     "z": 0.291122,
+     "p_one_sided": 0.385479
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 15,
+     "n": 46,
+     "rate": 0.326087,
+     "wilson95": [
+      0.208659,
+      0.470323
+     ]
+    },
+    "sl_first": {
+     "k": 31,
+     "n": 46,
+     "rate": 0.673913,
+     "wilson95": [
+      0.529677,
+      0.791341
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": 0.123946,
+    "mean_net_r_boot95": [
+     -0.316885,
+     0.612438
+    ],
+    "usd_per_trade": 80.565151,
+    "profit_factor": 1.18392,
+    "max_drawdown_usd": 5027.020156,
+    "geometric_baseline": 0.2744,
+    "break_even": 0.302769,
+    "median_min_to_tp": 35.0,
+    "random": {
+     "tp_first": {
+      "k": 250,
+      "n": 920,
+      "rate": 0.271739,
+      "wilson95": [
+       0.243987,
+       0.30139
+      ]
+     },
+     "mean_net_r": -0.097006,
+     "z": 0.806235,
+     "p_one_sided": 0.210054
+    }
+   },
+   "median_D": 6.59558,
+   "mean_cost": 0.783043,
+   "median_lots": 0.875,
+   "mfe_median": 28.35779,
+   "mae_median": 21.711946,
+   "realised_loss_usd": {
+    "n": 28,
+    "max": 649.871411,
+    "over_650": 0,
+    "mean": 646.828912
+   },
+   "weeks": 138.78869,
+   "per_direction": {
+    "1": {
+     "n": 18,
+     "tp10": {
+      "tp_first": {
+       "k": 5,
+       "n": 18,
+       "rate": 0.277778,
+       "wilson95": [
+        0.124998,
+        0.508727
+       ]
+      },
+      "sl_first": {
+       "k": 13,
+       "n": 18,
+       "rate": 0.722222,
+       "wilson95": [
+        0.491273,
+        0.875002
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.423675,
+      "mean_net_r_boot95": [
+       -0.85945,
+       -0.000365
+      ],
+      "usd_per_trade": -275.388578,
+      "profit_factor": 0.413373,
+      "max_drawdown_usd": 5801.22784,
+      "geometric_baseline": 0.418544,
+      "break_even": 0.463316,
+      "median_min_to_tp": 65.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 4,
+       "n": 18,
+       "rate": 0.222222,
+       "wilson95": [
+        0.090009,
+        0.452146
+       ]
+      },
+      "sl_first": {
+       "k": 14,
+       "n": 18,
+       "rate": 0.777778,
+       "wilson95": [
+        0.547854,
+        0.909991
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.322133,
+      "mean_net_r_boot95": [
+       -1.0,
+       0.388426
+      ],
+      "usd_per_trade": -209.386641,
+      "profit_factor": 0.585829,
+      "max_drawdown_usd": 5107.713806,
+      "geometric_baseline": 0.327249,
+      "break_even": 0.361784,
+      "median_min_to_tp": 350.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 4,
+       "n": 18,
+       "rate": 0.222222,
+       "wilson95": [
+        0.090009,
+        0.452146
+       ]
+      },
+      "sl_first": {
+       "k": 14,
+       "n": 18,
+       "rate": 0.777778,
+       "wilson95": [
+        0.547854,
+        0.909991
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.242436,
+      "mean_net_r_boot95": [
+       -1.0,
+       0.505876
+      ],
+      "usd_per_trade": -157.583431,
+      "profit_factor": 0.688297,
+      "max_drawdown_usd": 4618.505726,
+      "geometric_baseline": 0.269238,
+      "break_even": 0.297372,
+      "median_min_to_tp": 357.5
+     },
+     "median_D": 6.395643,
+     "mean_cost": 0.77,
+     "median_lots": 0.905,
+     "mfe_median": 25.610073,
+     "mae_median": 22.339903,
+     "realised_loss_usd": {
+      "n": 13,
+      "max": 649.871411,
+      "over_650": 0,
+      "mean": 647.43366
+     },
+     "weeks": 136.797619
+    },
+    "-1": {
+     "n": 28,
+     "tp10": {
+      "tp_first": {
+       "k": 13,
+       "n": 28,
+       "rate": 0.464286,
+       "wilson95": [
+        0.295316,
+        0.641873
+       ]
+      },
+      "sl_first": {
+       "k": 15,
+       "n": 28,
+       "rate": 0.535714,
+       "wilson95": [
+        0.358127,
+        0.704684
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.067695,
+      "mean_net_r_boot95": [
+       -0.372518,
+       0.533493
+      ],
+      "usd_per_trade": 44.002063,
+      "profit_factor": 1.126365,
+      "max_drawdown_usd": 2846.336314,
+      "geometric_baseline": 0.430928,
+      "break_even": 0.475829,
+      "median_min_to_tp": 20.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 12,
+       "n": 28,
+       "rate": 0.428571,
+       "wilson95": [
+        0.265085,
+        0.609292
+       ]
+      },
+      "sl_first": {
+       "k": 16,
+       "n": 28,
+       "rate": 0.571429,
+       "wilson95": [
+        0.390708,
+        0.734915
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.250223,
+      "mean_net_r_boot95": [
+       -0.278613,
+       0.79398
+      ],
+      "usd_per_trade": 162.644858,
+      "profit_factor": 1.43789,
+      "max_drawdown_usd": 2627.666928,
+      "geometric_baseline": 0.337522,
+      "break_even": 0.372386,
+      "median_min_to_tp": 35.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 11,
+       "n": 28,
+       "rate": 0.392857,
+       "wilson95": [
+        0.235657,
+        0.57591
+       ]
+      },
+      "sl_first": {
+       "k": 17,
+       "n": 28,
+       "rate": 0.607143,
+       "wilson95": [
+        0.42409,
+        0.764343
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.359478,
+      "mean_net_r_boot95": [
+       -0.203405,
+       0.954819
+      ],
+      "usd_per_trade": 233.660668,
+      "profit_factor": 1.592081,
+      "max_drawdown_usd": 2600.0,
+      "geometric_baseline": 0.277719,
+      "break_even": 0.306238,
+      "median_min_to_tp": 35.0
+     },
+     "median_D": 6.739865,
+     "mean_cost": 0.791429,
+     "median_lots": 0.85,
+     "mfe_median": 30.222563,
+     "mae_median": 21.077941,
+     "realised_loss_usd": {
+      "n": 15,
+      "max": 649.674413,
+      "over_650": 0,
+      "mean": 646.304797
+     },
+     "weeks": 137.459821
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 2,
+     "tp10_first": 1
+    },
+    "LDN_CONT": {
+     "n": 15,
+     "tp10_first": 7
+    },
+    "LDN_OPEN": {
+     "n": 3,
+     "tp10_first": 1
+    },
+    "NY_CONT": {
+     "n": 15,
+     "tp10_first": 6
+    },
+    "NY_OPEN": {
+     "n": 10,
+     "tp10_first": 3
+    },
+    "OFF": {
+     "n": 1,
+     "tp10_first": 0
+    }
+   }
+  },
+  "A5": {
+   "name": "sweep of the pullback high + displacement",
+   "n": 132,
+   "tp10": {
+    "tp_first": {
+     "k": 67,
+     "n": 132,
+     "rate": 0.507576,
+     "wilson95": [
+      0.423289,
+      0.591434
+     ]
+    },
+    "sl_first": {
+     "k": 64,
+     "n": 132,
+     "rate": 0.484848,
+     "wilson95": [
+      0.401233,
+      0.569321
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.076446,
+    "mean_net_r_boot95": [
+     -0.242558,
+     0.078865
+    ],
+    "usd_per_trade": -49.690099,
+    "profit_factor": 0.844755,
+    "max_drawdown_usd": 12990.328682,
+    "geometric_baseline": 0.52274,
+    "break_even": 0.560631,
+    "median_min_to_tp": 65.0,
+    "random": {
+     "tp_first": {
+      "k": 1364,
+      "n": 2640,
+      "rate": 0.516667,
+      "wilson95": [
+       0.497594,
+       0.535691
+      ]
+     },
+     "mean_net_r": -0.077457,
+     "z": -0.203966,
+     "p_one_sided": 0.58081
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 55,
+     "n": 132,
+     "rate": 0.416667,
+     "wilson95": [
+      0.336084,
+      0.501962
+     ]
+    },
+    "sl_first": {
+     "k": 74,
+     "n": 132,
+     "rate": 0.560606,
+     "wilson95": [
+      0.475413,
+      0.642372
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 2,
+    "m5_resolved": 0,
+    "mean_net_r": -0.060118,
+    "mean_net_r_boot95": [
+     -0.251147,
+     0.134971
+    ],
+    "usd_per_trade": -39.076742,
+    "profit_factor": 0.894552,
+    "max_drawdown_usd": 16773.029344,
+    "geometric_baseline": 0.426684,
+    "break_even": 0.45704,
+    "median_min_to_tp": 110.0,
+    "random": {
+     "tp_first": {
+      "k": 1126,
+      "n": 2640,
+      "rate": 0.426515,
+      "wilson95": [
+       0.40777,
+       0.445474
+      ]
+     },
+     "mean_net_r": -0.056522,
+     "z": -0.223303,
+     "p_one_sided": 0.58835
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 45,
+     "n": 132,
+     "rate": 0.340909,
+     "wilson95": [
+      0.265569,
+      0.425247
+     ]
+    },
+    "sl_first": {
+     "k": 84,
+     "n": 132,
+     "rate": 0.636364,
+     "wilson95": [
+      0.551521,
+      0.713494
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 2,
+    "m5_resolved": 0,
+    "mean_net_r": -0.110074,
+    "mean_net_r_boot95": [
+     -0.331003,
+     0.129041
+    ],
+    "usd_per_trade": -71.547957,
+    "profit_factor": 0.829575,
+    "max_drawdown_usd": 21860.06432,
+    "geometric_baseline": 0.361415,
+    "break_even": 0.386781,
+    "median_min_to_tp": 185.0,
+    "random": {
+     "tp_first": {
+      "k": 920,
+      "n": 2640,
+      "rate": 0.348485,
+      "wilson95": [
+       0.330541,
+       0.366869
+      ]
+     },
+     "mean_net_r": -0.075342,
+     "z": -0.178307,
+     "p_one_sided": 0.570759
+    }
+   },
+   "median_D": 10.291744,
+   "mean_cost": 0.795758,
+   "median_lots": 0.58,
+   "mfe_median": 22.727463,
+   "mae_median": 27.515241,
+   "realised_loss_usd": {
+    "n": 65,
+    "max": 649.59227,
+    "over_650": 0,
+    "mean": 644.315286
+   },
+   "weeks": 146.99256,
+   "per_direction": {
+    "1": {
+     "n": 76,
+     "tp10": {
+      "tp_first": {
+       "k": 46,
+       "n": 76,
+       "rate": 0.605263,
+       "wilson95": [
+        0.492863,
+        0.707534
+       ]
+      },
+      "sl_first": {
+       "k": 29,
+       "n": 76,
+       "rate": 0.381579,
+       "wilson95": [
+        0.280571,
+        0.493982
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.106794,
+      "mean_net_r_boot95": [
+       -0.103277,
+       0.315249
+      ],
+      "usd_per_trade": 69.416131,
+      "profit_factor": 1.270545,
+      "max_drawdown_usd": 4393.058259,
+      "geometric_baseline": 0.522879,
+      "break_even": 0.56058,
+      "median_min_to_tp": 80.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 38,
+       "n": 76,
+       "rate": 0.5,
+       "wilson95": [
+        0.390326,
+        0.609674
+       ]
+      },
+      "sl_first": {
+       "k": 36,
+       "n": 76,
+       "rate": 0.473684,
+       "wilson95": [
+        0.365421,
+        0.58448
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": 0.128418,
+      "mean_net_r_boot95": [
+       -0.142786,
+       0.396507
+      ],
+      "usd_per_trade": 83.471819,
+      "profit_factor": 1.263778,
+      "max_drawdown_usd": 6657.35712,
+      "geometric_baseline": 0.427016,
+      "break_even": 0.457208,
+      "median_min_to_tp": 110.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 31,
+       "n": 76,
+       "rate": 0.407895,
+       "wilson95": [
+        0.304438,
+        0.520214
+       ]
+      },
+      "sl_first": {
+       "k": 43,
+       "n": 76,
+       "rate": 0.565789,
+       "wilson95": [
+        0.453858,
+        0.671391
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": 0.053974,
+      "mean_net_r_boot95": [
+       -0.24463,
+       0.369197
+      ],
+      "usd_per_trade": 35.083357,
+      "profit_factor": 1.093229,
+      "max_drawdown_usd": 8542.5689,
+      "geometric_baseline": 0.361869,
+      "break_even": 0.387092,
+      "median_min_to_tp": 185.0
+     },
+     "median_D": 10.464088,
+     "mean_cost": 0.791053,
+     "median_lots": 0.575,
+     "mfe_median": 25.131298,
+     "mae_median": 23.977305,
+     "realised_loss_usd": {
+      "n": 30,
+      "max": 649.59227,
+      "over_650": 0,
+      "mean": 644.177797
+     },
+     "weeks": 145.813988
+    },
+    "-1": {
+     "n": 56,
+     "tp10": {
+      "tp_first": {
+       "k": 21,
+       "n": 56,
+       "rate": 0.375,
+       "wilson95": [
+        0.260102,
+        0.505946
+       ]
+      },
+      "sl_first": {
+       "k": 35,
+       "n": 56,
+       "rate": 0.625,
+       "wilson95": [
+        0.494054,
+        0.739898
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.32513,
+      "mean_net_r_boot95": [
+       -0.550799,
+       -0.096706
+      ],
+      "usd_per_trade": -211.334269,
+      "profit_factor": 0.479793,
+      "max_drawdown_usd": 11956.506122,
+      "geometric_baseline": 0.522551,
+      "break_even": 0.560699,
+      "median_min_to_tp": 50.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 17,
+       "n": 56,
+       "rate": 0.303571,
+       "wilson95": [
+        0.199003,
+        0.433359
+       ]
+      },
+      "sl_first": {
+       "k": 38,
+       "n": 56,
+       "rate": 0.678571,
+       "wilson95": [
+        0.548226,
+        0.78599
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.315989,
+      "mean_net_r_boot95": [
+       -0.576869,
+       -0.04614
+      ],
+      "usd_per_trade": -205.392646,
+      "profit_factor": 0.537445,
+      "max_drawdown_usd": 12375.271295,
+      "geometric_baseline": 0.426234,
+      "break_even": 0.456812,
+      "median_min_to_tp": 125.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 14,
+       "n": 56,
+       "rate": 0.25,
+       "wilson95": [
+        0.155171,
+        0.376926
+       ]
+      },
+      "sl_first": {
+       "k": 41,
+       "n": 56,
+       "rate": 0.732143,
+       "wilson95": [
+        0.604054,
+        0.830427
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.332711,
+      "mean_net_r_boot95": [
+       -0.634278,
+       0.00253
+      ],
+      "usd_per_trade": -216.261885,
+      "profit_factor": 0.548382,
+      "max_drawdown_usd": 14437.533143,
+      "geometric_baseline": 0.3608,
+      "break_even": 0.386358,
+      "median_min_to_tp": 192.5
+     },
+     "median_D": 9.976883,
+     "mean_cost": 0.802143,
+     "median_lots": 0.6,
+     "mfe_median": 16.528278,
+     "mae_median": 32.405859,
+     "realised_loss_usd": {
+      "n": 35,
+      "max": 649.338364,
+      "over_650": 0,
+      "mean": 644.433133
+     },
+     "weeks": 141.80506
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 12,
+     "tp10_first": 5
+    },
+    "LDN_CONT": {
+     "n": 67,
+     "tp10_first": 33
+    },
+    "LDN_OPEN": {
+     "n": 16,
+     "tp10_first": 10
+    },
+    "NY_CONT": {
+     "n": 7,
+     "tp10_first": 4
+    },
+    "NY_OPEN": {
+     "n": 25,
+     "tp10_first": 11
+    },
+    "OFF": {
+     "n": 5,
+     "tp10_first": 4
+    }
+   }
+  },
+  "A6": {
+   "name": "failed reclaim of the broken level",
+   "n": 252,
+   "tp10": {
+    "tp_first": {
+     "k": 123,
+     "n": 252,
+     "rate": 0.488095,
+     "wilson95": [
+      0.427023,
+      0.549525
+     ]
+    },
+    "sl_first": {
+     "k": 129,
+     "n": 252,
+     "rate": 0.511905,
+     "wilson95": [
+      0.450475,
+      0.572977
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.132025,
+    "mean_net_r_boot95": [
+     -0.237767,
+     -0.029491
+    ],
+    "usd_per_trade": -85.816323,
+    "profit_factor": 0.74209,
+    "max_drawdown_usd": 23995.621747,
+    "geometric_baseline": 0.512008,
+    "break_even": 0.551825,
+    "median_min_to_tp": 80.0,
+    "random": {
+     "tp_first": {
+      "k": 2563,
+      "n": 5039,
+      "rate": 0.508633,
+      "wilson95": [
+       0.494828,
+       0.522424
+      ]
+     },
+     "mean_net_r": -0.079906,
+     "z": -0.6364,
+     "p_one_sided": 0.737742
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 104,
+     "n": 252,
+     "rate": 0.412698,
+     "wilson95": [
+      0.353668,
+      0.47435
+     ]
+    },
+    "sl_first": {
+     "k": 148,
+     "n": 252,
+     "rate": 0.587302,
+     "wilson95": [
+      0.52565,
+      0.646332
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.088156,
+    "mean_net_r_boot95": [
+     -0.218519,
+     0.055098
+    ],
+    "usd_per_trade": -57.301385,
+    "profit_factor": 0.849897,
+    "max_drawdown_usd": 16733.530784,
+    "geometric_baseline": 0.415998,
+    "break_even": 0.447758,
+    "median_min_to_tp": 132.5,
+    "random": {
+     "tp_first": {
+      "k": 2086,
+      "n": 5038,
+      "rate": 0.414053,
+      "wilson95": [
+       0.400523,
+       0.427715
+      ]
+     },
+     "mean_net_r": -0.068122,
+     "z": -0.042611,
+     "p_one_sided": 0.516994
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 85,
+     "n": 252,
+     "rate": 0.337302,
+     "wilson95": [
+      0.28176,
+      0.397729
+     ]
+    },
+    "sl_first": {
+     "k": 165,
+     "n": 252,
+     "rate": 0.654762,
+     "wilson95": [
+      0.594133,
+      0.710744
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 2,
+    "m5_resolved": 0,
+    "mean_net_r": -0.115757,
+    "mean_net_r_boot95": [
+     -0.264537,
+     0.039083
+    ],
+    "usd_per_trade": -75.242061,
+    "profit_factor": 0.823207,
+    "max_drawdown_usd": 23718.04782,
+    "geometric_baseline": 0.351198,
+    "break_even": 0.377656,
+    "median_min_to_tp": 215.0,
+    "random": {
+     "tp_first": {
+      "k": 1716,
+      "n": 5038,
+      "rate": 0.340611,
+      "wilson95": [
+       0.327651,
+       0.353815
+      ]
+     },
+     "mean_net_r": -0.077376,
+     "z": -0.108205,
+     "p_one_sided": 0.543083
+    }
+   },
+   "median_D": 9.79463,
+   "mean_cost": 0.814444,
+   "median_lots": 0.605,
+   "mfe_median": 24.605985,
+   "mae_median": 24.454534,
+   "realised_loss_usd": {
+    "n": 129,
+    "max": 649.768214,
+    "over_650": 0,
+    "mean": 644.300892
+   },
+   "weeks": 149.394345,
+   "per_direction": {
+    "1": {
+     "n": 142,
+     "tp10": {
+      "tp_first": {
+       "k": 62,
+       "n": 142,
+       "rate": 0.43662,
+       "wilson95": [
+        0.357778,
+        0.5188
+       ]
+      },
+      "sl_first": {
+       "k": 80,
+       "n": 142,
+       "rate": 0.56338,
+       "wilson95": [
+        0.4812,
+        0.642222
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.226378,
+      "mean_net_r_boot95": [
+       -0.362403,
+       -0.087276
+      ],
+      "usd_per_trade": -147.145732,
+      "profit_factor": 0.598179,
+      "max_drawdown_usd": 21574.292922,
+      "geometric_baseline": 0.510054,
+      "break_even": 0.55,
+      "median_min_to_tp": 110.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 54,
+       "n": 142,
+       "rate": 0.380282,
+       "wilson95": [
+        0.304584,
+        0.462286
+       ]
+      },
+      "sl_first": {
+       "k": 88,
+       "n": 142,
+       "rate": 0.619718,
+       "wilson95": [
+        0.537714,
+        0.695416
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.153622,
+      "mean_net_r_boot95": [
+       -0.330452,
+       0.04355
+      ],
+      "usd_per_trade": -99.854547,
+      "profit_factor": 0.752109,
+      "max_drawdown_usd": 15828.794613,
+      "geometric_baseline": 0.414425,
+      "break_even": 0.446243,
+      "median_min_to_tp": 162.5
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 45,
+       "n": 142,
+       "rate": 0.316901,
+       "wilson95": [
+        0.246059,
+        0.397389
+       ]
+      },
+      "sl_first": {
+       "k": 95,
+       "n": 142,
+       "rate": 0.669014,
+       "wilson95": [
+        0.588061,
+        0.741063
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 2,
+      "m5_resolved": 0,
+      "mean_net_r": -0.155543,
+      "mean_net_r_boot95": [
+       -0.345928,
+       0.059098
+      ],
+      "usd_per_trade": -101.102634,
+      "profit_factor": 0.767505,
+      "max_drawdown_usd": 18236.074081,
+      "geometric_baseline": 0.349982,
+      "break_even": 0.376467,
+      "median_min_to_tp": 290.0
+     },
+     "median_D": 9.499805,
+     "mean_cost": 0.813662,
+     "median_lots": 0.63,
+     "mfe_median": 24.820374,
+     "mae_median": 23.542801,
+     "realised_loss_usd": {
+      "n": 80,
+      "max": 649.768214,
+      "over_650": 0,
+      "mean": 643.900288
+     },
+     "weeks": 147.33631
+    },
+    "-1": {
+     "n": 110,
+     "tp10": {
+      "tp_first": {
+       "k": 61,
+       "n": 110,
+       "rate": 0.554545,
+       "wilson95": [
+        0.461387,
+        0.644023
+       ]
+      },
+      "sl_first": {
+       "k": 49,
+       "n": 110,
+       "rate": 0.445455,
+       "wilson95": [
+        0.355977,
+        0.538613
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.010224,
+      "mean_net_r_boot95": [
+       -0.160086,
+       0.153567
+      ],
+      "usd_per_trade": -6.645631,
+      "profit_factor": 0.977048,
+      "max_drawdown_usd": 5082.819462,
+      "geometric_baseline": 0.514531,
+      "break_even": 0.554182,
+      "median_min_to_tp": 50.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 50,
+       "n": 110,
+       "rate": 0.454545,
+       "wilson95": [
+        0.364599,
+        0.547559
+       ]
+      },
+      "sl_first": {
+       "k": 60,
+       "n": 110,
+       "rate": 0.545455,
+       "wilson95": [
+        0.452441,
+        0.635401
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.003645,
+      "mean_net_r_boot95": [
+       -0.194922,
+       0.210801
+      ],
+      "usd_per_trade": -2.369122,
+      "profit_factor": 0.993318,
+      "max_drawdown_usd": 5558.432913,
+      "geometric_baseline": 0.418028,
+      "break_even": 0.449713,
+      "median_min_to_tp": 87.5
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 40,
+       "n": 110,
+       "rate": 0.363636,
+       "wilson95": [
+        0.279752,
+        0.456723
+       ]
+      },
+      "sl_first": {
+       "k": 70,
+       "n": 110,
+       "rate": 0.636364,
+       "wilson95": [
+        0.543277,
+        0.720248
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.064398,
+      "mean_net_r_boot95": [
+       -0.289451,
+       0.185507
+      ],
+      "usd_per_trade": -41.858412,
+      "profit_factor": 0.898804,
+      "max_drawdown_usd": 9149.071669,
+      "geometric_baseline": 0.352767,
+      "break_even": 0.379192,
+      "median_min_to_tp": 170.0
+     },
+     "median_D": 10.21783,
+     "mean_cost": 0.815455,
+     "median_lots": 0.59,
+     "mfe_median": 24.501256,
+     "mae_median": 28.023502,
+     "realised_loss_usd": {
+      "n": 49,
+      "max": 649.111927,
+      "over_650": 0,
+      "mean": 644.954939
+     },
+     "weeks": 144.302083
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 43,
+     "tp10_first": 23
+    },
+    "LDN_CONT": {
+     "n": 97,
+     "tp10_first": 49
+    },
+    "LDN_OPEN": {
+     "n": 39,
+     "tp10_first": 18
+    },
+    "NY_CONT": {
+     "n": 33,
+     "tp10_first": 11
+    },
+    "NY_OPEN": {
+     "n": 26,
+     "tp10_first": 14
+    },
+    "OFF": {
+     "n": 13,
+     "tp10_first": 7
+    },
+    "OVERLAP": {
+     "n": 1,
+     "tp10_first": 1
+    }
+   }
+  },
+  "T1": {
+   "name": "early limit at the approach",
+   "n": 114,
+   "tp10": {
+    "tp_first": {
+     "k": 53,
+     "n": 114,
+     "rate": 0.464912,
+     "wilson95": [
+      0.375996,
+      0.556116
+     ]
+    },
+    "sl_first": {
+     "k": 61,
+     "n": 114,
+     "rate": 0.535088,
+     "wilson95": [
+      0.443884,
+      0.624004
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 1,
+    "mean_net_r": 0.061245,
+    "mean_net_r_boot95": [
+     -0.161256,
+     0.284376
+    ],
+    "usd_per_trade": 39.809525,
+    "profit_factor": 1.114459,
+    "max_drawdown_usd": 6469.740045,
+    "geometric_baseline": 0.430663,
+    "break_even": 0.475811,
+    "median_min_to_tp": 20.0,
+    "random": {
+     "tp_first": {
+      "k": 975,
+      "n": 2280,
+      "rate": 0.427632,
+      "wilson95": [
+       0.407463,
+       0.448044
+      ]
+     },
+     "mean_net_r": -0.104075,
+     "z": 0.784773,
+     "p_one_sided": 0.216293
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 43,
+     "n": 114,
+     "rate": 0.377193,
+     "wilson95": [
+      0.293595,
+      0.468798
+     ]
+    },
+    "sl_first": {
+     "k": 71,
+     "n": 114,
+     "rate": 0.622807,
+     "wilson95": [
+      0.531202,
+      0.706405
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": 0.056998,
+    "mean_net_r_boot95": [
+     -0.205162,
+     0.313514
+    ],
+    "usd_per_trade": 37.048633,
+    "profit_factor": 1.091518,
+    "max_drawdown_usd": 8648.842137,
+    "geometric_baseline": 0.337415,
+    "break_even": 0.372457,
+    "median_min_to_tp": 35.0,
+    "random": {
+     "tp_first": {
+      "k": 752,
+      "n": 2280,
+      "rate": 0.329825,
+      "wilson95": [
+       0.310827,
+       0.349395
+      ]
+     },
+     "mean_net_r": -0.118412,
+     "z": 1.048004,
+     "p_one_sided": 0.147318
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 37,
+     "n": 114,
+     "rate": 0.324561,
+     "wilson95": [
+      0.245551,
+      0.415009
+     ]
+    },
+    "sl_first": {
+     "k": 76,
+     "n": 114,
+     "rate": 0.666667,
+     "wilson95": [
+      0.575948,
+      0.746519
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 1,
+    "m5_resolved": 0,
+    "mean_net_r": 0.108135,
+    "mean_net_r_boot95": [
+     -0.189442,
+     0.411944
+    ],
+    "usd_per_trade": 70.287634,
+    "profit_factor": 1.162202,
+    "max_drawdown_usd": 8224.443282,
+    "geometric_baseline": 0.277749,
+    "break_even": 0.306404,
+    "median_min_to_tp": 50.0,
+    "random": {
+     "tp_first": {
+      "k": 589,
+      "n": 2279,
+      "rate": 0.258447,
+      "wilson95": [
+       0.24089,
+       0.276816
+      ]
+     },
+     "mean_net_r": -0.154886,
+     "z": 1.567432,
+     "p_one_sided": 0.058507
+    }
+   },
+   "median_D": 7.043075,
+   "mean_cost": 0.794561,
+   "median_lots": 0.82,
+   "mfe_median": 30.274349,
+   "mae_median": 22.255924,
+   "realised_loss_usd": {
+    "n": 61,
+    "max": 649.906051,
+    "over_650": 0,
+    "mean": 645.229477
+   },
+   "weeks": 148.473214,
+   "per_direction": {
+    "1": {
+     "n": 55,
+     "tp10": {
+      "tp_first": {
+       "k": 27,
+       "n": 55,
+       "rate": 0.490909,
+       "wilson95": [
+        0.363768,
+        0.619237
+       ]
+      },
+      "sl_first": {
+       "k": 28,
+       "n": 55,
+       "rate": 0.509091,
+       "wilson95": [
+        0.380763,
+        0.636232
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": 0.171193,
+      "mean_net_r_boot95": [
+       -0.140626,
+       0.476159
+      ],
+      "usd_per_trade": 111.2757,
+      "profit_factor": 1.336273,
+      "max_drawdown_usd": 2600.0,
+      "geometric_baseline": 0.411853,
+      "break_even": 0.457559,
+      "median_min_to_tp": 35.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 18,
+       "n": 55,
+       "rate": 0.327273,
+       "wilson95": [
+        0.218131,
+        0.458968
+       ]
+      },
+      "sl_first": {
+       "k": 37,
+       "n": 55,
+       "rate": 0.672727,
+       "wilson95": [
+        0.541032,
+        0.781869
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.028918,
+      "mean_net_r_boot95": [
+       -0.401365,
+       0.338637
+      ],
+      "usd_per_trade": -18.796683,
+      "profit_factor": 0.957014,
+      "max_drawdown_usd": 7150.0,
+      "geometric_baseline": 0.320086,
+      "break_even": 0.355313,
+      "median_min_to_tp": 35.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 15,
+       "n": 55,
+       "rate": 0.272727,
+       "wilson95": [
+        0.172808,
+        0.402322
+       ]
+      },
+      "sl_first": {
+       "k": 39,
+       "n": 55,
+       "rate": 0.709091,
+       "wilson95": [
+        0.578593,
+        0.812288
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": 0.014513,
+      "mean_net_r_boot95": [
+       -0.407236,
+       0.436007
+      ],
+      "usd_per_trade": 9.433529,
+      "profit_factor": 1.020467,
+      "max_drawdown_usd": 7150.0,
+      "geometric_baseline": 0.262124,
+      "break_even": 0.290798,
+      "median_min_to_tp": 50.0
+     },
+     "median_D": 6.443959,
+     "mean_cost": 0.777273,
+     "median_lots": 0.9,
+     "mfe_median": 26.193908,
+     "mae_median": 21.646167,
+     "realised_loss_usd": {
+      "n": 28,
+      "max": 649.158825,
+      "over_650": 0,
+      "mean": 645.43008
+     },
+     "weeks": 146.546131
+    },
+    "-1": {
+     "n": 59,
+     "tp10": {
+      "tp_first": {
+       "k": 26,
+       "n": 59,
+       "rate": 0.440678,
+       "wilson95": [
+        0.321502,
+        0.567106
+       ]
+      },
+      "sl_first": {
+       "k": 33,
+       "n": 59,
+       "rate": 0.559322,
+       "wilson95": [
+        0.432894,
+        0.678498
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.041248,
+      "mean_net_r_boot95": [
+       -0.311637,
+       0.236085
+      ],
+      "usd_per_trade": -26.811485,
+      "profit_factor": 0.926253,
+      "max_drawdown_usd": 5695.842656,
+      "geometric_baseline": 0.448198,
+      "break_even": 0.492825,
+      "median_min_to_tp": 20.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 25,
+       "n": 59,
+       "rate": 0.423729,
+       "wilson95": [
+        0.306127,
+        0.550655
+       ]
+      },
+      "sl_first": {
+       "k": 34,
+       "n": 59,
+       "rate": 0.576271,
+       "wilson95": [
+        0.449345,
+        0.693873
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.137089,
+      "mean_net_r_boot95": [
+       -0.199805,
+       0.478661
+      ],
+      "usd_per_trade": 89.107826,
+      "profit_factor": 1.23789,
+      "max_drawdown_usd": 5363.979893,
+      "geometric_baseline": 0.353569,
+      "break_even": 0.388438,
+      "median_min_to_tp": 35.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 22,
+       "n": 59,
+       "rate": 0.372881,
+       "wilson95": [
+        0.26084,
+        0.500464
+       ]
+      },
+      "sl_first": {
+       "k": 37,
+       "n": 59,
+       "rate": 0.627119,
+       "wilson95": [
+        0.499536,
+        0.73916
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.195409,
+      "mean_net_r_boot95": [
+       -0.170041,
+       0.591699
+      ],
+      "usd_per_trade": 127.016036,
+      "profit_factor": 1.311599,
+      "max_drawdown_usd": 6046.936366,
+      "geometric_baseline": 0.292314,
+      "break_even": 0.320952,
+      "median_min_to_tp": 35.0
+     },
+     "median_D": 7.376107,
+     "mean_cost": 0.810678,
+     "median_lots": 0.79,
+     "mfe_median": 31.853701,
+     "mae_median": 23.222194,
+     "realised_loss_usd": {
+      "n": 33,
+      "max": 649.906051,
+      "over_650": 0,
+      "mean": 645.059269
+     },
+     "weeks": 140.479167
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 9,
+     "tp10_first": 4
+    },
+    "LDN_CONT": {
+     "n": 42,
+     "tp10_first": 24
+    },
+    "LDN_OPEN": {
+     "n": 9,
+     "tp10_first": 5
+    },
+    "NY_CONT": {
+     "n": 28,
+     "tp10_first": 12
+    },
+    "NY_OPEN": {
+     "n": 21,
+     "tp10_first": 7
+    },
+    "OFF": {
+     "n": 5,
+     "tp10_first": 1
+    }
+   }
+  },
+  "T4": {
+   "name": "next M15 close after A1",
+   "n": 147,
+   "tp10": {
+    "tp_first": {
+     "k": 76,
+     "n": 147,
+     "rate": 0.517007,
+     "wilson95": [
+      0.436827,
+      0.59632
+     ]
+    },
+    "sl_first": {
+     "k": 71,
+     "n": 147,
+     "rate": 0.482993,
+     "wilson95": [
+      0.40368,
+      0.563173
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 1,
+    "mean_net_r": -0.120986,
+    "mean_net_r_boot95": [
+     -0.266101,
+     0.019922
+    ],
+    "usd_per_trade": -78.640748,
+    "profit_factor": 0.749508,
+    "max_drawdown_usd": 13839.278583,
+    "geometric_baseline": 0.538886,
+    "break_even": 0.57676,
+    "median_min_to_tp": 50.0,
+    "random": {
+     "tp_first": {
+      "k": 1594,
+      "n": 2940,
+      "rate": 0.542177,
+      "wilson95": [
+       0.524124,
+       0.560119
+      ]
+     },
+     "mean_net_r": -0.066375,
+     "z": -0.597643,
+     "p_one_sided": 0.724961
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 65,
+     "n": 147,
+     "rate": 0.442177,
+     "wilson95": [
+      0.364379,
+      0.522919
+     ]
+    },
+    "sl_first": {
+     "k": 81,
+     "n": 147,
+     "rate": 0.55102,
+     "wilson95": [
+      0.470335,
+      0.629107
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 1,
+    "m5_resolved": 1,
+    "mean_net_r": -0.074409,
+    "mean_net_r_boot95": [
+     -0.246996,
+     0.102676
+    ],
+    "usd_per_trade": -48.366149,
+    "profit_factor": 0.864961,
+    "max_drawdown_usd": 13958.179269,
+    "geometric_baseline": 0.44354,
+    "break_even": 0.473992,
+    "median_min_to_tp": 125.0,
+    "random": {
+     "tp_first": {
+      "k": 1318,
+      "n": 2940,
+      "rate": 0.448299,
+      "wilson95": [
+       0.430402,
+       0.466332
+      ]
+     },
+     "mean_net_r": -0.050424,
+     "z": -0.145673,
+     "p_one_sided": 0.55791
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 53,
+     "n": 147,
+     "rate": 0.360544,
+     "wilson95": [
+      0.287388,
+      0.440803
+     ]
+    },
+    "sl_first": {
+     "k": 92,
+     "n": 147,
+     "rate": 0.62585,
+     "wilson95": [
+      0.545356,
+      0.699935
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 2,
+    "m5_resolved": 0,
+    "mean_net_r": -0.132439,
+    "mean_net_r_boot95": [
+     -0.328075,
+     0.051731
+    ],
+    "usd_per_trade": -86.085186,
+    "profit_factor": 0.788386,
+    "max_drawdown_usd": 16305.628564,
+    "geometric_baseline": 0.377973,
+    "break_even": 0.403492,
+    "median_min_to_tp": 125.0,
+    "random": {
+     "tp_first": {
+      "k": 1098,
+      "n": 2940,
+      "rate": 0.373469,
+      "wilson95": [
+       0.35616,
+       0.391109
+      ]
+     },
+     "mean_net_r": -0.051364,
+     "z": -0.316262,
+     "p_one_sided": 0.624098
+    }
+   },
+   "median_D": 11.472379,
+   "mean_cost": 0.817619,
+   "median_lots": 0.53,
+   "mfe_median": 21.224676,
+   "mae_median": 22.581587,
+   "realised_loss_usd": {
+    "n": 71,
+    "max": 649.871786,
+    "over_650": 0,
+    "mean": 644.584912
+   },
+   "weeks": 149.284226,
+   "per_direction": {
+    "1": {
+     "n": 76,
+     "tp10": {
+      "tp_first": {
+       "k": 36,
+       "n": 76,
+       "rate": 0.473684,
+       "wilson95": [
+        0.365421,
+        0.58448
+       ]
+      },
+      "sl_first": {
+       "k": 40,
+       "n": 76,
+       "rate": 0.526316,
+       "wilson95": [
+        0.41552,
+        0.634579
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.189895,
+      "mean_net_r_boot95": [
+       -0.384185,
+       0.014022
+      ],
+      "usd_per_trade": -123.431493,
+      "profit_factor": 0.6392,
+      "max_drawdown_usd": 10903.526127,
+      "geometric_baseline": 0.53275,
+      "break_even": 0.570943,
+      "median_min_to_tp": 72.5
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 33,
+       "n": 76,
+       "rate": 0.434211,
+       "wilson95": [
+        0.328609,
+        0.546142
+       ]
+      },
+      "sl_first": {
+       "k": 42,
+       "n": 76,
+       "rate": 0.552632,
+       "wilson95": [
+        0.441005,
+        0.659193
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.086498,
+      "mean_net_r_boot95": [
+       -0.320651,
+       0.151333
+      ],
+      "usd_per_trade": -56.223563,
+      "profit_factor": 0.84348,
+      "max_drawdown_usd": 8612.521972,
+      "geometric_baseline": 0.436543,
+      "break_even": 0.467237,
+      "median_min_to_tp": 170.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 27,
+       "n": 76,
+       "rate": 0.355263,
+       "wilson95": [
+        0.257018,
+        0.467436
+       ]
+      },
+      "sl_first": {
+       "k": 47,
+       "n": 76,
+       "rate": 0.618421,
+       "wilson95": [
+        0.506018,
+        0.719429
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 2,
+      "m5_resolved": 0,
+      "mean_net_r": -0.119526,
+      "mean_net_r_boot95": [
+       -0.379252,
+       0.153312
+      ],
+      "usd_per_trade": -77.691578,
+      "profit_factor": 0.806725,
+      "max_drawdown_usd": 11829.416334,
+      "geometric_baseline": 0.370664,
+      "break_even": 0.396367,
+      "median_min_to_tp": 305.0
+     },
+     "median_D": 11.470353,
+     "mean_cost": 0.814737,
+     "median_lots": 0.52,
+     "mfe_median": 22.208079,
+     "mae_median": 22.014802,
+     "realised_loss_usd": {
+      "n": 40,
+      "max": 649.802152,
+      "over_650": 0,
+      "mean": 645.361364
+     },
+     "weeks": 147.3125
+    },
+    "-1": {
+     "n": 71,
+     "tp10": {
+      "tp_first": {
+       "k": 40,
+       "n": 71,
+       "rate": 0.56338,
+       "wilson95": [
+        0.447715,
+        0.672539
+       ]
+      },
+      "sl_first": {
+       "k": 31,
+       "n": 71,
+       "rate": 0.43662,
+       "wilson95": [
+        0.327461,
+        0.552285
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.047224,
+      "mean_net_r_boot95": [
+       -0.241474,
+       0.153214
+      ],
+      "usd_per_trade": -30.695726,
+      "profit_factor": 0.891841,
+      "max_drawdown_usd": 4347.13878,
+      "geometric_baseline": 0.545454,
+      "break_even": 0.582986,
+      "median_min_to_tp": 35.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 32,
+       "n": 71,
+       "rate": 0.450704,
+       "wilson95": [
+        0.34048,
+        0.565989
+       ]
+      },
+      "sl_first": {
+       "k": 39,
+       "n": 71,
+       "rate": 0.549296,
+       "wilson95": [
+        0.434011,
+        0.65952
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.06147,
+      "mean_net_r_boot95": [
+       -0.310785,
+       0.192202
+      ],
+      "usd_per_trade": -39.955396,
+      "profit_factor": 0.888093,
+      "max_drawdown_usd": 7050.095559,
+      "geometric_baseline": 0.451028,
+      "break_even": 0.481223,
+      "median_min_to_tp": 95.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 26,
+       "n": 71,
+       "rate": 0.366197,
+       "wilson95": [
+        0.263702,
+        0.482428
+       ]
+      },
+      "sl_first": {
+       "k": 45,
+       "n": 71,
+       "rate": 0.633803,
+       "wilson95": [
+        0.517572,
+        0.736298
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.146261,
+      "mean_net_r_boot95": [
+       -0.404333,
+       0.130209
+      ],
+      "usd_per_trade": -95.069893,
+      "profit_factor": 0.769232,
+      "max_drawdown_usd": 8125.280528,
+      "geometric_baseline": 0.385797,
+      "break_even": 0.411119,
+      "median_min_to_tp": 102.5
+     },
+     "median_D": 11.472379,
+     "mean_cost": 0.820704,
+     "median_lots": 0.53,
+     "mfe_median": 20.893011,
+     "mae_median": 24.88389,
+     "realised_loss_usd": {
+      "n": 31,
+      "max": 649.871786,
+      "over_650": 0,
+      "mean": 643.583039
+     },
+     "weeks": 140.78125
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 27,
+     "tp10_first": 14
+    },
+    "LDN_CONT": {
+     "n": 63,
+     "tp10_first": 40
+    },
+    "LDN_OPEN": {
+     "n": 18,
+     "tp10_first": 10
+    },
+    "NY_CONT": {
+     "n": 12,
+     "tp10_first": 4
+    },
+    "NY_OPEN": {
+     "n": 17,
+     "tp10_first": 4
+    },
+    "OFF": {
+     "n": 8,
+     "tp10_first": 2
+    },
+    "OVERLAP": {
+     "n": 2,
+     "tp10_first": 2
+    }
+   }
+  },
+  "T6": {
+   "name": "limit at A2's displacement midpoint",
+   "n": 151,
+   "tp10": {
+    "tp_first": {
+     "k": 75,
+     "n": 151,
+     "rate": 0.496689,
+     "wilson95": [
+      0.418018,
+      0.575524
+     ]
+    },
+    "sl_first": {
+     "k": 74,
+     "n": 151,
+     "rate": 0.490066,
+     "wilson95": [
+      0.411573,
+      0.569052
+     ]
+    },
+    "ambiguous": 2,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.106494,
+    "mean_net_r_boot95": [
+     -0.257359,
+     0.039398
+    ],
+    "usd_per_trade": -69.22083,
+    "profit_factor": 0.789884,
+    "max_drawdown_usd": 15495.646421,
+    "geometric_baseline": 0.50353,
+    "break_even": 0.543061,
+    "median_min_to_tp": 65.0,
+    "random": {
+     "tp_first": {
+      "k": 1535,
+      "n": 3020,
+      "rate": 0.508278,
+      "wilson95": [
+       0.490449,
+       0.526086
+      ]
+     },
+     "mean_net_r": -0.061309,
+     "z": -0.277995,
+     "p_one_sided": 0.609492
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 59,
+     "n": 151,
+     "rate": 0.390728,
+     "wilson95": [
+      0.316541,
+      0.470338
+     ]
+    },
+    "sl_first": {
+     "k": 91,
+     "n": 151,
+     "rate": 0.602649,
+     "wilson95": [
+      0.522984,
+      0.677221
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.127826,
+    "mean_net_r_boot95": [
+     -0.314532,
+     0.054584
+    ],
+    "usd_per_trade": -83.086954,
+    "profit_factor": 0.79163,
+    "max_drawdown_usd": 19020.072137,
+    "geometric_baseline": 0.408689,
+    "break_even": 0.440087,
+    "median_min_to_tp": 110.0,
+    "random": {
+     "tp_first": {
+      "k": 1220,
+      "n": 3020,
+      "rate": 0.403974,
+      "wilson95": [
+       0.386606,
+       0.421585
+      ]
+     },
+     "mean_net_r": -0.075213,
+     "z": -0.323778,
+     "p_one_sided": 0.626947
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 55,
+     "n": 151,
+     "rate": 0.364238,
+     "wilson95": [
+      0.291736,
+      0.443477
+     ]
+    },
+    "sl_first": {
+     "k": 95,
+     "n": 151,
+     "rate": 0.629139,
+     "wilson95": [
+      0.549786,
+      0.702085
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.038361,
+    "mean_net_r_boot95": [
+     -0.257862,
+     0.190934
+    ],
+    "usd_per_trade": -24.934566,
+    "profit_factor": 0.940056,
+    "max_drawdown_usd": 16102.569875,
+    "geometric_baseline": 0.344931,
+    "break_even": 0.371025,
+    "median_min_to_tp": 185.0,
+    "random": {
+     "tp_first": {
+      "k": 990,
+      "n": 3020,
+      "rate": 0.327815,
+      "wilson95": [
+       0.311301,
+       0.344766
+      ]
+     },
+     "mean_net_r": -0.09281,
+     "z": 0.929257,
+     "p_one_sided": 0.176378
+    }
+   },
+   "median_D": 9.386168,
+   "mean_cost": 0.797815,
+   "median_lots": 0.63,
+   "mfe_median": 24.389146,
+   "mae_median": 24.570186,
+   "realised_loss_usd": {
+    "n": 76,
+    "max": 868.698127,
+    "over_650": 3,
+    "mean": 648.783815
+   },
+   "weeks": 148.282738,
+   "per_direction": {
+    "1": {
+     "n": 84,
+     "tp10": {
+      "tp_first": {
+       "k": 43,
+       "n": 84,
+       "rate": 0.511905,
+       "wilson95": [
+        0.406852,
+        0.615916
+       ]
+      },
+      "sl_first": {
+       "k": 40,
+       "n": 84,
+       "rate": 0.47619,
+       "wilson95": [
+        0.372784,
+        0.581679
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.071684,
+      "mean_net_r_boot95": [
+       -0.28736,
+       0.127139
+      ],
+      "usd_per_trade": -46.594368,
+      "profit_factor": 0.853625,
+      "max_drawdown_usd": 9131.559392,
+      "geometric_baseline": 0.494953,
+      "break_even": 0.535042,
+      "median_min_to_tp": 80.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 34,
+       "n": 84,
+       "rate": 0.404762,
+       "wilson95": [
+        0.306196,
+        0.511658
+       ]
+      },
+      "sl_first": {
+       "k": 50,
+       "n": 84,
+       "rate": 0.595238,
+       "wilson95": [
+        0.488342,
+        0.693804
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.098864,
+      "mean_net_r_boot95": [
+       -0.358505,
+       0.145581
+      ],
+      "usd_per_trade": -64.261761,
+      "profit_factor": 0.834693,
+      "max_drawdown_usd": 11957.547638,
+      "geometric_baseline": 0.400579,
+      "break_even": 0.432313,
+      "median_min_to_tp": 110.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 32,
+       "n": 84,
+       "rate": 0.380952,
+       "wilson95": [
+        0.284471,
+        0.487846
+       ]
+      },
+      "sl_first": {
+       "k": 52,
+       "n": 84,
+       "rate": 0.619048,
+       "wilson95": [
+        0.512154,
+        0.715529
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.003293,
+      "mean_net_r_boot95": [
+       -0.304314,
+       0.301488
+      ],
+      "usd_per_trade": 2.140419,
+      "profit_factor": 1.005295,
+      "max_drawdown_usd": 9887.370815,
+      "geometric_baseline": 0.337488,
+      "break_even": 0.363802,
+      "median_min_to_tp": 185.0
+     },
+     "median_D": 8.867565,
+     "mean_cost": 0.79619,
+     "median_lots": 0.67,
+     "mfe_median": 24.216097,
+     "mae_median": 23.344325,
+     "realised_loss_usd": {
+      "n": 41,
+      "max": 733.654821,
+      "over_650": 1,
+      "mean": 647.030565
+     },
+     "weeks": 143.522321
+    },
+    "-1": {
+     "n": 67,
+     "tp10": {
+      "tp_first": {
+       "k": 32,
+       "n": 67,
+       "rate": 0.477612,
+       "wilson95": [
+        0.362504,
+        0.595148
+       ]
+      },
+      "sl_first": {
+       "k": 34,
+       "n": 67,
+       "rate": 0.507463,
+       "wilson95": [
+        0.390638,
+        0.623478
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.150136,
+      "mean_net_r_boot95": [
+       -0.371091,
+       0.067252
+      ],
+      "usd_per_trade": -97.588334,
+      "profit_factor": 0.715802,
+      "max_drawdown_usd": 7852.674025,
+      "geometric_baseline": 0.514283,
+      "break_even": 0.553115,
+      "median_min_to_tp": 35.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 25,
+       "n": 67,
+       "rate": 0.373134,
+       "wilson95": [
+        0.267182,
+        0.492846
+       ]
+      },
+      "sl_first": {
+       "k": 41,
+       "n": 67,
+       "rate": 0.61194,
+       "wilson95": [
+        0.492231,
+        0.71951
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.164136,
+      "mean_net_r_boot95": [
+       -0.42935,
+       0.114143
+      ],
+      "usd_per_trade": -106.688689,
+      "profit_factor": 0.740601,
+      "max_drawdown_usd": 9012.524499,
+      "geometric_baseline": 0.418856,
+      "break_even": 0.449834,
+      "median_min_to_tp": 110.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 23,
+       "n": 67,
+       "rate": 0.343284,
+       "wilson95": [
+        0.24089,
+        0.462673
+       ]
+      },
+      "sl_first": {
+       "k": 43,
+       "n": 67,
+       "rate": 0.641791,
+       "wilson95": [
+        0.522185,
+        0.746019
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.090584,
+      "mean_net_r_boot95": [
+       -0.401317,
+       0.249781
+      ],
+      "usd_per_trade": -58.879323,
+      "profit_factor": 0.863292,
+      "max_drawdown_usd": 8611.586846,
+      "geometric_baseline": 0.354264,
+      "break_even": 0.38008,
+      "median_min_to_tp": 170.0
+     },
+     "median_D": 9.433014,
+     "mean_cost": 0.799851,
+     "median_lots": 0.63,
+     "mfe_median": 25.791471,
+     "mae_median": 28.265425,
+     "realised_loss_usd": {
+      "n": 35,
+      "max": 868.698127,
+      "over_650": 2,
+      "mean": 650.837621
+     },
+     "weeks": 142.96875
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 15,
+     "tp10_first": 7
+    },
+    "LDN_CONT": {
+     "n": 73,
+     "tp10_first": 37
+    },
+    "LDN_OPEN": {
+     "n": 29,
+     "tp10_first": 12
+    },
+    "NY_CONT": {
+     "n": 3,
+     "tp10_first": 2
+    },
+    "NY_OPEN": {
+     "n": 25,
+     "tp10_first": 14
+    },
+    "OFF": {
+     "n": 6,
+     "tp10_first": 3
+    }
+   }
+  },
+  "B1": {
+   "name": "sweep + reclaim close",
+   "n": 387,
+   "tp10": {
+    "tp_first": {
+     "k": 169,
+     "n": 387,
+     "rate": 0.436693,
+     "wilson95": [
+      0.38814,
+      0.48649
+     ]
+    },
+    "sl_first": {
+     "k": 214,
+     "n": 387,
+     "rate": 0.552972,
+     "wilson95": [
+      0.503157,
+      0.601745
+     ]
+    },
+    "ambiguous": 4,
+    "timeout": 0,
+    "m5_resolved": 2,
+    "mean_net_r": -0.137413,
+    "mean_net_r_boot95": [
+     -0.230472,
+     -0.03772
+    ],
+    "usd_per_trade": -89.318174,
+    "profit_factor": 0.759348,
+    "max_drawdown_usd": 35902.230151,
+    "geometric_baseline": 0.457816,
+    "break_even": 0.501181,
+    "median_min_to_tp": 35.0,
+    "random": {
+     "tp_first": {
+      "k": 3499,
+      "n": 7739,
+      "rate": 0.452126,
+      "wilson95": [
+       0.441064,
+       0.463235
+      ]
+     },
+     "mean_net_r": -0.106256,
+     "z": -0.595394,
+     "p_one_sided": 0.72421
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 136,
+     "n": 387,
+     "rate": 0.351421,
+     "wilson95": [
+      0.305528,
+      0.400235
+     ]
+    },
+    "sl_first": {
+     "k": 246,
+     "n": 387,
+     "rate": 0.635659,
+     "wilson95": [
+      0.586596,
+      0.682055
+     ]
+    },
+    "ambiguous": 5,
+    "timeout": 0,
+    "m5_resolved": 2,
+    "mean_net_r": -0.13171,
+    "mean_net_r_boot95": [
+     -0.25057,
+     -0.006343
+    ],
+    "usd_per_trade": -85.611793,
+    "profit_factor": 0.799306,
+    "max_drawdown_usd": 35771.257201,
+    "geometric_baseline": 0.363332,
+    "break_even": 0.397295,
+    "median_min_to_tp": 80.0,
+    "random": {
+     "tp_first": {
+      "k": 2801,
+      "n": 7739,
+      "rate": 0.361933,
+      "wilson95": [
+       0.351297,
+       0.372706
+      ]
+     },
+     "mean_net_r": -0.096921,
+     "z": -0.420071,
+     "p_one_sided": 0.662783
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 114,
+     "n": 387,
+     "rate": 0.294574,
+     "wilson95": [
+      0.251355,
+      0.341831
+     ]
+    },
+    "sl_first": {
+     "k": 271,
+     "n": 387,
+     "rate": 0.700258,
+     "wilson95": [
+      0.652827,
+      0.743753
+     ]
+    },
+    "ambiguous": 2,
+    "timeout": 0,
+    "m5_resolved": 1,
+    "mean_net_r": -0.139154,
+    "mean_net_r_boot95": [
+     -0.283329,
+     0.016212
+    ],
+    "usd_per_trade": -90.449927,
+    "profit_factor": 0.804867,
+    "max_drawdown_usd": 39733.030156,
+    "geometric_baseline": 0.301716,
+    "break_even": 0.329662,
+    "median_min_to_tp": 125.0,
+    "random": {
+     "tp_first": {
+      "k": 2271,
+      "n": 7738,
+      "rate": 0.293487,
+      "wilson95": [
+       0.283445,
+       0.303733
+      ]
+     },
+     "mean_net_r": -0.109932,
+     "z": 0.045824,
+     "p_one_sided": 0.481725
+    }
+   },
+   "median_D": 7.842798,
+   "mean_cost": 0.801525,
+   "median_lots": 0.75,
+   "mfe_median": 26.673306,
+   "mae_median": 30.333331,
+   "realised_loss_usd": {
+    "n": 218,
+    "max": 2406.210097,
+    "over_650": 4,
+    "mean": 654.448602
+   },
+   "weeks": 149.494048,
+   "per_direction": {
+    "1": {
+     "n": 192,
+     "tp10": {
+      "tp_first": {
+       "k": 83,
+       "n": 192,
+       "rate": 0.432292,
+       "wilson95": [
+        0.364225,
+        0.503014
+       ]
+      },
+      "sl_first": {
+       "k": 108,
+       "n": 192,
+       "rate": 0.5625,
+       "wilson95": [
+        0.491785,
+        0.630763
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.151697,
+      "mean_net_r_boot95": [
+       -0.275638,
+       -0.019811
+      ],
+      "usd_per_trade": -98.603326,
+      "profit_factor": 0.73325,
+      "max_drawdown_usd": 21870.644054,
+      "geometric_baseline": 0.46482,
+      "break_even": 0.507553,
+      "median_min_to_tp": 50.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 66,
+       "n": 192,
+       "rate": 0.34375,
+       "wilson95": [
+        0.280224,
+        0.413405
+       ]
+      },
+      "sl_first": {
+       "k": 125,
+       "n": 192,
+       "rate": 0.651042,
+       "wilson95": [
+        0.581258,
+        0.7149
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.161294,
+      "mean_net_r_boot95": [
+       -0.321368,
+       0.012118
+      ],
+      "usd_per_trade": -104.841041,
+      "profit_factor": 0.754585,
+      "max_drawdown_usd": 20129.479832,
+      "geometric_baseline": 0.369956,
+      "break_even": 0.403502,
+      "median_min_to_tp": 80.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 55,
+       "n": 192,
+       "rate": 0.286458,
+       "wilson95": [
+        0.227189,
+        0.354105
+       ]
+      },
+      "sl_first": {
+       "k": 136,
+       "n": 192,
+       "rate": 0.708333,
+       "wilson95": [
+        0.640457,
+        0.768037
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.172684,
+      "mean_net_r_boot95": [
+       -0.360246,
+       0.038696
+      ],
+      "usd_per_trade": -112.244558,
+      "profit_factor": 0.758322,
+      "max_drawdown_usd": 21808.343618,
+      "geometric_baseline": 0.307811,
+      "break_even": 0.335457,
+      "median_min_to_tp": 185.0
+     },
+     "median_D": 8.126477,
+     "mean_cost": 0.799167,
+     "median_lots": 0.72,
+     "mfe_median": 28.02967,
+     "mae_median": 30.616393,
+     "realised_loss_usd": {
+      "n": 109,
+      "max": 730.630314,
+      "over_650": 2,
+      "mean": 646.693505
+     },
+     "weeks": 144.3125
+    },
+    "-1": {
+     "n": 195,
+     "tp10": {
+      "tp_first": {
+       "k": 86,
+       "n": 195,
+       "rate": 0.441026,
+       "wilson95": [
+        0.373144,
+        0.511186
+       ]
+      },
+      "sl_first": {
+       "k": 106,
+       "n": 195,
+       "rate": 0.54359,
+       "wilson95": [
+        0.47351,
+        0.611985
+       ]
+      },
+      "ambiguous": 3,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.123347,
+      "mean_net_r_boot95": [
+       -0.274244,
+       0.038469
+      ],
+      "usd_per_trade": -80.175871,
+      "profit_factor": 0.784839,
+      "max_drawdown_usd": 20473.206738,
+      "geometric_baseline": 0.45092,
+      "break_even": 0.494907,
+      "median_min_to_tp": 27.5
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 70,
+       "n": 195,
+       "rate": 0.358974,
+       "wilson95": [
+        0.294968,
+        0.42843
+       ]
+      },
+      "sl_first": {
+       "k": 121,
+       "n": 195,
+       "rate": 0.620513,
+       "wilson95": [
+        0.550697,
+        0.685673
+       ]
+      },
+      "ambiguous": 4,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.102582,
+      "mean_net_r_boot95": [
+       -0.294098,
+       0.091792
+      ],
+      "usd_per_trade": -66.678379,
+      "profit_factor": 0.843465,
+      "max_drawdown_usd": 23555.602256,
+      "geometric_baseline": 0.35681,
+      "break_even": 0.391183,
+      "median_min_to_tp": 65.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 59,
+       "n": 195,
+       "rate": 0.302564,
+       "wilson95": [
+        0.242415,
+        0.370341
+       ]
+      },
+      "sl_first": {
+       "k": 135,
+       "n": 195,
+       "rate": 0.692308,
+       "wilson95": [
+        0.624334,
+        0.752851
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.106139,
+      "mean_net_r_boot95": [
+       -0.331278,
+       0.128348
+      ],
+      "usd_per_trade": -68.990598,
+      "profit_factor": 0.850874,
+      "max_drawdown_usd": 25577.004146,
+      "geometric_baseline": 0.295715,
+      "break_even": 0.323956,
+      "median_min_to_tp": 110.0
+     },
+     "median_D": 7.559264,
+     "mean_cost": 0.803846,
+     "median_lots": 0.77,
+     "mfe_median": 25.931741,
+     "mae_median": 29.202201,
+     "realised_loss_usd": {
+      "n": 109,
+      "max": 2406.210097,
+      "over_650": 2,
+      "mean": 662.203699
+     },
+     "weeks": 149.494048
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 40,
+     "tp10_first": 19
+    },
+    "LDN_CONT": {
+     "n": 187,
+     "tp10_first": 81
+    },
+    "LDN_OPEN": {
+     "n": 44,
+     "tp10_first": 14
+    },
+    "NY_CONT": {
+     "n": 45,
+     "tp10_first": 21
+    },
+    "NY_OPEN": {
+     "n": 49,
+     "tp10_first": 21
+    },
+    "OFF": {
+     "n": 21,
+     "tp10_first": 12
+    },
+    "OVERLAP": {
+     "n": 1,
+     "tp10_first": 1
+    }
+   }
+  },
+  "B2": {
+   "name": "reclaim + displacement",
+   "n": 187,
+   "tp10": {
+    "tp_first": {
+     "k": 108,
+     "n": 187,
+     "rate": 0.57754,
+     "wilson95": [
+      0.505882,
+      0.646077
+     ]
+    },
+    "sl_first": {
+     "k": 78,
+     "n": 187,
+     "rate": 0.417112,
+     "wilson95": [
+      0.348804,
+      0.488758
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 0,
+    "m5_resolved": 1,
+    "mean_net_r": -0.052548,
+    "mean_net_r_boot95": [
+     -0.171057,
+     0.064688
+    ],
+    "usd_per_trade": -34.155942,
+    "profit_factor": 0.875781,
+    "max_drawdown_usd": 11241.561314,
+    "geometric_baseline": 0.575701,
+    "break_even": 0.610557,
+    "median_min_to_tp": 65.0,
+    "random": {
+     "tp_first": {
+      "k": 2161,
+      "n": 3739,
+      "rate": 0.577962,
+      "wilson95": [
+       0.562059,
+       0.593705
+      ]
+     },
+     "mean_net_r": -0.053107,
+     "z": -0.0114,
+     "p_one_sided": 0.504548
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 86,
+     "n": 187,
+     "rate": 0.459893,
+     "wilson95": [
+      0.389986,
+      0.531415
+     ]
+    },
+    "sl_first": {
+     "k": 98,
+     "n": 187,
+     "rate": 0.524064,
+     "wilson95": [
+      0.452722,
+      0.594438
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 2,
+    "m5_resolved": 1,
+    "mean_net_r": -0.098217,
+    "mean_net_r_boot95": [
+     -0.248974,
+     0.055872
+    ],
+    "usd_per_trade": -63.841304,
+    "profit_factor": 0.817034,
+    "max_drawdown_usd": 16265.908312,
+    "geometric_baseline": 0.479809,
+    "break_even": 0.508275,
+    "median_min_to_tp": 170.0,
+    "random": {
+     "tp_first": {
+      "k": 1751,
+      "n": 3739,
+      "rate": 0.468307,
+      "wilson95": [
+       0.452353,
+       0.484326
+      ]
+     },
+     "mean_net_r": -0.070981,
+     "z": -0.225036,
+     "p_one_sided": 0.589024
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 73,
+     "n": 187,
+     "rate": 0.390374,
+     "wilson95": [
+      0.323333,
+      0.461829
+     ]
+    },
+    "sl_first": {
+     "k": 108,
+     "n": 187,
+     "rate": 0.57754,
+     "wilson95": [
+      0.505882,
+      0.646077
+     ]
+    },
+    "ambiguous": 1,
+    "timeout": 5,
+    "m5_resolved": 1,
+    "mean_net_r": -0.098915,
+    "mean_net_r_boot95": [
+     -0.272223,
+     0.083648
+    ],
+    "usd_per_trade": -64.294558,
+    "profit_factor": 0.833223,
+    "max_drawdown_usd": 19732.736279,
+    "geometric_baseline": 0.412293,
+    "break_even": 0.436399,
+    "median_min_to_tp": 320.0,
+    "random": {
+     "tp_first": {
+      "k": 1483,
+      "n": 3739,
+      "rate": 0.39663,
+      "wilson95": [
+       0.381064,
+       0.412409
+      ]
+     },
+     "mean_net_r": -0.062527,
+     "z": -0.170678,
+     "p_one_sided": 0.567761
+    }
+   },
+   "median_D": 13.631902,
+   "mean_cost": 0.817059,
+   "median_lots": 0.45,
+   "mfe_median": 23.584437,
+   "mae_median": 22.112093,
+   "realised_loss_usd": {
+    "n": 79,
+    "max": 697.634766,
+    "over_650": 1,
+    "mean": 643.319636
+   },
+   "weeks": 146.513393,
+   "per_direction": {
+    "1": {
+     "n": 72,
+     "tp10": {
+      "tp_first": {
+       "k": 43,
+       "n": 72,
+       "rate": 0.597222,
+       "wilson95": [
+        0.481807,
+        0.702789
+       ]
+      },
+      "sl_first": {
+       "k": 29,
+       "n": 72,
+       "rate": 0.402778,
+       "wilson95": [
+        0.297211,
+        0.518193
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.039903,
+      "mean_net_r_boot95": [
+       -0.211889,
+       0.138985
+      ],
+      "usd_per_trade": -25.937106,
+      "profit_factor": 0.90093,
+      "max_drawdown_usd": 4743.775798,
+      "geometric_baseline": 0.582305,
+      "break_even": 0.616593,
+      "median_min_to_tp": 65.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 33,
+       "n": 72,
+       "rate": 0.458333,
+       "wilson95": [
+        0.348286,
+        0.572601
+       ]
+      },
+      "sl_first": {
+       "k": 36,
+       "n": 72,
+       "rate": 0.5,
+       "wilson95": [
+        0.387471,
+        0.612529
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 2,
+      "m5_resolved": 0,
+      "mean_net_r": -0.137467,
+      "mean_net_r_boot95": [
+       -0.371434,
+       0.105943
+      ],
+      "usd_per_trade": -89.35374,
+      "profit_factor": 0.74142,
+      "max_drawdown_usd": 8965.562353,
+      "geometric_baseline": 0.486364,
+      "break_even": 0.514443,
+      "median_min_to_tp": 200.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 29,
+       "n": 72,
+       "rate": 0.402778,
+       "wilson95": [
+        0.297211,
+        0.518193
+       ]
+      },
+      "sl_first": {
+       "k": 39,
+       "n": 72,
+       "rate": 0.541667,
+       "wilson95": [
+        0.427399,
+        0.651714
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 3,
+      "m5_resolved": 0,
+      "mean_net_r": -0.125727,
+      "mean_net_r_boot95": [
+       -0.374538,
+       0.143913
+      ],
+      "usd_per_trade": -81.722237,
+      "profit_factor": 0.780693,
+      "max_drawdown_usd": 9914.13955,
+      "geometric_baseline": 0.418525,
+      "break_even": 0.442345,
+      "median_min_to_tp": 515.0
+     },
+     "median_D": 13.998725,
+     "mean_cost": 0.814444,
+     "median_lots": 0.43,
+     "mfe_median": 27.210828,
+     "mae_median": 15.26741,
+     "realised_loss_usd": {
+      "n": 29,
+      "max": 649.963662,
+      "over_650": 0,
+      "mean": 644.187205
+     },
+     "weeks": 144.284226
+    },
+    "-1": {
+     "n": 115,
+     "tp10": {
+      "tp_first": {
+       "k": 65,
+       "n": 115,
+       "rate": 0.565217,
+       "wilson95": [
+        0.473958,
+        0.652261
+       ]
+      },
+      "sl_first": {
+       "k": 49,
+       "n": 115,
+       "rate": 0.426087,
+       "wilson95": [
+        0.339537,
+        0.517415
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.060464,
+      "mean_net_r_boot95": [
+       -0.213566,
+       0.099886
+      ],
+      "usd_per_trade": -39.301648,
+      "profit_factor": 0.861226,
+      "max_drawdown_usd": 10869.529191,
+      "geometric_baseline": 0.571566,
+      "break_even": 0.606777,
+      "median_min_to_tp": 65.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 53,
+       "n": 115,
+       "rate": 0.46087,
+       "wilson95": [
+        0.372507,
+        0.551762
+       ]
+      },
+      "sl_first": {
+       "k": 62,
+       "n": 115,
+       "rate": 0.53913,
+       "wilson95": [
+        0.448238,
+        0.627493
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.073644,
+      "mean_net_r_boot95": [
+       -0.277119,
+       0.145648
+      ],
+      "usd_per_trade": -47.868301,
+      "profit_factor": 0.863636,
+      "max_drawdown_usd": 10413.928311,
+      "geometric_baseline": 0.475705,
+      "break_even": 0.504414,
+      "median_min_to_tp": 125.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 44,
+       "n": 115,
+       "rate": 0.382609,
+       "wilson95": [
+        0.298939,
+        0.473868
+       ]
+      },
+      "sl_first": {
+       "k": 69,
+       "n": 115,
+       "rate": 0.6,
+       "wilson95": [
+        0.50863,
+        0.684905
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 2,
+      "m5_resolved": 1,
+      "mean_net_r": -0.082128,
+      "mean_net_r_boot95": [
+       -0.319016,
+       0.168385
+      ],
+      "usd_per_trade": -53.383316,
+      "profit_factor": 0.864362,
+      "max_drawdown_usd": 15043.273457,
+      "geometric_baseline": 0.408391,
+      "break_even": 0.432676,
+      "median_min_to_tp": 275.0
+     },
+     "median_D": 13.221327,
+     "mean_cost": 0.818696,
+     "median_lots": 0.46,
+     "mfe_median": 19.42705,
+     "mae_median": 23.589144,
+     "realised_loss_usd": {
+      "n": 50,
+      "max": 697.634766,
+      "over_650": 1,
+      "mean": 642.816445
+     },
+     "weeks": 146.513393
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 38,
+     "tp10_first": 20
+    },
+    "LDN_CONT": {
+     "n": 78,
+     "tp10_first": 46
+    },
+    "LDN_OPEN": {
+     "n": 34,
+     "tp10_first": 16
+    },
+    "NY_CONT": {
+     "n": 7,
+     "tp10_first": 6
+    },
+    "NY_OPEN": {
+     "n": 24,
+     "tp10_first": 17
+    },
+    "OFF": {
+     "n": 6,
+     "tp10_first": 3
+    }
+   }
+  },
+  "B3": {
+   "name": "reclaim + M15 MSS",
+   "n": 294,
+   "tp10": {
+    "tp_first": {
+     "k": 174,
+     "n": 294,
+     "rate": 0.591837,
+     "wilson95": [
+      0.534822,
+      0.646483
+     ]
+    },
+    "sl_first": {
+     "k": 118,
+     "n": 294,
+     "rate": 0.401361,
+     "wilson95": [
+      0.34695,
+      0.458315
+     ]
+    },
+    "ambiguous": 2,
+    "timeout": 0,
+    "m5_resolved": 1,
+    "mean_net_r": -0.051295,
+    "mean_net_r_boot95": [
+     -0.155892,
+     0.049148
+    ],
+    "usd_per_trade": -33.342006,
+    "profit_factor": 0.874437,
+    "max_drawdown_usd": 11321.018257,
+    "geometric_baseline": 0.582213,
+    "break_even": 0.616969,
+    "median_min_to_tp": 65.0,
+    "random": {
+     "tp_first": {
+      "k": 3380,
+      "n": 5879,
+      "rate": 0.574928,
+      "wilson95": [
+       0.562246,
+       0.587511
+      ]
+     },
+     "mean_net_r": -0.062385,
+     "z": 0.572487,
+     "p_one_sided": 0.283496
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 145,
+     "n": 294,
+     "rate": 0.493197,
+     "wilson95": [
+      0.436506,
+      0.550064
+     ]
+    },
+    "sl_first": {
+     "k": 145,
+     "n": 294,
+     "rate": 0.493197,
+     "wilson95": [
+      0.436506,
+      0.550064
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 4,
+    "m5_resolved": 1,
+    "mean_net_r": -0.04455,
+    "mean_net_r_boot95": [
+     -0.168605,
+     0.078918
+    ],
+    "usd_per_trade": -28.957514,
+    "profit_factor": 0.910326,
+    "max_drawdown_usd": 12304.522609,
+    "geometric_baseline": 0.48669,
+    "break_even": 0.515124,
+    "median_min_to_tp": 170.0,
+    "random": {
+     "tp_first": {
+      "k": 2785,
+      "n": 5879,
+      "rate": 0.47372,
+      "wilson95": [
+       0.460978,
+       0.486496
+      ]
+     },
+     "mean_net_r": -0.062085,
+     "z": 0.652671,
+     "p_one_sided": 0.256984
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 123,
+     "n": 294,
+     "rate": 0.418367,
+     "wilson95": [
+      0.363388,
+      0.475452
+     ]
+    },
+    "sl_first": {
+     "k": 161,
+     "n": 294,
+     "rate": 0.547619,
+     "wilson95": [
+      0.490476,
+      0.603534
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 10,
+    "m5_resolved": 1,
+    "mean_net_r": -0.02448,
+    "mean_net_r_boot95": [
+     -0.168104,
+     0.124299
+    ],
+    "usd_per_trade": -15.911983,
+    "profit_factor": 0.955689,
+    "max_drawdown_usd": 13056.142199,
+    "geometric_baseline": 0.419144,
+    "break_even": 0.443254,
+    "median_min_to_tp": 290.0,
+    "random": {
+     "tp_first": {
+      "k": 2359,
+      "n": 5879,
+      "rate": 0.401259,
+      "wilson95": [
+       0.388798,
+       0.413849
+      ]
+     },
+     "mean_net_r": -0.055562,
+     "z": 0.58387,
+     "p_one_sided": 0.279654
+    }
+   },
+   "median_D": 14.291225,
+   "mean_cost": 0.825102,
+   "median_lots": 0.43,
+   "mfe_median": 22.805788,
+   "mae_median": 22.121032,
+   "realised_loss_usd": {
+    "n": 120,
+    "max": 697.634766,
+    "over_650": 1,
+    "mean": 643.964845
+   },
+   "weeks": 149.014881,
+   "per_direction": {
+    "1": {
+     "n": 140,
+     "tp10": {
+      "tp_first": {
+       "k": 83,
+       "n": 140,
+       "rate": 0.592857,
+       "wilson95": [
+        0.51005,
+        0.670704
+       ]
+      },
+      "sl_first": {
+       "k": 56,
+       "n": 140,
+       "rate": 0.4,
+       "wilson95": [
+        0.322567,
+        0.482774
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.062997,
+      "mean_net_r_boot95": [
+       -0.194643,
+       0.085159
+      ],
+      "usd_per_trade": -40.947975,
+      "profit_factor": 0.845271,
+      "max_drawdown_usd": 8636.386191,
+      "geometric_baseline": 0.587825,
+      "break_even": 0.622464,
+      "median_min_to_tp": 65.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 71,
+       "n": 140,
+       "rate": 0.507143,
+       "wilson95": [
+        0.42525,
+        0.588654
+       ]
+      },
+      "sl_first": {
+       "k": 66,
+       "n": 140,
+       "rate": 0.471429,
+       "wilson95": [
+        0.390611,
+        0.553772
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 3,
+      "m5_resolved": 0,
+      "mean_net_r": -0.034916,
+      "mean_net_r_boot95": [
+       -0.205101,
+       0.150946
+      ],
+      "usd_per_trade": -22.695392,
+      "profit_factor": 0.926991,
+      "max_drawdown_usd": 7477.844474,
+      "geometric_baseline": 0.492651,
+      "break_even": 0.521033,
+      "median_min_to_tp": 140.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 62,
+       "n": 140,
+       "rate": 0.442857,
+       "wilson95": [
+        0.363194,
+        0.525572
+       ]
+      },
+      "sl_first": {
+       "k": 73,
+       "n": 140,
+       "rate": 0.521429,
+       "wilson95": [
+        0.439219,
+        0.602493
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 5,
+      "m5_resolved": 0,
+      "mean_net_r": -0.00784,
+      "mean_net_r_boot95": [
+       -0.206803,
+       0.203445
+      ],
+      "usd_per_trade": -5.095968,
+      "profit_factor": 0.985166,
+      "max_drawdown_usd": 6805.897858,
+      "geometric_baseline": 0.425113,
+      "break_even": 0.449207,
+      "median_min_to_tp": 275.0
+     },
+     "median_D": 14.381414,
+     "mean_cost": 0.831429,
+     "median_lots": 0.425,
+     "mfe_median": 28.313441,
+     "mae_median": 19.945174,
+     "realised_loss_usd": {
+      "n": 57,
+      "max": 649.968595,
+      "over_650": 0,
+      "mean": 644.390894
+     },
+     "weeks": 147.436012
+    },
+    "-1": {
+     "n": 154,
+     "tp10": {
+      "tp_first": {
+       "k": 91,
+       "n": 154,
+       "rate": 0.590909,
+       "wilson95": [
+        0.511962,
+        0.665431
+       ]
+      },
+      "sl_first": {
+       "k": 62,
+       "n": 154,
+       "rate": 0.402597,
+       "wilson95": [
+        0.328423,
+        0.481513
+       ]
+      },
+      "ambiguous": 1,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.040658,
+      "mean_net_r_boot95": [
+       -0.188416,
+       0.107614
+      ],
+      "usd_per_trade": -26.427488,
+      "profit_factor": 0.900781,
+      "max_drawdown_usd": 8633.313973,
+      "geometric_baseline": 0.577111,
+      "break_even": 0.611973,
+      "median_min_to_tp": 65.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 74,
+       "n": 154,
+       "rate": 0.480519,
+       "wilson95": [
+        0.403049,
+        0.558938
+       ]
+      },
+      "sl_first": {
+       "k": 79,
+       "n": 154,
+       "rate": 0.512987,
+       "wilson95": [
+        0.434694,
+        0.590648
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 1,
+      "mean_net_r": -0.053308,
+      "mean_net_r_boot95": [
+       -0.234193,
+       0.121116
+      ],
+      "usd_per_trade": -34.650351,
+      "profit_factor": 0.896222,
+      "max_drawdown_usd": 10274.042115,
+      "geometric_baseline": 0.481271,
+      "break_even": 0.509753,
+      "median_min_to_tp": 177.5
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 61,
+       "n": 154,
+       "rate": 0.396104,
+       "wilson95": [
+        0.322291,
+        0.474974
+       ]
+      },
+      "sl_first": {
+       "k": 88,
+       "n": 154,
+       "rate": 0.571429,
+       "wilson95": [
+        0.492468,
+        0.646912
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 5,
+      "m5_resolved": 1,
+      "mean_net_r": -0.039607,
+      "mean_net_r_boot95": [
+       -0.243743,
+       0.174862
+      ],
+      "usd_per_trade": -25.744724,
+      "profit_factor": 0.931022,
+      "max_drawdown_usd": 11050.0,
+      "geometric_baseline": 0.413717,
+      "break_even": 0.437843,
+      "median_min_to_tp": 305.0
+     },
+     "median_D": 14.095411,
+     "mean_cost": 0.819351,
+     "median_lots": 0.435,
+     "mfe_median": 19.975678,
+     "mae_median": 22.822515,
+     "realised_loss_usd": {
+      "n": 63,
+      "max": 697.634766,
+      "over_650": 1,
+      "mean": 643.579373
+     },
+     "weeks": 149.014881
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 68,
+     "tp10_first": 40
+    },
+    "LDN_CONT": {
+     "n": 109,
+     "tp10_first": 64
+    },
+    "LDN_OPEN": {
+     "n": 43,
+     "tp10_first": 23
+    },
+    "NY_CONT": {
+     "n": 27,
+     "tp10_first": 13
+    },
+    "NY_OPEN": {
+     "n": 33,
+     "tp10_first": 26
+    },
+    "OFF": {
+     "n": 13,
+     "tp10_first": 8
+    },
+    "OVERLAP": {
+     "n": 1,
+     "tp10_first": 0
+    }
+   }
+  },
+  "B4": {
+   "name": "higher low after the MSS",
+   "n": 134,
+   "tp10": {
+    "tp_first": {
+     "k": 61,
+     "n": 134,
+     "rate": 0.455224,
+     "wilson95": [
+      0.373328,
+      0.539615
+     ]
+    },
+    "sl_first": {
+     "k": 73,
+     "n": 134,
+     "rate": 0.544776,
+     "wilson95": [
+      0.460385,
+      0.626672
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.16011,
+    "mean_net_r_boot95": [
+     -0.330688,
+     0.00163
+    ],
+    "usd_per_trade": -104.071609,
+    "profit_factor": 0.706099,
+    "max_drawdown_usd": 15983.603446,
+    "geometric_baseline": 0.500954,
+    "break_even": 0.541353,
+    "median_min_to_tp": 95.0,
+    "random": {
+     "tp_first": {
+      "k": 1317,
+      "n": 2680,
+      "rate": 0.491418,
+      "wilson95": [
+       0.472517,
+       0.510344
+      ]
+     },
+     "mean_net_r": -0.097058,
+     "z": -0.817932,
+     "p_one_sided": 0.793302
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 50,
+     "n": 134,
+     "rate": 0.373134,
+     "wilson95": [
+      0.295855,
+      0.457485
+     ]
+    },
+    "sl_first": {
+     "k": 83,
+     "n": 134,
+     "rate": 0.619403,
+     "wilson95": [
+      0.534953,
+      0.697198
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 1,
+    "m5_resolved": 0,
+    "mean_net_r": -0.148287,
+    "mean_net_r_boot95": [
+     -0.346248,
+     0.058518
+    ],
+    "usd_per_trade": -96.38674,
+    "profit_factor": 0.761841,
+    "max_drawdown_usd": 15429.552294,
+    "geometric_baseline": 0.405273,
+    "break_even": 0.437377,
+    "median_min_to_tp": 140.0,
+    "random": {
+     "tp_first": {
+      "k": 1055,
+      "n": 2680,
+      "rate": 0.393657,
+      "wilson95": [
+       0.375325,
+       0.412293
+      ]
+     },
+     "mean_net_r": -0.098289,
+     "z": -0.474742,
+     "p_one_sided": 0.682515
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 37,
+     "n": 134,
+     "rate": 0.276119,
+     "wilson95": [
+      0.207464,
+      0.357254
+     ]
+    },
+    "sl_first": {
+     "k": 95,
+     "n": 134,
+     "rate": 0.708955,
+     "wilson95": [
+      0.627078,
+      0.779186
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 2,
+    "m5_resolved": 0,
+    "mean_net_r": -0.248328,
+    "mean_net_r_boot95": [
+     -0.457176,
+     -0.025672
+    ],
+    "usd_per_trade": -161.413204,
+    "profit_factor": 0.651319,
+    "max_drawdown_usd": 23335.629255,
+    "geometric_baseline": 0.341111,
+    "break_even": 0.367791,
+    "median_min_to_tp": 380.0,
+    "random": {
+     "tp_first": {
+      "k": 858,
+      "n": 2680,
+      "rate": 0.320149,
+      "wilson95": [
+       0.302754,
+       0.338059
+      ]
+     },
+     "mean_net_r": -0.118481,
+     "z": -1.068022,
+     "p_one_sided": 0.857245
+    }
+   },
+   "median_D": 9.400371,
+   "mean_cost": 0.810299,
+   "median_lots": 0.625,
+   "mfe_median": 21.965803,
+   "mae_median": 22.707119,
+   "realised_loss_usd": {
+    "n": 73,
+    "max": 649.902996,
+    "over_650": 0,
+    "mean": 644.25068
+   },
+   "weeks": 149.00744,
+   "per_direction": {
+    "1": {
+     "n": 65,
+     "tp10": {
+      "tp_first": {
+       "k": 31,
+       "n": 65,
+       "rate": 0.476923,
+       "wilson95": [
+        0.360218,
+        0.596204
+       ]
+      },
+      "sl_first": {
+       "k": 34,
+       "n": 65,
+       "rate": 0.523077,
+       "wilson95": [
+        0.403796,
+        0.639782
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.134806,
+      "mean_net_r_boot95": [
+       -0.355459,
+       0.097164
+      ],
+      "usd_per_trade": -87.623587,
+      "profit_factor": 0.742284,
+      "max_drawdown_usd": 8415.292438,
+      "geometric_baseline": 0.515128,
+      "break_even": 0.554555,
+      "median_min_to_tp": 95.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 27,
+       "n": 65,
+       "rate": 0.415385,
+       "wilson95": [
+        0.303602,
+        0.53661
+       ]
+      },
+      "sl_first": {
+       "k": 37,
+       "n": 65,
+       "rate": 0.569231,
+       "wilson95": [
+        0.44833,
+        0.682405
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.055565,
+      "mean_net_r_boot95": [
+       -0.320257,
+       0.239483
+      ],
+      "usd_per_trade": -36.117534,
+      "profit_factor": 0.903516,
+      "max_drawdown_usd": 7261.468612,
+      "geometric_baseline": 0.419374,
+      "break_even": 0.450833,
+      "median_min_to_tp": 195.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 22,
+       "n": 65,
+       "rate": 0.338462,
+       "wilson95": [
+        0.235335,
+        0.459616
+       ]
+      },
+      "sl_first": {
+       "k": 42,
+       "n": 65,
+       "rate": 0.646154,
+       "wilson95": [
+        0.524751,
+        0.751245
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.079492,
+      "mean_net_r_boot95": [
+       -0.38468,
+       0.275326
+      ],
+      "usd_per_trade": -51.66969,
+      "profit_factor": 0.878234,
+      "max_drawdown_usd": 9537.858695,
+      "geometric_baseline": 0.354516,
+      "break_even": 0.380735,
+      "median_min_to_tp": 260.0
+     },
+     "median_D": 9.938223,
+     "mean_cost": 0.81,
+     "median_lots": 0.6,
+     "mfe_median": 26.499955,
+     "mae_median": 21.991255,
+     "realised_loss_usd": {
+      "n": 34,
+      "max": 649.723808,
+      "over_650": 0,
+      "mean": 644.340842
+     },
+     "weeks": 147.188988
+    },
+    "-1": {
+     "n": 69,
+     "tp10": {
+      "tp_first": {
+       "k": 30,
+       "n": 69,
+       "rate": 0.434783,
+       "wilson95": [
+        0.324328,
+        0.552116
+       ]
+      },
+      "sl_first": {
+       "k": 39,
+       "n": 69,
+       "rate": 0.565217,
+       "wilson95": [
+        0.447884,
+        0.675672
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.183948,
+      "mean_net_r_boot95": [
+       -0.438959,
+       0.04115
+      ],
+      "usd_per_trade": -119.566123,
+      "profit_factor": 0.674554,
+      "max_drawdown_usd": 8725.35866,
+      "geometric_baseline": 0.487602,
+      "break_even": 0.528915,
+      "median_min_to_tp": 72.5
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 23,
+       "n": 69,
+       "rate": 0.333333,
+       "wilson95": [
+        0.233511,
+        0.450735
+       ]
+      },
+      "sl_first": {
+       "k": 46,
+       "n": 69,
+       "rate": 0.666667,
+       "wilson95": [
+        0.549265,
+        0.766489
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.235634,
+      "mean_net_r_boot95": [
+       -0.538347,
+       0.065412
+      ],
+      "usd_per_trade": -153.16208,
+      "profit_factor": 0.646549,
+      "max_drawdown_usd": 11850.870556,
+      "geometric_baseline": 0.391989,
+      "break_even": 0.424702,
+      "median_min_to_tp": 95.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 15,
+       "n": 69,
+       "rate": 0.217391,
+       "wilson95": [
+        0.136408,
+        0.328183
+       ]
+      },
+      "sl_first": {
+       "k": 53,
+       "n": 69,
+       "rate": 0.768116,
+       "wilson95": [
+        0.656032,
+        0.851921
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": -0.407377,
+      "mean_net_r_boot95": [
+       -0.700115,
+       -0.106055
+      ],
+      "usd_per_trade": -264.794775,
+      "profit_factor": 0.469642,
+      "max_drawdown_usd": 19272.487986,
+      "geometric_baseline": 0.328483,
+      "break_even": 0.355598,
+      "median_min_to_tp": 545.0
+     },
+     "median_D": 8.706244,
+     "mean_cost": 0.81058,
+     "median_lots": 0.68,
+     "mfe_median": 21.065637,
+     "mae_median": 23.716156,
+     "realised_loss_usd": {
+      "n": 39,
+      "max": 649.902996,
+      "over_650": 0,
+      "mean": 644.172078
+     },
+     "weeks": 149.00744
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 21,
+     "tp10_first": 11
+    },
+    "LDN_CONT": {
+     "n": 45,
+     "tp10_first": 22
+    },
+    "LDN_OPEN": {
+     "n": 16,
+     "tp10_first": 5
+    },
+    "NY_CONT": {
+     "n": 16,
+     "tp10_first": 5
+    },
+    "NY_OPEN": {
+     "n": 30,
+     "tp10_first": 17
+    },
+    "OFF": {
+     "n": 6,
+     "tp10_first": 1
+    }
+   }
+  },
+  "C1": {
+   "name": "break, acceptance, retest rejection",
+   "n": 528,
+   "tp10": {
+    "tp_first": {
+     "k": 242,
+     "n": 528,
+     "rate": 0.458333,
+     "wilson95": [
+      0.416287,
+      0.500981
+     ]
+    },
+    "sl_first": {
+     "k": 286,
+     "n": 528,
+     "rate": 0.541667,
+     "wilson95": [
+      0.499019,
+      0.583713
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 2,
+    "mean_net_r": -0.094654,
+    "mean_net_r_boot95": [
+     -0.195284,
+     0.002228
+    ],
+    "usd_per_trade": -61.524888,
+    "profit_factor": 0.829471,
+    "max_drawdown_usd": 39650.130468,
+    "geometric_baseline": 0.455037,
+    "break_even": 0.498125,
+    "median_min_to_tp": 50.0,
+    "random": {
+     "tp_first": {
+      "k": 4790,
+      "n": 10557,
+      "rate": 0.453727,
+      "wilson95": [
+       0.444249,
+       0.463239
+      ]
+     },
+     "mean_net_r": -0.0898,
+     "z": 0.207452,
+     "p_one_sided": 0.417828
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 198,
+     "n": 528,
+     "rate": 0.375,
+     "wilson95": [
+      0.334748,
+      0.417057
+     ]
+    },
+    "sl_first": {
+     "k": 330,
+     "n": 528,
+     "rate": 0.625,
+     "wilson95": [
+      0.582943,
+      0.665252
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.060051,
+    "mean_net_r_boot95": [
+     -0.17595,
+     0.051656
+    ],
+    "usd_per_trade": -39.033408,
+    "profit_factor": 0.905933,
+    "max_drawdown_usd": 30446.722581,
+    "geometric_baseline": 0.360839,
+    "break_even": 0.394542,
+    "median_min_to_tp": 80.0,
+    "random": {
+     "tp_first": {
+      "k": 3780,
+      "n": 10556,
+      "rate": 0.35809,
+      "wilson95": [
+       0.348997,
+       0.367286
+      ]
+     },
+     "mean_net_r": -0.092139,
+     "z": 0.790513,
+     "p_one_sided": 0.214614
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 157,
+     "n": 528,
+     "rate": 0.297348,
+     "wilson95": [
+      0.259937,
+      0.337687
+     ]
+    },
+    "sl_first": {
+     "k": 369,
+     "n": 528,
+     "rate": 0.698864,
+     "wilson95": [
+      0.658412,
+      0.736442
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 2,
+    "m5_resolved": 1,
+    "mean_net_r": -0.099169,
+    "mean_net_r_boot95": [
+     -0.228616,
+     0.033957
+    ],
+    "usd_per_trade": -64.459641,
+    "profit_factor": 0.861379,
+    "max_drawdown_usd": 49191.335904,
+    "geometric_baseline": 0.299517,
+    "break_even": 0.327226,
+    "median_min_to_tp": 140.0,
+    "random": {
+     "tp_first": {
+      "k": 3083,
+      "n": 10554,
+      "rate": 0.292117,
+      "wilson95": [
+       0.283518,
+       0.300867
+      ]
+     },
+     "mean_net_r": -0.095285,
+     "z": 0.257926,
+     "p_one_sided": 0.398232
+    }
+   },
+   "median_D": 7.651741,
+   "mean_cost": 0.79197,
+   "median_lots": 0.77,
+   "mfe_median": 25.070319,
+   "mae_median": 26.722686,
+   "realised_loss_usd": {
+    "n": 286,
+    "max": 4453.067099,
+    "over_650": 5,
+    "mean": 661.389264
+   },
+   "weeks": 149.892857,
+   "per_direction": {
+    "1": {
+     "n": 292,
+     "tp10": {
+      "tp_first": {
+       "k": 141,
+       "n": 292,
+       "rate": 0.482877,
+       "wilson95": [
+        0.426156,
+        0.540042
+       ]
+      },
+      "sl_first": {
+       "k": 151,
+       "n": 292,
+       "rate": 0.517123,
+       "wilson95": [
+        0.459958,
+        0.573844
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.045814,
+      "mean_net_r_boot95": [
+       -0.172945,
+       0.07491
+      ],
+      "usd_per_trade": -29.779109,
+      "profit_factor": 0.911876,
+      "max_drawdown_usd": 19834.401222,
+      "geometric_baseline": 0.460838,
+      "break_even": 0.503513,
+      "median_min_to_tp": 50.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 118,
+       "n": 292,
+       "rate": 0.40411,
+       "wilson95": [
+        0.349423,
+        0.461287
+       ]
+      },
+      "sl_first": {
+       "k": 174,
+       "n": 292,
+       "rate": 0.59589,
+       "wilson95": [
+        0.538713,
+        0.650577
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.013353,
+      "mean_net_r_boot95": [
+       -0.148746,
+       0.161376
+      ],
+      "usd_per_trade": 8.679524,
+      "profit_factor": 1.022305,
+      "max_drawdown_usd": 19782.130946,
+      "geometric_baseline": 0.366432,
+      "break_even": 0.399869,
+      "median_min_to_tp": 95.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 97,
+       "n": 292,
+       "rate": 0.332192,
+       "wilson95": [
+        0.280656,
+        0.388086
+       ]
+      },
+      "sl_first": {
+       "k": 193,
+       "n": 292,
+       "rate": 0.660959,
+       "wilson95": [
+        0.604886,
+        0.712852
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 2,
+      "m5_resolved": 0,
+      "mean_net_r": -0.004195,
+      "mean_net_r_boot95": [
+       -0.185034,
+       0.172076
+      ],
+      "usd_per_trade": -2.7267,
+      "profit_factor": 0.99368,
+      "max_drawdown_usd": 25553.66285,
+      "geometric_baseline": 0.304732,
+      "break_even": 0.332255,
+      "median_min_to_tp": 170.0
+     },
+     "median_D": 7.666311,
+     "mean_cost": 0.791918,
+     "median_lots": 0.76,
+     "mfe_median": 27.868443,
+     "mae_median": 23.92532,
+     "realised_loss_usd": {
+      "n": 151,
+      "max": 1014.637954,
+      "over_650": 3,
+      "mean": 648.791479
+     },
+     "weeks": 149.052083
+    },
+    "-1": {
+     "n": 236,
+     "tp10": {
+      "tp_first": {
+       "k": 101,
+       "n": 236,
+       "rate": 0.427966,
+       "wilson95": [
+        0.366491,
+        0.491749
+       ]
+      },
+      "sl_first": {
+       "k": 135,
+       "n": 236,
+       "rate": 0.572034,
+       "wilson95": [
+        0.508251,
+        0.633509
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 2,
+      "mean_net_r": -0.155082,
+      "mean_net_r_boot95": [
+       -0.305328,
+       -0.013711
+      ],
+      "usd_per_trade": -100.803563,
+      "profit_factor": 0.740919,
+      "max_drawdown_usd": 27506.03688,
+      "geometric_baseline": 0.44786,
+      "break_even": 0.491458,
+      "median_min_to_tp": 50.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 80,
+       "n": 236,
+       "rate": 0.338983,
+       "wilson95": [
+        0.281599,
+        0.401525
+       ]
+      },
+      "sl_first": {
+       "k": 156,
+       "n": 236,
+       "rate": 0.661017,
+       "wilson95": [
+        0.598475,
+        0.718401
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.150874,
+      "mean_net_r_boot95": [
+       -0.320268,
+       0.021849
+      ],
+      "usd_per_trade": -98.068052,
+      "profit_factor": 0.780569,
+      "max_drawdown_usd": 23692.90795,
+      "geometric_baseline": 0.353919,
+      "break_even": 0.38795,
+      "median_min_to_tp": 77.5
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 60,
+       "n": 236,
+       "rate": 0.254237,
+       "wilson95": [
+        0.202926,
+        0.313421
+       ]
+      },
+      "sl_first": {
+       "k": 176,
+       "n": 236,
+       "rate": 0.745763,
+       "wilson95": [
+        0.686579,
+        0.797074
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.216679,
+      "mean_net_r_boot95": [
+       -0.41408,
+       -0.01428
+      ],
+      "usd_per_trade": -140.841076,
+      "profit_factor": 0.721955,
+      "max_drawdown_usd": 34208.581181,
+      "geometric_baseline": 0.293065,
+      "break_even": 0.321003,
+      "median_min_to_tp": 110.0
+     },
+     "median_D": 7.550069,
+     "mean_cost": 0.792034,
+     "median_lots": 0.775,
+     "mfe_median": 23.459583,
+     "mae_median": 29.228849,
+     "realised_loss_usd": {
+      "n": 135,
+      "max": 4453.067099,
+      "over_650": 2,
+      "mean": 675.48012
+     },
+     "weeks": 149.892857
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 43,
+     "tp10_first": 21
+    },
+    "LDN_CONT": {
+     "n": 207,
+     "tp10_first": 94
+    },
+    "LDN_OPEN": {
+     "n": 59,
+     "tp10_first": 22
+    },
+    "NY_CONT": {
+     "n": 91,
+     "tp10_first": 43
+    },
+    "NY_OPEN": {
+     "n": 105,
+     "tp10_first": 48
+    },
+    "OFF": {
+     "n": 15,
+     "tp10_first": 8
+    },
+    "OVERLAP": {
+     "n": 8,
+     "tp10_first": 6
+    }
+   }
+  },
+  "C2": {
+   "name": "C1 with the M30 context",
+   "n": 133,
+   "tp10": {
+    "tp_first": {
+     "k": 62,
+     "n": 133,
+     "rate": 0.466165,
+     "wilson95": [
+      0.383528,
+      0.550703
+     ]
+    },
+    "sl_first": {
+     "k": 71,
+     "n": 133,
+     "rate": 0.533835,
+     "wilson95": [
+      0.449297,
+      0.616472
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.103669,
+    "mean_net_r_boot95": [
+     -0.279013,
+     0.059705
+    ],
+    "usd_per_trade": -67.384804,
+    "profit_factor": 0.805803,
+    "max_drawdown_usd": 16562.086846,
+    "geometric_baseline": 0.463867,
+    "break_even": 0.50595,
+    "median_min_to_tp": 35.0,
+    "random": {
+     "tp_first": {
+      "k": 1260,
+      "n": 2660,
+      "rate": 0.473684,
+      "wilson95": [
+       0.454761,
+       0.492683
+      ]
+     },
+     "mean_net_r": -0.061478,
+     "z": -0.169484,
+     "p_one_sided": 0.567292
+    }
+   },
+   "tp15": {
+    "tp_first": {
+     "k": 52,
+     "n": 133,
+     "rate": 0.390977,
+     "wilson95": [
+      0.312222,
+      0.475854
+     ]
+    },
+    "sl_first": {
+     "k": 81,
+     "n": 133,
+     "rate": 0.609023,
+     "wilson95": [
+      0.524146,
+      0.687778
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 0,
+    "m5_resolved": 0,
+    "mean_net_r": -0.041518,
+    "mean_net_r_boot95": [
+     -0.262961,
+     0.184041
+    ],
+    "usd_per_trade": -26.986462,
+    "profit_factor": 0.931829,
+    "max_drawdown_usd": 19135.515993,
+    "geometric_baseline": 0.369016,
+    "break_even": 0.402048,
+    "median_min_to_tp": 72.5,
+    "random": {
+     "tp_first": {
+      "k": 1019,
+      "n": 2660,
+      "rate": 0.383083,
+      "wilson95": [
+       0.36479,
+       0.401713
+      ]
+     },
+     "mean_net_r": -0.047001,
+     "z": 0.182738,
+     "p_one_sided": 0.427502
+    }
+   },
+   "tp20": {
+    "tp_first": {
+     "k": 47,
+     "n": 133,
+     "rate": 0.353383,
+     "wilson95": [
+      0.277302,
+      0.437696
+     ]
+    },
+    "sl_first": {
+     "k": 85,
+     "n": 133,
+     "rate": 0.639098,
+     "wilson95": [
+      0.554631,
+      0.715755
+     ]
+    },
+    "ambiguous": 0,
+    "timeout": 1,
+    "m5_resolved": 1,
+    "mean_net_r": 0.057477,
+    "mean_net_r_boot95": [
+     -0.192033,
+     0.317693
+    ],
+    "usd_per_trade": 37.360239,
+    "profit_factor": 1.089935,
+    "max_drawdown_usd": 17783.06413,
+    "geometric_baseline": 0.30693,
+    "break_even": 0.33415,
+    "median_min_to_tp": 95.0,
+    "random": {
+     "tp_first": {
+      "k": 847,
+      "n": 2660,
+      "rate": 0.318421,
+      "wilson95": [
+       0.30099,
+       0.336376
+      ]
+     },
+     "mean_net_r": -0.043013,
+     "z": 0.843475,
+     "p_one_sided": 0.199481
+    }
+   },
+   "median_D": 8.143737,
+   "mean_cost": 0.786541,
+   "median_lots": 0.72,
+   "mfe_median": 27.525596,
+   "mae_median": 25.844262,
+   "realised_loss_usd": {
+    "n": 71,
+    "max": 649.884707,
+    "over_650": 0,
+    "mean": 645.435375
+   },
+   "weeks": 148.485119,
+   "per_direction": {
+    "1": {
+     "n": 79,
+     "tp10": {
+      "tp_first": {
+       "k": 39,
+       "n": 79,
+       "rate": 0.493671,
+       "wilson95": [
+        0.386303,
+        0.601626
+       ]
+      },
+      "sl_first": {
+       "k": 40,
+       "n": 79,
+       "rate": 0.506329,
+       "wilson95": [
+        0.398374,
+        0.613697
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.054997,
+      "mean_net_r_boot95": [
+       -0.266976,
+       0.172732
+      ],
+      "usd_per_trade": -35.74795,
+      "profit_factor": 0.891381,
+      "max_drawdown_usd": 11148.729306,
+      "geometric_baseline": 0.474924,
+      "break_even": 0.516367,
+      "median_min_to_tp": 50.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 33,
+       "n": 79,
+       "rate": 0.417722,
+       "wilson95": [
+        0.315266,
+        0.527807
+       ]
+      },
+      "sl_first": {
+       "k": 46,
+       "n": 79,
+       "rate": 0.582278,
+       "wilson95": [
+        0.472193,
+        0.684734
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": 0.020977,
+      "mean_net_r_boot95": [
+       -0.268416,
+       0.302279
+      ],
+      "usd_per_trade": 13.634841,
+      "profit_factor": 1.036025,
+      "max_drawdown_usd": 12768.260146,
+      "geometric_baseline": 0.379446,
+      "break_even": 0.412108,
+      "median_min_to_tp": 80.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 31,
+       "n": 79,
+       "rate": 0.392405,
+       "wilson95": [
+        0.292129,
+        0.50266
+       ]
+      },
+      "sl_first": {
+       "k": 47,
+       "n": 79,
+       "rate": 0.594937,
+       "wilson95": [
+        0.484732,
+        0.696337
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 1,
+      "m5_resolved": 0,
+      "mean_net_r": 0.156421,
+      "mean_net_r_boot95": [
+       -0.165584,
+       0.486839
+      ],
+      "usd_per_trade": 101.673557,
+      "profit_factor": 1.26292,
+      "max_drawdown_usd": 10926.853632,
+      "geometric_baseline": 0.316509,
+      "break_even": 0.343494,
+      "median_min_to_tp": 155.0
+     },
+     "median_D": 8.531702,
+     "mean_cost": 0.790253,
+     "median_lots": 0.69,
+     "mfe_median": 31.570411,
+     "mae_median": 21.78783,
+     "realised_loss_usd": {
+      "n": 40,
+      "max": 649.237179,
+      "over_650": 0,
+      "mean": 644.903698
+     },
+     "weeks": 146.543155
+    },
+    "-1": {
+     "n": 54,
+     "tp10": {
+      "tp_first": {
+       "k": 23,
+       "n": 54,
+       "rate": 0.425926,
+       "wilson95": [
+        0.303318,
+        0.558373
+       ]
+      },
+      "sl_first": {
+       "k": 31,
+       "n": 54,
+       "rate": 0.574074,
+       "wilson95": [
+        0.441627,
+        0.696682
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.174874,
+      "mean_net_r_boot95": [
+       -0.416721,
+       0.066102
+      ],
+      "usd_per_trade": -113.668349,
+      "profit_factor": 0.69538,
+      "max_drawdown_usd": 8927.451004,
+      "geometric_baseline": 0.447689,
+      "break_even": 0.490709,
+      "median_min_to_tp": 35.0
+     },
+     "tp15": {
+      "tp_first": {
+       "k": 19,
+       "n": 54,
+       "rate": 0.351852,
+       "wilson95": [
+        0.23823,
+        0.485152
+       ]
+      },
+      "sl_first": {
+       "k": 35,
+       "n": 54,
+       "rate": 0.648148,
+       "wilson95": [
+        0.514848,
+        0.76177
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 0,
+      "mean_net_r": -0.132944,
+      "mean_net_r_boot95": [
+       -0.45014,
+       0.200103
+      ],
+      "usd_per_trade": -86.413924,
+      "profit_factor": 0.794886,
+      "max_drawdown_usd": 11425.855202,
+      "geometric_baseline": 0.353756,
+      "break_even": 0.387331,
+      "median_min_to_tp": 50.0
+     },
+     "tp20": {
+      "tp_first": {
+       "k": 16,
+       "n": 54,
+       "rate": 0.296296,
+       "wilson95": [
+        0.191374,
+        0.428276
+       ]
+      },
+      "sl_first": {
+       "k": 38,
+       "n": 54,
+       "rate": 0.703704,
+       "wilson95": [
+        0.571724,
+        0.808626
+       ]
+      },
+      "ambiguous": 0,
+      "timeout": 0,
+      "m5_resolved": 1,
+      "mean_net_r": -0.087273,
+      "mean_net_r_boot95": [
+       -0.472309,
+       0.328141
+      ],
+      "usd_per_trade": -56.727762,
+      "profit_factor": 0.87598,
+      "max_drawdown_usd": 11500.134507,
+      "geometric_baseline": 0.292917,
+      "break_even": 0.320478,
+      "median_min_to_tp": 65.0
+     },
+     "median_D": 7.575144,
+     "mean_cost": 0.781111,
+     "median_lots": 0.775,
+     "mfe_median": 21.982975,
+     "mae_median": 29.572948,
+     "realised_loss_usd": {
+      "n": 31,
+      "max": 649.884707,
+      "over_650": 0,
+      "mean": 646.121409
+     },
+     "weeks": 137.86756
+    }
+   },
+   "by_session": {
+    "ASIA": {
+     "n": 5,
+     "tp10_first": 1
+    },
+    "LDN_CONT": {
+     "n": 58,
+     "tp10_first": 30
+    },
+    "LDN_OPEN": {
+     "n": 14,
+     "tp10_first": 7
+    },
+    "NY_CONT": {
+     "n": 19,
+     "tp10_first": 8
+    },
+    "NY_OPEN": {
+     "n": 30,
+     "tp10_first": 13
+    },
+    "OFF": {
+     "n": 6,
+     "tp10_first": 2
+    },
+    "OVERLAP": {
+     "n": 1,
+     "tp10_first": 1
+    }
+   }
+  }
+ },
+ "funnel": {
+  "A1": {
+   "orders": 458,
+   "ELIGIBLE": 226,
+   "REJECTED:cost": 232
+  },
+  "A2": {
+   "orders": 270,
+   "ELIGIBLE": 254,
+   "REJECTED:cost": 16
+  },
+  "A3": {
+   "orders": 214,
+   "ELIGIBLE": 172,
+   "REJECTED:cost": 42
+  },
+  "A4": {
+   "orders": 585,
+   "ELIGIBLE": 46,
+   "REJECTED:cost": 428,
+   "MISSED": 111
+  },
+  "A5": {
+   "orders": 144,
+   "ELIGIBLE": 132,
+   "REJECTED:cost": 12
+  },
+  "A6": {
+   "orders": 358,
+   "ELIGIBLE": 252,
+   "REJECTED:cost": 106
+  },
+  "T1": {
+   "orders": 585,
+   "ELIGIBLE": 114,
+   "REJECTED:cost": 443,
+   "MISSED": 28
+  },
+  "T4": {
+   "orders": 212,
+   "ELIGIBLE": 147,
+   "REJECTED:cost": 65
+  },
+  "T6": {
+   "orders": 270,
+   "ELIGIBLE": 152,
+   "MISSED": 80,
+   "REJECTED:cost": 38
+  },
+  "B1": {
+   "orders": 1426,
+   "ELIGIBLE": 430,
+   "REJECTED:cost": 996
+  },
+  "B2": {
+   "orders": 257,
+   "ELIGIBLE": 245,
+   "REJECTED:cost": 12
+  },
+  "B3": {
+   "orders": 519,
+   "ELIGIBLE": 461,
+   "REJECTED:cost": 58
+  },
+  "B4": {
+   "orders": 392,
+   "ELIGIBLE": 209,
+   "REJECTED:cost": 183
+  },
+  "C1": {
+   "orders": 1884,
+   "REJECTED:cost": 1337,
+   "ELIGIBLE": 547
+  },
+  "C2": {
+   "orders": 444,
+   "ELIGIBLE": 137,
+   "REJECTED:cost": 307
+  }
+ },
+ "holm": {
+  "tp10": {
+   "A2": 1.0,
+   "A1": 1.0,
+   "T1": 1.0,
+   "B3": 1.0,
+   "C1": 1.0,
+   "B2": 1.0,
+   "C2": 1.0,
+   "A5": 1.0,
+   "T6": 1.0,
+   "A4": 1.0,
+   "B1": 1.0,
+   "T4": 1.0,
+   "A6": 1.0,
+   "B4": 1.0,
+   "A3": 1.0
+  },
+  "tp15": {
+   "A2": 1.0,
+   "A1": 1.0,
+   "T1": 1.0,
+   "C1": 1.0,
+   "B3": 1.0,
+   "A4": 1.0,
+   "C2": 1.0,
+   "A6": 1.0,
+   "T4": 1.0,
+   "A5": 1.0,
+   "B2": 1.0,
+   "T6": 1.0,
+   "B1": 1.0,
+   "B4": 1.0,
+   "A3": 1.0
+  },
+  "tp20": {
+   "T1": 0.877604,
+   "A1": 0.977018,
+   "A2": 1.0,
+   "T6": 1.0,
+   "C2": 1.0,
+   "A4": 1.0,
+   "B3": 1.0,
+   "C1": 1.0,
+   "B1": 1.0,
+   "A6": 1.0,
+   "B2": 1.0,
+   "A5": 1.0,
+   "T4": 1.0,
+   "A3": 1.0,
+   "B4": 1.0
+  }
+ },
+ "verdict": {
+  "A1": {
+   "n": 226,
+   "mean_net_r_lb95": -0.176661,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "A2": {
+   "n": 251,
+   "mean_net_r_lb95": -0.126082,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "A3": {
+   "n": 172,
+   "mean_net_r_lb95": -0.256611,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "A4": {
+   "n": 46,
+   "mean_net_r_lb95": -0.451753,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "A5": {
+   "n": 132,
+   "mean_net_r_lb95": -0.242558,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "A6": {
+   "n": 252,
+   "mean_net_r_lb95": -0.237767,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "T1": {
+   "n": 114,
+   "mean_net_r_lb95": -0.161256,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "T4": {
+   "n": 147,
+   "mean_net_r_lb95": -0.266101,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "T6": {
+   "n": 151,
+   "mean_net_r_lb95": -0.257359,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "B1": {
+   "n": 387,
+   "mean_net_r_lb95": -0.230472,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "B2": {
+   "n": 187,
+   "mean_net_r_lb95": -0.171057,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "B3": {
+   "n": 294,
+   "mean_net_r_lb95": -0.155892,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "B4": {
+   "n": 134,
+   "mean_net_r_lb95": -0.330688,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "C1": {
+   "n": 528,
+   "mean_net_r_lb95": -0.195284,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  },
+  "C2": {
+   "n": 133,
+   "mean_net_r_lb95": -0.279013,
+   "holm_p_tp10": 1.0,
+   "candidate": false
+  }
+ },
+ "overall": "NO CANDIDATE",
+ "timing_paired_vs_A1": {
+  "T1": {
+   "n": 74,
+   "mean_diff_net_r": 0.038595,
+   "boot95": [
+    -0.235124,
+    0.311949
+   ],
+   "median_entry_better_usd": -1.406557,
+   "tp10_first": {
+    "A1": 40,
+    "T1": 32
+   }
+  },
+  "A3": {
+   "n": 76,
+   "mean_diff_net_r": -0.326198,
+   "boot95": [
+    -0.52726,
+    -0.121102
+   ],
+   "median_entry_better_usd": 5.977625,
+   "tp10_first": {
+    "A1": 48,
+    "A3": 40
+   }
+  },
+  "T4": {
+   "n": 106,
+   "mean_diff_net_r": -0.346005,
+   "boot95": [
+    -0.471816,
+    -0.229027
+   ],
+   "median_entry_better_usd": 3.161461,
+   "tp10_first": {
+    "A1": 77,
+    "T4": 63
+   }
+  },
+  "A4": {
+   "n": 35,
+   "mean_diff_net_r": -0.118217,
+   "boot95": [
+    -0.433124,
+    0.221625
+   ],
+   "median_entry_better_usd": -3.303037,
+   "tp10_first": {
+    "A1": 19,
+    "A4": 13
+   }
+  },
+  "A2": {
+   "n": 127,
+   "mean_diff_net_r": -0.130719,
+   "boot95": [
+    -0.311226,
+    0.045956
+   ],
+   "median_entry_better_usd": 2.058196,
+   "tp10_first": {
+    "A1": 80,
+    "A2": 78
+   }
+  },
+  "T6": {
+   "n": 83,
+   "mean_diff_net_r": -0.140426,
+   "boot95": [
+    -0.371853,
+    0.091689
+   ],
+   "median_entry_better_usd": -0.833188,
+   "tp10_first": {
+    "A1": 49,
+    "T6": 44
+   }
+  },
+  "A5": {
+   "n": 62,
+   "mean_diff_net_r": 0.166968,
+   "boot95": [
+    -0.09726,
+    0.438905
+   ],
+   "median_entry_better_usd": -0.155183,
+   "tp10_first": {
+    "A1": 30,
+    "A5": 37
+   }
+  },
+  "A6": {
+   "n": 176,
+   "mean_diff_net_r": -0.011471,
+   "boot95": [
+    -0.086285,
+    0.057046
+   ],
+   "median_entry_better_usd": 0.0,
+   "tp10_first": {
+    "A1": 86,
+    "A6": 85
+   }
+  }
+ },
+ "b_taxonomy": {
+  "events": 1426,
+  "classes": {
+   "GENUINE REVERSAL": 210,
+   "CONTINUATION": 730,
+   "SHORT-COVERING BOUNCE": 485,
+   "FAILED BREAKDOWN": 1
+  }
+ },
+ "meta": {
+  "score_from": 1583719200,
+  "end": 1674525600,
+  "bars15": 67332,
+  "m30_incomplete_pairs": 45,
+  "m5_coverage": 0.992158,
+  "data_hash": "f113f97ad2105ff9",
+  "context_share": {
+   "-1": 0.151189,
+   "0": 0.663983,
+   "1": 0.184828
+  },
+  "registration": "B31b-W4",
+  "part": "development",
+  "code_sha256": "f974c75ee55be281cc29415f8870a8ad83aa4feca6974c739d41f985baedc232"
+ }
+}
