@@ -8508,6 +8508,33 @@
    "overshoot_usd": 20.56,
    "why": "the first 15m close $15 beyond was $20.56 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
    "t_done": 1795102200
+  },
+  {
+   "key": "SWEEP|15m|1793197800|1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1793197800,
+   "t_close": 1793198700,
+   "dir": 1,
+   "p0": 4043.2,
+   "what": "sweep at TDL 4042.17",
+   "id": 237,
+   "seen": 1795104462,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 4058.2,
+   "invalid_at": 4030.2,
+   "cap_at": 4063.2,
+   "confirm20_at": 4063.2,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1793212200,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }

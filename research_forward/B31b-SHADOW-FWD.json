@@ -1199,6 +1199,30 @@
 "cost": 0.77,
 "status": "REJECTED",
 "why": "room"
+},
+{
+"key": "C|1795103100|-1|ASL|3695.08",
+"module": "C",
+"dir": -1,
+"kind": "ASL",
+"lv": 3695.08,
+"order_t": 1795103100,
+"order_close": 1795104000,
+"recorded_utc": 1795104462,
+"timely": true,
+"entry_type": "RETEST",
+"limit": 3695.08,
+"market": null,
+"p_ref": 3695.08,
+"stop": 3707.2586,
+"inval": null,
+"false_break": true,
+"vwap": null,
+"session": "LONDON+NY",
+"ranging": true,
+"vol_ratio": 3.545,
+"cost": 0.77,
+"status": "PENDING"
 }
 ],
 "days": [
