@@ -57,5 +57,25 @@
  "live_forward_record": "every live breakout, stage, delivery result and shadow entry with its outcome is kept in alerts_state.json -> brk; outcomes evaluated only on bars after each record; descriptive until each variant has 100 decided shadow trades; no verdict, no probability on the phone",
  "phone_format": "the operator's short templates (BREAKOUT DETECTED / CONFIRMED / FAILED; ENTRY READY and NO TRADE are not sent while ENTRY READY is shadow): direction, level, price, status, action, the bar time; no probability",
  "switch": "repository variable ALERT_BREAKOUTS: unset = phone, site = website only, 0 = off (no code revert)",
- "preserved": "the production freeze key, the engine, every existing alert and record, B31b-W3 / W4 / W5 findings"
+ "preserved": "the production freeze key, the engine, every existing alert and record, B31b-W3 / W4 / W5 findings",
+ "amendments": [
+  {
+   "id": "A1",
+   "date_utc": "2026-11-19",
+   "when": "Written after the live code (quantum/breakouts.py) and its unit tests, before the regression replay and before any study run. Disclosure: a smoke count of events on the live store's 15m / 30m bars of 17-19 Nov was made while writing the code (event counts and the stages of the 19 Nov 03:00 UTC previous-day-low break); no shadow entry outcome was computed. None of the items below changes a level, a threshold, a stage rule, a stop, a target or a check value.",
+   "changes": {
+    "range_rule": "A range box that holds the bar of an earlier range breakout is not a level: at bar i a range exists only when the last range breakout bar is before i-12. Without it, the 12-bar boxes that follow a range breakout still contain that bar and fire the same move again as new range breakouts (each bar's box is a new level instance, so one-break-per-level does not catch it).",
+    "e2_cancel_clause": "The E2 clause 'cancelled by a close back inside before the fill' cannot occur: a close back inside the level trades through a limit placed AT the level, so the limit fills first. It is not coded; E2 is otherwise unchanged.",
+    "live_races": "Live shadow entries are raced on closed 15m bars for both timeframes (the finest bars the monitor reads for both); a limit fills on the first 15m bar reaching it (at the open when the bar opens through it); a fill bar that also reaches the stop counts as the stop and a target reached on the fill bar is not counted (conservative); a bar touching target and stop = AMBIGUOUS, counted as the stop; a bar opening through the stop = the stop. The development study keeps the registered M5 race (B31b-W3 execute). Live results are therefore coarser than development results and are reported separately, never pooled.",
+    "fresh_data_check": "The registered 'fresh data' check of ENTRY READY: a shadow entry is not ready when its confirmation was not seen fresh (its bar the newest closed bar and the run within 20 minutes of its close); the reason is recorded with the minutes elapsed.",
+    "invalid_stop": "A shadow entry whose stop is not beyond its entry (D <= 0; possible only for E2 after a gap breakout) is recorded NO TRADE with that reason and is not raced.",
+    "room_check_levels": "The room check reads up to 10 nearest unbroken same-side levels beyond the breakout close, as known at the breakout close.",
+    "start": "The live record starts at the first production run carrying the code (alerts_state.json -> brk.since); a breakout that closed before it is never recorded or sent (no backlog).",
+    "retest_message": "RETEST HELD is sent under the CONFIRMED header with 'Status: Retest held' (the directive's stage B names a valid retest as a confirmation).",
+    "time_line": "Every phone message ends with 'Time: HH:MM MT5 / HH:MM <local zone>' (the stage bar's close).",
+    "bundling": "More than 5 breakout messages in one run (a fast market or a data burst) go as one message that carries them all; every event key is in the P-0 delivery log either way.",
+    "delivery": "One message per event id and stage, ever. A stage whose send fails on every channel after the P-0 retry is recorded SEND_FAILED and not re-sent by a later run (it would no longer be fresh). Server acceptance (SENT) is not proof the phone showed it."
+   }
+  }
+ ]
 }
