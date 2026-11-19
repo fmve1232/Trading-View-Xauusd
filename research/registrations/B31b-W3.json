@@ -1,0 +1,156 @@
+{
+  "id": "B31b-W3",
+  "title": "Workstream 3: XAUUSD M15 / M30 liquidity sweep, liquidation and breakout event study; two independent engines (A reversal, B continuation); quantitative entry formula; shadow-only forward module",
+  "status": "APPROVED by the operator 2026-11-18 (directive 'CLAUDE DIRECTIVE - QUANTUM WORKSTREAM 3'); written and committed before any of its code and before any run",
+  "approved_by_operator": true,
+  "approval": "Operator, 2026-11-18 (chat): \"Start with historical event discovery and statistical analysis. Only then develop the formula and shadow-testing implementation.\" ... \"Use chronological, leakage-free testing. Required structure: Development dataset. Validation dataset. Untouched holdout dataset. Prospective live shadow testing.\" ... \"Preserve chronological separation between development, validation, holdout and forward-testing periods.\" ... \"This is a research directive, not authorization to modify production.\" ... \"Production remains frozen until I explicitly authorize a change.\"",
+  "partitions": [
+    "development",
+    "validation",
+    "holdout"
+  ],
+  "partition_order_enforced_in_code": {
+    "development": "open: discovery, every descriptive table, the univariate and model analysis, the selection of at most one candidate per engine",
+    "validation": "opened ONCE, only after the freeze amendment (research/registrations/B31b-W3-FREEZE.json, holding the frozen formula and the sha256 of the code that computes it) is committed; the code refuses to open it otherwise and refuses a second opening (a results file for validation already present)",
+    "holdout": "opened ONCE, only for a candidate whose validation verdict is PASS (read from the committed validation results file); otherwise it stays sealed for a later study, as B19 / B23 did",
+    "recent": "2026-01-01 to the end of the research history: unsealed, already read by B31 and B31b-W2; reported descriptively in its own column, never used to select or to judge",
+    "case_study": "17-18 Nov 2026 (the operator's M15 / M30 screenshots): the registered detector run on the market-data store's bars for those days; descriptive only (which levels, sweeps, confirmations and moves it finds); nothing is changed to fit the chart"
+  },
+  "disclosure": "Not a first look at these periods. B2, B3, B16, B21, B31 and B31b-W1 / W2 measured related liquidity events (sweeps / breakouts of PD / PW / session levels at fixed -$13 / -$10 stops: B16 SWEEP 46.6% vs 46.2% random, BREAKOUT 46.1% vs 46.3%), and B31 read module C / D / E outcomes on validation and holdout. W3's event definitions, structural stops, entry methods and model are new and are selected on development only; validation and holdout are opened once each for W3, under the rules above.",
+  "created_utc": "2026-11-18",
+  "data": {
+    "bars": "spot XAU/USD from Twelve Data on the research-data branch (Amendment 11), read through quantum.research.history.load (market-shut bars removed): 15min and 1h since 2020-01-24; 5min where the 2026-11-18 extension (research-history workflow, intervals=5min) supplies it",
+    "derived": "M30 = two consecutive 15m bars opening at :00 and :15 / :30 and :45 (a 30m bar needs both; incomplete pairs are dropped and counted); H4 = sources.resample_ny_session(1h, 4) as in B31; M5 only from the 5min series (never synthesised)",
+    "m5_uses": "(1) entry method A-M5MSS; (2) ordering stop and target inside a 15m bar that touches both; (3) the 5-minute outcome horizon. Where 5min bars are missing for a period these three are reported NOT RUN for it, with the coverage, and stop-first accounting is used for ambiguity",
+    "volume": "the spot series has no volume; W1 found tick volume unreliable. Relative volume and volume expansion are NOT TESTED (no reliable data); nothing is imputed",
+    "vwap": "not computable without volume. The registered substitute is a TWAP anchored at the trading-day start (sessions.calendar trading_date, NY 17:00 rollover) with its rolling 2-sigma band (std of close - TWAP over the same day); it is labelled TWAP everywhere, never VWAP",
+    "bid_ask": "not available historically (Twelve Data mid / last). Costs are modelled (below); realised spreads are recorded only by the forward shadow module where the live feed has them",
+    "news": "exact CPI / NFP / FOMC release times are known for development only (quantum/research/b8_news.DATES); the news-regime breakdown is therefore development only. The cost stress uses sessions.calendar news_window in every period"
+  },
+  "levels": {
+    "rule": "a level is used at bar i only if it is known before bar i opens; each level produces at most one event: its first crossing after it became known",
+    "kinds": {
+      "PDH / PDL": "previous trading day high / low (NY 17:00 rollover), as b31.build_pools",
+      "PWH / PWL": "previous trading week high / low, as b31.build_pools",
+      "ASH / ASL, LOH / LOL, NYH / NYL": "high / low of the last completed Asian / London / New York session (sessions.calendar windows), as b31.build_pools",
+      "PSH / PSL": "the high / low of the most recently completed session of the three (event type 5, previous session)",
+      "SWH / SWL": "swing high / low on the event timeframe: a pivot with 3 bars each side (ta.pivothigh / pivotlow), known from the close of the 3rd bar after it; kept for 5 trading days or until crossed",
+      "EQH / EQL": "two untaken swings of the same kind on the event timeframe, at least 4 bars apart, within max($0.50 x s, 0.10 x ATR14) of each other; the level is the outer of the two; known from the confirmation of the second"
+    },
+    "not_events": "the current day's running high / low (CDH / CDL) is used only for the distance to opposing liquidity, never as an event level"
+  },
+  "events": {
+    "timeframes": [
+      "M15",
+      "M30"
+    ],
+    "crossing": "at bar i: high_i > L (buy-side level above price) or low_i < L (sell-side level below price) for a live level L. All levels on one side crossed by the same bar form ONE event. Its reference level is the crossed level nearest to the previous close (closing back beyond it = back inside all of them); the event also records the outermost crossed level, the number of levels and every kind. Primary kind = highest rank: PW > PD > previous session > AS / LO / NY session > EQ > SW",
+    "disposition_at_the_crossing_close": "SWEEP: the crossing bar closes back inside the reference level. BREAK: it closes beyond.",
+    "types": {
+      "1 buy-side liquidity sweep": "a buy-side SWEEP event (any kind)",
+      "2 sell-side liquidity sweep": "a sell-side SWEEP event (any kind)",
+      "3 PDH liquidation": "any event whose crossed levels include PDH (SWEEP or BREAK, reported separately)",
+      "4 PDL liquidation": "any event whose crossed levels include PDL",
+      "5 previous-session high / low sweep": "crossed levels include PSH / PSL",
+      "6 Asian-session high / low sweep": "crossed levels include ASH / ASL",
+      "7 London-session liquidity sweep": "a SWEEP event whose crossing bar opens inside the London session",
+      "8 New York-session liquidity sweep": "a SWEEP event whose crossing bar opens inside the New York session",
+      "9 equal highs / lows liquidation": "crossed levels include EQH / EQL",
+      "10 swing stop hunt": "a SWEEP event whose crossed levels include SWH / SWL",
+      "11 false breakout followed by reversal": "a BREAK event followed by a close back inside the reference level within the next 3 bars; the event is known at that close (never earlier)",
+      "12 genuine breakout followed by continuation": "a BREAK event whose next 2 bars also close beyond (3 closes beyond, as B31 ACCEPTED); known at the 3rd close",
+      "13 breakout, retest and continuation": "an event 12 after which price returns to the reference level within 8 bars of acceptance without a close back inside; the retest is known when it trades",
+      "14 liquidity sweep followed by market structure shift": "a crossing that closes back inside within 3 bars, then, within 8 bars of the crossing, a close beyond the most recent opposite swing (pivot 2 bars each side, confirmed before that close; if none in the last 20 bars, the extreme of the 5 bars before the crossing)"
+    },
+    "sessions": "label of the crossing bar's open (sessions.calendar, UTC): ASIA (00:00 to London open), LDN_OPEN (the first 2 hours of London), LDN_CONT (London, not the first 2 hours, not New York), NY_OPEN (the first 2 hours of New York), OVERLAP (London and New York, not the first 2 hours of New York), NY_CONT (New York only), OFF (after the New York close). 'London / New York overlap' is also reported as the union of bars inside both sessions",
+    "regimes": "a priori report buckets, never tuned: TREND if the 20-bar efficiency ratio |c - c[-20]| / sum|dc| >= 0.30, RANGE if < 0.15, else MIXED; volatility HIGH if ATR14 / ATR100 >= 1.25, LOW if <= 0.80, else NORMAL; news (development only): within 60 minutes after a CPI / NFP / FOMC release"
+  },
+  "measurements": {
+    "units": "$ per oz at $4,000: every distance is divided by s = price / 4000 (as B31); ATR = Wilder ATR14 of the event timeframe at the decision bar",
+    "before": "distance from the previous close to the reference level ($, ATR); ATR14 ($); ATR14 / ATR100; 16-bar range / ATR (compression); EMA20 / 100 / 200 of the event timeframe: close minus each (ATR) and the stack (+1 bull, -1 bear, 0 mixed); M30 / H1 / H4 trend (EMA20 vs EMA100 on the last COMPLETED bar); TWAP deviation (ATR) and the 2-sigma band position; previous bar body / range; 4-bar momentum toward the level (ATR); distance to the nearest opposing liquidity (any live level on the other side, including CDH / CDL); an unfilled FVG (3-bar gap > 0.3 x ATR, the engine's rule) between the close and +$10 in the trade direction; two-sided activity (a live level on the other side crossed in the previous 8 bars); level age (bars since known); session; regime",
+    "during": "penetration beyond the reference level ($, ATR); the wick beyond the level / the bar's range; the close relative to the level (ATR, + beyond); body / ATR; range / ATR; close back inside (y / n); displacement (body >= 1.0 x ATR); number of levels crossed",
+    "after": "from the event close c, in the REVERSAL direction (continuation is its mirror): MFE and MAE at 5 (M5 only), 15, 30, 60, 120 and 240 minutes; directional efficiency DE_h = MFE_h / (MFE_h + MAE_h) at each horizon (a path measure, never a probability); minutes to +$5 / +$10 / +$15 / +$20 in each direction (first passage on 15m bars, M5 where available, within 24 h); retest of the reference level within 240 minutes; a market structure shift (event 14's rule) within 8 bars; return to the liquidation origin (the opposite extreme of the 8 bars before the crossing) within 240 minutes; continuation vs reversal (which +$10 came first); breakout failure (a close back inside within 3 bars)"
+  },
+  "classes": {
+    "window": "first passage within 96 15m bars (24 h) from the event's decision close c; barriers at $10 x s",
+    "G": "indeterminate: a 15m bar touches two deciding barriers and M5 cannot order them (or has no data), or the window runs past the end of the data. Checked first",
+    "F": "multiple-sided: before either +$10 barrier is reached, price crosses a live level on the other side. Checked second",
+    "SWEEP events": "A successful reversal: +$10 reversal before the sweep extreme is exceeded (A1); A2 (reported under A): +$10 reversal reached only after the extreme was exceeded and before +$10 continuation. D continuation in the original direction: the extreme is exceeded and +$10 continuation comes first. E no sufficient movement: neither +$10 within 24 h",
+    "BREAK events": "B successful continuation: +$10 continuation before a close back inside. C false breakout then reversal: a close back inside, then +$10 reversal (from c) before the breakout extreme is exceeded. E: anything else within 24 h (no follow-through either way)",
+    "use": "labels for the research tables only; never a feature; every event keeps its class, losing and ambiguous ones included"
+  },
+  "engines": {
+    "common": {
+      "stop_buffer": "0.2 x ATR14 beyond the structure (B31 SL_BUF)",
+      "targets": "+$10, +$15 and +$20 x s from the fill, each raced separately against the same stop from the same fill (a trade may reach +$10 and not +$15; both are recorded)",
+      "time_stop": "96 15m bars (24 h) after the fill, at that close (B31 HOLD)",
+      "fills": "a market entry fills at the decision bar's close; a limit fills at its price when a later bar trades through it (a gap fills at the open); an order still open after its validity is MISSED; one position at a time per engine and method",
+      "ambiguity": "a 15m bar touching stop and target: ordered by M5 where available; otherwise, or if one M5 bar touches both, the stop (counted AMBIGUOUS separately)",
+      "eligibility": "(i) the stop is on the correct side; (ii) $650 sizing: lots = floor to 0.01 of 650 / ((D + cost) x 100); lots < 0.01 is rejected; (iii) cost <= 15% of D (B31's rule). Every rejection is recorded with its reason. Room to opposing liquidity, trend, session and the model are NOT fixed filters: their effect is measured (Q8) and only the selection protocol may use them"
+    },
+    "A_reversal (direction away from the swept side)": {
+      "A-IMM": "immediate: at the close of a SWEEP crossing bar; stop = the sweep extreme + buffer",
+      "A-CONF": "candle confirmation: the next bar of the same timeframe closes further in the trade direction than the crossing bar's close and still inside the level; entry at that close; stop = the extreme of both bars + buffer",
+      "A-MSS": "event 14 on the event timeframe: entry at the shift close; stop = the extreme since the crossing + buffer",
+      "A-M5MSS": "after a SWEEP crossing bar, within 60 minutes: the first M5 close beyond the most recent M5 swing (pivot 2 bars each side, confirmed before that close) in the trade direction; entry at that M5 close; stop = the extreme since the crossing + buffer; cancelled if an M5 bar closes beyond the reference level again first. Needs M5",
+      "A-RETEST": "a limit at the swept reference level, placed at the SWEEP close, valid 8 bars; stop = the sweep extreme + buffer; cancelled if price exceeds the sweep extreme before the fill (a bar that fills and exceeds counts as a fill then the stop)",
+      "A-DISP": "displacement pullback: within 4 bars after a SWEEP, a bar with body >= 1.0 x ATR in the trade direction; a limit at 50% of its body, valid 4 bars; stop = the extreme since the crossing + buffer"
+    },
+    "B_continuation (direction of the break)": {
+      "B-CLOSE": "at the close of a BREAK crossing bar; stop = that bar's opposite extreme + buffer",
+      "B-ACC": "event 12: at the 3rd close beyond; stop = the opposite extreme of the 3 bars + buffer",
+      "B-RETEST": "event 13: a limit at the reference level placed at acceptance, valid 8 bars; stop = the opposite extreme of the breakout leg + buffer; cancelled by a close back inside before the fill",
+      "B-DISP": "if the BREAK bar or one of the next 2 bars (all closing beyond) has body >= 1.0 x ATR in the break direction: a limit at 50% of that body, valid 4 bars; stop = that bar's opposite extreme + buffer"
+    },
+    "variants": "each method on M15 and on M30 (A-M5MSS's trigger is M15 / M30, its entry M5): 20 variants"
+  },
+  "costs_and_risk": {
+    "cost_of_record": "the frozen engine's session model per bar (harness.cost_pts: session spread + 2 x slippage $0.20 + commission $7 / lot / 100 oz), $ per oz, charged once per round trip",
+    "stress": "sensitivity only: spread x 2 inside sessions.calendar news_window, and every cost x 1.5",
+    "sizing": "lots = floor_0.01(650 / ((D + cost) x 100)) with 100 oz per lot ASSUMED (verify with the broker before any operational use); modelled loss = lots x (D + cost) x 100 <= $650; realised loss is recorded separately (a gap through the stop fills at the open and can exceed $650: how often and by how much is reported)",
+    "net_R": "win: (T - cost) / (D + cost); stop: -(D_realised + cost) / (D + cost); time stop: (exit - entry) x dir / s - cost, over (D + cost); expected net USD = net R x 650"
+  },
+  "statistics": {
+    "baselines": "(a) geometric: D / (D + T) per trade (a driftless walk); (b) matched random entries: for each trade, 20 random 15m closes in the same partition with the same direction, session bucket and ATR14 tercile (within the partition), the same scaled stop distance D and targets, the same race and costs; seed 3103",
+    "intervals": "Wilson 95% for rates; mean net R with a day-clustered bootstrap 95% interval (2,000 resamples, seed 3103)",
+    "discovery_tables": "Benjamini-Hochberg at q = 0.10 across every (variant x feature / filter) test reported; nothing in a discovery table is a verdict",
+    "model": "L2 logistic regression (C = 1.0, fixed; features standardised with training-fold means / sds; no other hyper-parameter) of TP(+$10) before the stop, per variant. Walk-forward on development: 6 equal-time folds; fold k (k = 2..6) is predicted by a model trained on folds < k, with every training trade whose 24 h outcome window reaches the test fold removed (purge). Reported: AUC (bootstrap 95%), Brier, Brier skill against the base rate and against the geometry-only model (logit of D / (D + 10) and cost / D only), reliability by decile, and feature-group ablation (drop one group, refit, change in out-of-fold AUC and Brier)",
+    "features_for_the_model": "known at the entry decision only: geometry (log D, cost / D, logit D / (D + 10)); level (kind group, number crossed, log age); before (distance, compression, ATR ratio, EMA positions and stack, M30 / H1 / H4 trend agreement with the trade, TWAP deviation, previous body / range, momentum, room to opposing liquidity capped at $50, FVG against, two-sided); during (penetration / ATR, wick share, close vs level, body / ATR, range / ATR); between the event and a delayed entry (bars waited, DE of the path so far); session dummies. Never: anything after the entry, the class, news (development only)",
+    "score": "setup quality score = the percentile (0-100) of the model's linear predictor among development entries of the same variant. It is NOT a probability and is never displayed as one. The probability is the model's output, reported with its out-of-fold reliability and an interval"
+  },
+  "selection_and_freeze": {
+    "candidates_per_engine": "A: 6 methods x 2 timeframes; B: 4 x 2; each under two rules: UNCONDITIONAL (every eligible entry) and MODEL (model p >= break-even (D + cost) / (10 + D) + 0.05; the 0.05 margin is fixed a priori, margin 0 is shown as sensitivity only)",
+    "criterion": "development walk-forward folds 2-6 (out of sample for the model): mean net R at +$10. A variant qualifies only with n >= 30 trades, a bootstrap 95% lower bound > 0, and a +$10-first rate above matched random (one-sided p < 0.05). Per engine the qualifying variant with the highest mean net R is the candidate. With none qualifying the engine's verdict is NO CANDIDATE and validation is not opened for it",
+    "reported_with_the_selection": "the Deflated Sharpe Ratio over all candidates tried (trial count from research/trials.jsonl) and PBO by CSCV across the variants",
+    "freeze": "before validation opens: research/registrations/B31b-W3-FREEZE.json is committed with, per candidate, the method, timeframe, rule, the model coefficients refit on all development trades, the standardisation, the threshold, and the sha256 of quantum/research/w3liq.py. Nothing in it may change afterwards"
+  },
+  "validation_and_holdout_gate": {
+    "tests": "per frozen candidate and target (+$10 primary; +$15 and +$20 on the same trades): the +$T-first rate vs matched random (one-sided two-proportion z), Holm across every candidate x target tested",
+    "pass": "+$10: n >= 30, mean net R > 0 with bootstrap 95% lower bound > 0, and the Holm-adjusted p < 0.05 vs matched random. +$15 / +$20 are reported, with their own Holm-adjusted p, and are not needed for PASS",
+    "holdout": "opened only for a PASS candidate, once, same tests; PASS there is the precondition for proposing a forward shadow test of that candidate (shadow only; any alert needs the operator's explicit authorization)"
+  },
+  "frequency": "per partition: events per day / week by type, timeframe and session; qualifying entries per method; rejected by reason; MISSED (limit not filled); confirmation cost: for SWEEP events whose +$10 reversal happened, the share of the move already gone at each delayed method's entry, and how many reversals no delayed method entered",
+  "questions_answered": "the operator's ten decision questions (directive section 15), each from the tables above, with the evidence and its limits",
+  "shadow_module": "quantum/research/w3shadow.py: the same detector code (imported from w3liq, not copied) run on the live store's closed bars only; every event and every qualifying / rejected entry recorded append-only with a unique id, timestamp, strategy, timeframe, level, sweep / breakout price, decision, entry reference, stop, TP1-3, costs, lots, data freshness, then MFE / MAE, TP / SL sequence, time to target and class once known; stale bars (older than 20 minutes at decision) are recorded as STALE and never qualify; duplicates are refused by id. No alert, no notification, no ledger write in production: it is tested and replayed offline on the store; wiring it into the site's workflow needs the operator's explicit authorization",
+  "unchanged": "production alerts, the engine, config.py, the freeze key 1f88aad357497da4:4440d52587f5cc6b, the workflows, B9-GRAB-FWD, B15b-ENGINE-FWD, B31b-SHADOW-FWD, B24 (OFF), every other registration and every existing results file (B31b-W2's included)",
+  "not_done_by_design": "no threshold or window is searched on the data; no rule is changed after validation or holdout is read; no probability is displayed that is not calibrated and validated; nothing is promoted to production",
+  "trials_log": "one line per partition and per selection / validation run is appended to research/trials.jsonl",
+  "decision": "Descriptive findings (Deliverables A, B, E) plus, per engine, CANDIDATE PASS / FAIL / NO CANDIDATE on validation (and holdout when opened). A PASS is not authorization to alert.",
+  "amendment_A1_before_any_run": {
+    "utc": "2026-11-18, committed with the code and before any development run (a 3-month smoke run printed counts only)",
+    "why": "three points of the registration were ambiguous or, read literally, would mislabel events; fixed before any outcome was computed or read",
+    "level_on_the_wrong_side_at_the_open": "a level the crossing bar OPENS at or beyond (a gap through it) is consumed without an event and counted as 'gapped' (the registration says 'a buy-side level above price')",
+    "types_11_12": "type 11 = a BREAK with a close back inside at bar i+1 or i+2; type 12 = closes beyond at i, i+1 and i+2; the two are exclusive (B31's ACCEPTED / REJECTED windows)",
+    "class_F": "read literally ('price crosses a live level on the other side before either +$10') every reversal with less than $10 of room would be F. F is therefore: before either +$10 barrier, BOTH the event's own side is pushed again (the sweep extreme exceeded, or for a BREAK a close back inside) AND the nearest live level on the other side is crossed",
+    "unchanged": "every threshold, window, method, model setting and gate of the registration"
+  },
+  "corrections_after_the_first_development_run": {
+    "utc": "2026-11-18, after the first development run (code f76b5065...), before the second; labels only",
+    "what_the_first_run_showed": "22% of SWEEP events (633 M15, 366 M30) were class G 'tie': two barriers touched inside the same 5-minute bar were treated as unorderable even when they lie in the same direction, where price must pass the nearer one first. The registration defines G as an order that is genuinely unknown.",
+    "C1": "same-direction barriers touched in one (M5-refined) bar are ordered by their distance from the event close; only opposite-direction ties are G",
+    "C2": "amendment A1 counted, for a BREAK, a close back inside as 'its own side pushed again'. A close back inside is what defines a false breakout, so every false breakout whose reversal passed a level less than $10 away became F, the mislabelling A1 was written to prevent. Corrected to the symmetric rule: the break extreme exceeded again AND the nearest level on the other side crossed, both before either +$10",
+    "not_affected": "classes are research labels: no feature, entry, race, eligibility, model, selection or verdict reads them. Every trade result of the second run must equal the first run's (checked and reported)",
+    "both_runs_kept": "the first run's trial line stays in research/trials.jsonl",
+    "R1_reproducibility": "comparing runs 1 and 2 showed 21 events whose 'primary' label differed: a tie in rank between Asia / London / New York session levels was broken by Python's string-hash order, which changes per process. Ties now break alphabetically (tested under three hash seeds). It touched only the descriptive by-primary-level table (the model's level feature groups AS / LO / NY together)."
+  }
+}
