@@ -59,5 +59,15 @@
   "case_study": "18 Nov 2026 (the operator's screenshots): every impulse opportunity of the day, its mechanisms, fills and outcomes, and the nine questions of the directive's section 11, answered from bars known at each time; no hindsight choice is presented as identifiable in advance",
   "outputs": "research/results/b31b_w5_development_<date>.json, research/results/b31b_w5_trades_development_<date>.csv (no absolute prices), research/results/b31b_w5_case_2026-11-18.json, research/B31B_W5_RESULTS.md, research/trials.jsonl",
   "unchanged": "W3 / W4 registrations, code, results and verdicts; the production engine, configuration, freeze key and alerts; validation and holdout stay sealed",
-  "not_done_by_design": "no parameter search: every number above is fixed before the run (2.0 ATR, 16 bars, the 9 levels, 0.2 ATR buffer, 1.0 ATR, 8 x cost and 4 bars are declared, not chosen on results); no new indicators; no probability shown as a win rate"
+  "not_done_by_design": "no parameter search: every number above is fixed before the run (2.0 ATR, 16 bars, the 9 levels, 0.2 ATR buffer, 1.0 ATR, 8 x cost and 4 bars are declared, not chosen on results); no new indicators; no probability shown as a win rate",
+  "amendment_A1_before_any_run": {
+    "why": "clarifications found while writing and testing quantum/research/w5entry.py, before it ran on any market data (synthetic walks only)",
+    "H": "both M5 bars k-1 and k-2 open after t1's close; the M5 search ends at the close of bar t1 + 16 (by bar count), or at the end of the data",
+    "G20_G50": "implemented as the one-bar limit that fills: priced at the EMA of the bar before the fill bar (closed data only); a close beyond the structural stop before the fill cancels it",
+    "J": "the first bar m (from t1 + 2, up to 4 bars after the window) whose close is back across E's level while one of the 4 closes before it (from t1 + 1, inside the window) was on the other side; a close beyond the structural stop first cancels it",
+    "K": "when price at t1 is already at or beyond the adaptive level, K is a market entry at c[t1] and goes through the same eligibility (it can fail the cost rule)",
+    "random_draws": "every random draw (B_rand's level, R1's bars, R3's prices) is seeded by the registration seed and the opportunity / trade identity, so results do not depend on processing order",
+    "features": "the predictive rows' features are known at placement (t1) or at the fill; the ATR feature at the fill uses the bar before the fill bar",
+    "E_lookback": "E's swing is searched among swings confirmed in the 4 trading days (384 bars) before t0"
+  }
 }
