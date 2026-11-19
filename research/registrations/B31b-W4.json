@@ -1,0 +1,73 @@
+{
+  "id": "B31b-W4",
+  "title": "Pullback continuation (A), reversal against the trend (B), breakout and retest (C), and entry timing, on M15 with M30 context: development discovery only",
+  "status": "registered before any W4 research code or run",
+  "created_utc": "2026-11-19T04:20:00Z",
+  "approval": "Operator, 2026-11-18 (Workstream 4 directive): \"Bearish continuation after pullback\" hypotheses A-F, \"bullish reversal conditions\", \"Module A ... Module B ... Module C ... separately evaluated\", \"Entry-timing / confirmation-delay study\", \"Respect the Workstream 3 result. Do not change its pre-registration, selection rule or methodology to manufacture a positive result.\", \"Preserve the sealed 2023-24 and 2024-25 holdout periods unless I explicitly authorise their opening under a documented validation plan.\", \"If no strategy beats its matched control after costs, retain NO TRADE.\", \"For new directional entry strategies: Keep them feature-flagged and disabled for live trading until independently validated.\"",
+  "partitions": {
+    "used": "development only (harness.DEV: 2020-01-24 02:00 to 2023-01-24 02:00 UTC), scored from 45 days after its first bar (warm-up, as W3)",
+    "sealed": "validation (2023-01-24 to 2024-07-01) and holdout (2024-07-01 to 2026-01-01) are NOT opened by this registration. A development CANDIDATE is only a reason to write a separate validation plan (freeze file + the operator's explicit authorisation); nothing here opens them",
+    "recent": "2026-01-01 onward is read only for the 17-18 Nov 2026 case study (the operator's screenshots) and descriptive counts; it overlaps the live forward-test period, so nothing from it is evidence or used for any decision"
+  },
+  "disclosure": "Not a first look. B16 / B21 / B31 and B31b-W3 measured sweeps and breakouts of related levels on this development period; W3 (engine A reversal after sweeps: A-IMM / A-CONF / A-MSS / A-M5MSS / A-RETEST / A-DISP; engine B breakout: B-CLOSE / B-ACC / B-RETEST / B-DISP) found NO CANDIDATE. Module B below is therefore largely a subset of W3 engine A (sweeps restricted to those against an M30 trend) and Module C overlaps W3 engine B (retest after a break, here with a close confirmation); both are reported as such. Module A (with-trend entries after a pullback into the broken structure) and the timing study are new. Every parameter below is fixed in advance, copied from W3 / keyzones where one exists; there is no grid, no filter search and no model in W4.",
+  "data": "as B31b-W3: spot XAU/USD from Twelve Data on the research-data branch via quantum.research.history.load (15min, 1h; 5min where the 2026-11-18 extension supplies it). M30 = two consecutive 15m bars (w3liq.make_m30). No volume is used.",
+  "context": {
+    "definition": "M30 structure at the decision bar's close, from M30 bars closed by then: the last two confirmed M30 swing highs (pivot 3 bars each side, known 3 bars after the pivot) descending AND the last two confirmed swing lows descending AND M30 EMA20 < EMA50 < EMA100 = BEARISH; the mirror = BULLISH; else NONE. This is keyzones.structure's 'bias' rule, evaluated point in time.",
+    "direction_d": "Module A and C trade WITH the context (d = -1 bearish, +1 bullish); Module B trades AGAINST it. Both directions are run; results are pooled per method and also shown per direction."
+  },
+  "common": {
+    "timeframe": "M15 decisions; M5 only where a method says so and only from the 5min series",
+    "atr": "ATR14 of M15 (w3liq frame), at the decision bar",
+    "buffer": "stop buffer 0.2 x ATR beyond the structure (W3 SL_BUF)",
+    "swing": "M15 swing = pivot 3 / 3 (W3 SW_LR), known from the close of the 3rd bar after it; the minor swing for MSS / sweep-of-pullback = pivot 2 / 2 (W3 MSS_LR)",
+    "zone": "the broken swing's wick zone as keyzones.swing_sources builds it: for a swing low, low .. bottom of its body, widened to at least 0.15 x ATR and cut to at most 0.75 x ATR from the extreme (mirror for a swing high)",
+    "displacement": "a bar with d x (close - open) >= 1.0 x ATR (W3 DISP_BODY)",
+    "targets_races_costs_sizing": "exactly w3liq.execute: +$10 / +$15 / +$20 x s from the fill, each raced separately against the same stop; 24 h time stop; a 15m bar touching both ordered by M5 where available, else the stop (AMBIGUOUS); market fills at the decision close, limits when a later bar trades through (a gap fills at the open); cost of record = harness session model; eligibility = stop on the correct side, lots = floor_0.01(650 / ((D + cost) x 100)) >= 0.01, cost <= 15% of D; realised loss beyond $650 through gaps recorded",
+    "one_position": "one position at a time per method (busy until the +$10 race's exit), as w3liq.one_position",
+    "rejections": "every order that is not filled or not eligible is counted with its reason"
+  },
+  "module_A_pullback_continuation": {
+    "episode": "a BREAK: an M15 bar i whose close is beyond the most recent confirmed M15 swing in direction d (close < swing low for d = -1) while the previous close was not, with context = d at bar i's close. Level L = that swing; Z = its wick zone (now opposing structure). The episode is the next 24 M15 bars (6 h). While an episode of direction d is open, a new BREAK of the same direction does not start another one.",
+    "approach": "the first bar j in the episode that trades to within 0.25 x ATR of Z (the keyzones AT ZONE distance)",
+    "A1_ZONE_REJECT": "operator A. First bar m >= approach that trades into Z and closes back outside it on the trend side (d = -1: high >= Z.lo and close < Z.lo). Market at that close; stop = the extreme since the approach (highest high for d = -1) + buffer.",
+    "A2_EMA_DISP": "operator B. First bar j in the episode reaching the M15 EMA band (d = -1: high >= min(EMA20, EMA50, EMA100) - 0.1 x ATR, the EMAs above the close), then a displacement bar m in (j, j + 4]. Market at m's close; stop = the extreme of j .. m + buffer.",
+    "A3_M5_MSS": "operator C. After the approach, the first M5 close beyond the most recent confirmed M5 minor swing (pivot 2 / 2) in direction d formed after the approach began, within 8 M15 bars (2 h) of the approach; cancelled by an M15 close beyond Z's far side first. Market at that M5 close; stop = the extreme since the approach + buffer. NOT RUN where 5min bars are missing.",
+    "A4_RETEST_LIMIT": "operator D. A limit at L placed at the BREAK close, valid 8 bars (W3 LIMIT_BARS); stop = Z's far side + buffer.",
+    "A5_SWEEP_PB_DISP": "operator E. A minor swing (pivot 2 / 2) of the pullback confirmed inside the episode against d (a pullback high for d = -1); a later bar k trades beyond it and closes back (d = -1: high > it, close < it); then a displacement bar m in [k, k + 2]. Market at m's close; stop = the extreme of k .. m + buffer.",
+    "A6_FAILED_RECLAIM": "operator F. A close back across L against d (a reclaim, d = -1: close > L) at bar r inside the episode, then within 4 bars a close back across L in direction d at bar m. Market at m's close; stop = the extreme of r .. m + buffer."
+  },
+  "timing_study": {
+    "question": "operator section 7: what an earlier or later entry on the same Module A episodes costs or gains",
+    "T1_EARLY_ZONE": "a limit at the approach price (d = -1: Z.lo - 0.25 x ATR) placed at the BREAK close, valid for the episode; stop = Z's far side + buffer",
+    "T2_FIRST_REJECTION": "= A1",
+    "T3_M5": "= A3",
+    "T4_M15_CONFIRM": "after A1's bar, the next M15 bar closes further in direction d than A1's close: market at that close; stop = the extreme since the approach + buffer",
+    "T5_RETEST": "= A4",
+    "T6_DISP_PULLBACK": "after A2's displacement bar, a limit at its body midpoint valid 4 bars (W3 DISP_BARS); stop as A2",
+    "reported": "per method: fill rate, entry relative to T1 in ATR, stop distance, net R, +$10 / +$15 / +$20 first; and on the episodes where both fill, the paired difference in net R against A1 (day-clustered bootstrap 95%)"
+  },
+  "module_B_reversal": {
+    "event": "context = c (non-zero); a SWEEP of the most recent confirmed M15 swing in the context direction or of the previous day's extreme (d_c = -1: low < swing low or PDL) by a bar i that closes back across it (close > level). Trade direction d = -c.",
+    "B1_RECLAIM": "market at bar i's close; stop = bar i's extreme + buffer",
+    "B2_RECLAIM_DISP": "a displacement bar m in (i, i + 4] in direction d, every close since i still on the reclaimed side; market at m's close; stop = the extreme since i + buffer",
+    "B3_RECLAIM_MSS": "within 8 bars, a close beyond the most recent minor swing (pivot 2 / 2) in direction d confirmed after i - 8; market at that close; stop = the extreme since i + buffer",
+    "B4_HIGHER_LOW": "after B3's bar, a minor swing against d confirmed within 16 bars that holds beyond the sweep extreme (a higher low for d = +1); market at the confirming bar's close; stop = that swing + buffer",
+    "taxonomy": "descriptive, uses the future and is NEVER a feature or a filter. Within 96 bars of bar i: CONTINUATION = a close beyond the sweep extreme in the context direction before the move in direction d reaches 1 x ATR (from bar i's close); SHORT-COVERING BOUNCE = 1 x ATR reached first, then a close beyond the sweep extreme; GENUINE REVERSAL = 1 x ATR reached, no close beyond the extreme, and an M30 close beyond the last confirmed M30 swing in direction d (structure flip); FAILED BREAKDOWN = 1 x ATR reached, no close beyond the extreme, no M30 flip; UNRESOLVED = none of these"
+  },
+  "module_C_breakout_retest": {
+    "event": "an M15 close beyond a level in direction d (previous close on the other side) and the next bar also closes beyond it (acceptance, W3 a12 analogue with one bar). Levels: the previous day's high / low and the most recent confirmed M30 and H1 swings (pivot 3 / 3) known at the bar",
+    "C1_RETEST_REJECT": "within 12 bars after the acceptance, a bar trades back to within 0.1 x ATR of the level (d = -1: high >= L - 0.1 x ATR) and closes back beyond it in direction d; market at that close; stop = the extreme since the acceptance + buffer; any context",
+    "C2_RETEST_REJECT_WITH_CONTEXT": "C1 when the M30 context = d at the decision (a pre-declared subset of C1)"
+  },
+  "statistics": {
+    "per_method": "n, +$10 / +$15 / +$20-first (Wilson 95%), mean net R with a day-clustered bootstrap 95% interval (2,000, seed 3103), profit factor, max drawdown in USD at $650, MFE / MAE medians, median minutes to target, realised loss distribution (how many beyond $650 and the worst), per direction and per session bucket",
+    "control": "w3liq.matched_random: 20 random 15m closes per trade in the same partition, direction, session bucket and ATR tercile, the same scaled stop distance and targets, the same race and costs (seed 3103)",
+    "family": "15 methods: A1-A6, T1, T4, T6, B1-B4, C1, C2. The +$10-first rate vs matched random, one-sided two-proportion test, Holm-adjusted across the 15. +$15 / +$20 reported with their own Holm adjustment, not needed",
+    "candidate": "a method is a development CANDIDATE only with n >= 30 decided trades, a bootstrap 95% lower bound of mean net R at +$10 > 0, and a Holm-adjusted p < 0.05 vs matched random at +$10 (W3's bar). With none: NO CANDIDATE, and NO TRADE stays",
+    "what_a_candidate_means": "only that a validation plan may be written for it (freeze file with the code hash, then validation once, then holdout once, W3's order), and only with the operator's explicit authorisation. No alert, no shadow wiring and no production change follows from a development result"
+  },
+  "case_study": "17-18 Nov 2026 (the operator's M15 / M30 screenshots): every Module A / B / C order and its fate, trade by trade, from the recent period; descriptive only",
+  "outputs": "research/results/b31b_w4_development_<date>.json (summaries, family table), research/results/b31b_w4_trades_development_<date>.csv (trade by trade: method, direction, decision time, entry, stop, D, cost, lots, outcomes, net R, MFE / MAE, minutes to target; prices kept because they are derived research records, no vendor rows), research/results/b31b_w4_case_study_2026-11-17_18.json, research/B31B_W4_RESULTS.md, research/trials.jsonl lines",
+  "unchanged": "production engine, configuration and freeze key; every alert; W3's registration, code, results and verdict; validation and holdout stay sealed",
+  "not_done_by_design": "no parameter tuning, no filter or threshold search, no model, no probability shown as a win rate, nothing wired to alerts or shadow"
+}
