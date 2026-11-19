@@ -8301,6 +8301,67 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "GRAB|15m|1795059900|1",
+   "kind": "GRAB",
+   "tf": "15m",
+   "t": 1795059900,
+   "t_close": 1795060800,
+   "dir": 1,
+   "p0": 3722.59,
+   "what": "PDL 3719.19 swept and rejected",
+   "id": 225,
+   "seen": 1795061171,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3737.59,
+   "invalid_at": 3709.59,
+   "cap_at": 3742.59,
+   "confirm20_at": 3742.59,
+   "status": "CONFIRMED",
+   "bars": 7,
+   "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
+   "reason": "confirmed, but NOT VALIDATED: its registered test failed: +$15 before -$13 after a $15 confirmation was 43% of 302 trades (2020-22, 95% 38%-49%) against a break-even of 47.4%; FAIL (B21 H1 / H2)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "t_conf": 1795067100,
+   "entry": 3738.85,
+   "entry_px": 3738.85,
+   "move_usd": 16.26,
+   "sl": 3725.85,
+   "tp1": 3753.85,
+   "tp2": 3758.85,
+   "rr1": 1.1538461538461537,
+   "rr2": 1.5384615384615385,
+   "x20": {
+    "status": "PENDING",
+    "scan_t": 1795087800
+   },
+   "result": {
+    "T15": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 4.0,
+     "mae": 13.0,
+     "mfe_px": 4.0,
+     "mae_px": 13.0,
+     "t": 1795087800,
+     "scan_t": null
+    },
+    "T20": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 4.0,
+     "mae": 13.0,
+     "mfe_px": 4.0,
+     "mae_px": 13.0,
+     "t": 1795087800,
+     "scan_t": null
+    }
+   },
+   "t_done": 1795087800
   }
  ]
 }
