@@ -870,6 +870,47 @@ function entryIntelCard(EI) {
     ${kv(info)}
     <p class="muted pa-note">${esc(EI.rules || "")} ${esc(EI.evidence || "")}</p>`;
 }
+/* ---------- Workstream 7: M15 / M30 breakout monitor (quantum/breakouts.py; index.json -> alerts.breakouts) ----------
+   Monitoring, not an entry: every 15m / 30m close beyond a level, its stages and what reached the phone. ENTRY READY is
+   SHADOW (computed, recorded, shown here, never sent): no breakout entry has been validated. */
+function breakoutsCard(BK) {
+  if (!BK || !BK.on) return "";
+  if (BK.ok === false) return `<h4>Breakouts M15 / M30</h4><p class="muted pa-note">Not available in this run${BK.error ? ": " + esc(BK.error) : ""}.</p>`;
+  const C = BK.counts || {};
+  const sd = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
+  const NM = { PWH: "prev week high", PWL: "prev week low", PDH: "prev day high", PDL: "prev day low", ASH: "Asia high", ASL: "Asia low",
+    LOH: "London high", LOL: "London low", NYH: "New York high", NYL: "New York low", EQH: "equal highs", EQL: "equal lows",
+    RGH: "range high", RGL: "range low", SWH: "swing high", SWL: "swing low" };
+  const PH = { SENT: "sent", LATE: "late, not sent", SITE: "website only", SEND_FAILED: "send failed", DUE: "due" };
+  const kvs = (o) => Object.entries(o || {}).map(([k, v]) => `${esc(k)} ${v}`).join(" · ") || "none";
+  const stg = (e) => ["DETECTED", "CONFIRMED", "RETEST", "FAILED", "CLOSED"].filter((k) => e.stages[k]).map((k) => {
+    const s = e.stages[k], lbl = k === "RETEST" ? "retest held" : k === "CONFIRMED" ? `confirmed (${(s.how || "").toLowerCase()})` : k.toLowerCase();
+    const ph = e.phone && e.phone[k] ? ` <span class="dim">[${esc(PH[e.phone[k]] || e.phone[k])}]</span>` : "";
+    return `${esc(lbl)} ${tfmt(s.t, false)}${ph}`; }).join("<br>");
+  const RES = { TP: "bull", SL: "bear", AMBIGUOUS: "bear" };
+  const SS = { ASIAN: "Asia", LONDON: "London", "LONDON+NY": "London+NY", "NEW YORK": "New York", OFF: "other" };
+  const one = (name, x) => {
+    if (!x) return "";
+    const out = !(x.D > 0) ? '<span class="dim">not raced (no valid stop)</span>' : x.fill === "MISSED" ? '<span class="dim">not filled (limit expired)</span>' : !x.fill ? '<span class="dim">waiting for fill</span>'
+      : ["10", "15", "20"].map((k) => { const v = x.res && x.res[k]; return v ? `<b class="${RES[v[0]] || ""}">${v[0] === "AMBIGUOUS" ? "AMB" : v[0]}</b>` : '<span class="dim">open</span>'; }).join(" · ");
+    return `<div><b>${name}</b> ${px(x.entry)} SL ${px(x.stop)} <span class="dim">($${f(x.D, 2)}, ${f(x.lots, 2)} lot)</span></div>
+      <div>${x.ready ? "rule checks passed (shadow only)" : '<span class="warn">NO TRADE: ' + esc((x.why || []).join("; ")) + "</span>"}</div>
+      <div class="dim">+$10 · +$15 · +$20: ${out}</div>`; };
+  const shadow = (e) => (e.shadow && (e.shadow.E1 || e.shadow.E2)) ? one("E1 market", e.shadow.E1) + one("E2 limit at level", e.shadow.E2) : '<span class="dim">—</span>';
+  const rows = (BK.events || []).slice(0, 20).map((e) => `<tr><td>${esc(e.tf === "15m" ? "M15" : "M30")} ${sd(e.dir)}<div>${tfmt(e.t_close)}</div><div class="dim">${esc(SS[e.sess] || e.sess || "")}</div></td>
+    <td>${px(e.ref)}<div class="dim">${esc(NM[e.ref_kind] || e.ref_kind)}${e.levels && e.levels.length > 1 ? ` +${e.levels.length - 1} more` : ""}</div></td>
+    <td>${stg(e)}</td><td>${shadow(e)}</td></tr>`).join("");
+  const P = C.phone || {};
+  return `<h4>Breakouts M15 / M30 · monitoring, not an entry</h4>
+    ${kv([["Phone", BK.mode === "phone" ? "ON: every breakout, confirmation, retest and failure (all sessions)" : BK.mode === "site" ? "website only" : "OFF"],
+      [`Last ${C.days || 7} days`, `${C.events || 0} breakouts · ${kvs(C.by_tf)} · ${kvs(C.by_dir)}`],
+      ["By session", kvs(C.by_session)],
+      ["What happened", `${C.confirmed || 0} confirmed · ${C.retest_held || 0} retests held · ${C.failed_before || 0} failed before confirmation (false breakouts) · ${C.failed_after || 0} failed after it`],
+      ["Phone delivery", `${P.SENT || 0} sent · ${P.LATE || 0} late (not sent) · ${P.SEND_FAILED || 0} send failed${P.SITE ? ` · ${P.SITE} website only` : ""} <span class="dim">(sent = accepted by the server, not proof it showed on the phone)</span>`],
+      ["ENTRY READY", `<b class="warn">SHADOW</b> <span class="dim">computed and recorded, never sent: no breakout entry is validated</span>`]])}
+    ${rows ? `<div class="scroll"><table class="yt"><tr><th>Breakout</th><th>Level</th><th>Stages [phone]</th><th>Shadow entries (not validated, never sent)</th></tr>${rows}</table></div>` : '<p class="muted pa-note">No breakout since this monitor started.</p>'}
+    <p class="muted pa-note">${esc(BK.rules || "")} ${esc(BK.shadow || "")} Shadow results are raced on closed 15m bars, each target on its own against the stop: TP = target first, SL = stop first, AMB = both in one bar (counted as the stop). Feed mid prices with a cost model; no broker bid / ask is connected, and the planned loss is not a maximum (gaps).</p>`;
+}
 function shadowCard(SH) {
   if (!SH) return "";
   if (SH.error || SH.status) return `<h4>Entry-module forward test (B31b)</h4><p class="muted">${esc(SH.error || SH.status)}</p>`;
@@ -2452,7 +2493,7 @@ function renderPlanAlerts() {
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   // this card is redrawn on live ticks (open plans' P/L): keep the "phone alert, as sent" blocks the reader has opened
   const openK = new Set([...el.querySelectorAll("details[open][data-k]")].map((d) => d.dataset.k));
-  el.innerHTML = `${c1Card(A.c1)}${entryIntelCard(A.entry_intel)}${zonesCard(A.zones)}
+  el.innerHTML = `${c1Card(A.c1)}${entryIntelCard(A.entry_intel)}${breakoutsCard(A.breakouts)}${zonesCard(A.zones)}
     <h4>Your plan</h4>
     <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}${c.tp2_usd ? ` · two targets: TP1 +$${f(c.tp_usd / 2, 0)} on half, then SL to entry, TP2 +$${f(c.tp2_usd / 2, 0)} on the rest` : ""}</div>
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>
