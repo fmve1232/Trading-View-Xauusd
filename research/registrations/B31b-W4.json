@@ -2,7 +2,7 @@
   "id": "B31b-W4",
   "title": "Pullback continuation (A), reversal against the trend (B), breakout and retest (C), and entry timing, on M15 with M30 context: development discovery only",
   "status": "registered before any W4 research code or run",
-  "created_utc": "2026-11-19T04:20:00Z",
+  "created_utc": "2026-11-19T04:13:09Z",
   "approval": "Operator, 2026-11-18 (Workstream 4 directive): \"Bearish continuation after pullback\" hypotheses A-F, \"bullish reversal conditions\", \"Module A ... Module B ... Module C ... separately evaluated\", \"Entry-timing / confirmation-delay study\", \"Respect the Workstream 3 result. Do not change its pre-registration, selection rule or methodology to manufacture a positive result.\", \"Preserve the sealed 2023-24 and 2024-25 holdout periods unless I explicitly authorise their opening under a documented validation plan.\", \"If no strategy beats its matched control after costs, retain NO TRADE.\", \"For new directional entry strategies: Keep them feature-flagged and disabled for live trading until independently validated.\"",
   "partitions": {
     "used": "development only (harness.DEV: 2020-01-24 02:00 to 2023-01-24 02:00 UTC), scored from 45 days after its first bar (warm-up, as W3)",
