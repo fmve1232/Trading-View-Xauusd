@@ -8362,6 +8362,33 @@
     }
    },
    "t_done": 1795087800
+  },
+  {
+   "key": "SWEEP|15m|1795092300|1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1795092300,
+   "t_close": 1795093200,
+   "dir": 1,
+   "p0": 3719.79,
+   "what": "sweep at PDL 3719.19",
+   "id": 234,
+   "seen": 1795093654,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3734.79,
+   "invalid_at": 3706.79,
+   "cap_at": 3739.79,
+   "confirm20_at": 3739.79,
+   "status": "INVALIDATED",
+   "bars": 6,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795098600
   }
  ]
 }
