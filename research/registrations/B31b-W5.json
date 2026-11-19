@@ -1,0 +1,63 @@
+{
+  "id": "B31b-W5",
+  "title": "Executable entry-price study: which entry price, after a directional impulse, gives +$10 before the structural stop more often than a fair random entry, after costs (development only)",
+  "status": "registered before any W5 code or run",
+  "created_utc": "2026-11-19T08:25:43Z",
+  "approval": "Operator, 2026-11-19 (Critical Workstream 5): \"Find the entry price that maximises the probability of +$10 before structural stop.\" ... \"Do not respond by adding more indicators or changing thresholds to manufacture better results.\" ... \"The 2023-24 and 2024-25 holdout periods remain sealed.\" ... \"A candidate must beat its matched benchmark after costs, with sufficient sample size and a statistically defensible result. If no candidate passes, report NO TRADE.\"",
+  "question": "Given a directional impulse known at the decision time, at what executable price (and so with what stop distance to the same structural invalidation) does price reach +$10 before the stop more often than a fair random entry with the same stop distance, the same window and the same costs, with positive net expectancy?",
+  "partitions": {
+    "used": "development only (harness.DEV 2020-01-24 .. 2023-01-24, scored from 45 days after its first bar; M5 from 2020-03-16)",
+    "sealed": "validation (2023-01-24 .. 2024-07-01) and holdout (2024-07-01 .. 2026-01-01) are not opened. A development CANDIDATE only allows a validation plan to be written and submitted for the operator's explicit approval",
+    "recent": "2026 data are used only for the 18 Nov case (section 11 of the directive), descriptively"
+  },
+  "data": "Twelve Data spot XAU/USD 15min / 1h / 5min from the research-data branch (quantum.research.history.load). A mid-price feed with no bid / ask and no volume: spread, bid / ask, data freshness and latency features are NOT RUN on it",
+  "audit_of_the_previous_benchmark": "w3liq.matched_random (W3, W4) draws random 15m closes from the whole partition with the same direction, session bucket, ATR tercile, stop distance and costs. Gaps: (1) not the same decision time or window; (2) market entries only, while limit fills are conditioned on price coming to the order; (3) no one-position rule on the controls; (4) no random PRICE inside the same eligible zone with the same structural stop. W5 keeps it for continuity (R4) and adds R1-R3 below",
+  "opportunity": {
+    "impulse": "M15. An UP impulse is detected at the close of bar t0 when c[t0] - L0 >= 2.0 x ATR14[t0], where L0 is the lowest low of bars t0-16 .. t0-1 (its bar p0), and the previous close c[t0-1] - L0 was below 2.0 x ATR14[t0-1] (first crossing). DOWN is the mirror (H0 = highest high, c[t0] <= H0 - 2 ATR). Each extreme bar p0 starts at most one impulse per direction; while an opportunity of a direction is open (until its window ends), no new one of that direction starts",
+    "structural_stop": "S = L0 - 0.2 x ATR14[t0] (UP); the mirror for DOWN. The same S for every mechanism of the opportunity",
+    "t1": "the first pullback bar: the first bar j in (t0, t0 + 16] whose high does not exceed the running high of p0 .. j-1 (UP). At its close the impulse extreme H = max high of p0 .. t1 and the range R = H - L0 are fixed. With no pullback bar in 16 bars, or a close beyond S first, the opportunity has no t1 and only A0 is placed",
+    "window": "orders placed at t1 are valid for the 16 bars after t1 (4 h) and cancelled by a close beyond S",
+    "earliest_plausible_price": "p_0 = c[t0]; the confirmation price is the H / J fill (if any); everything is measured relative to both"
+  },
+  "mechanisms": {
+    "A0": "market at c[t0] (the earliest plausible price)",
+    "A1": "market at c[t1] (the immediate executable entry at the decision time)",
+    "B_r": "limit at H - r x R (UP), placed at t1, for r in {0.236, 0.382, 0.5, 0.618, 0.786} (Fibonacci) and {0.30, 0.45, 0.55, 0.70} (non-Fibonacci comparators). D (midpoint of the impulse leg) = B_0.5 and is not tested twice",
+    "B_rand": "CONTROL, not a candidate: limit at H - u x R with u ~ Uniform(0.2, 0.8) per opportunity (seed 3103): the 'equivalent random retracement level'",
+    "C": "limit at the open of the largest-body bar in the impulse direction among p0 .. t1 (the displacement origin), if that open is beyond S",
+    "E": "limit at the broken structure level: the most recent confirmed M15 swing high (pivot 3 / 3) known before the impulse that lies inside (L0, H) and was closed above during the impulse (UP); no order without one",
+    "F": "limit at the anchored TWAP from p0 to t1 (mean of (high + low + close) / 3): the volume-free proxy of an anchored VWAP (the feed has no volume, so a true VWAP deviation is NOT RUN)",
+    "G20 / G50": "a limit re-priced every bar at the previous bar's EMA20 (EMA50) of M15 closes, from t1 + 1 to the window end; fills when a bar trades through it (an open beyond it fills at the open)",
+    "H": "M5 pullback then resume: after t1, the first M5 bar k with a lower high than the M5 bar before it at k-1 (a pullback) and a close above that previous high at k (UP); market at c5[k]. NOT RUN where 5min bars are missing",
+    "I": "limit at H - 1.0 x ATR14[t1] (a volatility-adjusted retracement)",
+    "J": "failed reclaim of E's level: a close back below it (UP) inside the window, then within 4 bars a close above it; market at that close; no order without E's level",
+    "K": "adaptive limit at S + max(1.0 x ATR14[t1], 8 x cost[t1]) (UP): the deepest price that keeps the stop at least one ATR away and the cost at most 12.5% of it; if price is already there at t1, market at c[t1]"
+  },
+  "execution": "w3liq.execute unchanged: market at the decision close (or the M5 close), limits when a later bar trades through (a gap fills at the open), $650 sizing with 100 oz per lot ASSUMED (labelled until a broker specification is validated), the harness session cost model (spread + 2 x $0.20 slippage + $7 / lot commission), eligibility: stop on the correct side, lots >= 0.01, cost <= 15% of the stop distance; +$10 / +$15 / +$20 raced separately from the fill against the same stop; a 15m bar touching both is ordered by M5, else the stop (AMBIGUOUS); 24 h time stop; one position at a time per mechanism. Planned loss (<= $650) and realised loss through gaps are reported separately",
+  "benchmarks": {
+    "R1_same_D_random_timing": "PRIMARY. For every counted trade: 20 random M15 closes drawn uniformly from the same opportunity's window (t1 .. t1 + 16, or t0 .. t0 + 16 for A0), market entries in the same direction with the SAME stop distance D and targets, the same race and cost model (cost of the drawn bar), seed 3103",
+    "R2_immediate": "A1 on the same opportunity (paired difference in net R)",
+    "R3_random_price_in_zone": "per opportunity, 20 limits at prices drawn uniformly between H and H - 0.8 R (the eligible retracement zone), same structural stop S, same window and cancellation; their mean outcome per opportunity is the opportunity's control (paired with the candidate)",
+    "R4_W3_matched": "w3liq.matched_random, for continuity with W3 / W4 only"
+  },
+  "metrics": "per mechanism: opportunities, orders, fills, eligible and counted trades with every rejection reason; +$10 / +$15 / +$20-first and stop-first rates (Wilson 95%); TP1-first-but-net-negative after costs reported as its own count; the path after TP1 (TP1 then stop before TP3) as its own count; excess over the driftless geometry (+$T-first minus D / (D + T)) with a day-clustered bootstrap 95%; net expectancy in R and USD (bootstrap 95%), profit factor, max drawdown, MAE / MFE, time-to-target distribution (quartiles); entry price vs p_0 and vs c[t1] in $ and ATR (positive = better); confirmation delay; remaining favourable movement at entry (MFE from the entry over 24 h, and the share of the opportunity's MFE from p_0 already consumed at entry; descriptive, uses the future); cost sensitivity (cost x 1.5, x 2); by session and ATR tercile; distributions, not only means",
+  "impulse_and_retracement_description": "per opportunity: impulse size ($, ATR), duration and bars, displacement ratio (largest body / R), the maximum retracement before price exceeds H again or the window ends (as a share of R; future, descriptive), time spent retracing, ATR change during the retracement, whether a higher low forms, whether the structure (S) holds, distance from H to the nearest opposing level (previous day / session extremes) in ATR. Then the +$10-first excess over geometry and net R by realised entry depth (B_rand fills binned by depth) and Fibonacci levels against the random-level control",
+  "fibonacci_test": "Fibonacci levels {0.382, 0.5, 0.618} vs B_rand: the paired difference in net R at +$10 per opportunity (day-clustered bootstrap 95%); and every B level's excess over geometry. Fibonacci is supported only if a Fibonacci level beats B_rand with the interval above 0 after Holm across the five Fibonacci / nine B levels",
+  "predictive_question": {
+    "rows": "B_rand fills (one per opportunity, a random entry depth), eligible, decided",
+    "label": "+$10 before the stop",
+    "baseline": "logit(D / (D + 10)), cost / D, log ATR14, session bucket dummies",
+    "groups_added_one_at_a_time_and_together": "returns (1 / 4 / 16 bars before the decision) and acceleration; candle body / wick of the decision bar; range expansion (ATR5 / ATR20) and realised volatility; impulse (size / ATR, bars, displacement ratio); retracement at entry (depth as a share of R, bars since t1, ATR change since t0); distance to the nearest swing / opposing level in ATR; M30 / H1 / H4 trend agreement (w3liq frame flags); regime (efficiency ratio ER20, ATR percentile). Spread, bid / ask, freshness and latency: NOT RUN (no data)",
+    "method": "L2 logistic, C = 1 fixed (w3liq.logit_fit), standardised with training-fold statistics, walk-forward 6 equal-time folds on development, predicting folds 2-6 from earlier folds with trades whose 24 h window reaches the test fold purged. Reported: out-of-fold log-loss and Brier against the baseline per trade with a day-clustered bootstrap 95%, AUC, and the in-sample minus out-of-sample gap (if adding variables makes it worse, the gap shows why)"
+  },
+  "statistics": {
+    "family": "the 20 candidates A0, A1, B_0.236 .. B_0.786 (9), C, E, F, G20, G50, H, I, J, K: +$10-first vs R1, one-sided two-proportion test, Holm across the 20. +$15 / +$20 with their own Holm",
+    "candidate": "n >= 30 counted trades, bootstrap 95% lower bound of mean net R at +$10 > 0, and Holm-adjusted p < 0.05 vs R1 (W3's bar). R2 / R3 / R4 are reported beside it. With none: NO CANDIDATE and NO TRADE — INSUFFICIENT EVIDENCE",
+    "what_a_candidate_means": "only that a validation plan may be written and submitted (freeze file with the code hash, then validation once, then holdout once), and that its trades are re-raced on Dukascopy development ticks when that data exists. No alert, shadow wiring or production change follows from a development result"
+  },
+  "tick_validation": "declared now, NOT RUN until Dukascopy development ticks exist on the operator's computer (Dukascopy refuses cloud addresses): every counted trade of every candidate re-raced on bid / ask ticks (a buy fills at the ask and exits at the bid, a sell the reverse; stop and target ordered by tick time), reporting how many outcomes change and the tick-level +$10-first rate and net R. Dukascopy prices are never presented as the operator's broker prices",
+  "case_study": "18 Nov 2026 (the operator's screenshots): every impulse opportunity of the day, its mechanisms, fills and outcomes, and the nine questions of the directive's section 11, answered from bars known at each time; no hindsight choice is presented as identifiable in advance",
+  "outputs": "research/results/b31b_w5_development_<date>.json, research/results/b31b_w5_trades_development_<date>.csv (no absolute prices), research/results/b31b_w5_case_2026-11-18.json, research/B31B_W5_RESULTS.md, research/trials.jsonl",
+  "unchanged": "W3 / W4 registrations, code, results and verdicts; the production engine, configuration, freeze key and alerts; validation and holdout stay sealed",
+  "not_done_by_design": "no parameter search: every number above is fixed before the run (2.0 ATR, 16 bars, the 9 levels, 0.2 ATR buffer, 1.0 ATR, 8 x cost and 4 bars are declared, not chosen on results); no new indicators; no probability shown as a win rate"
+}
