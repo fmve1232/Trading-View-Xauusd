@@ -42,6 +42,8 @@ from __future__ import annotations
 
 import math
 import os
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 INV_USD = 13.0
 WIN = 96                               # 15m bars to confirm (24 h), as B19 / B30
@@ -246,7 +248,7 @@ def _markers_at(markers: list, kinds: tuple, d: int) -> set:
 
 
 def advance(s: dict, ch: dict, markers: list, t_now: int, pl: dict | None, off: float = 0.0, now: dict | None = None,
-            rec: dict | None = None) -> list[str]:
+            rec: dict | None = None, news: list | None = None) -> list[str]:
     """Moves `s` along its lifecycle on the closed 15m bars it has not seen; returns the phone lines for what changed.
     now: this run's latest price {'px', 't_px', 'live'} (notify.price_now); rec: the live record of earlier entries
     (record()). Both are kept on the confirmation, so the alert and the website print the same figures."""
@@ -284,6 +286,8 @@ def advance(s: dict, ch: dict, markers: list, t_now: int, pl: dict | None, off: 
                     out.append(_final(s, "EXPIRED", tj + 900, c[j], f"the first close was ${move:.2f} beyond, past the ${cap_usd():g} cap", off))
                     break
                 s["conf"] = {"t": tj + 900, "px": float(c[j]), "move": round(move, 2), "tier": tier(move), "t_alert": int(t_now)}
+                s["conf"]["news"] = [{"name": str(e.get("name")), "t": int(e["t"])} for e in (news or [])
+                                     if e.get("t") is not None and tj + 900 <= int(e["t"]) <= tj + 900 + NEWS_AHEAD_SEC]
                 if now and now.get("px") is not None and now.get("t_px") is not None:
                     s["conf"]["now"] = {"px": float(now["px"]), "t_px": int(now["t_px"]), "live": bool(now.get("live"))}
                 if rec:
@@ -451,6 +455,46 @@ def probability_line(x: float, rec: list | None = None) -> str:
     return f"PROBABILITY: none shown, NOT CALIBRATED | {hist} | {record_text(rec)}"
 
 
+# Workstream 4 (operator 2026-11-18): the planned loss is not a guaranteed maximum. Measured on B31b-W3's development
+# trades (2020-23, 20 entry methods, every eligible stopped trade sized to $650 including costs): 90 of 9,335 stopped
+# trades lost more than planned because price jumped over the stop; the worst lost $3,041. Source: the sum over
+# variants/*/summary/realised_loss_usd {n, over_650, max} of research/results/b31b_w3_development_2026-11-18.json
+# (research branch ...-w3-liquidity, draft PR #128, commit e23e50450; kept off production as the W3 directive requires).
+GAP_REF = {"over": 90, "stopped": 9335, "worst_usd": 3041, "plan_usd": 650, "ref": "B31b-W3 development 2020-23"}
+NEWS_AHEAD_SEC = 4 * 3600
+NY_TZ = ZoneInfo("America/New_York")
+HOLD_CLOCK_SEC = HOLD * 900 + 3 * 3600   # HOLD counts market bars: two daily 1 h breaks (+1 h spare) stretch it in clock time
+
+
+def weekend_close_after(t: int, within_sec: int) -> int | None:
+    """The next Friday 17:00 New York (spot gold's weekly close) after t, if it falls within within_sec; else None."""
+    ny = datetime.fromtimestamp(int(t), timezone.utc).astimezone(NY_TZ)
+    days = (4 - ny.weekday()) % 7
+    fri = (ny + timedelta(days=days)).replace(hour=17, minute=0, second=0, microsecond=0)
+    if fri <= ny:
+        fri += timedelta(days=7)
+    ts = int(fri.timestamp())
+    return ts if ts - int(t) <= within_sec else None
+
+
+def gap_line(s: dict) -> str:
+    """GAP RISK: the planned loss is a plan, not a ceiling; the weekend close or high-impact news inside the plan's window
+    are named. Nothing is rejected on these grounds: the line discloses the exposure."""
+    cf, p = s["conf"], s["plan"]
+    g = GAP_REF
+    out = (f"GAP RISK: the ${p['risk_usd']:,.0f} loss at the stop is planned, NOT guaranteed: a price that jumps over the "
+           f"stop fills at the next price ({g['ref']}: {g['over']} of {g['stopped']:,} stopped trades lost more than planned, "
+           f"worst ${g['worst_usd']:,} on a ${g['plan_usd']} plan)")
+    wk = weekend_close_after(cf["t"], HOLD_CLOCK_SEC)
+    if wk is not None:
+        out += f" | the {HOLD // 4}-market-hour follow-up spans the WEEKEND CLOSE {_hm(wk)}: a Monday gap can skip the stop"
+    nw = cf.get("news") or []
+    if nw:
+        out += " | HIGH-IMPACT NEWS within 4 h: " + ", ".join(f"{e['name']} {_hm(e['t'])}" for e in nw[:3]) + \
+            " (spreads widen, fills slip)"
+    return out
+
+
 ENTRY_HEAD = " ENTRY ELIGIBLE, SETUP #"                    # the head of an entry alert (eligible_lines)
 
 
@@ -474,7 +518,8 @@ def eligible_lines(s: dict, off: float = 0.0) -> list[str]:
         valid_line(s),
         probability_line(s["x"], cf.get("rec")),
         "CHECKS passed: fresh close, no opposite structure or signal since the setup, room to TP1, size within the budget. "
-        + EVIDENCE]
+        + EVIDENCE,
+        gap_line(s)]
 
 
 # ---------------- one run ----------------
@@ -496,7 +541,8 @@ def advance_all(state: dict, p15: dict, t_now: int, pl: dict | None, off: float 
     bk = book(state)
     markers, ch = p15.get("markers") or [], p15.get("chart") or {}
     rec = record(state)                                    # the record before this run's changes: what the alert prints
-    groups = [advance(s, ch, markers, t_now, pl, off, now, rec) for s in list(bk["open"])]
+    news = ((p15.get("news") or {}).get("events")) or []
+    groups = [advance(s, ch, markers, t_now, pl, off, now, rec, news) for s in list(bk["open"])]
     entry = [g for g in groups if any(ENTRY_HEAD in x for x in g)]
     out = [x for g in entry + [g for g in groups if not any(ENTRY_HEAD in x for x in g)] for x in g]
     done = [s for s in bk["open"] if s["status"] in FINAL]
