@@ -48,9 +48,10 @@ NAMES = {"A0": "market at the impulse close (earliest plausible)", "A1": "market
          "K": "adaptive: the deepest price keeping the stop >= 1 ATR and >= 8 x cost"}
 
 
-def rng_for(*key) -> np.random.Generator:
-    """A generator seeded by the registration seed and the opportunity / trade identity: draws never depend on order."""
-    return np.random.default_rng([SEED] + [int(k) & 0x7FFFFFFF for k in key])
+def rng_for(*key):
+    """A generator seeded by the registration seed and the opportunity / trade identity: draws never depend on order.
+    Through harness.seeded_rng, the one place research code may draw random numbers (tests/test_integrity.py)."""
+    return H.seeded_rng([SEED] + [int(k) & 0x7FFFFFFF for k in key])
 
 
 def tc(F: W.Frame, j: int) -> int:
@@ -131,12 +132,12 @@ def missed(m, op, why):
 
 
 def orders_for(P: W.Path, F: W.Frame, op: dict, ema: dict) -> list[dict]:
-    d, S, n = op["d"], op["S"], len(F.c)
+    d, S = op["d"], op["S"]
     out = [mkt("A0", op, F, op["t0"])]
     t1 = op["t1"]
     if t1 is None:
         return out
-    Hx, R, end = op["Hx"], op["R"], op["end"]
+    Hx, R = op["Hx"], op["R"]
     out.append(mkt("A1", op, F, t1))
     for r in LEVELS:
         out.append(lim(BNAME[r], op, F, Hx - d * r * R))
@@ -186,7 +187,7 @@ def dynamic_limit(m: str, op: dict, F: W.Frame, e: np.ndarray) -> dict:
 def m5_resume(P: W.Path, F: W.Frame, op: dict) -> dict:
     """H: after t1, the first M5 bar k whose previous bar k-1 made a lower high than k-2 (a pullback) and whose close is
     above that previous high (UP; the mirror DOWN); both k-1 and k-2 open after t1's close."""
-    d, S, t1, end = op["d"], op["S"], op["t1"], op["end"]
+    d, S, t1 = op["d"], op["S"], op["t1"]
     if P.t5 is None:
         return missed("H", op, "NOT RUN: no 5min bars")
     t_hi = tc(F, t1 + WIN) if t1 + WIN < len(F.c) else 2 ** 62     # the window by bar count; the data's end otherwise

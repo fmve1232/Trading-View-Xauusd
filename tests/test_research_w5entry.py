@@ -196,3 +196,66 @@ def test_registration_names_the_twenty_candidates_and_the_controls():
         assert m in r["mechanisms"]
     assert "R1_same_D_random_timing" in r["benchmarks"] and "R3_random_price_in_zone" in r["benchmarks"]
     assert "NOT RUN until Dukascopy" in r["tick_validation"]
+
+
+def test_t1_is_the_first_bar_whose_high_does_not_exceed_the_run_an_equal_high_included():
+    rows = impulse_rows()
+    rows[202] = (4001.9, 4002.0, 4000.9, 4001.0)                     # 202 only equals the extreme 4002.0 of bar 201
+    P, F, ops = build(rows)
+    op = [o for o in ops if o["t0"] == 200 and o["d"] == 1][0]
+    assert op["t1"] == 202 and op["Hx"] == 4002.0                     # registration: "does not exceed the running high"
+
+
+@pytest.mark.parametrize("seed", [7, 11, 13])
+def test_every_impulse_is_a_first_crossing_of_two_atr_from_its_extreme(seed):
+    m15, m5 = walk(seed=seed)
+    P, F, F30, _ = W.frames(m15, agg(m15, "1h"), m5)
+    ops = X.opportunities(F, int(m15.index[0].timestamp()) + 86400 * 3)
+    assert len(ops) >= 20
+    for op in ops:
+        d, t0 = op["d"], op["t0"]
+        seg = F.l[t0 - X.LOOK:t0] if d == 1 else F.h[t0 - X.LOOK:t0]
+        assert op["X0"] == (seg.min() if d == 1 else seg.max()) and op["p0"] == t0 - X.LOOK + (
+            int(np.argmin(seg)) if d == 1 else int(np.argmax(seg)))
+        assert d * (F.c[t0] - op["X0"]) >= X.IMP_ATR * F.atr[t0]
+        assert d * (F.c[t0 - 1] - op["X0"]) < X.IMP_ATR * F.atr[t0 - 1]   # the previous close had not crossed yet
+
+
+@pytest.mark.parametrize("seed", [7, 11, 13])
+def test_e_uses_a_swing_confirmed_by_t0_inside_the_impulse(seed):
+    """E's level is a 3 / 3 pivot reported (confirmed) at a bar q <= t0, strictly inside (X0, H), with the origin's close
+    on the near side and a close beyond it between max(p0, q) and t1. (A swing confirmed after t0 cannot also satisfy the
+    t1 rule and the close-beyond condition, so this is also the check that E has no look-ahead.)"""
+    m15, m5 = walk(seed=seed)
+    P, F, F30, _ = W.frames(m15, agg(m15, "1h"), m5)
+    seen = 0
+    for op in X.opportunities(F, int(m15.index[0].timestamp()) + 86400 * 3):
+        if op["t1"] is None:
+            continue
+        lv = X.broken_level(F, op)
+        if lv is None:
+            continue
+        seen += 1
+        d, t0, t1, p0 = op["d"], op["t0"], op["t1"], op["p0"]
+        piv = F.ph if d == 1 else F.pl
+        qs = [q for q in range(max(t0 - X.E_LOOKBACK, W.SW_LR), t0 + 1) if piv[q] == lv]
+        assert qs, (op["id"], lv)
+        q = max(qs)
+        assert d * (lv - op["X0"]) > 0 and d * (op["Hx"] - lv) > 0 and d * (F.c[p0] - lv) < 0
+        assert np.any(d * (F.c[max(p0, q):t1 + 1] - lv) > 0)
+    assert seen >= 5
+
+
+def test_j_counts_a_dip_that_starts_after_the_first_bar_past_t1():
+    """203-204 close above E's level 4001.0 (no dip yet), 205-206 close below it, 207 closes back above: J at 207."""
+    after = [(4001.0, 4001.7, 4000.9, 4001.5), (4001.5, 4001.8, 4001.2, 4001.6), (4001.6, 4001.6, 4000.2, 4000.4),
+             (4000.4, 4000.8, 4000.2, 4000.6), (4000.6, 4001.6, 4000.5, 4001.4)]
+    px = 4001.4
+    for _ in range(30):
+        after.append((px, px + 1.2, px - 0.1, px + 1.0))
+        px += 1.0
+    P, F, ops = build(impulse_rows(after))
+    op = [o for o in ops if o["t0"] == 200 and o["d"] == 1][0]
+    assert op["t1"] == 202 and X.broken_level(F, op) == 4001.0
+    j = [o for o in X.orders_for(P, F, op, ema_of(F)) if o["m"] == "J"][0]
+    assert j.get("status") != "MISSED" and j["j"] == 207 and j["px"] == 4001.4
