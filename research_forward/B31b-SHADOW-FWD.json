@@ -1223,6 +1223,30 @@
 "vol_ratio": 3.545,
 "cost": 0.77,
 "status": "MISSED"
+},
+{
+"key": "C|1795132800|-1|PDL|3620.96",
+"module": "C",
+"dir": -1,
+"kind": "PDL",
+"lv": 3620.96,
+"order_t": 1795132800,
+"order_close": 1795133700,
+"recorded_utc": 1795134255,
+"timely": true,
+"entry_type": "RETEST",
+"limit": 3620.96,
+"market": null,
+"p_ref": 3620.96,
+"stop": 3629.3722,
+"inval": null,
+"false_break": true,
+"vwap": null,
+"session": "ASIAN",
+"ranging": false,
+"vol_ratio": 2.589,
+"cost": 0.97,
+"status": "PENDING"
 }
 ],
 "days": [
