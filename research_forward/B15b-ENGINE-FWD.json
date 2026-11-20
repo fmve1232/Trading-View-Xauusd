@@ -122,6 +122,21 @@
    "late": false,
    "move_alert": 0.28,
    "session": "Rollover"
+  },
+  {
+   "id": 22,
+   "tf": "15m",
+   "dir": -1,
+   "entry": 3566.34,
+   "t_dec": 1795185900,
+   "status": "SL",
+   "result": "SL",
+   "t_res": 1795185900,
+   "tp2_result": null,
+   "path": "5m",
+   "late": true,
+   "move_alert": -7.46,
+   "session": "London+NY"
   }
  ],
  "excluded": 0,
