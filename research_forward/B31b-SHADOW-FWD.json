@@ -1546,6 +1546,30 @@
 "cost": 0.77,
 "status": "REJECTED",
 "why": "stop"
+},
+{
+"key": "D|1795194000|1|VWAP|3534.91",
+"module": "D",
+"dir": 1,
+"kind": "VWAP",
+"lv": 3534.91,
+"order_t": 1795194000,
+"order_close": 1795194900,
+"recorded_utc": 1795196266,
+"timely": true,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3535.82,
+"p_ref": 3535.82,
+"stop": 3530.9176,
+"inval": null,
+"false_break": false,
+"vwap": 3562.18,
+"session": "NEW YORK",
+"ranging": true,
+"vol_ratio": 0.631,
+"cost": 0.77,
+"status": "REPEAT"
 }
 ],
 "days": [
