@@ -1246,7 +1246,13 @@
 "ranging": false,
 "vol_ratio": 2.589,
 "cost": 0.97,
-"status": "PENDING"
+"status": "OPEN",
+"fill_t": 1795133700,
+"fill_bar_t": 1795133700,
+"day": "2026-11-20",
+"entry": 3620.96,
+"D": 8.41,
+"lots": 0.693
 }
 ],
 "days": [
