@@ -43,7 +43,7 @@ def test_existing_fields_unchanged(tmp_path):
     store, ledger = _store(tmp_path)
     line = manifest.record(store, ledger, "7", "abc", FROZEN_KEY)
     assert set(line) == {"run_utc", "run_id", "commit", "freeze_key", "tree_sha256", "n_files", "changed", "removed",
-                         "revised_closed_bars", "revised_files", "forming_bar_updates", "env"}
+                         "revised_closed_bars", "revised_files", "revised_files_repeating", "forming_bar_updates", "env"}
     assert line["run_id"] == "7" and line["commit"] == "abc" and line["n_files"] == 1
 
 

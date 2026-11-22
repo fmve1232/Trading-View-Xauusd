@@ -88,6 +88,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: actions/setup-python@v6
+        id: py
         with:
           python-version: "3.11"
           cache: pip
@@ -95,8 +96,46 @@ jobs:
       - name: "Install (requirements.lock: the exact versions, audit IA-21)"
         run: pip install -r requirements.lock
 
+      # The suite takes about 5 minutes and every phone alert waited for it. It still gates every run, but a run
+      # whose commit, lock file, Python, runner image and UTC day all match a run that already PASSED it (the key
+      # below) reuses that pass instead of repeating the same tests on the same code: the first run of each day and
+      # of each new commit or runner image runs the whole suite. A failure saves nothing, so every later run re-runs
+      # the suite and fails again until it is fixed; a cache outage only means the suite runs.
+      - name: Unit-test key (commit, lock file, Python, runner image, UTC day)
+        id: tkey
+        env:
+          PYV: ${{ steps.py.outputs.python-version }}
+          LOCK: ${{ hashFiles('requirements.lock') }}
+        run: echo "key=unit-tests-passed-${GITHUB_SHA}-${LOCK:0:16}-py${PYV}-${ImageOS}-${ImageVersion}-$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
+      - name: Has an earlier run passed the unit tests with this exact key?
+        id: tested
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ runner.temp }}/unit-tests-passed
+          key: ${{ steps.tkey.outputs.key }}
+
       - name: Unit tests (engine, no-look-ahead, execution model)
+        if: steps.tested.outputs.cache-hit != 'true'
         run: python -m pytest -q tests
+
+      - name: Note the pass for later runs with the same key (only reached when the tests above passed)
+        if: steps.tested.outputs.cache-hit != 'true'
+        run: echo "run ${{ github.run_id }} passed the unit tests at $(date -u +%FT%TZ)" > "${{ runner.temp }}/unit-tests-passed"
+
+      - name: Save the pass (a failed save only means the next run repeats the suite)
+        if: steps.tested.outputs.cache-hit != 'true'
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ runner.temp }}/unit-tests-passed
+          key: ${{ steps.tkey.outputs.key }}
+
+      - name: Unit tests not repeated (an earlier run passed them with this exact key)
+        if: steps.tested.outputs.cache-hit == 'true'
+        run: |
+          echo "::notice title=Unit tests::not repeated: $(cat "${{ runner.temp }}/unit-tests-passed") (key ${{ steps.tkey.outputs.key }})"
+          echo "Unit tests not repeated: $(cat "${{ runner.temp }}/unit-tests-passed") with the same commit, lock, Python, runner image and day." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Load the market-data store
         run: |
