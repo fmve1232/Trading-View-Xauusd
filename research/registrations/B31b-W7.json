@@ -76,6 +76,22 @@
     "bundling": "More than 5 breakout messages in one run (a fast market or a data burst) go as one message that carries them all; every event key is in the P-0 delivery log either way.",
     "delivery": "One message per event id and stage, ever. A stage whose send fails on every channel after the P-0 retry is recorded SEND_FAILED and not re-sent by a later run (it would no longer be fresh). Server acceptance (SENT) is not proof the phone showed it."
    }
+  },
+  {
+   "id": "A2",
+   "date_utc": "2026-11-22",
+   "approval": "Operator, 2026-11-19: \"identify the potential entry price at the liquidation and price breakout on 15 minute time frame and 30 minutes time frame, and also include 1 hour and 4 hour\"; and \"Everything is approved until we get 100% accuracy\". The standing rule still applies: \"New directional entry strategies must remain disabled until independently validated.\"",
+   "when": "Written and committed before any H1 / H4 code, before any H1 / H4 event was counted on any data, and before any replay. No shadow entry outcome on H1 / H4 has been computed.",
+   "changes": {
+    "timeframes": "H1 (the 1h payload) and H4 (the 4h payload: 4-hour bars aligned to the 17:00 New York session, built by the pipeline from 1h bars) are monitored in addition to M15 and M30, each on its own, from that timeframe's own closed bars, exactly as M15 / M30.",
+    "definitions": "Unchanged and counted in bars of the timeframe: levels (previous day / week, last Asia / London / New York session, swing pivot 3 / 3 live 5 trading days, equal highs / lows, 12-bar range at most 1.5 x ATR14 with A1), each level breaks once, CONFIRMED (displacement body >= 1.0 x ATR14 or two more closes beyond), RETEST HELD, FAILED (close back inside) within the 16-bar watch (16 h on H1, 64 h on H4), the E2 limit valid 8 bars. On H4 a session high / low is taken from the 4-hour bars that open inside that session, which is coarser than on M15; this is disclosed, not adjusted.",
+    "phone": "The same short messages with the timeframe named (GOLD H1 ... / GOLD H4 ...), the same freshness rule (sent only while the stage's bar is the newest closed bar and the run is within 20 minutes of its close; otherwise LATE), the same bundling and delivery log.",
+    "start": "Each new timeframe records events only from the first run that monitors it (its own start time, kept in brk.since_tf); M15 / M30 keep the W7 start. Nothing is back-filled.",
+    "shadow": "ENTRY READY on H1 / H4 is computed and recorded in SHADOW exactly as on M15 / M30 (E1, E2; raced on closed 15m bars, A1) and is NEVER sent. No development study covers H1 / H4 breakout entries: the B31b-W7 study tested M15 / M30 only, B18 found the operator's 4h candle breakout with confirmations FAIL, and B6 found 1h / 4h agreement no better than random. A separate registered study is required before any H1 / H4 entry could be validated.",
+    "switch": "Repository variable BREAKOUT_TFS: a comma list from 15m, 30m, 1h, 4h; unset = all four; entries that are not one of those are ignored, and if none is left all four are used. ALERT_BREAKOUTS is unchanged (unset = phone, site = website only, 0 = off).",
+    "regression": "Before merge: a replay on real bars must show every M15 / M30 phone message and record identical with and without H1 / H4, and every other phone message unchanged."
+   },
+   "unchanged": "No level, threshold, stage rule, stop, target, check value, freshness window or message wording of M15 / M30 changes; the engine, configuration and freeze key are untouched; ENTRY READY stays shadow on every timeframe."
   }
  ]
 }
