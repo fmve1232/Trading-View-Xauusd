@@ -1,6 +1,6 @@
-"""W7 (research/registrations/B31b-W7.json): M15 / M30 breakout monitoring. NON-DIRECTIONAL MONITORING ONLY.
+"""W7 (research/registrations/B31b-W7.json): M15 / M30 / H1 / H4 breakout monitoring. NON-DIRECTIONAL MONITORING ONLY.
 
-Every run reads the 15m and 30m payloads' CLOSED bars (the forming bar is never in `chart`) and, on each timeframe on its
+Every run reads the 15m, 30m, 1h and 4h payloads' CLOSED bars (amendment A2 added 1h / 4h; BREAKOUT_TFS selects) (the forming bar is never in `chart`) and, on each timeframe on its
 own, finds every breakout: a bar that CLOSES beyond a live level after the previous bar closed at or inside it (a wick
 through a level is not a breakout). Levels, from that timeframe's bars only:
 
@@ -41,8 +41,9 @@ import pandas as pd
 from . import sessions, shadow, ta
 
 ID = "B31b-W7"
-TFS = {"15m": 900, "30m": 1800}
-TF_LABEL = {"15m": "M15", "30m": "M30"}
+TFS = {"15m": 900, "30m": 1800, "1h": 3600, "4h": 14400}
+TF_LABEL = {"15m": "M15", "30m": "M30", "1h": "H1", "4h": "H4"}
+W7_TFS = ("15m", "30m")                        # monitored since the W7 start; A2 timeframes start at their first run
 PIVOT, SWING_DAYS = 3, 5
 EQ_USD, EQ_ATR, EQ_GAP = 0.50, 0.10, 4
 RANGE_BARS, RANGE_ATR = 12, 1.5
@@ -68,6 +69,14 @@ def mode() -> str:
     """ALERT_BREAKOUTS: unset = phone; 'site' = website only; '0' / 'off' = no breakout monitoring at all."""
     v = (os.environ.get("ALERT_BREAKOUTS") or "").strip().lower()
     return "off" if v in ("0", "off", "no", "false") else ("site" if v == "site" else "phone")
+
+
+def tfs() -> list[str]:
+    """BREAKOUT_TFS (amendment A2): a comma list from 15m, 30m, 1h, 4h; unset = all four; unknown entries are ignored and
+    an empty result means all four."""
+    want = [x.strip().lower() for x in (os.environ.get("BREAKOUT_TFS") or "").split(",")]
+    got = [tf for tf in TFS if tf in want]
+    return got or list(TFS)
 
 
 def _rank(kind: str) -> int:
@@ -320,6 +329,14 @@ def book(state: dict, t_now: int) -> dict:
     return state.setdefault("brk", {"since": int(t_now), "events": {}})
 
 
+def since_tf(bk: dict, tf: str, t_now: int) -> int:
+    """The first close a timeframe records: the W7 start for M15 / M30, the first monitored run for an A2 timeframe."""
+    s = bk.setdefault("since_tf", {})
+    if tf not in s:
+        s[tf] = int(bk["since"]) if tf in W7_TFS else int(t_now)
+    return s[tf]
+
+
 def _bars(p: dict | None) -> dict | None:
     if not p or (p.get("meta") or {}).get("synthetic"):
         return None
@@ -337,15 +354,17 @@ def scan(state: dict, payloads: dict, t_now: int, budget: float) -> list[dict]:
     bk = book(state, t_now)
     due = []
     b15 = _bars(payloads.get("15m"))
-    for tf, sec in TFS.items():
+    for tf in tfs():
+        sec = TFS[tf]
         b = _bars(payloads.get(tf))
         if b is None:
             continue
+        since = since_tf(bk, tf, t_now)
         evs, ctx = detect(b["t"], b["o"], b["h"], b["l"], b["c"], sec)
         n = len(b["c"])
         newest = n - 1
         for ev in evs:
-            if ev["t_close"] < bk["since"]:
+            if ev["t_close"] < since:
                 continue
             eid = f"BRK:{TF_LABEL[tf]}:{ev['t']}:{'UP' if ev['dir'] == 1 else 'DN'}"
             st = follow(ev, b["o"], b["h"], b["l"], b["c"], n)
@@ -420,12 +439,14 @@ def snapshot(state: dict, t_now: int) -> dict:
     """index.json -> alerts.breakouts: the newest events with their stages, phone results and shadow entries."""
     bk = book(state, t_now)
     recent = sorted(bk["events"].values(), key=lambda e: (e["t_close"], e["tf"]), reverse=True)[:40]
-    return {"id": ID, "on": True, "mode": mode(), "t": int(t_now), "since": bk["since"], "events": recent,
+    return {"id": ID, "on": True, "mode": mode(), "t": int(t_now), "since": bk["since"], "since_tf": bk.get("since_tf", {}),
+            "tfs": [TF_LABEL[tf] for tf in tfs()], "events": recent,
             "counts": counts(bk, t_now), "watch_bars": WATCH, "fresh_sec": FRESH_SEC,
-            "rules": ("A breakout is a 15m / 30m bar that CLOSES beyond a level (swing, previous day / week, Asia / London / "
+            "rules": ("A breakout is an M15 / M30 / H1 / H4 bar that CLOSES beyond a level (swing, previous day / week, Asia / London / "
                       "New York session, equal highs / lows, range) after the bar before closed inside it; a wick is not "
                       "enough. CONFIRMED: a displacement close (body at least 1 ATR) or two more closes beyond. FAILED: a "
-                      "close back inside within 16 bars. Every session, both directions, each timeframe on its own."),
+                      "close back inside within 16 bars of that timeframe. Every session, both directions, each timeframe on its own."),
             "shadow": ("ENTRY READY is computed in SHADOW only (market at the confirmation close, or a limit at the level) "
                        "and never sent: no breakout entry has been validated. B31b-W3 (2020-23) found no breakout entry "
-                       "better than matched random entries.")}
+                       "better than matched random entries; B31b-W7 found none with positive expectancy after costs on "
+                       "M15 / M30, and no study covers H1 / H4 entries.")}

@@ -14,7 +14,7 @@ from quantum import holdout
 from quantum import notify as N
 
 T0 = 1795392000                        # 2026-11-23 00:00 UTC (Mon); a trading day rolls at 22:00 UTC (17:00 New York)
-KEYS = ("ALERT_BREAKOUTS", "ALERT_STRUCTURE", "ALERT_MODE", "ALERT_ZONES", "CONFIRM_MIN_USD", "PLAN", "MT5_PRICE_OFFSET",
+KEYS = ("ALERT_BREAKOUTS", "BREAKOUT_TFS", "ALERT_STRUCTURE", "ALERT_MODE", "ALERT_ZONES", "CONFIRM_MIN_USD", "PLAN", "MT5_PRICE_OFFSET",
         "ENTRY_INTEL")
 
 
@@ -420,6 +420,81 @@ def test_the_short_messages():
         "Action: Cancel setup", "Time: 05:00 MT5 / 08:00 PKT"]
     allt = " ".join(" ".join(B.message(ev, "15m", s, bar, fmt, clock)) for s in ("DETECTED", "CONFIRMED", "RETEST", "FAILED"))
     assert "%" not in allt and "probab" not in allt.lower() and "ENTRY READY" not in allt
+
+
+# ---------------- amendment A2: H1 / H4 ----------------
+def test_the_monitored_timeframes_and_their_switch(monkeypatch):
+    assert B.TFS == {"15m": 900, "30m": 1800, "1h": 3600, "4h": 14400}
+    assert B.TF_LABEL == {"15m": "M15", "30m": "M30", "1h": "H1", "4h": "H4"} and B.W7_TFS == ("15m", "30m")
+    assert B.tfs() == ["15m", "30m", "1h", "4h"]                     # unset = all four
+    for v, want in (("15m,30m", ["15m", "30m"]), (" 4H, 1h ", ["1h", "4h"]), ("1d,2h", ["15m", "30m", "1h", "4h"]),
+                    ("", ["15m", "30m", "1h", "4h"])):
+        monkeypatch.setenv("BREAKOUT_TFS", v)
+        assert B.tfs() == want, v
+
+
+def test_h1_and_h4_messages_name_their_timeframe():
+    ev = {"dir": 1, "ref": 4010.0, "ref_kind": "PDH"}
+    bar = {"c": 4012.0, "t_close": 0, "how": "DISPLACEMENT"}
+    assert B.message(ev, "1h", "DETECTED", bar, str, str)[0] == "🟢 GOLD H1 BREAKOUT"
+    assert B.message(ev, "4h", "CONFIRMED", bar, str, str)[:5] == [
+        "🟢 GOLD H4 CONFIRMED", "Direction: BUY", "Level: 4010.0 (prev day high)", "Price: 4012.0",
+        "Status: Displacement, retest pending"]
+
+
+def _h1_case():
+    rows = swing_rows()
+    brk(rows)
+    rows[56] = (4003.2, 4004.0, 4003.1, 4003.8)
+    rows[57] = (4003.8, 4004.5, 4003.5, 4004.2)
+    return rows
+
+
+def test_an_h1_breakout_is_sent_fresh_within_twenty_minutes_of_its_close_and_starts_at_its_first_run(only_swings):
+    rows = _h1_case()
+    st = {"brk": {"since": T0 - 10 * 86400, "events": {}}}            # the W7 start, long before
+    B.scan(st, {"1h": payload(rows[:50], "1h", 3600)}, T0 + 50 * 3600 + 300, 650.0)      # first H1 run: since = now
+    assert st["brk"]["since_tf"] == {"1h": T0 + 50 * 3600 + 300} and st["brk"]["since"] == T0 - 10 * 86400
+    due = B.scan(st, {"1h": payload(rows[:56], "1h", 3600)}, T0 + 56 * 3600 + 1100, 650.0)  # 18 min after the close
+    assert [(d["stage"], d["id"]) for d in due] == [("DETECTED", f"BRK:H1:{T0 + 55 * 3600}:UP")]
+    due = B.scan(st, {"1h": payload(rows[:58], "1h", 3600)}, T0 + 58 * 3600 + 1300, 650.0)  # 21 min after: LATE
+    rec = st["brk"]["events"][f"BRK:H1:{T0 + 55 * 3600}:UP"]
+    assert due == [] and rec["phone"]["CONFIRMED"] == "LATE" and rec["tf"] == "1h"
+
+
+def test_an_h4_breakout_before_its_first_run_is_never_recorded_while_m15_keeps_the_w7_start(only_swings):
+    rows = _h1_case()
+    st = {"brk": {"since": T0, "events": {}}}
+    B.scan(st, {"15m": payload(rows[:60], "15m", 900), "4h": payload(rows[:60], "4h", 14400)}, T0 + 60 * 14400 + 300, 650.0)
+    assert st["brk"]["since_tf"] == {"15m": T0, "4h": T0 + 60 * 14400 + 300}
+    assert sorted(st["brk"]["events"]) == [f"BRK:M15:{T0 + 55 * 900}:UP"]       # the same bars on H4: before its start
+
+
+def test_adding_h1_and_h4_leaves_every_m15_and_m30_record_and_message_identical(monkeypatch):
+    rows = walk(n=1400, seed=7)
+    t_end = T0 + 1400 * 900
+    def runs(value):
+        if value is None:
+            monkeypatch.delenv("BREAKOUT_TFS", raising=False)
+        else:
+            monkeypatch.setenv("BREAKOUT_TFS", value)
+        st, due = {}, []
+        for cut in range(1000, 1400, 4):
+            t_now = T0 + cut * 900 + 115
+            pay = {"15m": payload(rows[:cut], "15m", 900), "30m": payload(rows[:cut // 2], "30m", 1800, t0=T0),
+                   "1h": payload(rows[:cut // 4], "1h", 3600), "4h": payload(rows[:cut // 16], "4h", 14400)}
+            due += [(d["id"], d["stage"]) for d in B.scan(st, pay, t_now, 650.0)]
+        return st, due
+    base, d0 = runs("15m,30m")
+    full, d1 = runs(None)
+    w7 = lambda ev: {k: v for k, v in ev.items() if k.startswith(("BRK:M15:", "BRK:M30:"))}   # noqa: E731
+    assert w7(full["brk"]["events"]) == base["brk"]["events"] and len(base["brk"]["events"]) > 10
+    assert [x for x in d1 if x[0].startswith(("BRK:M15:", "BRK:M30:"))] == d0
+    h = [k for k in full["brk"]["events"] if k.startswith(("BRK:H1:", "BRK:H4:"))]
+    tf_of = {"H1": "1h", "H4": "4h"}
+    assert h and all(full["brk"]["events"][k]["t_close"] >= full["brk"]["since_tf"][tf_of[k.split(":")[1]]]
+                     for k in h)                                     # H1 / H4 recorded, none before their own start
+    assert full["brk"]["since_tf"]["15m"] == full["brk"]["since"] == base["brk"]["since"] and t_end > 0
 
 
 def test_more_than_five_messages_in_one_run_go_as_one():
