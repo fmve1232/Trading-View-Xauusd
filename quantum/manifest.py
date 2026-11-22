@@ -11,8 +11,17 @@ earlier versions of a bar are not kept there. This module records, on the never-
                              `env`: the Python / NumPy / pandas versions the run used (operator
                              approval 2026-11-13, audit F-03: the freeze key hashes source files
                              only, so a library upgrade would otherwise leave no trace)
-  revisions/<series>/YYYY-MM.csv  the OLD values of every bar that a later download changed
-                             after that bar had closed (a forming bar finishing is not a revision)
+  revisions/<series>/<bar month>/<run day>.csv  the OLD values of every bar that a later download
+                             changed after that bar had closed (a forming bar finishing is not a
+                             revision), beside its new values. One file per run day (2026-11-20): the
+                             month files written before then (revisions/<series>/YYYY-MM.csv) are kept
+                             as they are, but grew on every run to 62 MB, and GitHub refuses a file
+                             over 100 MB, which would stop the ledger push. A run whose revision set is
+                             byte-identical to an earlier run's set in the same day file is written as
+                             one `repeat` line naming that run (Yahoo's GC=F / SI=F bars alternate
+                             between two versions on most runs); read_revisions() expands it, so
+                             nothing is lost. A set larger than MAX_REVISIONS_PER_FILE is one
+                             `rebased` line with its count.
   `payloads` / `payload_artifact` in the run line (audit IA-12, 2026-11-14): SHA-256 and size of every
                              site payload this run published (site/data/*.json) and the name of the
                              Actions artifact that keeps their bytes (quantum-site.yml, 90 days by
@@ -27,6 +36,7 @@ it, and the workflow runs it as a separate, non-fatal step.
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import io
 import json
@@ -41,6 +51,9 @@ import pandas as pd
 BAR_SEC = {"5m": 300, "15m": 900, "30m": 1800, "60m": 3600, "1h": 3600, "1d": 86400}
 PRICE_COLS = ("open", "high", "low", "close")
 MAX_REVISIONS_PER_FILE = 500      # beyond this, only the count is recorded (a re-based series)
+REV_VALUES = [f"old_{c}" for c in PRICE_COLS] + [f"new_{c}" for c in PRICE_COLS]
+REV_HEADER = ["bar_open", "run_utc"] + REV_VALUES + ["kind", "ref_run", "n_bars"]
+FULL_KINDS = ("changed", "removed")
 
 
 def env_versions() -> dict:
@@ -132,6 +145,91 @@ def payload_digests(payload_dir: str) -> dict:
     return out
 
 
+def revision_path(ledger_dir: str, rel: str, stamp: str) -> str:
+    """revisions/<series>/<bar month>/<run day>.csv for the store file `rel` (<series>/<YYYY-MM>.csv)."""
+    return os.path.join(ledger_dir, "revisions", os.path.splitext(rel)[0], stamp[:10] + ".csv")
+
+
+def _cell(v) -> str:
+    if v is None or (isinstance(v, (float, np.floating)) and np.isnan(v)):
+        return ""
+    return f"{float(v):.6f}" if isinstance(v, (float, np.floating, int, np.integer)) else str(v)
+
+
+def revision_rows(rev: pd.DataFrame) -> list[list[str]]:
+    """A run's revision set as text rows in REV_HEADER order, without the run time (bar_open first)."""
+    rows = []
+    for bar, r in rev.iterrows():
+        rows.append([str(bar)] + [_cell(r.get(c, np.nan)) for c in REV_VALUES] + [str(r["kind"]), "", ""])
+    return rows
+
+
+def write_revisions(path: str, rev: pd.DataFrame, stamp: str) -> str:
+    """Append one run's revision set to its day file; returns how it was written (full / repeat / rebased)."""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    blank = [""] * len(REV_VALUES)
+    sets: dict[str, list] = {}
+    if os.path.exists(path):
+        with open(path, newline="") as f:
+            rd = csv.reader(f)
+            assert next(rd) == REV_HEADER, path            # this writer's own files only
+            for row in rd:
+                if row[-3] in FULL_KINDS:
+                    sets.setdefault(row[1], []).append(row[:1] + row[2:])
+    if len(rev) > MAX_REVISIONS_PER_FILE:
+        how, out = "rebased", [[str(rev.index[-1]), stamp] + blank + ["rebased", "", str(len(rev))]]
+    else:
+        body = revision_rows(rev)
+        ref = next((run for run, rows in sets.items() if rows == body), None)
+        if ref is not None:
+            how, out = "repeat", [["", stamp] + blank + ["repeat", ref, str(len(body))]]
+        else:
+            how, out = "full", [r[:1] + [stamp] + r[1:] for r in body]
+    new = not os.path.exists(path)
+    with open(path, "a", newline="") as f:
+        w = csv.writer(f, lineterminator="\n")
+        if new:
+            w.writerow(REV_HEADER)
+        w.writerows(out)
+    return how
+
+
+def read_revisions(path: str) -> pd.DataFrame:
+    """Every revised bar of every run in one revision file, one row each, `repeat` lines expanded from the
+    run they name. Reads both layouts: the day files (REV_HEADER) and the month files written before
+    2026-11-20, whose header is whichever row came first (11 columns, or 3 when the file began with a
+    re-based count), so a row's own width says which it is."""
+    out = []
+    with open(path, newline="") as f:
+        rd = csv.reader(f)
+        hdr = next(rd)
+        if hdr == REV_HEADER:
+            by_run: dict[str, list] = {}
+            for row in rd:
+                rec = dict(zip(REV_HEADER, row))
+                if rec["kind"] == "repeat":
+                    for r in by_run[rec["ref_run"]]:
+                        out.append({**r, "run_utc": rec["run_utc"], "ref_run": rec["ref_run"]})
+                    continue
+                if rec["kind"] in FULL_KINDS:
+                    by_run.setdefault(rec["run_utc"], []).append(rec)
+                out.append(rec)
+        else:
+            for row in rd:
+                if len(row) == 11:
+                    out.append(dict(zip(REV_HEADER[:11], row)))
+                elif len(row) == 3:
+                    out.append({"bar_open": row[0], "run_utc": row[1], "kind": row[2]})
+                else:
+                    raise ValueError(f"{path}: a row of {len(row)} fields")
+    df = pd.DataFrame(out).reindex(columns=REV_HEADER)
+    for c in REV_VALUES:
+        df[c] = pd.to_numeric(df[c].replace("", np.nan))
+    for c in ("ref_run", "n_bars"):
+        df[c] = df[c].astype(object).where(df[c].notna(), "")
+    return df
+
+
 def record(store_dir: str, ledger_dir: str, run_id: str = "", sha: str = "", freeze_key: str = "",
            now: datetime | None = None, payload_dir: str | None = None, artifact: str = "") -> dict:
     now = now or datetime.now(timezone.utc)
@@ -148,7 +246,7 @@ def record(store_dir: str, ledger_dir: str, run_id: str = "", sha: str = "", fre
     removed = sorted(k for k in prev if k not in state)
 
     # revisions: compare each changed CSV with its version in the previous store snapshot
-    n_rev, n_forming, rev_files = 0, 0, []
+    n_rev, n_forming, rev_files, rev_repeats = 0, 0, [], []
     ct = _git(store_dir, "log", "-1", "--format=%ct")
     prev_commit = pd.Timestamp(int(ct.strip()), unit="s", tz="UTC") if ct and ct.strip() else None
     if prev_commit is not None:
@@ -170,22 +268,16 @@ def record(store_dir: str, ledger_dir: str, run_id: str = "", sha: str = "", fre
                 continue
             n_rev += len(rev)
             rev_files.append(rel)
-            rdir = os.path.join(ledger_dir, "revisions", os.path.dirname(rel))
-            os.makedirs(rdir, exist_ok=True)
-            rpath = os.path.join(ledger_dir, "revisions", rel)
-            if len(rev) > MAX_REVISIONS_PER_FILE:
-                rev = pd.DataFrame({"kind": [f"{len(rev)} closed bars revised (series re-based); not listed"]},
-                                   index=[rev.index[-1]])
-            rev.insert(0, "run_utc", stamp)
-            rev.index.name = "bar_open"
-            rev.to_csv(rpath, mode="a", header=not os.path.exists(rpath), float_format="%.6f")
+            if write_revisions(revision_path(ledger_dir, rel, stamp), rev, stamp) == "repeat":
+                rev_repeats.append(rel)
 
     tree = tree_hash(state)
     with open(spath, "w") as f:
         json.dump({"run_utc": stamp, "tree_sha256": tree, "files": state}, f, indent=0, sort_keys=True)
     line = {"run_utc": stamp, "run_id": run_id, "commit": sha, "freeze_key": freeze_key, "tree_sha256": tree,
             "n_files": len(state), "changed": changed, "removed": removed,
-            "revised_closed_bars": n_rev, "revised_files": rev_files, "forming_bar_updates": n_forming,
+            "revised_closed_bars": n_rev, "revised_files": rev_files, "revised_files_repeating": rev_repeats,
+            "forming_bar_updates": n_forming,
             "env": env_versions()}
     if payload_dir and os.path.isdir(payload_dir):
         line["payloads"] = payload_digests(payload_dir)

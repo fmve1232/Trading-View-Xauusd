@@ -4,6 +4,7 @@ import json
 import os
 import re
 import subprocess
+from datetime import datetime, timezone
 
 import pandas as pd
 import pytest
@@ -141,11 +142,92 @@ def test_manifest_records_tree_hash_and_keeps_revised_closed_bars(tmp_path):
     line = manifest.record(store, ledger, "2", "abc", "k")
     assert line["tree_sha256"] != first["tree_sha256"] and line["changed"] == ["XAU_USD_60m/2026-10.csv"]
     assert line["revised_closed_bars"] == 1 and line["forming_bar_updates"] == 1     # 11:00 revised; 12:00 just finished
-    rev = pd.read_csv(os.path.join(ledger, "revisions", "XAU_USD_60m", "2026-10.csv"))
+    day = pd.Timestamp.now("UTC").strftime("%Y-%m-%d")
+    rev = pd.read_csv(os.path.join(ledger, "revisions", "XAU_USD_60m", "2026-10", day + ".csv"))
     assert list(rev["bar_open"]) == ["2026-10-02 11:00:00+00:00"] and rev["old_close"][0] == 4302.0 and rev["new_close"][0] == 4299.0
+    assert list(rev.columns) == manifest.REV_HEADER and rev["kind"][0] == "changed"
     runs = open(os.path.join(ledger, "manifests", "runs-" + pd.Timestamp.now("UTC").strftime("%Y-%m") + ".jsonl")).read().splitlines()
     assert len(runs) == 2 and json.loads(runs[1])["freeze_key"] == "k"
     assert manifest.tree_hash({"a": ["1", 1], "b": ["2", 1]}) == manifest.tree_hash({"b": ["2", 1], "a": ["1", 1]})
+
+
+def _flip_store(tmp_path):
+    """A store whose closed 11:00 bar alternates between two versions, as Yahoo's GC=F / SI=F bars do."""
+    store, ledger = str(tmp_path / "store"), str(tmp_path / "ledger")
+    os.makedirs(os.path.join(store, "XAU_USD_60m"))
+    f = os.path.join(store, "XAU_USD_60m", "2026-10.csv")
+    a = [("2026-10-02 10:00:00+00:00", 4300.0, 4301.0), ("2026-10-02 11:00:00+00:00", 4301.0, 4302.0)]
+    b = [a[0], ("2026-10-02 11:00:00+00:00", 4301.1, 4302.0)]
+    _git(store, "init", "-q", "-b", "market-data")
+
+    def snap(rows, when):
+        with open(f, "w") as fh:
+            fh.write(_csv(rows))
+        line = manifest.record(store, ledger, "r", "abc", "k", now=when)
+        _git(store, "add", "-A")
+        _git(store, "commit", "-q", "--allow-empty", "-m", "snapshot")
+        return line
+    return store, ledger, a, b, snap
+
+
+def test_revisions_go_to_day_files_and_an_identical_set_is_one_repeat_line_that_reads_back_in_full(tmp_path):
+    store, ledger, a, b, snap = _flip_store(tmp_path)
+    t = [datetime(2026, 11, 19, h, m, tzinfo=timezone.utc) for h, m in ((10, 2), (10, 17), (10, 32), (10, 47))]
+    snap(a, t[0])                                                   # first snapshot: nothing to compare
+    lines = [snap(v, w) for v, w in zip((b, a, b), t[1:])]          # A -> B, B -> A, A -> B
+    assert [ln["revised_closed_bars"] for ln in lines] == [1, 1, 1]
+    assert [ln["revised_files_repeating"] for ln in lines] == [[], [], ["XAU_USD_60m/2026-10.csv"]]
+    path = os.path.join(ledger, "revisions", "XAU_USD_60m", "2026-10", "2026-11-19.csv")
+    raw = open(path).read().splitlines()
+    assert raw[0] == ",".join(manifest.REV_HEADER) and len(raw) == 4
+    assert raw[3].split(",")[-3:] == ["repeat", "2026-11-19T10:17:00Z", "1"]       # names the A -> B run
+    got = manifest.read_revisions(path)
+    assert list(got["run_utc"]) == ["2026-11-19T10:17:00Z", "2026-11-19T10:32:00Z", "2026-11-19T10:47:00Z"]
+    assert list(got["old_open"]) == [4301.0, 4301.1, 4301.0] and list(got["new_open"]) == [4301.1, 4301.0, 4301.1]
+    assert list(got["kind"]) == ["changed"] * 3 and list(got["ref_run"]) == ["", "", "2026-11-19T10:17:00Z"]
+    # the next UTC day starts a new file, so no file holds more than one day of runs
+    snap(a, datetime(2026, 11, 20, 0, 2, tzinfo=timezone.utc))
+    nxt = os.path.join(ledger, "revisions", "XAU_USD_60m", "2026-10", "2026-11-20.csv")
+    assert manifest.read_revisions(nxt)["kind"].tolist() == ["changed"]         # written in full, not a repeat
+
+
+def test_month_files_written_before_the_change_are_left_as_they_are(tmp_path):
+    store, ledger, a, b, snap = _flip_store(tmp_path)
+    legacy = os.path.join(ledger, "revisions", "XAU_USD_60m", "2026-10.csv")
+    os.makedirs(os.path.dirname(legacy))
+    with open(legacy, "w") as fh:
+        fh.write("bar_open,run_utc,kind\n2026-10-01 23:00:00+00:00,2026-11-18T10:00:00Z,800 closed bars revised\n")
+    before = open(legacy).read()
+    snap(a, datetime(2026, 11, 19, 10, 2, tzinfo=timezone.utc))
+    snap(b, datetime(2026, 11, 19, 10, 17, tzinfo=timezone.utc))
+    assert open(legacy).read() == before
+
+
+def test_a_set_over_the_cap_is_one_rebased_line_under_the_full_header(tmp_path):
+    idx = [f"2026-10-02 {h:02d}:00:00+00:00" for h in range(manifest.MAX_REVISIONS_PER_FILE // 20 + 1)] * 21
+    rev = pd.DataFrame({"old_open": 1.0, "old_high": 2.0, "old_low": 0.5, "old_close": 1.5, "new_open": 1.1,
+                        "new_high": 2.0, "new_low": 0.5, "new_close": 1.5, "kind": "changed"}, index=idx)
+    assert len(rev) > manifest.MAX_REVISIONS_PER_FILE
+    path = str(tmp_path / "d.csv")
+    assert manifest.write_revisions(path, rev, "2026-11-19T10:02:00Z") == "rebased"
+    small = rev.iloc[:2]
+    assert manifest.write_revisions(path, small, "2026-11-19T10:17:00Z") == "full"
+    got = manifest.read_revisions(path)
+    assert list(got["kind"]) == ["rebased", "changed", "changed"] and got["n_bars"][0] == str(len(rev))
+    assert all(len(l.split(",")) == len(manifest.REV_HEADER) for l in open(path).read().splitlines())
+
+
+def test_the_reader_reads_the_old_month_files_whose_header_came_from_their_first_row(tmp_path):
+    p = tmp_path / "2026-09.csv"
+    p.write_text("bar_open,run_utc,kind\n"
+                 "2026-09-01 00:00:00+00:00,2026-11-01T10:00:00Z,600 closed bars revised (series re-based); not listed\n"
+                 "2026-09-02 01:00:00+00:00,2026-11-01T10:15:00Z,1.0,2.0,0.5,1.5,1.1,2.0,0.5,1.5,changed\n")
+    got = manifest.read_revisions(str(p))
+    assert len(got) == 2 and got["old_open"].isna()[0] and got["new_open"][1] == 1.1 and got["kind"][1] == "changed"
+    bad = tmp_path / "bad.csv"
+    bad.write_text("bar_open,run_utc,kind\n2026-09-01,2026-11-01T10:00:00Z,1,2\n")
+    with pytest.raises(ValueError):
+        manifest.read_revisions(str(bad))
 
 
 # ------------------------------------------------------------------ forbidden patterns
