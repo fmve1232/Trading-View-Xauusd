@@ -10708,6 +10708,34 @@
    "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
    "reason": "confirmed, but NOT VALIDATED: its registered test failed: +$15 before -$13 after a $15 confirmation was 44% of 277 trades (2020-22, 95% 38%-50%) against a break-even of 47.4%; FAIL (B21 H3 / H4)",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "BREAKOUT|15m|1793360700|-1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1793360700,
+   "t_close": 1793361600,
+   "dir": -1,
+   "p0": 3966.75,
+   "what": "breakout at TDL 3967.28",
+   "id": 292,
+   "seen": 1795449865,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 3951.75,
+   "invalid_at": 3979.75,
+   "cap_at": 3946.75,
+   "confirm20_at": 3946.75,
+   "status": "EXPIRED",
+   "bars": 96,
+   "scan_t": null,
+   "overshoot_usd": 21.01,
+   "why": "the first 15m close $15 beyond was $21.01 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1793366100,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $21.01 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
