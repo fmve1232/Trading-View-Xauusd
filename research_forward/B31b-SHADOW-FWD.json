@@ -1714,6 +1714,31 @@
 "vol_ratio": 0.631,
 "cost": 0.77,
 "status": "REPEAT"
+},
+{
+"key": "C|1795397400|1|LOH|3595.51",
+"module": "C",
+"dir": 1,
+"kind": "LOH",
+"lv": 3595.51,
+"order_t": 1795397400,
+"order_close": 1795398300,
+"recorded_utc": 1795398525,
+"timely": true,
+"entry_type": "RETEST",
+"limit": 3595.51,
+"market": null,
+"p_ref": 3595.51,
+"stop": 3566.9072,
+"inval": null,
+"false_break": true,
+"vwap": null,
+"session": "ASIAN",
+"ranging": false,
+"vol_ratio": 3.241,
+"cost": 0.97,
+"status": "REJECTED",
+"why": "reward"
 }
 ],
 "days": [
