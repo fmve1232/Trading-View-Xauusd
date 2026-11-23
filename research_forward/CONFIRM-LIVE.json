@@ -10472,6 +10472,33 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "ENG|15m|1795421700|-1",
+   "kind": "ENG",
+   "tf": "15m",
+   "t": 1795421700,
+   "t_close": 1795422600,
+   "dir": -1,
+   "p0": 3608.09,
+   "what": "engine 15m signal, TQ 60",
+   "id": 284,
+   "seen": 1795422840,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3593.09,
+   "invalid_at": 3621.09,
+   "cap_at": 3588.09,
+   "confirm20_at": 3588.09,
+   "status": "INVALIDATED",
+   "bars": 4,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795426200
   }
  ]
 }
