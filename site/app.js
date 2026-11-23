@@ -885,8 +885,9 @@ function breakoutsCard(BK) {
     RGH: "range high", RGL: "range low", SWH: "swing high", SWL: "swing low" };
   const PH = { SENT: "sent", LATE: "late, not sent", SITE: "website only", SEND_FAILED: "send failed", DUE: "due" };
   const kvs = (o) => Object.entries(o || {}).map(([k, v]) => `${esc(k)} ${v}`).join(" · ") || "none";
-  const stg = (e) => ["DETECTED", "CONFIRMED", "RETEST", "FAILED", "CLOSED"].filter((k) => e.stages[k]).map((k) => {
-    const s = e.stages[k], lbl = k === "RETEST" ? "retest held" : k === "CONFIRMED" ? `confirmed (${(s.how || "").toLowerCase()})` : k.toLowerCase();
+  const stg = (e) => ["DETECTED", "CONFIRMED", "RETEST", "MOVE10", "MOVE15", "MOVE20", "FAILED", "CLOSED"].filter((k) => e.stages[k]).map((k) => {
+    const s = e.stages[k], lbl = k === "RETEST" ? "retest held" : k === "CONFIRMED" ? `confirmed (${(s.how || "").toLowerCase()})`
+      : k.startsWith("MOVE") ? `+$${k.slice(4)} reached (E1)` : k.toLowerCase();
     const ph = e.phone && e.phone[k] ? ` <span class="dim">[${esc(PH[e.phone[k]] || e.phone[k])}]</span>` : "";
     return `${esc(lbl)} ${tfmt(s.t, false)}${ph}`; }).join("<br>");
   const RES = { TP: "bull", SL: "bear", AMBIGUOUS: "bear" };
@@ -912,6 +913,37 @@ function breakoutsCard(BK) {
       ["ENTRY READY", `<b class="warn">SHADOW</b> <span class="dim">computed and recorded, never sent: no breakout entry is validated</span>`]])}
     ${rows ? `<div class="scroll"><table class="yt"><tr><th>Breakout</th><th>Level</th><th>Stages [phone]</th><th>Shadow entries (not validated, never sent)</th></tr>${rows}</table></div>` : '<p class="muted pa-note">No breakout since this monitor started.</p>'}
     <p class="muted pa-note">${esc(BK.rules || "")} ${esc(BK.shadow || "")} Shadow results are raced on closed 15m bars, each target on its own against the stop: TP = target first, SL = stop first, AMB = both in one bar (counted as the stop). Feed mid prices with a cost model; no broker bid / ask is connected, and the planned loss is not a maximum (gaps).</p>`;
+}
+/* ---------- W7 amendment A3: every 15m sweep (quantum/sweeps.py; index.json -> alerts.sweeps) ----------
+   Monitoring, not an entry: a 15m bar that trades beyond a live M15 / M30 / H1 / H4 level and closes back inside, then
+   whether +$10 / +$15 / +$20 came before the wick was retaken. Counts only; nothing here is a probability. */
+function sweepsCard(SW) {
+  if (!SW || !SW.on) return "";
+  if (SW.ok === false) return `<h4>Sweeps (15m)</h4><p class="muted pa-note">Not available in this run${SW.error ? ": " + esc(SW.error) : ""}.</p>`;
+  const TFL = { "15m": "M15", "30m": "M30", "1h": "H1", "4h": "H4" };
+  const NM = { PWH: "prev week high", PWL: "prev week low", PDH: "prev day high", PDL: "prev day low", ASH: "Asia high", ASL: "Asia low",
+    LOH: "London high", LOL: "London low", NYH: "New York high", NYL: "New York low", EQH: "equal highs", EQL: "equal lows",
+    RGH: "range high", RGL: "range low", SWH: "swing high", SWL: "swing low" };
+  const PH = { SENT: "sent", LATE: "late, not sent", SITE: "website only", SEND_FAILED: "send failed", DUE: "due" };
+  const SS = { ASIAN: "Asia", LONDON: "London", "LONDON+NY": "London+NY", "NEW YORK": "New York", OFF: "other" };
+  const sd = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
+  const LBL = { SWEEP: "sweep", MOVE10: "+$10 reached", MOVE15: "+$15 reached", MOVE20: "+$20 reached", FAILED: "failed (wick retaken)", CLOSED: "24 h over" };
+  const stg = (e) => Object.keys(LBL).filter((k) => e.stages[k]).map((k) => {
+    const ph = e.phone && e.phone[k] ? ` <span class="dim">[${esc(PH[e.phone[k]] || e.phone[k])}]</span>` : "";
+    return `${esc(LBL[k])} ${tfmt(e.stages[k].t, false)}${ph}`; }).join("<br>");
+  const lvls = (e) => (e.levels || []).map((x) => `${esc(TFL[x.tf] || x.tf)} ${esc(NM[x.kind] || x.kind)} ${px(x.price)}`).join("<br>");
+  const rows = (SW.events || []).slice(0, 20).map((e) => `<tr><td>${sd(e.dir)} <span class="dim">reversal</span><div>${tfmt(e.t_close)}</div><div class="dim">${esc(SS[e.sess] || e.sess || "")}</div></td>
+    <td>${lvls(e)}</td><td>wick ${px(e.wick)}<div>close ${px(e.close)}</div><div class="dim">+$10/15/20: ${[10, 15, 20].map((T) => px(e.close + e.dir * T)).join(" / ")}</div></td>
+    <td>${stg(e)}</td></tr>`).join("");
+  const R = SW.record || {};
+  const cell = (r, T) => { const x = (r || {})[T] || {}; return x.decided ? `${x.target_first}/${x.decided}${x.wilson95 ? ` <span class="dim">(${f(100 * x.wilson95[0], 0)}–${f(100 * x.wilson95[1], 0)}%)</span>` : ""}` : "—"; };
+  const rec = ["15m", "30m", "1h", "4h", "ALL"].map((k) => `<tr><td>${esc(TFL[k] || "All")}</td><td>${(R[k] || {}).sweeps || 0}</td><td>${cell(R[k], "10")}</td><td>${cell(R[k], "15")}</td><td>${cell(R[k], "20")}</td></tr>`).join("");
+  return `<h4>Sweeps on every 15m close · monitoring, not an entry</h4>
+    ${kv([["Phone", SW.mode === "phone" ? "ON: every sweep, then +$10 / +$15 / +$20 reached or failed" : SW.mode === "site" ? "website only" : "OFF"],
+      ["Evidence", `<span class="warn">${esc(SW.evidence || "")}</span>`]])}
+    <div class="scroll"><table class="yt"><tr><th>Level timeframe</th><th>Sweeps</th><th>+$10 first / decided</th><th>+$15</th><th>+$20</th></tr>${rec}</table></div>
+    ${rows ? `<div class="scroll"><table class="yt"><tr><th>Sweep</th><th>Levels swept</th><th>Prices</th><th>Stages [phone]</th></tr>${rows}</table></div>` : '<p class="muted pa-note">No sweep since this monitor started.</p>'}
+    <p class="muted pa-note">${esc(SW.rules || "")} Counted on closed 15m bars: a bar touching both the target and the wick counts as failed. Feed mid prices; your MT5 prices differ by the spread and the MT5 offset.</p>`;
 }
 function shadowCard(SH) {
   if (!SH) return "";
@@ -2495,7 +2527,7 @@ function renderPlanAlerts() {
   const rec = n ? `Your plan so far: <b>${tp}</b> TP · <b>${sl}</b> SL = <b>${pct(100 * tp / n)}</b> TP first (n ${n}; expected about ${pct(100 * P.tp_first)})` : "No closed plans yet.";
   // this card is redrawn on live ticks (open plans' P/L): keep the "phone alert, as sent" blocks the reader has opened
   const openK = new Set([...el.querySelectorAll("details[open][data-k]")].map((d) => d.dataset.k));
-  el.innerHTML = `${c1Card(A.c1)}${entryIntelCard(A.entry_intel)}${breakoutsCard(A.breakouts)}${zonesCard(A.zones)}
+  el.innerHTML = `${c1Card(A.c1)}${entryIntelCard(A.entry_intel)}${breakoutsCard(A.breakouts)}${sweepsCard(A.sweeps)}${zonesCard(A.zones)}
     <h4>Your plan</h4>
     <div class="kv"><div>Plan</div><div>${f(c.lot, 2)} lot · −$${f(c.sl_usd, 0)} / +$${f(c.tp_usd, 0)}${c.tp2_usd ? ` · two targets: TP1 +$${f(c.tp_usd / 2, 0)} on half, then SL to entry, TP2 +$${f(c.tp2_usd / 2, 0)} on the rest` : ""}</div>
       <div>TP hit first</div><div>about ${pct(100 * P.tp_first)}</div>

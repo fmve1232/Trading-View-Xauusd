@@ -181,8 +181,18 @@ jobs:
           PLAN_TP2_USD: ${{ vars.PLAN_TP2_USD }}         # two targets: the second half's TP in $ (default $20 of price; 0 = one TP)
           ALERT_SETUPS: ${{ vars.ALERT_SETUPS }}         # SETUP alerts from the operator's level rules (B16); 0 = off
           SETUP_LEVELS: ${{ vars.SETUP_LEVELS }}         # all (default) or major = previous day / week / month levels only
-          ALERT_MODE: ${{ vars.ALERT_MODE }}             # quality (default): engine signals + setups with all 4 confirmations; all = every alert
+          ALERT_MODE: ${{ vars.ALERT_MODE }}             # sixty (default since 2026-11-06): 15m engine signals + plans only; quality; all = every alert
           PLAN_COST_PER_LOT: ${{ vars.PLAN_COST_PER_LOT }}
+          PLAN: ${{ vars.PLAN }}                         # the plan block in alerts; 0 = off (unset = on)
+          PLAN_SIZING: ${{ vars.PLAN_SIZING }}           # fixed = the fixed PLAN_LOT; unset = risk-based sizing (N1)
+          PLAN_RISK_PCT: ${{ vars.PLAN_RISK_PCT }}       # risk per trade, % of ACCOUNT_USD (2.6)
+          PLAN_LOT_MAX: ${{ vars.PLAN_LOT_MAX }}         # sizing cap in lots
+          ACCOUNT_USD: ${{ vars.ACCOUNT_USD }}           # account size for sizing and the daily-limit check (25000)
+          DAILY_LIMIT_PCT: ${{ vars.DAILY_LIMIT_PCT }}   # daily loss limit, % of ACCOUNT_USD (5)
+          ALERT_NEWS: ${{ vars.ALERT_NEWS }}             # news warnings; 0 = off (unset = on)
+          ALERT_STRUCTURE: ${{ vars.ALERT_STRUCTURE }}   # structure / H-setup lines (website unless ALERT_MODE=all); 0 = off
+          CONFIRM_MIN_USD: ${{ vars.CONFIRM_MIN_USD }}   # the confirmation close's minimum distance, $ (10)
+          CONFIRM_CAP_USD: ${{ vars.CONFIRM_CAP_USD }}   # the confirmation close's maximum distance, $ (0 = no cap)
           PLAN_LATE_FRAC: ${{ vars.PLAN_LATE_FRAC }}   # alert marked LATE when price moved this share of the stop (0.30)
           MT5_SERVER_UTC_OFFSET: ${{ vars.MT5_SERVER_UTC_OFFSET }}   # empty = New York + 7 h (UTC+2 winter / UTC+3 summer)
           ALERT_LOCAL_TZ: ${{ vars.ALERT_LOCAL_TZ }}   # local clock in alerts (Asia/Karachi)
@@ -193,7 +203,9 @@ jobs:
           DELIVERY_RETRY: ${{ vars.DELIVERY_RETRY }}   # P-0 phone-alert retry + ntfy cache checks; 0 = off (no code revert); unset = on
           ALERT_ZONES: ${{ vars.ALERT_ZONES }}         # W4 key-zone watch (non-directional): unset = phone (max 4 a day); site = website only; 0 = off
           ENTRY_INTEL: ${{ vars.ENTRY_INTEL }}         # W5 entry price check + path record (website and records only); 0 = off; unset = on
-          ALERT_BREAKOUTS: ${{ vars.ALERT_BREAKOUTS }} # W7 M15 / M30 breakout monitor (non-directional): unset = phone; site = website only; 0 = off
+          ALERT_BREAKOUTS: ${{ vars.ALERT_BREAKOUTS }} # W7 M15 / M30 / H1 / H4 breakout monitor (non-directional): unset = phone; site = website only; 0 = off
+          BREAKOUT_TFS: ${{ vars.BREAKOUT_TFS }}       # W7 A2: which breakout timeframes (15m,30m,1h,4h); unset = all four
+          ALERT_SWEEPS: ${{ vars.ALERT_SWEEPS }}       # W7 A3 every 15m sweep (non-directional): unset = phone; site = website only; 0 = off
         run: python -m quantum.pipeline --store store --out site/data --tfs 15m,30m,1h,4h,5m
 
       - name: Pipeline completeness (a warning per failed timeframe or download error, audit IA-19; never fails the run)
