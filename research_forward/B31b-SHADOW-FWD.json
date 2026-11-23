@@ -1812,6 +1812,30 @@
 "cost": 0.77,
 "status": "REJECTED",
 "why": "room"
+},
+{
+"key": "D|1795435200|-1|VWAP|3620.69",
+"module": "D",
+"dir": -1,
+"kind": "VWAP",
+"lv": 3620.69,
+"order_t": 1795435200,
+"order_close": 1795436100,
+"recorded_utc": 1795437215,
+"timely": true,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3615.24,
+"p_ref": 3615.24,
+"stop": 3622.928,
+"inval": null,
+"false_break": false,
+"vwap": 3608.56,
+"session": "LONDON",
+"ranging": true,
+"vol_ratio": 0.847,
+"cost": 0.77,
+"status": "REPEAT"
 }
 ],
 "days": [
