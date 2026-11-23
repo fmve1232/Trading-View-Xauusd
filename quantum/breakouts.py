@@ -84,9 +84,13 @@ def _rank(kind: str) -> int:
 
 
 # ---------------- detection: a pure function of closed bars ----------------
-def detect(t, o, h, l, c, sec: int) -> tuple[list[dict], dict]:
+def detect(t, o, h, l, c, sec: int, live: dict | None = None) -> tuple[list[dict], dict]:
     """Every breakout on these closed bars, each from the bars closed by its own close. Returns (events, context) where
-    context holds the arrays the stages and shadow entries need (atr, session label, cost model)."""
+    context holds the arrays the stages and shadow entries need (atr, session label, cost model).
+
+    live (amendment A3): when a dict is given, live[i][s] lists the levels (kind, price, key) still live at the OPEN of
+    bar i on side s, i = 1 .. n-1, and live[n][s] the swing / equal / range levels live at the open of the next (still
+    forming) bar. The sweep monitor reads them; the breakouts are the same with or without it."""
     t = np.asarray(t, np.int64)
     o, h, l, c = (np.asarray(x, float) for x in (o, h, l, c))
     n = len(c)
@@ -106,7 +110,10 @@ def detect(t, o, h, l, c, sec: int) -> tuple[list[dict], dict]:
     used: set = set()
     last_rg = -10 ** 9                             # bar of the last range breakout (amendment A1)
     events = []
-    for i in range(1, n):
+
+    def advance(i: int, d_now: int) -> dict | None:
+        """Levels at the open of bar i: the swing reported at bar i-1's close, expiry on bar i's trading day, and the
+        12-bar range box (None when there is none)."""
         q = i - 1                                  # a swing reported at bar q's close is usable from bar i
         for s, arr in ((1, ph), (-1, pl)):
             v = arr[q]
@@ -121,18 +128,28 @@ def detect(t, o, h, l, c, sec: int) -> tuple[list[dict], dict]:
                     eqs[s].append({"v": outer, "keys": (x["key"], sw["key"]), "key": ("EQ", s, x["p"], p)})
             swings[s].append(sw)
         for s in (1, -1):                          # expiry: 5 trading days after the swing became known
-            swings[s] = [x for x in swings[s] if x["key"] not in used and dord[i] - x["d"] < SWING_DAYS]
-            live = {x["key"] for x in swings[s]}
-            eqs[s] = [x for x in eqs[s] if x["key"] not in used and all(k in live for k in x["keys"])]
+            swings[s] = [x for x in swings[s] if x["key"] not in used and d_now - x["d"] < SWING_DAYS]
+            keep = {x["key"] for x in swings[s]}
+            eqs[s] = [x for x in eqs[s] if x["key"] not in used and all(k in keep for k in x["keys"])]
+        if i - RANGE_BARS >= 0 and last_rg < i - RANGE_BARS and np.isfinite(atr[i - 1]):
+            hb, lb = float(h[i - RANGE_BARS:i].max()), float(l[i - RANGE_BARS:i].min())
+            if hb - lb <= RANGE_ATR * atr[i - 1]:
+                return {1: hb, -1: lb}
+        return None
+
+    def structural(i: int, s: int, rg: dict | None) -> list:
+        out = [(("SWH" if s == 1 else "SWL"), x["v"], x["key"]) for x in swings[s]]
+        out += [(("EQH" if s == 1 else "EQL"), x["v"], x["key"]) for x in eqs[s]]
+        if rg is not None:
+            out.append((("RGH" if s == 1 else "RGL"), rg[s], ("RG", s, i)))
+        return out
+
+    for i in range(1, n):
+        rg = advance(i, int(dord[i]))
         for s in STATIC:
             for k in STATIC[s]:
                 if not (pools[k][i] == pools[k][i - 1]):
                     start[k] = i
-        rg = None
-        if i - RANGE_BARS >= 0 and last_rg < i - RANGE_BARS and np.isfinite(atr[i - 1]):
-            hb, lb = float(h[i - RANGE_BARS:i].max()), float(l[i - RANGE_BARS:i].min())
-            if hb - lb <= RANGE_ATR * atr[i - 1]:
-                rg = {1: hb, -1: lb}
         if not (np.isfinite(c[i]) and np.isfinite(c[i - 1])):
             continue
         for s in (1, -1):
@@ -141,10 +158,9 @@ def detect(t, o, h, l, c, sec: int) -> tuple[list[dict], dict]:
                 v = pools[k][i]
                 if np.isfinite(v):
                     cand.append((k, float(v), (k, start[k])))
-            cand += [(("SWH" if s == 1 else "SWL"), x["v"], x["key"]) for x in swings[s]]
-            cand += [(("EQH" if s == 1 else "EQL"), x["v"], x["key"]) for x in eqs[s]]
-            if rg is not None:
-                cand.append((("RGH" if s == 1 else "RGL"), rg[s], ("RG", s, i)))
+            cand += structural(i, s, rg)
+            if live is not None:
+                live.setdefault(i, {})[s] = [x for x in cand if x[2] not in used]
             crossed = [x for x in cand if x[2] not in used and s * (c[i] - x[1]) > EPS and s * (c[i - 1] - x[1]) <= EPS]
             if not crossed:
                 continue
@@ -167,6 +183,12 @@ def detect(t, o, h, l, c, sec: int) -> tuple[list[dict], dict]:
                            "disp": bool(a_prev > 0 and body >= DISP_ATR * a_prev - EPS),
                            "gap": bool(s * (o[i] - ref[1]) > EPS), "sess": str(sess[i]),
                            "beyond": beyond[:BEYOND_KEEP]})
+    if live is not None:                           # the forming bar: what is live at its open (no static pools)
+        nxt = pd.Timestamp(int(t[-1]) + sec, unit="s", tz="UTC")
+        d_next = int(dord[-1]) + int(sessions.calendar(pd.DatetimeIndex([nxt]))["trading_date"].iloc[0]
+                                     != cal["trading_date"].iloc[-1])
+        rg = advance(n, d_next)
+        live[n] = {s: [x for x in structural(n, s, rg) if x[2] not in used] for s in (1, -1)}
     return events, ctx
 
 
@@ -307,8 +329,15 @@ def message(ev: dict, tf: str, stage: str, bar: dict, fmt, clock) -> list[str]:
     if stage in ("CONFIRMED", "RETEST"):
         status = ("Retest held" if stage == "RETEST" else
                   "Displacement, retest pending" if bar.get("how") == "DISPLACEMENT" else "Accepted, retest pending")
+        ladder = ([f"+$10 / +$15 / +$20 at: {' / '.join(fmt(bar['c'] + ev['dir'] * T) for T in TARGETS)}"]
+                  if stage == "CONFIRMED" else [])          # amendment A3: where each move would be confirmed
         return [_head(ev, tf, "CONFIRMED"), f"Direction: {side}", f"Level: {lv}", f"Price: {fmt(bar['c'])}",
-                f"Status: {status}", "Action: Wait", "Entry: Not validated", t]
+                f"Status: {status}", "Action: Wait", "Entry: Not validated", *ladder, t]
+    if stage.startswith("MOVE"):                            # amendment A3: the E1 race reached this target first
+        T = float(stage[4:])
+        return [_head(ev, tf, f"+${T:g} REACHED"), f"Direction: {side}", f"Level: {lv}",
+                f"From the confirmation close {fmt(bar['c'])} to {fmt(bar['c'] + ev['dir'] * T)}",
+                "Entry: Not validated", t]
     back = "below" if ev["dir"] == 1 else "above"
     return [_head(ev, tf, "FAILED"), f"Direction: {side}", f"Level: {lv}",
             f"Reason: Price closed back {back} the level", "Action: Cancel setup", t]
@@ -326,7 +355,10 @@ def bundle(msgs: list[list[str]]) -> list[list[str]]:
 
 # ---------------- the live run ----------------
 def book(state: dict, t_now: int) -> dict:
-    return state.setdefault("brk", {"since": int(t_now), "events": {}})
+    bk = state.setdefault("brk", {})                # the sweep monitor (A3) keeps its own keys here: since_sw, sw
+    bk.setdefault("since", int(t_now))
+    bk.setdefault("events", {})
+    return bk
 
 
 def since_tf(bk: dict, tf: str, t_now: int) -> int:
@@ -414,6 +446,19 @@ def scan(state: dict, payloads: dict, t_now: int, budget: float) -> list[dict]:
                     r = race(x, ev["dir"], b15, k_t, limit=lim, valid_until=k_t + RETEST_VALID * sec if lim else None)
                     x["fill"], x["res"] = r["fill"], r["res"]
                     x["done"] = r["fill"] == "MISSED" or all(v is not None for v in r["res"].values())
+                    if name != "E1":
+                        continue
+                    for T, v in r["res"].items():   # amendment A3: MOVE when E1 reaches a target before its stop
+                        stage = f"MOVE{T}"
+                        if not v or v[0] != "TP" or stage in rec["stages"]:
+                            continue
+                        tc = int(v[1])
+                        rec["stages"][stage] = {"t": tc}
+                        fresh = tc == int(b15["t"][-1]) + 900 and 0 <= t_now - tc <= FRESH_SEC
+                        rec["phone"][stage] = "DUE" if fresh else "LATE"
+                        if fresh:
+                            due.append({"id": eid, "tf": tf, "stage": stage, "ev": ev,
+                                        "bar": {"c": x["entry"], "t_close": tc}})
     if len(bk["events"]) > KEEP_EVENTS:
         for k in sorted(bk["events"], key=lambda k: bk["events"][k]["t_close"])[:len(bk["events"]) - KEEP_EVENTS]:
             del bk["events"][k]

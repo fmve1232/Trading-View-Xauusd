@@ -11,7 +11,7 @@ rule (F-A74); it stays unchanged, and so does every forward-test record.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 NY = ZoneInfo("America/New_York")
@@ -56,7 +56,3 @@ def state(t: int, before_min: int = BEFORE_MIN, after_min: int = AFTER_MIN) -> d
 def export() -> dict:
     return {"events": events(), "before_min": BEFORE_MIN, "after_min": AFTER_MIN, "cost_mult": COST_MULT,
             "source": SOURCE, "valid_until": VALID_UNTIL}
-
-
-def now_utc() -> int:
-    return int(datetime.now(timezone.utc).timestamp())

@@ -14,7 +14,7 @@ from quantum import holdout
 from quantum import notify as N
 
 T0 = 1795392000                        # 2026-11-23 00:00 UTC (Mon); a trading day rolls at 22:00 UTC (17:00 New York)
-KEYS = ("ALERT_BREAKOUTS", "BREAKOUT_TFS", "ALERT_STRUCTURE", "ALERT_MODE", "ALERT_ZONES", "CONFIRM_MIN_USD", "PLAN", "MT5_PRICE_OFFSET",
+KEYS = ("ALERT_BREAKOUTS", "BREAKOUT_TFS", "ALERT_SWEEPS", "ALERT_STRUCTURE", "ALERT_MODE", "ALERT_ZONES", "CONFIRM_MIN_USD", "PLAN", "MT5_PRICE_OFFSET",
         "ENTRY_INTEL")
 
 
@@ -507,6 +507,7 @@ def test_more_than_five_messages_in_one_run_go_as_one():
 # ---------------- through notify: every other alert and record unchanged ----------------
 def _scenario(store, monkeypatch, value):
     monkeypatch.setenv("ALERT_STRUCTURE", "0")
+    monkeypatch.setenv("ALERT_SWEEPS", "0")                          # this test isolates the breakout stream
     if value is not None:
         monkeypatch.setenv("ALERT_BREAKOUTS", value)
     sent = []

@@ -73,7 +73,7 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from . import confirm_entry as C1
-from . import breakouts, entry_intel, keyzones, shadow
+from . import breakouts, entry_intel, keyzones, shadow, sweeps
 from .data.sources import redact as _src_redact
 from .data.sources import requests
 
@@ -1737,12 +1737,6 @@ def plan_stage2(plan: dict, chart: dict, t_from: int) -> dict:
     return {"result": None, "t_res": None}
 
 
-def plan_result(plan: dict, chart: dict) -> tuple[str, int] | None:
-    """('TP' | 'SL' | 'BOTH', bar open t) for the first bar AFTER the signal bar that touches the plan's TP or SL."""
-    r = plan_path(plan, chart)
-    return (r["result"], r["t_res"]) if r["result"] else None
-
-
 def plan_updates(plans: list[dict], tf: str, chart: dict, now_t: int, off: float = 0.0,
                  p5: dict | None = None, quiet: set | None = None,
                  refs: list | None = None) -> tuple[list[str], list[dict], list[dict]]:
@@ -2913,6 +2907,32 @@ def breakouts_run(state: dict, payloads: dict, t_send: int, off: float, pl: dict
     return {**breakouts.snapshot(state, t_send), "ok": True}, sent
 
 
+def sweeps_run(state: dict, payloads: dict, t_send: int, off: float) -> tuple[dict, list[dict]]:
+    """ALERT_SWEEPS (W7 amendment A3; unset = phone, site = website only, 0 = off): every 15m sweep, then MOVE +$10 /
+    +$15 / +$20 or FAILED. Returns the website block and the phone messages sent; each stage's phone result is recorded
+    on its sweep (SENT, SEND_FAILED, SITE, LATE)."""
+    m = sweeps.mode()
+    if m == "off":
+        return {"id": sweeps.ID, "on": False}, []
+    due = sweeps.scan(state, payloads, t_send)
+    recs = state["brk"]["sw"] if due else {}
+    if m == "site":
+        for d in due:
+            recs[d["id"]]["phone"][d["stage"]] = "SITE"
+        return {**sweeps.snapshot(state, t_send), "ok": True}, []
+    msgs = [sweeps.message(d["ev"], d["stage"], d["t_close"], lambda x: _fmt(x, off), short_clock) for d in due]
+    keys = [f"{d['id']}:{d['stage']}" for d in due]
+    sent = []
+    groups = breakouts.bundle(msgs)
+    for gi, lines in enumerate(groups):
+        part = list(range(len(due))) if len(groups) < len(msgs) else [gi]
+        ok = _say("sweeps", lines, [keys[k] for k in part], desc="sweep" if len(part) == 1 else f"{len(part)} sweep updates")
+        for k in part:
+            recs[due[k]["id"]]["phone"][due[k]["stage"]] = "SENT" if ok else "SEND_FAILED"
+        sent.append({"lines": lines, "sent": ok, "events": [keys[k] for k in part]})
+    return {**sweeps.snapshot(state, t_send), "ok": True}, sent
+
+
 def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | None = None) -> dict:
     path = os.path.join(store_dir, STATE) if store_dir else None
     state = {}
@@ -3143,10 +3163,14 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
             report["zones_alert"] = {"lines": zl, "sent": _say("zones", zl, zev, desc="key zone watch")}
     except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
         report["zones"] = {"ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
-    try:   # Workstream 7: M15 / M30 breakout monitoring (every session, both directions); never breaks this run
+    try:   # Workstream 7: M15 / M30 / H1 / H4 breakout monitoring (every session, both directions); never breaks this run
         report["breakouts"], report["breakout_alerts"] = breakouts_run(state, payloads, t_send, off, pl_cfg)
     except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
         report["breakouts"] = {"id": breakouts.ID, "on": True, "ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
+    try:   # W7 amendment A3: every 15m sweep of the M15 / M30 / H1 / H4 levels; never breaks this run
+        report["sweeps"], report["sweep_alerts"] = sweeps_run(state, payloads, t_send, off)
+    except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
+        report["sweeps"] = {"id": sweeps.ID, "on": True, "ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
     if glines:
         report["grab_test_alert"] = {"lines": glines, "sent": [] if sixty() else _say("grab_test", trade_msg(phone_only(glines)),
                                                                                       desc="grab test")}   # trades and results

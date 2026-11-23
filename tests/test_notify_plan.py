@@ -20,6 +20,12 @@ def _env(monkeypatch):
     #                                               the default risk sizing (N1, 2026-11-14) is tested in test_risk_sizing.py
 
 
+
+def plan_result(plan: dict, chart: dict):
+    """('TP' | 'SL' | 'BOTH', bar open t) of notify.plan_path, or None (was notify.plan_result, used only here)."""
+    r = notify.plan_path(plan, chart)
+    return (r["result"], r["t_res"]) if r["result"] else None
+
 def test_defaults_are_the_operators_650_plan_and_levels_follow_the_direction(monkeypatch):
     pl = notify.plan_cfg()                                   # default: two targets, TP2 $20 = $1,000 at 0.5 lot
     assert (pl["lot"], pl["sl_usd"], pl["tp_usd"], pl["tp2_usd"]) == (0.5, 650.0, 650.0, 1000.0) and pl["tp2_px"] == pytest.approx(20.0)
@@ -55,12 +61,12 @@ def _chart(rows):
 
 def test_first_touch_after_the_signal_bar():
     pl = {"tf": "15m", "t": 100, "dir": 1, "entry": 4000.0, "sl": 3987.0, "tp": 4013.0, "sl_usd": 650, "tp_usd": 650}
-    assert notify.plan_result(pl, _chart([(100, 4020, 3980), (200, 4005, 3995)])) is None       # the signal bar itself is ignored
-    assert notify.plan_result(pl, _chart([(100, 4020, 3980), (200, 4005, 3995), (300, 4013.5, 3999)])) == ("TP", 300)
-    assert notify.plan_result(pl, _chart([(200, 4001, 3986.9), (300, 4020, 3999)])) == ("SL", 200)
-    assert notify.plan_result(pl, _chart([(200, 4014, 3986)])) == ("BOTH", 200)
+    assert plan_result(pl, _chart([(100, 4020, 3980), (200, 4005, 3995)])) is None       # the signal bar itself is ignored
+    assert plan_result(pl, _chart([(100, 4020, 3980), (200, 4005, 3995), (300, 4013.5, 3999)])) == ("TP", 300)
+    assert plan_result(pl, _chart([(200, 4001, 3986.9), (300, 4020, 3999)])) == ("SL", 200)
+    assert plan_result(pl, _chart([(200, 4014, 3986)])) == ("BOTH", 200)
     short = {**pl, "dir": -1, "sl": 4013.0, "tp": 3987.0}
-    assert notify.plan_result(short, _chart([(200, 4001, 3986.5)])) == ("TP", 200)
+    assert plan_result(short, _chart([(200, 4001, 3986.5)])) == ("TP", 200)
 
 
 def test_updates_send_once_and_expire():
@@ -396,7 +402,7 @@ def test_a_4h_plan_is_resolved_on_the_5m_path_from_its_close():
     assert (r["result"], r["t_res"], r["path"]) == ("TP", 14700, "5m")
     # the whole next 4h bar spans both levels: on 4h bars that is BOTH (a loss); the 5m path finds the TP first
     four = _chart([(0, 4001, 3999), (14400, 4020, 3980)])
-    assert notify.plan_result(pl, four) == ("BOTH", 14400)
+    assert plan_result(pl, four) == ("BOTH", 14400)
     lines, _keep, done = notify.plan_updates([pl], "4h", four, 14700, 0.0, p5)
     assert done[0]["result"] == "TP" and done[0]["t_res"] == 14700 and "5m bar" in lines[0]
     # one 5m bar touching both is a loss unless it opened beyond the TP (trade_race / B9 rule)

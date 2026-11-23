@@ -73,10 +73,6 @@ def to_points(spec: dict, price_move: float) -> float:
     return price_move / spec["tick_size"]
 
 
-def round_price(spec: dict, px: float) -> float:
-    return round(px, int(spec.get("digits", 2)))
-
-
 def lots_for_risk(spec: dict, risk_money: float, stop_move: float, cost_per_price_unit: float = 0.0) -> float:
     """Largest lot (a multiple of volume_step) whose loss at the stop, plus the round-trip cost, is within
     risk_money. Returns 0 when even the minimum lot is too large."""
