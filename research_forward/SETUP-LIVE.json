@@ -8055,11 +8055,39 @@
    "mae": 17.079999999999927,
    "bars": 2,
    "path": "5m"
+  },
+  {
+   "id": 222,
+   "tf": "15m",
+   "t": 1795398300,
+   "t_dec": 1795399200,
+   "dir": 1,
+   "entry": 3601.38,
+   "kind": "4H BREAKOUT",
+   "levels": [],
+   "zones": [],
+   "sl": 3588.38,
+   "tp": 3616.38,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": false,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1795399411,
+   "result": "SL",
+   "t_res": 1795399800,
+   "mfe": 5.599999999999909,
+   "mae": 17.019999999999982,
+   "bars": 3,
+   "path": "5m"
   }
  ],
  "live": {
   "4H BREAKOUT": [
-   35,
+   36,
    17
   ],
   "SWEEP": [
