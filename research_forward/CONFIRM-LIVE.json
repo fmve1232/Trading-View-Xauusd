@@ -10736,6 +10736,33 @@
    "verdict": "NO TRADE",
    "reason": "the first 15m close $15 beyond was $21.01 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "GRAB|15m|1793357100|1",
+   "kind": "GRAB",
+   "tf": "15m",
+   "t": 1793357100,
+   "t_close": 1793358000,
+   "dir": 1,
+   "p0": 3978.36,
+   "what": "PWL 3975.83 swept and rejected",
+   "id": 293,
+   "seen": 1795450753,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 3993.36,
+   "invalid_at": 3965.36,
+   "cap_at": 3998.36,
+   "confirm20_at": 3998.36,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1793361600,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
