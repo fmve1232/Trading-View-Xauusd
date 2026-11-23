@@ -92,6 +92,29 @@
     "regression": "Before merge: a replay on real bars must show every M15 / M30 phone message and record identical with and without H1 / H4, and every other phone message unchanged."
    },
    "unchanged": "No level, threshold, stage rule, stop, target, check value, freshness window or message wording of M15 / M30 changes; the engine, configuration and freeze key are untouched; ENTRY READY stays shadow on every timeframe."
+  },
+  {
+   "id": "A3",
+   "date_utc": "2026-11-23",
+   "approval": "Operator, 2026-11-23: \"identify all the breakout and liquidation in time frames of 15 minutes, [30] minutes, 1 hour and 4 hours ... calibrate them with the 15-minute time frame, so that we can get the information timely and alert accordingly, so that we can plan our trades on Meta 5 as per the actual value, and we have to identify the market price where market will go confirm minimum $10, $15 and $20\"; \"find a way in which we can get the timely alert of every sweep\". The standing rule still applies: \"New directional entry strategies must remain disabled until independently validated.\"",
+   "when": "Written and committed before any sweep code, before any sweep was counted on any data, and before any replay. No sweep outcome has been computed.",
+   "sweeps": {
+    "definition": "On every closed 15m bar k, a live level L on side s (s = +1: a level above, buy-side liquidity; s = -1: a level below, sell-side liquidity) is SWEPT when the bar's extreme trades beyond it (s x (high or low - L) > 0), the bar CLOSES back at or inside it (s x (close_k - L) <= 0) and the bar before closed at or inside it (s x (close_k-1 - L) <= 0). A close beyond the level is a breakout (unchanged), not a sweep.",
+    "levels": "M15: every live level exactly as the breakout monitor builds it on 15m bars (previous day / week, last Asia / London / New York session, swings, equal highs / lows, range). M30, H1 and H4: their swing, equal-high / low and range levels, built on that timeframe's own bars exactly as the breakout monitor builds them, as they stand at the OPEN of the higher-timeframe bar that holds the 15m bar (no look-ahead; levels known at a higher-timeframe close are watched from the next 15m bar). Day, week and session levels are taken from M15 only: they are the same prices on every timeframe. Each level instance is alerted once.",
+    "event": "One event per 15m bar and side, listing every level swept. Reference = the highest-ranked swept level (previous week > previous day > session > equal highs / lows > range > swing; then H4 > H1 > M30 > M15; then the farthest from the close).",
+    "follow_up": "From the sweep close, in the reversal direction (-s): MOVE +$10 / +$15 / +$20 when a later closed 15m bar reaches that price before any bar trades at or beyond the sweep's wick extreme; FAILED when the wick extreme is traded first. A bar touching both counts as FAILED; a bar opening beyond the extreme counts as FAILED. The watch ends after 96 15m bars (24 h) with no message.",
+    "phone": "SWEEP at the 15m close (the swept level(s) and their timeframe, wick extreme, close, the reversal side, the +$10 / +$15 / +$20 prices from the close, and the invalidation price = the wick extreme), then MOVE and FAILED. Prices carry MT5_PRICE_OFFSET; times in MT5 and local time. Same freshness rule as W7 (sent only while the stage's bar is the newest closed 15m bar and the run is within 20 minutes of its close; otherwise LATE), same bundling, same delivery log. Every message says Entry: Not validated; none carries a probability, a lot size or an order.",
+    "record": "Every sweep and its outcome (+$10 / +$15 / +$20 first, FAILED, or open at 24 h) is recorded once (brk.sw) and shown on the website with counts by level timeframe, level kind, side and session, with Wilson 95% intervals once at least 30 are decided. Evidence shown beside it: B31b-W3 (development 2020-23) found sweep reversals no better than matched random entries. No evaluation before 100 decided sweeps per level timeframe, and nothing is tuned from the record.",
+    "start": "Sweeps are recorded only from the first run that monitors them (brk.since_sw); nothing is back-filled.",
+    "switch": "Repository variable ALERT_SWEEPS: unset = phone, site = website only, 0 = off."
+   },
+   "breakout_additions": {
+    "confirmed_line": "The CONFIRMED message adds one line: the +$10 / +$15 / +$20 prices from the confirmation close in the breakout direction.",
+    "move": "MOVE +$10 / +$15 / +$20 messages when the E1 shadow race (market at the confirmation close against its structural stop, raced on closed 15m bars as in A1, unchanged) records that target first. Same freshness rule. Nothing else in the breakout messages, stages, levels or shadow entries changes.",
+    "switch": "Follows ALERT_BREAKOUTS and BREAKOUT_TFS."
+   },
+   "not_an_entry": "The +$10 / +$15 / +$20 prices are where a move of that size would be confirmed, not forecasts; a MOVE message reports what already happened. ENTRY READY stays SHADOW on every timeframe and is never sent.",
+   "regression": "Before merge, a replay on real bars must show every breakout DETECTED / RETEST / FAILED message and every breakout record identical to production, and every CONFIRMED message identical except for the added line; the new sweep and MOVE message counts are reported."
   }
  ]
 }
