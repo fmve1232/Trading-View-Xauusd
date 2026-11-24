@@ -10952,6 +10952,69 @@
    "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
    "reason": "confirmed, but NOT VALIDATED: its registered test failed: +$15 before -$13 after a $15 confirmation was 48% of 958 trades (2020-22, 95% 45%-52%) against a break-even of 47.4%; FAIL (B21 H7 / H8)",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "SWEEP|15m|1793376000|-1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1793376000,
+   "t_close": 1793376900,
+   "dir": -1,
+   "p0": 3896.36,
+   "what": "sweep at TDH 3900.16",
+   "id": 297,
+   "seen": 1795481358,
+   "backfill": false,
+   "late": true,
+   "repeats": 0,
+   "confirm_at": 3881.36,
+   "invalid_at": 3909.36,
+   "cap_at": 3876.36,
+   "confirm20_at": 3876.36,
+   "status": "CONFIRMED",
+   "bars": 96,
+   "scan_t": null,
+   "t_conf": 1793384100,
+   "entry": 3879.86,
+   "entry_px": 3879.86,
+   "move_usd": 16.5,
+   "sl": 3892.86,
+   "tp1": 3864.86,
+   "tp2": 3859.86,
+   "rr1": 1.1538461538461537,
+   "rr2": 1.5384615384615385,
+   "x20": {
+    "status": "CONFIRMED",
+    "scan_t": null,
+    "t": 1793389500,
+    "px": 3873.52
+   },
+   "result": {
+    "T15": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 13.84,
+     "mae": 13.0,
+     "mfe_px": 13.840000000000146,
+     "mae_px": 13.0,
+     "t": 1793574900,
+     "scan_t": null
+    },
+    "T20": {
+     "out": "SL",
+     "usd": -13.0,
+     "mfe": 13.84,
+     "mae": 13.0,
+     "mfe_px": 13.840000000000146,
+     "mae_px": 13.0,
+     "t": 1793574900,
+     "scan_t": null
+    }
+   },
+   "t_done": 1793574900,
+   "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
+   "reason": "confirmed, but NOT VALIDATED: its registered test failed: +$15 before -$13 after a $15 confirmation was 46% of 949 trades (2020-22, 95% 43%-49%) against a break-even of 47.4%; FAIL (B21 H5 / H6)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
