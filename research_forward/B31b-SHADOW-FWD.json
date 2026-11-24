@@ -1908,13 +1908,35 @@
 "ranging": false,
 "vol_ratio": 1.758,
 "cost": 0.97,
-"status": "OPEN",
+"status": "DONE",
 "fill_t": 1795482900,
 "fill_bar_t": 1795482000,
 "day": "2026-11-24",
 "entry": 3663.65,
 "D": 10.28,
-"lots": 0.578
+"lots": 0.578,
+"out": [
+"SL",
+"SL",
+"SL"
+],
+"exit_t": 1795484700,
+"exit_bar_t": 1795483800,
+"r1": -1.0,
+"ladder_r": -1.0,
+"ladder_usd": -650.0,
+"ladder_r_op": -1.0,
+"mfe": 5.87,
+"mae": 13.5,
+"min_to_tp1": null,
+"mirror": {
+"out": [
+"TP",
+"TP",
+"SL"
+],
+"ladder_r": 0.21
+}
 }
 ],
 "days": [
