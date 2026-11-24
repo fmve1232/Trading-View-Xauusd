@@ -1937,6 +1937,31 @@
 ],
 "ladder_r": 0.21
 }
+},
+{
+"key": "D|1795489200|1|VWAP|3630.87",
+"module": "D",
+"dir": 1,
+"kind": "VWAP",
+"lv": 3630.87,
+"order_t": 1795489200,
+"order_close": 1795490100,
+"recorded_utc": 1795490347,
+"timely": true,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3633.23,
+"p_ref": 3633.23,
+"stop": 3628.0166,
+"inval": null,
+"false_break": false,
+"vwap": 3652.85,
+"session": "ASIAN",
+"ranging": true,
+"vol_ratio": 0.412,
+"cost": 0.97,
+"status": "REJECTED",
+"why": "cost"
 }
 ],
 "days": [
