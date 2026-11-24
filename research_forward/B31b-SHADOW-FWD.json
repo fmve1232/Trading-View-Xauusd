@@ -2131,6 +2131,30 @@
 "cost": 0.77,
 "status": "REJECTED",
 "why": "stop"
+},
+{
+"key": "C|1795535100|-1|LOL|3601.01",
+"module": "C",
+"dir": -1,
+"kind": "LOL",
+"lv": 3601.01,
+"order_t": 1795535100,
+"order_close": 1795536000,
+"recorded_utc": 1795536249,
+"timely": true,
+"entry_type": "RETEST",
+"limit": 3601.01,
+"market": null,
+"p_ref": 3601.01,
+"stop": 3607.53,
+"inval": null,
+"false_break": true,
+"vwap": null,
+"session": "LONDON+NY",
+"ranging": false,
+"vol_ratio": 2.346,
+"cost": 0.77,
+"status": "PENDING"
 }
 ],
 "days": [
