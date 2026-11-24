@@ -11476,6 +11476,33 @@
    "verdict": "NO TRADE",
    "reason": "the first 15m close $15 beyond was $44.79 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "SWEEP|15m|1793623500|-1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1793623500,
+   "t_close": 1793624400,
+   "dir": -1,
+   "p0": 3901.4,
+   "what": "sweep at TDH 3903.43",
+   "id": 313,
+   "seen": 1795548855,
+   "backfill": false,
+   "late": true,
+   "repeats": 1,
+   "confirm_at": 3886.4,
+   "invalid_at": 3914.4,
+   "cap_at": 3881.4,
+   "confirm20_at": 3881.4,
+   "status": "INVALIDATED",
+   "bars": 96,
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1793627100,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
   }
  ]
 }
