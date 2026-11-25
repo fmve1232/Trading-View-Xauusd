@@ -115,6 +115,16 @@
    },
    "not_an_entry": "The +$10 / +$15 / +$20 prices are where a move of that size would be confirmed, not forecasts; a MOVE message reports what already happened. ENTRY READY stays SHADOW on every timeframe and is never sent.",
    "regression": "Before merge, a replay on real bars must show every breakout DETECTED / RETEST / FAILED message and every breakout record identical to production, and every CONFIRMED message identical except for the added line; the new sweep and MOVE message counts are reported."
+  },
+  {
+   "id": "A4",
+   "created_utc": "2026-11-25",
+   "status": "Written and committed before any A4 code.",
+   "approval": "Operator, 2026-11-25: liquidity sweeps before session opens and closes, \"we have to identify the POC, market trend, and the other micro and macro indicators ... gold and USD, DXY, and interest rate on the bonds ... So we should get the timely alert\". B31b-W12 (research/registrations/B31b-W12.json on its research branch) registered the study and this live part B.",
+   "change": "Display only. Each live SWEEP message adds two lines and each sweep record stores the same values: (1) the nearest session boundary (Asia open 00:00 UTC, London open 08:00 London, New York open 08:30 New York, London close 16:30 London, New York close 17:00 New York) and the minutes to it when within 60 min, and the run into the sweep in ATR (sweep-bar extreme minus the close 4 M15 bars earlier, x side, / ATR14 of the bar before); (2) the H1 trend (EMA20 vs EMA50 on 1h bars closed by the sweep close), the previous trading day's time-at-price POC and its side, and the last completed hour's DXY change (%) and US 10Y change (bp) from the store's Yahoo 60m series (DX-Y.NYB, ^TNX), shown as 'closed' when that series' last completed hour ended more than 3 h before the sweep close. A third line states the B31b-W12 development record of the pattern as measured.",
+   "measured_pattern_line": "Session sweep after a run (2020-23, B31b-W12): +$10 first 26%, needs 33%: no edge",
+   "not_changed": "detection, stages, MOVE / FAILED messages, records' outcomes, the breakout monitor, the engine, configuration and freeze key; no probability, no order, Entry: Not validated stays",
+   "why_display_only": "B31b-W12 development: no candidate (session-boundary sweeps after a run reached +$10 before the wick 26.2% vs 32.9% needed; trend, POC and dollar confirmations did not reach break-even). The context is shown so the operator sees every factor at the alert time and so the live record counts them forward; it is not evidence."
   }
  ]
 }
