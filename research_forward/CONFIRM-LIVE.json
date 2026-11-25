@@ -12355,6 +12355,33 @@
    "verdict": "NO TRADE",
    "reason": "an opposite 15m structure break came first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "ENG|1h|1795618800|-1",
+   "kind": "ENG",
+   "tf": "1h",
+   "t": 1795618800,
+   "t_close": 1795622400,
+   "dir": -1,
+   "p0": 3450.68,
+   "what": "engine 1h signal, TQ 77",
+   "id": 335,
+   "seen": 1795624450,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3435.68,
+   "invalid_at": 3463.68,
+   "cap_at": 3430.68,
+   "confirm20_at": 3430.68,
+   "status": "INVALIDATED",
+   "bars": 4,
+   "scan_t": null,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "why": "price traded $13 against first",
+   "t_done": 1795626000
   }
  ]
 }
