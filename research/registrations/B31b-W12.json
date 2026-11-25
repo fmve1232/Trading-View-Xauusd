@@ -1,0 +1,49 @@
+{
+ "id": "B31b-W12",
+ "title": "Session-boundary liquidity sweeps: a run into a session open or close, a sweep, then the reversal (+$10 / +$15 / +$20 before the wick), with trend, value (POC) and dollar confirmation",
+ "status": "Written and committed before any W12 code, data fetch or run.",
+ "approval": "Operator, 2026-11-25: \"Before opening and closing of a session in this market, the movement of the market goes in a direction, and mostly it get liquidates after some movement and then revert back. So we have to identify that liquidity sweeps ... connect with our time frames of 15 minutes ... to evaluate and to confirm these points, we have to analyze the order flow, we have to identify the POC, market trend, and the other micro and macro indicators ... gold and USD, DXY, and interest rate on the bonds ... So we should get the timely alert\". Standing approval 2026-11-19: \"Everything is approved until we get 100% accuracy\".",
+ "created_utc": "2026-11-25",
+ "honesty": {
+  "selection_disclosure": "Before this registration the B31b-W3 development results were read split by session: the immediate reversal after an M15 sweep reached +$10 first in 34% of London-open sweeps (n 148, net -0.27 R) and 43% of New-York-open sweeps (n 194), below every other session. The hypothesis is the operator's, stated before that split was shown; the split is disclosed because it was seen. Development can therefore reject W12; only the sealed validation partition, opened once with the operator's explicit approval, can confirm it.",
+  "accuracy": "No accuracy target is promised. Gaps can make a loss larger than the $650 planned. Results are measured rates with 95% intervals."
+ },
+ "partitions": {
+  "selection": "development only (harness.DEV 2020-01-24 .. 2023-01-24)",
+  "descriptive_recent": "2026-01-01 .. the last stored bar: descriptive only, never decisive (outside the sealed partitions; the only period with hourly DXY and US 10Y yields in the store)",
+  "validation": "2023-01-24 .. 2024-07-01: opened ONCE, only for a development CANDIDATE, only after the operator's explicit approval, with the rule frozen by a committed freeze record",
+  "holdout": "2024-07-01 .. 2026-01-01: not opened"
+ },
+ "events": {
+  "sweep": "the production sweep detector quantum/sweeps.py (B31b-W7 amendment A3) on the development M15 bars, with the M30 levels from pairs of 15m bars and the H1 / H4 levels from the 1h bars, exactly as production builds them: a wick beyond a live swing / equal / range / session level that closes back inside. The reversal direction is opposite to the swept side.",
+  "boundaries": "five session boundaries, each at its local clock (daylight saving followed): Asia open 00:00 UTC; London open 08:00 London; New York open 08:30 New York; London close 16:30 London; New York daily close 17:00 New York",
+  "window": "the sweep bar CLOSES from 60 minutes before to 60 minutes after a boundary (inclusive)",
+  "pre_run": "the run into the sweep: (sweep-bar extreme - close of the M15 bar 4 bars before the sweep bar) x swept side >= 1.0 x ATR14(M15) of the bar before the sweep bar",
+  "H1": "a sweep inside a boundary window WITH the pre-run (the operator's pattern)"
+ },
+ "entry": {
+  "rule": "market at the sweep close in the reversal direction (the live SWEEP message); stop at the sweep wick's extreme; targets +$10 / +$15 / +$20 from the entry, each raced on its own",
+  "scale": "$ at $4,000 as B31b-W3 to W8: distances in a bar at price p are $ x p / 4000; costs are today's $ per oz",
+  "race": "on M5 bars from the sweep close (M15 where an M5 bar is missing); an M5 bar touching both the target and the stop counts as the stop; a bar opening beyond the stop fills at its open (the gap loss is recorded); time stop 24 h (96 M15 bars), exit at that close",
+  "cost": "the B31b-W8 decision cost per session (research/registrations/B31b-W8-cost.json: ASIA $0.955 from the operator's screenshots, other sessions the W3 model), and its x1.5 and x2 as sensitivity",
+  "net_r": "target first: (T - c) / (D + c); stop first: -1 - gap; time stop: ((exit - entry) x dir - c) / (D + c); D = |entry - wick| in $ at $4,000",
+  "sizing": "$650 at the stop including the round-trip cost (USD = 650 x net R)"
+ },
+ "confirmations": {
+  "C1_trend": "H1 EMA20 vs EMA50 on the H1 bars closed at the sweep close agrees with the reversal direction",
+  "C2_value": "the previous trading day's time-at-price POC (M15 bars, each bar's range spread equally over $0.50-at-$4,000 bins; the mid of the fullest bin) lies on the reversal side of the sweep close: the sweep took price away from value",
+  "C3_dollar": "EUR/USD M15 (Twelve Data, 58% of DXY) moved over the same 4 bars to the sweep close in the reversal direction's sense: EUR/USD up for a gold buy reversal, down for a gold sell reversal (the dollar did not confirm the run). If EUR/USD covers less than 95% of the development M15 bars, C3 and ALL are NOT RUN.",
+  "C4_yields": "US 10Y yield intraday has no free history before 2024: NOT TESTABLE on development. The hourly ^TNX change is recorded in the descriptive recent period and the live record only.",
+  "C5_order_flow": "NOT TESTABLE here: real COMEX order flow was tested on development in B5 (74.5M trades, AUC 0.50, reject); the tick-data study B5c needs the operator's laptop; there is no live order-flow source (MetaApi not connected)."
+ },
+ "tests": {
+  "candidates": "5: H1; H1 + C1; H1 + C2; H1 + C3; H1 + C1 + C2 + C3 (ALL). Each sweep at most once; overlapping trades allowed (each sweep is its own message).",
+  "controls": "R1 (primary): for each trade, 20 market entries at random M15 closes within the 16 bars after the sweep close, same direction, scaled stop distance, targets and cost; R2: the same entry on the sweeps OUTSIDE every boundary window (does session timing matter); R3: H1's trades without the confirmation (does the confirmation matter)",
+  "decision": "per candidate: the paired +$10-first rate vs R1 (day-clustered bootstrap, one-sided), Holm over the candidates that run. A development CANDIDATE needs ALL of: Holm p < 0.05; mean net R (+$10 race, decision cost) > 0 with its day-clustered bootstrap 95% lower bound > 0; at least 100 decided trades.",
+  "validation_pass": "(only if opened, once, frozen) mean net R > 0 with its day-clustered 95% lower bound > 0, the +$10-first rate above its break-even rate (D + c) / (T + D), and at least 50 decided trades"
+ },
+ "reported": "per candidate and target: trades, decided, timeouts, +$10 / +$15 / +$20-first and stop-first rates (Wilson 95%), break-even rates, net R and USD per trade (day-clustered 95%), gap losses beyond $650, R1 / R2 / R3 comparisons; descriptive splits by boundary, session and swept level (never decisive); the recent-period description with the hourly DXY and US 10Y changes",
+ "live_part_B": "display only, outside the freeze key: each live SWEEP message adds the session boundary and minutes to it, the pre-run in ATR, the H1 trend, the previous day's POC side and the last completed hour's DXY and US 10Y change (store's Yahoo 60m), each labelled as context; no probability, no entry; the live sweep record stores the same flags so they are counted forward",
+ "no_tuning": "the window (60 min), the run (4 bars, 1.0 ATR), the EMAs (20 / 50), the POC bin and the boundaries are fixed here; nothing is searched; there is no parameter grid",
+ "preserved": "the production engine, configuration, freeze key and every existing alert and record; B31b-W3 .. W8 registrations and results"
+}
