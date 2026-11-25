@@ -11850,6 +11850,34 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "BREAKOUT|15m|1795584600|-1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1795584600,
+   "t_close": 1795585500,
+   "dir": -1,
+   "p0": 3533.7,
+   "what": "breakout at TDL 3534.11, 4HL 3534.11, 1HL 3542.24",
+   "id": 320,
+   "seen": 1795585724,
+   "backfill": false,
+   "late": false,
+   "repeats": 2,
+   "confirm_at": 3518.7,
+   "invalid_at": 3546.7,
+   "cap_at": 3513.7,
+   "confirm20_at": 3513.7,
+   "status": "EXPIRED",
+   "bars": 5,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $20.88 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "overshoot_usd": 20.88,
+   "why": "the first 15m close $15 beyond was $20.88 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1795590000
   }
  ]
 }
