@@ -13,13 +13,21 @@
 const DOW = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
 // Gold is shut Friday 17:00 -> Sunday 18:00 New York and 17:00-18:00 Monday-Thursday: the same
-// rule as quantum/data/sources.gold_shut. A run in the first minutes after a close still runs
-// (the :01 slot after 17:00 falls inside the shut hour and is skipped; the backup cron covers it).
+// rule as quantum/data/sources.gold_shut.
 export function goldShut(d) {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", hour: "numeric", hourCycle: "h23" })
     .formatToParts(d).map((x) => [x.type, x.value]));
   const wd = DOW[p.weekday], h = Number(p.hour);
   return wd === 6 || (wd === 5 && h >= 17) || (wd === 0 && h < 18) || (wd >= 1 && wd <= 4 && h === 17);
+}
+
+// A slot runs when gold trades at the slot OR traded two minutes before it: the :01 slot after the
+// 17:00 New York close carries the bar that just closed (the last 15m bar of the day, and the 30m /
+// 1h / 4h bars closing at the daily close), so its stages reach the phone at once. Until 2026-11-25
+// that slot was skipped and left to GitHub's backup cron, which did not start on 23 or 24 Nov: the
+// next run was 18:01, an hour late, and those stages were recorded LATE and never sent.
+export function runSlot(d) {
+  return !goldShut(d) || !goldShut(new Date(d.getTime() - 2 * 60 * 1000));
 }
 
 export async function dispatch(env, fetchImpl = fetch) {
@@ -57,7 +65,7 @@ export async function check(env, fetchImpl = fetch) {
 export default {
   async scheduled(event, env, ctx) {
     const when = new Date(event.scheduledTime);
-    if (goldShut(when)) { console.log(`${when.toISOString()} gold shut: no run`); return; }
+    if (!runSlot(when)) { console.log(`${when.toISOString()} gold shut: no run`); return; }
     if (!env.GH_DISPATCH_TOKEN) { console.log("GH_DISPATCH_TOKEN not set"); return; }
     const st = await dispatch(env);
     console.log(`${when.toISOString()} dispatch -> HTTP ${st}`);   // never logs the token

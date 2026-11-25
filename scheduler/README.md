@@ -5,7 +5,8 @@ GitHub's own cron starts the site's runs late or skips them. On 1–2 Oct 2026 i
 behind TradingView.
 
 This Cloudflare Worker (free plan) starts the `quantum-site` workflow one minute after each
-15-minute bar closes, and only while gold trades. It uses `workflow_dispatch`, which starts within
+15-minute bar closes, while gold trades, and once more at the slot right after the daily and weekly close
+(17:01 New York) so the bars that close at 17:00 are alerted at once (since 2026-11-25). It uses `workflow_dispatch`, which starts within
 seconds. GitHub's cron stays as the backup, and its runs stand down when a dispatched run started
 in the last 15 minutes (the dispatcher's own period: a backup run is needed only when it missed a slot), so Twelve Data's free 800 calls a day are not spent twice (about 384 a day
 are used).
