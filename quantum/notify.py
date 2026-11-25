@@ -2907,14 +2907,14 @@ def breakouts_run(state: dict, payloads: dict, t_send: int, off: float, pl: dict
     return {**breakouts.snapshot(state, t_send), "ok": True}, sent
 
 
-def sweeps_run(state: dict, payloads: dict, t_send: int, off: float) -> tuple[dict, list[dict]]:
+def sweeps_run(state: dict, payloads: dict, t_send: int, off: float, store_dir: str | None = None) -> tuple[dict, list[dict]]:
     """ALERT_SWEEPS (W7 amendment A3; unset = phone, site = website only, 0 = off): every 15m sweep, then MOVE +$10 /
     +$15 / +$20 or FAILED. Returns the website block and the phone messages sent; each stage's phone result is recorded
     on its sweep (SENT, SEND_FAILED, SITE, LATE)."""
     m = sweeps.mode()
     if m == "off":
         return {"id": sweeps.ID, "on": False}, []
-    due = sweeps.scan(state, payloads, t_send)
+    due = sweeps.scan(state, payloads, t_send, sweeps.macro_from_store(store_dir))
     recs = state["brk"]["sw"] if due else {}
     if m == "site":
         for d in due:
@@ -3168,7 +3168,7 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
     except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
         report["breakouts"] = {"id": breakouts.ID, "on": True, "ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
     try:   # W7 amendment A3: every 15m sweep of the M15 / M30 / H1 / H4 levels; never breaks this run
-        report["sweeps"], report["sweep_alerts"] = sweeps_run(state, payloads, t_send, off)
+        report["sweeps"], report["sweep_alerts"] = sweeps_run(state, payloads, t_send, off, store_dir)
     except Exception as e:  # noqa: BLE001 - monitoring must never stop the alerts
         report["sweeps"] = {"id": sweeps.ID, "on": True, "ok": False, "error": f"{type(e).__name__}: {e}"[:200]}
     if glines:

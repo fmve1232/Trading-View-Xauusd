@@ -22,10 +22,15 @@ from __future__ import annotations
 
 import math
 import os
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 import numpy as np
+import pandas as pd
 
 from . import breakouts as B
+from . import sessions, ta
+from .data import store as _store
 
 ID = "B31b-W7-A3"
 LEVEL_TFS = {"15m": 900, "30m": 1800, "1h": 3600, "4h": 14400}
@@ -36,6 +41,15 @@ BAR = 900
 KEEP = 300
 WILSON_MIN = 30                                # intervals shown once this many are decided
 EPS = B.EPS
+# W7 amendment A4 (display only): the session / trend / value / dollar / yield context of each sweep (B31b-W12 part B)
+_LON, _NY = ZoneInfo("Europe/London"), ZoneInfo("America/New_York")
+BOUNDS = (("Asia open", timezone.utc, 0, 0), ("London open", _LON, 8, 0), ("New York open", _NY, 8, 30),
+          ("London close", _LON, 16, 30), ("New York close", _NY, 17, 0))
+WINDOW_MIN, RUN_BARS = 60, 4
+POC_BIN = 0.50                                 # $ at $4,000
+MACRO_STALE = 3 * 3600                         # a series whose last completed hour ended longer ago shows "closed"
+MACRO = (("dxy", "DX-Y.NYB_60m"), ("us10y", "^TNX_60m"))
+PATTERN_LINE = "Session sweep after a run (2020-23): +$10 first 26%, needs 33%: no edge"
 
 
 def mode() -> str:
@@ -130,7 +144,85 @@ def stages(res: dict, t_close: int) -> list[tuple[str, int]]:
     return sorted(out, key=lambda x: (x[1], x[0] == "FAILED"))
 
 
-def scan(state: dict, payloads: dict, t_now: int) -> list[dict]:
+# ---------------- context (W7 amendment A4: display only, never changes a sweep or its outcome) ----------------
+def nearest_boundary(t: int) -> tuple[str, float]:
+    """The session boundary nearest to epoch second t: (name, minutes from it to t; negative = before it)."""
+    d0 = datetime.fromtimestamp(t, timezone.utc).date()
+    best = ("", math.inf)
+    for dd in (-1, 0, 1):
+        d = d0 + pd.Timedelta(days=dd)
+        for name, tz, hh, mm in BOUNDS:
+            b = datetime(d.year, d.month, d.day, hh, mm, tzinfo=tz).timestamp()
+            if abs(t - b) < abs(best[1]):
+                best = (name, t - b)
+    return best[0], best[1] / 60.0
+
+
+def tpo_poc(lo: np.ndarray, hi: np.ndarray, bin_usd: float) -> float | None:
+    """Time-at-price POC: each bar's range spread equally over the bins it covers; the mid of the fullest bin."""
+    if not len(lo) or bin_usd <= 0:
+        return None
+    base = math.floor(float(np.min(lo)) / bin_usd)
+    acc = np.zeros(math.floor(float(np.max(hi)) / bin_usd) - base + 1)
+    for a, b in zip(lo, hi):
+        i0, i1 = math.floor(a / bin_usd) - base, math.floor(b / bin_usd) - base
+        acc[i0:i1 + 1] += 1.0 / (i1 - i0 + 1)
+    return (base + int(np.argmax(acc)) + 0.5) * bin_usd
+
+
+def macro_from_store(store_dir: str | None) -> dict:
+    """The store's Yahoo 60m DXY and US 10Y series (display only), or {} when absent."""
+    out = {}
+    for key, name in MACRO:
+        try:
+            df = _store.load(store_dir, name)
+        except Exception:  # noqa: BLE001 - context is optional
+            df = None
+        if df is not None and len(df) and "close" in df:
+            out[key] = df
+    return out
+
+
+def hour_change(df: pd.DataFrame | None, t_close: int, pct: bool) -> float | None:
+    """The last completed hour's change at t_close (% for DXY, bp for the yield); None when absent or stale."""
+    if df is None or len(df) < 2:
+        return None
+    t = ta.epoch_s(df.index).astype(np.int64)
+    j = int(np.searchsorted(t + 3600, t_close, side="right")) - 1
+    if j < 1 or t_close - (t[j] + 3600) > MACRO_STALE:
+        return None
+    c0, c1 = float(df["close"].iloc[j - 1]), float(df["close"].iloc[j])
+    return round((c1 / c0 - 1.0) * 100.0, 3) if pct else round((c1 - c0) * 100.0, 1)
+
+
+def context(ev: dict, b15: dict, h1: dict | None, macro: dict) -> dict:
+    """The context of one sweep, from bars closed by its close only."""
+    k, side = ev["i"], ev["side"]
+    name, mins = nearest_boundary(int(ev["t_close"]))
+    out = {"boundary": name if abs(mins) <= WINDOW_MIN else None, "min_to_boundary": round(mins)}
+    a = ev.get("atr")
+    if k >= RUN_BARS and a:
+        ext = b15["h"][k] if side == 1 else b15["l"][k]
+        out["run_atr"] = round(float((ext - b15["c"][k - RUN_BARS]) * side / a), 2)
+    if h1 is not None and len(h1["t"]) > 50:
+        j = int(np.searchsorted(h1["t"] + 3600, ev["t_close"], side="right")) - 1
+        e20, e50 = ta.ema(h1["c"][:j + 1], 20), ta.ema(h1["c"][:j + 1], 50)
+        if j >= 50 and np.isfinite(e20[-1]) and np.isfinite(e50[-1]) and e20[-1] != e50[-1]:
+            out["trend_h1"] = "up" if e20[-1] > e50[-1] else "down"
+    td = sessions.calendar(pd.DatetimeIndex(pd.to_datetime(b15["t"][:k + 1], unit="s", utc=True)))["trading_date"].to_numpy()
+    prev = [x for x in pd.unique(td) if x < td[k]]
+    if prev:
+        m = td == prev[-1]
+        poc = tpo_poc(b15["l"][:k + 1][m], b15["h"][:k + 1][m], POC_BIN * float(np.mean(b15["c"][:k + 1][m])) / 4000.0)
+        if poc is not None:
+            out["poc_prev"] = round(poc, 2)
+            out["poc_side"] = "above" if poc > ev["close"] else "below"
+    out["dxy_1h_pct"] = hour_change(macro.get("dxy"), int(ev["t_close"]), True)
+    out["us10y_1h_bp"] = hour_change(macro.get("us10y"), int(ev["t_close"]), False)
+    return out
+
+
+def scan(state: dict, payloads: dict, t_now: int, macro: dict | None = None) -> list[dict]:
     """Update the sweep records from this run's closed bars; returns the stages due on the phone now (fresh only)."""
     bk = state.setdefault("brk", {})            # its own keys only: the breakout monitor's start is not touched
     since = bk.setdefault("since_sw", int(t_now))
@@ -149,6 +241,10 @@ def scan(state: dict, payloads: dict, t_now: int) -> list[dict]:
             rec = {k: ev[k] for k in ("id", "t", "t_close", "side", "dir", "ref", "ref_kind", "ref_tf", "wick", "close",
                                       "levels", "atr", "sess")}
             rec.update(stages={}, phone={}, res={})
+            try:   # A4: display only; a failure here never stops the sweep or its stages
+                rec["ctx"] = context(ev, b15, B._bars(payloads.get("1h")), macro or {})
+            except Exception as e:  # noqa: BLE001
+                rec["ctx"] = {"error": type(e).__name__}
             recs[ev["id"]] = rec
         if rec.get("done"):
             continue
@@ -174,6 +270,24 @@ def scan(state: dict, payloads: dict, t_now: int) -> list[dict]:
 
 
 # ---------------- phone text (the operator's short format) ----------------
+def context_lines(ctx: dict | None, fmt) -> list[str]:
+    """A4: the session line and the context line of a SWEEP message ([] for a record without context)."""
+    if not ctx or "error" in ctx:
+        return []
+    m = ctx.get("min_to_boundary")
+    if ctx.get("boundary"):
+        when = f"{ctx['boundary']} in {-m} min" if m < 0 else f"{ctx['boundary']} +{m} min"
+    else:
+        when = "no session open / close within 60 min"
+    run = f" · run {ctx['run_atr']:.1f} ATR" if ctx.get("run_atr") is not None else ""
+    parts = [f"H1 trend {ctx['trend_h1']}" if ctx.get("trend_h1") else "H1 trend n/a"]
+    parts.append(f"POC {fmt(ctx['poc_prev'])} {ctx['poc_side']}" if ctx.get("poc_prev") is not None else "POC n/a")
+    dx, ty = ctx.get("dxy_1h_pct"), ctx.get("us10y_1h_bp")
+    parts.append(f"DXY 1h {dx:+.2f}%" if dx is not None else "DXY closed")
+    parts.append(f"US10Y 1h {ty:+.1f} bp" if ty is not None else "US10Y closed")
+    return [f"Session: {when}{run}", "Context: " + " · ".join(parts)]
+
+
 def _level(ev: dict, fmt) -> str:
     more = len(ev["levels"]) - 1
     return (f"{fmt(ev['ref'])} {B.TF_LABEL[ev['ref_tf']]} {B.NAMES[ev['ref_kind']]}"
@@ -192,7 +306,8 @@ def message(ev: dict, stage: str, t_close: int, fmt, clock) -> list[str]:
         ladder = " / ".join(fmt(ev["close"] + ev["dir"] * T) for T in B.TARGETS)
         return [f"{dot} GOLD SWEEP · {liq}", lv,
                 f"Wick: {fmt(ev['wick'])} · Close: {fmt(ev['close'])} (back {'below' if ev['side'] == 1 else 'above'})",
-                f"Reversal side: {side}", f"+$10 / +$15 / +$20 at: {ladder}", inval, "Entry: Not validated", t]
+                f"Reversal side: {side}", *context_lines(ev.get("ctx"), fmt), f"+$10 / +$15 / +$20 at: {ladder}", inval,
+                *([PATTERN_LINE] if (ev.get("ctx") or {}).get("boundary") else []), "Entry: Not validated", t]
     if stage.startswith("MOVE"):
         T = float(stage[4:])
         return [f"{dot} GOLD SWEEP +${T:g} REACHED", lv,
