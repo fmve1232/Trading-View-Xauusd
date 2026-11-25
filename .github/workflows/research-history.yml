@@ -12,6 +12,12 @@ on:
       max_calls:
         description: "Maximum requests per interval (free plan: 800 a day)"
         default: "150"
+      symbol:
+        description: "Twelve Data symbol (B31b-W12 adds EUR/USD for the dollar factor)"
+        default: "XAU/USD"
+      start:
+        description: "Earliest bar to page back to"
+        default: "2010-01-01"
   schedule:
     - cron: "41 7 2 * *"          # the 2nd of each month, 07:41 UTC
 
@@ -44,7 +50,7 @@ jobs:
       - name: Backfill
         env:
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
-        run: python -m quantum.research.history --store rd --intervals "${{ github.event.inputs.intervals || '1h,15min' }}" --max-calls "${{ github.event.inputs.max_calls || '150' }}"
+        run: python -m quantum.research.history --store rd --intervals "${{ github.event.inputs.intervals || '1h,15min' }}" --max-calls "${{ github.event.inputs.max_calls || '150' }}" --symbol "${{ github.event.inputs.symbol || 'XAU/USD' }}" --start "${{ github.event.inputs.start || '2010-01-01' }}"
       - name: Summary
         if: always()
         run: |
