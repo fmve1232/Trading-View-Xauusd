@@ -287,6 +287,21 @@
    "late": true,
    "move_alert": -12.16,
    "session": "New York"
+  },
+  {
+   "id": 33,
+   "tf": "1h",
+   "dir": -1,
+   "entry": 3466.14,
+   "t_dec": 1795626000,
+   "status": "SL",
+   "result": "SL",
+   "t_res": 1795626300,
+   "tp2_result": null,
+   "path": "5m",
+   "late": true,
+   "move_alert": -4.72,
+   "session": "New York"
   }
  ],
  "excluded": 0,
