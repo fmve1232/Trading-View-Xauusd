@@ -12103,6 +12103,34 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1795613400
+  },
+  {
+   "key": "ENG|1h|1795608000|-1",
+   "kind": "ENG",
+   "tf": "1h",
+   "t": 1795608000,
+   "t_close": 1795611600,
+   "dir": -1,
+   "p0": 3521.02,
+   "what": "engine 1h signal, TQ 63",
+   "id": 328,
+   "seen": 1795611821,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3506.02,
+   "invalid_at": 3534.02,
+   "cap_at": 3501.02,
+   "confirm20_at": 3501.02,
+   "status": "EXPIRED",
+   "bars": 3,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $43.08 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "overshoot_usd": 43.08,
+   "why": "the first 15m close $15 beyond was $43.08 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1795614300
   }
  ]
 }
