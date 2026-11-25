@@ -11742,6 +11742,33 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1795563000
+  },
+  {
+   "key": "GRAB|15m|1795564800|1",
+   "kind": "GRAB",
+   "tf": "15m",
+   "t": 1795564800,
+   "t_close": 1795565700,
+   "dir": 1,
+   "p0": 3551.67,
+   "what": "PDL 3547.16 swept and rejected",
+   "id": 316,
+   "seen": 1795565961,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3566.67,
+   "invalid_at": 3538.67,
+   "cap_at": 3571.67,
+   "confirm20_at": 3571.67,
+   "status": "INVALIDATED",
+   "bars": 2,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795567500
   }
  ]
 }
