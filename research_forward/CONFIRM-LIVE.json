@@ -12382,6 +12382,34 @@
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
    "why": "price traded $13 against first",
    "t_done": 1795626000
+  },
+  {
+   "key": "SWEEP|15m|1795626000|1",
+   "kind": "SWEEP",
+   "tf": "15m",
+   "t": 1795626000,
+   "t_close": 1795626900,
+   "dir": 1,
+   "p0": 3492.7,
+   "what": "sweep at 4HL 3465.44",
+   "id": 337,
+   "seen": 1795627122,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3507.7,
+   "invalid_at": 3479.7,
+   "cap_at": 3512.7,
+   "confirm20_at": 3512.7,
+   "status": "EXPIRED",
+   "bars": 2,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $23.76 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "overshoot_usd": 23.76,
+   "why": "the first 15m close $15 beyond was $23.76 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1795628700
   }
  ]
 }
