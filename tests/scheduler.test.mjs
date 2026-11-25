@@ -1,7 +1,7 @@
 // node --test tests/scheduler.test.mjs  (run by tests/test_relay.py)
 import test from "node:test";
 import assert from "node:assert/strict";
-import worker, { goldShut, dispatch } from "../scheduler/worker.js";
+import worker, { goldShut, dispatch, runSlot } from "../scheduler/worker.js";
 
 test("gold hours match sources.gold_shut (EDT and EST)", () => {
   const shut = (iso) => goldShut(new Date(iso));
@@ -14,6 +14,22 @@ test("gold hours match sources.gold_shut (EDT and EST)", () => {
   assert.equal(shut("2026-10-06T22:01:00Z"), false);   // Tue 18:01 EDT
   assert.equal(shut("2026-12-08T22:16:00Z"), true);    // Tue 17:16 EST: daily break in winter
   assert.equal(shut("2026-12-08T23:01:00Z"), false);
+});
+
+test("the slot right after the daily and weekly close runs; the rest of the shut hours do not", () => {
+  const run = (iso) => runSlot(new Date(iso));
+  assert.equal(run("2026-11-23T22:01:00Z"), true);    // Mon 17:01 EST: carries the 16:45-17:00 bar and the 4h close
+  assert.equal(run("2026-11-23T22:16:00Z"), false);   // Mon 17:16 EST: daily break
+  assert.equal(run("2026-11-23T22:46:00Z"), false);
+  assert.equal(run("2026-11-23T23:01:00Z"), true);    // Mon 18:01 EST: reopen, as before
+  assert.equal(run("2026-11-27T22:01:00Z"), true);    // Fri 17:01 EST: the week's last bar
+  assert.equal(run("2026-11-27T22:16:00Z"), false);   // Fri 17:16 EST: weekend
+  assert.equal(run("2026-11-28T12:01:00Z"), false);   // Saturday
+  assert.equal(run("2026-11-29T22:01:00Z"), false);   // Sun 17:01 EST: still shut before and after
+  assert.equal(run("2026-11-29T23:01:00Z"), true);    // Sun 18:01 EST: reopen
+  assert.equal(run("2026-10-06T21:01:00Z"), true);    // Tue 17:01 EDT (summer)
+  assert.equal(run("2026-10-06T21:16:00Z"), false);
+  assert.equal(run("2026-10-02T12:31:00Z"), true);    // an ordinary open slot
 });
 
 test("dispatch posts to the workflow on the default branch", async () => {
@@ -40,6 +56,10 @@ test("no dispatch while gold is shut or without a token; the token is never logg
     assert.equal(calls.length, 0);
     await worker.scheduled({ scheduledTime: Date.parse("2026-10-02T12:31:00Z") }, env);
     assert.equal(calls.length, 1);
+    await worker.scheduled({ scheduledTime: Date.parse("2026-11-23T22:01:00Z") }, env);   // the slot after the close
+    assert.equal(calls.length, 2);
+    await worker.scheduled({ scheduledTime: Date.parse("2026-11-23T22:16:00Z") }, env);   // daily break
+    assert.equal(calls.length, 2);
     assert.ok(logs.every((l) => !l.includes("secret-tok")));
   } finally { globalThis.fetch = orig; console.log = log; }
 });
