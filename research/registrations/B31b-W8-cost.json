@@ -1,0 +1,40 @@
+{
+ "registration": "B31b-W8",
+ "amendment": "cost (the decision cost the registration requires before the development run)",
+ "created_utc": "2026-11-25",
+ "committed_before_any_W8_run": true,
+ "source": "The operator's own MT5 phone screenshots of XAUUSD (19 Nov 2026 06:24-06:25 UTC: M15 / M30 / H1; 25 Nov 2026 06:53-06:54 UTC: M15 / M30 / H1 / H4), named as the cost source by the operator on 2026-11-25: \"You are totally responsible. To take the prices of my broker from the screenshots.\" Priority (2) of the registration (figures from the operator's MT5 terminal). MetaApi (priority 1) is not connected: the store holds no broker data.",
+ "method": "research/tools/spread_from_screenshots.py: the bid (teal) and ask (red) price lines located to sub-pixel precision and converted with a straight-line fit of each chart's own price-axis gridlines (fit error at most $0.17). The M15 charts have the finest scale ($0.068 and $0.081 per pixel) and give the decision values; the M30 / H1 readings are the check. On 19 Nov the ask label is partly visible and reads 3679.57 against the bid 3679.05 ($0.52), the same as the line measurement.",
+ "measured_spread_usd_oz": {
+  "2026-11-19T06:25Z (ASIA)": {"M15": 0.52, "M30": 0.61, "H1": 0.55, "ask_label": 0.52},
+  "2026-11-25T06:53Z (ASIA)": {"M15": 0.45, "M30": 0.49, "H1": 0.33, "H4": "lines not separable at $0.36 per pixel"},
+  "decision_value_ASIA": 0.485,
+  "decision_value_rule": "mean of the two M15 readings"
+ },
+ "not_observable_from_a_chart": [
+  "the commission per lot",
+  "the contract size",
+  "slippage",
+  "the spread in LDN_OPEN, LDN_CONT, NY_OPEN, OVERLAP, NY_CONT and OFF (both screenshot sets were taken in the ASIA session)"
+ ],
+ "assumed": {
+  "commission_usd_per_lot": 7.0,
+  "contract_size_oz": 100,
+  "slippage_usd_oz_round_trip": 0.40,
+  "spread_other_sessions_usd_oz": "the B31b-W3 cost model unchanged: 0.30 in London / New York / kill zones, 0.50 otherwise",
+  "label": "ASSUMED (the W3 cost model), not measured at the operator's broker"
+ },
+ "per_session_usd_oz": {
+  "ASIA": 0.955,
+  "LDN_OPEN": 0.77,
+  "LDN_CONT": 0.77,
+  "NY_OPEN": 0.77,
+  "OVERLAP": 0.77,
+  "NY_CONT": 0.77,
+  "OFF": 0.97
+ },
+ "composition": "round trip per oz = spread + slippage 2 x $0.20 + commission $7 / 100 oz. ASIA: the measured spread $0.485 + $0.40 + $0.07 = $0.955. Every other session: the W3 model ($0.30 + $0.40 + $0.07 = $0.77 in London / New York; $0.50 + $0.40 + $0.07 = $0.97 OFF).",
+ "check_against_the_model": "Where the broker was observed (ASIA), its spread ($0.45 and $0.52) agrees with the W3 model's ASIA spread ($0.50) within the reading precision; the decision cost therefore differs from the registered fallback only in ASIA, by -$0.015.",
+ "sensitivity_as_registered": "always reported, never decisive: the W3 cost model, and this cost x 1.5 and x 2",
+ "no_tuning": "this file fixes the cost only; no stop, target, check, threshold or selection rule of B31b-W8 is changed"
+}
