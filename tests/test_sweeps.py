@@ -281,8 +281,10 @@ def test_the_module_is_not_an_engine_source_and_sends_nothing_itself():
     assert "sweeps.py" not in holdout.ENGINE_SOURCES
     src = open(W.__file__).read()
     imports = sorted(x.strip() for x in src.splitlines() if x.startswith(("import ", "from ")))
-    assert imports == ["from . import breakouts as B", "from __future__ import annotations", "import math", "import numpy as np",
-                       "import os"]
+    # A4 adds read-only imports (dates, the session calendar, indicators, the local store reader); still no network
+    assert imports == ["from . import breakouts as B", "from . import sessions, ta", "from .data import store as _store",
+                       "from __future__ import annotations", "from datetime import datetime, timezone",
+                       "from zoneinfo import ZoneInfo", "import math", "import numpy as np", "import os", "import pandas as pd"]
     assert "send(" not in src and "requests" not in src
 
 
@@ -310,3 +312,59 @@ def test_sweeps_with_breakouts_off_leave_the_breakout_start_untouched(monkeypatc
     assert set(st["brk"]) == {"since_sw", "sw"}                        # no breakout book was created
     B.scan(st, {}, T0 + 99 * 900, 650.0)
     assert st["brk"]["since"] == T0 + 99 * 900 and st["brk"]["since_sw"] == T0 + 50 * 900 + 120
+
+
+# ---------------- W7 amendment A4: context lines (display only) ----------------
+def _ts(s):
+    from datetime import datetime, timezone
+    return int(datetime.fromisoformat(s).replace(tzinfo=timezone.utc).timestamp())
+
+
+@pytest.mark.parametrize("when,name,mins", [
+    ("2026-11-25T07:50", "London open", -10.0), ("2026-07-15T07:10", "London open", 10.0),
+    ("2026-11-25T13:00", "New York open", -30.0), ("2026-11-25T21:45", "New York close", -15.0),
+    ("2026-11-26T00:20", "Asia open", 20.0), ("2026-11-25T16:15", "London close", -15.0)])
+def test_a4_nearest_boundary(when, name, mins):
+    assert W.nearest_boundary(_ts(when)) == (name, mins)
+
+
+def test_a4_hour_change_completed_hours_only_and_stale():
+    import pandas as pd
+    idx = pd.to_datetime(["2026-11-25 05:00", "2026-11-25 06:00", "2026-11-25 07:00"], utc=True)
+    dxy = pd.DataFrame({"close": [100.0, 100.1, 100.6]}, index=idx)
+    # at 07:30 the 07:00 bar is still forming: the change is 06:00 vs 05:00 (+0.1%)
+    assert W.hour_change(dxy, _ts("2026-11-25T07:30"), True) == pytest.approx(0.1)
+    assert W.hour_change(dxy, _ts("2026-11-25T08:00"), True) == pytest.approx(0.4995, abs=1e-3)
+    tnx = pd.DataFrame({"close": [4.90, 4.92, 4.95]}, index=idx)
+    assert W.hour_change(tnx, _ts("2026-11-25T08:05"), False) == pytest.approx(3.0)        # basis points
+    assert W.hour_change(tnx, _ts("2026-11-25T11:30"), False) is None                     # last hour ended 3.5 h ago
+    assert W.hour_change(None, _ts("2026-11-25T08:05"), False) is None
+
+
+def test_a4_tpo_poc():
+    import numpy as np
+    assert W.tpo_poc(np.array([10.0, 11.0, 11.0]), np.array([12.0, 12.0, 11.9]), 1.0) == pytest.approx(11.5)
+
+
+def _sev(ctx):
+    return {"dir": -1, "side": 1, "ref": 3659.12, "ref_kind": "SWH", "ref_tf": "15m", "levels": [{"kind": "SWH"}],
+            "wick": 3660.72, "close": 3659.0, "stages": {}, **({"ctx": ctx} if ctx is not None else {})}
+
+
+def test_a4_message_lines_and_old_records_unchanged():
+    fmt = lambda x: f"{x:.2f}"  # noqa: E731
+    clock = lambda t: "T"  # noqa: E731
+    old = W.message(_sev(None), "SWEEP", 0, fmt, clock)
+    assert not any(x.startswith(("Session:", "Context:")) for x in old) and W.PATTERN_LINE not in old
+    ctx = {"boundary": "London open", "min_to_boundary": -10, "run_atr": 1.42, "trend_h1": "down", "poc_prev": 3640.25,
+           "poc_side": "below", "dxy_1h_pct": 0.031, "us10y_1h_bp": None}
+    new = W.message(_sev(ctx), "SWEEP", 0, fmt, clock)
+    assert "Session: London open in 10 min · run 1.4 ATR" in new
+    assert "Context: H1 trend down · POC 3640.25 below · DXY 1h +0.03% · US10Y closed" in new
+    assert W.PATTERN_LINE in new and new[-2:] == ["Entry: Not validated", "Time: T"]
+    assert [x for x in new if not x.startswith(("Session:", "Context:")) and x != W.PATTERN_LINE] == old
+    away = W.message(_sev({**ctx, "boundary": None, "min_to_boundary": 95}), "SWEEP", 0, fmt, clock)
+    assert "Session: no session open / close within 60 min · run 1.4 ATR" in away and W.PATTERN_LINE not in away
+    for stage in ("MOVE10", "FAILED"):           # only the SWEEP message changes
+        assert W.message(_sev(ctx), stage, 0, fmt, clock) == W.message(_sev(None), stage, 0, fmt, clock)
+    assert W.message(_sev({"error": "KeyError"}), "SWEEP", 0, fmt, clock) == old
