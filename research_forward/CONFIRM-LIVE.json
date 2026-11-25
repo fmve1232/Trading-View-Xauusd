@@ -11769,6 +11769,33 @@
    "scan_t": null,
    "why": "price traded $13 against first",
    "t_done": 1795567500
+  },
+  {
+   "key": "BREAK|15m|1795565700|-1",
+   "kind": "BREAK",
+   "tf": "15m",
+   "t": 1795565700,
+   "t_close": 1795566600,
+   "dir": -1,
+   "p0": 3541.16,
+   "what": "PDL 3547.16 broken",
+   "id": 317,
+   "seen": 1795566844,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3526.16,
+   "invalid_at": 3554.16,
+   "cap_at": 3521.16,
+   "confirm20_at": 3521.16,
+   "status": "INVALIDATED",
+   "bars": 2,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795568400
   }
  ]
 }
