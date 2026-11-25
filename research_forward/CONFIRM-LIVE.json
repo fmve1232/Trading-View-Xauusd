@@ -12274,6 +12274,33 @@
    "overshoot_usd": 30.9,
    "why": "the first 15m close $15 beyond was $30.90 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
    "t_done": 1795620600
+  },
+  {
+   "key": "BREAKOUT|15m|1795619700|-1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1795619700,
+   "t_close": 1795620600,
+   "dir": -1,
+   "p0": 3437.64,
+   "what": "breakout at TDL 3456.57, 1HL 3456.57",
+   "id": 333,
+   "seen": 1795620836,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3422.64,
+   "invalid_at": 3450.64,
+   "cap_at": 3417.64,
+   "confirm20_at": 3417.64,
+   "status": "INVALIDATED",
+   "bars": 1,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795621500
   }
  ]
 }
