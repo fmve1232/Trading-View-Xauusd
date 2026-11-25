@@ -1,0 +1,39 @@
+{
+ "id": "B31b-W13",
+ "title": "Entry precision: every registered entry mechanism on one yardstick (+$10 / +$15 / +$20 before the structural stop, net of spread, commission and slippage), walk-forward and regime consistency, and a revalidation of B31b-W12 from its trade-level data",
+ "status": "Written and committed before any W13 code or computation.",
+ "approval": "Operator, 2026-11-25: \"change the priority of the next development cycle ... Our entire focus must now be on finding a genuinely profitable XAUUSD entry strategy ... Test each independently. Do not combine filters without evidence ... Revalidate B31/W12 using original trade-level data ... For every candidate, report ... Use walk-forward and sealed out-of-sample testing ... Do not modify the existing production strategies, alerts or frozen forward test ... Do not merge or deploy experimental changes without my approval ... recommend whether it deserves a controlled forward test.\"",
+ "created_utc": "2026-11-25",
+ "honesty": {
+  "reuse_disclosure": "Every mechanism below was defined and already measured on this development partition by its own registered study (B31b-W3, W4, W5, W7, W8, W12); none was confirmed. Ranking them again on the same data selects the luckiest of many, so development can only reject: a mechanism that passes the rule below is a candidate for the sealed validation partition, nothing more.",
+  "no_new_rules": "No mechanism, filter, stop, target, threshold or window is created, combined or tuned here. Each mechanism keeps its own registered entry, stop and checks; only the cost is made uniform (below)."
+ },
+ "partitions": {
+  "selection": "development only (2020-01-24 .. 2023-01-24), each study's own scoring period",
+  "validation": "2023-01-24 .. 2024-07-01: opened ONCE, for at most the one strongest mechanism that passes the development rule, only after the operator's explicit approval given after seeing this study's development results, with the mechanism frozen by a committed freeze record",
+  "holdout": "2024-07-01 .. 2026-01-01: not opened"
+ },
+ "mechanisms": {
+  "1_sweep_then_displacement": ["W3 A-DISP|M15", "W3 A-DISP|M30", "W4 A5 (sweep of the pullback high + displacement)", "W4 B2 (reclaim + displacement)"],
+  "2_market_structure_shift_5m_15m": ["W3 A-MSS|M15", "W3 A-MSS|M30", "W3 A-M5MSS|M15", "W3 A-M5MSS|M30", "W4 A3 (M5 MSS after the approach)", "W4 B3 (reclaim + M15 MSS)", "W4 B4 (higher low after the MSS)"],
+  "3_sweep_reclaim_retest": ["W3 A-RETEST|M15", "W3 A-RETEST|M30", "W4 B1 (sweep + reclaim close)"],
+  "4_breakout_then_retest": ["W3 B-RETEST|M15", "W3 B-RETEST|M30", "W4 C1 (break, acceptance, retest rejection)", "W4 C2 (C1 with the M30 context)", "W4 A4 (retest limit at the broken level)", "W7 E2:M15 (limit at the level)", "W7 E2:M30"],
+  "5_session_directional_continuation": ["W3 B-ACC|M15 in LDN_OPEN / NY_OPEN only", "W3 B-ACC|M30 in LDN_OPEN / NY_OPEN only", "W7 E1:M15 in LDN_OPEN / NY_OPEN only", "W7 E1:M30 in LDN_OPEN / NY_OPEN only"],
+  "6_entry_timing_and_structural_stops": ["W5 A0, A1, B0.236, B0.382, B0.5, B0.618, B0.786, B0.3, B0.45, B0.55, B0.7, C, E, F, G20, G50, H, I, J, K (W5's own trades)", "W4 T1, T4, T6", "W7 E3:M15, E3:M30 (M5 resume)"],
+  "baselines_not_candidates": ["W3 A-IMM|M15 / |M30 (immediate sweep reversal)", "W12 H1 (session-boundary sweep after a run)", "W7 E0 / E1 M15 / M30 (the live breakout entries)", "W8 E0 / E1 M15 / M30 quality-selected", "W5 B_rand (random retracement control)"]
+ },
+ "trades": "each study's own counted trades on the development partition: W3 from its code (w3liq.run_part + variants: the eligible, decided, one-position trades; the run must reproduce W3's committed summary counts), W4 / W5 / W7 / W8 / W12 from their committed trade files (W4 / W5 'counted', W7 'ready' and one position at a time as W7 counted them, W12 every H1 sweep and, separately, one position at a time)",
+ "cost": "uniform: every trade's net R recomputed at the B31b-W8 decision cost per session (research/registrations/B31b-W8-cost.json: spread measured from the operator's MT5 screenshots in ASIA, the W3 model elsewhere; slippage 2 x $0.20; commission $7 per 100 oz) from its recorded gross move: g = R x (D + c_old) + c_old, R_new = (g - c_new) / (D + c_new). Sensitivity at x1.5.",
+ "metrics": "per mechanism: trades, decided, weeks and trades per week; +$10 / +$15 / +$20-first and stop-first rates (Wilson 95%); mean and median MFE and MAE ($ at $4,000) where recorded; net expectancy per trade (mean net R and USD at $650, day-clustered bootstrap 95%) and per week; profit factor; maximum drawdown of the chronological USD curve at $650 per trade; walk-forward: net R in 6 equal chronological folds of the development scoring period; regimes: calendar year (2020, 2021, 2022) and volatility (the previous trading day's M15 range against the median of the 60 trading days before it: HIGH > 1.25x, LOW < 0.80x, else NORMAL)",
+ "decision": "A mechanism is SUPPORTED when ALL hold: at least 100 decided trades; mean net R (+$10 race, decision cost) > 0 with its day-clustered 95% lower bound > 0; one-sided p (net R <= 0, day-clustered bootstrap) Holm-adjusted over every mechanism in the six families < 0.05; net R > 0 in at least 5 of the 6 walk-forward folds; net R > 0 in each calendar year. The strongest is the supported mechanism with the highest lower bound. If none is supported, the result is NO SUPPORTED MECHANISM and no forward test is recommended.",
+ "w12_revalidation": {
+  "independence": "how many W12 H1 trades overlap in time (open at the same moment), on how many distinct trading days, and the metrics one position at a time",
+  "entry_timing": "for the stop-first trades: time to the stop (share within the first M5 bar, 15 min, 1 h), and the share whose excursion beyond the wick was under $1 (at $4,000) and that later reached +$10 from the entry within 24 h (stopped, then right)",
+  "stop_width": "the stop distance distribution and, for target-first trades, how close they came to the wick (MAE as a share of the stop)",
+  "dollar_filter": "the H1 + C3 minus H1-without-C3 difference in the +$10-first rate: a permutation test (10,000 relabelings of C3 within calendar years, same count per year, seed 13), the difference in each walk-forward fold and year, and within the New York open boundary alone (session confound)",
+  "regimes": "H1 by calendar year and volatility regime as above",
+  "expectancy": "H1 net expectancy per trade and per week at the decision cost and x1.5"
+ },
+ "after": "If a mechanism is SUPPORTED, the operator is asked, with these results, whether to open the validation partition once for it. A controlled forward test (shadow record, never sent; or a separate, clearly labelled alert) is recommended only after it passes validation. Production, its alerts, the frozen forward test and the freeze key are not changed by this study.",
+ "preserved": "production engine, configuration, freeze key, alerts and records; every earlier registration, result and trial record"
+}
