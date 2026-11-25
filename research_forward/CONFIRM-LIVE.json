@@ -12131,6 +12131,33 @@
    "overshoot_usd": 43.08,
    "why": "the first 15m close $15 beyond was $43.08 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
    "t_done": 1795614300
+  },
+  {
+   "key": "4H|4h|1795600800|-1",
+   "kind": "4H",
+   "tf": "4h",
+   "t": 1795600800,
+   "t_close": 1795615200,
+   "dir": -1,
+   "p0": 3467.03,
+   "what": "4h close below the previous 4h low 3512.38",
+   "id": 330,
+   "seen": 1795615410,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3452.03,
+   "invalid_at": 3480.03,
+   "cap_at": 3447.03,
+   "confirm20_at": 3447.03,
+   "status": "INVALIDATED",
+   "bars": 1,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795616100
   }
  ]
 }
