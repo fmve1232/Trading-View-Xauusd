@@ -1,0 +1,1309 @@
+{
+ "B1|development": {
+  "lines": 96,
+  "first_utc": "2026-10-31T21:54:04.594239+00:00",
+  "last_utc": "2026-10-31T21:54:10.366337+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B10|development": {
+  "lines": 18,
+  "first_utc": "2026-11-05T07:18:23.871863+00:00",
+  "last_utc": "2026-11-05T07:18:23.872603+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B12-explore|live-window-2026": {
+  "lines": 18,
+  "first_utc": "2026-11-05T10:03:18.111135+00:00",
+  "last_utc": "2026-11-05T10:03:18.111135+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B13|development": {
+  "lines": 20,
+  "first_utc": "2026-11-05T10:20:06.508090+00:00",
+  "last_utc": "2026-11-05T10:20:06.509413+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B13|validation": {
+  "lines": 4,
+  "first_utc": "2026-11-05T10:23:45.130711+00:00",
+  "last_utc": "2026-11-05T10:23:45.131092+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B14|development": {
+  "lines": 12,
+  "first_utc": "2026-11-06T11:47:54.385706+00:00",
+  "last_utc": "2026-11-06T11:47:54.387596+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B16|development": {
+  "lines": 6,
+  "first_utc": "2026-11-06T17:40:11.454313+00:00",
+  "last_utc": "2026-11-06T17:40:11.454659+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B17|development": {
+  "lines": 10,
+  "first_utc": "2026-11-06T20:52:31.129532+00:00",
+  "last_utc": "2026-11-06T20:52:31.130113+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B18|development": {
+  "lines": 8,
+  "first_utc": "2026-11-06T21:26:58.147179+00:00",
+  "last_utc": "2026-11-06T21:26:58.147606+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B19|development": {
+  "lines": 298,
+  "first_utc": "2026-11-06T23:01:37.480288+00:00",
+  "last_utc": "2026-11-06T23:04:44.566877+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B19|validation": {
+  "lines": 19,
+  "first_utc": "2026-11-06T23:06:18.133325+00:00",
+  "last_utc": "2026-11-06T23:06:18.134209+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B19-explore|development": {
+  "lines": 2,
+  "first_utc": "2026-11-06T22:37:18.890200+00:00",
+  "last_utc": "2026-11-06T22:37:18.890327+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B19-month|recent": {
+  "lines": 22,
+  "first_utc": "2026-11-07T06:57:30.441468+00:00",
+  "last_utc": "2026-11-07T06:57:30.442211+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B1b|development": {
+  "lines": 28,
+  "first_utc": "2026-10-31T21:56:38.287377+00:00",
+  "last_utc": "2026-10-31T21:56:38.569572+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B2|development": {
+  "lines": 54,
+  "first_utc": "2026-11-01T08:07:11.951364+00:00",
+  "last_utc": "2026-11-01T08:07:13.491502+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B20|development": {
+  "lines": 58,
+  "first_utc": "2026-11-07T07:15:30.276180+00:00",
+  "last_utc": "2026-11-07T07:15:30.278106+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B21|development": {
+  "lines": 32,
+  "first_utc": "2026-11-07T07:33:32.962964+00:00",
+  "last_utc": "2026-11-07T07:33:32.964420+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B22|development": {
+  "lines": 42,
+  "first_utc": "2026-11-07T07:53:11.749153+00:00",
+  "last_utc": "2026-11-07T07:53:11.750160+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B23|validation": {
+  "lines": 6,
+  "first_utc": "2026-11-07T07:59:34.628354+00:00",
+  "last_utc": "2026-11-07T07:59:34.628676+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B24-A1|none (registration amendment, no data read)": {
+  "lines": 1,
+  "first_utc": "2026-11-10T07:45:42.386011+00:00",
+  "last_utc": "2026-11-10T07:45:42.386011+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B24-A2|none (registration amendment; signal frequencies from research/results/cf_validation.json, no outcome read)": {
+  "lines": 1,
+  "first_utc": "2026-11-11T07:01:54.963065+00:00",
+  "last_utc": "2026-11-11T07:01:54.963065+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B25|development": {
+  "lines": 50,
+  "first_utc": "2026-11-07T12:06:26.487048+00:00",
+  "last_utc": "2026-11-07T12:10:30.808198+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B25|recent": {
+  "lines": 91,
+  "first_utc": "2026-11-07T12:06:26.488217+00:00",
+  "last_utc": "2026-11-07T12:06:26.489914+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B26|development": {
+  "lines": 16,
+  "first_utc": "2026-11-08T17:45:00.008682+00:00",
+  "last_utc": "2026-11-08T17:45:00.009779+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15"
+  ]
+ },
+ "B26|unsealed P2": {
+  "lines": 16,
+  "first_utc": "2026-11-08T17:45:00.009804+00:00",
+  "last_utc": "2026-11-08T17:45:00.010178+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15"
+  ]
+ },
+ "B26|unsealed P3": {
+  "lines": 16,
+  "first_utc": "2026-11-08T17:45:00.010202+00:00",
+  "last_utc": "2026-11-08T17:45:00.010539+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15"
+  ]
+ },
+ "B27|development": {
+  "lines": 1192,
+  "first_utc": "2026-11-08T18:33:56.272186+00:00",
+  "last_utc": "2026-11-08T18:33:56.306625+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15"
+  ]
+ },
+ "B27|unsealed 2026 (frozen check)": {
+  "lines": 20,
+  "first_utc": "2026-11-08T18:33:56.306663+00:00",
+  "last_utc": "2026-11-08T18:33:56.307240+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15"
+  ]
+ },
+ "B27-fix|development": {
+  "lines": 70,
+  "first_utc": "2026-11-09T13:01:38.451854+00:00",
+  "last_utc": "2026-11-09T13:01:38.453717+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B27-fix|unsealed 2026 (frozen check)": {
+  "lines": 20,
+  "first_utc": "2026-11-09T13:01:38.453748+00:00",
+  "last_utc": "2026-11-09T13:01:38.454207+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B28|development": {
+  "lines": 320,
+  "first_utc": "2026-11-09T05:46:05.213778+00:00",
+  "last_utc": "2026-11-09T05:46:05.221363+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B28|unsealed 2026 (frozen check)": {
+  "lines": 10,
+  "first_utc": "2026-11-09T05:46:05.221386+00:00",
+  "last_utc": "2026-11-09T05:46:05.221583+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B29|development": {
+  "lines": 644,
+  "first_utc": "2026-11-09T05:46:05.242780+00:00",
+  "last_utc": "2026-11-09T05:46:05.257271+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B29|unsealed 2026 (frozen check)": {
+  "lines": 30,
+  "first_utc": "2026-11-09T05:46:05.257308+00:00",
+  "last_utc": "2026-11-09T05:46:05.257947+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B29-fix|development": {
+  "lines": 84,
+  "first_utc": "2026-11-09T13:01:38.454228+00:00",
+  "last_utc": "2026-11-09T13:01:38.456070+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B29-fix|unsealed 2026 (frozen check)": {
+  "lines": 35,
+  "first_utc": "2026-11-09T13:01:38.456097+00:00",
+  "last_utc": "2026-11-09T13:01:38.457026+00:00",
+  "branches": [
+   "claude/research-phase-c",
+   "claude/research-phase-d"
+  ]
+ },
+ "B2b|development": {
+  "lines": 18,
+  "first_utc": "2026-11-01T08:18:04.611860+00:00",
+  "last_utc": "2026-11-01T08:18:05.702763+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B2c|development": {
+  "lines": 18,
+  "first_utc": "2026-11-01T08:27:37.681614+00:00",
+  "last_utc": "2026-11-01T08:27:38.697114+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B3|development": {
+  "lines": 210,
+  "first_utc": "2026-11-01T08:44:27.549900+00:00",
+  "last_utc": "2026-11-01T08:44:29.308042+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B30|development": {
+  "lines": 32,
+  "first_utc": "2026-11-15T07:03:34.554503+00:00",
+  "last_utc": "2026-11-15T07:03:38.691540+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B30|holdout": {
+  "lines": 32,
+  "first_utc": "2026-11-15T07:06:09.870790+00:00",
+  "last_utc": "2026-11-15T07:06:12.342191+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B30|recent": {
+  "lines": 32,
+  "first_utc": "2026-11-15T07:06:56.269730+00:00",
+  "last_utc": "2026-11-15T07:06:57.780287+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B30|validation": {
+  "lines": 32,
+  "first_utc": "2026-11-15T07:04:50.987141+00:00",
+  "last_utc": "2026-11-15T07:04:53.074202+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31|development": {
+  "lines": 14,
+  "first_utc": "2026-11-15T08:24:56.797753+00:00",
+  "last_utc": "2026-11-15T08:24:57.243013+00:00",
+  "branches": [
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31|holdout": {
+  "lines": 14,
+  "first_utc": "2026-11-15T08:27:38.466995+00:00",
+  "last_utc": "2026-11-15T08:27:38.804365+00:00",
+  "branches": [
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31|recent": {
+  "lines": 14,
+  "first_utc": "2026-11-15T08:28:26.858374+00:00",
+  "last_utc": "2026-11-15T08:28:27.089252+00:00",
+  "branches": [
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31|validation": {
+  "lines": 14,
+  "first_utc": "2026-11-15T08:26:13.245203+00:00",
+  "last_utc": "2026-11-15T08:26:13.469362+00:00",
+  "branches": [
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W1|development": {
+  "lines": 1,
+  "first_utc": "2026-11-16T02:40:21.103553+00:00",
+  "last_utc": "2026-11-16T02:40:21.103553+00:00",
+  "branches": [
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W12|development": {
+  "lines": 1,
+  "first_utc": "2026-11-25T17:51:51.775107+00:00",
+  "last_utc": "2026-11-25T17:51:51.775107+00:00",
+  "branches": [
+   "w12-session-sweeps",
+   "w13-entry-precision"
+  ]
+ },
+ "B31b-W13|development": {
+  "lines": 1,
+  "first_utc": "2026-11-25T21:12:09.244436+00:00",
+  "last_utc": "2026-11-25T21:12:09.244436+00:00",
+  "branches": [
+   "w13-entry-precision"
+  ]
+ },
+ "B31b-W2|development": {
+  "lines": 2,
+  "first_utc": "2026-11-18T13:56:01.182388+00:00",
+  "last_utc": "2026-11-18T14:09:49.287787+00:00",
+  "branches": [
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W2|holdout": {
+  "lines": 2,
+  "first_utc": "2026-11-18T13:58:31.857616+00:00",
+  "last_utc": "2026-11-18T14:12:22.255610+00:00",
+  "branches": [
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W2|recent": {
+  "lines": 2,
+  "first_utc": "2026-11-18T13:59:14.742497+00:00",
+  "last_utc": "2026-11-18T14:13:04.990037+00:00",
+  "branches": [
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W2|validation": {
+  "lines": 2,
+  "first_utc": "2026-11-18T13:57:13.532045+00:00",
+  "last_utc": "2026-11-18T14:11:03.689553+00:00",
+  "branches": [
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W3|development": {
+  "lines": 3,
+  "first_utc": "2026-11-18T21:44:46.191698+00:00",
+  "last_utc": "2026-11-18T21:54:09.157079+00:00",
+  "branches": [
+   "w11-scoreboard",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W3|recent": {
+  "lines": 1,
+  "first_utc": "2026-11-18T21:54:26.361886+00:00",
+  "last_utc": "2026-11-18T21:54:26.361886+00:00",
+  "branches": [
+   "w11-scoreboard",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W4|development": {
+  "lines": 1,
+  "first_utc": "2026-11-19T04:28:30.019374+00:00",
+  "last_utc": "2026-11-19T04:28:30.019374+00:00",
+  "branches": [
+   "w11-scoreboard",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W5|development": {
+  "lines": 3,
+  "first_utc": "2026-11-19T08:36:22.601819+00:00",
+  "last_utc": "2026-11-19T08:58:21.392105+00:00",
+  "branches": [
+   "w11-scoreboard",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W7|development": {
+  "lines": 1,
+  "first_utc": "2026-11-19T16:59:06.472171+00:00",
+  "last_utc": "2026-11-19T16:59:06.472171+00:00",
+  "branches": [
+   "w11-scoreboard",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B31b-W8|development": {
+  "lines": 1,
+  "first_utc": "2026-11-25T16:44:57.732436+00:00",
+  "last_utc": "2026-11-25T16:44:57.732436+00:00",
+  "branches": [
+   "w8-quality"
+  ]
+ },
+ "B4|development": {
+  "lines": 48,
+  "first_utc": "2026-11-01T15:44:27.369522+00:00",
+  "last_utc": "2026-11-01T15:44:34.364303+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B4-V|validation": {
+  "lines": 1,
+  "first_utc": "2026-11-01T16:14:13.133535+00:00",
+  "last_utc": "2026-11-01T16:14:13.133535+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B5|development": {
+  "lines": 18,
+  "first_utc": "2026-11-01T21:55:50.778718+00:00",
+  "last_utc": "2026-11-01T21:55:50.779648+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B5-explore|live-window-2026": {
+  "lines": 6,
+  "first_utc": "2026-11-01T16:30:25.714808+00:00",
+  "last_utc": "2026-11-01T16:30:25.732667+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B6-explore|live-window-2026": {
+  "lines": 10,
+  "first_utc": "2026-11-01T22:44:29.626494+00:00",
+  "last_utc": "2026-11-01T22:44:29.665173+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B7|development": {
+  "lines": 22,
+  "first_utc": "2026-11-03T06:29:21.052947+00:00",
+  "last_utc": "2026-11-03T06:29:21.053814+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B8|development": {
+  "lines": 32,
+  "first_utc": "2026-11-03T06:25:37.251783+00:00",
+  "last_utc": "2026-11-03T06:25:37.254405+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "B9-explore|live-window-2026": {
+  "lines": 50,
+  "first_utc": "2026-11-04T23:32:48.774954+00:00",
+  "last_utc": "2026-11-04T23:32:48.774954+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "CF-VALIDATION|development": {
+  "lines": 10,
+  "first_utc": "2026-11-10T07:14:29.441826+00:00",
+  "last_utc": "2026-11-10T07:55:23.427184+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "CF-VALIDATION|recent": {
+  "lines": 10,
+  "first_utc": "2026-11-10T07:14:29.442387+00:00",
+  "last_utc": "2026-11-10T07:55:23.427339+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "CF-VALIDATION|validation": {
+  "lines": 10,
+  "first_utc": "2026-11-10T07:14:29.442182+00:00",
+  "last_utc": "2026-11-10T07:55:23.427262+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ },
+ "PR90-audit|recent (2026-03-01 on, unsealed)": {
+  "lines": 8,
+  "first_utc": "2026-11-07T09:53:43.098163+00:00",
+  "last_utc": "2026-11-07T09:53:43.099214+00:00",
+  "branches": [
+   "b30-confirmation",
+   "b31-opportunity",
+   "b31b-w1",
+   "b31b-w2",
+   "claude/audit-prompt-real-artefacts-nekqv6",
+   "claude/research-phase-c",
+   "claude/research-phase-d",
+   "claude/research-sym15",
+   "w11-scoreboard",
+   "w12-session-sweeps",
+   "w13-entry-precision",
+   "w3-liquidity",
+   "w4-research",
+   "w5-entry",
+   "w7-study",
+   "w8-quality"
+  ]
+ }
+}
