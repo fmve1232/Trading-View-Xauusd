@@ -355,16 +355,32 @@ def test_a4_message_lines_and_old_records_unchanged():
     fmt = lambda x: f"{x:.2f}"  # noqa: E731
     clock = lambda t: "T"  # noqa: E731
     old = W.message(_sev(None), "SWEEP", 0, fmt, clock)
-    assert not any(x.startswith(("Session:", "Context:")) for x in old) and W.PATTERN_LINE not in old
+    ctx_lines = ("Session:", "Context:", W.MACRO_HEAD)
+    assert not any(x.startswith(ctx_lines) for x in old) and W.PATTERN_LINE not in old
     ctx = {"boundary": "London open", "min_to_boundary": -10, "run_atr": 1.42, "trend_h1": "down", "poc_prev": 3640.25,
            "poc_side": "below", "dxy_1h_pct": 0.031, "us10y_1h_bp": None}
     new = W.message(_sev(ctx), "SWEEP", 0, fmt, clock)
     assert "Session: London open in 10 min · run 1.4 ATR" in new
-    assert "Context: H1 trend down · POC 3640.25 below · DXY 1h +0.03% · US10Y closed" in new
+    # decision D (2026-11-26): the POC named by its type; DXY / US10Y on their own line, labelled untested
+    assert "Context: H1 trend down · POC 3640.25 below (prior-day time-at-price, no volume)" in new
+    assert "DXY / US10Y (untested for sweeps): DXY 1h +0.03% · US10Y closed" in new
+    assert new.index("DXY / US10Y (untested for sweeps): DXY 1h +0.03% · US10Y closed") == new.index(
+        "Context: H1 trend down · POC 3640.25 below (prior-day time-at-price, no volume)") + 1
     assert W.PATTERN_LINE in new and new[-2:] == ["Entry: Not validated", "Time: T"]
-    assert [x for x in new if not x.startswith(("Session:", "Context:")) and x != W.PATTERN_LINE] == old
+    assert [x for x in new if not x.startswith(ctx_lines) and x != W.PATTERN_LINE] == old
     away = W.message(_sev({**ctx, "boundary": None, "min_to_boundary": 95}), "SWEEP", 0, fmt, clock)
     assert "Session: no session open / close within 60 min · run 1.4 ATR" in away and W.PATTERN_LINE not in away
     for stage in ("MOVE10", "FAILED"):           # only the SWEEP message changes
         assert W.message(_sev(ctx), stage, 0, fmt, clock) == W.message(_sev(None), stage, 0, fmt, clock)
     assert W.message(_sev({"error": "KeyError"}), "SWEEP", 0, fmt, clock) == old
+
+
+def test_decision_d_no_sweep_line_calls_the_dollar_or_yield_tested_and_the_poc_is_typed():
+    def fmt(x):
+        return f"{x:.2f}"
+    lines = W.context_lines({"boundary": None, "min_to_boundary": 95, "trend_h1": "up", "poc_prev": 4100.0,
+                             "poc_side": "above", "dxy_1h_pct": None, "us10y_1h_bp": 2.5}, fmt)
+    assert lines[2] == "DXY / US10Y (untested for sweeps): DXY closed · US10Y 1h +2.5 bp"
+    assert "POC 4100.00 above (prior-day time-at-price, no volume)" in lines[1]
+    assert not any("DXY" in x or "US10Y" in x for x in lines[:2])            # never outside the untested line
+    assert W.context_lines({"boundary": None, "min_to_boundary": 95}, fmt)[1] == "Context: H1 trend n/a · POC n/a"

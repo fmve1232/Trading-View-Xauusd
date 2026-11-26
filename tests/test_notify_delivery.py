@@ -608,7 +608,9 @@ def test_a_split_opening_whose_first_part_arrived_is_not_registered_as_undeliver
     try:
         N._say_tf("15m", lines, [], [(0, "HEAD", OPEN), (1, "BODY", OPEN)], 0, {T07: 12}, {}, [plan], 0.0, T07)
         assert len(net.posts) == 3 and N._RUN["state"]["open"] == {}
-        assert N._RUN["state"]["pending_warnings"][0]["desc"].endswith("(only partly delivered)")
+        assert N._RUN["state"]["pending_warnings"][0]["desc"].endswith("(only partly accepted by the server)")
+        st = [r["status"] for r in records(str(tmp_path))]
+        assert {x["SENT_TO_NTFY"] for x in st} == {"PARTLY"} and {x["PHONE_DELIVERY"] for x in st} == {"NOT_VERIFIABLE"}
     finally:
         N._RUN = None
 
@@ -775,3 +777,73 @@ def test_the_workflow_merges_the_records_into_the_ledger_and_passes_the_kill_swi
     assert "DELIVERY_RETRY: ${{ vars.DELIVERY_RETRY }}" in run
     assert "python -m quantum.notify --merge-ledger store/notifications ledger/notifications ||" in led
     assert led.index("--merge-ledger") < led.index("cd ledger")             # before the ledger commit
+
+
+# ---------------- decision B (2026-11-26): server acceptance is never called delivery ----------------------------------
+NV = "NOT_VERIFIABLE"
+
+
+@pytest.mark.parametrize("script, sent, failed, retried", [
+    ([], "YES", "NO", "NO"),                                                     # accepted on attempt 1
+    ([CE("aborted")], "YES", "YES", "YES"),                                      # cache miss, the retry accepted
+    ([503, 503], "NO", "YES", "YES"),                                            # both attempts refused
+    ([("arrived", N.requests.exceptions.ReadTimeout("read timed out"))], "YES", "YES", "NO"),   # cache hit: nothing resent
+    ([401], "NO", "YES", "NO"),                                                  # not retryable
+    ([429], "YES", "YES", "YES"),                                                # rate limited, then accepted
+])
+def test_every_record_carries_the_five_separate_statuses(tmp_path, monkeypatch, script, sent, failed, retried):
+    net = Net(monkeypatch, ntfy=list(script))
+    res = timeline(str(tmp_path), net, upto=2)
+    rows = [r for r in records(str(tmp_path)) if r["t_run"] == SENT_OPEN]
+    want = {"SENT_TO_NTFY": sent, "PHONE_DELIVERY": NV, "PHONE_DISPLAY": NV, "SEND_FAILED": failed, "RETRY_ATTEMPTED": retried}
+    assert rows and all(r["status"] == want for r in rows) and tuple(want) == N.STATUS_NAMES
+    assert N.delivery_status(rows) == want                    # the same from the records read back (old records too)
+    assert res[1][0]["15m"]["sent"] == (["ntfy"] if sent == "YES" else [])
+
+
+def test_no_channel_configured_is_its_own_status(tmp_path, monkeypatch):
+    monkeypatch.delenv("NTFY_TOPIC")
+    timeline(str(tmp_path), Net(monkeypatch), upto=2)
+    assert records(str(tmp_path))[0]["status"] == {"SENT_TO_NTFY": "NOT_CONFIGURED", "PHONE_DELIVERY": NV, "PHONE_DISPLAY": NV,
+                                                   "SEND_FAILED": "YES", "RETRY_ATTEMPTED": "NO"}
+
+
+def test_an_earlier_runs_acceptance_is_sent_to_ntfy_without_a_new_request(tmp_path, monkeypatch):
+    net = Net(monkeypatch)
+    out = {}
+    for t_run in (SENT_OPEN, SENT_OPEN + 120):
+        N._RUN = N._new_ctx(str(tmp_path), t_run)
+        try:
+            N._say("15m", ["the opening"], ["OPEN:15m:1:SELL"], out=out)
+        finally:
+            N._RUN = None
+    last = records(str(tmp_path))[-1]
+    assert len(net.posts) == 1 and last["request"] is False and last["status"]["SENT_TO_NTFY"] == "YES"
+    assert last["status"]["RETRY_ATTEMPTED"] == "NO" and out["status"] == last["status"]
+
+
+def test_no_record_or_message_calls_an_accepted_alert_delivered(tmp_path, monkeypatch):
+    for i, script in enumerate(([], [CE("a")], [503, 503], [("arrived", N.requests.exceptions.ReadTimeout("t"))])):
+        timeline(str(tmp_path / str(i)), Net(monkeypatch, ntfy=list(script)), upto=4)
+        for r in records(str(tmp_path / str(i))):           # "delivered" only ever in "NOT delivered" / "UNDELIVERED"
+            t = json.dumps(r, ensure_ascii=False).upper().replace("NOT DELIVERED", "").replace("UNDELIVERED", "")
+            assert "DELIVERED" not in t
+            assert r["status"]["PHONE_DELIVERY"] == NV and r["status"]["PHONE_DISPLAY"] == NV
+
+
+def test_a_plans_levels_accepted_later_are_recorded_under_the_new_name_and_old_entries_are_honoured(tmp_path, monkeypatch):
+    net = Net(monkeypatch, ntfy=[CE("aborted"), CE("aborted")])
+    store = str(tmp_path / "s")
+    timeline(store, net, upto=3)                              # the opening fails twice; the first REPEAT is accepted
+    u = json.loads((tmp_path / "s" / N.NOTIFY_STATE).read_text())["open"]["12"]
+    assert u["levels_accepted_utc"] == datetime.fromtimestamp(REPEATS[0][4], UTC).isoformat() and "redelivered_utc" not in u
+    legacy = str(tmp_path / "legacy")                         # an entry written before decision B keeps its own time
+    timeline(legacy, Net(monkeypatch, ntfy=[CE("aborted"), CE("aborted")]), upto=2)
+    ns = json.loads((tmp_path / "legacy" / N.NOTIFY_STATE).read_text())
+    del ns["open"]["12"]["levels_accepted_utc"]
+    ns["open"]["12"]["redelivered_utc"] = "2026-11-13T07:30:00+00:00"
+    (tmp_path / "legacy" / N.NOTIFY_STATE).write_text(json.dumps(ns))
+    sent, last = REPEATS[0][4], REPEATS[0][0]
+    N.run(legacy, {"15m": pay15(last, SIGS, gen=sent - 60), "5m": pay5(sent - sent % 300 - 300)}, ["15m"], sent_t=sent)
+    u = json.loads((tmp_path / "legacy" / N.NOTIFY_STATE).read_text())["open"]["12"]
+    assert u["redelivered_utc"] == "2026-11-13T07:30:00+00:00" and "levels_accepted_utc" not in u

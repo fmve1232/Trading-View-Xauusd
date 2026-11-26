@@ -93,3 +93,16 @@ The 27 rows cover all 28 IDs; GA-14 and GA-18 share one row.
 - **On the branch:**
   - GA-03 and GA-21 are fixed.
   - GA-07 is mitigated, but its live effect is unverified, and device delivery cannot be verified by the system.
+
+## Update, 26 Nov 2026 (after the operator's decision)
+
+The table above is the register as submitted. These rows changed afterwards; nothing above was rewritten.
+
+| Gap | Change | Evidence | Status now |
+|---|---|---|---|
+| GA-03 (P0), GA-21, GA-09, GA-10, GA-17, GA-19, GA-24, GA-01 / GA-02 (lineage records) | Merged to production: PR #141, merge commit `db7cd6a14` (head `fde25ed99`; pr-checks run 45831024797 both jobs success) | First production run on it, 45832483937: success. `forward-ledger/outcomes/2026-11-26.jsonl` 120 lines = the store's copy; `quantum.outcomes --verify` against the live state: problems [], every state record version logged; `ledger_check.py`: problems 0; freeze key recomputed, unchanged | VERIFIED (production) |
+| GA-07 (P0) | Merged in the same PR | No HTTP 429 has occurred since, so the 30 s pause is untested against a real rate limit | MITIGATED, live effect UNVERIFIED |
+| GA-11 | The POC is named by its type in the alerts and on the site: sweeps "prior-day time-at-price, no volume"; SETUP alerts "15m engine profile, last 100 bars, GC futures volume" | `tests/test_sweeps.py`, `tests/test_setup_rules.py`, `tests/test_setup_live.py` | VERIFIED (branch `…-alert-wording`); B5c still BLOCKED |
+| GA-12 | DXY / US 10Y on their own line: "DXY / US10Y (untested for sweeps)" | `test_decision_d_no_sweep_line_calls_the_dollar_or_yield_tested_and_the_poc_is_typed` | VERIFIED (branch `…-alert-wording`) |
+| *(decision B)* | Five separate delivery statuses on every record; no record or message calls an accepted alert delivered | `tests/test_notify_delivery.py` (10 new), `tests/test_delivery_status_tool.py`; mutation 46 of 46 | VERIFIED (branch `…-alert-wording`) |
+| *(decision D, found in the wording audit)* | The one-target plan line called the no-edge odds "measured"; they are stop / (stop + target) | `test_decision_d_the_no_edge_odds_are_labelled_as_odds_not_measurements` | VERIFIED (branch `…-alert-wording`) |

@@ -530,3 +530,18 @@ def test_two_targets_end_to_end(tmp_path, monkeypatch):
     be = {**st["plan_log"][0], "tp2_result": "BE"}
     assert notify.summarize([be], 26.0)["net_usd"] == pytest.approx(325.0 - 13.0)
     assert notify.summarize([{**be, "result": "SL"}], 26.0)["net_usd"] == pytest.approx(-650.0 - 13.0)
+
+
+def test_decision_d_the_no_edge_odds_are_labelled_as_odds_not_measurements(monkeypatch):
+    """The LADDER and plan odds come from the stop and target sizes alone (stop / (stop + target)); before decision D
+    the one-target plan line called them "measured"."""
+    for k in ("PLAN", "PLAN_LOT", "PLAN_SL_USD", "PLAN_TP_USD", "PLAN_TP2_USD", "PLAN_SIZING"):
+        monkeypatch.delenv(k, raising=False)
+    pl = notify.plan_cfg()
+    two = notify.plan_line(4000.0, 1, pl)
+    monkeypatch.setenv("PLAN_TP2_USD", "0")
+    one = notify.plan_line(4000.0, 1, notify.plan_cfg())
+    lad = notify.ladder_line(notify.plan_cfg())
+    for line in (two, one, lad):
+        assert notify.NO_EDGE_NOTE in line and "measured" not in line and "no signal beats" not in line
+    assert "TP first ~50%" in one                                    # 13 / (13 + 13): the sizes, not a record

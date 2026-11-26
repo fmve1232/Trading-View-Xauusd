@@ -36,7 +36,7 @@ def test_sweep_needs_a_zone_and_counts_once_per_day():
     z = {"ob_bull_lo": [None] * n, "ob_bull_hi": [None] * n, "vpoc": [4059.0] * n, "vah": [4075.0] * n, "val": [4040.0] * n}
     seen: dict = {}
     ev = notify.setup_events(t, h, lo, c, lv, z, range(n), seen)
-    assert [(e["i"], e["kind"], e["dir"], e["levels"], e["zones"]) for e in ev] == [(1, "SWEEP", 1, [("PDL", 4058.44)], ["POC 4059.00"])]
+    assert [(e["i"], e["kind"], e["dir"], e["levels"], e["zones"]) for e in ev] == [(1, "SWEEP", 1, [("PDL", 4058.44)], ["POC 4059.00 (15m engine profile, last 100 bars, GC futures volume)"])]
     assert notify.setup_events(t, h, lo, c, lv, z, range(n), {}, scale=False)[0]["close"] == 4061.0
     far = {**z, "vpoc": [4070.0] * n}                                                  # no zone within $3: no setup
     assert notify.setup_events(t, h, lo, c, lv, far, range(n), {}) == []

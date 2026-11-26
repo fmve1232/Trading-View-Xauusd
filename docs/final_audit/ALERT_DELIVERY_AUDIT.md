@@ -69,3 +69,26 @@ appeared on the phone is not observable by the system.**
   (`notify.TRADE_DISCLAIMER`; `tests/test_alert_disclaimer.py`, 16 tests).
 - **Breakout and sweep messages:** they carry no plan or $ risk. They give levels and the invalidation (the wick or
   level) only.
+
+## 6. Addendum, 26 Nov 2026: separate delivery statuses (operator decision B)
+
+The operator approved the 429 change on the condition that server acceptance is never described as delivery to the
+phone, with separate statuses. From the change that follows this audit, every delivery record carries:
+
+| Status | Values | What it means | Verifiable? |
+|---|---|---|---|
+| `SENT_TO_NTFY` | YES / PARTLY / NO / NOT_CONFIGURED | ntfy's server accepted every part / some parts / none; no ntfy channel | yes (HTTP 2xx + message id, or ntfy's cache) |
+| `PHONE_DELIVERY` | NOT_VERIFIABLE | the message reached the phone | **no**: ntfy reports server acceptance only |
+| `PHONE_DISPLAY` | NOT_VERIFIABLE | the phone showed it | **no** |
+| `SEND_FAILED` | YES / NO | an attempt failed (on any channel) | yes |
+| `RETRY_ATTEMPTED` | YES / NO | a second request was sent (a cache check that found attempt 1 had arrived sends nothing) | yes |
+
+- **Code:** `quantum/notify.py` `delivery_status`, `STATUS_NAMES`; the records keep their existing fields
+  (`state`, `trail`, `final_state` = `DELIVERY_UNCONFIRMED`).
+- **Report:** `audit/tools/delivery_status.py <notifications dir>` recomputes the statuses from the attempt fields
+  alone, independently of `notify.py`, for old records too, and lists any message whose stored status disagrees.
+- **Measured on `forward-ledger` `624ed94d2` (26 Nov 13:53 UTC):** 381 attempt records, 380 messages:
+  `SENT_TO_NTFY` YES 379, NO 1 (the 22 Nov breakout stage, HTTP 429 twice); `SEND_FAILED` YES 1;
+  `RETRY_ATTEMPTED` YES 1; `PHONE_DELIVERY` and `PHONE_DISPLAY` NOT_VERIFIABLE for all 380.
+- **Wording fixed with it:** "(only partly delivered)" → "(only partly accepted by the server)"; the site's "sent" →
+  "sent to server (accepted)".
