@@ -10034,6 +10034,41 @@
    "mae": 18.110000000000127,
    "bars": 2,
    "path": "5m"
+  },
+  {
+   "id": 275,
+   "tf": "15m",
+   "t": 1795666500,
+   "t_dec": 1795667400,
+   "dir": 1,
+   "entry": 3591.78,
+   "kind": "BREAKOUT",
+   "levels": [
+    [
+     "1HH",
+     3589.76
+    ]
+   ],
+   "zones": [
+    "above value-area high 3536.72"
+   ],
+   "sl": 3578.78,
+   "tp": 3606.78,
+   "checks": {
+    "major": false,
+    "trend": false,
+    "bias": true,
+    "session": false
+   },
+   "confirmed": false,
+   "phone": false,
+   "t_alert": 1795667627,
+   "result": "SL",
+   "t_res": 1795672200,
+   "mfe": 11.769999999999982,
+   "mae": 13.370000000000346,
+   "bars": 17,
+   "path": "5m"
   }
  ],
  "live": {
@@ -10046,7 +10081,7 @@
    31
   ],
   "BREAKOUT": [
-   150,
+   151,
    79
   ],
   "4H CONFIRMED": [
