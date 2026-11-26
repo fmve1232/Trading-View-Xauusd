@@ -64,7 +64,7 @@ def fetch_day(sym: str, day: date, side: str, get) -> pd.DataFrame:
 
 
 def mid_minutes(bid: pd.DataFrame, ask: pd.DataFrame) -> pd.DataFrame:
-    j = bid.join(ask, lsuffix="_b", rsuffix="_a", how="inner")
+    j = pd.merge(bid, ask, left_index=True, right_index=True, how="inner", suffixes=("_b", "_a"))
     out = pd.DataFrame({k: (j[f"{k}_b"] + j[f"{k}_a"]) / 2.0 for k in ("open", "high", "low", "close")})
     out["spread"] = j["close_a"] - j["close_b"]
     return out
@@ -104,7 +104,7 @@ def rank_corr(a: pd.Series, b: pd.Series) -> float:
 def compare(td: pd.DataFrame, dk: pd.DataFrame, bar_min: int) -> dict:
     """Per-bar agreement of two OHLC frames on the same UTC open-time index."""
     full = dk[dk["minutes"] >= bar_min * 0.9]                      # only bars Dukascopy saw almost completely
-    j = td.join(full, lsuffix="_td", rsuffix="_dk", how="inner")
+    j = pd.merge(td, full, left_index=True, right_index=True, how="inner", suffixes=("_td", "_dk"))
     res = {"bars_td": int(len(td)), "bars_ref_complete": int(len(full)), "matched": int(len(j)),
            "td_only": int(len(td.index.difference(full.index))), "ref_only": int(len(full.index.difference(td.index)))}
     if len(j) < 10:
@@ -283,7 +283,7 @@ def run_gc(store_dir: str, days: int, now: datetime | None = None) -> dict:
         gc = sources.trading_week_only(gc[["open", "high", "low", "close"]].astype(float).dropna())
         gc = gc[(gc.index >= start) & (gc.index + pd.Timedelta(minutes=mins) <= pd.Timestamp(now))]
         t = td[tf][td[tf].index >= start]
-        j = t[["close"]].join(gc[["close"]], lsuffix="_td", rsuffix="_gc", how="inner")
+        j = pd.merge(t[["close"]], gc[["close"]], left_index=True, right_index=True, how="inner", suffixes=("_td", "_gc"))
         if len(j) < 10:
             doc["error"] = f"{tf}: fewer than 10 bars in both feeds"
             return doc

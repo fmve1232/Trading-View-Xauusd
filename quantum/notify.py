@@ -2014,6 +2014,9 @@ NOTIF_DIR = "notifications"           # <store>/notifications/<YYYY-MM-DD>.jsonl
                                       # into the forward ledger (git history, never forced)
 SEND_TIMEOUT = (5, 10)                # connect, read (s); was one 15 s value
 RETRY_PAUSE_SEC = 5                   # before attempt 2 (and before the cache check that precedes it)
+RETRY_429_PAUSE_SEC = 30              # GA-07: after HTTP 429 (rate limited). On 22 Nov 23:52 UTC attempt 2 came 5 s after a
+                                      # 429 and was refused again; ntfy.sh limits anonymous senders by IP, which GitHub's
+                                      # runners share. At most once per channel per run: a second failure marks it down.
 CACHE_RETRY_SINCE = "15m"             # before attempt 2: did attempt 1 reach ntfy after all?
 CACHE_RUN_SINCE, CACHE_RUN_SEC = "6h", 6 * 3600   # once per run: what earlier runs already delivered (ntfy keeps 12 h)
 RETRY_HTTP = (429, 500, 502, 503, 504)
@@ -2284,7 +2287,7 @@ def _deliver(R: dict, name: str, post, lines: list[str], tag: str) -> tuple[str,
     if skip:
         a1["no_retry"] = skip
         return "SEND_FAILED", [a1], trail
-    _sleep(RETRY_PAUSE_SEC)
+    _sleep(RETRY_429_PAUSE_SEC if a1.get("http") == 429 else RETRY_PAUSE_SEC)
     cache = "none"
     if name == "ntfy":
         t0 = time.time()

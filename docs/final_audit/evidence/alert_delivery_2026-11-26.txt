@@ -1,0 +1,16 @@
+Alert delivery cross-check (2026-11-26). Sources: forward-ledger c8a99d64e notifications/*.jsonl (12 day files,
+15-26 Nov, 377 delivery records) and market-data alerts_state.json at 11:04 UTC (93+ breakouts, 21+ sweeps).
+
+Final states: DELIVERY_UNCONFIRMED 375 (server accepted, HTTP 200; the success state by design), RETRY_FAILED 2.
+Trails: SIGNAL_GENERATED > SEND_ATTEMPTED > SERVER_ACCEPTED > DELIVERY_UNCONFIRMED (375);
+        SIGNAL_GENERATED > SEND_ATTEMPTED > SEND_FAILED > SEND_ATTEMPTED > RETRY_FAILED (2 rows, 1 message).
+Phone statuses in the state: breakouts SENT 326, LATE 4, SEND_FAILED 1; sweeps SENT 51, LATE 1.
+Every SENT stage has a server-accepted delivery record: 377 of 377; missing 0. Event keys accepted twice: 0.
+The one SEND_FAILED stage: BRK:M15:1795388400:UP:CONFIRMED, run at 2026-11-22 23:52:22 UTC, HTTP 429 on attempt 1
+  (+1.4 s) and attempt 2 (+6.9 s, 5 s pause). It was the run's only message. Never resent: the next run's freshness
+  gate (20 min) treats it as stale, by design. LATE stages (5) were seen after the freshness window and never sent.
+Bar close to server acceptance (breakout and sweep stages, attempt 1, n 377): median 248 s, p90 454 s, max 597 s,
+  share over 20 minutes 0.000.
+Device display and user acknowledgement: not observable by the system (ntfy reports server acceptance only): UNVERIFIED.
+Cause of the 429: UNVERIFIED. ntfy.sh rate-limits anonymous senders per IP and GitHub-hosted runners share IPs; one
+  message cannot exhaust a limit by itself, so the shared-IP explanation is the likely one but cannot be confirmed here.

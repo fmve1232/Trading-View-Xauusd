@@ -1,0 +1,1646 @@
+{
+ "B10.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "w4-research": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "w7-study": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "c5295296f",
+   "added_committer_date": "2026-11-05T07:08:26+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B13.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "w4-research": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "w7-study": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "337af9f90",
+   "added_committer_date": "2026-11-05T10:13:37+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B14.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "w4-research": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "w7-study": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "4f37ae61f",
+   "added_committer_date": "2026-11-06T11:44:25+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B15-ENGINE-FWD.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "w4-research": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "w7-study": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "f5097bfc6",
+   "added_committer_date": "2026-11-06T12:43:51+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B15b-ENGINE-FWD.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  },
+  "w4-research": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  },
+  "w7-study": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b31b-w1": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "a266d66e0",
+   "added_committer_date": "2026-11-15T09:45:41+00:00"
+  }
+ },
+ "B16.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "w4-research": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "w7-study": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "4551e7a4b",
+   "added_committer_date": "2026-11-06T17:33:24+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B17.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "w4-research": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "w7-study": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "39c1b1f40",
+   "added_committer_date": "2026-11-06T20:49:16+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B18.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "w4-research": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "w7-study": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "5c805e8d1",
+   "added_committer_date": "2026-11-06T21:25:52+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B19.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w4-research": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w7-study": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B20.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w4-research": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w7-study": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B21.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w4-research": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w7-study": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B22.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w4-research": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w7-study": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B23.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "w4-research": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "w7-study": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "fc77a5f28",
+   "added_committer_date": "2026-11-07T07:54:57+00:00"
+  }
+ },
+ "B24-CONFIRM-FWD-A1.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "w4-research": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "w7-study": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "53a284023",
+   "added_committer_date": "2026-11-10T07:45:53+00:00"
+  }
+ },
+ "B24-CONFIRM-FWD-A2.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "w4-research": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "w7-study": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "d1ae906a4",
+   "added_committer_date": "2026-11-11T07:02:53+00:00"
+  }
+ },
+ "B24-CONFIRM-FWD.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w4-research": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w7-study": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  }
+ },
+ "B25.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w4-research": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w7-study": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "fa20f3bc9",
+   "added_committer_date": "2026-11-07T11:54:31+00:00"
+  }
+ },
+ "B26.json": {
+  "claude/research-phase-c": {
+   "added_commit": "4a3978666",
+   "added_committer_date": "2026-11-08T17:30:58+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "4a3978666",
+   "added_committer_date": "2026-11-08T17:30:58+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "4a3978666",
+   "added_committer_date": "2026-11-08T17:30:58+00:00"
+  }
+ },
+ "B27.json": {
+  "claude/research-phase-c": {
+   "added_commit": "0065cadb1",
+   "added_committer_date": "2026-11-08T18:00:10+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "0065cadb1",
+   "added_committer_date": "2026-11-08T18:00:10+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "0065cadb1",
+   "added_committer_date": "2026-11-08T18:00:10+00:00"
+  }
+ },
+ "B28.json": {
+  "claude/research-phase-c": {
+   "added_commit": "ffc0b6857",
+   "added_committer_date": "2026-11-08T18:51:16+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "ffc0b6857",
+   "added_committer_date": "2026-11-08T18:51:16+00:00"
+  }
+ },
+ "B29.json": {
+  "claude/research-phase-c": {
+   "added_commit": "ffc0b6857",
+   "added_committer_date": "2026-11-08T18:51:16+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "ffc0b6857",
+   "added_committer_date": "2026-11-08T18:51:16+00:00"
+  }
+ },
+ "B30.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "w4-research": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "w7-study": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "015739041",
+   "added_committer_date": "2026-11-15T06:56:23+00:00"
+  }
+ },
+ "B31.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "w4-research": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "w7-study": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "179814194",
+   "added_committer_date": "2026-11-15T08:05:09+00:00"
+  }
+ },
+ "B31b-SHADOW-FWD.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  },
+  "w4-research": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  },
+  "w7-study": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b31b-w1": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "078e7dad7",
+   "added_committer_date": "2026-11-15T12:43:32+00:00"
+  }
+ },
+ "B31b-W1.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  },
+  "w4-research": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  },
+  "w7-study": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b31b-w1": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "394703a15",
+   "added_committer_date": "2026-11-15T19:40:45+00:00"
+  }
+ },
+ "B31b-W12.json": {
+  "w12-session-sweeps": {
+   "added_commit": "f56b97515",
+   "added_committer_date": "2026-11-25T17:36:49+00:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "f56b97515",
+   "added_committer_date": "2026-11-25T17:36:49+00:00"
+  }
+ },
+ "B31b-W13.json": {
+  "w13-entry-precision": {
+   "added_commit": "399b08d7c",
+   "added_committer_date": "2026-11-25T21:06:00+00:00"
+  }
+ },
+ "B31b-W2.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "fcdfed47e",
+   "added_committer_date": "2026-11-16T13:26:27+00:00"
+  },
+  "w4-research": {
+   "added_commit": "fcdfed47e",
+   "added_committer_date": "2026-11-16T13:26:27+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "fcdfed47e",
+   "added_committer_date": "2026-11-16T13:26:27+00:00"
+  },
+  "w7-study": {
+   "added_commit": "fcdfed47e",
+   "added_committer_date": "2026-11-16T13:26:27+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "fcdfed47e",
+   "added_committer_date": "2026-11-16T13:26:27+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "fcdfed47e",
+   "added_committer_date": "2026-11-16T13:26:27+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b31b-w2": {
+   "added_commit": "fcdfed47e",
+   "added_committer_date": "2026-11-16T13:26:27+00:00"
+  }
+ },
+ "B31b-W3.json": {
+  "w3-liquidity": {
+   "added_commit": "69c746a7c",
+   "added_committer_date": "2026-11-18T21:10:26+00:00"
+  },
+  "w4-research": {
+   "added_commit": "69c746a7c",
+   "added_committer_date": "2026-11-18T21:10:26+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "69c746a7c",
+   "added_committer_date": "2026-11-18T21:10:26+00:00"
+  },
+  "w7-study": {
+   "added_commit": "69c746a7c",
+   "added_committer_date": "2026-11-18T21:10:26+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "69c746a7c",
+   "added_committer_date": "2026-11-18T21:10:26+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "69c746a7c",
+   "added_committer_date": "2026-11-18T21:10:26+00:00"
+  }
+ },
+ "B31b-W4.json": {
+  "w4-research": {
+   "added_commit": "cada883c4",
+   "added_committer_date": "2026-11-19T04:13:09+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "cada883c4",
+   "added_committer_date": "2026-11-19T04:13:09+00:00"
+  },
+  "w7-study": {
+   "added_commit": "cada883c4",
+   "added_committer_date": "2026-11-19T04:13:09+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "cada883c4",
+   "added_committer_date": "2026-11-19T04:13:09+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "cada883c4",
+   "added_committer_date": "2026-11-19T04:13:09+00:00"
+  }
+ },
+ "B31b-W5.json": {
+  "w5-entry": {
+   "added_commit": "238b6c56b",
+   "added_committer_date": "2026-11-19T08:25:43+00:00"
+  },
+  "w7-study": {
+   "added_commit": "238b6c56b",
+   "added_committer_date": "2026-11-19T08:25:43+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "238b6c56b",
+   "added_committer_date": "2026-11-19T08:25:43+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "238b6c56b",
+   "added_committer_date": "2026-11-19T08:25:43+00:00"
+  }
+ },
+ "B31b-W7.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w7-study": {
+   "added_commit": "b3d5a6594",
+   "added_committer_date": "2026-11-19T11:24:01+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "b3d5a6594",
+   "added_committer_date": "2026-11-19T11:24:01+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "b3d5a6594",
+   "added_committer_date": "2026-11-19T11:24:01+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  }
+ },
+ "B31b-W8-cost.json": {
+  "w8-quality": {
+   "added_commit": "64777afc4",
+   "added_committer_date": "2026-11-25T16:43:42+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "14ec74d5f",
+   "added_committer_date": "2026-11-25T17:40:46+00:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "14ec74d5f",
+   "added_committer_date": "2026-11-25T17:40:46+00:00"
+  }
+ },
+ "B31b-W8.json": {
+  "w8-quality": {
+   "added_commit": "e6c00f85f",
+   "added_committer_date": "2026-11-19T17:51:12+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "e6c00f85f",
+   "added_committer_date": "2026-11-19T17:51:12+00:00"
+  }
+ },
+ "B4-RN-V1.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "w4-research": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "w5-entry": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "w7-study": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "w8-quality": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "b31b-w1": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "b31b-w2": {
+   "added_commit": "6725c68bb",
+   "added_committer_date": "2026-11-02T04:16:39+05:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "B5C.json": {
+  "claude/research-phase-c": {
+   "added_commit": "7d84d0a6b",
+   "added_committer_date": "2026-11-09T07:50:05+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "7d84d0a6b",
+   "added_committer_date": "2026-11-09T07:50:05+00:00"
+  }
+ },
+ "B9-GRAB-FWD.json": {
+  "claude/audit-prompt-real-artefacts-nekqv6": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w3-liquidity": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "w4-research": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "w5-entry": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "w7-study": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "w8-quality": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "w11-scoreboard": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "w12-session-sweeps": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "w13-entry-precision": {
+   "added_commit": "a0969ecc7",
+   "added_committer_date": "2026-11-23T12:09:03+05:00"
+  },
+  "b30-confirmation": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "b31-opportunity": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "b31b-w1": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "b31b-w2": {
+   "added_commit": "3a5dc7076",
+   "added_committer_date": "2026-11-04T23:33:57+00:00"
+  },
+  "claude/research-phase-c": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-phase-d": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  },
+  "claude/research-sym15": {
+   "added_commit": "e3839c04d",
+   "added_committer_date": "2026-11-07T07:43:37+00:00"
+  }
+ },
+ "PHASE_D.json": {
+  "claude/research-phase-d": {
+   "added_commit": "451daf1aa",
+   "added_committer_date": "2026-11-09T17:04:17+00:00"
+  }
+ }
+}

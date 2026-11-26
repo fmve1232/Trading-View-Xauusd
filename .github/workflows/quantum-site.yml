@@ -263,6 +263,13 @@ jobs:
         continue-on-error: true
         run: python -m quantum.manifest --store store --ledger ledger --payloads site/data --artifact "payloads-${{ github.run_id }}-${{ github.run_attempt }}"
 
+      - name: Durable outcome log (every sweep and breakout record version, append-only; audit GA-03; records only)
+        # The monitors keep at most 300 records each in alerts_state.json, which the store's orphan commit replaces every
+        # run. This appends each new version of every record to store/outcomes/<day>.jsonl; the ledger step below merges
+        # it into forward-ledger, which is never force-pushed. A failure here shows on the run; the saves below still run.
+        if: always() && hashFiles('store-loaded.flag') != '' && hashFiles('store/alerts_state.json') != ''
+        run: python -m quantum.outcomes --append store
+
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
         id: savestore
         if: always() && hashFiles('store-loaded.flag') != ''
@@ -286,6 +293,8 @@ jobs:
           if [ -d store/research_forward ]; then mkdir -p ledger/research_forward && cp -r store/research_forward/. ledger/research_forward/; fi
           # P-0: every phone-message attempt with its full text, merged (a union by record id, so a store that went back never removes one)
           if [ -d store/notifications ]; then python -m quantum.notify --merge-ledger store/notifications ledger/notifications || echo "::warning title=notification ledger::merge failed; the records stay in the store"; fi
+          # GA-03: the outcome log, a union by (record, version): a line already in the ledger is never removed or changed
+          if [ -d store/outcomes ]; then python -m quantum.outcomes --merge-ledger store/outcomes ledger/outcomes || echo "::warning title=outcome log::merge failed; the records stay in the store"; fi
           cd ledger
           git config user.name "quantum-pipeline"
           git config user.email "quantum-pipeline@users.noreply.github.com"

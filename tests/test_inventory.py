@@ -24,3 +24,11 @@ def test_the_reasons_cover_only_definitions_that_exist():
         src = open(os.path.join(inventory.ROOT, rel)).read()
         names = {n.name for n in ast.parse(src).body if isinstance(n, (ast.FunctionDef, ast.ClassDef))}
         assert name in names or (rel, name) in defined, (rel, name)
+
+
+def test_the_committed_appendix_is_what_the_tool_generates_now():
+    """GA-17: docs/inventory/PRODUCTION_CONSTANTS.md went stale after PR #140 and nothing noticed. Regenerate it with
+    `python3 audit/tools/inventory.py --md docs/inventory/PRODUCTION_CONSTANTS.md` after changing production Python."""
+    with open(os.path.join(inventory.ROOT, "docs", "inventory", "PRODUCTION_CONSTANTS.md")) as f:
+        committed = f.read()
+    assert committed == inventory.markdown(inventory.build())

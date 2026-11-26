@@ -19,7 +19,16 @@ for f in glob.glob(os.path.join(B, "holdout", "manifest_*.json")):
     m = json.load(open(f))
     arm_hash[a] = {m["freeze_key"].rsplit(":", 1)[1]} | {h["freeze_key"].rsplit(":", 1)[1] for h in m.get("history", []) if h.get("freeze_key")}
 ENGINE_ARMS = {"treatment", "control", "challenger"}
-problems, counts = [], Counter()
+# Arms closed by an amendment keep their final live record under their own last key (quantum/arm_h6.py: "H6 is CLOSED";
+# audit/PREREGISTRATION.md Amendment F). Such a trade is valid when it carries that arm's key and was entered before
+# the closure, which is the start of the current engine key (Amendment F took effect with web.8).
+CLOSED_ARMS = {"h6": "Amendment F"}
+arm_key = {}
+for f in glob.glob(os.path.join(B, "holdout", "manifest_*.json")):
+    with open(f) as fh:
+        m = json.load(fh)
+    arm_key[os.path.basename(f)[9:-5]] = {m["freeze_key"]} | {h["freeze_key"] for h in m.get("history", []) if h.get("freeze_key")}
+problems, counts, closed = [], Counter(), Counter()
 seen = defaultdict(set)
 
 
@@ -33,7 +42,10 @@ def check(path, live):
         where = f"{'live' if live else 'archive'} {tf}_{arm} {t.get('entry_time')}"
         counts[(main, live)] += 1
         if live and main != man["freeze_key"]:
-            problems.append(f"{where}: live trade under a non-current key {k}")
+            if arm in CLOSED_ARMS and k in arm_key.get(arm, set()) and t["entry_time"][:19] < man["freeze_utc"][:19]:
+                closed[f"{tf}_{arm}"] += 1               # the closed arm's final record, kept read only
+            else:
+                problems.append(f"{where}: live trade under a non-current key {k}")
         if arm in ENGINE_ARMS and len(parts) != 2:
             problems.append(f"{where}: engine arm carries an arm suffix {k}")
         if arm not in ENGINE_ARMS and (len(parts) != 3 or (arm in arm_hash and parts[2] not in arm_hash[arm])):
@@ -78,6 +90,7 @@ for f in sorted(glob.glob(os.path.join(B, "holdout", "archive", "*.json"))):
     check(f, False)
 print("keys:", {f"{k[0][-16:]} ({'live' if k[1] else 'archive'})": v for k, v in sorted(counts.items())})
 print("current key:", man["freeze_key"], man["engine_version"], man["freeze_utc"])
+print("closed arms' final records (valid, read only):", {f"{k} ({CLOSED_ARMS[k.split('_', 1)[1]]})": v for k, v in sorted(closed.items())})
 print(f"problems: {len(problems)}")
 for p in problems[:40]:
     print("  ", p)

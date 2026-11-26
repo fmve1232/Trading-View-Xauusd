@@ -1,0 +1,5 @@
+forward-ledger c8a99d64e (2026-11-26T11:04:17Z); python3 audit/tools/ledger_check.py <checkout>
+keys: {'4440d52587f5cc6b (live)': 762, '3252a9f0d312db75 (archive)': 14, '32babc71ed938b30 (archive)': 27, '60bb01794d03c9ac (archive)': 107, '6f3964ad97813cc9 (archive)': 798, '92b67584f33cc1f0 (archive)': 340, 'a6f2be58c74887ed (archive)': 577, 'a6f2be58c74887ed (live)': 13}
+current key: 1f88aad357497da4:4440d52587f5cc6b Q7.2-web.8 2026-11-15T11:46:48.501212+00:00
+closed arms' final records (valid, read only): {'15m_h6 (Amendment F)': 4, '1h_h6 (Amendment F)': 2, '30m_h6 (Amendment F)': 3, '4h_h6 (Amendment F)': 1, '5m_h6 (Amendment F)': 3}
+problems: 0
