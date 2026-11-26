@@ -55,3 +55,15 @@ historical dataset was changed.
 - No production merge, deployment, workflow run on production, or phone message.
 - No new strategy or signal.
 - B24 stays OFF.
+
+## 5. After the operator's decision (26 Nov 2026)
+
+Sections 1–4 are the register as submitted; this section records what followed.
+
+| Decision | What was done | Commit / run | Verification |
+|---|---|---|---|
+| A, B, C, E: APPROVE MERGE | PR #141 merged with a merge commit (reversible: revert `db7cd6a14`) | head `fde25ed99`, merge `db7cd6a14`; pr-checks run 45831024797 (Pine checkers + manifest: success; full tests on `requirements.lock`: success) | merged tree identical to the tested head; freeze key `1f88aad357497da4:4440d52587f5cc6b` and `config.py` SHA-256 `3ea5827a…d67fc` unchanged; manifest 7 of 7 OK |
+| (first production run) | quantum-site run 45832483937 on `db7cd6a14` | success, 13:46–13:53 UTC | outcome log: 120 lines in `forward-ledger/outcomes/2026-11-26.jsonl`, identical to the store's copy; `--verify` problems []; `ledger_check.py` problems 0 |
+| B condition: separate statuses; acceptance never called delivery | Branch `claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-alert-wording` | PR pending | `tests/test_notify_delivery.py`, `tests/test_delivery_status_tool.py`; mutation 46 of 46 |
+| D: APPROVE WITH CONDITIONS (POC type; DXY / US10Y untested; no unverified probability) | Same branch | PR pending | `tests/test_sweeps.py`, `tests/test_setup_*.py`, `tests/test_notify_plan.py` |
+| NOT APPROVED: live trading, automatic execution, strategy changes for performance, artificial signals or statistics, any 90% claim, acceptance as proof of phone delivery | Nothing of these was done | — | no engine source, `config.py`, frozen file, registration or record changed |

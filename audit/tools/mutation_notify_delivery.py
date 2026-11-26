@@ -4,7 +4,7 @@ Usage: python audit/tools/mutation_notify_delivery.py <empty scratch dir>
 Each mutant is applied to a COPY of quantum/notify.py in the scratch dir; tests/test_notify_delivery.py must fail on
 it. D01-D10 are the specification's list (docs/deploy/P0_NOTIFICATION_INTEGRITY_SPEC.md §10); D11-D31 break the rest of
 the design one piece at a time (idempotency across runs, the reconcile, the warnings, the records, the line references,
-the redaction, the per-run budget); D32-D38 undo the fixes of the independent review of 2026-11-14. A mutant is a list of (old, new) replacements, each of which must occur exactly once.
+the redaction, the per-run budget); D32-D38 undo the fixes of the independent review of 2026-11-14; D39-D42 undo decision B (2026-11-26: server acceptance is never called delivery). A mutant is a list of (old, new) replacements, each of which must occur exactly once.
 No request leaves the tests (their transport is a stand-in). Exit status 1 if any mutant survives."""
 import json
 import os
@@ -57,9 +57,17 @@ M = {
     "D19 per-run budget removed": [('        R["down"].add(name)                                # per-run budget', "        pass  #")],
     "D20 one 15 s timeout again": [("SEND_TIMEOUT = (5, 10)", "SEND_TIMEOUT = 15")],
     "D21 block only until one message is accepted (D3 = every message)": [
-        ('            if u is not None and not u.get("redelivered_utc"):',
+        ('            if u is not None and not (u.get("levels_accepted_utc") or u.get("redelivered_utc")):',
          '            und.pop(str(pid), None)\n            if False:')],
     "D22 secrets not redacted": [('        out = out.replace(v, "***")', "        pass")],
+    # --- decision B (2026-11-26): server acceptance is never called delivery ---
+    "D39 phone delivery claimed from server acceptance": [("(sent, NOT_VERIFIABLE, NOT_VERIFIABLE, failed, retried)",
+                                                           "(sent, sent, NOT_VERIFIABLE, failed, retried)")],
+    "D40 a cache-hit attempt 2 counted as a retry sent": [('retried = "YES" if any(r.get("attempt") == 2 and r.get("request") for r in recs)',
+                                                           'retried = "YES" if any(r.get("attempt") == 2 for r in recs)')],
+    "D41 a part that failed counted as sent": [('sent = "NOT_CONFIGURED" if not got else "YES" if all(got) else "PARTLY" if any(got) else "NO"',
+                                                'sent = "NOT_CONFIGURED" if not got else "YES" if any(got) else "NO"')],
+    "D42 partly accepted called delivered again": [('" (only partly accepted by the server)"', '" (only partly delivered)"')],
     "D23 full text not kept in the ledger (D1)": [
         ('f.write("".join(json.dumps(json_safe(r), sort_keys=True) + "\\n" for r in rs))',
          'f.write("".join(json.dumps(json_safe({k: v for k, v in r.items() if k != "text"}), sort_keys=True) + "\\n" for r in rs))')],

@@ -60,6 +60,9 @@ DELIVERY_UNCONFIRMED when a server accepted it: nothing confirms the phone showe
 failed on every channel, every later message of that plan (REPEAT, TP / SL follow-up) repeats the plan's own levels and
 says the original was not delivered, and the next accepted message opens with a DELIVERY WARNING. Plans, levels,
 results and records are unchanged by any of this. DELIVERY_RETRY=0 turns the retry and the cache checks off.
+Server acceptance is never called delivery (operator decision B, 2026-11-26): each message's records carry the separate
+statuses SENT_TO_NTFY, PHONE_DELIVERY, PHONE_DISPLAY, SEND_FAILED and RETRY_ATTEMPTED (delivery_status); the two in
+the middle are NOT_VERIFIABLE, because no configured channel reports them.
 """
 from __future__ import annotations
 
@@ -346,6 +349,9 @@ def mt5_line(d: int, pl: dict) -> str:
 
 
 LADDER_USD = (10.0, 13.0, 15.0, 20.0)       # the operator's range of moves (2026-11-05: "$10 to $20, $15 ideal")
+# Decision D (2026-11-26): these odds come from the stop and target sizes alone (a driftless price: stop / (stop +
+# target)); they are not measured and not a forecast. Was "no signal beats these" / "measured" (the latter was wrong).
+NO_EDGE_NOTE = "no-edge odds from the stop and target sizes, not a forecast; no signal has been shown to beat them"
 
 
 def ladder_line(pl: dict) -> str:
@@ -358,7 +364,7 @@ def ladder_line(pl: dict) -> str:
     day = (f"2 stops in a day = -${two:,.0f} ({100 * two / acct:.1f}% of ${acct:,.0f}): "
            + ("inside" if fits else "OVER") + f" a {lim:g}% daily limit"
            + ("" if fits else f" -- only one loss a day fits at {pl['lot']:g} lot"))
-    return f"LADDER before -${sl:.2f} (no signal beats these odds): {steps} | {day}"
+    return f"LADDER before -${sl:.2f} ({NO_EDGE_NOTE}): {steps} | {day}"
 
 
 def timing_lines(tm: dict | None, off: float = 0.0) -> tuple[str | None, str | None]:
@@ -902,7 +908,7 @@ def _setup_zone(L: float, side: int, zb: tuple, tol: float) -> str | None:
     if va is not None and abs(L - va) <= tol:
         return f"value-area {'low' if side > 0 else 'high'} {va:.2f}"
     if poc is not None and abs(L - poc) <= tol:
-        return f"POC {poc:.2f}"
+        return f"POC {poc:.2f} ({SETUP_POC_KIND})"
     return None
 
 
@@ -957,6 +963,7 @@ def setup_events(t: list, h: list, lo_: list, c: list, lv: dict, z: dict, rows, 
 
 
 SETUP_ZKEYS = ("ob_bull_lo", "ob_bull_hi", "ob_bear_lo", "ob_bear_hi", "vah", "val", "vpoc")
+SETUP_POC_KIND = "15m engine profile, last 100 bars, GC futures volume"   # decision D (GA-11): the POC named by its type
 SETUP_TP_PX, SETUP_SL_PX = 15.0, 13.0           # the registered outcome: +$15 before -$13 (B16)
 SETUP_TRACK_SEC = 86400                          # one trading day OF BARS, as in the test (B16-B18: 96 15m bars)
 SETUP_STALE_SEC = 7 * 86400                      # clock limit if the feed stops (a weekend is not trading time)
@@ -1661,9 +1668,9 @@ def plan_line(entry: float, d: int, pl: dict, off: float = 0.0) -> str:
         return (f"YOUR PLAN {pl['lot']:g} lot: SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f}) | TP1 {_fmt(tp, off)}: close half "
                 f"(+${pl['tp_usd'] / 2:,.0f}), move SL to entry | TP2 {_fmt(tp2, off)}: the rest (+${pl['tp2_usd'] / 2:,.0f}) | "
                 f"odds with no edge: SL {1 - first:.0%} · TP1 then entry {first * (1 - p2):.0%} · TP2 {first * p2:.0%} "
-                f"(no signal beats these) | break-even {be:.0%} TP1 first {cost_note(pl)}")
+                f"({NO_EDGE_NOTE}) | break-even {be:.0%} TP1 first {cost_note(pl)}")
     return (f"YOUR PLAN {pl['lot']:g} lot: SL {_fmt(sl, off)} (-${pl['sl_usd']:,.0f}) TP {_fmt(tp, off)} (+${pl['tp_usd']:,.0f}) | "
-            f"TP first ~{first:.0%} (measured; no signal beats it) | break-even {be:.0%} {cost_note(pl)}")
+            f"TP first ~{first:.0%} ({NO_EDGE_NOTE}) | break-even {be:.0%} {cost_note(pl)}")
 
 
 def plan_path(plan: dict, chart: dict) -> dict:
@@ -2018,7 +2025,7 @@ RETRY_429_PAUSE_SEC = 30              # GA-07: after HTTP 429 (rate limited). On
                                       # 429 and was refused again; ntfy.sh limits anonymous senders by IP, which GitHub's
                                       # runners share. At most once per channel per run: a second failure marks it down.
 CACHE_RETRY_SINCE = "15m"             # before attempt 2: did attempt 1 reach ntfy after all?
-CACHE_RUN_SINCE, CACHE_RUN_SEC = "6h", 6 * 3600   # once per run: what earlier runs already delivered (ntfy keeps 12 h)
+CACHE_RUN_SINCE, CACHE_RUN_SEC = "6h", 6 * 3600   # once per run: what earlier runs already had accepted (ntfy keeps 12 h)
 RETRY_HTTP = (429, 500, 502, 503, 504)
 PART_LIMIT = {"ntfy": (4096, True), "telegram": (4096, False), "discord": (2000, False)}   # each channel's hard limit
 RESENT_MAX, REF_MAX, MARK_MAX = 110, 22, 10   # the longest RESENT line, "ref xq-<key>-<n>" line and "(i/n) " mark: a
@@ -2030,6 +2037,12 @@ UNDELIVERED_KEEP_SEC = 3 * 86400      # an undelivered plan's entry is dropped t
 PENDING_MAX = 50
 ACCEPTED = ("SERVER_ACCEPTED", "RETRY_SUCCEEDED")
 FINAL_OK = "DELIVERY_UNCONFIRMED"     # never "delivered": nothing confirms the phone
+# Operator decision B (2026-11-26): server acceptance is never called delivery. Every message's records also carry
+# five separate statuses (delivery_status): SENT_TO_NTFY (YES / PARTLY / NO / NOT_CONFIGURED), PHONE_DELIVERY and
+# PHONE_DISPLAY (NOT_VERIFIABLE: ntfy, Telegram and Discord report only that their server accepted a message),
+# SEND_FAILED (an attempt failed) and RETRY_ATTEMPTED (a second request was sent). They describe; they decide nothing.
+STATUS_NAMES = ("SENT_TO_NTFY", "PHONE_DELIVERY", "PHONE_DISPLAY", "SEND_FAILED", "RETRY_ATTEMPTED")
+NOT_VERIFIABLE = "NOT_VERIFIABLE"
 _DELIVERIES: list[dict] = []
 _EVENTS: dict | None = None           # set by _say() just before each send(): stream, event keys, plan ids; cleared after
 _RUN: dict | None = None              # this run's delivery context (store, notify state, caches, channels down)
@@ -2493,15 +2506,17 @@ def _send(lines: list[str], ctx: dict) -> list[str]:
                 got.append(st)
             states[name] = FINAL_OK if all(x in ACCEPTED for x in got) else "RETRY_FAILED" if "RETRY_FAILED" in got else "SEND_FAILED"
         final = FINAL_OK if FINAL_OK in states.values() else "RETRY_FAILED" if "RETRY_FAILED" in states.values() else "SEND_FAILED"
+    status = delivery_status(recs)
     for r in recs:
         r.update(meta)
         r["final_state"], r["channel_final"] = final, states.get(r["channel"], final)
+        r["status"] = status
         r["rid"] = f"{r['tag']}:{r['channel']}:{r['attempt']}:{r.get('t_start') or r['t']}:{R['t_run']}"
     _record(R, recs)
     fails = [r for r in recs if not r["ok"]]
     http_n = max([sum(1 for r in recs if r["channel"] == c and r.get("request")) for c in states] or [0])   # requests made
     why = _whys(fails)
-    ctx["outcome"] = {"notif_key": key, "final_state": final, "attempts": http_n, "why": why, "no_channel": not chans,
+    ctx["outcome"] = {"notif_key": key, "final_state": final, "status": status, "attempts": http_n, "why": why, "no_channel": not chans,
                       "t": R["t_run"], "parts": parts_n, "channels": dict(states),
                       "accepted_texts": [r["text"] for r in recs if r["ok"]]}   # this run's or an earlier run's acceptance
     ns = R["state"]
@@ -2517,11 +2532,29 @@ def _send(lines: list[str], ctx: dict) -> list[str]:
         partly = any(r["ok"] for r in recs)
         ns["pending_warnings"] = (ns["pending_warnings"] + [{
             "id": f"{key}:{R['t_run']}", "t": R["t_run"], "stream": stream,
-            "desc": (ctx.get("desc") or stream) + (" (only partly delivered)" if partly else ""),
+            "desc": (ctx.get("desc") or stream) + (" (only partly accepted by the server)" if partly else ""),
             "attempts": ctx["outcome"]["attempts"], "why": why, "notif_key": key, "parts": parts_n,
             "open_plan": bool(ctx.get("open_plan_ids")), "events": events}])[-PENDING_MAX:]
         _actions_warning(f"{stream} {' '.join(events)[:200]}: {final} ({why}{_hint(fails, None)})")
     return [c for c, st in states.items() if st == FINAL_OK]
+
+
+def delivery_status(recs: list[dict]) -> dict:
+    """Decision B: the five statuses of one message from its attempt records (this run's, or old records read back).
+    SENT_TO_NTFY: YES when ntfy's server accepted every part (this run, or an earlier run: not sent again), PARTLY when
+    it accepted some, NO when it accepted none, NOT_CONFIGURED when no ntfy attempt exists. PHONE_DELIVERY and
+    PHONE_DISPLAY: always NOT_VERIFIABLE (no channel reports them). SEND_FAILED: YES when any attempt on any
+    channel failed. RETRY_ATTEMPTED: YES when a second request was sent (a cache check that found attempt 1 had
+    arrived sends nothing, so it is NO)."""
+    parts: dict = {}
+    for r in recs:
+        if r.get("channel") == "ntfy":
+            parts.setdefault(str(r.get("part") or "1/1"), []).append(bool(r.get("ok")))
+    got = [any(v) for v in parts.values()]
+    sent = "NOT_CONFIGURED" if not got else "YES" if all(got) else "PARTLY" if any(got) else "NO"
+    failed = "YES" if any(not r.get("ok") for r in recs) else "NO"
+    retried = "YES" if any(r.get("attempt") == 2 and r.get("request") for r in recs) else "NO"
+    return dict(zip(STATUS_NAMES, (sent, NOT_VERIFIABLE, NOT_VERIFIABLE, failed, retried), strict=True))
 
 
 def _whys(fails: list[dict], channel=None) -> str:
@@ -2638,14 +2671,14 @@ def _say_tf(tf: str, phone_lines: list[str], upd_refs: list, msg_refs: list, n_u
                              "tp2": pl.get("tp2"), "sl_usd": pl.get("sl_usd"), "tp_usd": pl.get("tp_usd"), "tp2_usd": pl.get("tp2_usd"),
                              "first_attempt_t": oc["t"], "first_attempt_utc": datetime.fromtimestamp(oc["t"], timezone.utc).isoformat(),
                              "final_state": oc["final_state"], "attempts": oc["attempts"], "why": oc["why"],
-                             "redelivered_utc": None, "closed_t": None}
+                             "levels_accepted_utc": None, "closed_t": None}
     elif oc.get("final_state") == FINAL_OK:
         for pid, _ in opens:                               # an opening sent again (a crash before the state was saved)
             und.pop(str(pid), None)
         for pid in blocked:                                # its levels reached a server at last (the block stays: D3)
-            u = und.get(str(pid))
-            if u is not None and not u.get("redelivered_utc"):
-                u["redelivered_utc"] = datetime.fromtimestamp(R["t_run"], timezone.utc).isoformat()
+            u = und.get(str(pid))                          # "redelivered_utc": the same field before decision B
+            if u is not None and not (u.get("levels_accepted_utc") or u.get("redelivered_utc")):
+                u["levels_accepted_utc"] = datetime.fromtimestamp(R["t_run"], timezone.utc).isoformat()
     return sent
 
 
@@ -3277,7 +3310,7 @@ def _run(store_dir: str | None, payloads: dict, tfs: list[str], sent_t: int | No
     if path:
         with open(path, "w") as f:
             json.dump(state, f)
-    dl = save_deliveries(store_dir)                        # proof of delivery (status codes, ntfy ids), no secrets
+    dl = save_deliveries(store_dir)                        # proof of server acceptance (status codes, ntfy ids), no secrets
     if dl:
         report["delivery"] = dl
     if vpath and pl_cfg:

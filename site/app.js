@@ -883,7 +883,7 @@ function breakoutsCard(BK) {
   const NM = { PWH: "prev week high", PWL: "prev week low", PDH: "prev day high", PDL: "prev day low", ASH: "Asia high", ASL: "Asia low",
     LOH: "London high", LOL: "London low", NYH: "New York high", NYL: "New York low", EQH: "equal highs", EQL: "equal lows",
     RGH: "range high", RGL: "range low", SWH: "swing high", SWL: "swing low" };
-  const PH = { SENT: "sent", LATE: "late, not sent", SITE: "website only", SEND_FAILED: "send failed", DUE: "due" };
+  const PH = { SENT: "sent to server (accepted)", LATE: "late, not sent", SITE: "website only", SEND_FAILED: "send failed", DUE: "due" };
   const kvs = (o) => Object.entries(o || {}).map(([k, v]) => `${esc(k)} ${v}`).join(" · ") || "none";
   const stg = (e) => ["DETECTED", "CONFIRMED", "RETEST", "MOVE10", "MOVE15", "MOVE20", "FAILED", "CLOSED"].filter((k) => e.stages[k]).map((k) => {
     const s = e.stages[k], lbl = k === "RETEST" ? "retest held" : k === "CONFIRMED" ? `confirmed (${(s.how || "").toLowerCase()})`
@@ -909,7 +909,7 @@ function breakoutsCard(BK) {
       [`Last ${C.days || 7} days`, `${C.events || 0} breakouts · ${kvs(C.by_tf)} · ${kvs(C.by_dir)}`],
       ["By session", kvs(C.by_session)],
       ["What happened", `${C.confirmed || 0} confirmed · ${C.retest_held || 0} retests held · ${C.failed_before || 0} failed before confirmation (false breakouts) · ${C.failed_after || 0} failed after it`],
-      ["Phone delivery", `${P.SENT || 0} sent · ${P.LATE || 0} late (not sent) · ${P.SEND_FAILED || 0} send failed${P.SITE ? ` · ${P.SITE} website only` : ""} <span class="dim">(sent = accepted by the server, not proof it showed on the phone)</span>`],
+      ["Phone delivery", `${P.SENT || 0} sent to server (accepted) · ${P.LATE || 0} late (not sent) · ${P.SEND_FAILED || 0} send failed${P.SITE ? ` · ${P.SITE} website only` : ""} <span class="dim">(accepted by the ntfy server; delivery to the phone and display on it are not verifiable)</span>`],
       ["ENTRY READY", `<b class="warn">SHADOW</b> <span class="dim">computed and recorded, never sent: no breakout entry is validated</span>`]])}
     ${rows ? `<div class="scroll"><table class="yt"><tr><th>Breakout</th><th>Level</th><th>Stages [phone]</th><th>Shadow entries (not validated, never sent)</th></tr>${rows}</table></div>` : '<p class="muted pa-note">No breakout since this monitor started.</p>'}
     <p class="muted pa-note">${esc(BK.rules || "")} ${esc(BK.shadow || "")} Shadow results are raced on closed 15m bars, each target on its own against the stop: TP = target first, SL = stop first, AMB = both in one bar (counted as the stop). Feed mid prices with a cost model; no broker bid / ask is connected, and the planned loss is not a maximum (gaps).</p>`;
@@ -924,7 +924,7 @@ function sweepsCard(SW) {
   const NM = { PWH: "prev week high", PWL: "prev week low", PDH: "prev day high", PDL: "prev day low", ASH: "Asia high", ASL: "Asia low",
     LOH: "London high", LOL: "London low", NYH: "New York high", NYL: "New York low", EQH: "equal highs", EQL: "equal lows",
     RGH: "range high", RGL: "range low", SWH: "swing high", SWL: "swing low" };
-  const PH = { SENT: "sent", LATE: "late, not sent", SITE: "website only", SEND_FAILED: "send failed", DUE: "due" };
+  const PH = { SENT: "sent to server (accepted)", LATE: "late, not sent", SITE: "website only", SEND_FAILED: "send failed", DUE: "due" };
   const SS = { ASIAN: "Asia", LONDON: "London", "LONDON+NY": "London+NY", "NEW YORK": "New York", OFF: "other" };
   const sd = (d) => `<b class="${d === 1 ? "bull" : "bear"}">${d === 1 ? "BUY" : "SELL"}</b>`;
   const LBL = { SWEEP: "sweep", MOVE10: "+$10 reached", MOVE15: "+$15 reached", MOVE20: "+$20 reached", FAILED: "failed (wick retaken)", CLOSED: "24 h over" };
@@ -1098,7 +1098,7 @@ setInterval(tickClock, 1000);
 const LEVEL = { PDH: ["Yesterday's high", "PDH"], PDL: ["Yesterday's low", "PDL"], PWH: ["Last week's high", "PWH"], PWL: ["Last week's low", "PWL"],
   PMH: ["Last month's high", "PMH"], PML: ["Last month's low", "PML"], EQH: ["Equal highs", "EQH"], EQL: ["Equal lows", "EQL"],
   CDH: ["Today's high", "CDH"], CDL: ["Today's low", "CDL"], "Day high": ["Today's high", "CDH"], "Day low": ["Today's low", "CDL"],
-  VAH: ["Value-area high", "VAH"], VAL: ["Value-area low", "VAL"], POC: ["Busiest price", "POC"], "Internal high": ["Recent swing high", ""],
+  VAH: ["Value-area high", "VAH"], VAL: ["Value-area low", "VAL"], POC: ["Busiest price by GC futures volume, last 100 bars", "POC"], "Internal high": ["Recent swing high", ""],
   "Internal low": ["Recent swing low", ""], "Swing high": ["Swing high", ""], "Swing low": ["Swing low", ""], "2R": ["2 × the stop distance", ""] };
 const lvl = (k) => (LEVEL[k] ? LEVEL[k][0] + (LEVEL[k][1] ? ` (${LEVEL[k][1]})` : "") : k);   // "Equal lows (EQL)"
 const REGIME = { ABNORMAL: "unusually volatile", COMPRESS: "quiet, compressing", EXPANSION: "expanding", "STRONG TR": "strong trend", "WEAK TR": "weak trend", RANGE: "ranging" };
@@ -2039,7 +2039,7 @@ function renderOverview() {
     card("Auction", kv([["State", `${esc(au.state)} ${au.prob}% ${esc(au.cycle)}`], ["Bias", esc(au.bias)], ["Discovery", esc(au.disc)], ["Acceptance", `${au.accept} ${esc(au.accept_grade)}`],
       ["Value migration", esc(au.value_mig)], ["Last sweep", au.sweep_q ? `${esc(au.sweep_grade)} ${au.sweep_q}` : "—"]])),
     card("Volume (proxy, not order flow)", kv([["Bar-signed volume", fl.cvd_bull ? '<span class="bull">bull</span>' : '<span class="bear">bear</span>'], ["Volume delta (50)", f(fl.vd_k, 1) + "k"],
-      ["Value area", `${esc(fl.va_pos)} POC ${f(fl.vpoc)} (${f(fl.va_ratio, 0)}%)`], ["Rel. volume", f(fl.rel_vol, 2) + "×"], ["Volume pct", pct(fl.vol_pct)],
+      ["Value area", `${esc(fl.va_pos)} POC ${f(fl.vpoc)} (${f(fl.va_ratio, 0)}%) <span class="dim">GC futures volume, last 100 bars</span>`], ["Rel. volume", f(fl.rel_vol, 2) + "×"], ["Volume pct", pct(fl.vol_pct)],
       ["Climax", fl.climax_up ? '<span class="bull">up</span>' : fl.climax_dn ? '<span class="bear">down</span>' : "—"]]) +
       `<p class="note">${esc(M.volume_source || "")}. Volume is signed by the bar's direction (close vs open); this is a proxy, not true CVD: no trade-by-trade aggressor data is used.</p>`),
     card("Liquidity draw (engine)", kv([["Destination", `${esc(li.dest)} ${li.dest_score} ${esc(li.dest_conf)}`], ["Reach score", f(li.reach, 0) + "/100"], ["Health", li.health + "/100"],

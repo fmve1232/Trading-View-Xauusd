@@ -50,6 +50,10 @@ POC_BIN = 0.50                                 # $ at $4,000
 MACRO_STALE = 3 * 3600                         # a series whose last completed hour ended longer ago shows "closed"
 MACRO = (("dxy", "DX-Y.NYB_60m"), ("us10y", "^TNX_60m"))
 PATTERN_LINE = "Session sweep after a run (2020-23): +$10 first 26%, needs 33%: no edge"
+# Operator decision D (2026-11-26, GA-11 / GA-12): the POC is named by its type, and the dollar / yield context is
+# labelled untested -- no study has measured a link between their 1h change and a sweep's outcome.
+POC_KIND = "prior-day time-at-price, no volume"
+MACRO_HEAD = "DXY / US10Y (untested for sweeps)"
 
 
 def mode() -> str:
@@ -271,7 +275,8 @@ def scan(state: dict, payloads: dict, t_now: int, macro: dict | None = None) -> 
 
 # ---------------- phone text (the operator's short format) ----------------
 def context_lines(ctx: dict | None, fmt) -> list[str]:
-    """A4: the session line and the context line of a SWEEP message ([] for a record without context)."""
+    """A4: the session, context and untested dollar / yield lines of a SWEEP message ([] for a record without
+    context). The POC is named by its type (POC_KIND); the DXY / US10Y line is labelled untested (MACRO_HEAD)."""
     if not ctx or "error" in ctx:
         return []
     m = ctx.get("min_to_boundary")
@@ -281,11 +286,12 @@ def context_lines(ctx: dict | None, fmt) -> list[str]:
         when = "no session open / close within 60 min"
     run = f" · run {ctx['run_atr']:.1f} ATR" if ctx.get("run_atr") is not None else ""
     parts = [f"H1 trend {ctx['trend_h1']}" if ctx.get("trend_h1") else "H1 trend n/a"]
-    parts.append(f"POC {fmt(ctx['poc_prev'])} {ctx['poc_side']}" if ctx.get("poc_prev") is not None else "POC n/a")
+    parts.append(f"POC {fmt(ctx['poc_prev'])} {ctx['poc_side']} ({POC_KIND})" if ctx.get("poc_prev") is not None
+                 else "POC n/a")
     dx, ty = ctx.get("dxy_1h_pct"), ctx.get("us10y_1h_bp")
-    parts.append(f"DXY 1h {dx:+.2f}%" if dx is not None else "DXY closed")
-    parts.append(f"US10Y 1h {ty:+.1f} bp" if ty is not None else "US10Y closed")
-    return [f"Session: {when}{run}", "Context: " + " · ".join(parts)]
+    macro = [f"DXY 1h {dx:+.2f}%" if dx is not None else "DXY closed",
+             f"US10Y 1h {ty:+.1f} bp" if ty is not None else "US10Y closed"]
+    return [f"Session: {when}{run}", "Context: " + " · ".join(parts), f"{MACRO_HEAD}: " + " · ".join(macro)]
 
 
 def _level(ev: dict, fmt) -> str:
