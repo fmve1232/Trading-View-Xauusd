@@ -12930,6 +12930,33 @@
    "verdict": "NO TRADE",
    "reason": "price traded $13 against first",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "BREAKOUT|15m|1795704300|1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1795704300,
+   "t_close": 1795705200,
+   "dir": 1,
+   "p0": 3581.71,
+   "what": "breakout at 4HH 3575.29, 1HH 3575.29",
+   "id": 351,
+   "seen": 1795705453,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3596.71,
+   "invalid_at": 3568.71,
+   "cap_at": 3601.71,
+   "confirm20_at": 3601.71,
+   "status": "INVALIDATED",
+   "bars": 11,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795715100
   }
  ]
 }
