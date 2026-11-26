@@ -47,6 +47,7 @@ def test_metrics_by_hand():
     assert m["avg_win_r"] == round(3.5 / 3, 4) and m["avg_loss_r"] == round(-2.5 / 3, 4)
     assert m["tp1_reached"] == 3 and m["stop_exits"] == 2 and m["trading_days"] == 5
     assert m["mean_r_boot95_days"][0] is not None and m["avg_hold_min"] == 30.0
+    assert m["worst_r"] == -1.0 and m["share_below_minus_1r"] == 0.0
     # a wider spread costs (spread - 0.30) / stop distance in R, nothing else changes
     assert m["mean_r_at_spread"]["spread_0.80"] == round(1.0 / 6 - 0.5 / 10, 4)
 

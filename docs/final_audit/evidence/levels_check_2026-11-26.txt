@@ -1,0 +1,22 @@
+python3 audit/tools/levels_check.py --state <market-data alerts_state.json 2026-11-26 11:04 UTC> --bars <market-data checkout>
+{
+ "checked": 8,
+ "agree": 8,
+ "disagree": [],
+ "skipped_no_prior_data": 0,
+ "by_kind": {
+  "PDL": [
+   3,
+   3
+  ],
+  "PDH": [
+   4,
+   4
+  ],
+  "PWL": [
+   1,
+   1
+  ]
+ }
+}
+Note: without the market-hours filter (first run), the two Monday 23 Nov PDH levels disagreed, because the store also holds the feed's carried weekend quotes; production removes them (quantum/data/sources.py trading_week_only) and its cited PDH equals Friday 20 Nov's high.

@@ -25,7 +25,8 @@ ENGINE_ARMS = {"treatment", "control", "challenger"}
 CLOSED_ARMS = {"h6": "Amendment F"}
 arm_key = {}
 for f in glob.glob(os.path.join(B, "holdout", "manifest_*.json")):
-    m = json.load(open(f))
+    with open(f) as fh:
+        m = json.load(fh)
     arm_key[os.path.basename(f)[9:-5]] = {m["freeze_key"]} | {h["freeze_key"] for h in m.get("history", []) if h.get("freeze_key")}
 problems, counts, closed = [], Counter(), Counter()
 seen = defaultdict(set)

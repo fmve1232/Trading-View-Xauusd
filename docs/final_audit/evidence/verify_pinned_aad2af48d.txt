@@ -1,0 +1,27 @@
+commit aad2af48da128691893519c22fe89ff1b7fb451e branch claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-remediation
+started_utc 2026-11-26T11:28:34Z
+python 3.11.18 | numpy 2.4.6 | pandas 3.1.1 | pytest 9.2.0 | os Linux-6.18.44-fc-v880-x86_64-with-glibc2.39
+node v22.23.4
+== python -m pytest -q tests
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+1092 passed, 2 skipped, 2186 warnings in 465.88s (0:07:45)
+== node --test tests/*.mjs
+# tests 20
+# pass 20
+# fail 0
+== freeze key
+1f88aad357497da4:4440d52587f5cc6b
+== sha256sum -c audit/MANIFEST.sha256
+7
+== precheck
+== undeclared
+== order
+== deadcode
+== pinelimits
+== diag_parity
+PASS  Diagnostics engine == Treatment twin engine (3291 code lines, DIAG blocks excluded)
+== inventory
+41 production modules; switches read 47, not passed by the workflow: none; unreferenced: none; tests only: 0
+== actionlint
+actionlint: 0 findings
+finished_utc 2026-11-26T11:36:39Z

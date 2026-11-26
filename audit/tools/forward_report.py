@@ -11,7 +11,8 @@ Per ledger: trades; wins / losses (net points > 0 / < 0); win rate (Wilson 95%);
 factor; mean R with a trade-level and a DAY-CLUSTERED bootstrap 95% interval (trades on the same UTC day are resampled
 together, because they overlap and share the day's move); sum R; maximum drawdown in R; longest losing streak; R per
 trade / its standard deviation (a per-trade ratio, not an annualised Sharpe); average holding time; TP1 reached,
-TP2 exits, stop exits (SL and SL_GAP), break-even and FLIP exits; the trades needed for 80% power to detect a mean of
+TP2 exits, stop exits (SL and SL_GAP), break-even and FLIP exits; the loss tail (worst trade, share of trades below
+-1 R, 1st percentile); the trades needed for 80% power to detect a mean of
 +0.10 R; and the mean R recomputed at a $0.50 and $0.80 spread (the operator's MT5 readings) instead of the
 model's $0.30 (r' = r - (cost' - cost) / |entry - stop|).
 
@@ -140,7 +141,11 @@ def metrics(trades: list, rng) -> dict:
         "mean_r": round(float(r.mean()), 4) if n else None,
         "mean_r_boot95_trades": boot_mean(r, rng), "mean_r_boot95_days": boot_day(r, days, rng),
         "trading_days": len(set(days)), "sum_r": round(float(r.sum()), 3), "max_drawdown_r": round(dd, 3),
-        "longest_losing_streak": best, "r_per_sd": round(float(r.mean() / sd), 4) if n > 1 and sd > 0 else None,
+        "longest_losing_streak": best,
+        "worst_r": round(float(r.min()), 4) if n else None,                       # GA-10: the tail, not only the mean
+        "share_below_minus_1r": round(float((r < -1.0).mean()), 4) if n else None,
+        "r_p01": round(float(np.percentile(r, 1)), 4) if n else None,
+        "r_per_sd": round(float(r.mean() / sd), 4) if n > 1 and sd > 0 else None,
         "avg_hold_min": round(float(np.mean(hold)), 1) if n else None,
         "tp1_reached": int(sum(bool(t.get("tp1_hit")) for t in trades)),
         "exits": dict(sorted(reasons.items())),
