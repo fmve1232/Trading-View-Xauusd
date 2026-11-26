@@ -2280,6 +2280,30 @@
 "cost": 0.77,
 "status": "REJECTED",
 "why": "stop"
+},
+{
+"key": "D|1795710600|1|VWAP|3570.94",
+"module": "D",
+"dir": 1,
+"kind": "VWAP",
+"lv": 3570.94,
+"order_t": 1795710600,
+"order_close": 1795711500,
+"recorded_utc": 1795711753,
+"timely": true,
+"entry_type": "MARKET",
+"limit": null,
+"market": 3573.28,
+"p_ref": 3573.28,
+"stop": 3568.5184,
+"inval": null,
+"false_break": false,
+"vwap": 3579.01,
+"session": "LONDON+NY",
+"ranging": true,
+"vol_ratio": null,
+"cost": 0.77,
+"status": "REPEAT"
 }
 ],
 "days": [
