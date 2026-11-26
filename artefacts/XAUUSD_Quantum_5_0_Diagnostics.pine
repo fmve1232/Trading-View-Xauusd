@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v99   (day rollover = website key)   ║
+// ║  BUILD STAMP — this file last CHANGED in v105  (last 3000 bars: run time)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -76,7 +76,7 @@
 // These are BROKER-SPECIFIC, not universal truths. $7/lot round turn and 0.2 pts/side are
 // mid-range retail ECN gold figures. Replace with your own fills, rerun the derivation
 // above, and keep BOTH arms identical.
-indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000)
+indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=3000)
 // ═══════════════════════════════════════════════════════════════════════════════
 // FILE ROLE: DIAGNOSTICS COMPANION — display only, trades nothing. The engine below is the Treatment twin's, verbatim (audit/tools/diag_parity.py); the diagnostic panel is appended.
 // ═══════════════════════════════════════════════════════════════════════════════

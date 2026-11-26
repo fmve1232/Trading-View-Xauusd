@@ -21,11 +21,11 @@ def at(prefix):
 
 # banner + declaration + role
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v99   (day rollover = website key)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v105  (last 3000 bars: run time)"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Diagnostics", overlay=true, max_lines_count=500, '
-        'max_labels_count=500, max_boxes_count=500, max_bars_back=5000)')
+        'max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=3000)')  # v105: run time
 i = at("// FILE ROLE: A/B TREATMENT ARM")
 L[i] = ("// FILE ROLE: DIAGNOSTICS COMPANION — display only, trades nothing. The engine below is the "
         "Treatment twin's, verbatim (audit/tools/diag_parity.py); the diagnostic panel is appended.")

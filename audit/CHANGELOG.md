@@ -3765,3 +3765,28 @@ Visuals' strip shows the POC under PRICE. If the strip sits too low, set Visuals
 Master dashboard" (a saved 24 stays 24).
 
 **Not run:** the TradingView compile and rendering of v104 (the Master changed: please report the compile).
+
+# v105 — the chart scripts calculate on the last 3000 bars (F-A94, run-time limit) (2026-11-26)
+
+**Operator's screenshots:** the Master and Visuals (QV2) show "Script takes too long to calculate" (TradingView's
+run-time limit, 20 s on the Basic plan) and an upgrade offer. Both scripts had shown the "Heavy script" warning since
+v39 / v68. v104 only removed work, so the limit was crossed by load (bars loaded, server time), not by a v104 addition.
+
+**Fix (`fix_v105.py`; Brief / Diagnostics through `build_brief.py` / `build_diag.py`):** `calc_bars_count = 3000` in the
+declaration of all four chart scripts. TradingView's own advice for this error is to limit the bars a script runs on;
+run time falls in proportion to the bars the chart had loaded.
+- 3000 bars = about 31 trading days on 15m, 10 days on 5m, 4 months on 1H.
+- The engine fits: its longest chart-timeframe window is 200 bars; the stats ring buffer on 15m is 3000 records
+  (about 2,930 are filled); daily / weekly / monthly requests read their own timeframe's history.
+- No formula, threshold, input or display changed. Statistics counted over the loaded history (the engine's history
+  sample, the H2 card's record, the BRACKET row, the CHURN count) now count the last 3000 bars. The forward record is
+  the website's (A7) and is typed in.
+- The strategy arms (repo set, not on the chart) are unchanged; A/B hunks unchanged.
+
+**Checks:** `v105_check.py` (new): the same value in all four chart scripts and none in the arms; the longest literal
+window ≤ a tenth of it and HIST_MAX(15m) ≤ it; Brief / Diagnostics rebuilt byte for byte; controls. `refactor_check`
+chain + `fix_v105.master`. Every checker passes; `pine_web_parity.py` NOT RUN here (numpy is not installed in this
+container; the probability blocks did not change).
+
+**Not run:** TradingView's run time. If the error remains, the next step is measured, not guessed: open the script in
+the Pine Editor, turn on the Profiler, and send the screenshot of its slowest lines.

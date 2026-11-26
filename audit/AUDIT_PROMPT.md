@@ -18,17 +18,17 @@ scope, and no other build of these scripts is in scope.
 
 | File | Lines | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5911 | 387092 | `9a1f91a76cb8ef726290db157be10f1f7dbcea077f82789947d507d1855ed6c4` |
+| `artefacts/XAUUSD_Quantum_5_0_Master.pine` | 5911 | 387114 | `259af0ad67509cf602b3e42ee28d4698feac35d8531334ce50173b935048546b` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy.pine` | 5432 | 346329 | `6e8fedde7d3fd065058c55cf5b22c93a4b566236ef49b32ef3b564cff07e1744` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine` | 5432 | 346394 | `e4646aac97248e7afb1eb1951e856e6e81dfe77c7a1c8c37ad4574dbaeec56f0` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine` | 5443 | 347313 | `30b00b7179fe8a31851fb76a072e5d9bca2709b8bfc1d793d78fd820c31d0b3a` |
 | `artefacts/XAUUSD_Quantum_5_0_Strategy_H2.pine` | 374 | 26827 | `d5b6aa5436ebfbec052c28054c0ff9a25336e7eaae3099f2e3e01bbd11ca6214` |
 | `artefacts/XAUUSD_Quantum_5_0_EdgeCases.pine` | 401 | 29668 | `2007716791180f4e6e43ea1cde135cf9673b4f45d87bc33cdf3379b12fff1354` |
-| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2501 | 189580 | `1725bf581236f1abe967cc9e54886e593e813fa7bf3905f7f866c869c309463f` |
-| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5669 | 363420 | `b877eb0949f65c801b627761ec868e99d36635e91ffbf45ad01f75a002835bb6` |
-| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5656 | 363128 | `5e133fc408b02b2272dda7c2927096b422fa70617585e771a77a94152c991ab6` |
+| `artefacts/XAUUSD_Quantum_5_5_Visuals.pine` | 2501 | 189604 | `8d110994b962f462a1dbd85e9a78c07382b38d509c13e05114db9fb67e1c185c` |
+| `artefacts/XAUUSD_Quantum_5_0_Diagnostics.pine` | 5669 | 363442 | `853f72cdc15ab82a6874005394332416cf2f5ddeb7c468e4ee7bec00bfa27e95` |
+| `artefacts/XAUUSD_Quantum_5_0_Brief.pine` | 5656 | 363150 | `27007963050540ad81bf857dedf3f45ba347a7187f1601b7a00f5a6ea487a312` |
 
-> **BUILD v104 — this prompt pins the current build.** The originally audited build
+> **BUILD v105 — this prompt pins the current build.** The originally audited build
 > (v1) is superseded. Findings F-A01, F-A03, F-A04 and F-A06 from
 > `FINDINGS_TRACEABILITY.md` were applied in v2; **F-A07 in v3** (marked basis);
 > **F-A02 and F-A05 in v4** via a calibrated-probability veto folded into `tqVeto`; and
@@ -150,6 +150,7 @@ scope, and no other build of these scripts is in scope.
 > **v102:** typed forward records refreshed after the website's web.8 restart (Amendment 15, 2026-11-03): the Brief's four H4 records and Visuals' banner are the web.8 live records as of 2026-11-14 00:55 UTC; the ledger checkers read the live key as of the typed time.
 > **v103:** Visuals' default view is a two-row strip under the Master's dashboard, one cell per Master column (`v103_check.py`); the detail panel, bottom ticker and dock cards are off by default, each with its own switch.
 > **v104:** the Master's H2 text re-wrapped (≤ 4 lines of ≤ 32 characters) into its DECISION footer, removing the dashboard's row 3; the POC number shown once, in Visuals' strip under PRICE (`v104_check.py`); 177 Master tokens fewer.
+> **v105 (F-A94):** the four chart scripts declare `calc_bars_count = 3000` (TradingView's run-time limit; `v105_check.py`); no formula, input or display changed.
 > Data-collection steps: `audit/RUNBOOK.md`.
 >
 > **§4.5 is now CLOSED** — the EdgeCases citations it documents as stale have been
