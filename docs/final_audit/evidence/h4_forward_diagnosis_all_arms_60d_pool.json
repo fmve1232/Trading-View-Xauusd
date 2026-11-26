@@ -1,0 +1,4302 @@
+{
+ "key": "1f88aad357497da4:4440d52587f5cc6b",
+ "freeze_utc": "2026-11-15T11:46:48.501212+00:00",
+ "seed": 20261126,
+ "pseudo_ledgers": 2000,
+ "twin_pool": "last 60 days of bars",
+ "horizon_days": 7.0,
+ "bars_5m_last_utc": 1795701000,
+ "ledgers": {
+  "5m_treatment": {
+   "trades": 17,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 11,
+    "TP2": 4,
+    "BE": 1,
+    "BE_GAP": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.1123,
+    "TP2": 2.0174,
+    "BE": 0.2494,
+    "BE_GAP": 0.2802
+   },
+   "cost": {
+    "mean_net_r": -0.2139,
+    "mean_gross_r": -0.1038,
+    "mean_cost_r": 0.1101,
+    "median_cost_r": 0.12,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 6.41
+   },
+   "replica_agreement": {
+    "checked": 17,
+    "agree": 15,
+    "rate": 0.8824
+   },
+   "no_flip_all": {
+    "mean_r_decided": -0.1143,
+    "outcomes": {
+     "SL": 11,
+     "TP2": 5,
+     "BE": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 17,
+     "target_first": 6,
+     "rate": 0.3529,
+     "wilson95": [
+      0.1731,
+      0.587
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "tp2": {
+     "decided": 17,
+     "target_first": 5,
+     "rate": 0.2941,
+     "wilson95": [
+      0.1328,
+      0.5313
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "usd10": {
+     "decided": 17,
+     "target_first": 8,
+     "rate": 0.4706,
+     "wilson95": [
+      0.2616,
+      0.6904
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "usd15": {
+     "decided": 17,
+     "target_first": 8,
+     "rate": 0.4706,
+     "wilson95": [
+      0.2616,
+      0.6904
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.5
+    },
+    "usd20": {
+     "decided": 17,
+     "target_first": 6,
+     "rate": 0.3529,
+     "wilson95": [
+      0.1731,
+      0.587
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.54
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 8.76,
+    "mfe_before_stop_r_median": 1.128,
+    "share_mfe_ge_10usd": 0.4706,
+    "share_mfe_ge_15usd": 0.4706,
+    "share_mfe_ge_20usd": 0.3529,
+    "mae_in_trade_r_median": 1.058
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 17,
+     "actual": 0.3529,
+     "null_mean": 0.3944,
+     "null_sd": 0.116,
+     "null_95": [
+      0.1765,
+      0.625
+     ],
+     "p_two_sided": 0.7861,
+     "p_normal": 0.7207,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 17,
+     "actual": 0.2941,
+     "null_mean": 0.2789,
+     "null_sd": 0.1087,
+     "null_95": [
+      0.0625,
+      0.5
+     ],
+     "p_two_sided": 0.965,
+     "p_normal": 0.8889,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 17,
+     "actual": 0.4706,
+     "null_mean": 0.498,
+     "null_sd": 0.1161,
+     "null_95": [
+      0.2941,
+      0.7059
+     ],
+     "p_two_sided": 0.9725,
+     "p_normal": 0.8132,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 17,
+     "actual": 0.4706,
+     "null_mean": 0.4132,
+     "null_sd": 0.1176,
+     "null_95": [
+      0.1765,
+      0.6471
+     ],
+     "p_two_sided": 0.7671,
+     "p_normal": 0.6257,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 17,
+     "actual": 0.3529,
+     "null_mean": 0.3542,
+     "null_sd": 0.1134,
+     "null_95": [
+      0.125,
+      0.5882
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.9909,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 17,
+     "actual": -0.1143,
+     "null_mean": 0.067,
+     "null_sd": 0.4733,
+     "null_95": [
+      -0.7309,
+      1.1409
+     ],
+     "p_two_sided": 0.7116,
+     "p_normal": 0.7016,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 936,
+    "median": 1401.0,
+    "max": 1527
+   },
+   "pseudo_ledgers": 2000
+  },
+  "5m_control": {
+   "trades": 2,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 1,
+    "SL": 1
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.8254,
+    "SL": -1.0181
+   },
+   "cost": {
+    "mean_net_r": 0.4036,
+    "mean_gross_r": 0.4728,
+    "mean_cost_r": 0.0691,
+    "median_cost_r": 0.0691,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 24.44
+   },
+   "replica_agreement": {
+    "checked": 2,
+    "agree": 2,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.4037,
+    "outcomes": {
+     "TP2": 1,
+     "SL": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "tp2": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.5
+    },
+    "usd10": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "usd15": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.5
+    },
+    "usd20": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.5
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 79.58,
+    "mfe_before_stop_r_median": 12.151,
+    "share_mfe_ge_10usd": 0.5,
+    "share_mfe_ge_15usd": 0.5,
+    "share_mfe_ge_20usd": 0.5,
+    "mae_in_trade_r_median": 0.755
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 936,
+    "median": 1231.5,
+    "max": 1527
+   },
+   "pseudo_ledgers": 2000
+  },
+  "5m_challenger": {
+   "trades": 13,
+   "entry_bar_missing": 0,
+   "exits": {
+    "BE": 2,
+    "TP2": 3,
+    "SL": 7,
+    "BE_GAP": 1
+   },
+   "mean_r_by_exit": {
+    "BE": 1.1081,
+    "TP2": 2.1942,
+    "SL": -1.1132,
+    "BE_GAP": 0.2802
+   },
+   "cost": {
+    "mean_net_r": 0.099,
+    "mean_gross_r": 0.2098,
+    "mean_cost_r": 0.1108,
+    "median_cost_r": 0.1195,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 6.44
+   },
+   "replica_agreement": {
+    "checked": 13,
+    "agree": 11,
+    "rate": 0.8462
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.2292,
+    "outcomes": {
+     "TP2": 4,
+     "SL": 7,
+     "BE": 2
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 13,
+     "target_first": 6,
+     "rate": 0.4615,
+     "wilson95": [
+      0.2321,
+      0.7086
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.88
+    },
+    "tp2": {
+     "decided": 13,
+     "target_first": 4,
+     "rate": 0.3077,
+     "wilson95": [
+      0.1268,
+      0.5763
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "usd10": {
+     "decided": 13,
+     "target_first": 8,
+     "rate": 0.6154,
+     "wilson95": [
+      0.3552,
+      0.8229
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "usd15": {
+     "decided": 13,
+     "target_first": 8,
+     "rate": 0.6154,
+     "wilson95": [
+      0.3552,
+      0.8229
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.75
+    },
+    "usd20": {
+     "decided": 13,
+     "target_first": 6,
+     "rate": 0.4615,
+     "wilson95": [
+      0.2321,
+      0.7086
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.88
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 18.08,
+    "mfe_before_stop_r_median": 2.806,
+    "share_mfe_ge_10usd": 0.6154,
+    "share_mfe_ge_15usd": 0.6154,
+    "share_mfe_ge_20usd": 0.4615,
+    "mae_in_trade_r_median": 1.045
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 13,
+     "actual": 0.4615,
+     "null_mean": 0.4088,
+     "null_sd": 0.1289,
+     "null_95": [
+      0.1667,
+      0.6923
+     ],
+     "p_two_sided": 0.7536,
+     "p_normal": 0.6826,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 13,
+     "actual": 0.3077,
+     "null_mean": 0.2805,
+     "null_sd": 0.1254,
+     "null_95": [
+      0.0769,
+      0.5385
+     ],
+     "p_two_sided": 0.9635,
+     "p_normal": 0.8283,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 13,
+     "actual": 0.6154,
+     "null_mean": 0.4984,
+     "null_sd": 0.1311,
+     "null_95": [
+      0.2308,
+      0.7692
+     ],
+     "p_two_sided": 0.3768,
+     "p_normal": 0.3719,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 13,
+     "actual": 0.6154,
+     "null_mean": 0.4163,
+     "null_sd": 0.1294,
+     "null_95": [
+      0.1538,
+      0.6923
+     ],
+     "p_two_sided": 0.1399,
+     "p_normal": 0.124,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 13,
+     "actual": 0.4615,
+     "null_mean": 0.3541,
+     "null_sd": 0.125,
+     "null_95": [
+      0.1538,
+      0.6154
+     ],
+     "p_two_sided": 0.4778,
+     "p_normal": 0.3902,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 13,
+     "actual": 0.2292,
+     "null_mean": 0.016,
+     "null_sd": 0.4585,
+     "null_95": [
+      -0.795,
+      0.9864
+     ],
+     "p_two_sided": 0.6477,
+     "p_normal": 0.642,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 936,
+    "median": 1401.0,
+    "max": 1527
+   },
+   "pseudo_ledgers": 2000
+  },
+  "5m_h2": {
+   "trades": 4,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 3,
+    "TP2": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.0347,
+    "TP2": 1.0913
+   },
+   "cost": {
+    "mean_net_r": -0.5032,
+    "mean_gross_r": -0.4437,
+    "mean_cost_r": 0.0595,
+    "median_cost_r": 0.0434,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 18.71
+   },
+   "replica_agreement": {
+    "checked": 4,
+    "agree": 4,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -0.5032,
+    "outcomes": {
+     "SL": 3,
+     "TP2": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 4,
+     "target_first": 1,
+     "rate": 0.25,
+     "wilson95": [
+      0.0456,
+      0.6994
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.67
+    },
+    "tp2": {
+     "decided": 4,
+     "target_first": 1,
+     "rate": 0.25,
+     "wilson95": [
+      0.0456,
+      0.6994
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.83
+    },
+    "usd10": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.25
+    },
+    "usd15": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.92
+    },
+    "usd20": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.92
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 23.41,
+    "mfe_before_stop_r_median": 0.668,
+    "share_mfe_ge_10usd": 0.75,
+    "share_mfe_ge_15usd": 0.5,
+    "share_mfe_ge_20usd": 0.5,
+    "mae_in_trade_r_median": 1.031
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 1365,
+    "median": 1454.5,
+    "max": 1490
+   },
+   "pseudo_ledgers": 2000
+  },
+  "5m_h3": {
+   "trades": 8,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 4,
+    "TP2": 3,
+    "BE": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.1657,
+    "TP2": 3.6242,
+    "BE": 0.7127
+   },
+   "cost": {
+    "mean_net_r": 0.8653,
+    "mean_gross_r": 1.0224,
+    "mean_cost_r": 0.157,
+    "median_cost_r": 0.1635,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 4.71
+   },
+   "replica_agreement": {
+    "checked": 8,
+    "agree": 8,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.8653,
+    "outcomes": {
+     "SL": 4,
+     "TP2": 3,
+     "BE": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 8,
+     "target_first": 4,
+     "rate": 0.5,
+     "wilson95": [
+      0.2152,
+      0.7848
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.96
+    },
+    "tp2": {
+     "decided": 8,
+     "target_first": 3,
+     "rate": 0.375,
+     "wilson95": [
+      0.1368,
+      0.6943
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.25
+    },
+    "usd10": {
+     "decided": 8,
+     "target_first": 6,
+     "rate": 0.75,
+     "wilson95": [
+      0.4093,
+      0.9285
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.67
+    },
+    "usd15": {
+     "decided": 8,
+     "target_first": 4,
+     "rate": 0.5,
+     "wilson95": [
+      0.2152,
+      0.7848
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.0
+    },
+    "usd20": {
+     "decided": 8,
+     "target_first": 4,
+     "rate": 0.5,
+     "wilson95": [
+      0.2152,
+      0.7848
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.54
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 24.16,
+    "mfe_before_stop_r_median": 3.424,
+    "share_mfe_ge_10usd": 0.75,
+    "share_mfe_ge_15usd": 0.5,
+    "share_mfe_ge_20usd": 0.5,
+    "mae_in_trade_r_median": 1.012
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 8,
+     "actual": 0.5,
+     "null_mean": 0.359,
+     "null_sd": 0.161,
+     "null_95": [
+      0.125,
+      0.7143
+     ],
+     "p_two_sided": 0.4433,
+     "p_normal": 0.3811,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 8,
+     "actual": 0.375,
+     "null_mean": 0.2744,
+     "null_sd": 0.1575,
+     "null_95": [
+      0.0,
+      0.625
+     ],
+     "p_two_sided": 0.7001,
+     "p_normal": 0.5229,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 8,
+     "actual": 0.75,
+     "null_mean": 0.4175,
+     "null_sd": 0.1728,
+     "null_95": [
+      0.125,
+      0.75
+     ],
+     "p_two_sided": 0.0695,
+     "p_normal": 0.05436,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 8,
+     "actual": 0.5,
+     "null_mean": 0.3327,
+     "null_sd": 0.1643,
+     "null_95": [
+      0.0,
+      0.625
+     ],
+     "p_two_sided": 0.4573,
+     "p_normal": 0.3087,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 8,
+     "actual": 0.5,
+     "null_mean": 0.2742,
+     "null_sd": 0.1576,
+     "null_95": [
+      0.0,
+      0.625
+     ],
+     "p_two_sided": 0.2284,
+     "p_normal": 0.1519,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 8,
+     "actual": 0.8653,
+     "null_mean": -0.0228,
+     "null_sd": 0.6203,
+     "null_95": [
+      -0.9696,
+      1.3019
+     ],
+     "p_two_sided": 0.1514,
+     "p_normal": 0.1522,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 1307,
+    "median": 1389.0,
+    "max": 1564
+   },
+   "pseudo_ledgers": 2000
+  },
+  "5m_h4": {
+   "trades": 413,
+   "entry_bar_missing": 0,
+   "exits": {
+    "BE": 25,
+    "FLIP": 265,
+    "SL": 57,
+    "TP2": 62,
+    "BE_GAP": 4
+   },
+   "mean_r_by_exit": {
+    "BE": 0.2553,
+    "FLIP": -0.219,
+    "SL": -1.073,
+    "TP2": 0.9138,
+    "BE_GAP": -0.0371
+   },
+   "cost": {
+    "mean_net_r": -0.1363,
+    "mean_gross_r": -0.0371,
+    "mean_cost_r": 0.0992,
+    "median_cost_r": 0.0906,
+    "gross_gain_net_loss": 11,
+    "median_stop_usd": 9.23
+   },
+   "replica_agreement": {
+    "checked": 148,
+    "agree": 147,
+    "rate": 0.9932
+   },
+   "flip_counterfactual": {
+    "flips": 265,
+    "held_outcome": {
+     "SL": 165,
+     "TP2": 52,
+     "BE": 40,
+     "BE_GAP": 4,
+     "OPEN_AT_HORIZON": 4
+    },
+    "mean_realised_r": -0.219,
+    "mean_held_r_decided": -0.2457,
+    "mean_held_r_all_marked": -0.236,
+    "held_better": 82,
+    "held_worse": 183,
+    "tp1_done_before_flip_in_replica": 96
+   },
+   "no_flip_all": {
+    "mean_r_decided": -0.1592,
+    "outcomes": {
+     "BE": 65,
+     "SL": 222,
+     "TP2": 114,
+     "BE_GAP": 8,
+     "OPEN_AT_HORIZON": 4
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 409,
+     "target_first": 187,
+     "rate": 0.4572,
+     "wilson95": [
+      0.4096,
+      0.5057
+     ],
+     "undecided": 4,
+     "median_hours_to_target": 0.42
+    },
+    "tp2": {
+     "decided": 406,
+     "target_first": 127,
+     "rate": 0.3128,
+     "wilson95": [
+      0.2696,
+      0.3595
+     ],
+     "undecided": 7,
+     "median_hours_to_target": 0.75
+    },
+    "usd10": {
+     "decided": 411,
+     "target_first": 189,
+     "rate": 0.4599,
+     "wilson95": [
+      0.4123,
+      0.5082
+     ],
+     "undecided": 2,
+     "median_hours_to_target": 0.58
+    },
+    "usd15": {
+     "decided": 410,
+     "target_first": 156,
+     "rate": 0.3805,
+     "wilson95": [
+      0.3348,
+      0.4284
+     ],
+     "undecided": 3,
+     "median_hours_to_target": 0.92
+    },
+    "usd20": {
+     "decided": 409,
+     "target_first": 133,
+     "rate": 0.3252,
+     "wilson95": [
+      0.2816,
+      0.372
+     ],
+     "undecided": 4,
+     "median_hours_to_target": 1.5
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 8.6,
+    "mfe_before_stop_r_median": 0.989,
+    "share_mfe_ge_10usd": 0.4576,
+    "share_mfe_ge_15usd": 0.3777,
+    "share_mfe_ge_20usd": 0.322,
+    "mae_in_trade_r_median": 0.443
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 409,
+     "actual": 0.4572,
+     "null_mean": 0.4656,
+     "null_sd": 0.0234,
+     "null_95": [
+      0.4194,
+      0.5112
+     ],
+     "p_two_sided": 0.7176,
+     "p_normal": 0.7195,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 406,
+     "actual": 0.3128,
+     "null_mean": 0.3372,
+     "null_sd": 0.0218,
+     "null_95": [
+      0.2954,
+      0.3819
+     ],
+     "p_two_sided": 0.2629,
+     "p_normal": 0.2636,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 411,
+     "actual": 0.4599,
+     "null_mean": 0.4893,
+     "null_sd": 0.0241,
+     "null_95": [
+      0.4425,
+      0.5355
+     ],
+     "p_two_sided": 0.2339,
+     "p_normal": 0.2222,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 410,
+     "actual": 0.3805,
+     "null_mean": 0.3931,
+     "null_sd": 0.0232,
+     "null_95": [
+      0.349,
+      0.4398
+     ],
+     "p_two_sided": 0.5857,
+     "p_normal": 0.585,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 409,
+     "actual": 0.3252,
+     "null_mean": 0.3291,
+     "null_sd": 0.0227,
+     "null_95": [
+      0.2861,
+      0.3744
+     ],
+     "p_two_sided": 0.8631,
+     "p_normal": 0.8632,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 409,
+     "actual": -0.1592,
+     "null_mean": -0.1154,
+     "null_sd": 0.0738,
+     "null_95": [
+      -0.2511,
+      0.0341
+     ],
+     "p_two_sided": 0.5457,
+     "p_normal": 0.553,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 922,
+    "median": 1401.0,
+    "max": 1570
+   },
+   "pseudo_ledgers": 2000
+  },
+  "5m_h5": {
+   "trades": 7,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 6,
+    "TP2": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.1045,
+    "TP2": 1.8254
+   },
+   "cost": {
+    "mean_net_r": -0.686,
+    "mean_gross_r": -0.5792,
+    "mean_cost_r": 0.1067,
+    "median_cost_r": 0.1177,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 6.54
+   },
+   "replica_agreement": {
+    "checked": 7,
+    "agree": 7,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -0.6859,
+    "outcomes": {
+     "SL": 6,
+     "TP2": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "tp2": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.5
+    },
+    "usd10": {
+     "decided": 7,
+     "target_first": 2,
+     "rate": 0.2857,
+     "wilson95": [
+      0.0822,
+      0.6411
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.75
+    },
+    "usd15": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.5
+    },
+    "usd20": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.5
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 2.36,
+    "mfe_before_stop_r_median": 0.274,
+    "share_mfe_ge_10usd": 0.2857,
+    "share_mfe_ge_15usd": 0.1429,
+    "share_mfe_ge_20usd": 0.1429,
+    "mae_in_trade_r_median": 1.058
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 7,
+     "actual": 0.1429,
+     "null_mean": 0.3372,
+     "null_sd": 0.1789,
+     "null_95": [
+      0.0,
+      0.7143
+     ],
+     "p_two_sided": 0.3133,
+     "p_normal": 0.2774,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 7,
+     "actual": 0.1429,
+     "null_mean": 0.2526,
+     "null_sd": 0.1721,
+     "null_95": [
+      0.0,
+      0.6667
+     ],
+     "p_two_sided": 0.4708,
+     "p_normal": 0.5238,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 7,
+     "actual": 0.2857,
+     "null_mean": 0.4876,
+     "null_sd": 0.1793,
+     "null_95": [
+      0.1429,
+      0.8571
+     ],
+     "p_two_sided": 0.4153,
+     "p_normal": 0.2603,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 7,
+     "actual": 0.1429,
+     "null_mean": 0.4,
+     "null_sd": 0.1755,
+     "null_95": [
+      0.1429,
+      0.7143
+     ],
+     "p_two_sided": 0.2069,
+     "p_normal": 0.1429,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 7,
+     "actual": 0.1429,
+     "null_mean": 0.3359,
+     "null_sd": 0.1679,
+     "null_95": [
+      0.0,
+      0.7143
+     ],
+     "p_two_sided": 0.3398,
+     "p_normal": 0.2504,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 7,
+     "actual": -0.6859,
+     "null_mean": 0.0609,
+     "null_sd": 0.8975,
+     "null_95": [
+      -1.1215,
+      2.2514
+     ],
+     "p_two_sided": 0.3783,
+     "p_normal": 0.4053,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 936,
+    "median": 1417.0,
+    "max": 1527
+   },
+   "pseudo_ledgers": 2000
+  },
+  "15m_treatment": {
+   "trades": 6,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 2,
+    "SL": 3,
+    "BE_GAP": 1
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.1837,
+    "SL": -1.0456,
+    "BE_GAP": 0.8388
+   },
+   "cost": {
+    "mean_net_r": 0.0116,
+    "mean_gross_r": 0.0642,
+    "mean_cost_r": 0.0526,
+    "median_cost_r": 0.0504,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 15.47
+   },
+   "replica_agreement": {
+    "checked": 6,
+    "agree": 5,
+    "rate": 0.8333
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.0632,
+    "outcomes": {
+     "TP2": 2,
+     "SL": 3,
+     "BE": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 6,
+     "target_first": 3,
+     "rate": 0.5,
+     "wilson95": [
+      0.1876,
+      0.8124
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 3.25
+    },
+    "tp2": {
+     "decided": 6,
+     "target_first": 2,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0968,
+      0.7
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.96
+    },
+    "usd10": {
+     "decided": 6,
+     "target_first": 4,
+     "rate": 0.6667,
+     "wilson95": [
+      0.3,
+      0.9032
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "usd15": {
+     "decided": 6,
+     "target_first": 3,
+     "rate": 0.5,
+     "wilson95": [
+      0.1876,
+      0.8124
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.42
+    },
+    "usd20": {
+     "decided": 6,
+     "target_first": 3,
+     "rate": 0.5,
+     "wilson95": [
+      0.1876,
+      0.8124
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.58
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 35.64,
+    "mfe_before_stop_r_median": 1.805,
+    "share_mfe_ge_10usd": 0.6667,
+    "share_mfe_ge_15usd": 0.5,
+    "share_mfe_ge_20usd": 0.5,
+    "mae_in_trade_r_median": 0.849
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 6,
+     "actual": 0.5,
+     "null_mean": 0.4828,
+     "null_sd": 0.1951,
+     "null_95": [
+      0.1667,
+      0.8333
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.9296,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 6,
+     "actual": 0.3333,
+     "null_mean": 0.3598,
+     "null_sd": 0.1903,
+     "null_95": [
+      0.0,
+      0.6667
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.8894,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 6,
+     "actual": 0.6667,
+     "null_mean": 0.6617,
+     "null_sd": 0.1866,
+     "null_95": [
+      0.3333,
+      1.0
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.9786,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 6,
+     "actual": 0.5,
+     "null_mean": 0.5643,
+     "null_sd": 0.194,
+     "null_95": [
+      0.1667,
+      1.0
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.7405,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 6,
+     "actual": 0.5,
+     "null_mean": 0.4709,
+     "null_sd": 0.194,
+     "null_95": [
+      0.1667,
+      0.8333
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.8808,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 6,
+     "actual": 0.0632,
+     "null_mean": 0.1102,
+     "null_sd": 0.5491,
+     "null_95": [
+      -0.807,
+      1.27
+     ],
+     "p_two_sided": 0.949,
+     "p_normal": 0.9318,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 453,
+    "median": 468.5,
+    "max": 485
+   },
+   "pseudo_ledgers": 2000
+  },
+  "15m_control": {
+   "trades": 1,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.036
+   },
+   "cost": {
+    "mean_net_r": -1.036,
+    "mean_gross_r": -1.0,
+    "mean_cost_r": 0.036,
+    "median_cost_r": 0.036,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 21.39
+   },
+   "replica_agreement": {
+    "checked": 1,
+    "agree": 1,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.036,
+    "outcomes": {
+     "SL": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.25
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 11.18,
+    "mfe_before_stop_r_median": 0.523,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 0.0,
+    "share_mfe_ge_20usd": 0.0,
+    "mae_in_trade_r_median": 1.012
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 465,
+    "median": 465.0,
+    "max": 465
+   },
+   "pseudo_ledgers": 2000
+  },
+  "15m_challenger": {
+   "trades": 6,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 2,
+    "SL": 3,
+    "BE_GAP": 1
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.1837,
+    "SL": -1.0456,
+    "BE_GAP": 0.8388
+   },
+   "cost": {
+    "mean_net_r": 0.0116,
+    "mean_gross_r": 0.0642,
+    "mean_cost_r": 0.0526,
+    "median_cost_r": 0.0504,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 15.47
+   },
+   "replica_agreement": {
+    "checked": 6,
+    "agree": 5,
+    "rate": 0.8333
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.0632,
+    "outcomes": {
+     "TP2": 2,
+     "SL": 3,
+     "BE": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 6,
+     "target_first": 3,
+     "rate": 0.5,
+     "wilson95": [
+      0.1876,
+      0.8124
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 3.25
+    },
+    "tp2": {
+     "decided": 6,
+     "target_first": 2,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0968,
+      0.7
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.96
+    },
+    "usd10": {
+     "decided": 6,
+     "target_first": 4,
+     "rate": 0.6667,
+     "wilson95": [
+      0.3,
+      0.9032
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    },
+    "usd15": {
+     "decided": 6,
+     "target_first": 3,
+     "rate": 0.5,
+     "wilson95": [
+      0.1876,
+      0.8124
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.42
+    },
+    "usd20": {
+     "decided": 6,
+     "target_first": 3,
+     "rate": 0.5,
+     "wilson95": [
+      0.1876,
+      0.8124
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.58
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 35.64,
+    "mfe_before_stop_r_median": 1.805,
+    "share_mfe_ge_10usd": 0.6667,
+    "share_mfe_ge_15usd": 0.5,
+    "share_mfe_ge_20usd": 0.5,
+    "mae_in_trade_r_median": 0.849
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 6,
+     "actual": 0.5,
+     "null_mean": 0.4895,
+     "null_sd": 0.1947,
+     "null_95": [
+      0.1667,
+      0.8333
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.9568,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 6,
+     "actual": 0.3333,
+     "null_mean": 0.3693,
+     "null_sd": 0.1945,
+     "null_95": [
+      0.0,
+      0.8333
+     ],
+     "p_two_sided": 0.9905,
+     "p_normal": 0.8532,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 6,
+     "actual": 0.6667,
+     "null_mean": 0.672,
+     "null_sd": 0.1852,
+     "null_95": [
+      0.3333,
+      1.0
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.977,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 6,
+     "actual": 0.5,
+     "null_mean": 0.5733,
+     "null_sd": 0.1929,
+     "null_95": [
+      0.1667,
+      1.0
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.7039,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 6,
+     "actual": 0.5,
+     "null_mean": 0.4818,
+     "null_sd": 0.1929,
+     "null_95": [
+      0.1667,
+      0.8333
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.9246,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 6,
+     "actual": 0.0632,
+     "null_mean": 0.1182,
+     "null_sd": 0.5537,
+     "null_95": [
+      -0.807,
+      1.2442
+     ],
+     "p_two_sided": 0.94,
+     "p_normal": 0.9208,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 453,
+    "median": 468.5,
+    "max": 485
+   },
+   "pseudo_ledgers": 2000
+  },
+  "15m_h3": {
+   "trades": 3,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 3
+   },
+   "mean_r_by_exit": {
+    "SL": -1.0813
+   },
+   "cost": {
+    "mean_net_r": -1.0813,
+    "mean_gross_r": -1.0,
+    "mean_cost_r": 0.0813,
+    "median_cost_r": 0.0933,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 10.39
+   },
+   "replica_agreement": {
+    "checked": 3,
+    "agree": 3,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.0813,
+    "outcomes": {
+     "SL": 3
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd15": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd20": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 5.34,
+    "mfe_before_stop_r_median": 0.514,
+    "share_mfe_ge_10usd": 0.0,
+    "share_mfe_ge_15usd": 0.0,
+    "share_mfe_ge_20usd": 0.0,
+    "mae_in_trade_r_median": 2.187
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 457,
+    "median": 508.0,
+    "max": 521
+   },
+   "pseudo_ledgers": 2000
+  },
+  "15m_h4": {
+   "trades": 149,
+   "entry_bar_missing": 0,
+   "exits": {
+    "FLIP": 92,
+    "SL": 20,
+    "TP2": 29,
+    "BE": 7,
+    "BE_GAP": 1
+   },
+   "mean_r_by_exit": {
+    "FLIP": -0.1797,
+    "SL": -1.0691,
+    "TP2": 0.9403,
+    "BE": 0.1692,
+    "BE_GAP": -0.1508
+   },
+   "cost": {
+    "mean_net_r": -0.0645,
+    "mean_gross_r": -0.0071,
+    "mean_cost_r": 0.0574,
+    "median_cost_r": 0.0511,
+    "gross_gain_net_loss": 4,
+    "median_stop_usd": 16.34
+   },
+   "replica_agreement": {
+    "checked": 57,
+    "agree": 57,
+    "rate": 1.0
+   },
+   "flip_counterfactual": {
+    "flips": 92,
+    "held_outcome": {
+     "BE": 12,
+     "SL": 51,
+     "TP2": 23,
+     "BE_GAP": 2,
+     "OPEN_AT_HORIZON": 4
+    },
+    "mean_realised_r": -0.1797,
+    "mean_held_r_decided": -0.1009,
+    "mean_held_r_all_marked": -0.0819,
+    "held_better": 35,
+    "held_worse": 57,
+    "tp1_done_before_flip_in_replica": 38
+   },
+   "no_flip_all": {
+    "mean_r_decided": -0.0135,
+    "outcomes": {
+     "BE": 19,
+     "SL": 71,
+     "TP2": 52,
+     "BE_GAP": 3,
+     "OPEN_AT_HORIZON": 4
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 146,
+     "target_first": 75,
+     "rate": 0.5137,
+     "wilson95": [
+      0.4333,
+      0.5934
+     ],
+     "undecided": 3,
+     "median_hours_to_target": 1.08
+    },
+    "tp2": {
+     "decided": 142,
+     "target_first": 54,
+     "rate": 0.3803,
+     "wilson95": [
+      0.3046,
+      0.4623
+     ],
+     "undecided": 7,
+     "median_hours_to_target": 2.25
+    },
+    "usd10": {
+     "decided": 149,
+     "target_first": 90,
+     "rate": 0.604,
+     "wilson95": [
+      0.5238,
+      0.679
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.67
+    },
+    "usd15": {
+     "decided": 149,
+     "target_first": 80,
+     "rate": 0.5369,
+     "wilson95": [
+      0.4569,
+      0.615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.17
+    },
+    "usd20": {
+     "decided": 149,
+     "target_first": 71,
+     "rate": 0.4765,
+     "wilson95": [
+      0.3979,
+      0.5563
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.75
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 17.81,
+    "mfe_before_stop_r_median": 1.026,
+    "share_mfe_ge_10usd": 0.604,
+    "share_mfe_ge_15usd": 0.5369,
+    "share_mfe_ge_20usd": 0.4765,
+    "mae_in_trade_r_median": 0.406
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 146,
+     "actual": 0.5137,
+     "null_mean": 0.4992,
+     "null_sd": 0.0405,
+     "null_95": [
+      0.4184,
+      0.5767
+     ],
+     "p_two_sided": 0.7246,
+     "p_normal": 0.7209,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 142,
+     "actual": 0.3803,
+     "null_mean": 0.3992,
+     "null_sd": 0.0392,
+     "null_95": [
+      0.3212,
+      0.4745
+     ],
+     "p_two_sided": 0.6352,
+     "p_normal": 0.6289,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 149,
+     "actual": 0.604,
+     "null_mean": 0.6253,
+     "null_sd": 0.0388,
+     "null_95": [
+      0.5503,
+      0.6987
+     ],
+     "p_two_sided": 0.5717,
+     "p_normal": 0.584,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 149,
+     "actual": 0.5369,
+     "null_mean": 0.5308,
+     "null_sd": 0.0399,
+     "null_95": [
+      0.4527,
+      0.6081
+     ],
+     "p_two_sided": 0.8916,
+     "p_normal": 0.8793,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 149,
+     "actual": 0.4765,
+     "null_mean": 0.4615,
+     "null_sd": 0.0408,
+     "null_95": [
+      0.3793,
+      0.5379
+     ],
+     "p_two_sided": 0.7071,
+     "p_normal": 0.7123,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 145,
+     "actual": -0.0135,
+     "null_mean": -0.0523,
+     "null_sd": 0.0999,
+     "null_95": [
+      -0.2496,
+      0.1418
+     ],
+     "p_two_sided": 0.7096,
+     "p_normal": 0.6981,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 305,
+    "median": 465.0,
+    "max": 522
+   },
+   "pseudo_ledgers": 2000
+  },
+  "30m_treatment": {
+   "trades": 3,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 3
+   },
+   "mean_r_by_exit": {
+    "SL": -1.0393
+   },
+   "cost": {
+    "mean_net_r": -1.0393,
+    "mean_gross_r": -1.0,
+    "mean_cost_r": 0.0393,
+    "median_cost_r": 0.0412,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 18.71
+   },
+   "replica_agreement": {
+    "checked": 3,
+    "agree": 3,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.0393,
+    "outcomes": {
+     "SL": 3
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 3,
+     "target_first": 2,
+     "rate": 0.6667,
+     "wilson95": [
+      0.2077,
+      0.9385
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.08
+    },
+    "usd15": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.17
+    },
+    "usd20": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.42
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 13.13,
+    "mfe_before_stop_r_median": 0.702,
+    "share_mfe_ge_10usd": 0.6667,
+    "share_mfe_ge_15usd": 0.3333,
+    "share_mfe_ge_20usd": 0.3333,
+    "mae_in_trade_r_median": 1.663
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 227,
+    "median": 235.0,
+    "max": 253
+   },
+   "pseudo_ledgers": 2000
+  },
+  "30m_control": {
+   "trades": 2,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL_GAP": 1,
+    "SL": 1
+   },
+   "mean_r_by_exit": {
+    "SL_GAP": -2.1835,
+    "SL": -1.0412
+   },
+   "cost": {
+    "mean_net_r": -1.6123,
+    "mean_gross_r": -1.5789,
+    "mean_cost_r": 0.0334,
+    "median_cost_r": 0.0334,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 24.37
+   },
+   "replica_agreement": {
+    "checked": 2,
+    "agree": 1,
+    "rate": 0.5
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.0334,
+    "outcomes": {
+     "SL": 2
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 2,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 2,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.08
+    },
+    "usd15": {
+     "decided": 2,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd20": {
+     "decided": 2,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 10.24,
+    "mfe_before_stop_r_median": 0.473,
+    "share_mfe_ge_10usd": 0.5,
+    "share_mfe_ge_15usd": 0.0,
+    "share_mfe_ge_20usd": 0.0,
+    "mae_in_trade_r_median": 1.981
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 2,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 236,
+    "median": 244.5,
+    "max": 253
+   },
+   "pseudo_ledgers": 2000
+  },
+  "30m_challenger": {
+   "trades": 3,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 3
+   },
+   "mean_r_by_exit": {
+    "SL": -1.0393
+   },
+   "cost": {
+    "mean_net_r": -1.0393,
+    "mean_gross_r": -1.0,
+    "mean_cost_r": 0.0393,
+    "median_cost_r": 0.0412,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 18.71
+   },
+   "replica_agreement": {
+    "checked": 3,
+    "agree": 3,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.0393,
+    "outcomes": {
+     "SL": 3
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 3,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.5615
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 3,
+     "target_first": 2,
+     "rate": 0.6667,
+     "wilson95": [
+      0.2077,
+      0.9385
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.08
+    },
+    "usd15": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.17
+    },
+    "usd20": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.42
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 13.13,
+    "mfe_before_stop_r_median": 0.702,
+    "share_mfe_ge_10usd": 0.6667,
+    "share_mfe_ge_15usd": 0.3333,
+    "share_mfe_ge_20usd": 0.3333,
+    "mae_in_trade_r_median": 1.663
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 3,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 227,
+    "median": 235.0,
+    "max": 253
+   },
+   "pseudo_ledgers": 2000
+  },
+  "30m_h2": {
+   "trades": 1,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.0396
+   },
+   "cost": {
+    "mean_net_r": -1.0396,
+    "mean_gross_r": -1.0,
+    "mean_cost_r": 0.0396,
+    "median_cost_r": 0.0396,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 19.46
+   },
+   "replica_agreement": {
+    "checked": 1,
+    "agree": 1,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.0396,
+    "outcomes": {
+     "SL": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.17
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.25
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 18.08,
+    "mfe_before_stop_r_median": 0.929,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 1.0,
+    "share_mfe_ge_20usd": 0.0,
+    "mae_in_trade_r_median": 1.96
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 241,
+    "median": 241.0,
+    "max": 241
+   },
+   "pseudo_ledgers": 2000
+  },
+  "30m_h3": {
+   "trades": 1,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.048
+   },
+   "cost": {
+    "mean_net_r": -1.048,
+    "mean_gross_r": -1.0,
+    "mean_cost_r": 0.048,
+    "median_cost_r": 0.048,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 20.19
+   },
+   "replica_agreement": {
+    "checked": 1,
+    "agree": 1,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.048,
+    "outcomes": {
+     "SL": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 1.9,
+    "mfe_before_stop_r_median": 0.094,
+    "share_mfe_ge_10usd": 0.0,
+    "share_mfe_ge_15usd": 0.0,
+    "share_mfe_ge_20usd": 0.0,
+    "mae_in_trade_r_median": 3.054
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 185,
+    "median": 185.0,
+    "max": 185
+   },
+   "pseudo_ledgers": 2000
+  },
+  "30m_h4": {
+   "trades": 71,
+   "entry_bar_missing": 0,
+   "exits": {
+    "FLIP": 39,
+    "TP2": 13,
+    "BE": 5,
+    "SL": 14
+   },
+   "mean_r_by_exit": {
+    "FLIP": -0.0747,
+    "TP2": 1.4359,
+    "BE": 0.2464,
+    "SL": -1.0495
+   },
+   "cost": {
+    "mean_net_r": 0.0323,
+    "mean_gross_r": 0.0723,
+    "mean_cost_r": 0.04,
+    "median_cost_r": 0.0391,
+    "gross_gain_net_loss": 1,
+    "median_stop_usd": 22.12
+   },
+   "replica_agreement": {
+    "checked": 32,
+    "agree": 32,
+    "rate": 1.0
+   },
+   "flip_counterfactual": {
+    "flips": 39,
+    "held_outcome": {
+     "BE": 3,
+     "TP2": 12,
+     "SL": 22,
+     "OPEN_AT_HORIZON": 2
+    },
+    "mean_realised_r": -0.0747,
+    "mean_held_r_decided": -0.1578,
+    "mean_held_r_all_marked": -0.1226,
+    "held_better": 15,
+    "held_worse": 24,
+    "tp1_done_before_flip_in_replica": 16
+   },
+   "no_flip_all": {
+    "mean_r_decided": -0.0092,
+    "outcomes": {
+     "BE": 8,
+     "TP2": 25,
+     "SL": 36,
+     "OPEN_AT_HORIZON": 2
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 70,
+     "target_first": 34,
+     "rate": 0.4857,
+     "wilson95": [
+      0.3725,
+      0.6005
+     ],
+     "undecided": 1,
+     "median_hours_to_target": 4.12
+    },
+    "tp2": {
+     "decided": 69,
+     "target_first": 29,
+     "rate": 0.4203,
+     "wilson95": [
+      0.3111,
+      0.5379
+     ],
+     "undecided": 2,
+     "median_hours_to_target": 5.0
+    },
+    "usd10": {
+     "decided": 71,
+     "target_first": 50,
+     "rate": 0.7042,
+     "wilson95": [
+      0.5898,
+      0.7977
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.71
+    },
+    "usd15": {
+     "decided": 71,
+     "target_first": 45,
+     "rate": 0.6338,
+     "wilson95": [
+      0.5176,
+      0.7363
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.5
+    },
+    "usd20": {
+     "decided": 71,
+     "target_first": 39,
+     "rate": 0.5493,
+     "wilson95": [
+      0.434,
+      0.6595
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.67
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 27.55,
+    "mfe_before_stop_r_median": 1.003,
+    "share_mfe_ge_10usd": 0.7042,
+    "share_mfe_ge_15usd": 0.6338,
+    "share_mfe_ge_20usd": 0.5493,
+    "mae_in_trade_r_median": 0.372
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 70,
+     "actual": 0.4857,
+     "null_mean": 0.4925,
+     "null_sd": 0.0578,
+     "null_95": [
+      0.3824,
+      0.6032
+     ],
+     "p_two_sided": 0.948,
+     "p_normal": 0.9059,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 69,
+     "actual": 0.4203,
+     "null_mean": 0.4063,
+     "null_sd": 0.0572,
+     "null_95": [
+      0.2985,
+      0.5168
+     ],
+     "p_two_sided": 0.8101,
+     "p_normal": 0.8065,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 71,
+     "actual": 0.7042,
+     "null_mean": 0.7046,
+     "null_sd": 0.052,
+     "null_95": [
+      0.6,
+      0.8028
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.995,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 71,
+     "actual": 0.6338,
+     "null_mean": 0.6198,
+     "null_sd": 0.0553,
+     "null_95": [
+      0.5143,
+      0.7247
+     ],
+     "p_two_sided": 0.8196,
+     "p_normal": 0.8,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 71,
+     "actual": 0.5493,
+     "null_mean": 0.553,
+     "null_sd": 0.0571,
+     "null_95": [
+      0.4412,
+      0.6667
+     ],
+     "p_two_sided": 0.9595,
+     "p_normal": 0.9482,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 69,
+     "actual": -0.0092,
+     "null_mean": -0.0189,
+     "null_sd": 0.1349,
+     "null_95": [
+      -0.2772,
+      0.2368
+     ],
+     "p_two_sided": 0.934,
+     "p_normal": 0.9422,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 154,
+    "median": 231.0,
+    "max": 259
+   },
+   "pseudo_ledgers": 2000
+  },
+  "1h_treatment": {
+   "trades": 4,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 2,
+    "SL": 2
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.3341,
+    "SL": -1.0193
+   },
+   "cost": {
+    "mean_net_r": 0.1574,
+    "mean_gross_r": 0.183,
+    "mean_cost_r": 0.0256,
+    "median_cost_r": 0.0284,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 27.09
+   },
+   "replica_agreement": {
+    "checked": 4,
+    "agree": 4,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.1574,
+    "outcomes": {
+     "TP2": 2,
+     "SL": 2
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.92
+    },
+    "tp2": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 3.21
+    },
+    "usd10": {
+     "decided": 4,
+     "target_first": 4,
+     "rate": 1.0,
+     "wilson95": [
+      0.5101,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.33
+    },
+    "usd15": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.33
+    },
+    "usd20": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 68.3,
+    "mfe_before_stop_r_median": 2.445,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 0.75,
+    "share_mfe_ge_20usd": 0.75,
+    "mae_in_trade_r_median": 0.855
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 114,
+    "median": 126.0,
+    "max": 126
+   },
+   "pseudo_ledgers": 2000
+  },
+  "1h_control": {
+   "trades": 1,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 1
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.3852
+   },
+   "cost": {
+    "mean_net_r": 1.3852,
+    "mean_gross_r": 1.4137,
+    "mean_cost_r": 0.0285,
+    "median_cost_r": 0.0285,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 27.06
+   },
+   "replica_agreement": {
+    "checked": 1,
+    "agree": 1,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": 1.3853,
+    "outcomes": {
+     "TP2": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 5.42
+    },
+    "tp2": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 5.75
+    },
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 4.08
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 5.0
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 5.33
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 248.25,
+    "mfe_before_stop_r_median": 9.173,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 1.0,
+    "share_mfe_ge_20usd": 1.0,
+    "mae_in_trade_r_median": 0.611
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 114,
+    "median": 114.0,
+    "max": 114
+   },
+   "pseudo_ledgers": 2000
+  },
+  "1h_challenger": {
+   "trades": 4,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 2,
+    "SL": 2
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.3341,
+    "SL": -1.0193
+   },
+   "cost": {
+    "mean_net_r": 0.1574,
+    "mean_gross_r": 0.183,
+    "mean_cost_r": 0.0256,
+    "median_cost_r": 0.0284,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 27.09
+   },
+   "replica_agreement": {
+    "checked": 4,
+    "agree": 4,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.1574,
+    "outcomes": {
+     "TP2": 2,
+     "SL": 2
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.92
+    },
+    "tp2": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 3.21
+    },
+    "usd10": {
+     "decided": 4,
+     "target_first": 4,
+     "rate": 1.0,
+     "wilson95": [
+      0.5101,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.33
+    },
+    "usd15": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.33
+    },
+    "usd20": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.42
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 68.3,
+    "mfe_before_stop_r_median": 2.445,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 0.75,
+    "share_mfe_ge_20usd": 0.75,
+    "mae_in_trade_r_median": 0.855
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 4,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 114,
+    "median": 126.0,
+    "max": 126
+   },
+   "pseudo_ledgers": 2000
+  },
+  "1h_h3": {
+   "trades": 1,
+   "entry_bar_missing": 0,
+   "exits": {
+    "SL": 1
+   },
+   "mean_r_by_exit": {
+    "SL": -1.0356
+   },
+   "cost": {
+    "mean_net_r": -1.0356,
+    "mean_gross_r": -1.0,
+    "mean_cost_r": 0.0356,
+    "median_cost_r": 0.0356,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 21.64
+   },
+   "replica_agreement": {
+    "checked": 1,
+    "agree": 1,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": -1.0356,
+    "outcomes": {
+     "SL": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "tp2": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    },
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.17
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.25
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "undecided": 0,
+     "median_hours_to_target": null
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 18.08,
+    "mfe_before_stop_r_median": 0.836,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 1.0,
+    "share_mfe_ge_20usd": 0.0,
+    "mae_in_trade_r_median": 1.764
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 120,
+    "median": 120.0,
+    "max": 120
+   },
+   "pseudo_ledgers": 2000
+  },
+  "1h_h4": {
+   "trades": 38,
+   "entry_bar_missing": 0,
+   "exits": {
+    "FLIP": 18,
+    "BE": 3,
+    "SL": 11,
+    "TP2": 6
+   },
+   "mean_r_by_exit": {
+    "FLIP": -0.256,
+    "BE": 0.2433,
+    "SL": -1.0277,
+    "TP2": 0.6718
+   },
+   "cost": {
+    "mean_net_r": -0.2935,
+    "mean_gross_r": -0.2698,
+    "mean_cost_r": 0.0236,
+    "median_cost_r": 0.0206,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 43.01
+   },
+   "replica_agreement": {
+    "checked": 20,
+    "agree": 20,
+    "rate": 1.0
+   },
+   "flip_counterfactual": {
+    "flips": 18,
+    "held_outcome": {
+     "SL": 8,
+     "TP2": 6,
+     "BE": 1,
+     "OPEN_AT_HORIZON": 3
+    },
+    "mean_realised_r": -0.256,
+    "mean_held_r_decided": -0.1762,
+    "mean_held_r_all_marked": -0.1037,
+    "held_better": 9,
+    "held_worse": 9,
+    "tp1_done_before_flip_in_replica": 8
+   },
+   "no_flip_all": {
+    "mean_r_decided": -0.2625,
+    "outcomes": {
+     "SL": 19,
+     "TP2": 12,
+     "BE": 4,
+     "OPEN_AT_HORIZON": 3
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 36,
+     "target_first": 17,
+     "rate": 0.4722,
+     "wilson95": [
+      0.3199,
+      0.6299
+     ],
+     "undecided": 2,
+     "median_hours_to_target": 2.92
+    },
+    "tp2": {
+     "decided": 35,
+     "target_first": 14,
+     "rate": 0.4,
+     "wilson95": [
+      0.2555,
+      0.5643
+     ],
+     "undecided": 3,
+     "median_hours_to_target": 5.71
+    },
+    "usd10": {
+     "decided": 38,
+     "target_first": 26,
+     "rate": 0.6842,
+     "wilson95": [
+      0.5254,
+      0.8092
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.17
+    },
+    "usd15": {
+     "decided": 38,
+     "target_first": 24,
+     "rate": 0.6316,
+     "wilson95": [
+      0.4728,
+      0.7662
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.92
+    },
+    "usd20": {
+     "decided": 37,
+     "target_first": 22,
+     "rate": 0.5946,
+     "wilson95": [
+      0.4349,
+      0.7365
+     ],
+     "undecided": 1,
+     "median_hours_to_target": 3.33
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 27.2,
+    "mfe_before_stop_r_median": 0.596,
+    "share_mfe_ge_10usd": 0.6842,
+    "share_mfe_ge_15usd": 0.6316,
+    "share_mfe_ge_20usd": 0.5789,
+    "mae_in_trade_r_median": 0.477
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 36,
+     "actual": 0.4722,
+     "null_mean": 0.5524,
+     "null_sd": 0.0814,
+     "null_95": [
+      0.3939,
+      0.7188
+     ],
+     "p_two_sided": 0.3448,
+     "p_normal": 0.3243,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 35,
+     "actual": 0.4,
+     "null_mean": 0.4918,
+     "null_sd": 0.081,
+     "null_95": [
+      0.3333,
+      0.6552
+     ],
+     "p_two_sided": 0.2659,
+     "p_normal": 0.2568,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 38,
+     "actual": 0.6842,
+     "null_mean": 0.7783,
+     "null_sd": 0.0658,
+     "null_95": [
+      0.6486,
+      0.8947
+     ],
+     "p_two_sided": 0.1524,
+     "p_normal": 0.1529,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 38,
+     "actual": 0.6316,
+     "null_mean": 0.7164,
+     "null_sd": 0.0708,
+     "null_95": [
+      0.5714,
+      0.8572
+     ],
+     "p_two_sided": 0.2399,
+     "p_normal": 0.2308,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 37,
+     "actual": 0.5946,
+     "null_mean": 0.6516,
+     "null_sd": 0.0766,
+     "null_95": [
+      0.5,
+      0.8
+     ],
+     "p_two_sided": 0.4568,
+     "p_normal": 0.4569,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 35,
+     "actual": -0.2625,
+     "null_mean": -0.0425,
+     "null_sd": 0.166,
+     "null_95": [
+      -0.3496,
+      0.2959
+     ],
+     "p_two_sided": 0.1834,
+     "p_normal": 0.1851,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 95,
+    "median": 114.0,
+    "max": 129
+   },
+   "pseudo_ledgers": 2000
+  },
+  "4h_treatment": {
+   "trades": 1,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 1
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.4873
+   },
+   "cost": {
+    "mean_net_r": 1.4873,
+    "mean_gross_r": 1.5,
+    "mean_cost_r": 0.0127,
+    "median_cost_r": 0.0127,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 60.4
+   },
+   "replica_agreement": {
+    "checked": 1,
+    "agree": 1,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": 1.4873,
+    "outcomes": {
+     "TP2": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 5.58
+    },
+    "tp2": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 30.08
+    },
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.58
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.67
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.67
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 317.91,
+    "mfe_before_stop_r_median": 5.263,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 1.0,
+    "share_mfe_ge_20usd": 1.0,
+    "mae_in_trade_r_median": 0.044
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 37,
+    "median": 37.0,
+    "max": 37
+   },
+   "pseudo_ledgers": 2000
+  },
+  "4h_challenger": {
+   "trades": 1,
+   "entry_bar_missing": 0,
+   "exits": {
+    "TP2": 1
+   },
+   "mean_r_by_exit": {
+    "TP2": 1.4873
+   },
+   "cost": {
+    "mean_net_r": 1.4873,
+    "mean_gross_r": 1.5,
+    "mean_cost_r": 0.0127,
+    "median_cost_r": 0.0127,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 60.4
+   },
+   "replica_agreement": {
+    "checked": 1,
+    "agree": 1,
+    "rate": 1.0
+   },
+   "no_flip_all": {
+    "mean_r_decided": 1.4873,
+    "outcomes": {
+     "TP2": 1
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 5.58
+    },
+    "tp2": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 30.08
+    },
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.58
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.67
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.67
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 317.91,
+    "mfe_before_stop_r_median": 5.263,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 1.0,
+    "share_mfe_ge_20usd": 1.0,
+    "mae_in_trade_r_median": 0.044
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "tp2_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd10_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd15_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "usd20_first": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    },
+    "no_flip_r": {
+     "n": 1,
+     "actual": null,
+     "null_mean": null,
+     "p_two_sided": null
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 37,
+    "median": 37.0,
+    "max": 37
+   },
+   "pseudo_ledgers": 2000
+  },
+  "4h_h4": {
+   "trades": 8,
+   "entry_bar_missing": 0,
+   "exits": {
+    "FLIP": 4,
+    "TP2": 4
+   },
+   "mean_r_by_exit": {
+    "FLIP": -0.2529,
+    "TP2": 1.116
+   },
+   "cost": {
+    "mean_net_r": 0.4316,
+    "mean_gross_r": 0.4428,
+    "mean_cost_r": 0.0112,
+    "median_cost_r": 0.0093,
+    "gross_gain_net_loss": 0,
+    "median_stop_usd": 94.4
+   },
+   "replica_agreement": {
+    "checked": 4,
+    "agree": 4,
+    "rate": 1.0
+   },
+   "flip_counterfactual": {
+    "flips": 4,
+    "held_outcome": {
+     "SL": 3,
+     "TP2": 1
+    },
+    "mean_realised_r": -0.2529,
+    "mean_held_r_decided": -0.6055,
+    "mean_held_r_all_marked": -0.6055,
+    "held_better": 1,
+    "held_worse": 3,
+    "tp1_done_before_flip_in_replica": 1
+   },
+   "no_flip_all": {
+    "mean_r_decided": 0.2553,
+    "outcomes": {
+     "SL": 3,
+     "TP2": 5
+    }
+   },
+   "targets_before_stop": {
+    "tp1": {
+     "decided": 8,
+     "target_first": 5,
+     "rate": 0.625,
+     "wilson95": [
+      0.3057,
+      0.8632
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 18.17
+    },
+    "tp2": {
+     "decided": 8,
+     "target_first": 5,
+     "rate": 0.625,
+     "wilson95": [
+      0.3057,
+      0.8632
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 18.17
+    },
+    "usd10": {
+     "decided": 8,
+     "target_first": 8,
+     "rate": 1.0,
+     "wilson95": [
+      0.6756,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 0.71
+    },
+    "usd15": {
+     "decided": 8,
+     "target_first": 8,
+     "rate": 1.0,
+     "wilson95": [
+      0.6756,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 1.5
+    },
+    "usd20": {
+     "decided": 8,
+     "target_first": 8,
+     "rate": 1.0,
+     "wilson95": [
+      0.6756,
+      1.0
+     ],
+     "undecided": 0,
+     "median_hours_to_target": 2.46
+    }
+   },
+   "excursions": {
+    "mfe_before_stop_usd_median": 136.45,
+    "mfe_before_stop_r_median": 1.159,
+    "share_mfe_ge_10usd": 1.0,
+    "share_mfe_ge_15usd": 1.0,
+    "share_mfe_ge_20usd": 1.0,
+    "mae_in_trade_r_median": 0.399
+   },
+   "vs_matched_random": {
+    "tp1_first": {
+     "n": 8,
+     "actual": 0.625,
+     "null_mean": 0.6222,
+     "null_sd": 0.1757,
+     "null_95": [
+      0.25,
+      1.0
+     ],
+     "p_two_sided": 1.0,
+     "p_normal": 0.9872,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "tp2_first": {
+     "n": 8,
+     "actual": 0.625,
+     "null_mean": 0.5915,
+     "null_sd": 0.1716,
+     "null_95": [
+      0.2,
+      0.8571
+     ],
+     "p_two_sided": 0.8041,
+     "p_normal": 0.845,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd10_first": {
+     "n": 8,
+     "actual": 1.0,
+     "null_mean": 0.8823,
+     "null_sd": 0.1144,
+     "null_95": [
+      0.625,
+      1.0
+     ],
+     "p_two_sided": 0.5737,
+     "p_normal": 0.3032,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd15_first": {
+     "n": 8,
+     "actual": 1.0,
+     "null_mean": 0.8612,
+     "null_sd": 0.1257,
+     "null_95": [
+      0.5714,
+      1.0
+     ],
+     "p_two_sided": 0.4728,
+     "p_normal": 0.2697,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "usd20_first": {
+     "n": 8,
+     "actual": 1.0,
+     "null_mean": 0.8263,
+     "null_sd": 0.1382,
+     "null_95": [
+      0.5,
+      1.0
+     ],
+     "p_two_sided": 0.3388,
+     "p_normal": 0.2091,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    },
+    "no_flip_r": {
+     "n": 8,
+     "actual": 0.2553,
+     "null_mean": 0.2042,
+     "null_sd": 0.3882,
+     "null_95": [
+      -0.5641,
+      0.9513
+     ],
+     "p_two_sided": 0.8666,
+     "p_normal": 0.8954,
+     "p_holm": 1.0,
+     "p_bh": 0.995
+    }
+   },
+   "random_twins_per_trade": {
+    "min": 37,
+    "median": 38.5,
+    "max": 42
+   },
+   "pseudo_ledgers": 2000
+  }
+ },
+ "multiplicity": {
+  "family": 66,
+  "method": "Holm (FWER) and Benjamini-Hochberg (FDR) over every p_normal listed (the normal tail of the matched null; p_two_sided is the empirical one)"
+ }
+}
