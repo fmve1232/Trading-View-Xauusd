@@ -12813,6 +12813,33 @@
    "verdict": "NO TRADE \u2014 INSUFFICIENT CONFIRMATION",
    "reason": "confirmed, but NOT VALIDATED: its registered test failed: +$15 before -$13 after a $15 confirmation was 46% of 949 trades (2020-22, 95% 43%-49%) against a break-even of 47.4%; FAIL (B21 H5 / H6)",
    "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)"
+  },
+  {
+   "key": "BREAKOUT|15m|1795685400|1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1795685400,
+   "t_close": 1795686300,
+   "dir": 1,
+   "p0": 3576.0,
+   "what": "breakout at 1HH 3575.39",
+   "id": 348,
+   "seen": 1795686544,
+   "backfill": false,
+   "late": false,
+   "repeats": 0,
+   "confirm_at": 3591.0,
+   "invalid_at": 3563.0,
+   "cap_at": 3596.0,
+   "confirm20_at": 3596.0,
+   "status": "INVALIDATED",
+   "bars": 3,
+   "verdict": "NO TRADE",
+   "reason": "price traded $13 against first",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "why": "price traded $13 against first",
+   "t_done": 1795689000
   }
  ]
 }
