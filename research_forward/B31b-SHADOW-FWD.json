@@ -2203,6 +2203,30 @@
 "vol_ratio": 2.435,
 "cost": 0.77,
 "status": "REPEAT"
+},
+{
+"key": "C|1795689900|-1|EQL|3561.89",
+"module": "C",
+"dir": -1,
+"kind": "EQL",
+"lv": 3561.89,
+"order_t": 1795689900,
+"order_close": 1795690800,
+"recorded_utc": 1795691047,
+"timely": true,
+"entry_type": "RETEST",
+"limit": 3561.89,
+"market": null,
+"p_ref": 3561.89,
+"stop": 3568.476,
+"inval": null,
+"false_break": true,
+"vwap": null,
+"session": "LONDON",
+"ranging": true,
+"vol_ratio": null,
+"cost": 0.77,
+"status": "PENDING"
 }
 ],
 "days": [
