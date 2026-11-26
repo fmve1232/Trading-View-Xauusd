@@ -1,0 +1,631 @@
+{
+ "weights": {
+  "data": 0.2,
+  "stats": 0.2,
+  "cost": 0.15,
+  "alerts": 0.15,
+  "research": 0.1,
+  "tests": 0.1,
+  "ops": 0.05,
+  "docs": 0.05
+ },
+ "previous": {
+  "date": "2026-11-26 11:04 UTC",
+  "production_commit": "505f05ecc",
+  "production": 45.9,
+  "branch": 68.0
+ },
+ "production": {
+  "categories": {
+   "data": {
+    "verified": 5,
+    "total": 8,
+    "share": 0.625
+   },
+   "stats": {
+    "verified": 7,
+    "total": 9,
+    "share": 0.7778
+   },
+   "cost": {
+    "verified": 4,
+    "total": 8,
+    "share": 0.5
+   },
+   "alerts": {
+    "verified": 6,
+    "total": 8,
+    "share": 0.75
+   },
+   "research": {
+    "verified": 4,
+    "total": 6,
+    "share": 0.6667
+   },
+   "tests": {
+    "verified": 6,
+    "total": 8,
+    "share": 0.75
+   },
+   "ops": {
+    "verified": 3,
+    "total": 5,
+    "share": 0.6
+   },
+   "docs": {
+    "verified": 4,
+    "total": 5,
+    "share": 0.8
+   }
+  },
+  "weighted_percent": 68.0,
+  "p0_not_verified": [
+   "A5"
+  ],
+  "designation": "90% NOT ACHIEVED"
+ },
+ "branch": {
+  "categories": {
+   "data": {
+    "verified": 5,
+    "total": 8,
+    "share": 0.625
+   },
+   "stats": {
+    "verified": 7,
+    "total": 9,
+    "share": 0.7778
+   },
+   "cost": {
+    "verified": 4,
+    "total": 8,
+    "share": 0.5
+   },
+   "alerts": {
+    "verified": 6,
+    "total": 8,
+    "share": 0.75
+   },
+   "research": {
+    "verified": 4,
+    "total": 6,
+    "share": 0.6667
+   },
+   "tests": {
+    "verified": 6,
+    "total": 8,
+    "share": 0.75
+   },
+   "ops": {
+    "verified": 3,
+    "total": 5,
+    "share": 0.6
+   },
+   "docs": {
+    "verified": 4,
+    "total": 5,
+    "share": 0.8
+   }
+  },
+  "weighted_percent": 68.0,
+  "p0_not_verified": [
+   "A5"
+  ],
+  "designation": "90% NOT ACHIEVED"
+ },
+ "requirements": [
+  {
+   "id": "D1",
+   "category": "data",
+   "p0": false,
+   "requirement": "Engine input excludes market-shut quotes; cited PDH/PDL/PWL reproduced independently",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "levels_check_2026-11-26.txt; sources.trading_week_only"
+  },
+  {
+   "id": "D2",
+   "category": "data",
+   "p0": true,
+   "requirement": "Forward ledgers append-only, never force-pushed",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "GitHub activity: forward-ledger 3,572 pushes since 27 Sep, 0 force pushes"
+  },
+  {
+   "id": "D3",
+   "category": "data",
+   "p0": true,
+   "requirement": "Ledger records internally consistent (attribution, arithmetic, windows)",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "ledger_check_2026-11-26.txt: 0 problems"
+  },
+  {
+   "id": "D4",
+   "category": "data",
+   "p0": true,
+   "requirement": "Audit tooling reports the records correctly (no false problems)",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "GA-21; merged db7cd6a14; ledger_check problems 0"
+  },
+  {
+   "id": "D5",
+   "category": "data",
+   "p0": true,
+   "requirement": "Live sweep / breakout outcome records durable (no cap, no overwrite)",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "GA-03 merged db7cd6a14; runs 45832483937 / 45837411129: verify problems []"
+  },
+  {
+   "id": "D6",
+   "category": "data",
+   "p0": false,
+   "requirement": "Per-run payload archive checked against its manifest SHA-256",
+   "production": "NOT RUN",
+   "branch": "NOT RUN",
+   "evidence": "artifact download unavailable here"
+  },
+  {
+   "id": "D7",
+   "category": "data",
+   "p0": false,
+   "requirement": "Research input data retained immutably by hash",
+   "production": "OPEN",
+   "branch": "OPEN",
+   "evidence": "GA-15"
+  },
+  {
+   "id": "D8",
+   "category": "data",
+   "p0": false,
+   "requirement": "Vendor data licensing checked",
+   "production": "BLOCKED",
+   "branch": "BLOCKED",
+   "evidence": "GA-16"
+  },
+  {
+   "id": "S1",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Forward metrics per arm and timeframe with Wilson and bootstrap intervals",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "forward_stats.py; forward_report.py"
+  },
+  {
+   "id": "S2",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Dependence-aware (day-clustered) intervals",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "GA-09 merged"
+  },
+  {
+   "id": "S3",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Matched random-entry baseline on forward data",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "forward_report merged; matched twins in PR #143"
+  },
+  {
+   "id": "S4",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Cost sensitivity of forward results at measured spreads",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "mean_r_at_spread merged"
+  },
+  {
+   "id": "S5",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Loss tail reported (worst, share below -1 R)",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "GA-10 merged"
+  },
+  {
+   "id": "S6",
+   "category": "stats",
+   "p0": true,
+   "requirement": "No look-ahead: engine and monitors tested on prefixes",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "test_no_lookahead and five prefix tests"
+  },
+  {
+   "id": "S7",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Registered looks honoured; INSUFFICIENT EVIDENCE between looks",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "test_engine_forward, test_grab_forward"
+  },
+  {
+   "id": "S8",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Program-level multiple-testing correction over all trials",
+   "production": "OPEN",
+   "branch": "OPEN",
+   "evidence": "GA-02"
+  },
+  {
+   "id": "S9",
+   "category": "stats",
+   "p0": false,
+   "requirement": "Untouched out-of-sample data of sufficient size",
+   "production": "FAIL",
+   "branch": "FAIL",
+   "evidence": "GA-01, GA-08"
+  },
+  {
+   "id": "E1",
+   "category": "cost",
+   "p0": false,
+   "requirement": "One cost of record applied to every simulated trade",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "cost_pts_used [0.77]"
+  },
+  {
+   "id": "E2",
+   "category": "cost",
+   "p0": false,
+   "requirement": "Spread verified by session at the broker",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "Asia only; 1 NY reading"
+  },
+  {
+   "id": "E3",
+   "category": "cost",
+   "p0": false,
+   "requirement": "Commission, contract size, tick value from the MT5 specification",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "GA-04"
+  },
+  {
+   "id": "E4",
+   "category": "cost",
+   "p0": false,
+   "requirement": "Swap",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "GA-04"
+  },
+  {
+   "id": "E5",
+   "category": "cost",
+   "p0": false,
+   "requirement": "Slippage and stop / target fills against account statements",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "GA-28"
+  },
+  {
+   "id": "E6",
+   "category": "cost",
+   "p0": true,
+   "requirement": "Position sizing keeps the planned loss within $650 including the round-trip cost",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "test_notify_plan, test_risk_sizing"
+  },
+  {
+   "id": "E7",
+   "category": "cost",
+   "p0": true,
+   "requirement": "Gap fills modelled; gap risk disclosed in plan alerts",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "test_backtest_gaps; confirm_entry.gap_line"
+  },
+  {
+   "id": "E8",
+   "category": "cost",
+   "p0": false,
+   "requirement": "Expectancy recomputed at measured spreads",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "BROKER_COST_VALIDATION.md (merged)"
+  },
+  {
+   "id": "A1",
+   "category": "alerts",
+   "p0": true,
+   "requirement": "Every SENT stage has a server-accepted delivery record",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "377 of 377"
+  },
+  {
+   "id": "A2",
+   "category": "alerts",
+   "p0": true,
+   "requirement": "No duplicate sends",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "0 keys accepted twice"
+  },
+  {
+   "id": "A3",
+   "category": "alerts",
+   "p0": true,
+   "requirement": "No stale alert sent (freshness gate)",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "0 over 20 min; stale-gate tests"
+  },
+  {
+   "id": "A4",
+   "category": "alerts",
+   "p0": false,
+   "requirement": "Retry with cache check; mutation-tested",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "42 of 42 mutants killed"
+  },
+  {
+   "id": "A5",
+   "category": "alerts",
+   "p0": true,
+   "requirement": "Resilient to rate limits (no lost alert)",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "GA-07 fix merged; no 429 since, so untested live"
+  },
+  {
+   "id": "A6",
+   "category": "alerts",
+   "p0": false,
+   "requirement": "Device delivery confirmed",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "not observable via ntfy; PHONE_DELIVERY = NOT_VERIFIABLE on every record"
+  },
+  {
+   "id": "A7",
+   "category": "alerts",
+   "p0": false,
+   "requirement": "Disclaimer and planned-vs-guaranteed loss wording",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "test_alert_disclaimer; GAP RISK line"
+  },
+  {
+   "id": "A8",
+   "category": "alerts",
+   "p0": false,
+   "requirement": "Outage notice when alerts may be missing",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "test_outage_notice (53)"
+  },
+  {
+   "id": "R1",
+   "category": "research",
+   "p0": false,
+   "requirement": "Registration provably precedes code (server-side times)",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "GA-06: 26 of 38 BEFORE by GitHub push times, 9 same push (order by commit parents only), 0 after, 3 no evidence"
+  },
+  {
+   "id": "R2",
+   "category": "research",
+   "p0": false,
+   "requirement": "Complete partition-use ledger",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "partition_access.json (merged)"
+  },
+  {
+   "id": "R3",
+   "category": "research",
+   "p0": false,
+   "requirement": "Complete trial log in one place",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "trials_union.jsonl (merged)"
+  },
+  {
+   "id": "R4",
+   "category": "research",
+   "p0": true,
+   "requirement": "Partition boundaries leak-free",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "harness.partition; W4 boundary check"
+  },
+  {
+   "id": "R5",
+   "category": "research",
+   "p0": false,
+   "requirement": "Sealed holdout untouched",
+   "production": "FAIL",
+   "branch": "FAIL",
+   "evidence": "read by B30, B31, B31b-W2"
+  },
+  {
+   "id": "R6",
+   "category": "research",
+   "p0": true,
+   "requirement": "No tuning on forward data; freeze key unchanged",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "freeze key recomputed"
+  },
+  {
+   "id": "T1",
+   "category": "tests",
+   "p0": false,
+   "requirement": "Full Python suite passes on the pinned versions",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "production gate (40/40 runs); branch: pinned run + GitHub pr-checks"
+  },
+  {
+   "id": "T2",
+   "category": "tests",
+   "p0": false,
+   "requirement": "JavaScript tests pass",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "node --test 20 of 20"
+  },
+  {
+   "id": "T3",
+   "category": "tests",
+   "p0": false,
+   "requirement": "Pine checkers and frozen-file manifest",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "7 of 7 OK; checkers clean"
+  },
+  {
+   "id": "T4",
+   "category": "tests",
+   "p0": true,
+   "requirement": "Freeze key reproducible",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "1f88aad357497da4:4440d52587f5cc6b"
+  },
+  {
+   "id": "T5",
+   "category": "tests",
+   "p0": false,
+   "requirement": "Mutation tests of critical rules",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "mutation_notify_delivery 42/42"
+  },
+  {
+   "id": "T6",
+   "category": "tests",
+   "p0": false,
+   "requirement": "Library versions recorded per run",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "manifest env; requirements.lock"
+  },
+  {
+   "id": "T7",
+   "category": "tests",
+   "p0": false,
+   "requirement": "Every research result reproducible from committed code and data",
+   "production": "UNVERIFIED",
+   "branch": "UNVERIFIED",
+   "evidence": "W3/W7/W8/W12 reproduced in W13; not all studies; GA-15"
+  },
+  {
+   "id": "T8",
+   "category": "tests",
+   "p0": false,
+   "requirement": "Live alert replay committed as a tested tool",
+   "production": "OPEN",
+   "branch": "OPEN",
+   "evidence": "GA-23"
+  },
+  {
+   "id": "O1",
+   "category": "ops",
+   "p0": false,
+   "requirement": "Scheduler cadence: production runs succeed",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "40 of 40 latest runs"
+  },
+  {
+   "id": "O2",
+   "category": "ops",
+   "p0": false,
+   "requirement": "Site smoke test on every deploy",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "smoke.py in every run"
+  },
+  {
+   "id": "O3",
+   "category": "ops",
+   "p0": false,
+   "requirement": "Partial-failure warnings",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "test_run_hygiene"
+  },
+  {
+   "id": "O4",
+   "category": "ops",
+   "p0": false,
+   "requirement": "No false-failure workflows",
+   "production": "FAIL",
+   "branch": "FAIL",
+   "evidence": "GA-22"
+  },
+  {
+   "id": "O5",
+   "category": "ops",
+   "p0": false,
+   "requirement": "Independent price cross-check result inspected",
+   "production": "NOT RUN",
+   "branch": "NOT RUN",
+   "evidence": "xcheck-dukascopy"
+  },
+  {
+   "id": "C1",
+   "category": "docs",
+   "p0": false,
+   "requirement": "Feature register with code, tests and evidence",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "docs/AUDIT_PACK.md"
+  },
+  {
+   "id": "C2",
+   "category": "docs",
+   "p0": false,
+   "requirement": "Inventory appendix current and enforced by a test",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "GA-17 merged"
+  },
+  {
+   "id": "C3",
+   "category": "docs",
+   "p0": false,
+   "requirement": "Changelog and approval register",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "CHANGELOG_AND_APPROVAL_REGISTER.md (merged)"
+  },
+  {
+   "id": "C4",
+   "category": "docs",
+   "p0": false,
+   "requirement": "Gap register with status and evidence",
+   "production": "VERIFIED",
+   "branch": "VERIFIED",
+   "evidence": "GAP_REMEDIATION_REGISTER.md (merged)"
+  },
+  {
+   "id": "C5",
+   "category": "docs",
+   "p0": false,
+   "requirement": "Errata for misleading research wording (B31 registration, W-series)",
+   "production": "FAIL",
+   "branch": "FAIL",
+   "evidence": "B31 done; W-series OPEN"
+  }
+ ]
+}

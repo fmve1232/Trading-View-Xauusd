@@ -1,0 +1,40 @@
+activity {'activities': 8235, 'skipped_refs': 3965, 'unresolved': 1304, 'history_from': '2026-09-07T12:34:29Z', 'history_to': '2026-11-26T14:48:44Z'}
+B10                  SAME_PUSH   reg 2026-11-05T07:19:47Z code 2026-11-05T07:19:47Z result 2026-11-05T07:19:47Z gap 0.0 h; file date 2026-11-05; reg commit ancestor of first evidence: True
+B13                  BEFORE      reg 2026-11-05T10:13:38Z code 2026-11-05T10:20:54Z result 2026-11-05T10:20:54Z gap 0.12 h; file date 2026-11-05
+B14                  BEFORE      reg 2026-11-06T11:44:27Z code 2026-11-06T11:48:18Z result 2026-11-06T11:48:18Z gap 0.06 h; file date 2026-11-06
+B15-ENGINE-FWD       BEFORE      reg 2026-11-06T12:43:53Z code 2026-11-06T12:49:22Z result -                    gap 0.09 h; file date 2026-11-06
+B15b-ENGINE-FWD      SAME_PUSH   reg 2026-11-15T09:48:44Z code 2026-11-15T09:48:44Z result -                    gap 0.0 h; file date 2026-11-15; reg commit ancestor of first evidence: True
+B16                  BEFORE      reg 2026-11-06T17:33:27Z code 2026-11-06T17:45:32Z result 2026-11-06T17:45:32Z gap 0.2 h; file date 2026-11-06
+B17                  BEFORE      reg 2026-11-06T20:49:19Z code 2026-11-06T21:03:44Z result 2026-11-06T21:03:44Z gap 0.24 h; file date 2026-11-06
+B18                  BEFORE      reg 2026-11-06T21:25:54Z code 2026-11-06T21:35:12Z result 2026-11-06T21:35:12Z gap 0.15 h; file date 2026-11-06
+B19                  BEFORE      reg 2026-11-06T22:48:22Z code 2026-11-06T22:54:30Z result 2026-11-06T23:04:46Z gap 0.1 h; file date 2026-11-07T00:30:00Z
+B20                  BEFORE      reg 2026-11-07T07:12:59Z code 2026-11-07T07:14:39Z result 2026-11-07T07:16:05Z gap 0.03 h; file date 2026-11-07T02:30:00Z
+B21                  BEFORE      reg 2026-11-07T07:29:03Z code 2026-11-07T07:30:21Z result 2026-11-07T07:35:14Z gap 0.02 h; file date 2026-11-07T04:00:00Z
+B22                  BEFORE      reg 2026-11-07T07:40:48Z code 2026-11-07T07:43:38Z result 2026-11-07T07:54:36Z gap 0.05 h; file date 2026-11-07T05:00:00Z
+B23                  BEFORE      reg 2026-11-07T07:54:58Z code 2026-11-07T07:55:47Z result 2026-11-07T08:00:03Z gap 0.01 h; file date 2026-11-07T08:30:00Z
+B24-CONFIRM-FWD-A1   NO_EVIDENCE reg 2026-11-10T07:56:17Z code -                    result -                    gap None h; file date None
+B24-CONFIRM-FWD-A2   NO_EVIDENCE reg 2026-11-11T07:06:15Z code -                    result -                    gap None h; file date None
+B24-CONFIRM-FWD      BEFORE      reg 2026-11-07T11:54:33Z code 2026-11-07T12:08:47Z result -                    gap 0.24 h; file date 2026-11-07
+B25                  BEFORE      reg 2026-11-07T11:54:33Z code 2026-11-07T11:58:47Z result 2026-11-07T12:11:07Z gap 0.07 h; file date 2026-11-07
+B26                  SAME_PUSH   reg 2026-11-08T17:48:18Z code 2026-11-08T17:48:18Z result 2026-11-08T17:48:18Z gap 0.0 h; file date 2026-11-08; reg commit ancestor of first evidence: True
+B27                  SAME_PUSH   reg 2026-11-08T18:40:29Z code 2026-11-08T18:40:29Z result 2026-11-08T18:40:29Z gap 0.0 h; file date 2026-11-08; reg commit ancestor of first evidence: True
+B28                  SAME_PUSH   reg 2026-11-09T06:08:01Z code 2026-11-09T06:08:01Z result 2026-11-09T06:08:01Z gap 0.0 h; file date 2026-11-08; reg commit ancestor of first evidence: True
+B29                  SAME_PUSH   reg 2026-11-09T06:08:01Z code 2026-11-09T06:08:01Z result 2026-11-09T06:08:01Z gap 0.0 h; file date 2026-11-08; reg commit ancestor of first evidence: True
+B30                  BEFORE      reg 2026-11-15T06:56:34Z code 2026-11-15T07:00:55Z result 2026-11-15T07:12:30Z gap 0.07 h; file date 2026-11-15
+B31                  BEFORE      reg 2026-11-15T08:05:11Z code 2026-11-15T08:16:03Z result 2026-11-15T08:45:00Z gap 0.18 h; file date 2026-11-15
+B31b-SHADOW-FWD      BEFORE      reg 2026-11-15T12:43:34Z code 2026-11-15T13:14:46Z result -                    gap 0.52 h; file date 2026-11-15
+B31b-W1              BEFORE      reg 2026-11-15T19:40:47Z code 2026-11-15T19:43:55Z result 2026-11-16T02:45:37Z gap 0.05 h; file date 2026-11-15
+B31b-W12             BEFORE      reg 2026-11-25T17:36:50Z code 2026-11-25T17:40:47Z result 2026-11-25T17:51:54Z gap 0.07 h; file date 2026-11-25
+B31b-W13             BEFORE      reg 2026-11-25T21:06:03Z code 2026-11-25T21:09:18Z result 2026-11-25T21:12:21Z gap 0.05 h; file date 2026-11-25
+B31b-W2              BEFORE      reg 2026-11-16T13:26:28Z code 2026-11-18T13:53:21Z result 2026-11-18T14:19:20Z gap 48.45 h; file date 2026-11-16
+B31b-W3              BEFORE      reg 2026-11-18T21:10:29Z code 2026-11-18T21:26:37Z result 2026-11-18T21:48:03Z gap 0.27 h; file date 2026-11-18
+B31b-W4              BEFORE      reg 2026-11-19T04:13:11Z code 2026-11-19T04:25:17Z result 2026-11-19T04:38:23Z gap 0.2 h; file date 2026-11-19T04:13:09Z
+B31b-W5              BEFORE      reg 2026-11-19T08:25:47Z code 2026-11-19T08:34:45Z result 2026-11-19T09:28:09Z gap 0.15 h; file date 2026-11-19T08:25:43Z
+B31b-W7              BEFORE      reg 2026-11-19T11:24:03Z code 2026-11-19T11:56:17Z result 2026-11-19T17:05:01Z gap 0.54 h; file date 2026-11-19
+B31b-W8-cost         BEFORE      reg 2026-11-25T16:43:50Z code -                    result 2026-11-25T16:45:24Z gap 0.03 h; file date 2026-11-25
+B31b-W8              BEFORE      reg 2026-11-19T17:51:14Z code 2026-11-19T17:54:49Z result 2026-11-25T16:45:24Z gap 0.06 h; file date 2026-11-19
+B4-RN-V1             SAME_PUSH   reg 2026-11-01T16:12:18Z code 2026-11-01T16:12:18Z result 2026-11-01T16:18:14Z gap 0.0 h; file date 2026-11-01; reg commit ancestor of first evidence: True
+B5C                  NO_EVIDENCE reg 2026-11-09T07:50:07Z code -                    result -                    gap None h; file date None
+B9-GRAB-FWD          SAME_PUSH   reg 2026-11-04T23:42:36Z code 2026-11-04T23:42:36Z result -                    gap 0.0 h; file date 2026-11-04; reg commit ancestor of first evidence: True
+PHASE_D              SAME_PUSH   reg 2026-11-09T17:04:20Z code -                    result 2026-11-09T17:04:20Z gap 0.0 h; file date 2026-11-09; reg commit ancestor of first evidence: True
+counts {'BEFORE': 26, 'SAME_PUSH': 9, 'AFTER': 0, 'NO_EVIDENCE': 3, 'NOT_FOUND': 0}

@@ -1,0 +1,1112 @@
+{
+ "activity": {
+  "activities": 8235,
+  "skipped_refs": 3965,
+  "unresolved": 1304,
+  "history_from": "2026-09-07T12:34:29Z",
+  "history_to": "2026-11-26T14:48:44Z"
+ },
+ "branches": [
+  "claude/audit-prompt-real-artefacts-nekqv6",
+  "w3-liquidity",
+  "w4-research",
+  "w5-entry",
+  "w7-study",
+  "w8-quality",
+  "w11-scoreboard",
+  "w12-session-sweeps",
+  "w13-entry-precision",
+  "b30-confirmation",
+  "b31-opportunity",
+  "b31b-w1",
+  "b31b-w2",
+  "remediation",
+  "claude/research-phase-c",
+  "claude/research-phase-d",
+  "claude/research-sym15"
+ ],
+ "registrations": [
+  {
+   "registration": "B10",
+   "id": "B10",
+   "kind": "study",
+   "result_names": [
+    "B10"
+   ],
+   "created_utc_in_file": "2026-11-05",
+   "registration_first_push": {
+    "utc": "2026-11-05T07:19:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "c5295296f"
+   },
+   "first_code_push": {
+    "utc": "2026-11-05T07:19:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "ee8b61f0e"
+   },
+   "first_result_push": {
+    "utc": "2026-11-05T07:19:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "7c0aa5f68"
+   },
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "B13",
+   "id": "B13",
+   "kind": "study",
+   "result_names": [
+    "B13"
+   ],
+   "created_utc_in_file": "2026-11-05",
+   "registration_first_push": {
+    "utc": "2026-11-05T10:13:38Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "337af9f90"
+   },
+   "first_code_push": {
+    "utc": "2026-11-05T10:20:54Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "33dba7080"
+   },
+   "first_result_push": {
+    "utc": "2026-11-05T10:20:54Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "33dba7080"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.12
+  },
+  {
+   "registration": "B14",
+   "id": "B14",
+   "kind": "study",
+   "result_names": [
+    "B14"
+   ],
+   "created_utc_in_file": "2026-11-06",
+   "registration_first_push": {
+    "utc": "2026-11-06T11:44:27Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "4f37ae61f"
+   },
+   "first_code_push": {
+    "utc": "2026-11-06T11:48:18Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "14afc6730"
+   },
+   "first_result_push": {
+    "utc": "2026-11-06T11:48:18Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "14afc6730"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.06
+  },
+  {
+   "registration": "B15-ENGINE-FWD",
+   "id": "B15-ENGINE-FWD",
+   "kind": "forward",
+   "result_names": [
+    "B15-ENGINE-FWD"
+   ],
+   "created_utc_in_file": "2026-11-06",
+   "registration_first_push": {
+    "utc": "2026-11-06T12:43:53Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "f5097bfc6"
+   },
+   "first_code_push": {
+    "utc": "2026-11-06T12:49:22Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "33bad69bc"
+   },
+   "first_result_push": null,
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.09
+  },
+  {
+   "registration": "B15b-ENGINE-FWD",
+   "id": "B15b-ENGINE-FWD",
+   "kind": "forward",
+   "result_names": [
+    "B15b-ENGINE-FWD"
+   ],
+   "created_utc_in_file": "2026-11-15",
+   "registration_first_push": {
+    "utc": "2026-11-15T09:48:44Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-f1f4-engine",
+    "type": "push",
+    "commit": "a266d66e0"
+   },
+   "first_code_push": {
+    "utc": "2026-11-15T09:48:44Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-f1f4-engine",
+    "type": "push",
+    "commit": "66bd23c73"
+   },
+   "first_result_push": null,
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "B16",
+   "id": "B16",
+   "kind": "study",
+   "result_names": [
+    "B16"
+   ],
+   "created_utc_in_file": "2026-11-06",
+   "registration_first_push": {
+    "utc": "2026-11-06T17:33:27Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "4551e7a4b"
+   },
+   "first_code_push": {
+    "utc": "2026-11-06T17:45:32Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "76c5624e7"
+   },
+   "first_result_push": {
+    "utc": "2026-11-06T17:45:32Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "76c5624e7"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.2
+  },
+  {
+   "registration": "B17",
+   "id": "B17",
+   "kind": "study",
+   "result_names": [
+    "B17"
+   ],
+   "created_utc_in_file": "2026-11-06",
+   "registration_first_push": {
+    "utc": "2026-11-06T20:49:19Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "39c1b1f40"
+   },
+   "first_code_push": {
+    "utc": "2026-11-06T21:03:44Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "8b441e41d"
+   },
+   "first_result_push": {
+    "utc": "2026-11-06T21:03:44Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "8b441e41d"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.24
+  },
+  {
+   "registration": "B18",
+   "id": "B18",
+   "kind": "study",
+   "result_names": [
+    "B18"
+   ],
+   "created_utc_in_file": "2026-11-06",
+   "registration_first_push": {
+    "utc": "2026-11-06T21:25:54Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "5c805e8d1"
+   },
+   "first_code_push": {
+    "utc": "2026-11-06T21:35:12Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "9e6c0fff6"
+   },
+   "first_result_push": {
+    "utc": "2026-11-06T21:35:12Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "9e6c0fff6"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.15
+  },
+  {
+   "registration": "B19",
+   "id": "B19",
+   "kind": "study",
+   "result_names": [
+    "B19"
+   ],
+   "created_utc_in_file": "2026-11-07T00:30:00Z",
+   "registration_first_push": {
+    "utc": "2026-11-06T22:48:22Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "2c4843f77"
+   },
+   "first_code_push": {
+    "utc": "2026-11-06T22:54:30Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "fc6d1352e"
+   },
+   "first_result_push": {
+    "utc": "2026-11-06T23:04:46Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "0ec3354f3"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.1
+  },
+  {
+   "registration": "B20",
+   "id": "B20",
+   "kind": "study",
+   "result_names": [
+    "B20"
+   ],
+   "created_utc_in_file": "2026-11-07T02:30:00Z",
+   "registration_first_push": {
+    "utc": "2026-11-07T07:12:59Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "8ef843101"
+   },
+   "first_code_push": {
+    "utc": "2026-11-07T07:14:39Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "245ba4b03"
+   },
+   "first_result_push": {
+    "utc": "2026-11-07T07:16:05Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "e648a2083"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.03
+  },
+  {
+   "registration": "B21",
+   "id": "B21",
+   "kind": "study",
+   "result_names": [
+    "B21"
+   ],
+   "created_utc_in_file": "2026-11-07T04:00:00Z",
+   "registration_first_push": {
+    "utc": "2026-11-07T07:29:03Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "efee99854"
+   },
+   "first_code_push": {
+    "utc": "2026-11-07T07:30:21Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "a1961488a"
+   },
+   "first_result_push": {
+    "utc": "2026-11-07T07:35:14Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "a16ff70a4"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.02
+  },
+  {
+   "registration": "B22",
+   "id": "B22",
+   "kind": "study",
+   "result_names": [
+    "B22"
+   ],
+   "created_utc_in_file": "2026-11-07T05:00:00Z",
+   "registration_first_push": {
+    "utc": "2026-11-07T07:40:48Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "4ec79159d"
+   },
+   "first_code_push": {
+    "utc": "2026-11-07T07:43:38Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "e3839c04d"
+   },
+   "first_result_push": {
+    "utc": "2026-11-07T07:54:36Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "51c3743a6"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.05
+  },
+  {
+   "registration": "B23",
+   "id": "B23",
+   "kind": "study",
+   "result_names": [
+    "B23"
+   ],
+   "created_utc_in_file": "2026-11-07T08:30:00Z",
+   "registration_first_push": {
+    "utc": "2026-11-07T07:54:58Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "fc77a5f28"
+   },
+   "first_code_push": {
+    "utc": "2026-11-07T07:55:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "b0a825a15"
+   },
+   "first_result_push": {
+    "utc": "2026-11-07T08:00:03Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "48aad06fd"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.01
+  },
+  {
+   "registration": "B24-CONFIRM-FWD-A1",
+   "id": "B24-CONFIRM-FWD-A1",
+   "kind": "study",
+   "result_names": [
+    "B24-CONFIRM-FWD-A1"
+   ],
+   "created_utc_in_file": null,
+   "registration_first_push": {
+    "utc": "2026-11-10T07:56:17Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "53a284023"
+   },
+   "first_code_push": null,
+   "first_result_push": null,
+   "verdict": "NO_EVIDENCE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": null
+  },
+  {
+   "registration": "B24-CONFIRM-FWD-A2",
+   "id": "B24-CONFIRM-FWD-A2",
+   "kind": "study",
+   "result_names": [
+    "B24-CONFIRM-FWD-A2"
+   ],
+   "created_utc_in_file": null,
+   "registration_first_push": {
+    "utc": "2026-11-11T07:06:15Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "d1ae906a4"
+   },
+   "first_code_push": null,
+   "first_result_push": null,
+   "verdict": "NO_EVIDENCE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": null
+  },
+  {
+   "registration": "B24-CONFIRM-FWD",
+   "id": "B24-CONFIRM-FWD",
+   "kind": "forward",
+   "result_names": [
+    "B24-CONFIRM-FWD"
+   ],
+   "created_utc_in_file": "2026-11-07",
+   "registration_first_push": {
+    "utc": "2026-11-07T11:54:33Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "fa20f3bc9"
+   },
+   "first_code_push": {
+    "utc": "2026-11-07T12:08:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "5a9a3760a"
+   },
+   "first_result_push": null,
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.24
+  },
+  {
+   "registration": "B25",
+   "id": "B25",
+   "kind": "study",
+   "result_names": [
+    "B25"
+   ],
+   "created_utc_in_file": "2026-11-07",
+   "registration_first_push": {
+    "utc": "2026-11-07T11:54:33Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "fa20f3bc9"
+   },
+   "first_code_push": {
+    "utc": "2026-11-07T11:58:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "9dfc11ce1"
+   },
+   "first_result_push": {
+    "utc": "2026-11-07T12:11:07Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "7af1f1da9"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.07
+  },
+  {
+   "registration": "B26",
+   "id": "B26",
+   "kind": "study",
+   "result_names": [
+    "B26"
+   ],
+   "created_utc_in_file": "2026-11-08",
+   "registration_first_push": {
+    "utc": "2026-11-08T17:48:18Z",
+    "ref": "refs/heads/claude/research-sym15",
+    "type": "branch_creation",
+    "commit": "4a3978666"
+   },
+   "first_code_push": {
+    "utc": "2026-11-08T17:48:18Z",
+    "ref": "refs/heads/claude/research-sym15",
+    "type": "branch_creation",
+    "commit": "1548e43c8"
+   },
+   "first_result_push": {
+    "utc": "2026-11-08T17:48:18Z",
+    "ref": "refs/heads/claude/research-sym15",
+    "type": "branch_creation",
+    "commit": "dd691044c"
+   },
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "B27",
+   "id": "B27",
+   "kind": "study",
+   "result_names": [
+    "B27"
+   ],
+   "created_utc_in_file": "2026-11-08",
+   "registration_first_push": {
+    "utc": "2026-11-08T18:40:29Z",
+    "ref": "refs/heads/claude/research-sym15",
+    "type": "push",
+    "commit": "0065cadb1"
+   },
+   "first_code_push": {
+    "utc": "2026-11-08T18:40:29Z",
+    "ref": "refs/heads/claude/research-sym15",
+    "type": "push",
+    "commit": "acca0426f"
+   },
+   "first_result_push": {
+    "utc": "2026-11-08T18:40:29Z",
+    "ref": "refs/heads/claude/research-sym15",
+    "type": "push",
+    "commit": "9d053ee4e"
+   },
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "B28",
+   "id": "B28",
+   "kind": "study",
+   "result_names": [
+    "B28"
+   ],
+   "created_utc_in_file": "2026-11-08",
+   "registration_first_push": {
+    "utc": "2026-11-09T06:08:01Z",
+    "ref": "refs/heads/claude/research-phase-c",
+    "type": "branch_creation",
+    "commit": "ffc0b6857"
+   },
+   "first_code_push": {
+    "utc": "2026-11-09T06:08:01Z",
+    "ref": "refs/heads/claude/research-phase-c",
+    "type": "branch_creation",
+    "commit": "9a86c684c"
+   },
+   "first_result_push": {
+    "utc": "2026-11-09T06:08:01Z",
+    "ref": "refs/heads/claude/research-phase-c",
+    "type": "branch_creation",
+    "commit": "627b2d2a3"
+   },
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "B29",
+   "id": "B29",
+   "kind": "study",
+   "result_names": [
+    "B29"
+   ],
+   "created_utc_in_file": "2026-11-08",
+   "registration_first_push": {
+    "utc": "2026-11-09T06:08:01Z",
+    "ref": "refs/heads/claude/research-phase-c",
+    "type": "branch_creation",
+    "commit": "ffc0b6857"
+   },
+   "first_code_push": {
+    "utc": "2026-11-09T06:08:01Z",
+    "ref": "refs/heads/claude/research-phase-c",
+    "type": "branch_creation",
+    "commit": "9a86c684c"
+   },
+   "first_result_push": {
+    "utc": "2026-11-09T06:08:01Z",
+    "ref": "refs/heads/claude/research-phase-c",
+    "type": "branch_creation",
+    "commit": "627b2d2a3"
+   },
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "B30",
+   "id": "B30",
+   "kind": "study",
+   "result_names": [
+    "B30"
+   ],
+   "created_utc_in_file": "2026-11-15",
+   "registration_first_push": {
+    "utc": "2026-11-15T06:56:34Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b30-confirmation",
+    "type": "branch_creation",
+    "commit": "015739041"
+   },
+   "first_code_push": {
+    "utc": "2026-11-15T07:00:55Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b30-confirmation",
+    "type": "push",
+    "commit": "4007aa81d"
+   },
+   "first_result_push": {
+    "utc": "2026-11-15T07:12:30Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b30-confirmation",
+    "type": "push",
+    "commit": "74ccb4bce"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.07
+  },
+  {
+   "registration": "B31",
+   "id": "B31",
+   "kind": "study",
+   "result_names": [
+    "B31"
+   ],
+   "created_utc_in_file": "2026-11-15",
+   "registration_first_push": {
+    "utc": "2026-11-15T08:05:11Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31-opportunity",
+    "type": "branch_creation",
+    "commit": "179814194"
+   },
+   "first_code_push": {
+    "utc": "2026-11-15T08:16:03Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31-opportunity",
+    "type": "push",
+    "commit": "daf26e730"
+   },
+   "first_result_push": {
+    "utc": "2026-11-15T08:45:00Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31-opportunity",
+    "type": "push",
+    "commit": "58eb24cb8"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.18
+  },
+  {
+   "registration": "B31b-SHADOW-FWD",
+   "id": "B31b-SHADOW-FWD",
+   "kind": "forward",
+   "result_names": [
+    "B31b-SHADOW-FWD"
+   ],
+   "created_utc_in_file": "2026-11-15",
+   "registration_first_push": {
+    "utc": "2026-11-15T12:43:34Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-shadow",
+    "type": "branch_creation",
+    "commit": "078e7dad7"
+   },
+   "first_code_push": {
+    "utc": "2026-11-15T13:14:46Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-shadow",
+    "type": "push",
+    "commit": "0178d9319"
+   },
+   "first_result_push": null,
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.52
+  },
+  {
+   "registration": "B31b-W1",
+   "id": "B31b-W1",
+   "kind": "study",
+   "result_names": [
+    "B31b-W1"
+   ],
+   "created_utc_in_file": "2026-11-15",
+   "registration_first_push": {
+    "utc": "2026-11-15T19:40:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-w1",
+    "type": "branch_creation",
+    "commit": "394703a15"
+   },
+   "first_code_push": {
+    "utc": "2026-11-15T19:43:55Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-w1",
+    "type": "push",
+    "commit": "2f65ed935"
+   },
+   "first_result_push": {
+    "utc": "2026-11-16T02:45:37Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-w1",
+    "type": "push",
+    "commit": "68aa1c74d"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.05
+  },
+  {
+   "registration": "B31b-W12",
+   "id": "B31b-W12",
+   "kind": "study",
+   "result_names": [
+    "B31b-W12"
+   ],
+   "created_utc_in_file": "2026-11-25",
+   "registration_first_push": {
+    "utc": "2026-11-25T17:36:50Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w12-session-sweeps",
+    "type": "branch_creation",
+    "commit": "f56b97515"
+   },
+   "first_code_push": {
+    "utc": "2026-11-25T17:40:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w12-session-sweeps",
+    "type": "push",
+    "commit": "14ec74d5f"
+   },
+   "first_result_push": {
+    "utc": "2026-11-25T17:51:54Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w12-session-sweeps",
+    "type": "push",
+    "commit": "373541359"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.07
+  },
+  {
+   "registration": "B31b-W13",
+   "id": "B31b-W13",
+   "kind": "study",
+   "result_names": [
+    "B31b-W13"
+   ],
+   "created_utc_in_file": "2026-11-25",
+   "registration_first_push": {
+    "utc": "2026-11-25T21:06:03Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w13-entry-precision",
+    "type": "branch_creation",
+    "commit": "399b08d7c"
+   },
+   "first_code_push": {
+    "utc": "2026-11-25T21:09:18Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w13-entry-precision",
+    "type": "push",
+    "commit": "c026f2b72"
+   },
+   "first_result_push": {
+    "utc": "2026-11-25T21:12:21Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w13-entry-precision",
+    "type": "push",
+    "commit": "fd6fbc305"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.05
+  },
+  {
+   "registration": "B31b-W2",
+   "id": "B31b-W2",
+   "kind": "study",
+   "result_names": [
+    "B31b-W2"
+   ],
+   "created_utc_in_file": "2026-11-16",
+   "registration_first_push": {
+    "utc": "2026-11-16T13:26:28Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-w2",
+    "type": "branch_creation",
+    "commit": "fcdfed47e"
+   },
+   "first_code_push": {
+    "utc": "2026-11-18T13:53:21Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-w2",
+    "type": "push",
+    "commit": "548344448"
+   },
+   "first_result_push": {
+    "utc": "2026-11-18T14:19:20Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-b31b-w2",
+    "type": "push",
+    "commit": "775515d8b"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 48.45
+  },
+  {
+   "registration": "B31b-W3",
+   "id": "B31b-W3",
+   "kind": "study",
+   "result_names": [
+    "B31b-W3"
+   ],
+   "created_utc_in_file": "2026-11-18",
+   "registration_first_push": {
+    "utc": "2026-11-18T21:10:29Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w3-liquidity",
+    "type": "branch_creation",
+    "commit": "69c746a7c"
+   },
+   "first_code_push": {
+    "utc": "2026-11-18T21:26:37Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w3-liquidity",
+    "type": "push",
+    "commit": "776235851"
+   },
+   "first_result_push": {
+    "utc": "2026-11-18T21:48:03Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w3-liquidity",
+    "type": "push",
+    "commit": "4432bf23f"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.27
+  },
+  {
+   "registration": "B31b-W4",
+   "id": "B31b-W4",
+   "kind": "study",
+   "result_names": [
+    "B31b-W4"
+   ],
+   "created_utc_in_file": "2026-11-19T04:13:09Z",
+   "registration_first_push": {
+    "utc": "2026-11-19T04:13:11Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w4-research",
+    "type": "branch_creation",
+    "commit": "cada883c4"
+   },
+   "first_code_push": {
+    "utc": "2026-11-19T04:25:17Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w4-research",
+    "type": "push",
+    "commit": "b6f15f44d"
+   },
+   "first_result_push": {
+    "utc": "2026-11-19T04:38:23Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w4-research",
+    "type": "push",
+    "commit": "7bea00cf9"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.2
+  },
+  {
+   "registration": "B31b-W5",
+   "id": "B31b-W5",
+   "kind": "study",
+   "result_names": [
+    "B31b-W5"
+   ],
+   "created_utc_in_file": "2026-11-19T08:25:43Z",
+   "registration_first_push": {
+    "utc": "2026-11-19T08:25:47Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w5-entry",
+    "type": "branch_creation",
+    "commit": "238b6c56b"
+   },
+   "first_code_push": {
+    "utc": "2026-11-19T08:34:45Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w5-entry",
+    "type": "push",
+    "commit": "6049d201f"
+   },
+   "first_result_push": {
+    "utc": "2026-11-19T09:28:09Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w5-entry",
+    "type": "push",
+    "commit": "918abd20d"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.15
+  },
+  {
+   "registration": "B31b-W7",
+   "id": "B31b-W7",
+   "kind": "study",
+   "result_names": [
+    "B31b-W7"
+   ],
+   "created_utc_in_file": "2026-11-19",
+   "registration_first_push": {
+    "utc": "2026-11-19T11:24:03Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w7-breakouts",
+    "type": "branch_creation",
+    "commit": "b3d5a6594"
+   },
+   "first_code_push": {
+    "utc": "2026-11-19T11:56:17Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w7-breakouts",
+    "type": "push",
+    "commit": "117cb8b0d"
+   },
+   "first_result_push": {
+    "utc": "2026-11-19T17:05:01Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w7-study",
+    "type": "branch_creation",
+    "commit": "da5cb0602"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.54
+  },
+  {
+   "registration": "B31b-W8-cost",
+   "id": "B31b-W8-cost",
+   "kind": "study",
+   "result_names": [
+    "B31b-W8"
+   ],
+   "created_utc_in_file": "2026-11-25",
+   "registration_first_push": {
+    "utc": "2026-11-25T16:43:50Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w8-quality",
+    "type": "push",
+    "commit": "64777afc4"
+   },
+   "first_code_push": null,
+   "first_result_push": {
+    "utc": "2026-11-25T16:45:24Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w8-quality",
+    "type": "push",
+    "commit": "19ba1e747"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.03
+  },
+  {
+   "registration": "B31b-W8",
+   "id": "B31b-W8",
+   "kind": "study",
+   "result_names": [
+    "B31b-W8"
+   ],
+   "created_utc_in_file": "2026-11-19",
+   "registration_first_push": {
+    "utc": "2026-11-19T17:51:14Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w8-quality",
+    "type": "branch_creation",
+    "commit": "e6c00f85f"
+   },
+   "first_code_push": {
+    "utc": "2026-11-19T17:54:49Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w8-quality",
+    "type": "push",
+    "commit": "00749cae1"
+   },
+   "first_result_push": {
+    "utc": "2026-11-25T16:45:24Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-w8-quality",
+    "type": "push",
+    "commit": "19ba1e747"
+   },
+   "verdict": "BEFORE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": 0.06
+  },
+  {
+   "registration": "B4-RN-V1",
+   "id": "B4-RN-V1",
+   "kind": "study",
+   "result_names": [
+    "B4-V"
+   ],
+   "created_utc_in_file": "2026-11-01",
+   "registration_first_push": {
+    "utc": "2026-11-01T16:12:18Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "7a5e621d9"
+   },
+   "first_code_push": {
+    "utc": "2026-11-01T16:12:18Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "7a5e621d9"
+   },
+   "first_result_push": {
+    "utc": "2026-11-01T16:18:14Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "9aec1175e"
+   },
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "B5C",
+   "id": "B5C",
+   "kind": "study",
+   "result_names": [
+    "B5C"
+   ],
+   "created_utc_in_file": null,
+   "registration_first_push": {
+    "utc": "2026-11-09T07:50:07Z",
+    "ref": "refs/heads/claude/research-phase-c",
+    "type": "push",
+    "commit": "7d84d0a6b"
+   },
+   "first_code_push": null,
+   "first_result_push": null,
+   "verdict": "NO_EVIDENCE",
+   "registration_commit_is_ancestor_of_first_evidence": null,
+   "hours_registration_to_first_evidence": null
+  },
+  {
+   "registration": "B9-GRAB-FWD",
+   "id": "B9-GRAB-FWD",
+   "kind": "forward",
+   "result_names": [
+    "B9-GRAB-FWD"
+   ],
+   "created_utc_in_file": "2026-11-04",
+   "registration_first_push": {
+    "utc": "2026-11-04T23:42:36Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "3a5dc7076"
+   },
+   "first_code_push": {
+    "utc": "2026-11-04T23:42:36Z",
+    "ref": "refs/heads/claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4",
+    "type": "push",
+    "commit": "7c1c2fb6b"
+   },
+   "first_result_push": null,
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  },
+  {
+   "registration": "PHASE_D",
+   "id": "PHASE_D",
+   "kind": "study",
+   "result_names": [
+    "PHASE_D"
+   ],
+   "created_utc_in_file": "2026-11-09",
+   "registration_first_push": {
+    "utc": "2026-11-09T17:04:20Z",
+    "ref": "refs/heads/claude/research-phase-d",
+    "type": "branch_creation",
+    "commit": "451daf1aa"
+   },
+   "first_code_push": null,
+   "first_result_push": {
+    "utc": "2026-11-09T17:04:20Z",
+    "ref": "refs/heads/claude/research-phase-d",
+    "type": "branch_creation",
+    "commit": "451daf1aa"
+   },
+   "verdict": "SAME_PUSH",
+   "registration_commit_is_ancestor_of_first_evidence": true,
+   "hours_registration_to_first_evidence": 0.0
+  }
+ ],
+ "counts": {
+  "BEFORE": 26,
+  "SAME_PUSH": 9,
+  "AFTER": 0,
+  "NO_EVIDENCE": 3,
+  "NOT_FOUND": 0
+ }
+}
