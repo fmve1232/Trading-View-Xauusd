@@ -1,0 +1,15 @@
+GA-03 durable outcome log: replay on the real alert state (2026-11-26). Counts only; no prices are stored here.
+Inputs: market-data:alerts_state.json at 07:33 UTC (sha256 of the 11:04 copy e562417c...0de14), then at 11:04 UTC.
+Code: quantum/outcomes.py on branch claude/session-01fdjaothuvhxscxtl7ysa-y3n4w4-remediation.
+
+run 1 (07:33 state)  append: {"state": "ok", "appended": 114, "records_in_state": 114}   merge: {"added": 114}
+run 2 (11:04 state)  append: {"state": "ok", "appended": 6,   "records_in_state": 119}   merge: {"added": 6}
+verify (ledger vs 11:04 state): lines 120, records 119, problems 0, state versions not logged 0
+  per kind|tf: breakout|15m 51 (49 final), breakout|30m 25 (24), breakout|1h 13 (11), breakout|4h 8 (5),
+               sweep|15m 17 (17), sweep|30m 2 (2), sweep|1h 2 (2), sweep|4h 1 (1)
+pruning (50 oldest breakouts and 10 oldest sweeps removed from the state, as KEEP does):
+  append: appended 0; verify: records 119, logged_not_in_state 60, problems 0
+store loss (store/outcomes deleted, append again, merge): store re-logged 59, ledger added 0; ledger lines 120, problems 0
+tamper (one record's close changed) + duplicate line: verify exit 1:
+  "2026-11-26.jsonl:1: checksum mismatch for sweep|SWP:1795418100:HI"
+  "2026-11-26.jsonl:121: duplicate of 2026-11-26.jsonl:2 (sweep|SWP:1795430700:HI)"
