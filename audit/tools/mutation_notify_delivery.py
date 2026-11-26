@@ -68,7 +68,9 @@ M = {
                                                 "        ok = rec[\"http\"] is not None\n")],
     "D26 line references not shifted by the NOT ACTIONABLE line": [
         ("            refs[:] = [(i + (i >= stale_at), k, m) for i, k, m in refs]", "            refs[:] = [(i, k, m) for i, k, m in refs]")],
-    "D27 the retry pause skipped": [("    _sleep(RETRY_PAUSE_SEC)\n", "")],
+    "D27 the retry pause skipped": [("    _sleep(RETRY_429_PAUSE_SEC if a1.get(\"http\") == 429 else RETRY_PAUSE_SEC)\n", "")],
+    "D27b a 429 retried after the ordinary 5 s pause (GA-07)": [("RETRY_429_PAUSE_SEC if a1.get(\"http\") == 429 else RETRY_PAUSE_SEC",
+                                                                "RETRY_PAUSE_SEC")],
     "D28 a reopened plan's entry not cleared when its opening is accepted": [("            und.pop(str(pid), None)\n        for pid in blocked:",
                                                                              "            pass\n        for pid in blocked:")],
     "D29 undelivered entries never expire": [("            del und[pid]\n", "            pass\n")],

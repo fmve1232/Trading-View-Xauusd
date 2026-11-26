@@ -510,6 +510,20 @@ def test_retryable_failures_are_retried_once(tmp_path, monkeypatch, fail):
     assert len(net.posts) == 2 and records(str(tmp_path))[-1]["state"] == "RETRY_SUCCEEDED"
 
 
+@pytest.mark.parametrize("fail, pause", [(429, 30), (503, 5), ("reset", 5)])
+def test_a_rate_limited_send_waits_longer_before_its_one_retry(tmp_path, monkeypatch, fail, pause):
+    """GA-07: the 22 Nov 429 was retried after 5 s and refused again. A 429 now waits 30 s; other failures 5 s."""
+    net = Net(monkeypatch, ntfy=[ConnectionResetError("reset") if fail == "reset" else fail])
+    timeline(str(tmp_path), net, upto=2)
+    assert net.sleeps == [pause] and len(net.posts) == 2
+
+
+def test_a_rate_limited_channel_waits_once_per_run(tmp_path, monkeypatch):
+    net = Net(monkeypatch, ntfy=[429, 429])
+    timeline(str(tmp_path), net, upto=2)
+    assert net.sleeps == [30] and records(str(tmp_path))[-1]["state"] == "RETRY_FAILED"
+
+
 def test_a_failed_poll_before_the_retry_fails_open_and_resends(tmp_path, monkeypatch):
     net = Net(monkeypatch, ntfy=[CE("aborted")], poll="fail")
     timeline(str(tmp_path), net, upto=2)
