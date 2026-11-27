@@ -1,0 +1,45 @@
+{
+ "M01 CVaR k rounded down": [
+  "test_tail_by_hand"
+ ],
+ "M02 the start is not a peak": [
+  "test_max_drawdown_by_hand",
+  "test_monte_carlo_keeps_each_day_whole_and_in_order"
+ ],
+ "M03 calendar day, not the 17:00 New York session day": [
+  "test_the_session_day_starts_at_17_new_york",
+  "test_analyse_a_hand_made_ledger"
+ ],
+ "M04 blocks do not wrap": [
+  "test_stationary_bootstrap_blocks"
+ ],
+ "M05 never a new block": [
+  "test_stationary_bootstrap_blocks",
+  "test_analyse_a_hand_made_ledger"
+ ],
+ "M06 trades shuffled inside a day": [
+  "test_monte_carlo_keeps_each_day_whole_and_in_order"
+ ],
+ "M07 before-cost expectancy equals after-cost": [
+  "test_analyse_a_hand_made_ledger"
+ ],
+ "M08 ledger order, not exit order": [
+  "test_drawdown_is_taken_in_exit_order_not_ledger_order"
+ ],
+ "M09 open trades counted": [
+  "test_analyse_a_hand_made_ledger"
+ ],
+ "M10 freeze keys merged": [
+  "test_analyse_a_hand_made_ledger",
+  "test_drawdown_is_taken_in_exit_order_not_ledger_order",
+  "test_reproducible_and_groups_seeded_by_their_own_key",
+  "test_freeze_keys_are_kept_apart_and_zero_stops_excluded"
+ ],
+ "M11 group seed from the key's length, not its hash": [],
+ "M12 the 95th percentile is the median": [
+  "test_analyse_a_hand_made_ledger"
+ ],
+ "M13 measured cost reported as the modelled one": [
+  "test_analyse_a_hand_made_ledger"
+ ]
+}

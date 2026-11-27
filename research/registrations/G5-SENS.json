@@ -1,0 +1,60 @@
+{
+ "id": "G5-SENS",
+ "title": "Parameter sensitivity of the frozen engine (treatment arm) and arm H4 on the development partition: how much the recorded result moves when each parameter moves, one at a time. A DIAGNOSTIC of fragility, never a selection",
+ "status": "REGISTERED 2026-11-27, written and committed before any of its code or any run; research only; no production change",
+ "approved_by_operator": true,
+ "approval": "Operator, 2026-11-27 (chat), QUANTUM XAUUSD - NEXT PHASE EXECUTION & VALIDATION MANDATE, G5 (APPROVED): \"Parameter sensitivity: Do not select parameters based on the existing holdout period. Keep exploratory research separate from validation.\" Research integrity: \"Never tune against the holdout. Preserve registrations. Keep development / validation / forward separation. Register before running. Document failures.\" \"Never allow an automated AI research loop to approve its own strategy changes.\" The approval covers the DEVELOPMENT partition only; validation and the sealed holdout stay closed (harness.partition refuses them for this registration).",
+ "partitions": ["development"],
+ "not_used": "validation (2023-01-24 to 2024-07-01), the sealed holdout (2024-07-01 to 2026-01-01), the 'recent' 2026 span (it contains the forward holdout window, from 2026-09-28) and every forward ledger",
+ "created_utc": "2026-11-27",
+ "prior_evidence_disclosed_before_running": [
+  "The frozen configuration was chosen before the holdout froze (PREREGISTRATION.md section 7); the H4 rules and constants before H4 ran on any history (Amendment 8). This study re-chooses nothing.",
+  "The development partition carries NO volume (b10.make_market: 'NONE (not stored for 2020-2023)'): the engine's volume-gated signals cannot fire there, and the volume profile (VAH / VAL / POC) that H4 uses as levels is absent or degenerate. On development data H4 therefore runs WITHOUT its volume-profile levels: it is not the production H4, and the report says so beside every H4 number.",
+  "B19 found 64 engine ideas on development after the REPEAT rule: treatment-arm samples on development are small. B10 / B30 ran the same engine on the same partition.",
+  "Forward record at registration time (descriptive, G5 page): H4 15m mean net -0.073 R on 162 trades, day-bootstrap interval spanning 0; H4 5m -0.148 R on 454 trades, interval below 0. The forward record plays no part in this study."
+ ],
+ "unchanged": "quantum/config.py, the engine, every arm module, the freeze key 1f88aad357497da4:4440d52587f5cc6b, the forward ledgers, the alerts, the site. The study code lives in quantum/research/ (never imported by production; test_integrity) and runs on a copy of the configuration (dataclasses.replace) and, for H4, on module constants patched in the study process only.",
+ "data": "Twelve Data XAU/USD 15min and 1h from the research-data branch, development partition 2020-01-24 02:00 to 2023-01-24 02:00 UTC (harness.DEV), through harness.partition; the SHA-256 of the partition's bars (harness.data_hash) is recorded with every trial. 30m is resampled from 15m as the pipeline does. 5m and 4h are not run (5m: compute; 4h: too few trades).",
+ "arms": {
+  "treatment": "the frozen engine's treatment arm (backtest.simulate on the engine's exec signals), production code",
+  "h4": "arm H4 (quantum/arm_h4.py) on the same engine output, production code; volume-profile levels absent on this partition (above)"
+ },
+ "timeframes": ["15m", "30m", "1h"],
+ "design": "ONE AT A TIME around the frozen value: each listed parameter takes each listed value while every other parameter stays at its frozen value. No grid search, no combinations, no optimisation, no second round. The value lists are fixed here and are not extended after a result is seen.",
+ "parameters": {
+  "engine (config.py; affects both arms)": {
+   "atr_len": [10, 14, 20],
+   "swing_pivot_len": [3, 5, 8],
+   "internal_pivot_len": [1, 2, 3],
+   "struct_window": [5, 8, 12],
+   "tq_min_score": [45, 55, 65],
+   "cal_gate_min_p": [0.45, 0.50, 0.55],
+   "eq_atr_mult": [0.15, 0.25, 0.35],
+   "liq_prox_mult": [1.0, 1.5, 2.0]
+  },
+  "h4 (module constants; H4 only)": {
+   "GAP_ATR": [0.05, 0.1, 0.2],
+   "MERGE_ATR": [0.025, 0.05, 0.1],
+   "MIN_TP_R": [0.75, 1.0, 1.5],
+   "FALLBACK_R": [1.5, 2.0, 3.0]
+  },
+  "cost of record (both arms; not a strategy parameter)": {
+   "cost multiplier on spread_cost, slippage_pts and commission_l together": [0.5, 1.0, 1.5, 2.0]
+  },
+  "frozen values": "the middle value of each list (1.0 for the cost multiplier); a test checks they equal config.py and arm_h4.py"
+ },
+ "cells": "per timeframe: treatment 8 x 2 + 3 (cost) + 1 (frozen) = 20; H4 (8 + 4) x 2 + 3 + 1 = 28; three timeframes: 144 cells, each logged as one trial in research/trials.jsonl",
+ "metrics_per_cell": ["closed trades n", "mean net R after the modelled cost", "mean R before cost", "profit factor", "win rate with Wilson 95%", "maximum drawdown in R", "mean net R day-block bootstrap 95% interval (as G5)"],
+ "fragility_summary_stated_in_advance": {
+  "sign_stability": "per parameter and arm / timeframe: whether mean net R keeps the frozen value's sign at every listed value",
+  "frozen_rank": "the frozen value's rank among its list on mean net R (1 = best): a frozen value that is best while both neighbours are clearly worse is reported as a PEAK (a sign of a fitted spike), otherwise PLATEAU or SLOPE",
+  "relative_change": "the largest change of mean net R and of n against the frozen cell",
+  "interval_overlap": "whether every cell's interval overlaps the frozen cell's"
+ },
+ "decision": "NONE. This is a diagnostic. No value from this study is proposed, adopted or recommended for production, the forward arms or the alerts, and no 'best' value is named as a recommendation. Any later parameter change would need its own amendment, a new forward test (the freeze key restarts by design) and the operator's explicit approval; this study cannot serve as that evidence on its own because it reads one partition many times.",
+ "multiple_testing": "No test is used to choose. The 144 trials are logged so that any later claim can be deflated against them (harness.deflated_sharpe takes the trial count).",
+ "feasibility_first": "Before the grid, the frozen cell is run once per arm and timeframe and its trade counts and run time are reported as they are. If a frozen cell has fewer than 20 closed trades, that arm / timeframe's cells are still run and reported, flagged INSUFFICIENT; nothing is re-designed to raise the count.",
+ "not_done_by_design": ["no combination of parameters", "no search beyond the listed values", "no validation, holdout, recent or forward data", "no change to config.py or any arm module", "no new strategy"],
+ "trials_log": "research/trials.jsonl, append-only, one line per cell: registration id, partition, arm, timeframe, parameter, value, data hash, metrics",
+ "outputs": "research/G5_SENS_RESULTS.md and research/G5_SENS_RESULTS.json, generated from the run, every number from the run file"
+}

@@ -1,0 +1,4 @@
+$ python -m pytest -q tests   (2026-11-27T22:24:25Z; python 3.11.18, numpy 2.4.6, pandas 3.1.1)
+SKIPPED [1] tests/test_research_b22.py:19: could not import 'hmmlearn.hmm': No module named 'hmmlearn'
+SKIPPED [1] tests/test_research_b22.py:48: could not import 'sklearn': No module named 'sklearn'
+1190 passed, 2 skipped in 365.95s (0:06:05)
