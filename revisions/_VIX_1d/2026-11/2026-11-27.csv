@@ -1,0 +1,2 @@
+bar_open,run_utc,old_open,old_high,old_low,old_close,new_open,new_high,new_low,new_close,kind,ref_run,n_bars
+2026-11-26 00:00:00+00:00,2026-11-27T05:22:33Z,27.180000,27.540001,26.570000,26.799999,0.000000,0.000000,0.000000,26.799999,changed,,
