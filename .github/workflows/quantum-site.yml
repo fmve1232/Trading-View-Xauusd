@@ -270,6 +270,14 @@ jobs:
         if: always() && hashFiles('store-loaded.flag') != '' && hashFiles('store/alerts_state.json') != ''
         run: python -m quantum.outcomes --append store
 
+      - name: Per-trade diagnostics (G4; every closed forward trade, written once; records only)
+        # MAE / MFE, time to +$10 / +$15 / +$20, target or stop first (engine fill and next-bar open), exit, modelled
+        # cost, NFP / CPI / FOMC tag: appended to store/trade_diag/<day>.jsonl from the stored 5-minute bars that have
+        # closed, merged into forward-ledger below. Nothing in the engine, the arms, the alerts or the ledgers reads it,
+        # so a failure is a warning on the run and never stops the saves or the site.
+        if: always() && hashFiles('store-loaded.flag') != '' && hashFiles('store/holdout_manifest.json') != ''
+        run: python -m quantum.trade_diag --append store || echo "::warning title=trade diagnostics::append failed; no trade record was changed"
+
       - name: Save the market-data store (one orphan commit; only changed month files are uploaded)
         id: savestore
         if: always() && hashFiles('store-loaded.flag') != ''
@@ -295,6 +303,8 @@ jobs:
           if [ -d store/notifications ]; then python -m quantum.notify --merge-ledger store/notifications ledger/notifications || echo "::warning title=notification ledger::merge failed; the records stay in the store"; fi
           # GA-03: the outcome log, a union by (record, version): a line already in the ledger is never removed or changed
           if [ -d store/outcomes ]; then python -m quantum.outcomes --merge-ledger store/outcomes ledger/outcomes || echo "::warning title=outcome log::merge failed; the records stay in the store"; fi
+          # G4: per-trade diagnostics, a union by trade key: a record already in the ledger is never removed or changed
+          if [ -d store/trade_diag ]; then python -m quantum.trade_diag --merge-ledger store/trade_diag ledger/trade_diag || echo "::warning title=trade diagnostics::merge failed; the records stay in the store"; fi
           cd ledger
           git config user.name "quantum-pipeline"
           git config user.email "quantum-pipeline@users.noreply.github.com"
