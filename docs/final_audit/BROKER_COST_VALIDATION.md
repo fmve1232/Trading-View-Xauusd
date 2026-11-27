@@ -11,7 +11,7 @@ UNVERIFIED. Nothing below is invented to fill those gaps.
 | Input | Value used | Where | Status | Evidence |
 |---|---|---|---|---|
 | Spread, Asia | $0.485 / oz (W8 decision cost); engine $0.30 | `research/registrations/B31b-W8-cost.json`; `quantum/config.py` `spread_cost` | **MEASURED** (2 screenshot sets, 19 and 25 Nov, about 06:25 and 06:53 UTC): M15 $0.52 and $0.45; M30 $0.61 and $0.49; H1 $0.55 and $0.33 | `research/tools/spread_from_screenshots.py` (W8 branch); fit error ≤ $0.17 |
-| Spread, New York close | — | — | **MEASURED, 1 reading:** about $0.80 at 20:55 UTC on 26 Nov (M15 / H1 screenshots); a single reading near the daily rollover, not a session average | screenshot analysis of 26 Nov (operator's screenshots, not committed: private) |
+| Spread, New York close | — | — | **MEASURED, 1 reading:** about $0.80 at a 20:55 clock reading on one day of the 23–25 Nov screenshots (M15 / H1). Erratum 26 Nov: first written as "20:55 UTC on 26 Nov", a time that had not yet occurred; the day and the clock's time zone are in the operator's private screenshots and are not re-checked here; a single reading near the daily rollover, not a session average | screenshot analysis of 26 Nov (operator's screenshots, not committed: private) |
 | Spread, London / New York / overlap / off-hours | $0.30 (London / New York), $0.50 (off), W3 model | `B31b-W8-cost.json` `assumed` | **ASSUMED** | none |
 | Spread during high-impact news | not modelled separately | — | **UNVERIFIED** | none |
 | Commission | $7 per 100-oz lot round trip ($0.07 / oz) | `config.py` `commission_l` | **ASSUMED** | none |
