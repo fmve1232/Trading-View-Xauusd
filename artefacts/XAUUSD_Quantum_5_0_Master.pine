@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v107  (stats scan: last 300 bars)    ║
+// ║  BUILD STAMP — this file last CHANGED in v108  (run time: H2 VP, quantiles)   ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -8,7 +8,7 @@
 // ║  The stamp only moves when THIS file changes, so an unchanged file keeps its  ║
 // ║  old number and still matches the record.                                     ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
-indicator("XAUUSD Quantum 5.0", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=1500)
+indicator("XAUUSD Quantum 5.0", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=1000)
 // XAUUSD Quantum 4.0 — Post-Audit Remediation
 // F-025: was stale at "Q5.0" while the build was Q7.x. The schema build is appended at
 // render time from SCHEMA_BUILD, so the footer label cannot silently drift again.
@@ -567,7 +567,7 @@ recentBars = backtestAllBars or bar_index > last_bar_index - recentBarsLen
 // v107 (F-A94): runStatsEngines() re-scores the stored history every 4th bar, the bulk of the run time; on the
 // free plan's 20 s it SCANS on the last statsBars bars only. Records are still written on every bar, so the last
 // bar's statistics use the same history; older bars show them warming up. 0 = every bar (the twins: always).
-statsBars = input.int(300, "Statistics scan: last N bars (0 = all)", minval=0, group=grpHist)
+statsBars = input.int(150, "Statistics scan: last N bars (0 = all)", minval=0, group=grpHist)
 bool statsScanOn = statsBars == 0 or bar_index >= last_bar_index - statsBars
 // Winsorized gold return: clamp extreme gaps (±5%) to prevent Z-score distortion after gap opens
 float _rawGoldRet = safeDiv(close, nz(close[1], close)) - 1
@@ -4360,9 +4360,8 @@ runStatsEngines() =>
 var int _qcec = -1
 _qcec := _qcec + 1
 if showStatsEngine and hN >= 50 and (_qcec % 10 == 0 or barstate.islast) and barstate.isconfirmed
-    float[] _tmpQ = array.new<float>()
-    for _qi = 0 to hN - 1
-        array.push(_tmpQ, array.get(hPred, _qi))
+    // v108 (run time): the same hN values in the same order, copied natively (was a 1-by-1 loop)
+    float[] _tmpQ = array.copy(array.slice(hPred, 0, hN))
     array.sort(_tmpQ)
     float _p20 = array.get(_tmpQ, int(hN * 0.20))
     float _p40 = array.get(_tmpQ, int(hN * 0.40))
@@ -5186,7 +5185,9 @@ float h2VLo = ta.lowest(low, 100)
 var float h2Poc = na
 var float h2Vah = na
 var float h2Val = na
-if barstate.isconfirmed and bar_index >= 100 and h2VHi > h2VLo
+// v108 (run time): rebuilt only where it is read -- a sweep bar (h2Long / h2Short / plan) or the last two bars
+// (displays). Same 100 bars, same profile, same signals; the other bars never read it.
+if barstate.isconfirmed and bar_index >= 100 and h2VHi > h2VLo and (h2SweepL or h2SweepH or bar_index >= last_bar_index - 1)
     float _h2bs = (h2VHi - h2VLo) / 40.0
     float[] _h2vv = array.new_float(40, 0.0)
     for _h2i = 0 to 99

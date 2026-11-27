@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v51   (card header version)         ║
+// ║  BUILD STAMP — this file last CHANGED in v108  (H2 VP where it is read)      ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -144,7 +144,9 @@ float h2VLo = ta.lowest(low, 100)
 var float h2Poc = na
 var float h2Vah = na
 var float h2Val = na
-if barstate.isconfirmed and bar_index >= 100 and h2VHi > h2VLo
+// v108 (run time): rebuilt only where it is read -- a sweep bar (h2Long / h2Short / plan) or the last two bars
+// (displays). Same 100 bars, same profile, same signals; the other bars never read it.
+if barstate.isconfirmed and bar_index >= 100 and h2VHi > h2VLo and (h2SweepL or h2SweepH or bar_index >= last_bar_index - 1)
     float _h2bs = (h2VHi - h2VLo) / 40.0
     float[] _h2vv = array.new_float(40, 0.0)
     for _h2i = 0 to 99

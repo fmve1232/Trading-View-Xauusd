@@ -68,7 +68,8 @@ def test_vp():
         hi, lo = max(h[-100:]), min(l[-100:])
         S = P.Series
         env = P.Env(**{'barstate.isconfirmed': True, 'bar_index': 150, 'h2VHi': hi, 'h2VLo': lo, 'high': S(h), 'low': S(l),
-                       'close': S(c), 'volume': S(v), 'h2Poc': P.NA, 'h2Vah': P.NA, 'h2Val': P.NA})
+                       'close': S(c), 'volume': S(v), 'h2Poc': P.NA, 'h2Vah': P.NA, 'h2Val': P.NA,
+                       'h2SweepL': True, 'h2SweepH': False, 'last_bar_index': 150})   # v108: a bar that reads it (gate open)
         P.run(vp, env)
         got = (env['h2Poc'], env['h2Vah'], env['h2Val'])
         bad_ref += max(abs(a - b) for a, b in zip(got, ref_vp(h, l, c, v))) > 1e-9

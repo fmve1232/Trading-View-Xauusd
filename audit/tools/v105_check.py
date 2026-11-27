@@ -40,10 +40,15 @@ def same(srcs):
 
 
 src = {p: open(p, encoding="utf-8").read() for p in CHART}
-vals, ok = same(src.values())
+# v108: the three ENGINE copies (Master, Brief, Diagnostics) share one value; Visuals (its own, lighter engine) may
+# calculate on more bars (it runs at 1500 on the free plan where the Master runs at ~1000)
+vals = [decl(src[p]) for p in CHART]
+eng = [vals[0], vals[2], vals[3]]
+ok = len(set(eng)) == 1 and eng[0] is not None and vals[1] is not None and vals[1] >= eng[0]
 arms = [p for p in glob.glob("artefacts/*Strategy*.pine") if decl(open(p, encoding="utf-8").read()) is not None]
-report(ok and not arms, f"1 chart scripts calc_bars_count {vals}; strategy arms with it: {arms}")
-N = vals[0] or 0
+report(ok and not arms, f"1 calc_bars_count: Master / Brief / Diagnostics {eng} (equal), Visuals {vals[1]} (>= them); "
+       f"strategy arms with it: {arms}")
+N = min(v for v in vals if v) if all(vals) else 0
 
 worst = (0, "")
 for p, s in src.items():
@@ -66,9 +71,10 @@ after = {p: open(p, encoding="utf-8").read() for p in CHART[2:]}
 report(before == after, "3 Brief / Diagnostics rebuilt by their builders: byte-identical, calc_bars_count included")
 
 s0 = list(src.values())
-m1 = [re.sub(r",\s*calc_bars_count\s*=\s*\d+", "", s0[0], count=1)] + s0[1:]
-m2 = [s0[0].replace(f"calc_bars_count={N}", f"calc_bars_count={N + 1000}", 1)] + s0[1:]
-report(not same(m1)[1] and not same(m2)[1], "4 controls: a script without it, and one with another value, are detected")
+m1 = re.sub(r",\s*calc_bars_count\s*=\s*\d+", "", s0[0], count=1)
+m2 = s0[0].replace(f"calc_bars_count={eng[0]}", f"calc_bars_count={eng[0] + 1000}", 1)
+report(decl(m1) is None and decl(m2) != eng[1], "4 controls: a Master without it, and one with another value than Brief / "
+       "Diagnostics, are detected")
 V = src[CHART[1]]
 calls = re.findall(r"request\.security_lower_tf\(([^\n]*)\)\s*$", V, re.M)
 uses = [i for i, l in enumerate(V.split("\n")) if re.search(r"\bltf[COV]\b", l.split("//")[0]) and "security_lower_tf" not in l]

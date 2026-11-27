@@ -8,7 +8,7 @@
   2 run time, modelled from the engine's OWN constants (the scan cadence `_rb` and chunk size `_cs` lines executed as
     written for 15m): record passes on 1500 bars with the default window vs every bar
   3 the last bar's statistics: complete passes over the stored history inside the window, and what is left of an
-    earlier start after the engine's 0.7-per-pass decay (must be < 2%)
+    earlier start after the engine's 0.7-per-pass decay (v108 default 150: >= 5 passes, < 20%)
   4 controls: window 0 gives the full count; a guard without the switch is detected
 Not measured here: TradingView's run time (the operator's chart is the test). Usage: python3 audit/tools/v107_check.py"""
 import math
@@ -101,8 +101,8 @@ part, cyc = model(1500, win)
 report(part < full / 2, f"2 run time (15m, 1500 bars, the engine's own _rb = {RB}, _cs, OUTCOME_N = {ON}): {part:,} record passes "
        f"with the default window {win} vs {full:,} on every bar ({100 - 100 * part // full}% fewer)")
 resid = 0.7 ** cyc
-report(cyc >= 10 and resid < 0.02, f"3 last bar: {cyc} complete passes over the stored history inside the window; an earlier start "
-       f"is decayed to {100 * resid:.2f}% (0.7 per pass) -- the same computation on the same records")
+report(cyc >= 5 and resid < 0.20, f"3 last bar: {cyc} complete passes over the stored history inside the window; an earlier start "
+       f"is decayed to {100 * resid:.2f}% (0.7 per pass; the calibration RATIOS do not depend on it, count thresholds see it)")
 
 # 4 controls
 f0, _ = model(1500, 0)

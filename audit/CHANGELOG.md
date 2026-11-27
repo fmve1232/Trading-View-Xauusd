@@ -3843,3 +3843,27 @@ model from the engine's own `_rb` / `_cs` / `OUTCOME_N` lines, the decay residua
 
 **Not run:** TradingView's run time. If the Master still times out, set "Statistics scan: last N bars" lower (e.g. 150);
 if it runs with room, it can be raised (e.g. 600) for longer history marks.
+
+# v108 — run time: work that changes no output removed (F-A94) (2026-11-27)
+
+**Measured on the operator's chart** (TradingView shows a "Calculated bars" input because the scripts declare
+`calc_bars_count`): the v107 PROBE loads at 800 bars with Statistics scan 300 and fails at 805; the Master loads at 950
+with Statistics scan 100; Density Spacious tips it over. The Pine Profiler could not be read on the operator's screen.
+
+**Identical-output rewrites (`fix_v108.py`, `v108_check.py`):**
+1. **H2 volume profile** (byte-identical H2 block in the Master, Visuals and Strategy_H2): it was rebuilt on every
+   confirmed bar (~180 loop steps with history reads). Its POC / VAH / VAL are read only by the signal / plan lines (false
+   or na unless h2SweepL / h2SweepH) and by last-bar displays, so it is now rebuilt on sweep bars and the last two bars
+   only. Executed on 10,809 real 15m bars with trend forced both ways (every sweep reads it): signals, SL, TP1, TP2 and
+   the last two bars' POC / VAH / VAL identical; every read located (signal line or a display function called only on
+   the last bar); control: without the last-bar rebuild the values differ.
+2. **Quantile pass** (all six engine copies): the hN-step copy loop -> `array.copy(array.slice(hPred, 0, hN))`.
+**Defaults:** engine copies (Master, Brief, Diagnostics) `calc_bars_count` 1500 -> 1000; the Master's Statistics scan
+300 -> 150 (>= 5 passes in the window). Visuals stays at 1500. Values saved on the chart are kept by TradingView.
+
+**Checks:** `v108_check.py` (new); `h2_trace` VP case runs with the gate open; `v105_check` 1: the engine copies share
+one value, Visuals may be higher; `v107_check` 3: >= 5 passes, < 20% residual at the default; `refactor_check` chain +
+`fix_v108.master`, twins through `fix_v108.untwin`. Every checker passes; A/B hunks unchanged; Master model 99,297.
+
+**Not run:** TradingView's run time. Expect more bars to fit than v107's 950; the operator raises "Calculated bars"
+step by step (1000 -> 1200 -> 1500) and keeps the largest that loads.
