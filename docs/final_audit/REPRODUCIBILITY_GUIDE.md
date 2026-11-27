@@ -68,6 +68,23 @@ python3 -m quantum.outcomes --merge-ledger st/outcomes led/outcomes
 python3 -m quantum.outcomes --verify led/outcomes --state st/alerts_state.json   # problems: []
 ```
 
+**Per-trade diagnostics (G4) on real records** (`docs/final_audit/G4_TRADE_DIAGNOSTICS.md`):
+
+```sh
+git fetch origin market-data && mkdir g4 && git archive origin/market-data | tar -x -C g4
+python3 -m quantum.trade_diag --append g4 --now 2026-11-27T21:33:58Z
+python3 audit/tools/trade_diag_check.py --store g4          # exit 0: every record recomputed independently
+python3 audit/tools/g4_doc.py --check                        # the document matches the committed evidence
+```
+
+- The evidence run used snapshot `1800b2810`. `market-data` is replaced every run, so that commit is not fetchable for long.
+- A later snapshot should give the same records:
+  - the store keeps every month of 5-minute bars;
+  - `--now` drops every bar that closed after that time;
+  - trades closed later stay pending.
+- A vendor revision of a bar would show as a different `bars.sha256` in the record.
+- This has **not yet been tried on a later snapshot.**
+
 ## 4. Research results
 
 The W-series results reproduce from their branches with `research-data` (development partition only). The commands

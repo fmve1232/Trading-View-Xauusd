@@ -1,0 +1,173 @@
+{
+ "M01 a bar touching stop and target counts as the target": [
+  "test_a_short_stopped_by_a_gap_and_the_shared_bar_rule",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M02 the stop bar's favourable side counted": [
+  "test_a_short_stopped_by_a_gap_and_the_shared_bar_rule",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M03 race window not cut at the last target": [
+  "test_agrees_with_the_independent_checker_on_random_paths[5]",
+  "test_agrees_with_the_independent_checker_on_random_paths[7]",
+  "test_agrees_with_the_independent_checker_on_random_paths[10]",
+  "test_agrees_with_the_independent_checker_on_random_paths[13]",
+  "test_agrees_with_the_independent_checker_on_random_paths[17]",
+  "test_agrees_with_the_independent_checker_on_random_paths[22]",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M04 the still-forming bar is read": [
+  "test_the_still_forming_bar_is_not_read",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M05 append ignores the run time": [
+  "test_the_still_forming_bar_is_not_read",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M06 exit-price cap removed (exit below the fill)": [
+  "test_a_long_trade_by_hand",
+  "test_agrees_with_the_independent_checker_on_random_paths[4]",
+  "test_agrees_with_the_independent_checker_on_random_paths[20]",
+  "test_agrees_with_the_independent_checker_on_random_paths[23]",
+  "test_agrees_with_the_independent_checker_on_random_paths[24]",
+  "test_agrees_with_the_independent_checker_on_random_paths[32]",
+  "test_agrees_with_the_independent_checker_on_random_paths[36]",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M07 exit-price cap removed (exit above the fill)": [
+  "test_a_short_stopped_by_a_gap_and_the_shared_bar_rule",
+  "test_every_target_first_the_record_is_final_and_a_later_stop_does_not_change_it",
+  "test_agrees_with_the_independent_checker_on_random_paths[0]",
+  "test_agrees_with_the_independent_checker_on_random_paths[2]",
+  "test_agrees_with_the_independent_checker_on_random_paths[6]",
+  "test_agrees_with_the_independent_checker_on_random_paths[9]",
+  "test_agrees_with_the_independent_checker_on_random_paths[11]",
+  "test_agrees_with_the_independent_checker_on_random_paths[15]",
+  "test_agrees_with_the_independent_checker_on_random_paths[16]",
+  "test_agrees_with_the_independent_checker_on_random_paths[18]",
+  "test_agrees_with_the_independent_checker_on_random_paths[19]",
+  "test_agrees_with_the_independent_checker_on_random_paths[25]",
+  "test_agrees_with_the_independent_checker_on_random_paths[26]",
+  "test_agrees_with_the_independent_checker_on_random_paths[28]",
+  "test_agrees_with_the_independent_checker_on_random_paths[30]",
+  "test_agrees_with_the_independent_checker_on_random_paths[31]",
+  "test_agrees_with_the_independent_checker_on_random_paths[39]",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M08 next-open race not required to be decided": [
+  "test_no_record_while_the_next_open_race_is_undecided",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M09 fill at the signal bar's open": [
+  "test_a_long_trade_by_hand",
+  "test_next_bar_open_worse_than_the_fill",
+  "test_a_signal_at_the_friday_close_fills_next_at_the_sunday_reopen",
+  "test_every_target_first_the_record_is_final_and_a_later_stop_does_not_change_it",
+  "test_no_record_while_the_next_open_race_is_undecided",
+  "test_a_bar_that_opens_beyond_a_level_reaches_it_even_if_its_range_does_not",
+  "test_written_once_never_rewritten_and_the_ledger_is_untouched",
+  "test_wilson_and_summary",
+  "test_agrees_with_the_independent_checker_on_random_paths[0]",
+  "test_agrees_with_the_independent_checker_on_random_paths[5]",
+  "test_agrees_with_the_independent_checker_on_random_paths[7]",
+  "test_agrees_with_the_independent_checker_on_random_paths[10]",
+  "test_agrees_with_the_independent_checker_on_random_paths[13]",
+  "test_agrees_with_the_independent_checker_on_random_paths[17]",
+  "test_agrees_with_the_independent_checker_on_random_paths[19]",
+  "test_agrees_with_the_independent_checker_on_random_paths[22]",
+  "test_agrees_with_the_independent_checker_on_random_paths[32]",
+  "test_agrees_with_the_independent_checker_on_random_paths[37]",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M10 a target gapped at the open ignored": [
+  "test_a_bar_that_opens_beyond_a_level_reaches_it_even_if_its_range_does_not",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M11 a long stop gapped at the open ignored": [
+  "test_a_bar_that_opens_beyond_a_level_reaches_it_even_if_its_range_does_not",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M12 a logged record written again": [
+  "test_written_once_never_rewritten_and_the_ledger_is_untouched",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M13 the ledger merge duplicates lines": [
+  "test_written_once_never_rewritten_and_the_ledger_is_untouched",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M14 news day taken in UTC, not New York": [
+  "test_news_classification_by_hand",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M15 a record written before the exit bar is stored": [
+  "test_the_still_forming_bar_is_not_read",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M16 next-open entry from the engine's fill": [
+  "test_next_bar_open_worse_than_the_fill",
+  "test_a_signal_at_the_friday_close_fills_next_at_the_sunday_reopen",
+  "test_a_short_stopped_by_a_gap_and_the_shared_bar_rule",
+  "test_no_record_while_the_next_open_race_is_undecided",
+  "test_agrees_with_the_independent_checker_on_random_paths[0]",
+  "test_agrees_with_the_independent_checker_on_random_paths[2]",
+  "test_agrees_with_the_independent_checker_on_random_paths[4]",
+  "test_agrees_with_the_independent_checker_on_random_paths[5]",
+  "test_agrees_with_the_independent_checker_on_random_paths[6]",
+  "test_agrees_with_the_independent_checker_on_random_paths[7]",
+  "test_agrees_with_the_independent_checker_on_random_paths[9]",
+  "test_agrees_with_the_independent_checker_on_random_paths[10]",
+  "test_agrees_with_the_independent_checker_on_random_paths[11]",
+  "test_agrees_with_the_independent_checker_on_random_paths[13]",
+  "test_agrees_with_the_independent_checker_on_random_paths[15]",
+  "test_agrees_with_the_independent_checker_on_random_paths[16]",
+  "test_agrees_with_the_independent_checker_on_random_paths[17]",
+  "test_agrees_with_the_independent_checker_on_random_paths[18]",
+  "test_agrees_with_the_independent_checker_on_random_paths[19]",
+  "test_agrees_with_the_independent_checker_on_random_paths[22]",
+  "test_agrees_with_the_independent_checker_on_random_paths[23]",
+  "test_agrees_with_the_independent_checker_on_random_paths[24]",
+  "test_agrees_with_the_independent_checker_on_random_paths[25]",
+  "test_agrees_with_the_independent_checker_on_random_paths[26]",
+  "test_agrees_with_the_independent_checker_on_random_paths[28]",
+  "test_agrees_with_the_independent_checker_on_random_paths[30]",
+  "test_agrees_with_the_independent_checker_on_random_paths[31]",
+  "test_agrees_with_the_independent_checker_on_random_paths[32]",
+  "test_agrees_with_the_independent_checker_on_random_paths[36]",
+  "test_agrees_with_the_independent_checker_on_random_paths[37]",
+  "test_agrees_with_the_independent_checker_on_random_paths[39]",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M17 session-close gap measured from the signal open": [
+  "test_a_long_trade_by_hand",
+  "test_a_signal_at_the_friday_close_fills_next_at_the_sunday_reopen",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M18 an undecided race written before the horizon": [
+  "test_no_record_while_the_next_open_race_is_undecided",
+  "test_no_record_before_the_race_is_decided_and_future_bars_do_not_change_it",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ],
+ "M19 one malformed trade stops the run": [
+  "test_a_malformed_trade_is_reported_and_never_blocks_the_others",
+  "test_wired_after_the_pipeline_before_the_store_is_saved_and_merged_into_the_ledger",
+  "test_the_g4_document_is_what_the_evidence_gives"
+ ]
+}

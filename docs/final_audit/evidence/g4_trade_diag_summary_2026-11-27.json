@@ -1,0 +1,3808 @@
+{
+ "challenger|15m": {
+  "n": 7,
+  "usd10": {
+   "target_first": 4,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.5714,
+   "wilson95": [
+    0.2505,
+    0.8418
+   ],
+   "median_hours": 0.416
+  },
+  "usd15": {
+   "target_first": 3,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.4286,
+   "wilson95": [
+    0.1582,
+    0.7495
+   ],
+   "median_hours": 1.417
+  },
+  "usd20": {
+   "target_first": 3,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.4286,
+   "wilson95": [
+    0.1582,
+    0.7495
+   ],
+   "median_hours": 1.583
+  },
+  "tp1": {
+   "target_first": 3,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.4286,
+   "wilson95": [
+    0.1582,
+    0.7495
+   ],
+   "median_hours": 3.25
+  },
+  "tp2": {
+   "target_first": 2,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.2857,
+   "wilson95": [
+    0.0822,
+    0.6411
+   ],
+   "median_hours": 2.958
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 4,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.5714,
+    "wilson95": [
+     0.2505,
+     0.8418
+    ],
+    "median_hours": 0.416
+   },
+   "usd15": {
+    "target_first": 3,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.4286,
+    "wilson95": [
+     0.1582,
+     0.7495
+    ],
+    "median_hours": 1.5
+   },
+   "usd20": {
+    "target_first": 3,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.4286,
+    "wilson95": [
+     0.1582,
+     0.7495
+    ],
+    "median_hours": 1.583
+   },
+   "median_entry_shift_usd": 0.047,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.5227,
+  "median_mae_usd": 13.692,
+  "median_mfe_usd": 11.182,
+  "race_window_ends": {
+   "ALL_TARGETS": 2,
+   "STOP": 5
+  },
+  "median_race_mfe_usd": 11.182,
+  "stop_before_usd10": 3,
+  "in_trade_ends": {
+   "exit price touched": 7
+  },
+  "exit_reasons": {
+   "BE_GAP": 1,
+   "SL": 4,
+   "TP2": 2
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 7,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "challenger|1h": {
+  "n": 4,
+  "usd10": {
+   "target_first": 4,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.5101,
+    1.0
+   ],
+   "median_hours": 0.333
+  },
+  "usd15": {
+   "target_first": 3,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.75,
+   "wilson95": [
+    0.3006,
+    0.9544
+   ],
+   "median_hours": 0.333
+  },
+  "usd20": {
+   "target_first": 3,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.75,
+   "wilson95": [
+    0.3006,
+    0.9544
+   ],
+   "median_hours": 0.417
+  },
+  "tp1": {
+   "target_first": 2,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.15,
+    0.85
+   ],
+   "median_hours": 2.917
+  },
+  "tp2": {
+   "target_first": 2,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.15,
+    0.85
+   ],
+   "median_hours": 3.208
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 4,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.5101,
+     1.0
+    ],
+    "median_hours": 0.333
+   },
+   "usd15": {
+    "target_first": 4,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.5101,
+     1.0
+    ],
+    "median_hours": 0.333
+   },
+   "usd20": {
+    "target_first": 4,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.5101,
+     1.0
+    ],
+    "median_hours": 0.375
+   },
+   "median_entry_shift_usd": -0.6565,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.8054,
+  "median_mfe_r": 1.1185,
+  "median_mae_usd": 21.8215,
+  "median_mfe_usd": 39.322,
+  "race_window_ends": {
+   "ALL_TARGETS": 2,
+   "STOP": 2
+  },
+  "median_race_mfe_usd": 41.554,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 4
+  },
+  "exit_reasons": {
+   "SL": 2,
+   "TP2": 2
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 4,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "challenger|30m": {
+  "n": 3,
+  "usd10": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 0.083
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 1.167
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 1.417
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.5615
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.5615
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 0.083
+   },
+   "usd15": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 0.708
+   },
+   "usd20": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 0.75
+   },
+   "median_entry_shift_usd": -0.351,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.7017,
+  "median_mae_usd": 18.71,
+  "median_mfe_usd": 13.129,
+  "race_window_ends": {
+   "STOP": 3
+  },
+  "median_race_mfe_usd": 13.129,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 3
+  },
+  "exit_reasons": {
+   "SL": 3
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 3,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "challenger|4h": {
+  "n": 1,
+  "usd10": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.583
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.667
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.667
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 5.583
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 30.083
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.583
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.667
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.667
+   },
+   "median_entry_shift_usd": -0.496,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.0441,
+  "median_mfe_r": 2.0,
+  "median_mae_usd": 2.661,
+  "median_mfe_usd": 120.81,
+  "race_window_ends": {
+   "ALL_TARGETS": 1
+  },
+  "median_race_mfe_usd": 121.284,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "challenger|5m": {
+  "n": 13,
+  "usd10": {
+   "target_first": 8,
+   "decided": 13,
+   "undecided": 0,
+   "rate": 0.6154,
+   "wilson95": [
+    0.3552,
+    0.8229
+   ],
+   "median_hours": 0.417
+  },
+  "usd15": {
+   "target_first": 8,
+   "decided": 13,
+   "undecided": 0,
+   "rate": 0.6154,
+   "wilson95": [
+    0.3552,
+    0.8229
+   ],
+   "median_hours": 0.75
+  },
+  "usd20": {
+   "target_first": 6,
+   "decided": 13,
+   "undecided": 0,
+   "rate": 0.4615,
+   "wilson95": [
+    0.2321,
+    0.7086
+   ],
+   "median_hours": 0.875
+  },
+  "tp1": {
+   "target_first": 6,
+   "decided": 13,
+   "undecided": 0,
+   "rate": 0.4615,
+   "wilson95": [
+    0.2321,
+    0.7086
+   ],
+   "median_hours": 0.875
+  },
+  "tp2": {
+   "target_first": 4,
+   "decided": 13,
+   "undecided": 0,
+   "rate": 0.3077,
+   "wilson95": [
+    0.1268,
+    0.5763
+   ],
+   "median_hours": 0.416
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 8,
+    "decided": 13,
+    "undecided": 0,
+    "rate": 0.6154,
+    "wilson95": [
+     0.3552,
+     0.8229
+    ],
+    "median_hours": 0.417
+   },
+   "usd15": {
+    "target_first": 8,
+    "decided": 13,
+    "undecided": 0,
+    "rate": 0.6154,
+    "wilson95": [
+     0.3552,
+     0.8229
+    ],
+    "median_hours": 0.75
+   },
+   "usd20": {
+    "target_first": 6,
+    "decided": 13,
+    "undecided": 0,
+    "rate": 0.4615,
+    "wilson95": [
+     0.2321,
+     0.7086
+    ],
+    "median_hours": 0.875
+   },
+   "median_entry_shift_usd": -0.133,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 2.1886,
+  "median_mae_usd": 5.592,
+  "median_mfe_usd": 14.922,
+  "race_window_ends": {
+   "ALL_TARGETS": 4,
+   "STOP": 9
+  },
+  "median_race_mfe_usd": 18.079,
+  "stop_before_usd10": 5,
+  "in_trade_ends": {
+   "exit price touched": 13
+  },
+  "exit_reasons": {
+   "BE": 2,
+   "BE_GAP": 1,
+   "SL": 7,
+   "TP2": 3
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 13,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "control|15m": {
+  "n": 1,
+  "usd10": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.25
+  },
+  "usd15": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "usd20": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.25
+   },
+   "usd15": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "usd20": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "median_entry_shift_usd": 0.299,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.5227,
+  "median_mae_usd": 21.392,
+  "median_mfe_usd": 11.182,
+  "race_window_ends": {
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 11.182,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "SL": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "control|1h": {
+  "n": 1,
+  "usd10": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 4.083
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 5.0
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 5.333
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 5.417
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 5.75
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 3.917
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 5.0
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 5.333
+   },
+   "median_entry_shift_usd": -2.231,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.6109,
+  "median_mfe_r": 1.9138,
+  "median_mae_usd": 16.534,
+  "median_mfe_usd": 51.794,
+  "race_window_ends": {
+   "ALL_TARGETS": 1
+  },
+  "median_race_mfe_usd": 52.435,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "control|30m": {
+  "n": 2,
+  "usd10": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.083
+  },
+  "usd15": {
+   "target_first": 0,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.6576
+   ],
+   "median_hours": null
+  },
+  "usd20": {
+   "target_first": 0,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.6576
+   ],
+   "median_hours": null
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.6576
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.6576
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.083
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.083
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.083
+   },
+   "median_entry_shift_usd": -7.3655,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.579,
+  "median_mfe_r": 0.4733,
+  "median_mae_usd": 41.75,
+  "median_mfe_usd": 10.241,
+  "race_window_ends": {
+   "STOP": 2
+  },
+  "median_race_mfe_usd": 10.241,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 2
+  },
+  "exit_reasons": {
+   "SL": 1,
+   "SL_GAP": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 2,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "control|5m": {
+  "n": 2,
+  "usd10": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.417
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.5
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.5
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.417
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.5
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.417
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.5
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.5
+   },
+   "median_entry_shift_usd": -1.1195,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.7322,
+  "median_mfe_r": 1.2682,
+  "median_mae_usd": 22.7185,
+  "median_mfe_usd": 9.771,
+  "race_window_ends": {
+   "ALL_TARGETS": 1,
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 14.7035,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 2
+  },
+  "exit_reasons": {
+   "SL": 1,
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 2,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h2|15m": {
+  "n": 1,
+  "usd10": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 1.25
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 1.25
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 1.333
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 1.25
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 1.25
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 1.25
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 1.25
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 1.333
+   },
+   "median_entry_shift_usd": -0.103,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.066,
+  "median_mfe_r": 1.0341,
+  "median_mae_usd": 0.949,
+  "median_mfe_usd": 14.884,
+  "race_window_ends": {
+   "ALL_TARGETS": 1
+  },
+  "median_race_mfe_usd": 21.461,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h2|30m": {
+  "n": 1,
+  "usd10": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.167
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.25
+  },
+  "usd20": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.167
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.25
+   },
+   "usd20": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "median_entry_shift_usd": -0.445,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.9289,
+  "median_mae_usd": 19.463,
+  "median_mfe_usd": 18.079,
+  "race_window_ends": {
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 18.079,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "SL": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h2|5m": {
+  "n": 4,
+  "usd10": {
+   "target_first": 3,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.75,
+   "wilson95": [
+    0.3006,
+    0.9544
+   ],
+   "median_hours": 0.25
+  },
+  "usd15": {
+   "target_first": 2,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.15,
+    0.85
+   ],
+   "median_hours": 0.917
+  },
+  "usd20": {
+   "target_first": 2,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.15,
+    0.85
+   ],
+   "median_hours": 0.917
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.25,
+   "wilson95": [
+    0.0456,
+    0.6994
+   ],
+   "median_hours": 0.667
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.25,
+   "wilson95": [
+    0.0456,
+    0.6994
+   ],
+   "median_hours": 0.833
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 3,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 0.75,
+    "wilson95": [
+     0.3006,
+     0.9544
+    ],
+    "median_hours": 0.083
+   },
+   "usd15": {
+    "target_first": 3,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 0.75,
+    "wilson95": [
+     0.3006,
+     0.9544
+    ],
+    "median_hours": 0.333
+   },
+   "usd20": {
+    "target_first": 2,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.15,
+     0.85
+    ],
+    "median_hours": 0.917
+   },
+   "median_entry_shift_usd": -0.8185,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.6675,
+  "median_mae_usd": 18.705,
+  "median_mfe_usd": 11.041,
+  "race_window_ends": {
+   "ALL_TARGETS": 1,
+   "STOP": 3
+  },
+  "median_race_mfe_usd": 23.4135,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 4
+  },
+  "exit_reasons": {
+   "SL": 3,
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 4,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h3|15m": {
+  "n": 5,
+  "usd10": {
+   "target_first": 1,
+   "decided": 5,
+   "undecided": 0,
+   "rate": 0.2,
+   "wilson95": [
+    0.0362,
+    0.6245
+   ],
+   "median_hours": 10.167
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 5,
+   "undecided": 0,
+   "rate": 0.2,
+   "wilson95": [
+    0.0362,
+    0.6245
+   ],
+   "median_hours": 10.333
+  },
+  "usd20": {
+   "target_first": 0,
+   "decided": 5,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.4345
+   ],
+   "median_hours": null
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 5,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.4345
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 5,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.4345
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 5,
+    "undecided": 0,
+    "rate": 0.2,
+    "wilson95": [
+     0.0362,
+     0.6245
+    ],
+    "median_hours": 10.083
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 5,
+    "undecided": 0,
+    "rate": 0.2,
+    "wilson95": [
+     0.0362,
+     0.6245
+    ],
+    "median_hours": 10.333
+   },
+   "usd20": {
+    "target_first": 0,
+    "decided": 5,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.4345
+    ],
+    "median_hours": null
+   },
+   "median_entry_shift_usd": -0.282,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.5143,
+  "median_mae_usd": 10.392,
+  "median_mfe_usd": 5.344,
+  "race_window_ends": {
+   "STOP": 5
+  },
+  "median_race_mfe_usd": 5.344,
+  "stop_before_usd10": 4,
+  "in_trade_ends": {
+   "exit price touched": 5
+  },
+  "exit_reasons": {
+   "SL": 5
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 5,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h3|1h": {
+  "n": 1,
+  "usd10": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.167
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.25
+  },
+  "usd20": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.167
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.25
+   },
+   "usd20": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "median_entry_shift_usd": -0.445,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.8356,
+  "median_mae_usd": 21.636,
+  "median_mfe_usd": 18.079,
+  "race_window_ends": {
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 18.079,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "SL": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h3|30m": {
+  "n": 1,
+  "usd10": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "usd15": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "usd20": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "usd15": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "usd20": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "median_entry_shift_usd": -0.666,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.0939,
+  "median_mae_usd": 20.193,
+  "median_mfe_usd": 1.897,
+  "race_window_ends": {
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 1.897,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "SL": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h3|5m": {
+  "n": 9,
+  "usd10": {
+   "target_first": 6,
+   "decided": 9,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.3542,
+    0.8794
+   ],
+   "median_hours": 0.666
+  },
+  "usd15": {
+   "target_first": 4,
+   "decided": 9,
+   "undecided": 0,
+   "rate": 0.4444,
+   "wilson95": [
+    0.1888,
+    0.7333
+   ],
+   "median_hours": 2.0
+  },
+  "usd20": {
+   "target_first": 4,
+   "decided": 9,
+   "undecided": 0,
+   "rate": 0.4444,
+   "wilson95": [
+    0.1888,
+    0.7333
+   ],
+   "median_hours": 2.542
+  },
+  "tp1": {
+   "target_first": 4,
+   "decided": 9,
+   "undecided": 0,
+   "rate": 0.4444,
+   "wilson95": [
+    0.1888,
+    0.7333
+   ],
+   "median_hours": 0.959
+  },
+  "tp2": {
+   "target_first": 3,
+   "decided": 9,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.1206,
+    0.6458
+   ],
+   "median_hours": 2.25
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 6,
+    "decided": 9,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.3542,
+     0.8794
+    ],
+    "median_hours": 0.666
+   },
+   "usd15": {
+    "target_first": 4,
+    "decided": 9,
+    "undecided": 0,
+    "rate": 0.4444,
+    "wilson95": [
+     0.1888,
+     0.7333
+    ],
+    "median_hours": 2.0
+   },
+   "usd20": {
+    "target_first": 4,
+    "decided": 9,
+    "undecided": 0,
+    "rate": 0.4444,
+    "wilson95": [
+     0.1888,
+     0.7333
+    ],
+    "median_hours": 2.5
+   },
+   "median_entry_shift_usd": -0.315,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 2.4942,
+  "median_mae_usd": 3.998,
+  "median_mfe_usd": 11.191,
+  "race_window_ends": {
+   "ALL_TARGETS": 3,
+   "STOP": 6
+  },
+  "median_race_mfe_usd": 11.191,
+  "stop_before_usd10": 3,
+  "in_trade_ends": {
+   "exit price touched": 9
+  },
+  "exit_reasons": {
+   "BE": 1,
+   "SL": 5,
+   "TP2": 3
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 9,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h4|15m": {
+  "n": 158,
+  "usd10": {
+   "target_first": 93,
+   "decided": 158,
+   "undecided": 0,
+   "rate": 0.5886,
+   "wilson95": [
+    0.5107,
+    0.6623
+   ],
+   "median_hours": 0.667
+  },
+  "usd15": {
+   "target_first": 81,
+   "decided": 158,
+   "undecided": 0,
+   "rate": 0.5127,
+   "wilson95": [
+    0.4353,
+    0.5894
+   ],
+   "median_hours": 1.167
+  },
+  "usd20": {
+   "target_first": 72,
+   "decided": 158,
+   "undecided": 0,
+   "rate": 0.4557,
+   "wilson95": [
+    0.38,
+    0.5335
+   ],
+   "median_hours": 1.833
+  },
+  "tp1": {
+   "target_first": 80,
+   "decided": 158,
+   "undecided": 0,
+   "rate": 0.5063,
+   "wilson95": [
+    0.4292,
+    0.5832
+   ],
+   "median_hours": 1.0
+  },
+  "tp2": {
+   "target_first": 59,
+   "decided": 158,
+   "undecided": 0,
+   "rate": 0.3734,
+   "wilson95": [
+    0.3018,
+    0.451
+   ],
+   "median_hours": 2.167
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 97,
+    "decided": 158,
+    "undecided": 0,
+    "rate": 0.6139,
+    "wilson95": [
+     0.5362,
+     0.6863
+    ],
+    "median_hours": 0.75
+   },
+   "usd15": {
+    "target_first": 83,
+    "decided": 158,
+    "undecided": 0,
+    "rate": 0.5253,
+    "wilson95": [
+     0.4478,
+     0.6017
+    ],
+    "median_hours": 1.167
+   },
+   "usd20": {
+    "target_first": 73,
+    "decided": 158,
+    "undecided": 0,
+    "rate": 0.462,
+    "wilson95": [
+     0.3861,
+     0.5397
+    ],
+    "median_hours": 1.833
+   },
+   "median_entry_shift_usd": -0.255,
+   "filled_at_a_session_close": 4
+  },
+  "median_mae_r": 0.3985,
+  "median_mfe_r": 0.5072,
+  "median_mae_usd": 5.9465,
+  "median_mfe_usd": 7.333,
+  "race_window_ends": {
+   "ALL_TARGETS": 54,
+   "STOP": 104
+  },
+  "median_race_mfe_usd": 16.4775,
+  "stop_before_usd10": 65,
+  "in_trade_ends": {
+   "exit bar close": 94,
+   "exit price touched": 64
+  },
+  "exit_reasons": {
+   "BE": 8,
+   "BE_GAP": 1,
+   "FLIP": 94,
+   "SL": 25,
+   "TP2": 30
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 158,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h4|1h": {
+  "n": 40,
+  "usd10": {
+   "target_first": 28,
+   "decided": 40,
+   "undecided": 0,
+   "rate": 0.7,
+   "wilson95": [
+    0.5457,
+    0.8193
+   ],
+   "median_hours": 1.167
+  },
+  "usd15": {
+   "target_first": 26,
+   "decided": 40,
+   "undecided": 0,
+   "rate": 0.65,
+   "wilson95": [
+    0.4951,
+    0.7787
+   ],
+   "median_hours": 2.333
+  },
+  "usd20": {
+   "target_first": 23,
+   "decided": 40,
+   "undecided": 0,
+   "rate": 0.575,
+   "wilson95": [
+    0.422,
+    0.7149
+   ],
+   "median_hours": 3.583
+  },
+  "tp1": {
+   "target_first": 18,
+   "decided": 40,
+   "undecided": 0,
+   "rate": 0.45,
+   "wilson95": [
+    0.3071,
+    0.6017
+   ],
+   "median_hours": 3.208
+  },
+  "tp2": {
+   "target_first": 16,
+   "decided": 40,
+   "undecided": 0,
+   "rate": 0.4,
+   "wilson95": [
+    0.2635,
+    0.554
+   ],
+   "median_hours": 6.667
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 28,
+    "decided": 40,
+    "undecided": 0,
+    "rate": 0.7,
+    "wilson95": [
+     0.5457,
+     0.8193
+    ],
+    "median_hours": 1.167
+   },
+   "usd15": {
+    "target_first": 24,
+    "decided": 40,
+    "undecided": 0,
+    "rate": 0.6,
+    "wilson95": [
+     0.446,
+     0.7365
+    ],
+    "median_hours": 1.917
+   },
+   "usd20": {
+    "target_first": 23,
+    "decided": 40,
+    "undecided": 0,
+    "rate": 0.575,
+    "wilson95": [
+     0.422,
+     0.7149
+    ],
+    "median_hours": 3.583
+   },
+   "median_entry_shift_usd": 0.1055,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.4772,
+  "median_mfe_r": 0.3005,
+  "median_mae_usd": 20.803,
+  "median_mfe_usd": 14.0465,
+  "race_window_ends": {
+   "ALL_TARGETS": 16,
+   "STOP": 24
+  },
+  "median_race_mfe_usd": 25.805,
+  "stop_before_usd10": 12,
+  "in_trade_ends": {
+   "exit bar close": 19,
+   "exit price touched": 21
+  },
+  "exit_reasons": {
+   "BE": 3,
+   "FLIP": 19,
+   "SL": 12,
+   "TP2": 6
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 40,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h4|30m": {
+  "n": 76,
+  "usd10": {
+   "target_first": 53,
+   "decided": 76,
+   "undecided": 0,
+   "rate": 0.6974,
+   "wilson95": [
+    0.5867,
+    0.7891
+   ],
+   "median_hours": 0.75
+  },
+  "usd15": {
+   "target_first": 48,
+   "decided": 76,
+   "undecided": 0,
+   "rate": 0.6316,
+   "wilson95": [
+    0.5193,
+    0.7312
+   ],
+   "median_hours": 1.667
+  },
+  "usd20": {
+   "target_first": 41,
+   "decided": 76,
+   "undecided": 0,
+   "rate": 0.5395,
+   "wilson95": [
+    0.4282,
+    0.6469
+   ],
+   "median_hours": 1.917
+  },
+  "tp1": {
+   "target_first": 36,
+   "decided": 76,
+   "undecided": 0,
+   "rate": 0.4737,
+   "wilson95": [
+    0.3654,
+    0.5845
+   ],
+   "median_hours": 4.208
+  },
+  "tp2": {
+   "target_first": 31,
+   "decided": 76,
+   "undecided": 0,
+   "rate": 0.4079,
+   "wilson95": [
+    0.3044,
+    0.5202
+   ],
+   "median_hours": 5.833
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 55,
+    "decided": 76,
+    "undecided": 0,
+    "rate": 0.7237,
+    "wilson95": [
+     0.6142,
+     0.8116
+    ],
+    "median_hours": 0.667
+   },
+   "usd15": {
+    "target_first": 48,
+    "decided": 76,
+    "undecided": 0,
+    "rate": 0.6316,
+    "wilson95": [
+     0.5193,
+     0.7312
+    ],
+    "median_hours": 1.667
+   },
+   "usd20": {
+    "target_first": 43,
+    "decided": 76,
+    "undecided": 0,
+    "rate": 0.5658,
+    "wilson95": [
+     0.4539,
+     0.6714
+    ],
+    "median_hours": 1.667
+   },
+   "median_entry_shift_usd": -0.1455,
+   "filled_at_a_session_close": 1
+  },
+  "median_mae_r": 0.3722,
+  "median_mfe_r": 0.5061,
+  "median_mae_usd": 10.701,
+  "median_mfe_usd": 11.6445,
+  "race_window_ends": {
+   "ALL_TARGETS": 31,
+   "STOP": 45
+  },
+  "median_race_mfe_usd": 22.044,
+  "stop_before_usd10": 23,
+  "in_trade_ends": {
+   "exit bar close": 42,
+   "exit price touched": 34
+  },
+  "exit_reasons": {
+   "BE": 5,
+   "FLIP": 42,
+   "SL": 16,
+   "TP2": 13
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 76,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h4|4h": {
+  "n": 8,
+  "usd10": {
+   "target_first": 8,
+   "decided": 8,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.6756,
+    1.0
+   ],
+   "median_hours": 0.791
+  },
+  "usd15": {
+   "target_first": 8,
+   "decided": 8,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.6756,
+    1.0
+   ],
+   "median_hours": 1.667
+  },
+  "usd20": {
+   "target_first": 8,
+   "decided": 8,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.6756,
+    1.0
+   ],
+   "median_hours": 2.625
+  },
+  "tp1": {
+   "target_first": 5,
+   "decided": 8,
+   "undecided": 0,
+   "rate": 0.625,
+   "wilson95": [
+    0.3057,
+    0.8632
+   ],
+   "median_hours": 18.167
+  },
+  "tp2": {
+   "target_first": 5,
+   "decided": 8,
+   "undecided": 0,
+   "rate": 0.625,
+   "wilson95": [
+    0.3057,
+    0.8632
+   ],
+   "median_hours": 18.167
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 8,
+    "decided": 8,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.6756,
+     1.0
+    ],
+    "median_hours": 0.791
+   },
+   "usd15": {
+    "target_first": 8,
+    "decided": 8,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.6756,
+     1.0
+    ],
+    "median_hours": 2.083
+   },
+   "usd20": {
+    "target_first": 8,
+    "decided": 8,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.6756,
+     1.0
+    ],
+    "median_hours": 2.625
+   },
+   "median_entry_shift_usd": -0.4765,
+   "filled_at_a_session_close": 1
+  },
+  "median_mae_r": 0.3994,
+  "median_mfe_r": 0.6333,
+  "median_mae_usd": 24.6975,
+  "median_mfe_usd": 63.9895,
+  "race_window_ends": {
+   "ALL_TARGETS": 5,
+   "STOP": 3
+  },
+  "median_race_mfe_usd": 79.1585,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit bar close": 4,
+   "exit price touched": 4
+  },
+  "exit_reasons": {
+   "FLIP": 4,
+   "TP2": 4
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 8,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h4|5m": {
+  "n": 447,
+  "usd10": {
+   "target_first": 200,
+   "decided": 447,
+   "undecided": 0,
+   "rate": 0.4474,
+   "wilson95": [
+    0.402,
+    0.4938
+   ],
+   "median_hours": 0.583
+  },
+  "usd15": {
+   "target_first": 165,
+   "decided": 447,
+   "undecided": 0,
+   "rate": 0.3691,
+   "wilson95": [
+    0.3257,
+    0.4148
+   ],
+   "median_hours": 0.917
+  },
+  "usd20": {
+   "target_first": 140,
+   "decided": 447,
+   "undecided": 0,
+   "rate": 0.3132,
+   "wilson95": [
+    0.2719,
+    0.3576
+   ],
+   "median_hours": 1.5
+  },
+  "tp1": {
+   "target_first": 194,
+   "decided": 447,
+   "undecided": 0,
+   "rate": 0.434,
+   "wilson95": [
+    0.3888,
+    0.4803
+   ],
+   "median_hours": 0.417
+  },
+  "tp2": {
+   "target_first": 132,
+   "decided": 447,
+   "undecided": 0,
+   "rate": 0.2953,
+   "wilson95": [
+    0.2549,
+    0.3392
+   ],
+   "median_hours": 0.75
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 210,
+    "decided": 447,
+    "undecided": 0,
+    "rate": 0.4698,
+    "wilson95": [
+     0.424,
+     0.5161
+    ],
+    "median_hours": 0.5
+   },
+   "usd15": {
+    "target_first": 166,
+    "decided": 447,
+    "undecided": 0,
+    "rate": 0.3714,
+    "wilson95": [
+     0.3278,
+     0.4171
+    ],
+    "median_hours": 0.833
+   },
+   "usd20": {
+    "target_first": 142,
+    "decided": 447,
+    "undecided": 0,
+    "rate": 0.3177,
+    "wilson95": [
+     0.2762,
+     0.3622
+    ],
+    "median_hours": 1.417
+   },
+   "median_entry_shift_usd": -0.489,
+   "filled_at_a_session_close": 1
+  },
+  "median_mae_r": 0.4385,
+  "median_mfe_r": 0.3951,
+  "median_mae_usd": 4.15,
+  "median_mfe_usd": 4.031,
+  "race_window_ends": {
+   "ALL_TARGETS": 115,
+   "STOP": 332
+  },
+  "median_race_mfe_usd": 8.28,
+  "stop_before_usd10": 247,
+  "in_trade_ends": {
+   "exit bar close": 287,
+   "exit price touched": 160
+  },
+  "exit_reasons": {
+   "BE": 26,
+   "BE_GAP": 4,
+   "FLIP": 287,
+   "SL": 65,
+   "SL_GAP": 1,
+   "TP2": 64
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 447,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h5|5m": {
+  "n": 7,
+  "usd10": {
+   "target_first": 2,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.2857,
+   "wilson95": [
+    0.0822,
+    0.6411
+   ],
+   "median_hours": 0.75
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.1429,
+   "wilson95": [
+    0.0257,
+    0.5131
+   ],
+   "median_hours": 0.5
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.1429,
+   "wilson95": [
+    0.0257,
+    0.5131
+   ],
+   "median_hours": 0.5
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.1429,
+   "wilson95": [
+    0.0257,
+    0.5131
+   ],
+   "median_hours": 0.417
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.1429,
+   "wilson95": [
+    0.0257,
+    0.5131
+   ],
+   "median_hours": 0.5
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 2,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.2857,
+    "wilson95": [
+     0.0822,
+     0.6411
+    ],
+    "median_hours": 0.75
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.1429,
+    "wilson95": [
+     0.0257,
+     0.5131
+    ],
+    "median_hours": 0.5
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.1429,
+    "wilson95": [
+     0.0257,
+     0.5131
+    ],
+    "median_hours": 0.5
+   },
+   "median_entry_shift_usd": -0.075,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.2744,
+  "median_mae_usd": 6.543,
+  "median_mfe_usd": 2.363,
+  "race_window_ends": {
+   "ALL_TARGETS": 1,
+   "STOP": 6
+  },
+  "median_race_mfe_usd": 2.363,
+  "stop_before_usd10": 5,
+  "in_trade_ends": {
+   "exit price touched": 7
+  },
+  "exit_reasons": {
+   "SL": 6,
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 7,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h6|15m": {
+  "n": 4,
+  "usd10": {
+   "target_first": 3,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.75,
+   "wilson95": [
+    0.3006,
+    0.9544
+   ],
+   "median_hours": 0.417
+  },
+  "usd15": {
+   "target_first": 2,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.15,
+    0.85
+   ],
+   "median_hours": 3.208
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.25,
+   "wilson95": [
+    0.0456,
+    0.6994
+   ],
+   "median_hours": 6.667
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.25,
+   "wilson95": [
+    0.0456,
+    0.6994
+   ],
+   "median_hours": 6.667
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.25,
+   "wilson95": [
+    0.0456,
+    0.6994
+   ],
+   "median_hours": 6.667
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 3,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 0.75,
+    "wilson95": [
+     0.3006,
+     0.9544
+    ],
+    "median_hours": 0.417
+   },
+   "usd15": {
+    "target_first": 2,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.15,
+     0.85
+    ],
+    "median_hours": 3.208
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 0.25,
+    "wilson95": [
+     0.0456,
+     0.6994
+    ],
+    "median_hours": 6.667
+   },
+   "median_entry_shift_usd": -0.2995,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.4133,
+  "median_mae_usd": 20.8705,
+  "median_mfe_usd": 14.553,
+  "race_window_ends": {
+   "ALL_TARGETS": 1,
+   "STOP": 3
+  },
+  "median_race_mfe_usd": 14.553,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 4
+  },
+  "exit_reasons": {
+   "SL": 3,
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 4,
+   "news_day": 1,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h6|1h": {
+  "n": 2,
+  "usd10": {
+   "target_first": 2,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.3424,
+    1.0
+   ],
+   "median_hours": 1.167
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.417
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 0.417
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 24.75
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 2,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.0945,
+    0.9055
+   ],
+   "median_hours": 47.0
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 2,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.3424,
+     1.0
+    ],
+    "median_hours": 1.25
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.417
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 2,
+    "undecided": 0,
+    "rate": 0.5,
+    "wilson95": [
+     0.0945,
+     0.9055
+    ],
+    "median_hours": 0.583
+   },
+   "median_entry_shift_usd": 0.364,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.9937,
+  "median_mfe_r": 3.9631,
+  "median_mae_usd": 30.0065,
+  "median_mfe_usd": 92.0235,
+  "race_window_ends": {
+   "ALL_TARGETS": 1,
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 95.3235,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 2
+  },
+  "exit_reasons": {
+   "SL": 1,
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 2,
+   "news_day": 1,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h6|30m": {
+  "n": 3,
+  "usd10": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 1.167
+  },
+  "usd15": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 1.792
+  },
+  "usd20": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 3.0
+  },
+  "tp1": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 2.167
+  },
+  "tp2": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 13.791
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 1.167
+   },
+   "usd15": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 1.833
+   },
+   "usd20": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 3.042
+   },
+   "median_entry_shift_usd": 0.271,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.6731,
+  "median_mfe_r": 2.9967,
+  "median_mae_usd": 5.909,
+  "median_mfe_usd": 26.305,
+  "race_window_ends": {
+   "ALL_TARGETS": 2,
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 28.345,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 3
+  },
+  "exit_reasons": {
+   "SL": 1,
+   "TP2": 2
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 3,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h6|4h": {
+  "n": 1,
+  "usd10": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "usd15": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "usd20": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.7935
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "usd15": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "usd20": {
+    "target_first": 0,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 0.0,
+    "wilson95": [
+     0.0,
+     0.7935
+    ],
+    "median_hours": null
+   },
+   "median_entry_shift_usd": 0.841,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.1232,
+  "median_mae_usd": 73.413,
+  "median_mfe_usd": 9.042,
+  "race_window_ends": {
+   "STOP": 1
+  },
+  "median_race_mfe_usd": 9.042,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "SL": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "h6|5m": {
+  "n": 3,
+  "usd10": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 0.666
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 1.25
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 3.333
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 2.083
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 3.417
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 0.709
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.3333,
+    "wilson95": [
+     0.0615,
+     0.7923
+    ],
+    "median_hours": 2.083
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.3333,
+    "wilson95": [
+     0.0615,
+     0.7923
+    ],
+    "median_hours": 3.333
+   },
+   "median_entry_shift_usd": -0.026,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 1.234,
+  "median_mae_usd": 6.271,
+  "median_mfe_usd": 10.645,
+  "race_window_ends": {
+   "ALL_TARGETS": 1,
+   "STOP": 2
+  },
+  "median_race_mfe_usd": 10.645,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 3
+  },
+  "exit_reasons": {
+   "SL": 2,
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 3,
+   "news_day": 2,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "treatment|15m": {
+  "n": 7,
+  "usd10": {
+   "target_first": 4,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.5714,
+   "wilson95": [
+    0.2505,
+    0.8418
+   ],
+   "median_hours": 0.416
+  },
+  "usd15": {
+   "target_first": 3,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.4286,
+   "wilson95": [
+    0.1582,
+    0.7495
+   ],
+   "median_hours": 1.417
+  },
+  "usd20": {
+   "target_first": 3,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.4286,
+   "wilson95": [
+    0.1582,
+    0.7495
+   ],
+   "median_hours": 1.583
+  },
+  "tp1": {
+   "target_first": 3,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.4286,
+   "wilson95": [
+    0.1582,
+    0.7495
+   ],
+   "median_hours": 3.25
+  },
+  "tp2": {
+   "target_first": 2,
+   "decided": 7,
+   "undecided": 0,
+   "rate": 0.2857,
+   "wilson95": [
+    0.0822,
+    0.6411
+   ],
+   "median_hours": 2.958
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 4,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.5714,
+    "wilson95": [
+     0.2505,
+     0.8418
+    ],
+    "median_hours": 0.416
+   },
+   "usd15": {
+    "target_first": 3,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.4286,
+    "wilson95": [
+     0.1582,
+     0.7495
+    ],
+    "median_hours": 1.5
+   },
+   "usd20": {
+    "target_first": 3,
+    "decided": 7,
+    "undecided": 0,
+    "rate": 0.4286,
+    "wilson95": [
+     0.1582,
+     0.7495
+    ],
+    "median_hours": 1.583
+   },
+   "median_entry_shift_usd": 0.047,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.5227,
+  "median_mae_usd": 13.692,
+  "median_mfe_usd": 11.182,
+  "race_window_ends": {
+   "ALL_TARGETS": 2,
+   "STOP": 5
+  },
+  "median_race_mfe_usd": 11.182,
+  "stop_before_usd10": 3,
+  "in_trade_ends": {
+   "exit price touched": 7
+  },
+  "exit_reasons": {
+   "BE_GAP": 1,
+   "SL": 4,
+   "TP2": 2
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 7,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "treatment|1h": {
+  "n": 4,
+  "usd10": {
+   "target_first": 4,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.5101,
+    1.0
+   ],
+   "median_hours": 0.333
+  },
+  "usd15": {
+   "target_first": 3,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.75,
+   "wilson95": [
+    0.3006,
+    0.9544
+   ],
+   "median_hours": 0.333
+  },
+  "usd20": {
+   "target_first": 3,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.75,
+   "wilson95": [
+    0.3006,
+    0.9544
+   ],
+   "median_hours": 0.417
+  },
+  "tp1": {
+   "target_first": 2,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.15,
+    0.85
+   ],
+   "median_hours": 2.917
+  },
+  "tp2": {
+   "target_first": 2,
+   "decided": 4,
+   "undecided": 0,
+   "rate": 0.5,
+   "wilson95": [
+    0.15,
+    0.85
+   ],
+   "median_hours": 3.208
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 4,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.5101,
+     1.0
+    ],
+    "median_hours": 0.333
+   },
+   "usd15": {
+    "target_first": 4,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.5101,
+     1.0
+    ],
+    "median_hours": 0.333
+   },
+   "usd20": {
+    "target_first": 4,
+    "decided": 4,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.5101,
+     1.0
+    ],
+    "median_hours": 0.375
+   },
+   "median_entry_shift_usd": -0.6565,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.8054,
+  "median_mfe_r": 1.1185,
+  "median_mae_usd": 21.8215,
+  "median_mfe_usd": 39.322,
+  "race_window_ends": {
+   "ALL_TARGETS": 2,
+   "STOP": 2
+  },
+  "median_race_mfe_usd": 41.554,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 4
+  },
+  "exit_reasons": {
+   "SL": 2,
+   "TP2": 2
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 4,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "treatment|30m": {
+  "n": 3,
+  "usd10": {
+   "target_first": 2,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.6667,
+   "wilson95": [
+    0.2077,
+    0.9385
+   ],
+   "median_hours": 0.083
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 1.167
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.3333,
+   "wilson95": [
+    0.0615,
+    0.7923
+   ],
+   "median_hours": 1.417
+  },
+  "tp1": {
+   "target_first": 0,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.5615
+   ],
+   "median_hours": null
+  },
+  "tp2": {
+   "target_first": 0,
+   "decided": 3,
+   "undecided": 0,
+   "rate": 0.0,
+   "wilson95": [
+    0.0,
+    0.5615
+   ],
+   "median_hours": null
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 0.083
+   },
+   "usd15": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 0.708
+   },
+   "usd20": {
+    "target_first": 2,
+    "decided": 3,
+    "undecided": 0,
+    "rate": 0.6667,
+    "wilson95": [
+     0.2077,
+     0.9385
+    ],
+    "median_hours": 0.75
+   },
+   "median_entry_shift_usd": -0.351,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.7017,
+  "median_mae_usd": 18.71,
+  "median_mfe_usd": 13.129,
+  "race_window_ends": {
+   "STOP": 3
+  },
+  "median_race_mfe_usd": 13.129,
+  "stop_before_usd10": 1,
+  "in_trade_ends": {
+   "exit price touched": 3
+  },
+  "exit_reasons": {
+   "SL": 3
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 3,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "treatment|4h": {
+  "n": 1,
+  "usd10": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.583
+  },
+  "usd15": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.667
+  },
+  "usd20": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 0.667
+  },
+  "tp1": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 5.583
+  },
+  "tp2": {
+   "target_first": 1,
+   "decided": 1,
+   "undecided": 0,
+   "rate": 1.0,
+   "wilson95": [
+    0.2065,
+    1.0
+   ],
+   "median_hours": 30.083
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.583
+   },
+   "usd15": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.667
+   },
+   "usd20": {
+    "target_first": 1,
+    "decided": 1,
+    "undecided": 0,
+    "rate": 1.0,
+    "wilson95": [
+     0.2065,
+     1.0
+    ],
+    "median_hours": 0.667
+   },
+   "median_entry_shift_usd": -0.496,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 0.0441,
+  "median_mfe_r": 2.0,
+  "median_mae_usd": 2.661,
+  "median_mfe_usd": 120.81,
+  "race_window_ends": {
+   "ALL_TARGETS": 1
+  },
+  "median_race_mfe_usd": 121.284,
+  "stop_before_usd10": 0,
+  "in_trade_ends": {
+   "exit price touched": 1
+  },
+  "exit_reasons": {
+   "TP2": 1
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 1,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ },
+ "treatment|5m": {
+  "n": 17,
+  "usd10": {
+   "target_first": 8,
+   "decided": 17,
+   "undecided": 0,
+   "rate": 0.4706,
+   "wilson95": [
+    0.2617,
+    0.6904
+   ],
+   "median_hours": 0.417
+  },
+  "usd15": {
+   "target_first": 8,
+   "decided": 17,
+   "undecided": 0,
+   "rate": 0.4706,
+   "wilson95": [
+    0.2617,
+    0.6904
+   ],
+   "median_hours": 0.5
+  },
+  "usd20": {
+   "target_first": 6,
+   "decided": 17,
+   "undecided": 0,
+   "rate": 0.3529,
+   "wilson95": [
+    0.1731,
+    0.587
+   ],
+   "median_hours": 0.541
+  },
+  "tp1": {
+   "target_first": 6,
+   "decided": 17,
+   "undecided": 0,
+   "rate": 0.3529,
+   "wilson95": [
+    0.1731,
+    0.587
+   ],
+   "median_hours": 0.417
+  },
+  "tp2": {
+   "target_first": 5,
+   "decided": 17,
+   "undecided": 0,
+   "rate": 0.2941,
+   "wilson95": [
+    0.1328,
+    0.5313
+   ],
+   "median_hours": 0.417
+  },
+  "next_open": {
+   "usd10": {
+    "target_first": 8,
+    "decided": 17,
+    "undecided": 0,
+    "rate": 0.4706,
+    "wilson95": [
+     0.2617,
+     0.6904
+    ],
+    "median_hours": 0.417
+   },
+   "usd15": {
+    "target_first": 7,
+    "decided": 17,
+    "undecided": 0,
+    "rate": 0.4118,
+    "wilson95": [
+     0.2161,
+     0.6399
+    ],
+    "median_hours": 0.5
+   },
+   "usd20": {
+    "target_first": 6,
+    "decided": 17,
+    "undecided": 0,
+    "rate": 0.3529,
+    "wilson95": [
+     0.1731,
+     0.587
+    ],
+    "median_hours": 0.541
+   },
+   "median_entry_shift_usd": -0.133,
+   "filled_at_a_session_close": 0
+  },
+  "median_mae_r": 1.0,
+  "median_mfe_r": 0.8731,
+  "median_mae_usd": 5.592,
+  "median_mfe_usd": 4.818,
+  "race_window_ends": {
+   "ALL_TARGETS": 5,
+   "STOP": 12
+  },
+  "median_race_mfe_usd": 8.762,
+  "stop_before_usd10": 9,
+  "in_trade_ends": {
+   "exit price touched": 17
+  },
+  "exit_reasons": {
+   "BE": 1,
+   "BE_GAP": 1,
+   "SL": 11,
+   "TP2": 4
+  },
+  "cost_measured": 0,
+  "news": {
+   "covered": 17,
+   "news_day": 0,
+   "event_in_trade": 0,
+   "fill_in_window": 0
+  }
+ }
+}

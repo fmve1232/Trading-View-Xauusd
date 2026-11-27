@@ -1,0 +1,73 @@
+{
+ "records": 837,
+ "bars": "raw (no reopen repair)",
+ "agree": 830,
+ "disagree": 0,
+ "reopen_only": 7,
+ "ledger_changed": 0,
+ "trade_not_in_ledger": 0,
+ "details": [
+  {
+   "key": "15m|h4|2026-11-16T21:45:00+00:00|SHORT",
+   "what": "REOPEN",
+   "diffs": [
+    "next open 3856.63 vs 3856.2301",
+    "next_open race mfe 4.995 vs 4.595"
+   ]
+  },
+  {
+   "key": "15m|h4|2026-11-20T21:45:00+00:00|LONG",
+   "what": "REOPEN",
+   "diffs": [
+    "next open 3576.12 vs 3533.04581",
+    "next_open.usd10: TARGET 49.417 vs TARGET 49.083333333333336",
+    "next_open.usd15: TARGET 51.167 vs TARGET 49.083333333333336",
+    "next_open.usd20: TARGET 51.167 vs TARGET 49.083333333333336",
+    "next_open race mfe 26.27 vs 44.388"
+   ]
+  },
+  {
+   "key": "15m|h4|2026-11-23T21:45:00+00:00|LONG",
+   "what": "REOPEN",
+   "diffs": [
+    "next open 3638.718 vs 3634.61412",
+    "next_open race mfe 4.688 vs 8.792"
+   ]
+  },
+  {
+   "key": "15m|h4|2026-11-25T21:45:00+00:00|LONG",
+   "what": "REOPEN",
+   "diffs": [
+    "next open 3583.343 vs 3589.50803",
+    "next_open race mfe 6.732 vs 0.567"
+   ]
+  },
+  {
+   "key": "30m|h4|2026-11-19T21:30:00+00:00|SHORT",
+   "what": "REOPEN",
+   "diffs": [
+    "next open 3632.676 vs 3628.36952",
+    "next_open.usd10: TARGET 1.25 vs TARGET 1.6666666666666665",
+    "next_open race mfe 37.8 vs 33.494"
+   ]
+  },
+  {
+   "key": "4h|h4|2026-11-19T18:00:00+00:00|SHORT",
+   "what": "REOPEN",
+   "diffs": [
+    "next open 3632.676 vs 3628.36952",
+    "next_open.usd10: TARGET 1.25 vs TARGET 1.6666666666666665",
+    "next_open race mfe 37.8 vs 33.494"
+   ]
+  },
+  {
+   "key": "5m|h4|2026-11-23T21:55:00+00:00|LONG",
+   "what": "REOPEN",
+   "diffs": [
+    "next open 3638.718 vs 3634.61412",
+    "next_open race mfe 4.688 vs 8.792",
+    "in_trade mae 0.0 vs 2.253"
+   ]
+  }
+ ]
+}
