@@ -373,6 +373,7 @@ def test_report_is_strict_json(mkt, res):
     man = holdout.load_or_freeze(None, DEFAULT)
     p = report.build(mkt, res, ctrl, DEFAULT, man, res_chal=chal)
     assert set(p["backtest"]) >= {"treatment", "control", "challenger"}
+    assert set(p["dashboard"]["daily_regime"]) >= {"label", "ret12", "close", "sma200"}   # the strip's DAILY REGIME tile
     s = json.dumps(p, allow_nan=False)
     assert '"synthetic":true' in s.replace(" ", "")
     t = p["chart"]["t"]

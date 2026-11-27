@@ -179,6 +179,69 @@ def gate_sides(L: dict, F: dict, i: int) -> dict | None:
 HTF_SEC = {"5": 300, "15": 900, "60": 3600, "240": 14400, "D": 86400}
 
 
+def _done_daily(df, asof, ny_session: bool) -> pd.Series | None:
+    """Closes of the daily bars that had CLOSED by `asof` (a bar is 24 h from its open), so nothing repaints."""
+    if df is None or not len(df) or "close" not in df:
+        return None
+    c = pd.to_numeric(df["close"], errors="coerce").dropna()
+    if not len(c):
+        return None
+    ix = pd.DatetimeIndex(c.index)
+    ix = ix.tz_localize("UTC") if ix.tz is None else ix.tz_convert("UTC")
+    c = pd.Series(c.values, index=ix).sort_index()
+    if ny_session:                                  # engine daily bars open at New York 17:00 and last 24 h
+        return c[c.index + pd.Timedelta(days=1) <= asof]
+    return c[c.index <= asof]                       # already lagged series (FRED values usable from the next day)
+
+
+def daily_regime(d1, asof, real_yield=None, dxy_1h=None) -> dict:
+    """The developed Pine line's DAILY REGIME tile (Visuals v86 `rgTxt`; display only, an UNTESTED hypothesis and
+    never a signal): LONG when the 12-month return (last completed month-end against the one 12 months earlier) is
+    positive AND the last completed day closed above its 200-day average; SHORT when both are negative / below;
+    FLAT otherwise. The 20-day change of the real yield and of the dollar is context for the tooltip only
+    (Pine `rgMacTxt`). Completed bars only: Pine reads close[1] / sma(200)[1] / monthly close[1] and close[13]."""
+    asof = pd.Timestamp(asof)
+    asof = asof.tz_localize("UTC") if asof.tzinfo is None else asof.tz_convert("UTC")
+    out = {"label": None, "ret12": None, "close": None, "sma200": None, "m1": None, "m13": None,
+           "ry20": None, "dxy20": None, "macro": None, "asof_day": None}
+    c = _done_daily(d1, asof, ny_session=True)
+    if c is not None and len(c):
+        # the New York trading date of each session (open 17:00 New York the evening before)
+        td = (c.index.tz_convert("America/New_York") + pd.Timedelta(hours=7)).normalize().tz_localize(None)
+        cur = (asof.tz_convert("America/New_York") + pd.Timedelta(hours=7)).tz_localize(None).to_period("M")
+        months = pd.Series(c.values, index=td.to_period("M")).groupby(level=0).last()
+        months = months[months.index < cur]                         # completed months only
+        out["close"] = _f(c.iloc[-1], 2)
+        out["asof_day"] = str(td[-1].date())
+        if len(c) >= 200:
+            out["sma200"] = _f(c.iloc[-200:].mean(), 2)
+        if len(months) >= 13 and months.iloc[-13] > 0:
+            out["m1"], out["m13"] = _f(months.iloc[-1], 2), _f(months.iloc[-13], 2)
+            out["ret12"] = _f((months.iloc[-1] / months.iloc[-13] - 1.0) * 100.0, 2)
+        if out["ret12"] is not None and out["sma200"] is not None:
+            up = out["ret12"] > 0 and out["close"] > out["sma200"]
+            dn = out["ret12"] < 0 and out["close"] < out["sma200"]
+            out["label"] = "LONG" if up else "SHORT" if dn else "FLAT"
+    ry = _done_daily(real_yield, asof, ny_session=False)
+    if ry is not None and len(ry) >= 21:
+        out["ry20"] = _f(ry.iloc[-1] - ry.iloc[-21], 3)
+    if dxy_1h is not None and len(dxy_1h) and "close" in dxy_1h:
+        h = pd.to_numeric(dxy_1h["close"], errors="coerce").dropna()
+        ix = pd.DatetimeIndex(h.index)
+        ix = ix.tz_localize("UTC") if ix.tz is None else ix.tz_convert("UTC")
+        h = pd.Series(h.values, index=ix).sort_index()
+        h = h[h.index + pd.Timedelta(hours=1) <= asof]
+        day = (h.index.tz_convert("America/New_York") + pd.Timedelta(hours=7)).normalize()
+        dd = h.groupby(day).last()
+        cur_day = (asof.tz_convert("America/New_York") + pd.Timedelta(hours=7)).normalize()
+        dd = dd[dd.index < cur_day]                                 # completed New York days only
+        if len(dd) >= 21:
+            out["dxy20"] = _f(dd.iloc[-1] - dd.iloc[-21], 3)
+    if out["ry20"] is not None and out["dxy20"] is not None:
+        out["macro"] = 1 if out["ry20"] < 0 and out["dxy20"] < 0 else -1 if out["ry20"] > 0 and out["dxy20"] > 0 else 0
+    return out
+
+
 def gold_arrows(L: dict, F: dict, i: int, tf_sec: int) -> list[dict]:
     """The Pine v53-v73 GOLD ARROWS grid (Brief `f_brGrid`), display only: each indicator's state as what it means FOR
     GOLD. d > 0 supports gold up (2 = strong), d < 0 down, 0 neutral, None no data. Macro cells are the impact on gold,
@@ -708,7 +771,9 @@ def build(market, res, res_ctrl, cfg, man: dict, now: datetime | None = None, st
         "holdout": {k: man.get(k) for k in ("freeze_key", "config_hash", "engine_code_hash", "engine_version", "freeze_utc", "status", "history")},
         "chart": chart, "markers": markers, "zones": zones, "sr": sr, "decisions": decisions, "cone": cone,
         "dashboard": {**{k: v for k, v in L.items() if k not in ("analog", "plan")}, "plan": plan, "kelly": ks, "checks": checks,
-                      "gate_sides": gate_sides(L, F, n - 1), "gold_arrows": gold_arrows(L, F, n - 1, market.tf_sec)},
+                      "gate_sides": gate_sides(L, F, n - 1), "gold_arrows": gold_arrows(L, F, n - 1, market.tf_sec),
+                      "daily_regime": daily_regime(market.htf.get("D"), last_close, market.ext_daily.get("DFII10"),
+                                                   market.ext_macro.get("dxy"))},
         "analog": {**A, "scan": L["analog_scan"], "hit_prob": L["hit_prob"], "hit_n": L["hit_n"],
                    "race_prob": L["race_prob"], "race_n": L["race_n"], "reliability": rel, "base_rate": _f(cr[15], 1),
                    "wr_ci": _f(diag_wr_ci, 1), "oos_ci": _f(diag_oos_ci, 1), "cal_q": L["cal_q"]},
