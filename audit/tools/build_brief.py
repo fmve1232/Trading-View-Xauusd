@@ -27,12 +27,12 @@ def at(prefix):
 
 
 ref = L[3]
-body = "// ║  BUILD STAMP — this file last CHANGED in v105  (last 3000 bars: run time)"
+body = "// ║  BUILD STAMP — this file last CHANGED in v106  (last 1500 bars: run time)"
 assert len(body) < len(ref), "stamp too long"
 L[2] = body + " " * (len(ref) - len(body) - 1) + "║"
 i = at('strategy("XAUUSD Quantum 5.0 — Treatment"')
 L[i] = ('indicator("XAUUSD Quantum 5.0 — Brief", overlay=true, max_lines_count=500, '
-        'max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=3000)')  # v105: run time
+        'max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=1500)')  # v105: run time
 i = at("// FILE ROLE: A/B TREATMENT ARM")
 L[i] = ("// FILE ROLE: MARKET BRIEF COMPANION — display only, trades nothing. The engine below is the "
         "Treatment twin's, verbatim (audit/tools/diag_parity.py); the brief panel is appended.")

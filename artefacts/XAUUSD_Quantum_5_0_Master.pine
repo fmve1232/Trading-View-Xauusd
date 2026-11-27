@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v105  (last 3000 bars: run time)     ║
+// ║  BUILD STAMP — this file last CHANGED in v106  (last 1500 bars: run time)     ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -8,7 +8,7 @@
 // ║  The stamp only moves when THIS file changes, so an unchanged file keeps its  ║
 // ║  old number and still matches the record.                                     ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
-indicator("XAUUSD Quantum 5.0", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=3000)
+indicator("XAUUSD Quantum 5.0", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500, max_bars_back=5000, calc_bars_count=1500)
 // XAUUSD Quantum 4.0 — Post-Audit Remediation
 // F-025: was stale at "Q5.0" while the build was Q7.x. The schema build is appended at
 // render time from SCHEMA_BUILD, so the footer label cannot silently drift again.

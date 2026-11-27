@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v105  (last 3000 bars: run time)     ║
+// ║  BUILD STAMP — this file last CHANGED in v106  (footprint data off, 1500 bars)║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -41,7 +41,7 @@
 // intrabar classified by the tick rule (close>open = buy-side), binned by price.
 // A genuine intrabar volume distribution — NOT exchange footprint.
 // ═══════════════════════════════════════════════════════════════════════════════
-indicator("XAUUSD Quantum Visuals V2", "QV2", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500, max_bars_back = 5000, calc_bars_count = 3000)
+indicator("XAUUSD Quantum Visuals V2", "QV2", overlay = true, max_lines_count = 500, max_labels_count = 500, max_boxes_count = 500, max_bars_back = 5000, calc_bars_count = 1500)
 
 // ─────────────────────────── INPUTS ───────────────────────────
 grpT = "Trend Overlays"
@@ -1061,9 +1061,9 @@ if (not showCandle or not vSep) and not na(tblC)
 // ═══════════════════ FOOTPRINT APPROXIMATION ═══════════════════
 // Intrabar volume via request.security_lower_tf(), classified by the tick rule and
 // binned by price. NOT exchange bid/ask footprint — Pine has no order-flow feed.
-array<float> ltfC = request.security_lower_tf(syminfo.tickerid, fpTf, close)
-array<float> ltfO = request.security_lower_tf(syminfo.tickerid, fpTf, open)
-array<float> ltfV = request.security_lower_tf(syminfo.tickerid, fpTf, volume)
+// v106 (run time, F-A94): ONE request, and 1-minute data only while the footprint is ON; off, it asks for the chart's
+// own timeframe (one intrabar per bar). The arrays are read only under `if showFP`, so the output is unchanged.
+[ltfC, ltfO, ltfV] = request.security_lower_tf(syminfo.tickerid, showFP ? fpTf : timeframe.period, [close, open, volume])
 
 var box[]   fpBoxes  = array.new<box>()
 var label[] fpLabels = array.new<label>()

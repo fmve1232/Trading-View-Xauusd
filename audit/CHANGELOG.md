@@ -3790,3 +3790,26 @@ container; the probability blocks did not change).
 
 **Not run:** TradingView's run time. If the error remains, the next step is measured, not guessed: open the script in
 the Pine Editor, turn on the Profiler, and send the screenshot of its slowest lines.
+
+# v106 — run time, second step (F-A94): footprint data only when shown; last 1500 bars (2026-11-27)
+
+**Operator's screenshots:** v105 still stops with "Script takes too long to calculate", now with the Master ALONE and
+Visuals ALONE on the chart. The same code ran on 2026-11-14, so the load or TradingView's limit changed.
+
+**Visuals (`fix_v106.py`):** the footprint approximation's three `request.security_lower_tf` calls loaded the
+1-minute intrabars of every chart bar (about 15 x the data on 15m), three times, even with the footprint OFF (its
+default since v81): a request runs whatever its result is used for. Now ONE tuple request, and while the footprint is
+off it asks for the chart's own timeframe (one intrabar per bar). The arrays are read only under `if showFP`, so
+every output is unchanged; with the footprint on, the same three series as before.
+
+**All four chart scripts:** `calc_bars_count` 3000 → 1500 (about 16 trading days on 15m, 5 days on 5m, 2 months on
+1H). The longest chart-timeframe window is 200 bars and weekly levels need about 920 15m bars, so every value keeps its
+history; history-counted statistics count the last 1500 bars (the engine's 15m sample fills about half of its
+3000-record buffer). On 1m charts (1500 bars ≈ one day) the previous-week levels stay empty.
+
+**Checks:** `v105_check.py` 2 now asks window × 5 ≤ N and two 15m weeks ≤ N; new section 5 (one intrabar request,
+chart timeframe while off, every read inside `if showFP`). `refactor_check` chain + `fix_v106.master`. Every checker
+passes.
+
+**Not run:** TradingView's run time. If v106 still times out: load the Master on a 1H chart (fewer bars of data per
+day), open it in the Pine Editor, turn on the Profiler, and send the slowest lines.
