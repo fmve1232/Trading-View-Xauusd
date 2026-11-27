@@ -30,3 +30,13 @@ is that file plus insertions only: the indicator title, and for P3 / P4 the MACR
   checks it is linear); the Master = P1 − 600 × slope − the filler's small fixed part:
 
       python3 audit/tools/probe_gd.py --lines <PB300> 108612 <PC900>
+
+## Master_v107_PROBE_200bars.pine (2026-11-27, F-A94 run time)
+The v107 Master with only the title ("PROBE - not for trading") and `calc_bars_count` 1500 -> 200 changed, plus a
+3-line comment. v105 (3000 bars), v106 (1500 bars, Visuals' footprint data) and v107 (statistics scan on the last 300
+bars, -82% of its modelled passes) did not bring the Master under the free plan's 20 s, so the cost model read from the
+code is not trusted further. The probe decides between the two remaining explanations with one paste:
+- it LOADS on 200 bars -> the time scales with bars; run the Pine Profiler on it (it cannot report a script that times
+  out) and fix the lines it flags;
+- it still TIMES OUT on 200 bars -> the time is not in the per-bar code but in the requested data contexts
+  (request.security of other symbols / timeframes), which `calc_bars_count` does not shorten.
