@@ -89,16 +89,21 @@ function showTab(t) {
   document.querySelectorAll(".tab").forEach((s) => s.classList.toggle("hidden", s.id !== "tab-" + t));
   if (t === "backtest") setTimeout(renderEquity, 0);
 }
-const TOGGLES = [["ema", "EMA 20/100/200"], ["vwap", "VWAP D/W/M"], ["bb", "Bollinger"], ["levels", "Levels"], ["zones", "OB / FVG"],
-  ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"], ["h2", "H2 signals"], ["h3", "H3 signals"]];
+const TOGGLES = [["dash", "Dashboard"], ["ema", "EMA 20/100/200"], ["vwap", "VWAP D/W/M"], ["bb", "Bollinger"], ["levels", "Levels"], ["zones", "OB / FVG"],
+  ["sr", "S/R"], ["vp", "Value area"], ["signals", "Signals"], ["structure", "BOS / CHoCH"], ["sweeps", "Sweeps"], ["plan", "Plan"], ["cone", "Vol cone"], ["h2", "H2 signals"], ["h3", "H3 signals"],
+  ["delta", "Δ volume"], ["sess", "Sessions"]];
 if (S.toggles.h2 === undefined) S.toggles.h2 = true;   // added after viewers saved their toggles
 if (S.toggles.h3 === undefined) S.toggles.h3 = true;
+// tv-layout (operator 27 Nov 2026): the TradingView chart as sent: dashboard table over the chart, Bollinger ±2σ,
+// numbered S/R, per-bar volume delta and the session backgrounds on by default once (each stays a toggle)
+if (!store.get("tv_v1", false)) { Object.assign(S.toggles, { dash: true, bb: true, sr: true, delta: true, sess: true }); store.set("toggles", S.toggles); store.set("tv_v1", true); }
 // v-labels (Oct 2026): sweeps and structure labels on by default once, now that they are readable labels
 if (!store.get("labels_v1", false)) { S.toggles.sweeps = true; S.toggles.structure = true; store.set("toggles", S.toggles); store.set("labels_v1", true); }
 // each toggle carries the colour / line style of what it draws, so the buttons are also the chart key
 const SWATCH = { ema: [["--ov-ema20", "solid"], ["--ov-ema100", "solid"], ["--ov-ema200", "thick"]], vwap: [["--ov-vwap", "thick"], ["--ov-vwap", "dash"]],
   bb: [["--ov-band", "solid"]], levels: [["--muted", "dot"], ["--dim", "dash"]], vp: [["--text", "dot"]], cone: [["--dim", "dash"]],
-  zones: [["--ob", "box"], ["--fvg", "box"]], sweeps: [["#d55181", "dotc"]], h2: [["#9b6dff", "dotc"]], h3: [["#0f9fb3", "dotc"]] };
+  zones: [["--ob", "box"], ["--fvg", "box"]], sweeps: [["#d55181", "dotc"]], h2: [["#9b6dff", "dotc"]], h3: [["#0f9fb3", "dotc"]],
+  sess: [["#26a69a", "box"], ["#ffb300", "box"], ["#5b8cff", "box"]], sr: [["--bear", "dot"], ["--bull", "dot"]] };
 const sw = (k) => (SWATCH[k] || []).map(([c, st]) => `<i class="sw ${st}" style="--c:${c.startsWith("--") ? `var(${c})` : c}"></i>`).join("");
 $("#toolbar").innerHTML = TOGGLES.map(([k, l]) => `<span class="toggle ${S.toggles[k] ? "on" : ""}" data-k="${k}">${sw(k)}${l}</span>`).join("") +
   `<button class="toggle fit" type="button" data-act="fit" title="Fit the latest bars to the screen and re-enable auto price scale">⤢ Fit</button>`;
@@ -108,6 +113,8 @@ $("#toolbar").onclick = (e) => {
   const k = btn.dataset.k; if (!k) return;
   S.toggles[k] = !S.toggles[k]; store.set("toggles", S.toggles);
   btn.classList.toggle("on", S.toggles[k]); renderChart();
+  if (k === "dash") placeDash();
+  if (k === "plan") renderPlanStrip();
 };
 
 /* ---------- data ---------- */
@@ -660,6 +667,7 @@ function renderQuote() {
   mk.textContent = closed ? "Market closed" : `Open · ${SESS[sess] || sess.toLowerCase() || "—"}`;
   mk.className = "mkt " + (closed ? "closed" : "open");
   mk.title = closed ? "Spot gold is shut Friday 17:00 to Sunday 18:00 New York and daily 17:00-18:00." : `Session of the last closed ${D.meta.tf} bar (engine label ${sess}).`;
+  updDashPrice();
 }
 function renderHeader() {
   const D = S.data; if (!D) return;
@@ -1649,14 +1657,237 @@ function structStr(st) {
   return "no active structure";
 }
 
+/* ---------- the chart terminal's dashboard (operator 27 Nov 2026: the website laid out as the TradingView chart) ----------
+   Top: the Pine Master's table (MARKET … DECISION; Master.pine "ROW 0/1/2"), then the developed Pine line's strip
+   (Visuals v81-v103 f_tk: DAILY REGIME … RECORD). Every value is one the engine published for the last closed bar; the
+   page adds only display arithmetic (distances to levels, a count of agreeing timeframes, a 95% interval from a
+   published mean and t). Scores stay scores: the engine's p is NOT CALIBRATED (IA-02), sizing is the fixed risk % only
+   (IA-13), and a reference plan on a bar without a signal is labelled as such (IA-04 / IA-07). DISPLAY ONLY. */
+const gaDir = (D, name) => { const g = (D.dashboard.gold_arrows || []).find((x) => x.name === name); return g ? g.d : undefined; };
+const tri = (x) => (x === 1 ? "▲" : x === -1 ? "▼" : x === 0 ? "·" : "—");
+const hv = (sc) => (!isNum(sc) || sc === 50 ? 0 : sc >= 60 ? 1 : sc <= 40 ? -1 : 0);     // a timeframe's trend vote (Overview rule)
+function dashPrice(D) {
+  const fb = D.meta.forming, lp = livePrice();
+  return isNum(lp) ? lp : fb && isNum(fb.c) ? fb.c : D.dashboard.close;
+}
+// Student-t 0.975 quantile (Cornish-Fisher expansion; within 0.002 of the table for df >= 10)
+const t975 = (df) => 1.959964 + 2.37227 / df + 2.82224 / df ** 2 + 2.56 / df ** 3;
+// Visuals v86 lgVerdict, on the published forward record: N >= 50, the 95% t-interval of mean R above 0, PF >= 1.2
+function recordVerdict(r) {
+  if (!r || !(r.n > 0)) return { txt: "no closed trades yet", lv: 0, lo: null, hi: null };
+  if (r.n < 50) return { txt: "UNDECIDED · N < 50", lv: 0, lo: null, hi: null };
+  if (!isNum(r.avg_r) || !isNum(r.t_stat) || r.t_stat === 0) return { txt: "—", lv: 0, lo: null, hi: null };
+  const se = Math.abs(r.avg_r / r.t_stat), h = t975(r.n - 1) * se, lo = r.avg_r - h, hi = r.avg_r + h;
+  const txt = lo > 0 && r.profit_factor >= 1.2 ? "EDGE SHOWN" : lo > 0 ? "NO EDGE SHOWN · PF < 1.2" : hi < 0 ? "NO EDGE · interval below 0" : "NO EDGE SHOWN · interval spans 0";
+  return { txt, lv: lo > 0 && r.profit_factor >= 1.2 ? 1 : hi < 0 ? -1 : 0, lo, hi };
+}
+// Visuals f_glNear: the nearest tagged level above / below (PDH PDL PWH PWL PMH PML CDH CDL)
+function glNear(D, from) {
+  const lq = D.dashboard.liquidity || {}, P = lq.pools || {};
+  const L = [["PDH", P.PDH], ["PDL", P.PDL], ["PWH", P.PWH], ["PWL", P.PWL], ["PMH", P.PMH], ["PML", P.PML], ["CDH", lq.cdh], ["CDL", lq.cdl]].filter(([, v]) => isNum(v));
+  const up = L.filter(([, v]) => v > from).sort((a, b) => a[1] - b[1])[0] || null;
+  const dn = L.filter(([, v]) => v < from).sort((a, b) => b[1] - a[1])[0] || null;
+  return { up, dn };
+}
+const ROOM_USD = 10;                                 // the operator's minimum move (CLAUDE.md target: at least $10)
+function renderDash() {
+  const el = $("#tvdash"), D = S.data; if (!el || !D) return;
+  const d = D.dashboard, M = D.meta, a = D.analog || {}, mac = D.macro || {}, ch = D.chart, n = ch.t.length;
+  const p = d.plan || {}, st = d.struct || {}, fl = d.flow || {}, lq = d.liquidity || {}, se = d.session || {}, reg = d.regime || {}, mtf = (d.mtf && d.mtf.scores) || {};
+  const dec = d.decision, sig = dec === "BUY" || dec === "SELL", close = d.close;
+  const price = dashPrice(D), pc = prevDayClose(D);
+  const cls = (x) => (x > 0 ? "bull" : x < 0 ? "bear" : "");
+  const sp = (c, t, title) => `<span class="${c}"${title ? ` title="${esc(title)}"` : ""}>${t}</span>`;
+  // ---- MARKET
+  const tfa = [["5M", "5M"], ["15M", "15M"], ["1H", "1H"], ["4H", "4H"], ["1D", "1D"]].map(([k, g]) => { const x = gaDir(D, g); return `${k}${sp(cls(x), tri(x))}`; }).join(" ");
+  const sessS = /^NY/.test(se.label || "") ? "NY" : /^LON/.test(se.label || "") ? "LDN" : se.label === "ASIAN" ? "ASN" : "CLS";
+  const volOk = Array.isArray(ch.v) && ch.v.slice(-50).some((v) => v > 0);
+  const flowS = volOk ? `CVD${fl.cvd_bull ? "▲" : d.evidence && d.evidence.cvd_bear ? "▼" : "·"} Δ${fs(fl.vd_k, 1)}k` : sp("amb", "VOL n/a", "No COMEX futures volume on the last 50 bars (holiday or feed gap): volume reads are off");
+  const sessStats = `${isNum(se.exp_pct) ? ` Exp${f(se.exp_pct, 0)}%` : ""}${isNum(se.manip_prob) ? ` M${f(se.manip_prob, 0)}%` : ""}${isNum(se.cont_prob) ? ` C${f(se.cont_prob, 0)}%` : ""}`;
+  const mkt1 = `<span id="tvd-px">${dashPxHtml(price, pc)}</span>`;
+  const mkt2 = `${tfa}\n${sessS} ${st.bos_label_bull ? "▲" : "·"}${st.bos_label_bear ? "▼" : "·"} ${flowS} ${esc(reg.label || "")} ${esc(reg.vol_tag || "")}${sessStats}\n` +
+    `${esc(mac.status_line || "")}\n{${esc(structStr(st))}} [${esc((d.risk && d.risk.lock_str) || "")}]${isNum(mac.vix) ? ` VIX${f(mac.vix, 1)}` : ""}${fl.climax_up ? " CLIMAX▲" : fl.climax_dn ? " CLIMAX▼" : ""}`;
+  // ---- BIAS (Master: BULL / BEAR n only when the top score is at least 62, otherwise MIXED)
+  const bp = Math.trunc(d.bull_score), sp_ = Math.trunc(d.bear_score), rp = Math.trunc(d.range_score), mx = Math.max(bp, sp_, rp);
+  const isBull = mx >= 62 && bp >= sp_ && bp >= rp, isBear = mx >= 62 && sp_ > bp && sp_ >= rp;
+  const bias1 = isBull ? sp("bull", `BULL ${bp}`) : isBear ? sp("bear", `BEAR ${sp_}`) : sp("amb", "MIXED");
+  const has5 = gaDir(D, "5M") !== null && gaDir(D, "5M") !== undefined, has15 = gaDir(D, "15M") !== null && gaDir(D, "15M") !== undefined;
+  const v5 = hv(mtf["5"]), v15 = hv(mtf["15"]), v60 = hv(mtf["60"]), v240 = hv(mtf["240"]);
+  const ib = v60 + v240, inst = ib >= 2 ? "BULL" : ib <= -2 ? "BEAR" : ib > 0 ? "BULL-ISH" : ib < 0 ? "BEAR-ISH" : "MIX";
+  const iS = { BULL: "▲", BEAR: "▼", "BULL-ISH": "↗", "BEAR-ISH": "↘" }[inst] || "≈";
+  const hb = [v15, v60, v240], hbu = hb.filter((x) => x > 0).length, hbd = hb.filter((x) => x < 0).length;
+  const htfB = hbu >= 2 ? "BULL" : hbd >= 2 ? "BEAR" : hbu > hbd ? "BULL-ISH" : hbd > hbu ? "BEAR-ISH" : "MIX";
+  const ct = (v5 > 0 && /BEAR/.test(inst)) || (v5 < 0 && /BULL/.test(inst)) ? " ↕" : "";
+  const bias2 = `C${has5 ? (v5 > 0 ? "▲" : v5 < 0 ? "▼" : "≈") + f(mtf["5"], 0) : "—"} S${has15 ? (v15 > 0 ? "▲" : v15 < 0 ? "▼" : "≈") + f(mtf["15"], 0) : "—"} I${iS}${f(((mtf["60"] || 0) + (mtf["240"] || 0)) / 2, 0)}` +
+    ` ${esc((d.mtf && d.mtf.tier) || "A:—")} H:${htfB}${ct}\n${sp("dimx", "trend votes, not odds")}`;
+  // ---- SIGNAL
+  const decL = dec === "BUY" || dec === "SELL" ? `${dec} ${d.confidence}/100` : dec === "NO TRADE" ? `NO TRADE Q${d.trade_quality}` : dec === "RISK LOCK" ? (d.risk && d.risk.lock_str) || dec : dec;
+  const dom = d.bull_score >= d.bear_score && d.bull_score >= d.range_score ? "bull" : d.bear_score >= d.bull_score && d.bear_score >= d.range_score ? "bear" : "";
+  const sig1 = `<span class="${dom}">${esc(decL)}<br>score L ${f(d.bull_score, 0)} S ${f(d.bear_score, 0)} R ${f(d.range_score, 0)}</span>`;
+  const conf = `${d.stats_warm ? "CONF" : "~CONF"} ${d.confidence}/100 ${{ MEDIUM: "MED", HIGH: "HI", LOW: "LO" }[d.conf_label] || esc(d.conf_label || "")}`;
+  const sig2 = `${sp(a.match > 0 ? cls(a.ev) : "", `EV ${a.match > 0 ? fs(a.ev, 2) + "R" : "—"}`, "Analog expectancy in R (in-sample estimate)")} ` +
+    `${sp("", `mP ${f(d.cal_prob * 100, 0)}/S${f(d.cal_prob_bear * 100, 0)}`, "The engine's model score for long / short. Not a probability: it did not rank outcomes (AUC about 0.5, Amendment 12).")} <span class="uncal">NOT CALIBRATED</span>\n` +
+    `${conf} ${sp("dimx", "(score)")}\n` +
+    `${sp("", `H/L 1st ${a.pdh1st ?? "—"}/${a.pdl1st ?? "—"}%`, "Analog frequency: which of yesterday's high / low was reached first")} · ${sp("", `BOS ${f(a.bos_cont, 0)}/${f(a.bos_fail, 0)}%`, "Analog frequency: break of structure continued / failed")}\n` +
+    `MAE ${f(a.max_adverse_atr, 1)} ATR · Cal ${esc(a.cal_grade || "—")} B${f(a.cal_brier, 2)} · n${a.match ?? "—"}`;
+  // ---- STRUCTURE
+  const bosS = st.bos_label_bull ? "BOS▲" : st.bos_label_bear ? "BOS▼" : "BOS—";
+  const chS = st.choch_bull ? "CHoCH▲" : st.choch_bear ? "CHoCH▼" : "CHoCH—";
+  const msS = st.mss_bull ? "MSS▲" : st.mss_bear ? "MSS▼" : "MSS—";
+  const stAct = st.mss_bull || st.mss_bear ? msS : st.choch_bull || st.choch_bear ? chS : bosS;
+  const stCls = st.mss_bull || st.choch_bull || st.bos_label_bull ? "bull" : st.mss_bear || st.choch_bear || st.bos_label_bear ? "bear" : "";
+  const str1 = sp(stCls, `${bosS} ${chS} ${msS}`);
+  const str2 = `${sp(stCls, stAct + ct)}\n${sp(st.bull_act ? "bull" : st.bear_act ? "bear" : "dimx", esc(structStr(st)), "The engine's active structure and its age in bars")}${st.disp_up ? `\n${sp("bull", "DISP▲")}` : st.disp_dn ? `\n${sp("bear", "DISP▼")}` : ""}`;
+  // ---- LIQUIDITY (Master: nearest PDH / PWH / PMH above the close, PDL / PWL / PML below)
+  const P = lq.pools || {};
+  const nearA = [["PDH", P.PDH], ["PWH", P.PWH], ["PMH", P.PMH]].filter(([, v]) => isNum(v) && v > close).sort((x, y) => x[1] - y[1])[0];
+  const nearB = [["PDL", P.PDL], ["PWL", P.PWL], ["PML", P.PML]].filter(([, v]) => isNum(v) && v < close).sort((x, y) => y[1] - x[1])[0];
+  const lq1 = nearA || nearB ? `${nearA ? nearA[0] + Math.trunc(nearA[1] + Number(S.mt5 || 0)) : "—"}/<wbr>${nearB ? nearB[0] + Math.trunc(nearB[1] + Number(S.mt5 || 0)) : "—"}` : "LIQ —";
+  const z = d.zones || {};
+  const lq2 = `DRAW ${lq.dest && lq.dest !== "—" ? `${esc(lq.dest)} R${lq.dest_score} · reach ${f(lq.reach, 0)}${lq.dest_conf ? " " + esc(lq.dest_conf) : ""}` : "—"}` +
+    (z.fvg ? `\n${sp(z.fvg[2] ? "bull" : "bear", `FVG ${px(Math.min(z.fvg[0], z.fvg[1]))}-${px(Math.max(z.fvg[0], z.fvg[1]))} ${z.fvg[2] ? "BULL" : "BEAR"}`)}` : "") +
+    (z.ob_bull ? `\n${sp("bull", `OB▲ ${px(z.ob_bull[0])}-${px(z.ob_bull[1])}`)}` : "") + (z.ob_bear ? `\n${sp("bear", `OB▼ ${px(z.ob_bear[0])}-${px(z.ob_bear[1])}`)}` : "");
+  // ---- PRICE
+  const vw = ch.vwap ? ch.vwap[n - 1] : null, e200 = ch.ema200 ? ch.ema200[n - 1] : null;
+  const pr1 = `V ${px(vw)}`;
+  const pr2 = `E200 ${px(e200)}\nXAUUSD ${esc(M.tf)} ${esc(M.engine_version)}\nBar ${tfmt(Date.parse(M.last_bar_close) / 1000)}`;
+  // ---- MACRO (Master row 1: dollar, 10Y, TIPS; row 2: EUR, silver, S&P, correlation health, verdict, day-of-week)
+  const gd = (m) => (!m || !m.valid ? 0 : m.gold_bullish ? 1 : m.gold_bearish ? -1 : 0);
+  const m1d = gd(mac.DXY) + gd(mac.US10Y);
+  const ma1 = `Corr DXY${arrow(mac.DXY)}${isNum(mac.dxy_rsi) ? " R" + Math.trunc(mac.dxy_rsi) : ""} 10Y${arrow(mac.US10Y)} TIP${mac.tips_on === false ? '<span class="dim" title="off: same feed as 10Y">—</span>' : arrow(mac.TIPS)}`;
+  const mm = d.macro || {}, ms = mm.strength;
+  const dow = (() => { const nm = ["", "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"], b = d.dow_bull || [], r = d.dow_bear || [];
+    return [2, 3, 4, 5, 6].map((k) => { const tot = (b[k] || 0) + (r[k] || 0); return tot > 5 ? nm[k] + Math.trunc((b[k] / tot) * 100) : ""; }).filter(Boolean).join(" "); })();
+  const cr = mac.avg_corr_health;
+  const ma2 = `Corr EUR${arrow(mac.EURUSD)} XAG${arrow(mac.XAG)} SPX${arrow(mac.SPX)} CR${isNum(cr) ? Math.trunc(cr) : "—"}%\n` +
+    `${sp(cls(isNum(ms) ? (ms >= 15 ? 1 : ms <= -15 ? -1 : 0) : 0), `Macro ${esc((mm.label || "—").toLowerCase())} ${fs(ms, 0)}`)}${dow ? `\n${sp("", dow, "Day-of-week bull share, % (the engine's decayed counts; a heuristic, not tested)")}` : ""}`;
+  const mtint1 = m1d > 0 ? "tint-bull" : m1d < 0 ? "tint-bear" : "tint-amb", mtint2 = isNum(cr) ? (cr >= 60 ? "tint-bull" : cr <= 40 ? "tint-bear" : "tint-amb") : "";
+  // ---- RISK (fixed risk % of the account only, IA-13; nothing is sized without a signal)
+  const k = d.kelly || {}, acct = S.account || ACCT_DEFAULT, rpct = riskPctFixed();
+  const costPts = isNum(k.cost_pts) ? k.cost_pts : d.checks && d.checks.cost_pts;
+  const perLotD = isNum(p.dist) && p.dist > 0 ? (p.dist + (isNum(costPts) ? costPts : 0)) * ((M.config && M.config.point_value) || 100) : 0;
+  const lotsFixed = sig && perLotD > 0 ? fixedLots(acct, perLotD) : 0;
+  const tpD = isNum(p.tp1) && isNum(p.entry) ? Math.abs(p.tp1 - p.entry) : null;
+  const cst = isNum(costPts) && tpD > 0 ? costPts / tpD * 100 : null;
+  const rk1 = `RRg 1:${f(p.rr2, 1)} SL ${isNum(p.dist) && d.aatr > 0 ? f(p.dist / d.aatr, 1) : "—"} ATR\nRisk ${f(rpct, 1)}% ${sig ? `$${Math.round(acct * rpct / 100)} ${f(lotsFixed, 2)}L` : sp("dimx", "no signal")} Cst ${isNum(cst) ? f(cst, 1) + "%" : "—"}`;
+  const rk2 = `${sp("", `WR ${pctN(a.wr, a.match)}`, "Analog win rate (in-sample)")} ${sp("", `ROLL ${a.oos_n > 0 && d.oos_neff >= 10 ? `${pct(a.oos_wr)} N${a.oos_n}/${d.oos_neff}eff` : "—"}`, "Rolling trailing slice: not a holdout (F-037)")} PF ${f(a.profit_factor, 2)}\n${sp("dimx", "analog, in-sample")}`;
+  // ---- DECISION
+  const grade = (c) => { const s = Math.min(Math.max(Math.trunc(c / 20), 0), 5); return s >= 4 ? "A" : s >= 3 ? "B" : s >= 2 ? "C" : "D"; };
+  const waitish = dec === "WAIT" || dec === "NO TRADE" || dec === "WARMUP";
+  const decBox = dec === "RISK LOCK" ? esc((d.risk && d.risk.lock_str) || dec) : waitish ? `${esc(decL)} TQ${d.trade_quality}${esc(d.tq_grade || "")}<br>BIAS ${esc(d.bias_label)}${d.blk_why ? " · " + esc(d.blk_why) : ""}`
+    : `${esc(decL)} ${grade(d.confidence)} TQ${d.trade_quality}${esc(d.tq_grade || "")}`;
+  const decCls = dec === "BUY" ? "buy" : dec === "SELL" ? "sell" : dec === "NO TRADE" ? "nt" : dec === "RISK LOCK" ? "lock" : "";
+  const agree = sig ? ["5M", "15M", "1H", "4H", "1D"].filter((g) => gaDir(D, g) === (dec === "BUY" ? 1 : -1)).length : 0;
+  const H2 = D.h2 && !D.h2.error ? D.h2 : null, hs = H2 && H2.last_signal;
+  // H2 (research arm): its levels only while the signal is live; a stale one keeps its date and outcome only
+  const h2stale = !!(hs && hs.status && hs.status.stale);
+  const h2l = hs ? `\nH2 last ${hs.dir === "LONG" ? "BUY" : "SELL"} ${tfmt(hs.t)} ${h2stale ? `○ stale${hs.status.outcome ? " · " + esc(hs.status.outcome) : ""}` : "● live"}` +
+    (h2stale ? "" : `\nentry ${px(hs.entry)} SL ${px(hs.sl)}\nTP1 ${px(hs.tp1)} · TP2 ${px(hs.tp2)}`) : "";
+  const dc2 = `RR 1:${f(p.rr2, 1)}${sig && lotsFixed > 0 ? ` $${Math.round(acct * rpct / 100)} ${f(lotsFixed, 2)}L` : ""}\n${esc(d.decision_log || "")}\nAgree ${Math.trunc(agree / 5 * 100)}%${h2l}`;
+  const cols = [
+    ["MARKET", mkt1, mkt2], ["BIAS", bias1, bias2], ["SIGNAL", sig1, sig2], ["STRUCTURE", str1, str2], ["LIQUIDITY", lq1, lq2],
+    ["PRICE", pr1, pr2], ["MACRO", ma1, ma2, mtint1, mtint2], ["RISK", rk1, rk2], ["DECISION", decBox, dc2, "dec " + decCls],
+  ];
+  // ---- the strip (developed line, Visuals f_tk)
+  const R = d.daily_regime || {};
+  const rgTxt = R.label === "LONG" ? "▲ LONG" : R.label === "SHORT" ? "▼ SHORT" : R.label === "FLAT" ? "◆ FLAT" : "—";
+  const rgTip = `Daily regime · UNTESTED hypothesis (context, never a signal). 12-month return ${isNum(R.ret12) ? fs(R.ret12, 1) + "%" : "—"} (month-end ${f(R.m1)} vs ${f(R.m13)}) · last completed day ${esc(R.asof_day || "—")} closed ${isNum(R.close) && isNum(R.sma200) ? (R.close > R.sma200 ? "above" : "below") : "—"} its 200-day average ${f(R.sma200)}. ` +
+    `Real yield 20d ${isNum(R.ry20) ? fs(R.ry20, 2) : "—"} · DXY 20d ${isNum(R.dxy20) ? fs(R.dxy20, 2) : "—"} → ${R.macro === 1 ? "20d macro supports gold" : R.macro === -1 ? "20d macro against gold" : R.macro === 0 ? "20d macro mixed" : "20d macro: no data"} (not the Master's MACRO).`;
+  const s1 = mtf["60"], s4 = mtf["240"], sD = mtf.D, votes = [s1, s4, sD].map(hv);
+  const tUp = votes.filter((x) => x > 0).length >= 2, tDn = votes.filter((x) => x < 0).length >= 2;
+  const trTip = `1H ${f(s1, 0)} · 4H ${f(s4, 0)} · 1D ${f(sD, 0)} (>=60 up, <=40 down; 2 of 3 decide)${isNum(e200) ? ` · price ${close > e200 ? "above" : "below"} EMA200` : ""}. Trend scores, not calibrated odds.`;
+  const h2v = hs ? `${hs.dir === "LONG" ? "BUY" : "SELL"} ${hs.status && hs.status.stale ? "○" : "●"}` : "none yet";
+  const h2c = !hs ? "" : hs.status && hs.status.stale ? "dimx" : hs.dir === "LONG" ? "bull" : "bear";
+  const h2Tip = hs ? `Research arm H2 (Sweep & Value), last signal ${tfmt(hs.t)}: ${hs.status ? `${hs.status.stale ? "stale" : "live"} · ${hs.status.outcome}${hs.status.why && hs.status.why.length ? " · " + hs.status.why.join(", ") : ""}` : ""}. A research test, not a trade instruction.` : "Research arm H2: no signal in this chart's history.";
+  const sw = lastSweep(D), swLvl = sw ? (isNum(sw.lvl) ? sw.lvl : sw.px) : null;
+  const swTip = sw ? `${sw.dir < 0 ? "Buy-side (a high)" : "Sell-side (a low)"} taken: ${lvl(sw.pool)}${isNum(sw.lvl) ? " " + px(sw.lvl) : ""}, wick ${px(sw.px)} · ${tfmt(sw.t)}${isNum(sw.barsAgo) ? ` · ${sw.barsAgo} bars ago` : ""}` : "No sweep in the chart window";
+  const gn = glNear(D, close), upR = gn.up ? gn.up[1] - close : null, dnR = gn.dn ? close - gn.dn[1] : null;
+  const room = `↓${isNum(dnR) ? f(dnR, 1) + (dnR >= ROOM_USD ? "✓" : "✗") : "—"}  ↑${isNum(upR) ? f(upR, 1) + (upR >= ROOM_USD ? "✓" : "✗") : "—"}`;
+  const roomTip = `Space from the last close to the nearest tagged level: below ${gn.dn ? `${gn.dn[0]} ${px(gn.dn[1])}` : "none"}, above ${gn.up ? `${gn.up[0]} ${px(gn.up[1])}` : "none"}. ✓ = at least $${ROOM_USD} of room. Display only: no gate, no signal.`;
+  const vDeg = !(isNum(fl.vah) && isNum(fl.val)) || fl.vah === fl.val;
+  const vTxt = vDeg ? "no volume profile" : `${close > fl.vah ? "above value" : close < fl.val ? "below value" : close >= fl.vpoc ? "over POC" : "under POC"} ${px(fl.vpoc)}`;
+  const vCls = vDeg ? "dimx" : close < fl.val ? "bull" : close > fl.vah ? "bear" : "";
+  const vTip = vDeg ? "The 100-bar value area needs COMEX futures volume; there was none on these bars." : `VAL ${px(fl.val)} · POC ${px(fl.vpoc)} · VAH ${px(fl.vah)} (100 bars, COMEX futures volume)`;
+  const mxG = isNum(ms) ? (ms >= 15 ? "▲" : ms <= -15 ? "▼" : "◆") : "—";
+  const NW = window.QCosts && D.news ? QCosts.newsState(D.news, Date.now() / 1000) : { in_window: null, next: null };
+  const c = d.checks || {}, cpa = c.cost_pct_atr, cLv = !isNum(cpa) ? 0 : cpa > c.cost_red_pct ? 2 : cpa > c.cost_amber_pct ? 1 : 0;
+  const nLeft = NW.next ? NW.next.t - Date.now() / 1000 : null, nLv = NW.in_window ? 2 : isNum(nLeft) && nLeft < 6 * 3600 ? 1 : 0;
+  const churnOn = !!(c.churn && c.churn.churn), lock = !!(d.risk && d.risk.lock);
+  const ck = [lock ? "STOP DAY" : "", nLv === 2 ? "NEWS" : nLv === 1 ? `${NW.next.name} ${dur(nLeft)}` : "", cLv >= 1 ? `COST ${f(cpa, 0)}%` : "", churnOn ? "CHURN" : ""].filter(Boolean);
+  const ckLv = Math.max(nLv, cLv, lock ? 2 : 0, churnOn ? 1 : 0);
+  const ckTip = `News: ${NW.in_window ? "in the window: " + NW.in_window.name : NW.next ? `next ${NW.next.name} in ${dur(nLeft)}` : "calendar ended"} · cost ${f(c.cost_pts, 2)} pts = ${f(cpa, 0)}% of 1 ATR (amber > ${c.cost_amber_pct}%, red > ${c.cost_red_pct}%) · churn ${c.churn ? c.churn.flips : "—"} structure flips in 20 bars · risk lock ${lock ? "ON" : "off"}`;
+  const H4 = D.h4 && !D.h4.error ? D.h4 : null, rv = recordVerdict(H4 && H4.forward);
+  const rTip = H4 && H4.forward && H4.forward.n ? `Arm H4 forward record (current engine), ${esc(M.tf)}: ${H4.forward.n} closed trades, mean ${fs(H4.forward.avg_r, 3)} R` +
+    `${isNum(rv.lo) ? `, 95% interval ${fs(rv.lo, 3)} to ${fs(rv.hi, 3)} R` : ""}, profit factor ${f(H4.forward.profit_factor, 2)}. Rule: N >= 50, interval of mean R above 0, PF >= 1.2.` : "Arm H4: no forward record on this timeframe.";
+  const tiles = [
+    ["DAILY REGIME", rgTxt, R.label === "LONG" ? "bull" : R.label === "SHORT" ? "bear" : "", rgTip],
+    ["TREND 1H·4H·1D", tUp ? "▲ UP" : tDn ? "▼ DOWN" : "◆ MIXED", tUp ? "bull" : tDn ? "bear" : "", trTip],
+    ["H2 SIGNAL", h2v, h2c, h2Tip],
+    ["LAST SWEEP", sw ? `${sw.dir < 0 ? "HIGH" : "LOW"} ${px(swLvl)}` : "none yet", sw ? (sw.dir < 0 ? "bear" : "bull") : "", swTip],
+    [`ROOM $${ROOM_USD}`, room, "", roomTip],
+    ["VALUE · POC", vTxt, vCls, vTip],
+    ["MACRO · = Master", `${mxG} ${fs(ms, 0)}`, mxG === "▲" ? "bull" : mxG === "▼" ? "bear" : "", `Macro ${mm.label || "—"} · votes bull ${mm.bull_votes ?? "—"} / bear ${mm.bear_votes ?? "—"} (±15 = a side). The Master's macro score.`],
+    ["CHECKS", ck.length ? ck.join(" · ") : "OK ✓", ckLv === 2 ? "bear" : ckLv === 1 ? "amb" : "bull", ckTip],
+    [`RECORD · H4 · ${esc(M.tf)}`, rv.txt, rv.lv === -1 ? "bear" : rv.lv === 1 ? "bull" : "amb", rTip],
+  ];
+  el.innerHTML = `<div class="tvd-cols">${cols.map(([h, r1, r2, t1 = "", t2 = ""]) => `<div class="tvd-col"><div class="h">${h}</div><div class="p ${t1}"><div>${r1}</div></div><div class="s ${t2}"><div>${r2}</div></div></div>`).join("")}</div>` +
+    `<div class="tvd-strip">${tiles.map(([h, v, vc, tip]) => `<div class="tvd-tile" title="${esc(tip)}"><div class="h">${h}</div><div class="v ${vc}">${esc(v)}</div></div>`).join("")}</div>`;
+  placeDash();
+}
+// MARKET row 1: price and change against the previous trading day's close (Master: _priceStr + _chgStr)
+function dashPxHtml(p, pc) {
+  const c = isNum(p) && isNum(pc) && pc ? (p - pc) / pc * 100 : null;
+  return `${isNum(p) ? p.toFixed(2) : "—"} <span class="${c > 0 ? "bull" : c < 0 ? "bear" : ""}">${isNum(c) ? fs(c, 2) + "%" : ""}</span>`;
+}
+// The live price into the MARKET cell between engine runs (renderQuote calls it on every quote)
+function updDashPrice() {
+  const el = $("#tvd-px"), D = S.data; if (!el || !D) return;
+  el.innerHTML = dashPxHtml(dashPrice(D), prevDayClose(D));
+}
+/* The Master's plan strip at the chart's foot. With a signal it is the plan; without one it is the engine's reference
+   levels for the side its scores lean to, marked "reference only · not a signal", never an instruction to enter. */
+function renderPlanStrip() {
+  const el = $("#tvplan"), D = S.data; if (!el || !D) return;
+  const d = D.dashboard, p = d.plan || {}, dec = d.decision, sig = dec === "BUY" || dec === "SELL";
+  if (!S.toggles.plan || !isNum(p.entry)) { el.innerHTML = ""; placeDash(); return; }
+  const side = p.long ? "LONG" : "SHORT", c = p.long ? "bull" : "bear";
+  const tch = (x) => (isNum(x) ? ` <i>${f(x, 0)}%</i>` : "");
+  const tb = p.tp_basis || [];
+  el.innerHTML = (sig ? `<span class="pl-tag solid ${c}">${esc(dec)} PLAN</span>` : `<span class="pl-tag ${c}">${side} PLAN</span><span class="pl-ref">reference only · decision ${esc(dec)} · not a signal</span>`) +
+    `<span>ENTRY ${px(p.entry)}</span><span class="bear">SL ${px(p.sl)}${tch(p.p_sl)}</span>` +
+    `<span class="bull">TP1 ${px(p.tp1)}${tch(p.p_tp1)}</span><span class="bull">TP2 ${px(p.tp2)}${tch(p.p_tp2)}</span><span class="bull">TP3 ${px(p.tp3)}${tch(p.p_tp3)}</span>` +
+    `<span>RR 1:${f(p.rr1, 1)}/1:${f(p.rr2, 1)}/1:${f(p.rr3, 1)}</span><span><i>SL</i> ${esc(p.sl_basis || "—")} <i>TP</i> ${esc(tb.join("/") || "—")}${d.regime ? ` [${esc(d.regime.label)}]` : ""}</span>` +
+    `<span><i>% = touch within ${p.horizon_bars ?? "—"} bars, analog frequency</i></span><span>EV race ${fs(p.ev, 2)}R <i>n${f(p.race_n, 0)}</i></span><span class="uncal">NOT CALIBRATED</span>`;
+  placeDash();
+}
+// Wide screens: the table floats over the chart and the price scale starts below it; narrow screens: it stacks above.
+const DASH_WIDE = matchMedia("(min-width: 1100px)");
+function placeDash() {
+  const pane = $("#tv-pane"), dash = $("#tvdash"), plan = $("#tvplan"); if (!pane || !dash) return;
+  const on = S.toggles.dash !== false;
+  dash.classList.toggle("hidden", !on);
+  pane.classList.toggle("overlay", DASH_WIDE.matches);
+  if (!C || !C.main) return;
+  const H = $("#chart").clientHeight || 1, wide = DASH_WIDE.matches;
+  const top = wide && on && dash.offsetHeight ? Math.min(0.62, (dash.offsetTop + dash.offsetHeight + 14) / H) : 0.12;
+  const bot = wide && plan && plan.offsetHeight ? Math.min(0.3, (plan.offsetHeight + 40) / H) : 0.08;
+  const k = `${top.toFixed(3)}|${bot.toFixed(3)}`; if (C.margins === k) return;
+  C.margins = k;
+  C.main.priceScale("right").applyOptions({ scaleMargins: { top, bottom: bot } });
+}
+DASH_WIDE.addEventListener ? DASH_WIDE.addEventListener("change", placeDash) : DASH_WIDE.addListener(placeDash);
+new ResizeObserver(() => placeDash()).observe(document.querySelector("#tv-pane"));
+
 /* ---------- chart ---------- */
 let C = null;
+// pixels per bar now (after any zoom): the pane width over the visible logical range
+const barPx = (ts, W) => { const r = ts.getVisibleLogicalRange(); return r && r.to > r.from ? W / (r.to - r.from) : 6; };
 /* ---------- chart labels layer: level segments with end tags, and event labels (display only) ----------
    Levels run from the bar where they formed to the current candle and carry their name at that end;
    overlay lines (EMAs, VWAPs, bands) are named at their last point; BOS / CHoCH / MSS / sweep / signal
    events get a filled label above (bearish) or below (bullish) the bar, stacked so they never overlap. */
 class LabelsPrimitive {
-  constructor() { this.segs = []; this.ends = []; this.events = []; this.hl = new Map(); this.lastT = null; }
+  constructor() { this.segs = []; this.ends = []; this.events = []; this.hl = new Map(); this.lastT = null; this.deltas = []; }
   attached({ chart, series, requestUpdate }) { this.chart = chart; this.series = series; this.req = requestUpdate; }
   detached() {}
   set(o) { Object.assign(this, o); this.req && this.req(); }
@@ -1699,6 +1930,19 @@ class LabelsPrimitive {
       if (Math.abs(g.ty - g.y) > 1) { ctx.strokeStyle = g.color; ctx.lineWidth = 1 * hr; ctx.beginPath(); ctx.moveTo(xEnd * hr, g.y * vr); ctx.lineTo((x - 2) * hr, g.ty * vr); ctx.stroke(); }
       pill(x, g.ty, g.label, g.solid ? g.color : this.bg, g.solid ? "#ffffff" : g.color, g.color);
     }
+    // 2b per-bar signed volume under each candle (+1.2k / -0.5k), as the Pine chart prints it; only when the bars
+    // are wide enough to read and the bar has volume (COMEX futures volume on spot bars; none on holidays)
+    const spacing = barPx(ts, W);
+    if (this.deltas.length && spacing >= 22) {
+      ctx.font = font(9.5, 600); ctx.textBaseline = "top"; ctx.textAlign = "center";
+      for (const g of this.deltas) {
+        const xb = ts.timeToCoordinate(g.t); if (xb === null || xb < 0 || xb > W) continue;
+        const y = se.priceToCoordinate(g.low); if (y === null) continue;
+        ctx.fillStyle = g.v >= 0 ? this.up : this.dn;
+        ctx.fillText(`${g.v >= 0 ? "+" : "−"}${(Math.abs(g.v) / 1000).toFixed(1)}k`, xb * hr, (y + 5) * vr);
+      }
+      ctx.textAlign = "start";
+    }
     // 3 event labels above / below their bar, in lanes so they do not collide
     const placed = { up: [], dn: [] };
     for (const e of this.events) {
@@ -1722,10 +1966,10 @@ class LabelsPrimitive {
   }
 }
 class ZonesPrimitive {
-  constructor() { this.zones = []; this.cone = null; }
+  constructor() { this.zones = []; this.cone = null; this.sess = []; }
   attached({ chart, series, requestUpdate }) { this.chart = chart; this.series = series; this.req = requestUpdate; }
   detached() {}
-  set(zones) { this.zones = zones; this.req && this.req(); }
+  set(zones, sess) { this.zones = zones; if (sess) this.sess = sess; this.req && this.req(); }
   updateAllViews() {}
   paneViews() {
     const self = this;
@@ -1736,6 +1980,14 @@ class ZonesPrimitive {
           target.useBitmapCoordinateSpace((scope) => {
             const ctx = scope.context, hr = scope.horizontalPixelRatio, vr = scope.verticalPixelRatio;
             const ts = self.chart.timeScale();
+            // session backgrounds (Asia / London / New York), full height, behind everything
+            const half = barPx(ts, scope.bitmapSize.width / hr) / 2, Hh = scope.bitmapSize.height;
+            for (const b of self.sess) {
+              const x0 = ts.timeToCoordinate(b.t0), x1 = ts.timeToCoordinate(b.t1);
+              if (x0 === null || x1 === null) continue;
+              ctx.fillStyle = b.fill;
+              ctx.fillRect(Math.round((x0 - half) * hr), 0, Math.max(1, Math.round((x1 - x0 + 2 * half) * hr)), Hh);
+            }
             for (const z of self.zones) {
               let x0 = ts.timeToCoordinate(z.t0), x1 = z.t1 ? ts.timeToCoordinate(z.t1) : scope.bitmapSize.width / hr;
               if (x0 === null) x0 = 0;
@@ -1765,8 +2017,8 @@ function tickFmt(t, type) {
 function chartOpts() {
   const tf = (t) => { try { return isNum(t) ? tfmt(t, true) : ""; } catch (e) { return ""; } };
   return {
-    layout: { background: { type: "solid", color: css("--card") }, textColor: css("--muted"), fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
-    grid: { vertLines: { color: css("--grid") }, horzLines: { color: css("--grid") } },
+    layout: { background: { type: "solid", color: css("--tv-bg") || css("--card") }, textColor: css("--muted"), fontFamily: "Inter, system-ui, sans-serif", fontSize: 11, attributionLogo: true },
+    grid: { vertLines: { color: css("--tv-grid") || css("--grid") }, horzLines: { color: css("--tv-grid") || css("--grid") } },
     rightPriceScale: { borderColor: css("--line") },
     watermark: { visible: true, text: `XAUUSD · ${S.tf}`, color: css("--text") + "0d", fontSize: 44, fontFamily: "Inter, system-ui, sans-serif", fontStyle: "800" },
     timeScale: { borderColor: css("--line"), timeVisible: true, secondsVisible: false, rightOffset: 14, tickMarkFormatter: tickFmt },
@@ -1857,7 +2109,15 @@ function renderChart() {
     z.push({ t0: zz.t0, t1: zz.t1, hi: zz.hi, lo: zz.lo, fill: col + (zz.t1 ? "14" : "26"), stroke: col + (zz.t1 ? "55" : "aa"),
       label: `${zz.type}${zz.dir > 0 ? "▲" : "▼"}${zz.failed ? " (failed disp.)" : ""}` });
   }
-  C.zones.set(z);
+  // session backgrounds: runs of bars in the same session group (the engine's per-bar session label)
+  const SG = (s) => (!s || s === "OFF" ? null : s === "ASIAN" ? "#26a69a12" : /^LON/.test(s) ? "#ffb3000f" : /^NY/.test(s) ? "#5b8cff12" : null);
+  const sess = [];
+  if (T.sess && Array.isArray(ch.session)) for (let k = 0; k < t.length; k++) {
+    const g = SG(ch.session[k]), last = sess[sess.length - 1];
+    if (!g) continue;
+    if (last && last.fill === g && last.k1 === k - 1) { last.t1 = t[k]; last.k1 = k; } else sess.push({ t0: t[k], t1: t[k], k1: k, fill: g });
+  }
+  C.zones.set(z, sess);
   // markers. Vetoes and sweeps are frequent (dozens a day on 15m), so they are drawn as dots without
   // text, which piled up into unreadable "veto EV" stacks; the hovered bar's labels go in the legend.
   const mk = [], tags = new Map(), ev = [];
@@ -1929,14 +2189,20 @@ function renderChart() {
     seg(fl.vpoc, v0, "POC", css("--text"), 1, 1.5); seg(fl.vah, v0, "VAH", css("--muted"), 1); seg(fl.val, v0, "VAL", css("--muted"), 1);
   }
   if (T.sr && D.sr) {
-    const s0 = t[Math.max(0, n - 40)];
-    D.sr.res.forEach((r, k) => seg(r.price, s0, `R${k + 1} ×${r.touches}`, css("--bear") + (r.touches >= 3 ? "" : "99"), 1));
-    D.sr.sup.forEach((r, k) => seg(r.price, s0, `S${k + 1} ×${r.touches}`, css("--bull") + (r.touches >= 3 ? "" : "99"), 1));
+    // numbered by where they sit now, as on the TradingView chart: R1 / R2 the nearest above price, S1 / S2 the nearest
+    // below (the scanner's res / sup lists are by origin, so a broken swing high below price counts as support here);
+    // the touch count is the scanner's. The Liquidity tab lists every level.
+    const s0 = t[Math.max(0, n - 40)], ref = isNum(ch.c[n - 1]) ? ch.c[n - 1] : d.close;
+    const lv = [...D.sr.res, ...D.sr.sup].filter((r) => isNum(r.price));
+    const up = lv.filter((r) => r.price > ref).sort((a, b) => a.price - b.price).slice(0, 2);
+    const dn = lv.filter((r) => r.price < ref).sort((a, b) => b.price - a.price).slice(0, 2);
+    up.forEach((r, k) => seg(r.price, s0, `R${k + 1} ×${r.touches}`, css("--bear") + (r.touches >= 3 ? "" : "aa"), 1, 1, false, `R${k + 1} ${px(r.price)} ×${r.touches}`));
+    dn.forEach((r, k) => seg(r.price, s0, `S${k + 1} ×${r.touches}`, css("--bull") + (r.touches >= 3 ? "" : "aa"), 1, 1, false, `S${k + 1} ${px(r.price)} ×${r.touches}`));
   }
   // overlay lines named at their last point
   const ends = [];
   const NAME = { ema20: ["EMA 20", "--ov-ema20"], ema100: ["EMA 100", "--ov-ema100"], ema200: ["EMA 200", "--ov-ema200"], vwap: ["VWAP D", "--ov-vwap"],
-    wvwap: ["VWAP W", "--ov-vwap"], mvwap: ["VWAP M", "--ov-vwap"], bb_up: ["BB upper", "--ov-band"], bb_lo: ["BB lower", "--ov-band"] };
+    wvwap: ["VWAP W", "--ov-vwap"], mvwap: ["VWAP M", "--ov-vwap"], bb_up: ["BB +2σ", "--ov-band"], bb_lo: ["BB −2σ", "--ov-band"] };
   for (const [tg, keys] of [["ema", ["ema20", "ema100", "ema200"]], ["vwap", ["vwap", "wvwap", "mvwap"]], ["bb", ["bb_up", "bb_lo"]]]) {
     if (T[tg]) for (const k of keys) if (isNum(ch[k][n - 1])) ends.push({ key: k, price: ch[k][n - 1], label: NAME[k][0], color: css(NAME[k][1]) });
   }
@@ -1956,13 +2222,20 @@ function renderChart() {
     C.priceLines.push(C.candles.createPriceLine({ price, color, lineVisible: false, axisLabelVisible: true, title: sg ? "" : title }));
   };
   ax(lq.cdh, "#4dd0e1", "CDH"); ax(lq.cdl, "#4dd0e1", "CDL"); ax(P.PDH, "#f0b04a", "PDH"); ax(P.PDL, "#f0b04a", "PDL"); ax(fl.vpoc, css("--muted"), "POC");
-  C.labels.set({ segs, ends, events: evs, hl, lastT: curT, bg: css("--card") });
+  // per-bar signed volume (the engine's own sign rule, features.vol_delta50: +v when close > open, -v when below)
+  const deltas = [];
+  if (T.delta && Array.isArray(ch.v)) for (let k = 0; k < n; k++) {
+    const v = ch.v[k]; if (!(v > 0) || !isNum(ch.c[k]) || !isNum(ch.o[k]) || ch.c[k] === ch.o[k]) continue;
+    deltas.push({ t: t[k], low: ch.l[k], v: ch.c[k] > ch.o[k] ? v : -v });
+  }
+  C.labels.set({ segs, ends, events: evs, hl, lastT: curT, bg: css("--tv-bg") || css("--card"), deltas, up: css("--bull"), dn: css("--bear") });
   // sub pane
   C.subS.bull.setData(series(t, ch.bull)); C.subS.bear.setData(series(t, ch.bear)); C.subS.range.setData(series(t, ch.range));
   C.subS.tq.setData(series(t, ch.tq));
   C.nBars = bars.length;
   if (!C.fitted || C.fittedTf !== S.tf) { fitView(); C.fitted = true; C.fittedTf = S.tf; }
   legend(null);
+  placeDash();
 }
 // Keep the plan's SL and TP1 on screen when they are near price; a level further than a quarter of
 // the candles' own range away is left off so it cannot squeeze the candles again (its axis label
@@ -1995,7 +2268,7 @@ function fitView() {
 // The chart key: every visible line by name, with its colour and line style (no values: it only identifies the lines).
 const KEY = [["ema", [["ema20", "EMA 20", "--ov-ema20", "solid"], ["ema100", "EMA 100", "--ov-ema100", "solid"], ["ema200", "EMA 200", "--ov-ema200", "thick"]]],
   ["vwap", [["vwap", "VWAP D", "--ov-vwap", "thick"], ["wvwap", "VWAP W", "--ov-vwap", "dash"], ["mvwap", "VWAP M", "--ov-vwap", "dash"]]],
-  ["bb", [["bb_up", "BB upper", "--ov-band", "solid"], ["bb_mid", "BB basis", "--ov-band", "dash"], ["bb_lo", "BB lower", "--ov-band", "solid"]]],
+  ["bb", [["bb_up", "BB +2σ", "--ov-band", "solid"], ["bb_mid", "BB basis", "--ov-band", "dash"], ["bb_lo", "BB −2σ", "--ov-band", "solid"]]],
   ["levels", [["pdh", "PDH", "--muted", "dot"], ["pdl", "PDL", "--muted", "dot"], ["pwh", "PWH", "--dim", "dash"], ["pwl", "PWL", "--dim", "dash"]]],
   ["vp", [["vpoc", "POC", "--text", "dot"], ["vah", "VAH", "--muted", "dot"], ["val", "VAL", "--muted", "dot"]]]];
 function legend(prm) {
@@ -2591,6 +2864,7 @@ function validationHtml(V) {
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
+  safe(renderDash); safe(renderPlanStrip);
   safe(renderPlanAlerts); safe(renderConfirm); safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
