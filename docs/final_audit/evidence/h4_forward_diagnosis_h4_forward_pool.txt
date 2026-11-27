@@ -1,0 +1,20 @@
+5m_h4            n  413 net -0.136R gross -0.037R cost 0.099R | replica 147/148 | exits {'BE': 25, 'FLIP': 265, 'SL': 57, 'TP2': 62, 'BE_GAP': 4}
+                 FLIP 265: realised -0.219R, held -0.2457R (decided), held outcomes {'SL': 165, 'TP2': 52, 'BE': 40, 'BE_GAP': 4, 'OPEN_AT_HORIZON': 4}, held better 82 / worse 183
+                 before stop: tp1 0.4572 (187/409) · tp2 0.3128 (127/406) · usd10 0.4599 (189/411) · usd15 0.3805 (156/410) · usd20 0.3252 (133/409)
+                 vs random: tp1_first 0.4572 vs 0.476 p 0.4248/0.3992 holm 1.0 · tp2_first 0.3128 vs 0.3547 p 0.042/0.04473 holm 0.8051 · usd10_first 0.4599 vs 0.4928 p 0.1524/0.1542 holm 1.0 · usd15_first 0.3805 vs 0.4115 p 0.1689/0.1644 holm 1.0 · usd20_first 0.3252 vs 0.3539 p 0.1774/0.1787 holm 1.0 · no_flip_r -0.1592 vs -0.0415 p 0.1369/0.1383 holm 1.0
+15m_h4           n  149 net -0.065R gross -0.007R cost 0.057R | replica 57/57 | exits {'FLIP': 92, 'SL': 20, 'TP2': 29, 'BE': 7, 'BE_GAP': 1}
+                 FLIP 92: realised -0.180R, held -0.1009R (decided), held outcomes {'BE': 12, 'SL': 51, 'TP2': 23, 'BE_GAP': 2, 'OPEN_AT_HORIZON': 4}, held better 35 / worse 57
+                 before stop: tp1 0.5137 (75/146) · tp2 0.3803 (54/142) · usd10 0.604 (90/149) · usd15 0.5369 (80/149) · usd20 0.4765 (71/149)
+                 vs random: tp1_first 0.5137 vs 0.5282 p 0.6762/0.6824 holm 1.0 · tp2_first 0.3803 vs 0.4372 p 0.089/0.09045 holm 1.0 · usd10_first 0.604 vs 0.64 p 0.3298/0.3177 holm 1.0 · usd15_first 0.5369 vs 0.567 p 0.4388/0.4027 holm 1.0 · usd20_first 0.4765 vs 0.4987 p 0.5357/0.5266 holm 1.0 · no_flip_r -0.0135 vs 0.0533 p 0.4693/0.4573 holm 1.0
+30m_h4           n   71 net +0.032R gross +0.072R cost 0.040R | replica 32/32 | exits {'FLIP': 39, 'TP2': 13, 'BE': 5, 'SL': 14}
+                 FLIP 39: realised -0.075R, held -0.1578R (decided), held outcomes {'BE': 3, 'TP2': 12, 'SL': 22, 'OPEN_AT_HORIZON': 2}, held better 15 / worse 24
+                 before stop: tp1 0.4857 (34/70) · tp2 0.4203 (29/69) · usd10 0.7042 (50/71) · usd15 0.6338 (45/71) · usd20 0.5493 (39/71)
+                 vs random: tp1_first 0.4857 vs 0.514 p 0.5982/0.5578 holm 1.0 · tp2_first 0.4203 vs 0.449 p 0.5342/0.5222 holm 1.0 · usd10_first 0.7042 vs 0.6974 p 0.9845/0.8888 holm 1.0 · usd15_first 0.6338 vs 0.6304 p 0.966/0.9453 holm 1.0 · usd20_first 0.5493 vs 0.5789 p 0.5667/0.5473 holm 1.0 · no_flip_r -0.0092 vs 0.082 p 0.4408/0.4283 holm 1.0
+1h_h4            n   38 net -0.293R gross -0.270R cost 0.024R | replica 20/20 | exits {'FLIP': 18, 'BE': 3, 'SL': 11, 'TP2': 6}
+                 FLIP 18: realised -0.256R, held -0.1762R (decided), held outcomes {'SL': 8, 'TP2': 6, 'BE': 1, 'OPEN_AT_HORIZON': 3}, held better 9 / worse 9
+                 before stop: tp1 0.4722 (17/36) · tp2 0.4 (14/35) · usd10 0.6842 (26/38) · usd15 0.6316 (24/38) · usd20 0.5946 (22/37)
+                 vs random: tp1_first 0.4722 vs 0.5481 p None/None holm None · tp2_first 0.4 vs 0.5027 p None/None holm None · usd10_first 0.6842 vs 0.7462 p None/None holm None · usd15_first 0.6316 vs 0.6976 p None/None holm None · usd20_first 0.5946 vs 0.6359 p None/None holm None · no_flip_r -0.2625 vs -0.0271 p None/None holm None
+4h_h4            n    8 net +0.432R gross +0.443R cost 0.011R | replica 4/4 | exits {'FLIP': 4, 'TP2': 4}
+                 FLIP 4: realised -0.253R, held -0.6055R (decided), held outcomes {'SL': 3, 'TP2': 1}, held better 1 / worse 3
+                 before stop: tp1 0.625 (5/8) · tp2 0.625 (5/8) · usd10 1.0 (8/8) · usd15 1.0 (8/8) · usd20 1.0 (8/8)
+                 vs random: tp1_first 0.625 vs 0.7511 p None/None holm None · tp2_first 0.625 vs 0.7511 p None/None holm None · usd10_first 1.0 vs 0.8664 p None/None holm None · usd15_first 1.0 vs 0.8664 p None/None holm None · usd20_first 1.0 vs 0.8664 p None/None holm None · no_flip_r 0.2553 vs 0.5016 p None/None holm None
