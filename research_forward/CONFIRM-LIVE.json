@@ -13155,6 +13155,34 @@
     }
    },
    "t_done": 1795758300
+  },
+  {
+   "key": "BREAKOUT|15m|1795755600|1",
+   "kind": "BREAKOUT",
+   "tf": "15m",
+   "t": 1795755600,
+   "t_close": 1795756500,
+   "dir": 1,
+   "p0": 3639.5,
+   "what": "breakout at TDH 3638.75, 1HH 3638.05",
+   "id": 359,
+   "seen": 1795756946,
+   "backfill": false,
+   "late": false,
+   "repeats": 1,
+   "confirm_at": 3654.5,
+   "invalid_at": 3626.5,
+   "cap_at": 3659.5,
+   "confirm20_at": 3659.5,
+   "status": "EXPIRED",
+   "bars": 8,
+   "verdict": "NO TRADE",
+   "reason": "the first 15m close $15 beyond was $20.37 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "data_source": "twelvedata:XAU/USD 15m bars (closed bars only)",
+   "scan_t": null,
+   "overshoot_usd": 20.37,
+   "why": "the first 15m close $15 beyond was $20.37 beyond the trigger price: over the $20 cap, so no entry (no chasing)",
+   "t_done": 1795763700
   }
  ]
 }
