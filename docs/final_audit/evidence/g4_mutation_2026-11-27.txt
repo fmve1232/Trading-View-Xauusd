@@ -1,0 +1,22 @@
+$ python audit/tools/mutation_trade_diag.py <scratch dir>
+KILLED   M01 a bar touching stop and target counts as the target -> 3 test(s) failed
+KILLED   M02 the stop bar's favourable side counted -> 3 test(s) failed
+KILLED   M03 race window not cut at the last target -> 8 test(s) failed
+KILLED   M04 the still-forming bar is read -> 3 test(s) failed
+KILLED   M05 append ignores the run time -> 3 test(s) failed
+KILLED   M06 exit-price cap removed (exit below the fill) -> 9 test(s) failed
+KILLED   M07 exit-price cap removed (exit above the fill) -> 19 test(s) failed
+KILLED   M08 next-open race not required to be decided -> 3 test(s) failed
+KILLED   M09 fill at the signal bar's open -> 20 test(s) failed
+KILLED   M10 a target gapped at the open ignored -> 3 test(s) failed
+KILLED   M11 a long stop gapped at the open ignored -> 3 test(s) failed
+KILLED   M12 a logged record written again -> 3 test(s) failed
+KILLED   M13 the ledger merge duplicates lines -> 3 test(s) failed
+KILLED   M14 news day taken in UTC, not New York -> 3 test(s) failed
+KILLED   M15 a record written before the exit bar is stored -> 3 test(s) failed
+KILLED   M16 next-open entry from the engine's fill -> 33 test(s) failed
+KILLED   M17 session-close gap measured from the signal open -> 4 test(s) failed
+KILLED   M18 an undecided race written before the horizon -> 4 test(s) failed
+KILLED   M19 one malformed trade stops the run -> 3 test(s) failed
+19 of 19 killed
+exit 0
