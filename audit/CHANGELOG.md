@@ -3813,3 +3813,33 @@ passes.
 
 **Not run:** TradingView's run time. If v106 still times out: load the Master on a 1H chart (fewer bars of data per
 day), open it in the Pine Editor, turn on the Profiler, and send the slowest lines.
+
+# v107 — the Master's statistics scan on its last 300 bars (F-A94, run time) (2026-11-27)
+
+**Operator's screenshot:** with v106, Visuals runs on the free plan; the Master compiles ("Added to chart") and then
+stops with "Script takes too long to calculate". Operator: "fix the master file ... without compromising on the features".
+
+**Where the time goes (read from the code; TradingView's Profiler cannot report a script that times out):**
+`runStatsEngines()` re-scores the stored history (one record per bar) against the current market, 200-300 records
+every 4th bar on 15m: about 71,000 passes of a ~150-statement body on 1,500 bars. The volume profiles are ~180 loop
+steps a bar and the other loops 5-12, so nothing else comes close.
+
+**Fix (`fix_v107.py`):** the SCAN runs on the last `statsBars` bars, a new input placed as the Master's LAST input
+("Statistics scan: last N bars (0 = all)", group Historical, default 300). Nothing else changes:
+- records are still written on EVERY bar, so the scan at the end covers the same stored history as before;
+- 300 bars hold 13 complete passes over that history; the counts carried between passes decay by 0.7 a pass, so an
+  earlier start is below 1%: the last bar's statistics are the same computation on the same records;
+- bars older than the window show the statistics warming up (their EV / calibration gates use the defaults), so old
+  history can show fewer BUY / SELL marks; the live bar is unaffected;
+- record passes on 1,500 bars: about 13,200 instead of 70,900 (82% fewer).
+The strategy twins (Treatment, OLDGATES, CHALLENGER) and, through their builders, Brief and Diagnostics get
+`bool statsScanOn = true`: their scan is unchanged and every engine copy stays line-for-line equal. A/B hunk counts
+unchanged (OLDGATES 2, CHALLENGER 3).
+
+**Checks:** `v107_check.py` (new): wiring in all six engine copies, the switch executed on bar indices, the run-time
+model from the engine's own `_rb` / `_cs` / `OUTCOME_N` lines, the decay residual, controls. `refactor_check` chain +
+`fix_v107.master`, twins compared through `fix_v107.untwin` (its exact inverse). Every checker passes, incl.
+`pine_web_parity` (numpy installed). Master model 99,301 / 98,841 (+59 vs v104; v72 at 99,542 compiled).
+
+**Not run:** TradingView's run time. If the Master still times out, set "Statistics scan: last N bars" lower (e.g. 150);
+if it runs with room, it can be raised (e.g. 600) for longer history marks.

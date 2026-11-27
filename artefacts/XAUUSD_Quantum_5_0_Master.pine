@@ -1,6 +1,6 @@
 //@version=6
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║  BUILD STAMP — this file last CHANGED in v106  (last 1500 bars: run time)     ║
+// ║  BUILD STAMP — this file last CHANGED in v107  (stats scan: last 300 bars)    ║
 // ║  Compare against the build record in chat. If they differ, the copy on your   ║
 // ║  chart is STALE — re-paste. Stale scripts throw errors already fixed here:    ║
 // ║  e.g. a pre-fix EdgeCases threw "Row 70 is out of table bounds" on a build    ║
@@ -564,6 +564,11 @@ highVolume = not na(volume) and volume > volSma20
 // of the NY day after a reload (it forgot those older than 120 bars on 5m / 1m). Nothing historical is drawn here.
 backtestAllBars = input.bool(true, "Backtest all bars (ignore Signal Lookback Bars)", group=grpCore, tooltip="ON for backtests: the entry gate is evaluated on every historical bar. OFF reproduces the live indicator's behaviour, where signals are shown only in the last 'Signal Lookback Bars'.")
 recentBars = backtestAllBars or bar_index > last_bar_index - recentBarsLen
+// v107 (F-A94): runStatsEngines() re-scores the stored history every 4th bar, the bulk of the run time; on the
+// free plan's 20 s it SCANS on the last statsBars bars only. Records are still written on every bar, so the last
+// bar's statistics use the same history; older bars show them warming up. 0 = every bar (the twins: always).
+statsBars = input.int(300, "Statistics scan: last N bars (0 = all)", minval=0, group=grpHist)
+bool statsScanOn = statsBars == 0 or bar_index >= last_bar_index - statsBars
 // Winsorized gold return: clamp extreme gaps (±5%) to prevent Z-score distortion after gap opens
 float _rawGoldRet = safeDiv(close, nz(close[1], close)) - 1
 // Q5.0-S6: TF-scaled winsorization (±6 sigma, prev-bar window; ±5% hard outer bound).
@@ -3341,7 +3346,7 @@ runStatsEngines() =>
     _cec := _cec + 1
     var int _lastGuardBar = -1
     int _rb = chartTFSeconds <= 180 ? 2 : chartTFSeconds <= 900 ? 4 : chartTFSeconds <= 3600 ? 8 : 12
-    bool _guard = showStatsEngine and hN > OUTCOME_N * 2 and (_cec % _rb == 0 or barstate.islast) and barstate.isconfirmed and bar_index != _lastGuardBar
+    bool _guard = showStatsEngine and statsScanOn and hN > OUTCOME_N * 2 and (_cec % _rb == 0 or barstate.islast) and barstate.isconfirmed and bar_index != _lastGuardBar
     // Reset/decay accumulators at start of a new scan
     if _rsp == 0 and _guard
         _gWb := 0.0
