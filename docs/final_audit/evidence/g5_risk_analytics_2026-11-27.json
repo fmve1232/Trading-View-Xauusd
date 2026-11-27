@@ -1,0 +1,1833 @@
+{
+ "method": {
+  "sims": 10000,
+  "seed": 20261127,
+  "alpha": 0.05,
+  "mean_block_days": [
+   1,
+   2,
+   5
+  ],
+  "usd_per_r": 650.0,
+  "usd_per_r_status": "ASSUMPTION: the plan's maximum loss per trade",
+  "day": "New York session day (starts 17:00 New York), by exit time",
+  "limitations": [
+   "the forward record covers few weeks: tails and drawdowns are estimated from few days",
+   "resampling cannot produce a regime the record does not contain: the Monte Carlo drawdown is a lower bound on what a longer record could show",
+   "each arm and timeframe alone; combined exposure across arms is G6",
+   "costs are the engine's model of record, not broker-measured (G2)",
+   "descriptive: nothing here selects a parameter"
+  ]
+ },
+ "groups": {
+  "challenger|15m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "challenger",
+   "tf": "15m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 684337840,
+   "n": 7,
+   "days": 5,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.0878,
+    "before_cost_day_boot95": [
+     -0.6869,
+     0.4537
+    ],
+    "after_modelled_cost": -0.1388,
+    "after_modelled_cost_day_boot95": [
+     -0.7316,
+     0.3906
+    ],
+    "modelled_cost": 0.051,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -90.25
+   },
+   "tail_per_trade_net_r": {
+    "n": 7,
+    "k": 1,
+    "var": -1.0562,
+    "cvar": -1.0562,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 5,
+    "k": 1,
+    "var": -1.0446,
+    "cvar": -1.0446,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 3.3394,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 2.298,
+     "p95_r": 4.3862,
+     "p99_r": 5.2166,
+     "p95_usd_at_650_per_r": 2851.0
+    },
+    "L=2d": {
+     "p50_r": 2.3034,
+     "p95_r": 4.172,
+     "p99_r": 4.401,
+     "p95_usd_at_650_per_r": 2712.0
+    },
+    "L=5d": {
+     "p50_r": 2.3034,
+     "p95_r": 3.56,
+     "p99_r": 4.384,
+     "p95_usd_at_650_per_r": 2314.0
+    }
+   }
+  },
+  "challenger|1h|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "challenger",
+   "tf": "1h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 1249029618,
+   "n": 4,
+   "days": 2,
+   "first_exit_day": "2026-11-19",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.183,
+    "before_cost_day_boot95": [
+     -0.2272,
+     1.4137
+    ],
+    "after_modelled_cost": 0.1574,
+    "after_modelled_cost_day_boot95": [
+     -0.2519,
+     1.3852
+    ],
+    "modelled_cost": 0.0256,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 102.29
+   },
+   "tail_per_trade_net_r": {
+    "n": 4,
+    "k": 1,
+    "var": -1.0284,
+    "cvar": -1.0284,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -0.7557,
+    "cvar": -0.7557,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0284,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 1.0284,
+     "p95_r": 2.0387,
+     "p99_r": 2.0387,
+     "p95_usd_at_650_per_r": 1325.0
+    },
+    "L=2d": {
+     "p50_r": 1.0284,
+     "p95_r": 2.0387,
+     "p99_r": 2.0387,
+     "p95_usd_at_650_per_r": 1325.0
+    },
+    "L=5d": {
+     "p50_r": 1.0284,
+     "p95_r": 2.0387,
+     "p99_r": 2.0387,
+     "p95_usd_at_650_per_r": 1325.0
+    }
+   }
+  },
+  "challenger|30m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "challenger",
+   "tf": "30m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 2384584988,
+   "n": 3,
+   "days": 3,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": [
+     -1.0,
+     -0.9999
+    ],
+    "after_modelled_cost": -1.0393,
+    "after_modelled_cost_day_boot95": [
+     -1.0609,
+     -1.0157
+    ],
+    "modelled_cost": 0.0393,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -675.52
+   },
+   "tail_per_trade_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -1.0609,
+    "cvar": -1.0609,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -1.0609,
+    "cvar": -1.0609,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 3.1178,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 3.1178,
+     "p95_r": 3.163,
+     "p99_r": 3.1827,
+     "p95_usd_at_650_per_r": 2056.0
+    },
+    "L=2d": {
+     "p50_r": 3.1178,
+     "p95_r": 3.163,
+     "p99_r": 3.163,
+     "p95_usd_at_650_per_r": 2056.0
+    },
+    "L=5d": {
+     "p50_r": 3.1178,
+     "p95_r": 3.1433,
+     "p99_r": 3.163,
+     "p95_usd_at_650_per_r": 2043.0
+    }
+   }
+  },
+  "challenger|4h|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "challenger",
+   "tf": "4h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 4009134109,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-19",
+   "last_exit_day": "2026-11-19",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 1.5,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": 1.4873,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.0127,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 966.75
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 1.4873,
+    "cvar": 1.4873,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 1.4873,
+    "cvar": 1.4873,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 0.0,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "challenger|5m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "challenger",
+   "tf": "5m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 2208228150,
+   "n": 13,
+   "days": 6,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.2098,
+    "before_cost_day_boot95": [
+     -0.4358,
+     1.0462
+    ],
+    "after_modelled_cost": 0.099,
+    "after_modelled_cost_day_boot95": [
+     -0.5614,
+     0.9354
+    ],
+    "modelled_cost": 0.1108,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 64.32
+   },
+   "tail_per_trade_net_r": {
+    "n": 13,
+    "k": 1,
+    "var": -1.1805,
+    "cvar": -1.1805,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 6,
+    "k": 1,
+    "var": -3.4359,
+    "cvar": -3.4359,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 4.4926,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 3.8591,
+     "p95_r": 9.34,
+     "p99_r": 12.4882,
+     "p95_usd_at_650_per_r": 6071.0
+    },
+    "L=2d": {
+     "p50_r": 4.4926,
+     "p95_r": 7.9285,
+     "p99_r": 10.2997,
+     "p95_usd_at_650_per_r": 5154.0
+    },
+    "L=5d": {
+     "p50_r": 4.8148,
+     "p95_r": 6.8718,
+     "p99_r": 8.2507,
+     "p95_usd_at_650_per_r": 4467.0
+    }
+   }
+  },
+  "control|15m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "control",
+   "tf": "15m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 4228173200,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-18",
+   "last_exit_day": "2026-11-18",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": -1.036,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.036,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -673.4
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.036,
+    "cvar": -1.036,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.036,
+    "cvar": -1.036,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.036,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "control|1h|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "control",
+   "tf": "1h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 1724396215,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-19",
+   "last_exit_day": "2026-11-19",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 1.4137,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": 1.3852,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.0285,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 900.38
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 1.3852,
+    "cvar": 1.3852,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 1.3852,
+    "cvar": 1.3852,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 0.0,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "control|30m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "control",
+   "tf": "30m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 591177103,
+   "n": 2,
+   "days": 2,
+   "first_exit_day": "2026-11-23",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.5789,
+    "before_cost_day_boot95": [
+     -2.1578,
+     -1.0
+    ],
+    "after_modelled_cost": -1.6123,
+    "after_modelled_cost_day_boot95": [
+     -2.1835,
+     -1.0412
+    ],
+    "modelled_cost": 0.0334,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -1048.03
+   },
+   "tail_per_trade_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -2.1835,
+    "cvar": -2.1835,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -2.1835,
+    "cvar": -2.1835,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 3.2247,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 3.2247,
+     "p95_r": 4.367,
+     "p99_r": 4.367,
+     "p95_usd_at_650_per_r": 2839.0
+    },
+    "L=2d": {
+     "p50_r": 3.2247,
+     "p95_r": 4.367,
+     "p99_r": 4.367,
+     "p95_usd_at_650_per_r": 2839.0
+    },
+    "L=5d": {
+     "p50_r": 3.2247,
+     "p95_r": 3.2247,
+     "p99_r": 4.367,
+     "p95_usd_at_650_per_r": 2096.0
+    }
+   }
+  },
+  "control|5m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "control",
+   "tf": "5m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 2364135667,
+   "n": 2,
+   "days": 2,
+   "first_exit_day": "2026-11-19",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.4728,
+    "before_cost_day_boot95": [
+     -1.0,
+     1.9456
+    ],
+    "after_modelled_cost": 0.4036,
+    "after_modelled_cost_day_boot95": [
+     -1.0181,
+     1.8254
+    ],
+    "modelled_cost": 0.0691,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 262.37
+   },
+   "tail_per_trade_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -1.0181,
+    "cvar": -1.0181,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -1.0181,
+    "cvar": -1.0181,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0181,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 1.0181,
+     "p95_r": 2.0362,
+     "p99_r": 2.0362,
+     "p95_usd_at_650_per_r": 1324.0
+    },
+    "L=2d": {
+     "p50_r": 1.0181,
+     "p95_r": 2.0362,
+     "p99_r": 2.0362,
+     "p95_usd_at_650_per_r": 1324.0
+    },
+    "L=5d": {
+     "p50_r": 1.0181,
+     "p95_r": 1.0181,
+     "p99_r": 2.0362,
+     "p95_usd_at_650_per_r": 662.0
+    }
+   }
+  },
+  "h2|15m|1f88aad357497da4:4440d52587f5cc6b:19433c9889d94f09": {
+   "arm": "h2",
+   "tf": "15m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:19433c9889d94f09",
+   "seed": 1468989433,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-27",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 1.017,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": 0.9635,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.0535,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 626.27
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 0.9635,
+    "cvar": 0.9635,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 0.9635,
+    "cvar": 0.9635,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 0.0,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "h2|30m|1f88aad357497da4:4440d52587f5cc6b:19433c9889d94f09": {
+   "arm": "h2",
+   "tf": "30m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:19433c9889d94f09",
+   "seed": 2986247411,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-23",
+   "last_exit_day": "2026-11-23",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": -1.0396,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.0396,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -675.74
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.0396,
+    "cvar": -1.0396,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.0396,
+    "cvar": -1.0396,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0396,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "h2|5m|1f88aad357497da4:4440d52587f5cc6b:19433c9889d94f09": {
+   "arm": "h2",
+   "tf": "5m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:19433c9889d94f09",
+   "seed": 843671244,
+   "n": 4,
+   "days": 3,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-24",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.4437,
+    "before_cost_day_boot95": [
+     -1.0,
+     1.2253
+    ],
+    "after_modelled_cost": -0.5032,
+    "after_modelled_cost_day_boot95": [
+     -1.0353,
+     1.0913
+    ],
+    "modelled_cost": 0.0595,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -327.08
+   },
+   "tail_per_trade_net_r": {
+    "n": 4,
+    "k": 1,
+    "var": -1.0534,
+    "cvar": -1.0534,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -2.0706,
+    "cvar": -2.0706,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 2.0706,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 3.1005,
+     "p95_r": 5.1747,
+     "p99_r": 6.2118,
+     "p95_usd_at_650_per_r": 3364.0
+    },
+    "L=2d": {
+     "p50_r": 3.1041,
+     "p95_r": 5.1747,
+     "p99_r": 5.1747,
+     "p95_usd_at_650_per_r": 3364.0
+    },
+    "L=5d": {
+     "p50_r": 3.1041,
+     "p95_r": 4.1412,
+     "p99_r": 5.1747,
+     "p95_usd_at_650_per_r": 2692.0
+    }
+   }
+  },
+  "h3|15m|1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e": {
+   "arm": "h3",
+   "tf": "15m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e",
+   "seed": 3586787509,
+   "n": 5,
+   "days": 4,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": [
+     -1.0,
+     -1.0
+    ],
+    "after_modelled_cost": -1.0785,
+    "after_modelled_cost_day_boot95": [
+     -1.0964,
+     -1.0616
+    ],
+    "modelled_cost": 0.0785,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -701.01
+   },
+   "tail_per_trade_net_r": {
+    "n": 5,
+    "k": 1,
+    "var": -1.0995,
+    "cvar": -1.0995,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 4,
+    "k": 1,
+    "var": -2.1486,
+    "cvar": -2.1486,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 5.3924,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 5.3924,
+     "p95_r": 7.4968,
+     "p99_r": 7.5453,
+     "p95_usd_at_650_per_r": 4873.0
+    },
+    "L=2d": {
+     "p50_r": 5.3924,
+     "p95_r": 6.49,
+     "p99_r": 7.5391,
+     "p95_usd_at_650_per_r": 4218.0
+    },
+    "L=5d": {
+     "p50_r": 5.3924,
+     "p95_r": 6.49,
+     "p99_r": 6.4962,
+     "p95_usd_at_650_per_r": 4218.0
+    }
+   }
+  },
+  "h3|1h|1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e": {
+   "arm": "h3",
+   "tf": "1h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e",
+   "seed": 3310274420,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-23",
+   "last_exit_day": "2026-11-23",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": -1.0356,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.0356,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -673.14
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.0356,
+    "cvar": -1.0356,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.0356,
+    "cvar": -1.0356,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0356,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "h3|30m|1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e": {
+   "arm": "h3",
+   "tf": "30m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e",
+   "seed": 1368143062,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-23",
+   "last_exit_day": "2026-11-23",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": -1.048,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.048,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -681.2
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.048,
+    "cvar": -1.048,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.048,
+    "cvar": -1.048,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.048,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "h3|5m|1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e": {
+   "arm": "h3",
+   "tf": "5m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:0eb650f81d99803e",
+   "seed": 1616639176,
+   "n": 9,
+   "days": 5,
+   "first_exit_day": "2026-11-16",
+   "last_exit_day": "2026-11-26",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.7977,
+    "before_cost_day_boot95": [
+     -0.5383,
+     2.7795
+    ],
+    "after_modelled_cost": 0.6198,
+    "after_modelled_cost_day_boot95": [
+     -0.7264,
+     2.6114
+    ],
+    "modelled_cost": 0.1779,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 402.86
+   },
+   "tail_per_trade_net_r": {
+    "n": 9,
+    "k": 1,
+    "var": -1.3444,
+    "cvar": -1.3444,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 5,
+    "k": 1,
+    "var": -1.195,
+    "cvar": -1.195,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 2.3607,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 2.6538,
+     "p95_r": 5.0852,
+     "p99_r": 5.944,
+     "p95_usd_at_650_per_r": 3305.0
+    },
+    "L=2d": {
+     "p50_r": 2.5239,
+     "p95_r": 4.2107,
+     "p99_r": 5.1622,
+     "p95_usd_at_650_per_r": 2737.0
+    },
+    "L=5d": {
+     "p50_r": 2.5239,
+     "p95_r": 3.7189,
+     "p99_r": 4.055,
+     "p95_usd_at_650_per_r": 2417.0
+    }
+   }
+  },
+  "h4|15m|1f88aad357497da4:4440d52587f5cc6b:090418672c210848": {
+   "arm": "h4",
+   "tf": "15m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:090418672c210848",
+   "seed": 1258547201,
+   "n": 162,
+   "days": 10,
+   "first_exit_day": "2026-11-16",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.0086,
+    "before_cost_day_boot95": [
+     -0.14,
+     0.1198
+    ],
+    "after_modelled_cost": -0.0728,
+    "after_modelled_cost_day_boot95": [
+     -0.2003,
+     0.058
+    ],
+    "modelled_cost": 0.0642,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -47.32
+   },
+   "tail_per_trade_net_r": {
+    "n": 162,
+    "k": 9,
+    "var": -1.0943,
+    "cvar": -1.191,
+    "note": ""
+   },
+   "tail_per_day_net_r": {
+    "n": 10,
+    "k": 1,
+    "var": -5.9449,
+    "cvar": -5.9449,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 18.5535,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 18.0608,
+     "p95_r": 32.7635,
+     "p99_r": 38.3729,
+     "p95_usd_at_650_per_r": 21296.0
+    },
+    "L=2d": {
+     "p50_r": 19.5853,
+     "p95_r": 32.1662,
+     "p99_r": 36.9628,
+     "p95_usd_at_650_per_r": 20908.0
+    },
+    "L=5d": {
+     "p50_r": 20.1915,
+     "p95_r": 30.8977,
+     "p99_r": 34.7851,
+     "p95_usd_at_650_per_r": 20084.0
+    }
+   }
+  },
+  "h4|1h|1f88aad357497da4:4440d52587f5cc6b:090418672c210848": {
+   "arm": "h4",
+   "tf": "1h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:090418672c210848",
+   "seed": 1039081985,
+   "n": 41,
+   "days": 10,
+   "first_exit_day": "2026-11-16",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.2459,
+    "before_cost_day_boot95": [
+     -0.4338,
+     -0.0464
+    ],
+    "after_modelled_cost": -0.2697,
+    "after_modelled_cost_day_boot95": [
+     -0.4582,
+     -0.0707
+    ],
+    "modelled_cost": 0.0238,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -175.31
+   },
+   "tail_per_trade_net_r": {
+    "n": 41,
+    "k": 3,
+    "var": -1.0337,
+    "cvar": -1.0448,
+    "note": ""
+   },
+   "tail_per_day_net_r": {
+    "n": 10,
+    "k": 1,
+    "var": -3.5213,
+    "cvar": -3.5213,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 12.0619,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 11.8167,
+     "p95_r": 19.0768,
+     "p99_r": 22.2472,
+     "p95_usd_at_650_per_r": 12400.0
+    },
+    "L=2d": {
+     "p50_r": 11.7496,
+     "p95_r": 18.5029,
+     "p99_r": 21.7782,
+     "p95_usd_at_650_per_r": 12027.0
+    },
+    "L=5d": {
+     "p50_r": 11.8548,
+     "p95_r": 16.6225,
+     "p99_r": 19.3166,
+     "p95_usd_at_650_per_r": 10805.0
+    }
+   }
+  },
+  "h4|30m|1f88aad357497da4:4440d52587f5cc6b:090418672c210848": {
+   "arm": "h4",
+   "tf": "30m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:090418672c210848",
+   "seed": 2172041150,
+   "n": 76,
+   "days": 10,
+   "first_exit_day": "2026-11-16",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.0566,
+    "before_cost_day_boot95": [
+     -0.1141,
+     0.3186
+    ],
+    "after_modelled_cost": 0.0147,
+    "after_modelled_cost_day_boot95": [
+     -0.1606,
+     0.2832
+    ],
+    "modelled_cost": 0.0419,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 9.55
+   },
+   "tail_per_trade_net_r": {
+    "n": 76,
+    "k": 4,
+    "var": -1.0786,
+    "cvar": -1.0998,
+    "note": ""
+   },
+   "tail_per_day_net_r": {
+    "n": 10,
+    "k": 1,
+    "var": -4.214,
+    "cvar": -4.214,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 11.5714,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 8.0513,
+     "p95_r": 17.1924,
+     "p99_r": 21.5852,
+     "p95_usd_at_650_per_r": 11175.0
+    },
+    "L=2d": {
+     "p50_r": 10.5055,
+     "p95_r": 20.1201,
+     "p99_r": 25.2006,
+     "p95_usd_at_650_per_r": 13078.0
+    },
+    "L=5d": {
+     "p50_r": 11.8403,
+     "p95_r": 19.4627,
+     "p99_r": 22.5951,
+     "p95_usd_at_650_per_r": 12651.0
+    }
+   }
+  },
+  "h4|4h|1f88aad357497da4:4440d52587f5cc6b:090418672c210848": {
+   "arm": "h4",
+   "tf": "4h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:090418672c210848",
+   "seed": 474703804,
+   "n": 8,
+   "days": 7,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.4428,
+    "before_cost_day_boot95": [
+     -0.0584,
+     1.0914
+    ],
+    "after_modelled_cost": 0.4316,
+    "after_modelled_cost_day_boot95": [
+     -0.0622,
+     1.0745
+    ],
+    "modelled_cost": 0.0112,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 280.51
+   },
+   "tail_per_trade_net_r": {
+    "n": 8,
+    "k": 1,
+    "var": -0.4704,
+    "cvar": -0.4704,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 7,
+    "k": 1,
+    "var": -0.395,
+    "cvar": -0.395,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 0.7163,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 0.6426,
+     "p95_r": 1.2604,
+     "p99_r": 1.6554,
+     "p95_usd_at_650_per_r": 819.0
+    },
+    "L=2d": {
+     "p50_r": 0.7163,
+     "p95_r": 1.3589,
+     "p99_r": 1.7279,
+     "p95_usd_at_650_per_r": 883.0
+    },
+    "L=5d": {
+     "p50_r": 0.7163,
+     "p95_r": 1.1113,
+     "p99_r": 1.4326,
+     "p95_usd_at_650_per_r": 722.0
+    }
+   }
+  },
+  "h4|5m|1f88aad357497da4:4440d52587f5cc6b:090418672c210848": {
+   "arm": "h4",
+   "tf": "5m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:090418672c210848",
+   "seed": 2568534222,
+   "n": 454,
+   "days": 10,
+   "first_exit_day": "2026-11-16",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.0438,
+    "before_cost_day_boot95": [
+     -0.106,
+     0.0229
+    ],
+    "after_modelled_cost": -0.1483,
+    "after_modelled_cost_day_boot95": [
+     -0.2133,
+     -0.0736
+    ],
+    "modelled_cost": 0.1045,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -96.4
+   },
+   "tail_per_trade_net_r": {
+    "n": 454,
+    "k": 23,
+    "var": -1.1453,
+    "cvar": -1.242,
+    "note": ""
+   },
+   "tail_per_day_net_r": {
+    "n": 10,
+    "k": 1,
+    "var": -14.0629,
+    "cvar": -14.0629,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 68.2455,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 71.5715,
+     "p95_r": 94.945,
+     "p99_r": 104.2492,
+     "p95_usd_at_650_per_r": 61714.0
+    },
+    "L=2d": {
+     "p50_r": 71.2039,
+     "p95_r": 91.1105,
+     "p99_r": 99.7118,
+     "p95_usd_at_650_per_r": 59222.0
+    },
+    "L=5d": {
+     "p50_r": 71.3568,
+     "p95_r": 85.7448,
+     "p99_r": 92.2879,
+     "p95_usd_at_650_per_r": 55734.0
+    }
+   }
+  },
+  "h5|5m|1f88aad357497da4:4440d52587f5cc6b:40d438ea0c144199": {
+   "arm": "h5",
+   "tf": "5m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b:40d438ea0c144199",
+   "seed": 1570523221,
+   "n": 7,
+   "days": 5,
+   "first_exit_day": "2026-11-18",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.5792,
+    "before_cost_day_boot95": [
+     -1.0,
+     0.4728
+    ],
+    "after_modelled_cost": -0.686,
+    "after_modelled_cost_day_boot95": [
+     -1.1159,
+     0.3677
+    ],
+    "modelled_cost": 0.1067,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -445.87
+   },
+   "tail_per_trade_net_r": {
+    "n": 7,
+    "k": 1,
+    "var": -1.1624,
+    "cvar": -1.1624,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 5,
+    "k": 1,
+    "var": -2.2576,
+    "cvar": -2.2576,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 4.8017,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 5.8928,
+     "p95_r": 9.8987,
+     "p99_r": 10.9796,
+     "p95_usd_at_650_per_r": 6434.0
+    },
+    "L=2d": {
+     "p50_r": 5.5377,
+     "p95_r": 8.8847,
+     "p99_r": 10.0427,
+     "p95_usd_at_650_per_r": 5775.0
+    },
+    "L=5d": {
+     "p50_r": 5.5275,
+     "p95_r": 8.8076,
+     "p99_r": 9.9656,
+     "p95_usd_at_650_per_r": 5725.0
+    }
+   }
+  },
+  "h6|15m|5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6": {
+   "arm": "h6",
+   "tf": "15m",
+   "freeze_key": "5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6",
+   "seed": 1774209565,
+   "n": 4,
+   "days": 2,
+   "first_exit_day": "2026-11-11",
+   "last_exit_day": "2026-11-13",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.2136,
+    "before_cost_day_boot95": [
+     -1.0,
+     0.0486
+    ],
+    "after_modelled_cost": -0.2584,
+    "after_modelled_cost_day_boot95": [
+     -1.0254,
+     -0.0027
+    ],
+    "modelled_cost": 0.0448,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -167.93
+   },
+   "tail_per_trade_net_r": {
+    "n": 4,
+    "k": 1,
+    "var": -1.0674,
+    "cvar": -1.0674,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -1.0254,
+    "cvar": -1.0254,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 2.0451,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 2.0508,
+     "p95_r": 2.0928,
+     "p99_r": 2.0928,
+     "p95_usd_at_650_per_r": 1360.0
+    },
+    "L=2d": {
+     "p50_r": 2.0871,
+     "p95_r": 2.0928,
+     "p99_r": 2.0928,
+     "p95_usd_at_650_per_r": 1360.0
+    },
+    "L=5d": {
+     "p50_r": 2.0508,
+     "p95_r": 2.0928,
+     "p99_r": 2.0928,
+     "p95_usd_at_650_per_r": 1360.0
+    }
+   }
+  },
+  "h6|1h|5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6": {
+   "arm": "h6",
+   "tf": "1h",
+   "freeze_key": "5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6",
+   "seed": 1680763817,
+   "n": 2,
+   "days": 2,
+   "first_exit_day": "2026-11-12",
+   "last_exit_day": "2026-11-13",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 1.8949,
+    "before_cost_day_boot95": [
+     -1.0,
+     4.7898
+    ],
+    "after_modelled_cost": 1.8677,
+    "after_modelled_cost_day_boot95": [
+     -1.0205,
+     4.7559
+    ],
+    "modelled_cost": 0.0272,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 1214.0
+   },
+   "tail_per_trade_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -1.0205,
+    "cvar": -1.0205,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -1.0205,
+    "cvar": -1.0205,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0205,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 1.0205,
+     "p95_r": 2.041,
+     "p99_r": 2.041,
+     "p95_usd_at_650_per_r": 1327.0
+    },
+    "L=2d": {
+     "p50_r": 1.0205,
+     "p95_r": 2.041,
+     "p99_r": 2.041,
+     "p95_usd_at_650_per_r": 1327.0
+    },
+    "L=5d": {
+     "p50_r": 1.0205,
+     "p95_r": 1.0205,
+     "p99_r": 2.041,
+     "p95_usd_at_650_per_r": 663.0
+    }
+   }
+  },
+  "h6|30m|5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6": {
+   "arm": "h6",
+   "tf": "30m",
+   "freeze_key": "5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6",
+   "seed": 578988463,
+   "n": 3,
+   "days": 3,
+   "first_exit_day": "2026-11-11",
+   "last_exit_day": "2026-11-13",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 2.2385,
+    "before_cost_day_boot95": [
+     -1.0,
+     5.4916
+    ],
+    "after_modelled_cost": 2.1842,
+    "after_modelled_cost_day_boot95": [
+     -1.0232,
+     5.4396
+    ],
+    "modelled_cost": 0.0543,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 1419.73
+   },
+   "tail_per_trade_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -1.0232,
+    "cvar": -1.0232,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -1.0232,
+    "cvar": -1.0232,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0232,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 1.0232,
+     "p95_r": 2.0464,
+     "p99_r": 3.0696,
+     "p95_usd_at_650_per_r": 1330.0
+    },
+    "L=2d": {
+     "p50_r": 1.0232,
+     "p95_r": 2.0464,
+     "p99_r": 2.0464,
+     "p95_usd_at_650_per_r": 1330.0
+    },
+    "L=5d": {
+     "p50_r": 1.0232,
+     "p95_r": 1.0232,
+     "p99_r": 2.0464,
+     "p95_usd_at_650_per_r": 665.0
+    }
+   }
+  },
+  "h6|4h|5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6": {
+   "arm": "h6",
+   "tf": "4h",
+   "freeze_key": "5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6",
+   "seed": 250699461,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-06",
+   "last_exit_day": "2026-11-06",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": -1.0105,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.0105,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -656.82
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.0105,
+    "cvar": -1.0105,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": -1.0105,
+    "cvar": -1.0105,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0105,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "h6|5m|5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6": {
+   "arm": "h6",
+   "tf": "5m",
+   "freeze_key": "5e4630924d663fc5:a6f2be58c74887ed:7c4ac023578836c6",
+   "seed": 285322922,
+   "n": 3,
+   "days": 2,
+   "first_exit_day": "2026-11-10",
+   "last_exit_day": "2026-11-11",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.1133,
+    "before_cost_day_boot95": [
+     -1.0001,
+     2.3401
+    ],
+    "after_modelled_cost": 0.0139,
+    "after_modelled_cost_day_boot95": [
+     -1.1064,
+     2.2545
+    ],
+    "modelled_cost": 0.0994,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 9.04
+   },
+   "tail_per_trade_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -1.1235,
+    "cvar": -1.1235,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -2.2128,
+    "cvar": -2.2128,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 2.2128,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 2.2128,
+     "p95_r": 4.4256,
+     "p99_r": 4.4256,
+     "p95_usd_at_650_per_r": 2877.0
+    },
+    "L=2d": {
+     "p50_r": 2.2128,
+     "p95_r": 4.4256,
+     "p99_r": 4.4256,
+     "p95_usd_at_650_per_r": 2877.0
+    },
+    "L=5d": {
+     "p50_r": 2.2128,
+     "p95_r": 2.2128,
+     "p99_r": 4.4256,
+     "p95_usd_at_650_per_r": 1438.0
+    }
+   }
+  },
+  "treatment|15m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "treatment",
+   "tf": "15m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 4103131363,
+   "n": 7,
+   "days": 5,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-27",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.0878,
+    "before_cost_day_boot95": [
+     -0.6869,
+     0.4537
+    ],
+    "after_modelled_cost": -0.1388,
+    "after_modelled_cost_day_boot95": [
+     -0.7316,
+     0.3906
+    ],
+    "modelled_cost": 0.051,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -90.25
+   },
+   "tail_per_trade_net_r": {
+    "n": 7,
+    "k": 1,
+    "var": -1.0562,
+    "cvar": -1.0562,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 5,
+    "k": 1,
+    "var": -1.0446,
+    "cvar": -1.0446,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 3.3394,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 2.3002,
+     "p95_r": 4.3894,
+     "p99_r": 5.2166,
+     "p95_usd_at_650_per_r": 2853.0
+    },
+    "L=2d": {
+     "p50_r": 2.3034,
+     "p95_r": 4.3808,
+     "p99_r": 4.401,
+     "p95_usd_at_650_per_r": 2848.0
+    },
+    "L=5d": {
+     "p50_r": 2.3034,
+     "p95_r": 3.5622,
+     "p99_r": 4.3862,
+     "p95_usd_at_650_per_r": 2315.0
+    }
+   }
+  },
+  "treatment|1h|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "treatment",
+   "tf": "1h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 742882335,
+   "n": 4,
+   "days": 2,
+   "first_exit_day": "2026-11-19",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 0.183,
+    "before_cost_day_boot95": [
+     -0.2272,
+     1.4137
+    ],
+    "after_modelled_cost": 0.1574,
+    "after_modelled_cost_day_boot95": [
+     -0.2519,
+     1.3852
+    ],
+    "modelled_cost": 0.0256,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 102.29
+   },
+   "tail_per_trade_net_r": {
+    "n": 4,
+    "k": 1,
+    "var": -1.0284,
+    "cvar": -1.0284,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 2,
+    "k": 1,
+    "var": -0.7557,
+    "cvar": -0.7557,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 1.0284,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 1.0284,
+     "p95_r": 2.0387,
+     "p99_r": 2.0387,
+     "p95_usd_at_650_per_r": 1325.0
+    },
+    "L=2d": {
+     "p50_r": 1.0284,
+     "p95_r": 2.0387,
+     "p99_r": 2.0387,
+     "p95_usd_at_650_per_r": 1325.0
+    },
+    "L=5d": {
+     "p50_r": 1.0284,
+     "p95_r": 1.0284,
+     "p99_r": 2.0387,
+     "p95_usd_at_650_per_r": 668.0
+    }
+   }
+  },
+  "treatment|30m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "treatment",
+   "tf": "30m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 3615874626,
+   "n": 3,
+   "days": 3,
+   "first_exit_day": "2026-11-17",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -1.0,
+    "before_cost_day_boot95": [
+     -1.0,
+     -0.9999
+    ],
+    "after_modelled_cost": -1.0393,
+    "after_modelled_cost_day_boot95": [
+     -1.0609,
+     -1.0157
+    ],
+    "modelled_cost": 0.0393,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -675.52
+   },
+   "tail_per_trade_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -1.0609,
+    "cvar": -1.0609,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 3,
+    "k": 1,
+    "var": -1.0609,
+    "cvar": -1.0609,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 3.1178,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 3.1178,
+     "p95_r": 3.163,
+     "p99_r": 3.1827,
+     "p95_usd_at_650_per_r": 2056.0
+    },
+    "L=2d": {
+     "p50_r": 3.1178,
+     "p95_r": 3.163,
+     "p99_r": 3.163,
+     "p95_usd_at_650_per_r": 2056.0
+    },
+    "L=5d": {
+     "p50_r": 3.1178,
+     "p95_r": 3.1433,
+     "p99_r": 3.163,
+     "p95_usd_at_650_per_r": 2043.0
+    }
+   }
+  },
+  "treatment|4h|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "treatment",
+   "tf": "4h",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 1686244034,
+   "n": 1,
+   "days": 1,
+   "first_exit_day": "2026-11-19",
+   "last_exit_day": "2026-11-19",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": 1.5,
+    "before_cost_day_boot95": null,
+    "after_modelled_cost": 1.4873,
+    "after_modelled_cost_day_boot95": null,
+    "modelled_cost": 0.0127,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": 966.75
+   },
+   "tail_per_trade_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 1.4873,
+    "cvar": 1.4873,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 1,
+    "k": 1,
+    "var": 1.4873,
+    "cvar": 1.4873,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 0.0,
+   "monte_carlo_drawdown": {
+    "note": "fewer than 2 trading days: not computed"
+   }
+  },
+  "treatment|5m|1f88aad357497da4:4440d52587f5cc6b": {
+   "arm": "treatment",
+   "tf": "5m",
+   "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+   "seed": 2347642923,
+   "n": 17,
+   "days": 7,
+   "first_exit_day": "2026-11-16",
+   "last_exit_day": "2026-11-25",
+   "excluded_zero_stop": 0,
+   "expectancy_r": {
+    "before_cost": -0.1038,
+    "before_cost_day_boot95": [
+     -0.7205,
+     0.4026
+    ],
+    "after_modelled_cost": -0.2139,
+    "after_modelled_cost_day_boot95": [
+     -0.8489,
+     0.324
+    ],
+    "modelled_cost": 0.1101,
+    "after_measured_cost": null,
+    "measured_cost_status": "NOT AVAILABLE: no broker fills yet (G2)",
+    "usd_at_650_per_r_after_modelled_cost": -139.01
+   },
+   "tail_per_trade_net_r": {
+    "n": 17,
+    "k": 1,
+    "var": -1.1805,
+    "cvar": -1.1805,
+    "note": "k = 1: the single worst outcome"
+   },
+   "tail_per_day_net_r": {
+    "n": 7,
+    "k": 1,
+    "var": -3.4359,
+    "cvar": -3.4359,
+    "note": "k = 1: the single worst outcome",
+    "days": "days with at least one exit"
+   },
+   "observed_max_drawdown_r": 6.8245,
+   "monte_carlo_drawdown": {
+    "L=1d": {
+     "p50_r": 6.8033,
+     "p95_r": 13.1907,
+     "p99_r": 15.6765,
+     "p95_usd_at_650_per_r": 8574.0
+    },
+    "L=2d": {
+     "p50_r": 6.4044,
+     "p95_r": 10.6872,
+     "p99_r": 12.8952,
+     "p95_usd_at_650_per_r": 6947.0
+    },
+    "L=5d": {
+     "p50_r": 6.0328,
+     "p95_r": 9.2927,
+     "p99_r": 10.5969,
+     "p95_usd_at_650_per_r": 6040.0
+    }
+   }
+  }
+ }
+}
