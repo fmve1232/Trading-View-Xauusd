@@ -1,0 +1,135 @@
+{
+ "file": "g6_mutation_2026-11-28.json",
+ "module": "quantum/research/g6_exposure.py",
+ "module_sha256": "314cb365206a4063985ab7ecf19418ab955f7ed47e1c7b334cfe4180cc90b446",
+ "tests": "tests/test_research_g6_exposure.py",
+ "tests_sha256": "a9721d636c6794032cba4083a65e925195d5b14ec49960c6de82992b3f59bf79",
+ "mutants": [
+  {
+   "mutant": "replay: a position closing at the fill instant still blocks",
+   "from": "open_ = [q for q in open_ if q[\"end\"] > p[\"fill\"]]                 # a position",
+   "to": "open_ = [q for q in open_ if q[\"end\"] >= p[\"fill\"]]                 # a position",
+   "killed": true
+  },
+  {
+   "mutant": "P2 allows a 4th entry a day",
+   "from": "per_day[p[\"day\"]] < PER_DAY",
+   "to": "per_day[p[\"day\"]] <= PER_DAY",
+   "killed": true
+  },
+  {
+   "mutant": "P3 allows 4 open",
+   "from": "ok = len(open_) < MAX_OPEN",
+   "to": "ok = len(open_) <= MAX_OPEN",
+   "killed": true
+  },
+  {
+   "mutant": "P4 checks the opposite direction",
+   "from": "ok = not any(q[\"d\"] == p[\"d\"] for q in open_)",
+   "to": "ok = not any(q[\"d\"] != p[\"d\"] for q in open_)",
+   "killed": true
+  },
+  {
+   "mutant": "position ends at the exit-bar open",
+   "from": "end = ts(t[\"exit_time\"]) + sec",
+   "to": "end = ts(t[\"exit_time\"])",
+   "killed": true
+  },
+  {
+   "mutant": "position fills at the signal-bar open",
+   "from": "fill = ts(t[\"entry_time\"]) + sec",
+   "to": "fill = ts(t[\"entry_time\"])",
+   "killed": true
+  },
+  {
+   "mutant": "tie-break reversed",
+   "from": "TF_RANK = {\"4h\": -1, \"1h\": 0, \"30m\": 1, \"15m\": 2, \"5m\": 3}",
+   "to": "TF_RANK = {\"4h\": -1, \"1h\": 3, \"30m\": 2, \"15m\": 1, \"5m\": 0}",
+   "killed": true
+  },
+  {
+   "mutant": "exact max: fills before closes at a tie",
+   "from": "key=lambda x: (x[0], x[1]))",
+   "to": "key=lambda x: (x[0], -x[1]))",
+   "killed": true
+  },
+  {
+   "mutant": "a flat trade counted as a loss",
+   "from": "cur = cur + 1 if x < 0 else 0",
+   "to": "cur = cur + 1 if x <= 0 else 0",
+   "killed": true
+  },
+  {
+   "mutant": "cross-timeframe test uses the arm",
+   "from": "cross_tf += any(q[\"tf\"] != p[\"tf\"] for q in nb)",
+   "to": "cross_tf += any(q[\"arm\"] != p[\"arm\"] for q in nb)",
+   "killed": true
+  },
+  {
+   "mutant": "a blocked position still occupies a slot",
+   "from": "if ok:\n            open_.append(p)",
+   "to": "if True:\n            open_.append(p)",
+   "killed": true
+  },
+  {
+   "mutant": "realised P/L booked on the entry day",
+   "from": "realised[p[\"exit_day\"]] += p[\"r\"]",
+   "to": "realised[p[\"day\"]] += p[\"r\"]",
+   "killed": true
+  },
+  {
+   "mutant": "counts: a fill after the sample counted",
+   "from": "np.searchsorted(f, grid, \"right\") - np.searchsorted(e, grid, \"right\")",
+   "to": "np.searchsorted(f, grid, \"left\") - np.searchsorted(e, grid, \"right\")",
+   "killed": true
+  },
+  {
+   "mutant": "net R per day divided by trades",
+   "from": "obs = (sa.sum() - sb.sum()) / len(days)",
+   "to": "obs = (sa.sum() - sb.sum()) / max(na.sum(), 1)",
+   "killed": true
+  },
+  {
+   "mutant": "every policy keeps everything",
+   "from": "keep.append(ok)",
+   "to": "keep.append(True)",
+   "killed": true
+  },
+  {
+   "mutant": "Holm without the running maximum",
+   "from": "run = max(run, min(1.0, (m - k) * ps[i]))",
+   "to": "run = min(1.0, (m - k) * ps[i])",
+   "killed": true
+  },
+  {
+   "mutant": "bootstrap unpaired (B resampled separately)",
+   "from": "- sb[pick].sum(1) / np.maximum(nb[pick].sum(1), 1)",
+   "to": "- sb[pick[::-1]].sum(1) / np.maximum(nb[pick[::-1]].sum(1), 1)",
+   "killed": true
+  },
+  {
+   "mutant": "A1: arm order reversed",
+   "from": "ARM_RANK = {a: i for i, a in enumerate(ARMS_A1)}",
+   "to": "ARM_RANK = {a: -i for i, a in enumerate(ARMS_A1)}",
+   "killed": true
+  },
+  {
+   "mutant": "A1: 4h ranked last",
+   "from": "TF_RANK = {\"4h\": -1, \"1h\": 0",
+   "to": "TF_RANK = {\"4h\": 9, \"1h\": 0",
+   "killed": true
+  },
+  {
+   "mutant": "A1: out-of-scope stream counts dropped",
+   "from": "streams[str(json.loads(line).get(\"stream\") or \"unknown\")] += 1",
+   "to": "streams[\"unknown\"] += 1",
+   "killed": true
+  },
+  {
+   "mutant": "forward grid keeps shut-market bars",
+   "from": "ix = pd.DatetimeIndex(sources.trading_week_only(sources.drop_offgrid(df)).index)",
+   "to": "ix = pd.DatetimeIndex(sources.drop_offgrid(df).index)",
+   "killed": true
+  }
+ ]
+}

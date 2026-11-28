@@ -231,3 +231,11 @@ def test_the_forward_grid_keeps_only_trading_bars(tmp_path):
     (d / "2026-11.csv").write_text("\n".join(rows) + "\n")
     got = G.grid5(str(tmp_path)).tolist()
     assert got == [int(pd.Timestamp(x).timestamp()) for x in ("2026-11-20T14:00:00Z", "2026-11-23T14:05:00Z")]
+
+
+def test_the_results_document_is_what_the_evidence_gives():
+    """research/G6_EXPOSURE_RESULTS.md is generated from the committed result, check and evidence files."""
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "audit", "tools"))
+    import g6_doc
+    assert g6_doc.main(["--check"]) == 0
