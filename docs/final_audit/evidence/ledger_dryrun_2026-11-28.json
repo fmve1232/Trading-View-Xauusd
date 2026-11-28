@@ -1,0 +1,129 @@
+{
+ "what": "DRY RUN into a scratch ledger (not a production record): every C1 setup published in a local index.json imported, expired, and given its theoretical outcome on the market-data store's XAU/USD 5m bars. No execution or closure was recorded: none has been confirmed by the operator.",
+ "index_json_sha256": "43cea0d56f58adc928c128a926c5e34345023b1dd65d63eca18e746711920ef2",
+ "index_generated_utc": "2026-11-28T07:29:11.994836+00:00",
+ "commands": [
+  "import-c1 --now <index generated_utc>",
+  "expire --now <index generated_utc>",
+  "outcomes --bars <store>/XAU_USD_5m",
+  "verify",
+  "stats",
+  "export"
+ ],
+ "ledger_lines": 18,
+ "ledger_sha256": "50ed99d4a1147c6da67993dee124a2437c5ad5fabf516701d6b16e1c1765dc32",
+ "verify": {
+  "ok": true,
+  "problems": []
+ },
+ "states": {
+  "SIGNAL_GENERATED": 0,
+  "AWAITING_USER_CONFIRMATION": 0,
+  "TRADE_OPEN": 0,
+  "TRADE_CLOSED": 0,
+  "SIGNAL_EXPIRED": 4,
+  "SIGNAL_CANCELLED": 3
+ },
+ "slot": "NO_OPEN_TRADE",
+ "populations_n": {
+  "1_generated": 7,
+  "2_qualified": 4,
+  "3_accepted": 0,
+  "4_executed": 0,
+  "5_closed_executed": 0
+ },
+ "signals": [
+  {
+   "signal_id": "Q-0001",
+   "c1_setup": 1,
+   "actionable": true,
+   "c1_status": "TP2",
+   "ledger_theoretical": "TP2 before stop",
+   "reached_10_15_20": [
+    true,
+    true,
+    true
+   ],
+   "mfe": 180.23,
+   "mae": 8.98
+  },
+  {
+   "signal_id": "Q-0002",
+   "c1_setup": 2,
+   "actionable": true,
+   "c1_status": "TP2",
+   "ledger_theoretical": "TP2 before stop",
+   "reached_10_15_20": [
+    true,
+    true,
+    true
+   ],
+   "mfe": 239.96,
+   "mae": 1.65
+  },
+  {
+   "signal_id": "Q-0003",
+   "c1_setup": 3,
+   "actionable": false,
+   "c1_status": "INVALIDATED",
+   "ledger_theoretical": null,
+   "reached_10_15_20": null,
+   "mfe": null,
+   "mae": null
+  },
+  {
+   "signal_id": "Q-0004",
+   "c1_setup": 4,
+   "actionable": false,
+   "c1_status": "INVALIDATED",
+   "ledger_theoretical": null,
+   "reached_10_15_20": null,
+   "mfe": null,
+   "mae": null
+  },
+  {
+   "signal_id": "Q-0005",
+   "c1_setup": 5,
+   "actionable": true,
+   "c1_status": "SL",
+   "ledger_theoretical": "stop",
+   "reached_10_15_20": [
+    false,
+    false,
+    false
+   ],
+   "mfe": 0.0,
+   "mae": 16.66
+  },
+  {
+   "signal_id": "Q-0006",
+   "c1_setup": 6,
+   "actionable": true,
+   "c1_status": "TP2",
+   "ledger_theoretical": "TP2 before stop",
+   "reached_10_15_20": [
+    true,
+    true,
+    true
+   ],
+   "mfe": 37.55,
+   "mae": 11.12
+  },
+  {
+   "signal_id": "Q-0007",
+   "c1_setup": 7,
+   "actionable": false,
+   "c1_status": "INVALIDATED",
+   "ledger_theoretical": null,
+   "reached_10_15_20": null,
+   "mfe": null,
+   "mae": null
+  }
+ ],
+ "cross_check": {
+  "what": "the ledger's theoretical result (planned entry, 5m bars, stop first on a shared bar) vs C1's own published status (its plan managed on 15m bars)",
+  "compared": 4,
+  "agree": 4
+ },
+ "theoretical_status": "INSUFFICIENT EVIDENCE"
+}

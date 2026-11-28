@@ -1,0 +1,117 @@
+{
+ "tool": "audit/tools/ledger_mutation.py (scratch copy; repository untouched)",
+ "applied": 22,
+ "killed": 22,
+ "results": [
+  {
+   "mutant": "hash not checked",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "prev not checked",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "append ignores a broken chain",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "second open trade allowed",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "blocked signals not marked",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "execution inferred from any source",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "closure inferred from any source",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "evidence not required",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "incomplete plans accepted",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "level order not checked",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "early expiry allowed",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "target counted on the stop bar",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "profit factor inverted",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "losing streak never resets",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "accepted population = executed",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "expired signal still actionable on the phone",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "entry deviation ignores the LATE rule",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "snapshot leaks the fill",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "server clock assumed to be UTC",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "corrections overwrite without trace",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "duplicate C1 import allowed",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "PKT shown as UTC",
+   "applied": true,
+   "killed": true
+  }
+ ]
+}
