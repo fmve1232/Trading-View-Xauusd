@@ -94,3 +94,14 @@ def test_metrics_by_hand():
     assert m["by"]["regime"] == {"RANGE": {"n": 1, "mean_net_r": -1.05}, "TREND": {"n": 1, "mean_net_r": 1.0}}
     rp = G.repriced(tr, 2.0)
     assert rp["mean_net_r"] == round(((10.5 - 1.0) / 10 + (-10.0 - 1.0) / 10) / 2, 4)
+
+
+def test_the_results_document_is_what_the_run_file_gives():
+    """research/G5_SENS_RESULTS.md is generated from research/G5_SENS_RESULTS.json (audit/tools/g5_sens_doc.py)."""
+    import sys
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "audit", "tools"))
+    import g5_sens_doc
+    assert g5_sens_doc.main(["--check"]) == 0
+    with open(os.path.join(os.path.dirname(__file__), "..", "research", "G5_SENS_RESULTS.json")) as f:
+        run = json.load(f)
+    assert run["cells_run"] == run["cells_planned"] == 144 and not run["feasibility_only"]
