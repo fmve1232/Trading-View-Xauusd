@@ -1,0 +1,5360 @@
+{
+ "tool": "audit/tools/forward_matched.py",
+ "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+ "seed": 20261128,
+ "k": 50,
+ "min_n": 30,
+ "bootstrap": 4000,
+ "bars": {
+  "first": 1788963900,
+  "last": 1795816500,
+  "count": 15811
+ },
+ "skipped_no_bars": {
+  "15m_challenger": 0,
+  "15m_control": 0,
+  "15m_h2": 0,
+  "15m_h3": 0,
+  "15m_h4": 0,
+  "15m_treatment": 0,
+  "1h_challenger": 0,
+  "1h_control": 0,
+  "1h_h3": 0,
+  "1h_h4": 0,
+  "1h_treatment": 0,
+  "30m_challenger": 0,
+  "30m_control": 0,
+  "30m_h2": 0,
+  "30m_h3": 0,
+  "30m_h4": 0,
+  "30m_treatment": 0,
+  "4h_challenger": 0,
+  "4h_h4": 0,
+  "4h_treatment": 0,
+  "5m_challenger": 0,
+  "5m_control": 0,
+  "5m_h2": 0,
+  "5m_h3": 0,
+  "5m_h4": 0,
+  "5m_h5": 0,
+  "5m_treatment": 0
+ },
+ "ledgers": {
+  "15m_challenger": {
+   "trades": 7,
+   "gross_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.0878,
+    "ci95_days": [
+     -1.0,
+     0.711
+    ],
+    "p_le_0": 0.6302
+   },
+   "net_r_modelled_cost": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.1388,
+    "ci95_days": [
+     -1.0462,
+     0.6506
+    ],
+    "p_le_0": 0.7167
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.0946,
+    "ci95_days": [
+     -1.0462,
+     0.685
+    ],
+    "p_le_0": 0.6228
+   },
+   "matched_random_r": {
+    "trades_with_matches": 7,
+    "mean_of_trade_means": 0.0653,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.2041,
+    "ci95_days": [
+     -1.0687,
+     0.5731
+    ],
+    "p_le_0": 0.7365
+   },
+   "replay_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.1599,
+    "ci95_days": [
+     -1.0667,
+     0.6015
+    ],
+    "p_le_0": 0.7225
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 7,
+     "target_first": 4,
+     "rate": 0.5714,
+     "wilson95": [
+      0.2505,
+      0.8418
+     ],
+     "random_decided": 350,
+     "random_rate": 0.6771,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.1057,
+      "ci95_days": [
+       -0.49,
+       0.2325
+      ],
+      "p_le_0": 0.7378
+     },
+     "minutes_to_target_median": 25.0,
+     "minutes_to_target_p75": 41.2
+    },
+    "usd15": {
+     "decided": 7,
+     "target_first": 3,
+     "rate": 0.4286,
+     "wilson95": [
+      0.1582,
+      0.7495
+     ],
+     "random_decided": 349,
+     "random_rate": 0.5874,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.1583,
+      "ci95_days": [
+       -0.608,
+       0.2369
+      ],
+      "p_le_0": 0.74
+     },
+     "minutes_to_target_median": 85.0,
+     "minutes_to_target_p75": 190.0
+    },
+    "usd20": {
+     "decided": 7,
+     "target_first": 3,
+     "rate": 0.4286,
+     "wilson95": [
+      0.1582,
+      0.7495
+     ],
+     "random_decided": 349,
+     "random_rate": 0.5072,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.0781,
+      "ci95_days": [
+       -0.528,
+       0.3076
+      ],
+      "p_le_0": 0.7295
+     },
+     "minutes_to_target_median": 95.0,
+     "minutes_to_target_p75": 197.5
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 11.18,
+    "mfe_p75": 17.72,
+    "mae_median": 17.99,
+    "mae_p75": 18.75,
+    "share_mfe_ge": {
+     "10": 0.5714,
+     "15": 0.2857,
+     "20": 0.2857
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 7,
+    "agree": 6,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T15:00:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.8388,
+      "replay_r": 1.1483
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 6,
+    "excluded": 1,
+    "net_r_mean": -0.3018
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "15m_control": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.036,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.036,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": 0.0657,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.1017,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.1017,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.84,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.16,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 15.0,
+     "minutes_to_target_p75": 15.0
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "random_decided": 50,
+     "random_rate": 0.72,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": -0.72,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "random_decided": 50,
+     "random_rate": 0.66,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": -0.66,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 11.18,
+    "mfe_p75": 11.18,
+    "mae_median": 21.65,
+    "mae_p75": 21.65,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 0.0,
+     "20": 0.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": -1.036
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "15m_h2": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.017,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": 0.9635,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 0.9636,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": -0.0623,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.0258,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.0259,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.54,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.46,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 75.0,
+     "minutes_to_target_p75": 75.0
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.42,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.58,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 75.0,
+     "minutes_to_target_p75": 75.0
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.34,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.66,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 80.0,
+     "minutes_to_target_p75": 80.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 17.94,
+    "mfe_p75": 17.94,
+    "mae_median": 0.95,
+    "mae_p75": 0.95,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 1.0,
+     "20": 0.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": 0.9635
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "15m_h3": {
+   "trades": 5,
+   "gross_r": {
+    "n": 5,
+    "days": 4,
+    "mean": -1.0,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 5,
+    "days": 4,
+    "mean": -1.0785,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 5,
+    "days": 4,
+    "mean": -1.0785,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 5,
+    "mean_of_trade_means": 0.0944,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 5,
+    "days": 4,
+    "mean": -1.1728,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 5,
+    "days": 4,
+    "mean": -1.1728,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 5,
+     "target_first": 1,
+     "rate": 0.2,
+     "wilson95": [
+      0.0362,
+      0.6245
+     ],
+     "random_decided": 249,
+     "random_rate": 0.5582,
+     "matched_difference": {
+      "n": 5,
+      "days": 4,
+      "mean": -0.358,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 610.0,
+     "minutes_to_target_p75": 610.0
+    },
+    "usd15": {
+     "decided": 5,
+     "target_first": 1,
+     "rate": 0.2,
+     "wilson95": [
+      0.0362,
+      0.6245
+     ],
+     "random_decided": 249,
+     "random_rate": 0.4819,
+     "matched_difference": {
+      "n": 5,
+      "days": 4,
+      "mean": -0.2816,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 620.0,
+     "minutes_to_target_p75": 620.0
+    },
+    "usd20": {
+     "decided": 5,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.4345
+     ],
+     "random_decided": 249,
+     "random_rate": 0.4458,
+     "matched_difference": {
+      "n": 5,
+      "days": 4,
+      "mean": -0.4455,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 5.34,
+    "mfe_p75": 9.29,
+    "mae_median": 22.7,
+    "mae_p75": 22.73,
+    "share_mfe_ge": {
+     "10": 0.2,
+     "15": 0.2,
+     "20": 0.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 5,
+    "agree": 5,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 5,
+    "excluded": 0,
+    "net_r_mean": -1.0785
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "15m_h4": {
+   "trades": 162,
+   "gross_r": {
+    "n": 162,
+    "days": 11,
+    "mean": -0.0086,
+    "ci95_days": [
+     -0.1517,
+     0.1463
+    ],
+    "p_le_0": 0.556
+   },
+   "net_r_modelled_cost": {
+    "n": 162,
+    "days": 11,
+    "mean": -0.0728,
+    "ci95_days": [
+     -0.2094,
+     0.0787
+    ],
+    "p_le_0": 0.8387
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 162,
+    "days": 11,
+    "mean": -0.0564,
+    "ci95_days": [
+     -0.1952,
+     0.0934
+    ],
+    "p_le_0": 0.7782
+   },
+   "matched_random_r": {
+    "trades_with_matches": 162,
+    "mean_of_trade_means": -0.05,
+    "matches_per_trade_mean": 49.8
+   },
+   "recorded_minus_random": {
+    "n": 162,
+    "days": 11,
+    "mean": -0.0228,
+    "ci95_days": [
+     -0.1609,
+     0.1185
+    ],
+    "p_le_0": 0.6252,
+    "p_holm": 1.0,
+    "p_bh": 0.9825
+   },
+   "replay_minus_random": {
+    "n": 162,
+    "days": 11,
+    "mean": -0.0064,
+    "ci95_days": [
+     -0.1472,
+     0.131
+    ],
+    "p_le_0": 0.539
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 162,
+     "target_first": 97,
+     "rate": 0.5988,
+     "wilson95": [
+      0.5218,
+      0.6711
+     ],
+     "random_decided": 8086,
+     "random_rate": 0.605,
+     "matched_difference": {
+      "n": 162,
+      "days": 11,
+      "mean": -0.0064,
+      "ci95_days": [
+       -0.0664,
+       0.0474
+      ],
+      "p_le_0": 0.5875
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 115.0
+    },
+    "usd15": {
+     "decided": 162,
+     "target_first": 85,
+     "rate": 0.5247,
+     "wilson95": [
+      0.4481,
+      0.6001
+     ],
+     "random_decided": 8083,
+     "random_rate": 0.5134,
+     "matched_difference": {
+      "n": 162,
+      "days": 11,
+      "mean": 0.011,
+      "ci95_days": [
+       -0.0483,
+       0.0768
+      ],
+      "p_le_0": 0.3575
+     },
+     "minutes_to_target_median": 70.0,
+     "minutes_to_target_p75": 160.0
+    },
+    "usd20": {
+     "decided": 162,
+     "target_first": 76,
+     "rate": 0.4691,
+     "wilson95": [
+      0.3939,
+      0.5458
+     ],
+     "random_decided": 8083,
+     "random_rate": 0.4511,
+     "matched_difference": {
+      "n": 162,
+      "days": 11,
+      "mean": 0.0178,
+      "ci95_days": [
+       -0.0363,
+       0.0974
+      ],
+      "p_le_0": 0.334
+     },
+     "minutes_to_target_median": 102.5,
+     "minutes_to_target_p75": 245.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 8.08,
+    "mfe_p75": 18.63,
+    "mae_median": 6.29,
+    "mae_p75": 13.35,
+    "share_mfe_ge": {
+     "10": 0.4321,
+     "15": 0.3086,
+     "20": 0.2346
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 162,
+    "agree": 159,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T13:45:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": 0.0304,
+      "replay_r": 0.1522
+     },
+     {
+      "entry_time": "2026-11-24T12:00:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": -0.1508,
+      "replay_r": -0.1062
+     },
+     {
+      "entry_time": "2026-11-26T23:45:00+00:00",
+      "exit_reason": "SL",
+      "recorded_r": -1.2856,
+      "replay_r": 1.207
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 161,
+    "excluded": 1,
+    "net_r_mean": -0.0829
+   },
+   "verdict": "NO EDGE \u2014 INSUFFICIENT EVIDENCE"
+  },
+  "15m_treatment": {
+   "trades": 7,
+   "gross_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.0878,
+    "ci95_days": [
+     -1.0,
+     0.711
+    ],
+    "p_le_0": 0.6548
+   },
+   "net_r_modelled_cost": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.1388,
+    "ci95_days": [
+     -1.0462,
+     0.6489
+    ],
+    "p_le_0": 0.7097
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.0946,
+    "ci95_days": [
+     -1.0462,
+     0.6288
+    ],
+    "p_le_0": 0.6352
+   },
+   "matched_random_r": {
+    "trades_with_matches": 7,
+    "mean_of_trade_means": 0.1257,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.2645,
+    "ci95_days": [
+     -1.1204,
+     0.6094
+    ],
+    "p_le_0": 0.739
+   },
+   "replay_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.2203,
+    "ci95_days": [
+     -1.1204,
+     0.6153
+    ],
+    "p_le_0": 0.7445
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 7,
+     "target_first": 4,
+     "rate": 0.5714,
+     "wilson95": [
+      0.2505,
+      0.8418
+     ],
+     "random_decided": 350,
+     "random_rate": 0.7057,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.1343,
+      "ci95_days": [
+       -0.5933,
+       0.265
+      ],
+      "p_le_0": 0.754
+     },
+     "minutes_to_target_median": 25.0,
+     "minutes_to_target_p75": 41.2
+    },
+    "usd15": {
+     "decided": 7,
+     "target_first": 3,
+     "rate": 0.4286,
+     "wilson95": [
+      0.1582,
+      0.7495
+     ],
+     "random_decided": 350,
+     "random_rate": 0.6,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.1714,
+      "ci95_days": [
+       -0.652,
+       0.2778
+      ],
+      "p_le_0": 0.731
+     },
+     "minutes_to_target_median": 85.0,
+     "minutes_to_target_p75": 190.0
+    },
+    "usd20": {
+     "decided": 7,
+     "target_first": 3,
+     "rate": 0.4286,
+     "wilson95": [
+      0.1582,
+      0.7495
+     ],
+     "random_decided": 350,
+     "random_rate": 0.52,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.0914,
+      "ci95_days": [
+       -0.552,
+       0.3375
+      ],
+      "p_le_0": 0.725
+     },
+     "minutes_to_target_median": 95.0,
+     "minutes_to_target_p75": 197.5
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 11.18,
+    "mfe_p75": 17.72,
+    "mae_median": 17.99,
+    "mae_p75": 18.75,
+    "share_mfe_ge": {
+     "10": 0.5714,
+     "15": 0.2857,
+     "20": 0.2857
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 7,
+    "agree": 6,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T15:00:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.8388,
+      "replay_r": 1.1483
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 6,
+    "excluded": 1,
+    "net_r_mean": -0.3018
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "1h_challenger": {
+   "trades": 4,
+   "gross_r": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.183,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1574,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1574,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 4,
+    "mean_of_trade_means": 0.0011,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1563,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1563,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 4,
+     "target_first": 4,
+     "rate": 1.0,
+     "wilson95": [
+      0.5101,
+      1.0
+     ],
+     "random_decided": 199,
+     "random_rate": 0.7789,
+     "matched_difference": {
+      "n": 4,
+      "days": 2,
+      "mean": 0.2205,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 20.0,
+     "minutes_to_target_p75": 76.2
+    },
+    "usd15": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "random_decided": 199,
+     "random_rate": 0.7035,
+     "matched_difference": {
+      "n": 4,
+      "days": 2,
+      "mean": 0.0456,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 20.0,
+     "minutes_to_target_p75": 160.0
+    },
+    "usd20": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "random_decided": 199,
+     "random_rate": 0.6281,
+     "matched_difference": {
+      "n": 4,
+      "days": 2,
+      "mean": 0.1212,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 25.0,
+     "minutes_to_target_p75": 172.5
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 47.92,
+    "mfe_p75": 54.22,
+    "mae_median": 24.35,
+    "mae_p75": 44.66,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 0.75,
+     "20": 0.75
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 4,
+    "agree": 4,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 4,
+    "excluded": 0,
+    "net_r_mean": 0.1574
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "1h_control": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4137,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.3852,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.3853,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": -0.0178,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.403,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4031,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.74,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.26,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 245.0,
+     "minutes_to_target_p75": 245.0
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.72,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.28,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 300.0,
+     "minutes_to_target_p75": 300.0
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.64,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.36,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 320.0,
+     "minutes_to_target_p75": 320.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 53.77,
+    "mfe_p75": 53.77,
+    "mae_median": 16.53,
+    "mae_p75": 16.53,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 1.0,
+     "20": 1.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": 1.3852
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "1h_h3": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0356,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0356,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": -0.0177,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0179,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0179,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.7,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.3,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 10.0,
+     "minutes_to_target_p75": 10.0
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.62,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.38,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 15.0,
+     "minutes_to_target_p75": 15.0
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "random_decided": 50,
+     "random_rate": 0.58,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": -0.58,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 18.08,
+    "mfe_p75": 18.08,
+    "mae_median": 38.16,
+    "mae_p75": 38.16,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 1.0,
+     "20": 0.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": -1.0356
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "1h_h4": {
+   "trades": 41,
+   "gross_r": {
+    "n": 41,
+    "days": 10,
+    "mean": -0.2459,
+    "ci95_days": [
+     -0.369,
+     -0.0616
+    ],
+    "p_le_0": 0.992
+   },
+   "net_r_modelled_cost": {
+    "n": 41,
+    "days": 10,
+    "mean": -0.2697,
+    "ci95_days": [
+     -0.3905,
+     -0.0925
+    ],
+    "p_le_0": 0.9962
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 41,
+    "days": 10,
+    "mean": -0.2697,
+    "ci95_days": [
+     -0.3877,
+     -0.0896
+    ],
+    "p_le_0": 0.9945
+   },
+   "matched_random_r": {
+    "trades_with_matches": 41,
+    "mean_of_trade_means": -0.0375,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 41,
+    "days": 10,
+    "mean": -0.2322,
+    "ci95_days": [
+     -0.3619,
+     -0.0235
+    ],
+    "p_le_0": 0.9825,
+    "p_holm": 1.0,
+    "p_bh": 0.9825
+   },
+   "replay_minus_random": {
+    "n": 41,
+    "days": 10,
+    "mean": -0.2322,
+    "ci95_days": [
+     -0.3693,
+     -0.0263
+    ],
+    "p_le_0": 0.9845
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 41,
+     "target_first": 29,
+     "rate": 0.7073,
+     "wilson95": [
+      0.5552,
+      0.8239
+     ],
+     "random_decided": 2047,
+     "random_rate": 0.7758,
+     "matched_difference": {
+      "n": 41,
+      "days": 10,
+      "mean": -0.0686,
+      "ci95_days": [
+       -0.1638,
+       0.0563
+      ],
+      "p_le_0": 0.8618
+     },
+     "minutes_to_target_median": 70.0,
+     "minutes_to_target_p75": 165.0
+    },
+    "usd15": {
+     "decided": 41,
+     "target_first": 27,
+     "rate": 0.6585,
+     "wilson95": [
+      0.5055,
+      0.7844
+     ],
+     "random_decided": 2046,
+     "random_rate": 0.7107,
+     "matched_difference": {
+      "n": 41,
+      "days": 10,
+      "mean": -0.0522,
+      "ci95_days": [
+       -0.1431,
+       0.0468
+      ],
+      "p_le_0": 0.8413
+     },
+     "minutes_to_target_median": 130.0,
+     "minutes_to_target_p75": 227.5
+    },
+    "usd20": {
+     "decided": 41,
+     "target_first": 24,
+     "rate": 0.5854,
+     "wilson95": [
+      0.4337,
+      0.7224
+     ],
+     "random_decided": 2043,
+     "random_rate": 0.653,
+     "matched_difference": {
+      "n": 41,
+      "days": 10,
+      "mean": -0.0674,
+      "ci95_days": [
+       -0.1486,
+       0.0333
+      ],
+      "p_le_0": 0.9077
+     },
+     "minutes_to_target_median": 200.0,
+     "minutes_to_target_p75": 330.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 14.96,
+    "mfe_p75": 22.79,
+    "mae_median": 20.85,
+    "mae_p75": 42.29,
+    "share_mfe_ge": {
+     "10": 0.5854,
+     "15": 0.4878,
+     "20": 0.3415
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 41,
+    "agree": 41,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 41,
+    "excluded": 0,
+    "net_r_mean": -0.2697
+   },
+   "verdict": "NO EDGE \u2014 INSUFFICIENT EVIDENCE"
+  },
+  "1h_treatment": {
+   "trades": 4,
+   "gross_r": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.183,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1574,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1574,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 4,
+    "mean_of_trade_means": 0.0482,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1092,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 4,
+    "days": 2,
+    "mean": 0.1092,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 4,
+     "target_first": 4,
+     "rate": 1.0,
+     "wilson95": [
+      0.5101,
+      1.0
+     ],
+     "random_decided": 200,
+     "random_rate": 0.835,
+     "matched_difference": {
+      "n": 4,
+      "days": 2,
+      "mean": 0.165,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 20.0,
+     "minutes_to_target_p75": 76.2
+    },
+    "usd15": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "random_decided": 200,
+     "random_rate": 0.75,
+     "matched_difference": {
+      "n": 4,
+      "days": 2,
+      "mean": 0.0,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 20.0,
+     "minutes_to_target_p75": 160.0
+    },
+    "usd20": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "random_decided": 200,
+     "random_rate": 0.685,
+     "matched_difference": {
+      "n": 4,
+      "days": 2,
+      "mean": 0.065,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 25.0,
+     "minutes_to_target_p75": 172.5
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 47.92,
+    "mfe_p75": 54.22,
+    "mae_median": 24.35,
+    "mae_p75": 44.66,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 0.75,
+     "20": 0.75
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 4,
+    "agree": 4,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 4,
+    "excluded": 0,
+    "net_r_mean": 0.1574
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "30m_challenger": {
+   "trades": 3,
+   "gross_r": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0393,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0393,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 3,
+    "mean_of_trade_means": 0.0513,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0906,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0906,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 3,
+     "target_first": 2,
+     "rate": 0.6667,
+     "wilson95": [
+      0.2077,
+      0.9385
+     ],
+     "random_decided": 150,
+     "random_rate": 0.7533,
+     "matched_difference": {
+      "n": 3,
+      "days": 3,
+      "mean": -0.0867,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 5.0,
+     "minutes_to_target_p75": 5.0
+    },
+    "usd15": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "random_decided": 150,
+     "random_rate": 0.6867,
+     "matched_difference": {
+      "n": 3,
+      "days": 3,
+      "mean": -0.3533,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 70.0,
+     "minutes_to_target_p75": 70.0
+    },
+    "usd20": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "random_decided": 150,
+     "random_rate": 0.58,
+     "matched_difference": {
+      "n": 3,
+      "days": 3,
+      "mean": -0.2467,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 85.0,
+     "minutes_to_target_p75": 85.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 13.13,
+    "mfe_p75": 29.44,
+    "mae_median": 31.79,
+    "mae_p75": 56.71,
+    "share_mfe_ge": {
+     "10": 0.6667,
+     "15": 0.3333,
+     "20": 0.3333
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 3,
+    "agree": 3,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 2,
+    "excluded": 1,
+    "net_r_mean": -1.0511
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "30m_control": {
+   "trades": 2,
+   "gross_r": {
+    "n": 2,
+    "days": 2,
+    "mean": -1.5789,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 2,
+    "days": 2,
+    "mean": -1.6123,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 2,
+    "days": 2,
+    "mean": -1.0334,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 2,
+    "mean_of_trade_means": 0.0639,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 2,
+    "days": 2,
+    "mean": -1.6763,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 2,
+    "days": 2,
+    "mean": -1.0973,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "random_decided": 100,
+     "random_rate": 0.64,
+     "matched_difference": {
+      "n": 2,
+      "days": 2,
+      "mean": -0.14,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 5.0,
+     "minutes_to_target_p75": 5.0
+    },
+    "usd15": {
+     "decided": 2,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576
+     ],
+     "random_decided": 100,
+     "random_rate": 0.58,
+     "matched_difference": {
+      "n": 2,
+      "days": 2,
+      "mean": -0.58,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    },
+    "usd20": {
+     "decided": 2,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.6576
+     ],
+     "random_decided": 100,
+     "random_rate": 0.52,
+     "matched_difference": {
+      "n": 2,
+      "days": 2,
+      "mean": -0.52,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 10.24,
+    "mfe_p75": 11.68,
+    "mae_median": 51.18,
+    "mae_p75": 63.07,
+    "share_mfe_ge": {
+     "10": 0.5,
+     "15": 0.0,
+     "20": 0.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 2,
+    "agree": 1,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T18:00:00+00:00",
+      "exit_reason": "SL_GAP",
+      "recorded_r": -2.1835,
+      "replay_r": -1.0256
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 1,
+    "net_r_mean": -1.0412
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "30m_h2": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0396,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0396,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": 0.0684,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.108,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.1079,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.74,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.26,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 10.0,
+     "minutes_to_target_p75": 10.0
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.64,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.36,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 15.0,
+     "minutes_to_target_p75": 15.0
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "random_decided": 50,
+     "random_rate": 0.54,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": -0.54,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 18.08,
+    "mfe_p75": 18.08,
+    "mae_median": 38.16,
+    "mae_p75": 38.16,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 1.0,
+     "20": 0.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": -1.0396
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "30m_h3": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.0,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.048,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": -1.048,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": -0.1406,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -0.9074,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": -0.9074,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "random_decided": 50,
+     "random_rate": 0.68,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": -0.68,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "random_decided": 50,
+     "random_rate": 0.56,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": -0.56,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 0,
+     "rate": 0.0,
+     "wilson95": [
+      0.0,
+      0.7935
+     ],
+     "random_decided": 50,
+     "random_rate": 0.48,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": -0.48,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": null,
+     "minutes_to_target_p75": null
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 1.9,
+    "mfe_p75": 1.9,
+    "mae_median": 61.66,
+    "mae_p75": 61.66,
+    "share_mfe_ge": {
+     "10": 0.0,
+     "15": 0.0,
+     "20": 0.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": -1.048
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "30m_h4": {
+   "trades": 76,
+   "gross_r": {
+    "n": 76,
+    "days": 10,
+    "mean": 0.0566,
+    "ci95_days": [
+     -0.1303,
+     0.3213
+    ],
+    "p_le_0": 0.302
+   },
+   "net_r_modelled_cost": {
+    "n": 76,
+    "days": 10,
+    "mean": 0.0147,
+    "ci95_days": [
+     -0.176,
+     0.2854
+    ],
+    "p_le_0": 0.4375
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 76,
+    "days": 10,
+    "mean": 0.0147,
+    "ci95_days": [
+     -0.1763,
+     0.2861
+    ],
+    "p_le_0": 0.456
+   },
+   "matched_random_r": {
+    "trades_with_matches": 76,
+    "mean_of_trade_means": -0.0507,
+    "matches_per_trade_mean": 49.6
+   },
+   "recorded_minus_random": {
+    "n": 76,
+    "days": 10,
+    "mean": 0.0654,
+    "ci95_days": [
+     -0.1245,
+     0.3289
+    ],
+    "p_le_0": 0.266,
+    "p_holm": 1.0,
+    "p_bh": 0.9825
+   },
+   "replay_minus_random": {
+    "n": 76,
+    "days": 10,
+    "mean": 0.0654,
+    "ci95_days": [
+     -0.1265,
+     0.3413
+    ],
+    "p_le_0": 0.273
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 76,
+     "target_first": 53,
+     "rate": 0.6974,
+     "wilson95": [
+      0.5867,
+      0.7891
+     ],
+     "random_decided": 3786,
+     "random_rate": 0.6783,
+     "matched_difference": {
+      "n": 76,
+      "days": 10,
+      "mean": 0.0189,
+      "ci95_days": [
+       -0.0493,
+       0.1222
+      ],
+      "p_le_0": 0.3172
+     },
+     "minutes_to_target_median": 45.0,
+     "minutes_to_target_p75": 110.0
+    },
+    "usd15": {
+     "decided": 76,
+     "target_first": 48,
+     "rate": 0.6316,
+     "wilson95": [
+      0.5193,
+      0.7312
+     ],
+     "random_decided": 3785,
+     "random_rate": 0.5889,
+     "matched_difference": {
+      "n": 76,
+      "days": 10,
+      "mean": 0.0426,
+      "ci95_days": [
+       -0.0301,
+       0.1336
+      ],
+      "p_le_0": 0.1318
+     },
+     "minutes_to_target_median": 95.0,
+     "minutes_to_target_p75": 210.0
+    },
+    "usd20": {
+     "decided": 76,
+     "target_first": 41,
+     "rate": 0.5395,
+     "wilson95": [
+      0.4282,
+      0.6469
+     ],
+     "random_decided": 3783,
+     "random_rate": 0.5297,
+     "matched_difference": {
+      "n": 76,
+      "days": 10,
+      "mean": 0.0097,
+      "ci95_days": [
+       -0.0536,
+       0.0956
+      ],
+      "p_le_0": 0.3987
+     },
+     "minutes_to_target_median": 115.0,
+     "minutes_to_target_p75": 295.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 11.64,
+    "mfe_p75": 28.04,
+    "mae_median": 11.18,
+    "mae_p75": 17.23,
+    "share_mfe_ge": {
+     "10": 0.5921,
+     "15": 0.4211,
+     "20": 0.3158
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 76,
+    "agree": 76,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 75,
+    "excluded": 1,
+    "net_r_mean": -0.0098
+   },
+   "verdict": "NO EDGE \u2014 INSUFFICIENT EVIDENCE"
+  },
+  "30m_treatment": {
+   "trades": 3,
+   "gross_r": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0393,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.0393,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 3,
+    "mean_of_trade_means": 0.2052,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.2444,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 3,
+    "days": 3,
+    "mean": -1.2444,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 3,
+     "target_first": 2,
+     "rate": 0.6667,
+     "wilson95": [
+      0.2077,
+      0.9385
+     ],
+     "random_decided": 150,
+     "random_rate": 0.76,
+     "matched_difference": {
+      "n": 3,
+      "days": 3,
+      "mean": -0.0933,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 5.0,
+     "minutes_to_target_p75": 5.0
+    },
+    "usd15": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "random_decided": 150,
+     "random_rate": 0.7267,
+     "matched_difference": {
+      "n": 3,
+      "days": 3,
+      "mean": -0.3933,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 70.0,
+     "minutes_to_target_p75": 70.0
+    },
+    "usd20": {
+     "decided": 3,
+     "target_first": 1,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0615,
+      0.7923
+     ],
+     "random_decided": 150,
+     "random_rate": 0.6733,
+     "matched_difference": {
+      "n": 3,
+      "days": 3,
+      "mean": -0.34,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 85.0,
+     "minutes_to_target_p75": 85.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 13.13,
+    "mfe_p75": 29.44,
+    "mae_median": 31.79,
+    "mae_p75": 56.71,
+    "share_mfe_ge": {
+     "10": 0.6667,
+     "15": 0.3333,
+     "20": 0.3333
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 3,
+    "agree": 3,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 2,
+    "excluded": 1,
+    "net_r_mean": -1.0511
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "4h_challenger": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.5,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4873,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4873,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": 0.0597,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4276,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4276,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.94,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.06,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 35.0,
+     "minutes_to_target_p75": 35.0
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.84,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.16,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 40.0
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.8,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.2,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 40.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 162.39,
+    "mfe_p75": 162.39,
+    "mae_median": 2.66,
+    "mae_p75": 2.66,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 1.0,
+     "20": 1.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": 1.4873
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "4h_h4": {
+   "trades": 8,
+   "gross_r": {
+    "n": 8,
+    "days": 7,
+    "mean": 0.4428,
+    "ci95_days": [
+     -0.0644,
+     1.0367
+    ],
+    "p_le_0": 0.0475
+   },
+   "net_r_modelled_cost": {
+    "n": 8,
+    "days": 7,
+    "mean": 0.4316,
+    "ci95_days": [
+     -0.0628,
+     1.0584
+    ],
+    "p_le_0": 0.0455
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 8,
+    "days": 7,
+    "mean": 0.4315,
+    "ci95_days": [
+     -0.0581,
+     1.0585
+    ],
+    "p_le_0": 0.0455
+   },
+   "matched_random_r": {
+    "trades_with_matches": 8,
+    "mean_of_trade_means": 0.0604,
+    "matches_per_trade_mean": 49.2
+   },
+   "recorded_minus_random": {
+    "n": 8,
+    "days": 7,
+    "mean": 0.3711,
+    "ci95_days": [
+     -0.0219,
+     0.842
+    ],
+    "p_le_0": 0.0315
+   },
+   "replay_minus_random": {
+    "n": 8,
+    "days": 7,
+    "mean": 0.3711,
+    "ci95_days": [
+     -0.0268,
+     0.8419
+    ],
+    "p_le_0": 0.0352
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 8,
+     "target_first": 8,
+     "rate": 1.0,
+     "wilson95": [
+      0.6756,
+      1.0
+     ],
+     "random_decided": 398,
+     "random_rate": 0.907,
+     "matched_difference": {
+      "n": 8,
+      "days": 7,
+      "mean": 0.0927,
+      "ci95_days": [
+       0.0377,
+       0.1657
+      ],
+      "p_le_0": 0.0
+     },
+     "minutes_to_target_median": 42.5,
+     "minutes_to_target_p75": 61.2
+    },
+    "usd15": {
+     "decided": 8,
+     "target_first": 8,
+     "rate": 1.0,
+     "wilson95": [
+      0.6756,
+      1.0
+     ],
+     "random_decided": 397,
+     "random_rate": 0.8841,
+     "matched_difference": {
+      "n": 8,
+      "days": 7,
+      "mean": 0.1155,
+      "ci95_days": [
+       0.059,
+       0.1887
+      ],
+      "p_le_0": 0.0
+     },
+     "minutes_to_target_median": 90.0,
+     "minutes_to_target_p75": 165.0
+    },
+    "usd20": {
+     "decided": 8,
+     "target_first": 8,
+     "rate": 1.0,
+     "wilson95": [
+      0.6756,
+      1.0
+     ],
+     "random_decided": 396,
+     "random_rate": 0.8561,
+     "matched_difference": {
+      "n": 8,
+      "days": 7,
+      "mean": 0.1431,
+      "ci95_days": [
+       0.0732,
+       0.2356
+      ],
+      "p_le_0": 0.0
+     },
+     "minutes_to_target_median": 147.5,
+     "minutes_to_target_p75": 260.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 76.33,
+    "mfe_p75": 91.12,
+    "mae_median": 24.7,
+    "mae_p75": 44.46,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 1.0,
+     "20": 1.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 8,
+    "agree": 8,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 7,
+    "excluded": 1,
+    "net_r_mean": 0.5391
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "4h_treatment": {
+   "trades": 1,
+   "gross_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.5,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4873,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.4873,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 1,
+    "mean_of_trade_means": 0.0945,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.3928,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 1,
+    "days": 1,
+    "mean": 1.3928,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.96,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.04,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 35.0,
+     "minutes_to_target_p75": 35.0
+    },
+    "usd15": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.94,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.06,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 40.0
+    },
+    "usd20": {
+     "decided": 1,
+     "target_first": 1,
+     "rate": 1.0,
+     "wilson95": [
+      0.2065,
+      1.0
+     ],
+     "random_decided": 50,
+     "random_rate": 0.84,
+     "matched_difference": {
+      "n": 1,
+      "days": 1,
+      "mean": 0.16,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 40.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 162.39,
+    "mfe_p75": 162.39,
+    "mae_median": 2.66,
+    "mae_p75": 2.66,
+    "share_mfe_ge": {
+     "10": 1.0,
+     "15": 1.0,
+     "20": 1.0
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 1,
+    "agree": 1,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 1,
+    "excluded": 0,
+    "net_r_mean": 1.4873
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "5m_challenger": {
+   "trades": 13,
+   "gross_r": {
+    "n": 13,
+    "days": 7,
+    "mean": 0.2098,
+    "ci95_days": [
+     -0.5948,
+     1.309
+    ],
+    "p_le_0": 0.3147
+   },
+   "net_r_modelled_cost": {
+    "n": 13,
+    "days": 7,
+    "mean": 0.099,
+    "ci95_days": [
+     -0.7396,
+     1.1876
+    ],
+    "p_le_0": 0.4235
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 13,
+    "days": 7,
+    "mean": 0.1219,
+    "ci95_days": [
+     -0.7141,
+     1.3487
+    ],
+    "p_le_0": 0.4065
+   },
+   "matched_random_r": {
+    "trades_with_matches": 13,
+    "mean_of_trade_means": 0.0815,
+    "matches_per_trade_mean": 49.8
+   },
+   "recorded_minus_random": {
+    "n": 13,
+    "days": 7,
+    "mean": 0.0174,
+    "ci95_days": [
+     -0.8353,
+     1.1352
+    ],
+    "p_le_0": 0.4845
+   },
+   "replay_minus_random": {
+    "n": 13,
+    "days": 7,
+    "mean": 0.0404,
+    "ci95_days": [
+     -0.8747,
+     1.2215
+    ],
+    "p_le_0": 0.462
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 13,
+     "target_first": 8,
+     "rate": 0.6154,
+     "wilson95": [
+      0.3552,
+      0.8229
+     ],
+     "random_decided": 648,
+     "random_rate": 0.5031,
+     "matched_difference": {
+      "n": 13,
+      "days": 7,
+      "mean": 0.1128,
+      "ci95_days": [
+       -0.1973,
+       0.4478
+      ],
+      "p_le_0": 0.2035
+     },
+     "minutes_to_target_median": 25.0,
+     "minutes_to_target_p75": 55.0
+    },
+    "usd15": {
+     "decided": 13,
+     "target_first": 8,
+     "rate": 0.6154,
+     "wilson95": [
+      0.3552,
+      0.8229
+     ],
+     "random_decided": 647,
+     "random_rate": 0.4312,
+     "matched_difference": {
+      "n": 13,
+      "days": 7,
+      "mean": 0.184,
+      "ci95_days": [
+       -0.1151,
+       0.5046
+      ],
+      "p_le_0": 0.114
+     },
+     "minutes_to_target_median": 45.0,
+     "minutes_to_target_p75": 80.0
+    },
+    "usd20": {
+     "decided": 13,
+     "target_first": 6,
+     "rate": 0.4615,
+     "wilson95": [
+      0.2321,
+      0.7086
+     ],
+     "random_decided": 647,
+     "random_rate": 0.3988,
+     "matched_difference": {
+      "n": 13,
+      "days": 7,
+      "mean": 0.0626,
+      "ci95_days": [
+       -0.2758,
+       0.4465
+      ],
+      "p_le_0": 0.3535
+     },
+     "minutes_to_target_median": 52.5,
+     "minutes_to_target_p75": 78.8
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 15.58,
+    "mfe_p75": 22.92,
+    "mae_median": 6.69,
+    "mae_p75": 15.37,
+    "share_mfe_ge": {
+     "10": 0.5385,
+     "15": 0.5385,
+     "20": 0.3077
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 13,
+    "agree": 11,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-17T13:10:00+00:00",
+      "exit_reason": "BE",
+      "recorded_r": 0.2494,
+      "replay_r": -0.3908
+     },
+     {
+      "entry_time": "2026-11-20T16:05:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.2802,
+      "replay_r": 1.2189
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 12,
+    "excluded": 1,
+    "net_r_mean": 0.0839
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "5m_control": {
+   "trades": 2,
+   "gross_r": {
+    "n": 2,
+    "days": 2,
+    "mean": 0.4728,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 2,
+    "days": 2,
+    "mean": 0.4036,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 2,
+    "days": 2,
+    "mean": 0.4037,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 2,
+    "mean_of_trade_means": 0.0039,
+    "matches_per_trade_mean": 49.0
+   },
+   "recorded_minus_random": {
+    "n": 2,
+    "days": 2,
+    "mean": 0.3997,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 2,
+    "days": 2,
+    "mean": 0.3998,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "random_decided": 98,
+     "random_rate": 0.6531,
+     "matched_difference": {
+      "n": 2,
+      "days": 2,
+      "mean": -0.1479,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 25.0,
+     "minutes_to_target_p75": 25.0
+    },
+    "usd15": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "random_decided": 97,
+     "random_rate": 0.5979,
+     "matched_difference": {
+      "n": 2,
+      "days": 2,
+      "mean": -0.0948,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 30.0,
+     "minutes_to_target_p75": 30.0
+    },
+    "usd20": {
+     "decided": 2,
+     "target_first": 1,
+     "rate": 0.5,
+     "wilson95": [
+      0.0945,
+      0.9055
+     ],
+     "random_decided": 97,
+     "random_rate": 0.5464,
+     "matched_difference": {
+      "n": 2,
+      "days": 2,
+      "mean": -0.0432,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 30.0,
+     "minutes_to_target_p75": 30.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 14.7,
+    "mfe_p75": 20.13,
+    "mae_median": 23.68,
+    "mae_p75": 34.03,
+    "share_mfe_ge": {
+     "10": 0.5,
+     "15": 0.5,
+     "20": 0.5
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 2,
+    "agree": 2,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 2,
+    "excluded": 0,
+    "net_r_mean": 0.4036
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "5m_h2": {
+   "trades": 4,
+   "gross_r": {
+    "n": 4,
+    "days": 3,
+    "mean": -0.4437,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 4,
+    "days": 3,
+    "mean": -0.5032,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 4,
+    "days": 3,
+    "mean": -0.5032,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 4,
+    "mean_of_trade_means": -0.1997,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 4,
+    "days": 3,
+    "mean": -0.3035,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 4,
+    "days": 3,
+    "mean": -0.3035,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 4,
+     "target_first": 3,
+     "rate": 0.75,
+     "wilson95": [
+      0.3006,
+      0.9544
+     ],
+     "random_decided": 200,
+     "random_rate": 0.55,
+     "matched_difference": {
+      "n": 4,
+      "days": 3,
+      "mean": 0.2,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 15.0,
+     "minutes_to_target_p75": 35.0
+    },
+    "usd15": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "random_decided": 200,
+     "random_rate": 0.465,
+     "matched_difference": {
+      "n": 4,
+      "days": 3,
+      "mean": 0.035,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 55.0,
+     "minutes_to_target_p75": 70.0
+    },
+    "usd20": {
+     "decided": 4,
+     "target_first": 2,
+     "rate": 0.5,
+     "wilson95": [
+      0.15,
+      0.85
+     ],
+     "random_decided": 200,
+     "random_rate": 0.41,
+     "matched_difference": {
+      "n": 4,
+      "days": 3,
+      "mean": 0.09,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 55.0,
+     "minutes_to_target_p75": 70.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 11.48,
+    "mfe_p75": 18.58,
+    "mae_median": 21.7,
+    "mae_p75": 29.24,
+    "share_mfe_ge": {
+     "10": 0.5,
+     "15": 0.25,
+     "20": 0.25
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 4,
+    "agree": 4,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 4,
+    "excluded": 0,
+    "net_r_mean": -0.5032
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "5m_h3": {
+   "trades": 9,
+   "gross_r": {
+    "n": 9,
+    "days": 5,
+    "mean": 0.7977,
+    "ci95_days": [
+     -0.5383,
+     2.7796
+    ],
+    "p_le_0": 0.1035
+   },
+   "net_r_modelled_cost": {
+    "n": 9,
+    "days": 5,
+    "mean": 0.6198,
+    "ci95_days": [
+     -0.7264,
+     2.6136
+    ],
+    "p_le_0": 0.1867
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 9,
+    "days": 5,
+    "mean": 0.6198,
+    "ci95_days": [
+     -0.7264,
+     2.6115
+    ],
+    "p_le_0": 0.1945
+   },
+   "matched_random_r": {
+    "trades_with_matches": 9,
+    "mean_of_trade_means": 0.0041,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 9,
+    "days": 5,
+    "mean": 0.6157,
+    "ci95_days": [
+     -0.8493,
+     2.5816
+    ],
+    "p_le_0": 0.1983
+   },
+   "replay_minus_random": {
+    "n": 9,
+    "days": 5,
+    "mean": 0.6157,
+    "ci95_days": [
+     -0.7471,
+     2.6838
+    ],
+    "p_le_0": 0.1965
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 9,
+     "target_first": 6,
+     "rate": 0.6667,
+     "wilson95": [
+      0.3542,
+      0.8794
+     ],
+     "random_decided": 450,
+     "random_rate": 0.4244,
+     "matched_difference": {
+      "n": 9,
+      "days": 5,
+      "mean": 0.2422,
+      "ci95_days": [
+       0.0029,
+       0.4657
+      ],
+      "p_le_0": 0.0245
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 61.2
+    },
+    "usd15": {
+     "decided": 9,
+     "target_first": 4,
+     "rate": 0.4444,
+     "wilson95": [
+      0.1888,
+      0.7333
+     ],
+     "random_decided": 450,
+     "random_rate": 0.3333,
+     "matched_difference": {
+      "n": 9,
+      "days": 5,
+      "mean": 0.1111,
+      "ci95_days": [
+       -0.188,
+       0.3533
+      ],
+      "p_le_0": 0.2225
+     },
+     "minutes_to_target_median": 120.0,
+     "minutes_to_target_p75": 156.2
+    },
+    "usd20": {
+     "decided": 9,
+     "target_first": 4,
+     "rate": 0.4444,
+     "wilson95": [
+      0.1888,
+      0.7333
+     ],
+     "random_decided": 450,
+     "random_rate": 0.2822,
+     "matched_difference": {
+      "n": 9,
+      "days": 5,
+      "mean": 0.1622,
+      "ci95_days": [
+       -0.1371,
+       0.4382
+      ],
+      "p_le_0": 0.1182
+     },
+     "minutes_to_target_median": 152.5,
+     "minutes_to_target_p75": 205.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 11.19,
+    "mfe_p75": 29.15,
+    "mae_median": 8.48,
+    "mae_p75": 10.27,
+    "share_mfe_ge": {
+     "10": 0.6667,
+     "15": 0.4444,
+     "20": 0.3333
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 9,
+    "agree": 9,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 9,
+    "excluded": 0,
+    "net_r_mean": 0.6198
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "5m_h4": {
+   "trades": 454,
+   "gross_r": {
+    "n": 454,
+    "days": 10,
+    "mean": -0.0438,
+    "ci95_days": [
+     -0.1051,
+     0.0248
+    ],
+    "p_le_0": 0.8905
+   },
+   "net_r_modelled_cost": {
+    "n": 454,
+    "days": 10,
+    "mean": -0.1483,
+    "ci95_days": [
+     -0.213,
+     -0.0735
+    ],
+    "p_le_0": 1.0
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 454,
+    "days": 10,
+    "mean": -0.1544,
+    "ci95_days": [
+     -0.2224,
+     -0.08
+    ],
+    "p_le_0": 1.0
+   },
+   "matched_random_r": {
+    "trades_with_matches": 454,
+    "mean_of_trade_means": -0.0968,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 454,
+    "days": 10,
+    "mean": -0.0515,
+    "ci95_days": [
+     -0.1165,
+     0.0207
+    ],
+    "p_le_0": 0.9223,
+    "p_holm": 1.0,
+    "p_bh": 0.9825
+   },
+   "replay_minus_random": {
+    "n": 454,
+    "days": 10,
+    "mean": -0.0577,
+    "ci95_days": [
+     -0.127,
+     0.0155
+    ],
+    "p_le_0": 0.9375
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 454,
+     "target_first": 207,
+     "rate": 0.4559,
+     "wilson95": [
+      0.4107,
+      0.5019
+     ],
+     "random_decided": 22677,
+     "random_rate": 0.4884,
+     "matched_difference": {
+      "n": 454,
+      "days": 10,
+      "mean": -0.0325,
+      "ci95_days": [
+       -0.082,
+       0.0056
+      ],
+      "p_le_0": 0.9433
+     },
+     "minutes_to_target_median": 35.0,
+     "minutes_to_target_p75": 70.0
+    },
+    "usd15": {
+     "decided": 454,
+     "target_first": 172,
+     "rate": 0.3789,
+     "wilson95": [
+      0.3354,
+      0.4243
+     ],
+     "random_decided": 22674,
+     "random_rate": 0.3916,
+     "matched_difference": {
+      "n": 454,
+      "days": 10,
+      "mean": -0.0128,
+      "ci95_days": [
+       -0.0642,
+       0.0339
+      ],
+      "p_le_0": 0.6917
+     },
+     "minutes_to_target_median": 55.0,
+     "minutes_to_target_p75": 121.2
+    },
+    "usd20": {
+     "decided": 454,
+     "target_first": 147,
+     "rate": 0.3238,
+     "wilson95": [
+      0.2824,
+      0.3682
+     ],
+     "random_decided": 22672,
+     "random_rate": 0.3324,
+     "matched_difference": {
+      "n": 454,
+      "days": 10,
+      "mean": -0.0086,
+      "ci95_days": [
+       -0.0566,
+       0.0427
+      ],
+      "p_le_0": 0.6488
+     },
+     "minutes_to_target_median": 90.0,
+     "minutes_to_target_p75": 160.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 4.46,
+    "mfe_p75": 8.85,
+    "mae_median": 4.34,
+    "mae_p75": 7.42,
+    "share_mfe_ge": {
+     "10": 0.2137,
+     "15": 0.1256,
+     "20": 0.0661
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 454,
+    "agree": 443,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-16T03:20:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.839,
+      "replay_r": -0.9174
+     },
+     {
+      "entry_time": "2026-11-16T12:15:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.5717,
+      "replay_r": -0.9222
+     },
+     {
+      "entry_time": "2026-11-16T13:35:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.2277,
+      "replay_r": -0.1477
+     },
+     {
+      "entry_time": "2026-11-16T15:40:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.2693,
+      "replay_r": -0.3317
+     },
+     {
+      "entry_time": "2026-11-17T03:05:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.5321,
+      "replay_r": -0.3564
+     },
+     {
+      "entry_time": "2026-11-17T04:35:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": 0.9074,
+      "replay_r": 0.8066
+     },
+     {
+      "entry_time": "2026-11-17T16:20:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": 0.9045,
+      "replay_r": 0.8795
+     },
+     {
+      "entry_time": "2026-11-17T20:35:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.0749,
+      "replay_r": 0.0378
+     },
+     {
+      "entry_time": "2026-11-18T03:20:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.1878,
+      "replay_r": -0.1008
+     },
+     {
+      "entry_time": "2026-11-20T21:45:00+00:00",
+      "exit_reason": "SL",
+      "recorded_r": 1.6118,
+      "replay_r": -1.098
+     },
+     {
+      "entry_time": "2026-11-26T20:15:00+00:00",
+      "exit_reason": "SL_GAP",
+      "recorded_r": -1.8584,
+      "replay_r": -1.7754
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 453,
+    "excluded": 1,
+    "net_r_mean": -0.1522
+   },
+   "verdict": "NO EDGE \u2014 INSUFFICIENT EVIDENCE"
+  },
+  "5m_h5": {
+   "trades": 7,
+   "gross_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.5792,
+    "ci95_days": [
+     -1.0,
+     0.4728
+    ],
+    "p_le_0": 0.907
+   },
+   "net_r_modelled_cost": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.686,
+    "ci95_days": [
+     -1.117,
+     0.366
+    ],
+    "p_le_0": 0.9227
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.6859,
+    "ci95_days": [
+     -1.117,
+     0.3678
+    ],
+    "p_le_0": 0.9137
+   },
+   "matched_random_r": {
+    "trades_with_matches": 7,
+    "mean_of_trade_means": 0.0316,
+    "matches_per_trade_mean": 49.6
+   },
+   "recorded_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.7176,
+    "ci95_days": [
+     -1.2512,
+     0.4558
+    ],
+    "p_le_0": 0.9123
+   },
+   "replay_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.7176,
+    "ci95_days": [
+     -1.2512,
+     0.4558
+    ],
+    "p_le_0": 0.9215
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 7,
+     "target_first": 2,
+     "rate": 0.2857,
+     "wilson95": [
+      0.0822,
+      0.6411
+     ],
+     "random_decided": 347,
+     "random_rate": 0.5331,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.2492,
+      "ci95_days": [
+       -0.6214,
+       0.184
+      ],
+      "p_le_0": 0.8575
+     },
+     "minutes_to_target_median": 45.0,
+     "minutes_to_target_p75": 55.0
+    },
+    "usd15": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "random_decided": 347,
+     "random_rate": 0.4524,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.3116,
+      "ci95_days": [
+       -0.5364,
+       0.152
+      ],
+      "p_le_0": 0.9175
+     },
+     "minutes_to_target_median": 30.0,
+     "minutes_to_target_p75": 30.0
+    },
+    "usd20": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "random_decided": 346,
+     "random_rate": 0.3844,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.2448,
+      "ci95_days": [
+       -0.4615,
+       0.2122
+      ],
+      "p_le_0": 0.8755
+     },
+     "minutes_to_target_median": 30.0,
+     "minutes_to_target_p75": 30.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 2.36,
+    "mfe_p75": 9.25,
+    "mae_median": 6.69,
+    "mae_p75": 8.9,
+    "share_mfe_ge": {
+     "10": 0.2857,
+     "15": 0.1429,
+     "20": 0.1429
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 7,
+    "agree": 7,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 7,
+    "excluded": 0,
+    "net_r_mean": -0.686
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  },
+  "5m_treatment": {
+   "trades": 17,
+   "gross_r": {
+    "n": 17,
+    "days": 8,
+    "mean": -0.1038,
+    "ci95_days": [
+     -0.7644,
+     0.681
+    ],
+    "p_le_0": 0.6245
+   },
+   "net_r_modelled_cost": {
+    "n": 17,
+    "days": 8,
+    "mean": -0.2139,
+    "ci95_days": [
+     -0.8966,
+     0.5902
+    ],
+    "p_le_0": 0.7318
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 17,
+    "days": 8,
+    "mean": -0.1963,
+    "ci95_days": [
+     -0.8355,
+     0.5572
+    ],
+    "p_le_0": 0.72
+   },
+   "matched_random_r": {
+    "trades_with_matches": 17,
+    "mean_of_trade_means": -0.0712,
+    "matches_per_trade_mean": 49.9
+   },
+   "recorded_minus_random": {
+    "n": 17,
+    "days": 8,
+    "mean": -0.1427,
+    "ci95_days": [
+     -0.8162,
+     0.6696
+    ],
+    "p_le_0": 0.6475
+   },
+   "replay_minus_random": {
+    "n": 17,
+    "days": 8,
+    "mean": -0.1251,
+    "ci95_days": [
+     -0.7649,
+     0.6934
+    ],
+    "p_le_0": 0.6498
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 17,
+     "target_first": 8,
+     "rate": 0.4706,
+     "wilson95": [
+      0.2617,
+      0.6904
+     ],
+     "random_decided": 846,
+     "random_rate": 0.461,
+     "matched_difference": {
+      "n": 17,
+      "days": 8,
+      "mean": 0.0105,
+      "ci95_days": [
+       -0.2903,
+       0.2322
+      ],
+      "p_le_0": 0.482
+     },
+     "minutes_to_target_median": 25.0,
+     "minutes_to_target_p75": 36.2
+    },
+    "usd15": {
+     "decided": 17,
+     "target_first": 8,
+     "rate": 0.4706,
+     "wilson95": [
+      0.2617,
+      0.6904
+     ],
+     "random_decided": 845,
+     "random_rate": 0.3941,
+     "matched_difference": {
+      "n": 17,
+      "days": 8,
+      "mean": 0.0769,
+      "ci95_days": [
+       -0.2231,
+       0.31
+      ],
+      "p_le_0": 0.3038
+     },
+     "minutes_to_target_median": 30.0,
+     "minutes_to_target_p75": 65.0
+    },
+    "usd20": {
+     "decided": 17,
+     "target_first": 6,
+     "rate": 0.3529,
+     "wilson95": [
+      0.1731,
+      0.587
+     ],
+     "random_decided": 845,
+     "random_rate": 0.3385,
+     "matched_difference": {
+      "n": 17,
+      "days": 8,
+      "mean": 0.0148,
+      "ci95_days": [
+       -0.2334,
+       0.2355
+      ],
+      "p_le_0": 0.4512
+     },
+     "minutes_to_target_median": 32.5,
+     "minutes_to_target_p75": 65.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 4.82,
+    "mfe_p75": 15.58,
+    "mae_median": 6.69,
+    "mae_p75": 15.37,
+    "share_mfe_ge": {
+     "10": 0.4118,
+     "15": 0.3529,
+     "20": 0.1765
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 17,
+    "agree": 15,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-17T13:10:00+00:00",
+      "exit_reason": "BE",
+      "recorded_r": 0.2494,
+      "replay_r": -0.3908
+     },
+     {
+      "entry_time": "2026-11-20T16:05:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.2802,
+      "replay_r": 1.2189
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 16,
+    "excluded": 1,
+    "net_r_mean": -0.2447
+   },
+   "verdict": "INSUFFICIENT SAMPLE"
+  }
+ },
+ "arms": {
+  "challenger": {
+   "trades": 28,
+   "gross_r": {
+    "n": 28,
+    "days": 8,
+    "mean": 0.048,
+    "ci95_days": [
+     -0.4614,
+     0.6916
+    ],
+    "p_le_0": 0.4205
+   },
+   "net_r_modelled_cost": {
+    "n": 28,
+    "days": 8,
+    "mean": -0.0245,
+    "ci95_days": [
+     -0.5374,
+     0.6537
+    ],
+    "p_le_0": 0.5305
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 28,
+    "days": 8,
+    "mean": -0.0028,
+    "ci95_days": [
+     -0.5326,
+     0.6168
+    ],
+    "p_le_0": 0.5025
+   },
+   "matched_random_r": {
+    "trades_with_matches": 28,
+    "mean_of_trade_means": 0.062,
+    "matches_per_trade_mean": 49.9
+   },
+   "recorded_minus_random": {
+    "n": 28,
+    "days": 8,
+    "mean": -0.0865,
+    "ci95_days": [
+     -0.5752,
+     0.566
+    ],
+    "p_le_0": 0.6395
+   },
+   "replay_minus_random": {
+    "n": 28,
+    "days": 8,
+    "mean": -0.0647,
+    "ci95_days": [
+     -0.5697,
+     0.5647
+    ],
+    "p_le_0": 0.5793
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 28,
+     "target_first": 19,
+     "rate": 0.6786,
+     "wilson95": [
+      0.4934,
+      0.8207
+     ],
+     "random_decided": 1397,
+     "random_rate": 0.6285,
+     "matched_difference": {
+      "n": 28,
+      "days": 8,
+      "mean": 0.0503,
+      "ci95_days": [
+       -0.0575,
+       0.1745
+      ],
+      "p_le_0": 0.1568
+     },
+     "minutes_to_target_median": 20.0,
+     "minutes_to_target_p75": 42.5
+    },
+    "usd15": {
+     "decided": 28,
+     "target_first": 16,
+     "rate": 0.5714,
+     "wilson95": [
+      0.3907,
+      0.7349
+     ],
+     "random_decided": 1395,
+     "random_rate": 0.5513,
+     "matched_difference": {
+      "n": 28,
+      "days": 8,
+      "mean": 0.0202,
+      "ci95_days": [
+       -0.1777,
+       0.2134
+      ],
+      "p_le_0": 0.3982
+     },
+     "minutes_to_target_median": 50.0,
+     "minutes_to_target_p75": 81.2
+    },
+    "usd20": {
+     "decided": 28,
+     "target_first": 14,
+     "rate": 0.5,
+     "wilson95": [
+      0.3263,
+      0.6737
+     ],
+     "random_decided": 1395,
+     "random_rate": 0.4925,
+     "matched_difference": {
+      "n": 28,
+      "days": 8,
+      "mean": 0.0076,
+      "ci95_days": [
+       -0.2131,
+       0.2421
+      ],
+      "p_le_0": 0.4685
+     },
+     "minutes_to_target_median": 57.5,
+     "minutes_to_target_p75": 88.8
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 14.45,
+    "mfe_p75": 42.99,
+    "mae_median": 14.36,
+    "mae_p75": 23.03,
+    "share_mfe_ge": {
+     "10": 0.6429,
+     "15": 0.5,
+     "20": 0.3929
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 28,
+    "agree": 25,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T15:00:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.8388,
+      "replay_r": 1.1483
+     },
+     {
+      "entry_time": "2026-11-17T13:10:00+00:00",
+      "exit_reason": "BE",
+      "recorded_r": 0.2494,
+      "replay_r": -0.3908
+     },
+     {
+      "entry_time": "2026-11-20T16:05:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.2802,
+      "replay_r": 1.2189
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 25,
+    "excluded": 3,
+    "net_r_mean": -0.0316
+   }
+  },
+  "control": {
+   "trades": 6,
+   "gross_r": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.2998,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.3447,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.1517,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 6,
+    "mean_of_trade_means": 0.0306,
+    "matches_per_trade_mean": 49.7
+   },
+   "recorded_minus_random": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.3753,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.1823,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 6,
+     "target_first": 4,
+     "rate": 0.6667,
+     "wilson95": [
+      0.3,
+      0.9032
+     ],
+     "random_decided": 298,
+     "random_rate": 0.6946,
+     "matched_difference": {
+      "n": 6,
+      "days": 4,
+      "mean": -0.026,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 20.0,
+     "minutes_to_target_p75": 80.0
+    },
+    "usd15": {
+     "decided": 6,
+     "target_first": 2,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0968,
+      0.7
+     ],
+     "random_decided": 297,
+     "random_rate": 0.633,
+     "matched_difference": {
+      "n": 6,
+      "days": 4,
+      "mean": -0.2983,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 165.0,
+     "minutes_to_target_p75": 232.5
+    },
+    "usd20": {
+     "decided": 6,
+     "target_first": 2,
+     "rate": 0.3333,
+     "wilson95": [
+      0.0968,
+      0.7
+     ],
+     "random_decided": 297,
+     "random_rate": 0.5724,
+     "matched_difference": {
+      "n": 6,
+      "days": 4,
+      "mean": -0.2377,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 175.0,
+     "minutes_to_target_p75": 247.5
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 12.16,
+    "mfe_p75": 22.45,
+    "mae_median": 24.53,
+    "mae_p75": 40.14,
+    "share_mfe_ge": {
+     "10": 0.6667,
+     "15": 0.3333,
+     "20": 0.3333
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 6,
+    "agree": 5,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T18:00:00+00:00",
+      "exit_reason": "SL_GAP",
+      "recorded_r": -2.1835,
+      "replay_r": -1.0256
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 5,
+    "excluded": 1,
+    "net_r_mean": 0.0231
+   }
+  },
+  "h2": {
+   "trades": 6,
+   "gross_r": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.2929,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_modelled_cost": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.3482,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.3481,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "matched_random_r": {
+    "trades_with_matches": 6,
+    "mean_of_trade_means": -0.1321,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.216,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "replay_minus_random": {
+    "n": 6,
+    "days": 4,
+    "mean": -0.216,
+    "ci95_days": null,
+    "p_le_0": null
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 6,
+     "target_first": 5,
+     "rate": 0.8333,
+     "wilson95": [
+      0.4365,
+      0.9699
+     ],
+     "random_decided": 300,
+     "random_rate": 0.58,
+     "matched_difference": {
+      "n": 6,
+      "days": 4,
+      "mean": 0.2533,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 15.0,
+     "minutes_to_target_p75": 55.0
+    },
+    "usd15": {
+     "decided": 6,
+     "target_first": 4,
+     "rate": 0.6667,
+     "wilson95": [
+      0.3,
+      0.9032
+     ],
+     "random_decided": 300,
+     "random_rate": 0.4867,
+     "matched_difference": {
+      "n": 6,
+      "days": 4,
+      "mean": 0.18,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 50.0,
+     "minutes_to_target_p75": 77.5
+    },
+    "usd20": {
+     "decided": 6,
+     "target_first": 3,
+     "rate": 0.5,
+     "wilson95": [
+      0.1876,
+      0.8124
+     ],
+     "random_decided": 300,
+     "random_rate": 0.42,
+     "matched_difference": {
+      "n": 6,
+      "days": 4,
+      "mean": 0.08,
+      "ci95_days": null,
+      "p_le_0": null
+     },
+     "minutes_to_target_median": 80.0,
+     "minutes_to_target_p75": 82.5
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 15.84,
+    "mfe_p75": 18.04,
+    "mae_median": 21.7,
+    "mae_p75": 34.45,
+    "share_mfe_ge": {
+     "10": 0.6667,
+     "15": 0.5,
+     "20": 0.1667
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 6,
+    "agree": 6,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 6,
+    "excluded": 0,
+    "net_r_mean": -0.3482
+   }
+  },
+  "h3": {
+   "trades": 16,
+   "gross_r": {
+    "n": 16,
+    "days": 8,
+    "mean": 0.0112,
+    "ci95_days": [
+     -0.7981,
+     1.2515
+    ],
+    "p_le_0": 0.5132
+   },
+   "net_r_modelled_cost": {
+    "n": 16,
+    "days": 8,
+    "mean": -0.1186,
+    "ci95_days": [
+     -0.8997,
+     1.0492
+    ],
+    "p_le_0": 0.6335
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 16,
+    "days": 8,
+    "mean": -0.1186,
+    "ci95_days": [
+     -0.8966,
+     1.1142
+    ],
+    "p_le_0": 0.634
+   },
+   "matched_random_r": {
+    "trades_with_matches": 16,
+    "mean_of_trade_means": 0.0219,
+    "matches_per_trade_mean": 50.0
+   },
+   "recorded_minus_random": {
+    "n": 16,
+    "days": 8,
+    "mean": -0.1405,
+    "ci95_days": [
+     -1.0141,
+     1.0719
+    ],
+    "p_le_0": 0.649
+   },
+   "replay_minus_random": {
+    "n": 16,
+    "days": 8,
+    "mean": -0.1405,
+    "ci95_days": [
+     -1.0163,
+     1.1148
+    ],
+    "p_le_0": 0.6508
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 16,
+     "target_first": 8,
+     "rate": 0.5,
+     "wilson95": [
+      0.28,
+      0.72
+     ],
+     "random_decided": 799,
+     "random_rate": 0.4994,
+     "matched_difference": {
+      "n": 16,
+      "days": 8,
+      "mean": 0.0006,
+      "ci95_days": [
+       -0.2171,
+       0.1714
+      ],
+      "p_le_0": 0.5182
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 67.5
+    },
+    "usd15": {
+     "decided": 16,
+     "target_first": 6,
+     "rate": 0.375,
+     "wilson95": [
+      0.1848,
+      0.6136
+     ],
+     "random_decided": 799,
+     "random_rate": 0.4118,
+     "matched_difference": {
+      "n": 16,
+      "days": 8,
+      "mean": -0.0368,
+      "ci95_days": [
+       -0.256,
+       0.136
+      ],
+      "p_le_0": 0.6647
+     },
+     "minutes_to_target_median": 120.0,
+     "minutes_to_target_p75": 198.8
+    },
+    "usd20": {
+     "decided": 16,
+     "target_first": 4,
+     "rate": 0.25,
+     "wilson95": [
+      0.1018,
+      0.495
+     ],
+     "random_decided": 799,
+     "random_rate": 0.3642,
+     "matched_difference": {
+      "n": 16,
+      "days": 8,
+      "mean": -0.1142,
+      "ci95_days": [
+       -0.3425,
+       0.0702
+      ],
+      "p_le_0": 0.9143
+     },
+     "minutes_to_target_median": 152.5,
+     "minutes_to_target_p75": 205.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 9.99,
+    "mfe_p75": 16.27,
+    "mae_median": 10.83,
+    "mae_p75": 22.71,
+    "share_mfe_ge": {
+     "10": 0.5,
+     "15": 0.375,
+     "20": 0.1875
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 16,
+    "agree": 16,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 16,
+    "excluded": 0,
+    "net_r_mean": -0.1186
+   }
+  },
+  "h4": {
+   "trades": 741,
+   "gross_r": {
+    "n": 741,
+    "days": 11,
+    "mean": -0.0317,
+    "ci95_days": [
+     -0.0925,
+     0.0357
+    ],
+    "p_le_0": 0.8333
+   },
+   "net_r_modelled_cost": {
+    "n": 741,
+    "days": 11,
+    "mean": -0.1155,
+    "ci95_days": [
+     -0.1803,
+     -0.0448
+    ],
+    "p_le_0": 0.999
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 741,
+    "days": 11,
+    "mean": -0.1157,
+    "ci95_days": [
+     -0.1765,
+     -0.0454
+    ],
+    "p_le_0": 0.9995
+   },
+   "matched_random_r": {
+    "trades_with_matches": 741,
+    "mean_of_trade_means": -0.0768,
+    "matches_per_trade_mean": 49.9
+   },
+   "recorded_minus_random": {
+    "n": 741,
+    "days": 11,
+    "mean": -0.0387,
+    "ci95_days": [
+     -0.0948,
+     0.026
+    ],
+    "p_le_0": 0.8818
+   },
+   "replay_minus_random": {
+    "n": 741,
+    "days": 11,
+    "mean": -0.0389,
+    "ci95_days": [
+     -0.0951,
+     0.0304
+    ],
+    "p_le_0": 0.8808
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 741,
+     "target_first": 394,
+     "rate": 0.5317,
+     "wilson95": [
+      0.4957,
+      0.5674
+     ],
+     "random_decided": 36994,
+     "random_rate": 0.5537,
+     "matched_difference": {
+      "n": 741,
+      "days": 11,
+      "mean": -0.0222,
+      "ci95_days": [
+       -0.0482,
+       0.0041
+      ],
+      "p_le_0": 0.9517
+     },
+     "minutes_to_target_median": 40.0,
+     "minutes_to_target_p75": 95.0
+    },
+    "usd15": {
+     "decided": 741,
+     "target_first": 340,
+     "rate": 0.4588,
+     "wilson95": [
+      0.4233,
+      0.4948
+     ],
+     "random_decided": 36985,
+     "random_rate": 0.4614,
+     "matched_difference": {
+      "n": 741,
+      "days": 11,
+      "mean": -0.0027,
+      "ci95_days": [
+       -0.0324,
+       0.0344
+      ],
+      "p_le_0": 0.5887
+     },
+     "minutes_to_target_median": 70.0,
+     "minutes_to_target_p75": 156.2
+    },
+    "usd20": {
+     "decided": 741,
+     "target_first": 296,
+     "rate": 0.3995,
+     "wilson95": [
+      0.3648,
+      0.4352
+     ],
+     "random_decided": 36977,
+     "random_rate": 0.4018,
+     "matched_difference": {
+      "n": 741,
+      "days": 11,
+      "mean": -0.0026,
+      "ci95_days": [
+       -0.044,
+       0.0494
+      ],
+      "p_le_0": 0.5557
+     },
+     "minutes_to_target_median": 95.0,
+     "minutes_to_target_p75": 201.2
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 5.92,
+    "mfe_p75": 13.52,
+    "mae_median": 5.33,
+    "mae_p75": 10.49,
+    "share_mfe_ge": {
+     "10": 0.3293,
+     "15": 0.2254,
+     "20": 0.1538
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 741,
+    "agree": 727,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T13:45:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": 0.0304,
+      "replay_r": 0.1522
+     },
+     {
+      "entry_time": "2026-11-24T12:00:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": -0.1508,
+      "replay_r": -0.1062
+     },
+     {
+      "entry_time": "2026-11-26T23:45:00+00:00",
+      "exit_reason": "SL",
+      "recorded_r": -1.2856,
+      "replay_r": 1.207
+     },
+     {
+      "entry_time": "2026-11-16T03:20:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.839,
+      "replay_r": -0.9174
+     },
+     {
+      "entry_time": "2026-11-16T12:15:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.5717,
+      "replay_r": -0.9222
+     },
+     {
+      "entry_time": "2026-11-16T13:35:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.2277,
+      "replay_r": -0.1477
+     },
+     {
+      "entry_time": "2026-11-16T15:40:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.2693,
+      "replay_r": -0.3317
+     },
+     {
+      "entry_time": "2026-11-17T03:05:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.5321,
+      "replay_r": -0.3564
+     },
+     {
+      "entry_time": "2026-11-17T04:35:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": 0.9074,
+      "replay_r": 0.8066
+     },
+     {
+      "entry_time": "2026-11-17T16:20:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": 0.9045,
+      "replay_r": 0.8795
+     },
+     {
+      "entry_time": "2026-11-17T20:35:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.0749,
+      "replay_r": 0.0378
+     },
+     {
+      "entry_time": "2026-11-18T03:20:00+00:00",
+      "exit_reason": "FLIP",
+      "recorded_r": -0.1878,
+      "replay_r": -0.1008
+     },
+     {
+      "entry_time": "2026-11-20T21:45:00+00:00",
+      "exit_reason": "SL",
+      "recorded_r": 1.6118,
+      "replay_r": -1.098
+     },
+     {
+      "entry_time": "2026-11-26T20:15:00+00:00",
+      "exit_reason": "SL_GAP",
+      "recorded_r": -1.8584,
+      "replay_r": -1.7754
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 737,
+    "excluded": 4,
+    "net_r_mean": -0.1225
+   }
+  },
+  "h5": {
+   "trades": 7,
+   "gross_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.5792,
+    "ci95_days": [
+     -1.0,
+     0.7674
+    ],
+    "p_le_0": 0.9107
+   },
+   "net_r_modelled_cost": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.686,
+    "ci95_days": [
+     -1.117,
+     0.366
+    ],
+    "p_le_0": 0.9205
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.6859,
+    "ci95_days": [
+     -1.1163,
+     0.3678
+    ],
+    "p_le_0": 0.9167
+   },
+   "matched_random_r": {
+    "trades_with_matches": 7,
+    "mean_of_trade_means": 0.0316,
+    "matches_per_trade_mean": 49.6
+   },
+   "recorded_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.7176,
+    "ci95_days": [
+     -1.256,
+     0.4171
+    ],
+    "p_le_0": 0.9185
+   },
+   "replay_minus_random": {
+    "n": 7,
+    "days": 5,
+    "mean": -0.7176,
+    "ci95_days": [
+     -1.256,
+     0.4558
+    ],
+    "p_le_0": 0.9143
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 7,
+     "target_first": 2,
+     "rate": 0.2857,
+     "wilson95": [
+      0.0822,
+      0.6411
+     ],
+     "random_decided": 347,
+     "random_rate": 0.5331,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.2492,
+      "ci95_days": [
+       -0.6214,
+       0.1815
+      ],
+      "p_le_0": 0.8652
+     },
+     "minutes_to_target_median": 45.0,
+     "minutes_to_target_p75": 55.0
+    },
+    "usd15": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "random_decided": 347,
+     "random_rate": 0.4524,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.3116,
+      "ci95_days": [
+       -0.5364,
+       0.152
+      ],
+      "p_le_0": 0.922
+     },
+     "minutes_to_target_median": 30.0,
+     "minutes_to_target_p75": 30.0
+    },
+    "usd20": {
+     "decided": 7,
+     "target_first": 1,
+     "rate": 0.1429,
+     "wilson95": [
+      0.0257,
+      0.5131
+     ],
+     "random_decided": 346,
+     "random_rate": 0.3844,
+     "matched_difference": {
+      "n": 7,
+      "days": 5,
+      "mean": -0.2448,
+      "ci95_days": [
+       -0.4742,
+       0.2122
+      ],
+      "p_le_0": 0.8825
+     },
+     "minutes_to_target_median": 30.0,
+     "minutes_to_target_p75": 30.0
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 2.36,
+    "mfe_p75": 9.25,
+    "mae_median": 6.69,
+    "mae_p75": 8.9,
+    "share_mfe_ge": {
+     "10": 0.2857,
+     "15": 0.1429,
+     "20": 0.1429
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 7,
+    "agree": 7,
+    "disagreements": []
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 7,
+    "excluded": 0,
+    "net_r_mean": -0.686
+   }
+  },
+  "treatment": {
+   "trades": 32,
+   "gross_r": {
+    "n": 32,
+    "days": 9,
+    "mean": -0.0983,
+    "ci95_days": [
+     -0.5767,
+     0.4653
+    ],
+    "p_le_0": 0.655
+   },
+   "net_r_modelled_cost": {
+    "n": 32,
+    "days": 9,
+    "mean": -0.1753,
+    "ci95_days": [
+     -0.6338,
+     0.422
+    ],
+    "p_le_0": 0.7508
+   },
+   "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+   "entry_replay_r": {
+    "n": 32,
+    "days": 9,
+    "mean": -0.1563,
+    "ci95_days": [
+     -0.5919,
+     0.4027
+    ],
+    "p_le_0": 0.7528
+   },
+   "matched_random_r": {
+    "trades_with_matches": 32,
+    "mean_of_trade_means": 0.0179,
+    "matches_per_trade_mean": 49.9
+   },
+   "recorded_minus_random": {
+    "n": 32,
+    "days": 9,
+    "mean": -0.1932,
+    "ci95_days": [
+     -0.6891,
+     0.4299
+    ],
+    "p_le_0": 0.7702
+   },
+   "replay_minus_random": {
+    "n": 32,
+    "days": 9,
+    "mean": -0.1741,
+    "ci95_days": [
+     -0.6247,
+     0.406
+    ],
+    "p_le_0": 0.7568
+   },
+   "target_before_stop": {
+    "usd10": {
+     "decided": 32,
+     "target_first": 19,
+     "rate": 0.5938,
+     "wilson95": [
+      0.4226,
+      0.7448
+     ],
+     "random_decided": 1596,
+     "random_rate": 0.6053,
+     "matched_difference": {
+      "n": 32,
+      "days": 9,
+      "mean": -0.0107,
+      "ci95_days": [
+       -0.2269,
+       0.1498
+      ],
+      "p_le_0": 0.566
+     },
+     "minutes_to_target_median": 20.0,
+     "minutes_to_target_p75": 35.0
+    },
+    "usd15": {
+     "decided": 32,
+     "target_first": 16,
+     "rate": 0.5,
+     "wilson95": [
+      0.3363,
+      0.6637
+     ],
+     "random_decided": 1595,
+     "random_rate": 0.5323,
+     "matched_difference": {
+      "n": 32,
+      "days": 9,
+      "mean": -0.0316,
+      "ci95_days": [
+       -0.2762,
+       0.1877
+      ],
+      "p_le_0": 0.6172
+     },
+     "minutes_to_target_median": 35.0,
+     "minutes_to_target_p75": 80.0
+    },
+    "usd20": {
+     "decided": 32,
+     "target_first": 14,
+     "rate": 0.4375,
+     "wilson95": [
+      0.2817,
+      0.6067
+     ],
+     "random_decided": 1595,
+     "random_rate": 0.469,
+     "matched_difference": {
+      "n": 32,
+      "days": 9,
+      "mean": -0.0309,
+      "ci95_days": [
+       -0.2441,
+       0.16
+      ],
+      "p_le_0": 0.6315
+     },
+     "minutes_to_target_median": 37.5,
+     "minutes_to_target_p75": 83.8
+    }
+   },
+   "mfe_mae_usd": {
+    "mfe_median": 12.32,
+    "mfe_p75": 29.68,
+    "mae_median": 11.27,
+    "mae_p75": 19.5,
+    "share_mfe_ge": {
+     "10": 0.5625,
+     "15": 0.4062,
+     "20": 0.3125
+    }
+   },
+   "replay_agrees_with_record": {
+    "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+    "replayed": 32,
+    "agree": 29,
+    "disagreements": [
+     {
+      "entry_time": "2026-11-20T15:00:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.8388,
+      "replay_r": 1.1483
+     },
+     {
+      "entry_time": "2026-11-17T13:10:00+00:00",
+      "exit_reason": "BE",
+      "recorded_r": 0.2494,
+      "replay_r": -0.3908
+     },
+     {
+      "entry_time": "2026-11-20T16:05:00+00:00",
+      "exit_reason": "BE_GAP",
+      "recorded_r": 0.2802,
+      "replay_r": 1.2189
+     }
+    ]
+   },
+   "sensitivity_without_reopen_trades": {
+    "trades": 29,
+    "excluded": 3,
+    "net_r_mean": -0.197
+   }
+  }
+ },
+ "all": {
+  "trades": 836,
+  "gross_r": {
+   "n": 836,
+   "days": 11,
+   "mean": -0.0391,
+   "ci95_days": [
+    -0.1186,
+    0.0668
+   ],
+   "p_le_0": 0.8053
+  },
+  "net_r_modelled_cost": {
+   "n": 836,
+   "days": 11,
+   "mean": -0.1229,
+   "ci95_days": [
+    -0.2017,
+    -0.0159
+   ],
+   "p_le_0": 0.986
+  },
+  "net_r_measured_cost": "UNAVAILABLE: broker costs not verified (G2)",
+  "entry_replay_r": {
+   "n": 836,
+   "days": 11,
+   "mean": -0.1202,
+   "ci95_days": [
+    -0.202,
+    -0.0159
+   ],
+   "p_le_0": 0.9832
+  },
+  "matched_random_r": {
+   "trades_with_matches": 836,
+   "mean_of_trade_means": -0.0654,
+   "matches_per_trade_mean": 49.9
+  },
+  "recorded_minus_random": {
+   "n": 836,
+   "days": 11,
+   "mean": -0.0575,
+   "ci95_days": [
+    -0.1311,
+    0.0519
+   ],
+   "p_le_0": 0.8792
+  },
+  "replay_minus_random": {
+   "n": 836,
+   "days": 11,
+   "mean": -0.0548,
+   "ci95_days": [
+    -0.1295,
+    0.0462
+   ],
+   "p_le_0": 0.8762
+  },
+  "target_before_stop": {
+   "usd10": {
+    "decided": 836,
+    "target_first": 451,
+    "rate": 0.5395,
+    "wilson95": [
+     0.5056,
+     0.573
+    ],
+    "random_decided": 41731,
+    "random_rate": 0.5582,
+    "matched_difference": {
+     "n": 836,
+     "days": 11,
+     "mean": -0.0188,
+     "ci95_days": [
+      -0.0494,
+      0.0147
+     ],
+     "p_le_0": 0.8868
+    },
+    "minutes_to_target_median": 35.0,
+    "minutes_to_target_p75": 77.5
+   },
+   "usd15": {
+    "decided": 836,
+    "target_first": 385,
+    "rate": 0.4605,
+    "wilson95": [
+     0.427,
+     0.4944
+    ],
+    "random_decided": 41718,
+    "random_rate": 0.4675,
+    "matched_difference": {
+     "n": 836,
+     "days": 11,
+     "mean": -0.0071,
+     "ci95_days": [
+      -0.0393,
+      0.0366
+     ],
+     "p_le_0": 0.6677
+    },
+    "minutes_to_target_median": 70.0,
+    "minutes_to_target_p75": 155.0
+   },
+   "usd20": {
+    "decided": 836,
+    "target_first": 334,
+    "rate": 0.3995,
+    "wilson95": [
+     0.3669,
+     0.4331
+    ],
+    "random_decided": 41709,
+    "random_rate": 0.4079,
+    "matched_difference": {
+     "n": 836,
+     "days": 11,
+     "mean": -0.0086,
+     "ci95_days": [
+      -0.0475,
+      0.0469
+     ],
+     "p_le_0": 0.6515
+    },
+    "minutes_to_target_median": 90.0,
+    "minutes_to_target_p75": 195.0
+   }
+  },
+  "mfe_mae_usd": {
+   "mfe_median": 6.4,
+   "mfe_p75": 14.46,
+   "mae_median": 5.69,
+   "mae_p75": 11.4,
+   "share_mfe_ge": {
+    "10": 0.3565,
+    "15": 0.2464,
+    "20": 0.1699
+   }
+  },
+  "replay_agrees_with_record": {
+   "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit at the same close); agreement = |replay R - recorded R| < 0.001",
+   "replayed": 836,
+   "agree": 815,
+   "disagreements": [
+    {
+     "entry_time": "2026-11-20T15:00:00+00:00",
+     "exit_reason": "BE_GAP",
+     "recorded_r": 0.8388,
+     "replay_r": 1.1483
+    },
+    {
+     "entry_time": "2026-11-20T13:45:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": 0.0304,
+     "replay_r": 0.1522
+    },
+    {
+     "entry_time": "2026-11-24T12:00:00+00:00",
+     "exit_reason": "BE_GAP",
+     "recorded_r": -0.1508,
+     "replay_r": -0.1062
+    },
+    {
+     "entry_time": "2026-11-26T23:45:00+00:00",
+     "exit_reason": "SL",
+     "recorded_r": -1.2856,
+     "replay_r": 1.207
+    },
+    {
+     "entry_time": "2026-11-20T15:00:00+00:00",
+     "exit_reason": "BE_GAP",
+     "recorded_r": 0.8388,
+     "replay_r": 1.1483
+    },
+    {
+     "entry_time": "2026-11-20T18:00:00+00:00",
+     "exit_reason": "SL_GAP",
+     "recorded_r": -2.1835,
+     "replay_r": -1.0256
+    },
+    {
+     "entry_time": "2026-11-17T13:10:00+00:00",
+     "exit_reason": "BE",
+     "recorded_r": 0.2494,
+     "replay_r": -0.3908
+    },
+    {
+     "entry_time": "2026-11-20T16:05:00+00:00",
+     "exit_reason": "BE_GAP",
+     "recorded_r": 0.2802,
+     "replay_r": 1.2189
+    },
+    {
+     "entry_time": "2026-11-16T03:20:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": -0.839,
+     "replay_r": -0.9174
+    },
+    {
+     "entry_time": "2026-11-16T12:15:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": -0.5717,
+     "replay_r": -0.9222
+    },
+    {
+     "entry_time": "2026-11-16T13:35:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": -0.2277,
+     "replay_r": -0.1477
+    },
+    {
+     "entry_time": "2026-11-16T15:40:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": -0.2693,
+     "replay_r": -0.3317
+    },
+    {
+     "entry_time": "2026-11-17T03:05:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": -0.5321,
+     "replay_r": -0.3564
+    },
+    {
+     "entry_time": "2026-11-17T04:35:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": 0.9074,
+     "replay_r": 0.8066
+    },
+    {
+     "entry_time": "2026-11-17T16:20:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": 0.9045,
+     "replay_r": 0.8795
+    },
+    {
+     "entry_time": "2026-11-17T20:35:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": -0.0749,
+     "replay_r": 0.0378
+    },
+    {
+     "entry_time": "2026-11-18T03:20:00+00:00",
+     "exit_reason": "FLIP",
+     "recorded_r": -0.1878,
+     "replay_r": -0.1008
+    },
+    {
+     "entry_time": "2026-11-20T21:45:00+00:00",
+     "exit_reason": "SL",
+     "recorded_r": 1.6118,
+     "replay_r": -1.098
+    },
+    {
+     "entry_time": "2026-11-26T20:15:00+00:00",
+     "exit_reason": "SL_GAP",
+     "recorded_r": -1.8584,
+     "replay_r": -1.7754
+    },
+    {
+     "entry_time": "2026-11-17T13:10:00+00:00",
+     "exit_reason": "BE",
+     "recorded_r": 0.2494,
+     "replay_r": -0.3908
+    }
+   ]
+  },
+  "sensitivity_without_reopen_trades": {
+   "trades": 825,
+   "excluded": 11,
+   "net_r_mean": -0.1279
+  }
+ },
+ "tested_ledgers": [
+  "15m_h4",
+  "1h_h4",
+  "30m_h4",
+  "5m_h4"
+ ],
+ "utc": "2026-11-28T07:18:59.151407+00:00"
+}

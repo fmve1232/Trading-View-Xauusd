@@ -1,0 +1,98 @@
+{
+ "attempt_records": 496,
+ "messages": 493,
+ "messages_with_stored_status": 113,
+ "status_distribution": {
+  "SENT_TO_NTFY": {
+   "YES": 490,
+   "NO": 3
+  },
+  "PHONE_DELIVERY": {
+   "NOT_VERIFIABLE": 493
+  },
+  "PHONE_DISPLAY": {
+   "NOT_VERIFIABLE": 493
+  },
+  "SEND_FAILED": {
+   "NO": 489,
+   "YES": 4
+  },
+  "RETRY_ATTEMPTED": {
+   "NO": 490,
+   "YES": 3
+  }
+ },
+ "by_stream": {
+  "15m": {
+   "messages": 26,
+   "SENT_TO_NTFY=YES": 26,
+   "SEND_FAILED=YES": 0,
+   "RETRY_ATTEMPTED=YES": 0
+  },
+  "breakouts": {
+   "messages": 340,
+   "SENT_TO_NTFY=YES": 337,
+   "SEND_FAILED=YES": 3,
+   "RETRY_ATTEMPTED=YES": 2,
+   "SENT_TO_NTFY=NO": 3
+  },
+  "confirm_entry": {
+   "messages": 13,
+   "SENT_TO_NTFY=YES": 13,
+   "SEND_FAILED=YES": 0,
+   "RETRY_ATTEMPTED=YES": 0
+  },
+  "report": {
+   "messages": 11,
+   "SENT_TO_NTFY=YES": 11,
+   "SEND_FAILED=YES": 0,
+   "RETRY_ATTEMPTED=YES": 0
+  },
+  "sweeps": {
+   "messages": 80,
+   "SENT_TO_NTFY=YES": 80,
+   "SEND_FAILED=YES": 0,
+   "RETRY_ATTEMPTED=YES": 0
+  },
+  "zones": {
+   "messages": 23,
+   "SENT_TO_NTFY=YES": 23,
+   "SEND_FAILED=YES": 1,
+   "RETRY_ATTEMPTED=YES": 1
+  }
+ },
+ "not_fully_accepted": [
+  {
+   "notif_key": "f26f0b8fd3",
+   "t_run": 1795391542,
+   "stream": "breakouts",
+   "requests": 2,
+   "http_failures": [
+    429
+   ],
+   "SENT_TO_NTFY": "NO"
+  },
+  {
+   "notif_key": "f0e5540169",
+   "t_run": 1795771117,
+   "stream": "breakouts",
+   "requests": 2,
+   "http_failures": [
+    429
+   ],
+   "SENT_TO_NTFY": "NO"
+  },
+  {
+   "notif_key": "a60bd30d4f",
+   "t_run": 1795771117,
+   "stream": "breakouts",
+   "requests": 1,
+   "http_failures": [
+    429
+   ],
+   "SENT_TO_NTFY": "NO"
+  }
+ ],
+ "stored_vs_recomputed_disagreements": [],
+ "note": "SENT_TO_NTFY=YES means ntfy's server accepted the message; delivery to and display on the phone are NOT_VERIFIABLE with the configured channels."
+}

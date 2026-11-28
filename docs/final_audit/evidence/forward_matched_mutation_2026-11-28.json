@@ -1,0 +1,74 @@
+{
+ "file": "forward_matched_mutation_2026-11-28.json",
+ "tool": "audit/tools/forward_matched.py",
+ "tool_sha256": "7f099a01d39db73c1bfe7f63c91edf97da9784e2114441ebf9e51d9dd83ef035",
+ "tests": "tests/test_forward_matched.py",
+ "mutants": [
+  {
+   "mutant": "break-even never applied",
+   "killed": true
+  },
+  {
+   "mutant": "stop not checked intrabar",
+   "killed": true
+  },
+  {
+   "mutant": "gap through the stop not filled at the open",
+   "killed": true
+  },
+  {
+   "mutant": "cost not subtracted",
+   "killed": true
+  },
+  {
+   "mutant": "time exit at the wrong bar",
+   "killed": true
+  },
+  {
+   "mutant": "race tie goes to the target",
+   "killed": true
+  },
+  {
+   "mutant": "random may share the trade's day",
+   "killed": true
+  },
+  {
+   "mutant": "clock window ten times wider",
+   "killed": true
+  },
+  {
+   "mutant": "random entries off the timeframe grid",
+   "killed": true
+  },
+  {
+   "mutant": "verdict on raw p, not Holm",
+   "killed": true
+  },
+  {
+   "mutant": "MIN_N ignored",
+   "killed": true
+  },
+  {
+   "mutant": "verdict ignores the interval",
+   "killed": true
+  },
+  {
+   "mutant": "shut-market bars kept",
+   "killed": true
+  },
+  {
+   "mutant": "reopen gap threshold 60 hours",
+   "killed": true
+  },
+  {
+   "mutant": "MFE uses the close, not the high",
+   "killed": true
+  },
+  {
+   "mutant": "Holm without the running maximum",
+   "killed": true
+  }
+ ],
+ "tests_sha256": "0837bfde63c939154022eacd2755e916f5f499f879b3e36f645b0303fba8f6eb",
+ "note": "the race-tie mutant was re-run after the both-touched test was added; the other 15 were killed by the earlier tests, which are unchanged"
+}

@@ -1,0 +1,184 @@
+........................................................................ [  5%]
+........................................................................ [ 11%]
+........................................................................ [ 17%]
+........................................................................ [ 22%]
+........................................................................ [ 28%]
+........................................................................ [ 34%]
+........................................................................ [ 40%]
+........................................................................ [ 45%]
+........................................................................ [ 51%]
+........................................................................ [ 57%]
+........................................................................ [ 63%]
+..........................................................s..s.......... [ 68%]
+........................................................................ [ 74%]
+........................................................................ [ 80%]
+........................................................................ [ 85%]
+........................................................................ [ 91%]
+........................................................................ [ 97%]
+.................................                                        [100%]
+=============================== warnings summary ===============================
+tests/test_amendment_f.py: 18 warnings
+tests/test_backtest_gaps.py: 2 warnings
+tests/test_confirm.py: 24 warnings
+tests/test_engine.py: 2 warnings
+tests/test_gate_sides.py: 2 warnings
+tests/test_gold_arrows.py: 2 warnings
+tests/test_h2.py: 2 warnings
+tests/test_h3.py: 4 warnings
+tests/test_h4.py: 2 warnings
+tests/test_h5.py: 2 warnings
+tests/test_h6.py: 8 warnings
+tests/test_live_path.py: 12 warnings
+tests/test_macro_factors.py: 6 warnings
+tests/test_pine_v92_port.py: 2 warnings
+tests/test_research_b31.py: 2 warnings
+tests/test_research_b31w1.py: 8 warnings
+tests/test_research_b31w2.py: 4 warnings
+tests/test_shadow.py: 6 warnings
+tests/test_tf30.py: 2 warnings
+tests/test_trade_race.py: 2 warnings
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/data/market.py:302: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    wd = ny.dayofweek
+
+tests/test_amendment_f.py: 9 warnings
+tests/test_backtest_gaps.py: 1 warning
+tests/test_breakouts.py: 668 warnings
+tests/test_confirm.py: 5 warnings
+tests/test_confirm_entry.py: 1 warning
+tests/test_confirm_panel.py: 3 warnings
+tests/test_engine.py: 3 warnings
+tests/test_fwd_b24.py: 36 warnings
+tests/test_gate_sides.py: 4 warnings
+tests/test_gold_arrows.py: 1 warning
+tests/test_h2.py: 1 warning
+tests/test_h3.py: 1 warning
+tests/test_h4.py: 1 warning
+tests/test_h5.py: 1 warning
+tests/test_h6.py: 4 warnings
+tests/test_keyzones.py: 8 warnings
+tests/test_live_path.py: 13 warnings
+tests/test_macro_factors.py: 4 warnings
+tests/test_notify_delivery.py: 105 warnings
+tests/test_pine_v92_port.py: 3 warnings
+tests/test_research_b19.py: 19 warnings
+tests/test_research_b2.py: 3 warnings
+tests/test_research_b20.py: 5 warnings
+tests/test_research_b3.py: 3 warnings
+tests/test_research_b30.py: 7 warnings
+tests/test_research_b31.py: 13 warnings
+tests/test_research_b31w1.py: 13 warnings
+tests/test_research_b31w2.py: 12 warnings
+tests/test_research_b5_orderflow.py: 6 warnings
+tests/test_research_b5c_dukascopy.py: 1 warning
+tests/test_research_b7.py: 1 warning
+tests/test_research_harness.py: 1 warning
+tests/test_shadow.py: 405 warnings
+tests/test_stale_gate_paths.py: 188 warnings
+tests/test_stale_signals.py: 77 warnings
+tests/test_sweeps.py: 82 warnings
+tests/test_tf30.py: 2 warnings
+tests/test_trade_race.py: 1 warning
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/sessions.py:40: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    dow = ((utc.dayofweek.to_numpy() + 1) % 7) + 1
+
+tests/test_backtest_gaps.py: 2 warnings
+tests/test_live_path.py: 6 warnings
+tests/test_tf30.py: 8 warnings
+tests/test_trade_diag.py: 232 warnings
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/data/sources.py:235: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    return np.asarray((ny.hour == 18) & (ny.minute == 0) & ((ny.dayofweek == 6) | (ny.dayofweek <= 3)))
+
+tests/test_confirm.py: 98 warnings
+tests/test_engine.py: 2 warnings
+tests/test_h2.py: 3 warnings
+tests/test_live_path.py: 22 warnings
+tests/test_research_history.py: 1 warning
+tests/test_shadow.py: 7 warnings
+tests/test_tf30.py: 4 warnings
+tests/test_trade_diag.py: 116 warnings
+tests/test_trade_race.py: 2 warnings
+tests/test_xcheck.py: 31 warnings
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/data/sources.py:195: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    wd, hr = ny.dayofweek, ny.hour
+
+tests/test_confirm.py::test_futures_fallback_reaches_the_panel_as_data_unavailable
+tests/test_confirm.py::test_futures_fallback_reaches_the_panel_as_data_unavailable
+tests/test_confirm.py::test_primary_failure_uses_the_named_fallback_and_total_failure_raises
+tests/test_confirm.py::test_primary_failure_uses_the_named_fallback_and_total_failure_raises
+tests/test_live_path.py::test_live_pipeline_offline
+tests/test_live_path.py::test_live_pipeline_offline
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_live_path.py:36: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    d = d[d.index.dayofweek < 5]
+
+tests/test_confirm.py: 4 warnings
+tests/test_live_path.py: 5 warnings
+tests/test_tf30.py: 1 warning
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/data/sources.py:213: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    return df[df.index.dayofweek < 5]
+
+tests/test_live_path.py::test_market_closed_bars_are_dropped
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_live_path.py:87: Pandas4Warning: Timestamp.dayofweek is deprecated and will be removed in a future version. Use Timestamp.day_of_week instead.
+    assert kept.min().hour == 14 and kept.min().dayofweek == 4           # Friday before 17:00 kept
+
+tests/test_live_path.py::test_market_closed_bars_are_dropped
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_live_path.py:88: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    assert not ((kept.dayofweek == 5).any())                             # no Saturday
+
+tests/test_live_path.py::test_market_closed_bars_are_dropped
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_live_path.py:89: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    assert ((kept.dayofweek == 6) & (kept.hour < 18)).sum() == 0          # gold reopens Sunday 18:00 NY
+
+tests/test_live_path.py::test_market_closed_bars_are_dropped
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_live_path.py:90: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    assert ((kept.dayofweek == 6) & (kept.hour >= 18)).sum() == 2
+
+tests/test_live_path.py::test_market_closed_bars_are_dropped
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_live_path.py:92: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    assert list(sources.trading_week_only(d, daily=True).index.dayofweek) == [0, 1, 2, 3, 4]
+
+tests/test_research_b2.py::test_every_declared_setup_fires_and_uses_only_past_bars
+tests/test_research_b3.py::test_sequences_use_only_past_bars_and_follow_their_parts
+tests/test_research_b4.py::test_session_open_momentum_uses_the_first_30_minutes_only
+tests/test_research_b4.py::test_session_open_momentum_uses_the_first_30_minutes_only
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_research_b2.py:12: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    idx = idx[idx.dayofweek < 5][:n]
+
+tests/test_research_b22.py::test_cusum_is_causal_and_sigma_scaled
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/research/b22.py:70: RuntimeWarning: divide by zero encountered in divide
+    z = r / sd
+
+tests/test_research_b22.py::test_cusum_is_causal_and_sigma_scaled
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/research/b22.py:70: RuntimeWarning: invalid value encountered in divide
+    z = r / sd
+
+tests/test_research_b5c_dukascopy.py: 50 warnings
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/research/b5c_dukascopy.py:145: Pandas4Warning: Timestamp.dayofweek is deprecated and will be removed in a future version. Use Timestamp.day_of_week instead.
+    return [] if day.dayofweek == 5 else [day + pd.Timedelta(hours=h) for h in range(24)]
+
+tests/test_research_b5c_dukascopy.py::test_main_end_to_end_with_a_mocked_dukascopy
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_research_b5c_dukascopy.py:133: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    idx = idx[idx.dayofweek != 5]
+
+tests/test_research_b7.py::test_study_end_to_end_and_a_planted_relation_is_found
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_research_b7.py:54: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    idx = idx[idx.dayofweek < 5]
+
+tests/test_research_b8.py: 95 warnings
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_research_b8.py:20: Pandas4Warning: Timestamp.dayofweek is deprecated and will be removed in a future version. Use Timestamp.day_of_week instead.
+    assert all(pd.Timestamp(d).dayofweek < 5 for d in ds), k
+
+tests/test_research_b8.py::test_reaction_direction_uses_only_bars_up_to_the_entry
+tests/test_research_b8.py::test_reaction_direction_uses_only_bars_up_to_the_entry
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/quantum/research/b8_news.py:87: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    same = (ny.time == t.tz_convert(NY).time()) & (ny.dayofweek < 5) & ~pd.Index(ny.strftime("%Y-%m-%d")).isin(event_days)
+
+tests/test_research_history.py::test_load_drops_market_shut_bars
+  /tmp/claude-0/-home-user-Trading-View-Xauusd/c6daebf9-cc70-5044-b6b4-95f2d009cb72/scratchpad/pr/fa/tests/test_research_history.py:94: Pandas4Warning: DatetimeIndex.dayofweek is deprecated and will be removed in a future version. Use DatetimeIndex.day_of_week instead.
+    assert not (got.index.dayofweek == 5).any()                       # no Saturday bars
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_research_b22.py:19: could not import 'hmmlearn.hmm': No module named 'hmmlearn'
+SKIPPED [1] tests/test_research_b22.py:48: could not import 'sklearn': No module named 'sklearn'
+1255 passed, 2 skipped, 2534 warnings in 308.81s (0:05:08)
+exit 0

@@ -1,0 +1,627 @@
+{
+ "registration": "G6-EXPOSURE",
+ "partition": "development",
+ "data_hashes": {
+  "5m": "cb64540777d4267c",
+  "15m": "f113f97ad2105ff9",
+  "1h": "75656fd32555f56a"
+ },
+ "seed": 20261128,
+ "window_utc": [
+  "2020-03-16T01:10:00+00:00",
+  "2023-01-24 01:55:00+00:00"
+ ],
+ "common_window_note": "every timeframe is measured from the first development 5-minute bar (2020-03-16) so that all four timeframes and the 5-minute sampling grid cover the same span; earlier 15m / 1h fills are counted under 'skipped'",
+ "skipped": {
+  "open_at_end": 5,
+  "before_common_start": 817
+ },
+ "engine_seconds": {
+  "5m": 267.8,
+  "15m": 95.6,
+  "30m": 51.8,
+  "1h": 25.5
+ },
+ "utc": "2026-11-28T07:06:44.419021+00:00",
+ "positions": 40667,
+ "by_tf_arm": {
+  "15m_h4": 8586,
+  "15m_treatment": 147,
+  "1h_h4": 2601,
+  "1h_treatment": 44,
+  "30m_h4": 4657,
+  "30m_treatment": 82,
+  "5m_h4": 24171,
+  "5m_treatment": 379
+ },
+ "concurrency": {
+  "open_positions": {
+   "samples": 200523,
+   "mean": 3.8566,
+   "max": 7,
+   "share": {
+    "0": 0.0017,
+    "1": 0.0153,
+    "2": 0.0637,
+    "3": 0.1961,
+    "4": 0.5297,
+    "5": 0.1576,
+    "6": 0.0332,
+    "7": 0.0029
+   },
+   "share_2_plus": 0.9831,
+   "share_3_plus": 0.9194
+  },
+  "long_open": {
+   "samples": 200523,
+   "mean": 2.034,
+   "max": 7,
+   "share": {
+    "0": 0.1762,
+    "1": 0.2271,
+    "2": 0.2147,
+    "3": 0.196,
+    "4": 0.1486,
+    "5": 0.03,
+    "6": 0.0069,
+    "7": 0.0006
+   },
+   "share_2_plus": 0.5967,
+   "share_3_plus": 0.382
+  },
+  "short_open": {
+   "samples": 200523,
+   "mean": 1.8226,
+   "max": 7,
+   "share": {
+    "0": 0.219,
+    "1": 0.2408,
+    "2": 0.2159,
+    "3": 0.1781,
+    "4": 0.12,
+    "5": 0.0216,
+    "6": 0.0041,
+    "7": 0.0005
+   },
+   "share_2_plus": 0.5401,
+   "share_3_plus": 0.3242
+  },
+  "net_long_minus_short": {
+   "mean": 0.2115,
+   "min": -7,
+   "max": 7
+  },
+  "share_of_time_any_open": 0.9983,
+  "share_of_time_two_plus_same_direction": 0.9577,
+  "share_of_time_long_and_short_together": 0.6065,
+  "mean_open_by_new_york_hour": {
+   "0": 3.9349,
+   "1": 3.8859,
+   "2": 3.8421,
+   "3": 3.8413,
+   "4": 3.8394,
+   "5": 3.8469,
+   "6": 3.8583,
+   "7": 3.8474,
+   "8": 3.7793,
+   "9": 3.681,
+   "10": 3.673,
+   "11": 3.7625,
+   "12": 3.8226,
+   "13": 3.8583,
+   "14": 3.8538,
+   "15": 3.868,
+   "16": 3.9028,
+   "17": 3.9123,
+   "18": 3.9009,
+   "19": 3.9256,
+   "20": 3.9377,
+   "21": 3.9488,
+   "22": 3.9456,
+   "23": 3.9474
+  },
+  "exact": {
+   "max_open": 7,
+   "first_at_utc": "2020-06-02T14:00:00+00:00",
+   "max_sum_stop_usd_per_oz": 154.61
+  },
+  "combined_stop_r": {
+   "max_r_at_risk": 7,
+   "max_usd_if_every_position_risked_650": 4550.0,
+   "note": "1 R per open position (its own stop); the USD figure is MODELLED: it assumes every position were taken at the operator's $650 planned loss, which the operator does not do"
+  }
+ },
+ "correlated": {
+  "entries": 40667,
+  "share_with_same_direction_entry_on_another_tf_within_60m": 0.7612,
+  "share_with_same_direction_entry_on_other_arm_same_tf_within_60m": 0.0298,
+  "same_direction_pairs_open_together": 64300,
+  "both_lost_share": 0.3721,
+  "independence_expectation": 0.3118,
+  "phi_loss_loss": 0.2705
+ },
+ "sessions": {
+  "ASIAN": {
+   "entries": 12289,
+   "initial_r": 12289,
+   "net_r": -6690.37,
+   "mean_net_r": -0.5444,
+   "mean_already_open_at_entry": 2.9464
+  },
+  "LON-CL": {
+   "entries": 1526,
+   "initial_r": 1526,
+   "net_r": -292.4,
+   "mean_net_r": -0.1916,
+   "mean_already_open_at_entry": 2.8604
+  },
+  "LON-FIX": {
+   "entries": 1752,
+   "initial_r": 1752,
+   "net_r": -647.75,
+   "mean_net_r": -0.3697,
+   "mean_already_open_at_entry": 2.9389
+  },
+  "LON-KZ": {
+   "entries": 3333,
+   "initial_r": 3333,
+   "net_r": -1006.29,
+   "mean_net_r": -0.3019,
+   "mean_already_open_at_entry": 2.9094
+  },
+  "LONDON": {
+   "entries": 10067,
+   "initial_r": 10067,
+   "net_r": -2621.25,
+   "mean_net_r": -0.2604,
+   "mean_already_open_at_entry": 2.8008
+  },
+  "NY": {
+   "entries": 4334,
+   "initial_r": 4334,
+   "net_r": -1908.23,
+   "mean_net_r": -0.4403,
+   "mean_already_open_at_entry": 2.9319
+  },
+  "NY-KZ": {
+   "entries": 3347,
+   "initial_r": 3347,
+   "net_r": -696.04,
+   "mean_net_r": -0.208,
+   "mean_already_open_at_entry": 2.7673
+  },
+  "OFF": {
+   "entries": 4019,
+   "initial_r": 4019,
+   "net_r": -3103.41,
+   "mean_net_r": -0.7722,
+   "mean_already_open_at_entry": 2.9856
+  }
+ },
+ "book": {
+  "trades": 40667,
+  "days_with_entries": 781,
+  "net_r": -16965.74,
+  "mean_net_r": -0.4172,
+  "win_rate": 0.2766,
+  "tp1_first_share": 0.2453,
+  "worst_trade_r": -8.5816,
+  "gap_exits": 486,
+  "max_dd_r": 16971.2826,
+  "longest_losing_streak": 38,
+  "potential_daily_loss_r": {
+   "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+   "mean": 52.07,
+   "p95": 74.0,
+   "max": 105,
+   "max_day": "2020-09-24",
+   "max_usd_if_every_position_risked_650": 68250.0
+  },
+  "realised_daily_r": {
+   "mean": -21.5849,
+   "p05": -44.3399,
+   "worst": -68.7409,
+   "worst_day": "2021-10-12"
+  }
+ },
+ "policies": {
+  "P0_none": {
+   "book": {
+    "trades": 40667,
+    "days_with_entries": 781,
+    "net_r": -16965.74,
+    "mean_net_r": -0.4172,
+    "win_rate": 0.2766,
+    "tp1_first_share": 0.2453,
+    "worst_trade_r": -8.5816,
+    "gap_exits": 486,
+    "max_dd_r": 16971.2826,
+    "longest_losing_streak": 38,
+    "potential_daily_loss_r": {
+     "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+     "mean": 52.07,
+     "p95": 74.0,
+     "max": 105,
+     "max_day": "2020-09-24",
+     "max_usd_if_every_position_risked_650": 68250.0
+    },
+    "realised_daily_r": {
+     "mean": -21.5849,
+     "p05": -44.3399,
+     "worst": -68.7409,
+     "worst_day": "2021-10-12"
+    }
+   },
+   "blocked": {
+    "count": 0
+   },
+   "concurrency": {
+    "samples": 200523,
+    "mean": 3.8566,
+    "max": 7,
+    "share": {
+     "0": 0.0017,
+     "1": 0.0153,
+     "2": 0.0637,
+     "3": 0.1961,
+     "4": 0.5297,
+     "5": 0.1576,
+     "6": 0.0332,
+     "7": 0.0029
+    },
+    "share_2_plus": 0.9831,
+    "share_3_plus": 0.9194
+   }
+  },
+  "P1_one_open": {
+   "book": {
+    "trades": 6572,
+    "days_with_entries": 742,
+    "net_r": -2177.09,
+    "mean_net_r": -0.3313,
+    "win_rate": 0.308,
+    "tp1_first_share": 0.2607,
+    "worst_trade_r": -3.3302,
+    "gap_exits": 80,
+    "max_dd_r": 2181.4311,
+    "longest_losing_streak": 28,
+    "potential_daily_loss_r": {
+     "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+     "mean": 8.857,
+     "p95": 22.949999999999932,
+     "max": 35,
+     "max_day": "2021-11-12",
+     "max_usd_if_every_position_risked_650": 22750.0
+    },
+    "realised_daily_r": {
+     "mean": -2.9301,
+     "p05": -14.5509,
+     "worst": -27.0131,
+     "worst_day": "2021-09-01"
+    }
+   },
+   "blocked": {
+    "count": 34095,
+    "share_of_all": 0.8384,
+    "mean_net_r": -0.4337,
+    "net_r": -14788.65,
+    "tp1_first_share": 0.2424,
+    "by_tf_arm": {
+     "15m_h4": 7556,
+     "15m_treatment": 136,
+     "1h_h4": 882,
+     "1h_treatment": 38,
+     "30m_h4": 3781,
+     "30m_treatment": 78,
+     "5m_h4": 21256,
+     "5m_treatment": 368
+    }
+   },
+   "concurrency": {
+    "samples": 200523,
+    "mean": 0.9724,
+    "max": 1,
+    "share": {
+     "0": 0.0276,
+     "1": 0.9724
+    },
+    "share_2_plus": 0.0,
+    "share_3_plus": 0.0
+   }
+  },
+  "P2_one_open_three_per_day": {
+   "book": {
+    "trades": 2235,
+    "days_with_entries": 776,
+    "net_r": -1515.34,
+    "mean_net_r": -0.678,
+    "win_rate": 0.2197,
+    "tp1_first_share": 0.2506,
+    "worst_trade_r": -4.2237,
+    "gap_exits": 43,
+    "max_dd_r": 1519.0322,
+    "longest_losing_streak": 29,
+    "potential_daily_loss_r": {
+     "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+     "mean": 2.88,
+     "p95": 3.0,
+     "max": 3,
+     "max_day": "2020-03-16",
+     "max_usd_if_every_position_risked_650": 1950.0
+    },
+    "realised_daily_r": {
+     "mean": -2.0533,
+     "p05": -5.8889,
+     "worst": -8.4934,
+     "worst_day": "2021-08-25"
+    }
+   },
+   "blocked": {
+    "count": 38432,
+    "share_of_all": 0.945,
+    "mean_net_r": -0.402,
+    "net_r": -15450.4,
+    "tp1_first_share": 0.245,
+    "by_tf_arm": {
+     "15m_h4": 8182,
+     "15m_treatment": 147,
+     "1h_h4": 2333,
+     "1h_treatment": 44,
+     "30m_h4": 4471,
+     "30m_treatment": 82,
+     "5m_h4": 22795,
+     "5m_treatment": 378
+    }
+   },
+   "concurrency": {
+    "samples": 200523,
+    "mean": 0.2337,
+    "max": 1,
+    "share": {
+     "0": 0.7663,
+     "1": 0.2337
+    },
+    "share_2_plus": 0.0,
+    "share_3_plus": 0.0
+   }
+  },
+  "P3_three_open": {
+   "book": {
+    "trades": 26330,
+    "days_with_entries": 774,
+    "net_r": -9990.5,
+    "mean_net_r": -0.3794,
+    "win_rate": 0.2875,
+    "tp1_first_share": 0.2497,
+    "worst_trade_r": -8.5816,
+    "gap_exits": 324,
+    "max_dd_r": 9996.0438,
+    "longest_losing_streak": 26,
+    "potential_daily_loss_r": {
+     "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+     "mean": 34.018,
+     "p95": 53.0,
+     "max": 94,
+     "max_day": "2020-09-24",
+     "max_usd_if_every_position_risked_650": 61100.0
+    },
+    "realised_daily_r": {
+     "mean": -12.8413,
+     "p05": -31.2017,
+     "worst": -51.6159,
+     "worst_day": "2022-06-28"
+    }
+   },
+   "blocked": {
+    "count": 14337,
+    "share_of_all": 0.3525,
+    "mean_net_r": -0.4865,
+    "net_r": -6975.24,
+    "tp1_first_share": 0.2372,
+    "by_tf_arm": {
+     "15m_h4": 2209,
+     "15m_treatment": 94,
+     "1h_h4": 287,
+     "1h_treatment": 27,
+     "30m_h4": 753,
+     "30m_treatment": 50,
+     "5m_h4": 10627,
+     "5m_treatment": 290
+    }
+   },
+   "concurrency": {
+    "samples": 200523,
+    "mean": 2.7935,
+    "max": 3,
+    "share": {
+     "0": 0.0028,
+     "1": 0.0265,
+     "2": 0.1452,
+     "3": 0.8255
+    },
+    "share_2_plus": 0.9707,
+    "share_3_plus": 0.8255
+   }
+  },
+  "P4_one_open_per_direction": {
+   "book": {
+    "trades": 18731,
+    "days_with_entries": 753,
+    "net_r": -8768.58,
+    "mean_net_r": -0.4681,
+    "win_rate": 0.2651,
+    "tp1_first_share": 0.2491,
+    "worst_trade_r": -4.9466,
+    "gap_exits": 217,
+    "max_dd_r": 8770.4941,
+    "longest_losing_streak": 29,
+    "potential_daily_loss_r": {
+     "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+     "mean": 24.875,
+     "p95": 36.0,
+     "max": 51,
+     "max_day": "2021-10-12",
+     "max_usd_if_every_position_risked_650": 33150.0
+    },
+    "realised_daily_r": {
+     "mean": -11.4323,
+     "p05": -24.6182,
+     "worst": -41.317,
+     "worst_day": "2021-10-12"
+    }
+   },
+   "blocked": {
+    "count": 21936,
+    "share_of_all": 0.5394,
+    "mean_net_r": -0.3737,
+    "net_r": -8197.16,
+    "tp1_first_share": 0.2421,
+    "by_tf_arm": {
+     "15m_h4": 5879,
+     "15m_treatment": 115,
+     "1h_h4": 1984,
+     "1h_treatment": 29,
+     "30m_h4": 3631,
+     "30m_treatment": 64,
+     "5m_h4": 9911,
+     "5m_treatment": 323
+    }
+   },
+   "concurrency": {
+    "samples": 200523,
+    "mean": 1.2404,
+    "max": 2,
+    "share": {
+     "0": 0.0373,
+     "1": 0.685,
+     "2": 0.2777
+    },
+    "share_2_plus": 0.2777,
+    "share_3_plus": 0.0
+   }
+  }
+ },
+ "comparisons": [
+  {
+   "a": "P1_one_open",
+   "b": "P0_none",
+   "mean_net_r_per_trade": {
+    "diff": 0.0859,
+    "ci95": [
+     0.0578,
+     0.1136
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   },
+   "net_r_per_day": {
+    "diff": 18.9355,
+    "ci95": [
+     18.0087,
+     19.851
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   }
+  },
+  {
+   "a": "P2_one_open_three_per_day",
+   "b": "P0_none",
+   "mean_net_r_per_trade": {
+    "diff": -0.2608,
+    "ci95": [
+     -0.3134,
+     -0.2078
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   },
+   "net_r_per_day": {
+    "diff": 19.7828,
+    "ci95": [
+     18.8658,
+     20.7011
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   }
+  },
+  {
+   "a": "P3_three_open",
+   "b": "P0_none",
+   "mean_net_r_per_trade": {
+    "diff": 0.0378,
+    "ci95": [
+     0.0288,
+     0.0474
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   },
+   "net_r_per_day": {
+    "diff": 8.9312,
+    "ci95": [
+     8.3431,
+     9.5478
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   }
+  },
+  {
+   "a": "P4_one_open_per_direction",
+   "b": "P0_none",
+   "mean_net_r_per_trade": {
+    "diff": -0.0509,
+    "ci95": [
+     -0.0613,
+     -0.0405
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   },
+   "net_r_per_day": {
+    "diff": 10.4957,
+    "ci95": [
+     9.8487,
+     11.1495
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   }
+  },
+  {
+   "a": "P1_one_open",
+   "b": "P2_one_open_three_per_day",
+   "mean_net_r_per_trade": {
+    "diff": 0.3467,
+    "ci95": [
+     0.2873,
+     0.4061
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   },
+   "net_r_per_day": {
+    "diff": -0.8473,
+    "ci95": [
+     -1.2345,
+     -0.4805
+    ],
+    "p_two_sided": 0.0,
+    "p_holm": 0.0,
+    "p_bh": 0.0
+   }
+  }
+ ],
+ "decision": "NONE: shadow research only (registration 'decision'); no limit is enforced or proposed for production"
+}

@@ -4,10 +4,11 @@
 
 Each requirement is scored 1 only when its status is VERIFIED with evidence; everything else (OPEN, FAIL,
 UNVERIFIED, NOT RUN, BLOCKED) scores 0. A category's score is the share of its requirements verified; the total is
-the weighted sum. Two columns: "production" (what is deployed: c59d49bca since 26 Nov 2026, after PR #141 and #142)
-and "branch" (production plus the open pull requests #143 and the phase report, NOT deployed). A P0 requirement that
-fails blocks the 90% designation whatever the total. Trading performance is NOT part of this score; it is reported
-separately. The previous scores (production 45.9 %, branch 68.0 % at 505f05ecc) are kept in PREVIOUS.
+the weighted sum. Two columns: "production" (what is deployed: f53d83338 since 28 Nov 2026, after PR #143-#147)
+and "branch" (production plus the open pull requests of 28 Nov: #148 reopen verification, G5-SENS, G6 exposure and
+the final audit, NOT deployed). A P0 requirement that fails blocks the 90% designation whatever the total. Trading
+performance is NOT part of this score; it is reported separately. The requirement list is unchanged since 26 Nov, so
+the scores stay comparable; only statuses with new evidence change (28 Nov: A5). Earlier scores are in PREVIOUS.
 """
 from __future__ import annotations
 
@@ -17,7 +18,8 @@ import json
 WEIGHTS = {"data": 0.20, "stats": 0.20, "cost": 0.15, "alerts": 0.15, "research": 0.10, "tests": 0.10,
            "ops": 0.05, "docs": 0.05}
 V, X = "VERIFIED", None
-PREVIOUS = {"date": "2026-11-26 11:04 UTC", "production_commit": "505f05ecc", "production": 45.9, "branch": 68.0}
+PREVIOUS = [{"date": "2026-11-26 11:04 UTC", "production_commit": "505f05ecc", "production": 45.9, "branch": 68.0},
+            {"date": "2026-11-26 (phase report, PR #144)", "production_commit": "c59d49bca", "production": 68.0, "branch": 68.0}]
 # (id, category, P0?, requirement, production status, branch status, evidence)
 REQ = [
     ("D1", "data", False, "Engine input excludes market-shut quotes; cited PDH/PDL/PWL reproduced independently", V, V, "levels_check_2026-11-26.txt; sources.trading_week_only"),
@@ -49,7 +51,10 @@ REQ = [
     ("A2", "alerts", True, "No duplicate sends", V, V, "0 keys accepted twice"),
     ("A3", "alerts", True, "No stale alert sent (freshness gate)", V, V, "0 over 20 min; stale-gate tests"),
     ("A4", "alerts", False, "Retry with cache check; mutation-tested", V, V, "42 of 42 mutants killed"),
-    ("A5", "alerts", True, "Resilient to rate limits (no lost alert)", "UNVERIFIED", "UNVERIFIED", "GA-07 fix merged; no 429 since, so untested live"),
+    ("A5", "alerts", True, "Resilient to rate limits (no lost alert)", "FAIL", "FAIL",
+     ("tested live after the GA-07 fix: run 2026-11-27 09:18:37 UTC, three 429s; the zone alert's retry succeeded, '+$10 REACHED' "
+     "failed its retry, 'M15 BREAKOUT' was not retried (channel failed twice in the run); both disclosed as pending "
+     "warnings in the 09:33 UTC message, not re-sent (delivery_status_2026-11-28)")),
     ("A6", "alerts", False, "Device delivery confirmed", "UNVERIFIED", "UNVERIFIED", "not observable via ntfy; PHONE_DELIVERY = NOT_VERIFIABLE on every record"),
     ("A7", "alerts", False, "Disclaimer and planned-vs-guaranteed loss wording", V, V, "test_alert_disclaimer; GAP RISK line"),
     ("A8", "alerts", False, "Outage notice when alerts may be missing", V, V, "test_outage_notice (53)"),
