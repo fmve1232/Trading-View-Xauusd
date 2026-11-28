@@ -1,0 +1,12 @@
+# Protected-state check, 28 Nov 2026 (before the Part 2-7 work)
+checkout: f53d83338b98ca2b62f821173af887fd1c86f321 (production f53d83338 + this branch's tools)
+store: origin/market-data 1800b2810269cdb39a296f2a0db7404b2c94b5a1
+$ python audit/tools/protected_check.py --store <store>
+PASS  freeze_key
+PASS  pine_count
+PASS  pine_manifest
+PASS  pine_prereg
+PASS  manifest_all
+PASS  store_manifest
+PASS
+exit 0

@@ -1,0 +1,139 @@
+{
+ "verdict": "SUSPECT",
+ "reopen": "2026-11-22T23:00:00+00:00",
+ "records": 837,
+ "post_reopen_records": 837,
+ "runs_logged": [
+  "2026-11-27T21:33:58Z"
+ ],
+ "checks": {
+  "R1": {
+   "verdict": "PASS",
+   "first_bar_open_utc": "2026-11-22T23:00:00+00:00",
+   "new_york": "2026-11-22T18:00:00-05:00",
+   "bars_after_reopen": 1375
+  },
+  "R2": {
+   "verdict": "PASS",
+   "friday_last_bar_utc": "2026-11-20T21:55:00+00:00",
+   "friday_last_close": 3533.284,
+   "last_shut_window_print": 3533.094,
+   "raw_first_print_open": 3533.046,
+   "raw_first_print_is_the_carried_quote": true,
+   "engine_first_bar": {
+    "open": 3576.12,
+    "high": 3577.434,
+    "low": 3521.75,
+    "close": 3576.12
+   },
+   "first_valid_price": 3576.12,
+   "first_valid_price_definition": "the first bar's close (its open is the carried quote; sources.repair_reopen)",
+   "gap_from_friday_close": 42.835
+  },
+  "R2b": {
+   "verdict": "SUSPECT",
+   "gap": "up",
+   "extreme_opposite_to_the_gap": 3521.75,
+   "friday_last_close": 3533.284,
+   "note": "the first bar's low lies beyond Friday's close against the gap: probably not a trade; unverifiable without a tick source",
+   "ledger_exits_decided_inside_the_suspect_range": [
+    {
+     "ledger": "5m_h4",
+     "dir": "LONG",
+     "entry_time": "2026-11-20T21:45:00+00:00",
+     "exit": 3522.478,
+     "exit_reason": "SL",
+     "r": 1.6118
+    }
+   ],
+   "g4_records_changed_without_the_extreme": {
+    "records_spanning_the_bar": 19,
+    "changed": [
+     {
+      "key": "15m|h4|2026-11-20T21:45:00+00:00|LONG",
+      "fields": [
+       "in_trade"
+      ]
+     },
+     {
+      "key": "5m|h4|2026-11-20T21:45:00+00:00|LONG",
+      "fields": [
+       "race",
+       "stop",
+       "race_window",
+       "next_open",
+       "in_trade"
+      ]
+     }
+    ]
+   }
+  },
+  "R3": {
+   "verdict": "PASS",
+   "raw_bars_in_shut_window": 588,
+   "engine_bars_in_shut_window": 0
+  },
+  "R4": {
+   "verdict": "PASS",
+   "bars": 15806,
+   "duplicates": 0,
+   "off_grid": 0
+  },
+  "R5": {
+   "verdict": "PASS",
+   "reference": "COMEX GC=F futures (Yahoo), premium removed; not a spot price",
+   "first_common_bar_utc": "2026-11-22T23:10:00+00:00",
+   "premium_usd": 0.372,
+   "first_common_open_spot_vs_futures_minus_premium": [
+    3562.844,
+    3567.628
+   ],
+   "first_hour_bars": 10,
+   "first_hour_median_abs_close_diff_usd": 3.612,
+   "first_hour_max_abs_close_diff_usd": 5.981,
+   "tolerance_usd": 5.583,
+   "tolerance_rule": "p95 of |futures - premium - spot| over the last session before the break",
+   "baseline_bars": 276
+  },
+  "R6": {
+   "verdict": "PASS",
+   "records_reading_unclosed_bars": 0,
+   "examples": []
+  },
+  "R7": {
+   "verdict": "PASS",
+   "discrepancies": 0,
+   "examples": [],
+   "post_reopen_fills_at_a_session_close": 7
+  },
+  "R8": {
+   "verdict": "PASS",
+   "all": {
+    "records": 837,
+    "agree": 837,
+    "disagree": 0,
+    "ledger_changed": 0,
+    "trade_not_in_ledger": 0
+   },
+   "post_reopen": {
+    "records": 837,
+    "agree": 837,
+    "disagree": 0,
+    "ledger_changed": 0
+   },
+   "details": []
+  },
+  "R9": {
+   "verdict": "PASS",
+   "expected_records_by_last_run": 837,
+   "actual_records": 837,
+   "duplicates": 0,
+   "conflicting_copies": 0,
+   "missing": 0,
+   "missing_examples": [],
+   "modified_ledger_trades": 0,
+   "second_copy": null
+  }
+ },
+ "pending_rule": "PENDING until the snapshot holds G4 records written after the reopening bar"
+}
