@@ -138,6 +138,7 @@ async function load() {
   } catch (e) {
     S.data = null;
     $("#banners").innerHTML = `<div class="banner error">No data for ${esc(S.tf)} yet (${esc(e.message)}). The pipeline publishes it on its next run.</div>`;
+    try { renderBbg(); } catch (e2) { console.error(e2); }        // every section then says UNAVAILABLE
     return;
   }
   renderAll();
@@ -202,6 +203,7 @@ function renderLive() {
   $("#live-meta").textContent = closed ? "market closed · last quote" : `${src} · ${age}${isNum(ref) ? " · Δ " + fs(LIVE.px - ref, 2) + " vs last bar" : ""}`;
   chip.classList.add(!closed && !LIVE.err && ageMin < 10 ? "ok" : "stale");
   try { renderQuote(); renderBrief(); } catch (e) { console.error(e); }
+  if (!S.bbT || Date.now() - S.bbT > 1000) { try { renderBbg(); } catch (e) { console.error(e); } }   // the live price, at most once a second
   if (!S.paT || Date.now() - S.paT > 2000) { S.paT = Date.now(); try { renderPlanAlerts(); } catch (e) { console.error(e); } }   // open plans' live P/L, at most every 2 s
   chip.title = (src === "stream" ? "Streaming ticks (Finnhub via the relay), at most 4 updates a second. DISPLAY ONLY: the engine never uses them; signals come from closed bars." : LIVE_TITLE) +
     (STREAM.url ? ` Stream: ${STREAM.status || "—"}.` : "") + (closed ? " The market is closed (Friday 17:00 to Sunday 18:00 New York, and the daily 17:00-18:00 break): the feed repeats the last quote with a fresh timestamp." : "") +
@@ -2861,10 +2863,26 @@ function validationHtml(V) {
     <p class="muted pa-note">A daily report reaches your phone after the New York close and a weekly one after Friday's close.
       A group is marked WEAK or STRONG only with 30+ results and a 95% range clear of break-even; smaller samples are mostly luck.</p>`;
 }
+/* ---------- the terminal band at the top (site/bbg.js; mandate 2026-11-28, Parts 18-19). DISPLAY ONLY ----------
+   QBbg.model lays out the published payloads; it is handed this file's own helpers (freshness, the live quote, the
+   RECORD verdict, the WAIT wording, the trend-vote wording, the MT5 offset), so nothing is computed twice. No
+   execution ledger is published yet (mandate Part 14), so section I says UNAVAILABLE rather than guess. */
+function renderBbg() {
+  const el = $("#bbg"); if (!el || !window.QBbg) return;
+  const lp = S.data ? livePrice() : null;
+  const x = { nowMs: Date.now(), closed: marketClosed(new Date()), fresh: freshness(),
+    live: lp !== null ? { px: lp, t: LIVE.t, src: LIVE.src === "stream" && streaming() ? "relay tick stream" : "gold-api.com" } : null,
+    verdict: recordVerdict, why: whyPlain, htfDir, px, tfmt, ago,
+    news: window.QCosts && S.data && S.data.news ? QCosts.newsState(S.data.news, Date.now() / 1000) : null,
+    mt5: S.mt5feed || null, spec: S.spec || null, specOk: !!(S.spec && window.QCosts && QCosts.specValidate(S.spec).ok), account: S.account, ledger: null };
+  el.innerHTML = QBbg.render(QBbg.model(S.data, S.index, x));
+  S.bbT = Date.now();
+}
+setInterval(() => { try { renderBbg(); } catch (e) { console.error(e); } }, 15000);   // ages, the market clock, a late MT5 file
 function renderAll() {
   renderHeader(); renderSide(); renderChart();
   const safe = (fn) => { try { fn(); } catch (e) { console.error(e); } };
-  safe(renderDash); safe(renderPlanStrip);
+  safe(renderBbg); safe(renderDash); safe(renderPlanStrip);
   safe(renderPlanAlerts); safe(renderConfirm); safe(renderBrief); safe(renderH5); safe(renderH6); safe(renderGoldArrows); safe(renderStrip); safe(renderH2); safe(renderH3); safe(renderOverview); safe(renderEvents); safe(renderReference); safe(renderMt5); safe(renderGuard); safe(renderLive); safe(renderMacro); safe(renderLiquidity); safe(renderAnalog); safe(renderBacktest); safe(renderDiagnostics); renderMethod();
   showTab(S.tab);
 }
