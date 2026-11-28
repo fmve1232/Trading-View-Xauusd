@@ -1,0 +1,64 @@
+{
+ "what": "LOCAL RENDER of the site before (production f53d83338) and after (this branch), both on the same local payload. Not the live site and not a production payload.",
+ "payload": {
+  "built_utc": "2026-11-28T07:29:11.994836+00:00",
+  "price_source": "yahoo:GC=F",
+  "synthetic": false,
+  "note": "built locally by quantum.pipeline on a copy of the market-data store; the live fetches failed in this sandbox, so the price source is the GC=F fallback and the macro series show DELAYED (store fallback)",
+  "sha256": {
+   "5m.json": "aebdcdcfe78185174be1e13c70a8dddc0c714626aeb52acec6eac059ee9d4a0a",
+   "15m.json": "2574a5fb4937815e0a1870615a8060126306cd6db074c5260e342a533dfd08ea",
+   "30m.json": "c1ec0ddc30777e6a42cd477baae221805cce41a7a19098ce3296fdb2c2f4bdf6",
+   "1h.json": "708262459dfe68d5bf4ab525f1652e4c801b13a0347bb03f4783cc93f4014ded",
+   "4h.json": "8a30bb94654ab236ce1016fd63f7e82985c92a6de2a9d9e242d0994b4fed4971",
+   "index.json": "43cea0d56f58adc928c128a926c5e34345023b1dd65d63eca18e746711920ef2"
+  }
+ },
+ "browser": "Chromium via Playwright; desktop 1440x900 at device scale 2, phone = Playwright 'iPhone 13' (390x844); default (light) site theme, the band keeps its dark palette",
+ "render_time_market": "closed (Saturday 28 Nov 2026)",
+ "measured_after": {
+  "desktop": {
+   "band_rows": 62,
+   "band_top_px": 114,
+   "band_height_px": 405,
+   "band_width_px": 1408,
+   "chart_top_px": 564,
+   "page_horizontal_scroll": false
+  },
+  "mobile": {
+   "band_rows": 62,
+   "band_top_px": 336,
+   "band_height_px": 272,
+   "band_width_px": 370,
+   "chart_top_px": 654,
+   "page_horizontal_scroll": false,
+   "layout": "one swipeable row, DECISION first"
+  },
+  "final_line": "NO TRADE / INSUFFICIENT EVIDENCE",
+  "page_errors": []
+ },
+ "rows_note": "62 rows + the DECISION headline = the 63 FIELDS cells",
+ "screenshots": {
+  "before_desktop.png": {
+   "sha256": "ebaf2aeb4ad2f255dae83531656de88337ff0ffe7e13140fc7675d182bc8c2ab",
+   "bytes": 657401
+  },
+  "before_mobile.png": {
+   "sha256": "d94cec2f81bd22dc8f3b85ed9bb76618ef843b0e93f11078108c79c8e33a3526",
+   "bytes": 298049
+  },
+  "after_desktop.png": {
+   "sha256": "fb49d3b12a91860209b625eb4f535f69c910522dd7c5ce5c7606ec86fc2a035b",
+   "bytes": 806673
+  },
+  "after_mobile.png": {
+   "sha256": "88a21e1f9da335bd29024d7c8eaba2f477261f5e1911c5f72d31bcd6a0a3e61a",
+   "bytes": 284129
+  },
+  "after_desktop_band.png": {
+   "sha256": "405f495978b2516d80af11f6726712f5b9e6aa865ef254a99e6a631665d7af1b",
+   "bytes": 356980
+  }
+ },
+ "screenshots_note": "PNG files are not committed (the repository holds no images); they were sent to the operator in the session, and these hashes identify them."
+}

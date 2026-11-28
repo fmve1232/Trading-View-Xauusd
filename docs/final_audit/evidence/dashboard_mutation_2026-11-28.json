@@ -1,0 +1,117 @@
+{
+ "tool": "audit/tools/bbg_mutation.py (scratch copy; repository untouched)",
+ "applied": 22,
+ "killed": 22,
+ "results": [
+  {
+   "mutant": "final verdict ignores the evidence",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "STALE never set",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "engine confidence shown as the score",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "invalid macro value shown",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "failed feed shown",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "macro STALE threshold disabled",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "macro STALE while the market is closed",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "store fallback not DELAYED",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "no ledger reads as no open trade",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "developing / done swapped",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "engine plan shown without a signal",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "lot shown without an account",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "lot shown without a valid spec",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "payload text not escaped",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "old structure coloured as current",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "live price used when stale",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "missing payload filled with zeros",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "high-cost warning dropped",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "news window dropped",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "phone decision ignored in the final line",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "confirmed sweep flag ignored",
+   "applied": true,
+   "killed": true
+  },
+  {
+   "mutant": "INDICATIVE dropped for a futures source",
+   "applied": true,
+   "killed": true
+  }
+ ]
+}
