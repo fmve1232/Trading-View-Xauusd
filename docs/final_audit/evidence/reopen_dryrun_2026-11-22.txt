@@ -1,0 +1,17 @@
+# Reopening check, DRY RUN on the 22 Nov 2026 reopening (not the Part 2 verification)
+store: origin/market-data 1800b2810269cdb39a296f2a0db7404b2c94b5a1 (committed 2026-11-27T21:33:58Z)
+G4 records: written by the 27 Nov evidence run (quantum.trade_diag --append --now 2026-11-27T21:33:58Z), NOT by a production run
+$ python audit/tools/reopen_check.py --store <store> --reopen 2026-11-22T23:00:00Z
+reopen 2026-11-22T23:00:00+00:00  records 837  post-reopen 837
+PASS        R1
+PASS        R2
+SUSPECT     R2b
+PASS        R3
+PASS        R4
+PASS        R5
+PASS        R6
+PASS        R7
+PASS        R8
+PASS        R9
+SUSPECT
+exit 3

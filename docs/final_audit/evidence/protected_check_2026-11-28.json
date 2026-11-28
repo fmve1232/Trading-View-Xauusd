@@ -1,0 +1,54 @@
+{
+ "verdict": "PASS",
+ "checks": {
+  "freeze_key": {
+   "ok": true,
+   "found": "1f88aad357497da4:4440d52587f5cc6b",
+   "expected": "1f88aad357497da4:4440d52587f5cc6b"
+  },
+  "pine_count": {
+   "ok": true,
+   "found": [
+    "XAUUSD_Quantum_5_0_Diagnostics.pine",
+    "XAUUSD_Quantum_5_0_EdgeCases.pine",
+    "XAUUSD_Quantum_5_0_Master.pine",
+    "XAUUSD_Quantum_5_0_Strategy.pine",
+    "XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine",
+    "XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine",
+    "XAUUSD_Quantum_5_5_Visuals.pine"
+   ]
+  },
+  "pine_manifest": {
+   "ok": true,
+   "mismatch": [],
+   "sha256": {
+    "XAUUSD_Quantum_5_0_Diagnostics.pine": "3e1707bd3c6ab9309c458e6ba6625eff9ee8e1a5d657c066a96bc0e923845bc0",
+    "XAUUSD_Quantum_5_0_EdgeCases.pine": "411a73e6deb72a87af279ec0f132c2fce9dcffeb896ed98375930fd0b17029fe",
+    "XAUUSD_Quantum_5_0_Master.pine": "0506208a373b4b60745443f966c63081d156de3d0f5d19d28601167a4f424f7a",
+    "XAUUSD_Quantum_5_0_Strategy.pine": "f43b6882b250c1a1401a14b73ee898122b107e37e782dea2aad13cc62834abf1",
+    "XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine": "b5762a04fc0b647f01ec85de40e9839bef2f34b1df358c7271a339bd2745449a",
+    "XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine": "2f0d987e2b715e636657c2b5e7cc0ef28b70f697bac2a635df04bdc499e14030",
+    "XAUUSD_Quantum_5_5_Visuals.pine": "2d7de37f3e737efa24451cf02d4dd3f846dfeb55d8781625ba0deb31dd0cad6a"
+   }
+  },
+  "pine_prereg": {
+   "ok": true,
+   "files": [
+    "XAUUSD_Quantum_5_0_Master.pine",
+    "XAUUSD_Quantum_5_0_Strategy.pine",
+    "XAUUSD_Quantum_5_0_Strategy_CHALLENGER.pine",
+    "XAUUSD_Quantum_5_0_Strategy_OLDGATES.pine"
+   ],
+   "mismatch": []
+  },
+  "manifest_all": {
+   "ok": true,
+   "files": 7,
+   "mismatch": []
+  },
+  "store_manifest": {
+   "ok": true,
+   "found": "1f88aad357497da4:4440d52587f5cc6b"
+  }
+ }
+}
