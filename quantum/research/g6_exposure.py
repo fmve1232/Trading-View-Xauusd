@@ -15,6 +15,7 @@ target, so concurrency is never understated. Each open position carries one R of
 from __future__ import annotations
 
 import argparse
+import glob
 import json
 import os
 import time
@@ -25,8 +26,8 @@ from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 
-from .. import arm_h4, backtest, config, engine, trade_diag
-from ..data import sources
+from .. import arm_h2, arm_h3, arm_h4, arm_h5, backtest, config, engine
+from ..data import sources, store
 from ..features import compute as compute_features
 from . import b10, history
 from . import harness as H
@@ -36,8 +37,15 @@ SEED = 20261128
 NY = ZoneInfo("America/New_York")
 TFS = {"5m": 300, "15m": 900, "30m": 1800, "1h": 3600}
 ARMS = ("treatment", "h4")
-TF_RANK = {"1h": 0, "30m": 1, "15m": 2, "5m": 3}          # tie-break at the same fill time: higher timeframe first
-ARM_RANK = {"treatment": 0, "h4": 1}                       # then treatment before H4 (registration "tie_break")
+# amendment A1: every live forward-test arm (h6 is closed, Amendment F) on 5m-4h, as a second family
+TFS_A1 = {**TFS, "4h": 14400}
+ARMS_A1 = ("treatment", "control", "challenger", "h2", "h3", "h4", "h5")
+FAMILIES = {"primary": (TFS, ARMS), "a1": (TFS_A1, ARMS_A1)}
+SEC = TFS_A1
+# tie-break at the same fill time: higher timeframe first, then the arm order (registration "tie_break", A1 "tie_break");
+# the A1 additions keep the primary order (1h before 30m before 15m before 5m; treatment before h4)
+TF_RANK = {"4h": -1, "1h": 0, "30m": 1, "15m": 2, "5m": 3}
+ARM_RANK = {a: i for i, a in enumerate(ARMS_A1)}
 OVERLAP_SEC = 3600                                         # "entries in the same direction within 60 minutes"
 PER_DAY = 3
 MAX_OPEN = 3
@@ -64,7 +72,7 @@ def positions(trades_by_key: dict, start: int | None = None) -> tuple[list[dict]
     arm). Trades still open at the end of the data and fills before `start` are left out and counted."""
     out, skipped = [], {"open_at_end": 0, "before_common_start": 0}
     for (tf, arm), trades in trades_by_key.items():
-        sec = TFS[tf]
+        sec = SEC[tf]
         for k, t in enumerate(trades):
             if t.get("open"):
                 skipped["open_at_end"] += 1
@@ -334,22 +342,45 @@ def study(pos: list[dict], grid: np.ndarray, rng, with_policies: bool) -> dict:
 
 
 # ---------------- runs ----------------
-def run_dev(rd: str, trials: str | None = None, log=print) -> dict:
+def dev_trades(bases: dict, h1, tfs: dict, arms: tuple, log=print) -> tuple[dict, dict]:
+    """The frozen engine's trades for each (timeframe, arm), produced as production produces them: one feature
+    computation per timeframe, engine.run per engine mode (quantum/pipeline.py), backtest.simulate for the engine arms
+    and the H-arms' own simulate on the treatment run (quantum/report.py)."""
+    cfg = config.DEFAULT
+    trades, timing = {}, {}
+    for tf, sec in tfs.items():
+        t0 = time.time()
+        m = b10.make_market(bases[tf], h1, tf, sec)
+        F = compute_features(m, cfg)
+        runs = {mode: engine.run(m, cfg, mode, F) for mode in ("treatment", "control", "challenger") if mode in arms}
+        res = runs.get("treatment") or engine.run(m, cfg, "treatment", F)
+        for arm in arms:
+            if arm in ("treatment", "control", "challenger"):
+                trades[(tf, arm)] = backtest.simulate(runs[arm], cfg)
+            elif arm == "h2":
+                trades[(tf, arm)], _ = arm_h2.simulate(res, cfg)
+            elif arm == "h3":
+                trades[(tf, arm)], _ = arm_h3.simulate(res, m, cfg)
+            elif arm == "h4":
+                trades[(tf, arm)], _ = arm_h4.simulate(res, cfg)
+            elif arm == "h5":
+                trades[(tf, arm)], _ = arm_h5.simulate(res, cfg, sec)
+            else:
+                raise ValueError(arm)
+        timing[tf] = round(time.time() - t0, 1)
+        log(f"[G6] {tf}: " + ", ".join(f"{a} {len(trades[(tf, a)])}" for a in arms) + f" trades, {timing[tf]} s")
+        del runs, res, F, m
+    return trades, timing
+
+
+def run_dev(rd: str, trials: str | None = None, log=print, family: str = "primary") -> dict:
     m15 = H.partition(history.load(rd, "XAU/USD", "15min"), "development")
     h1 = H.partition(history.load(rd, "XAU/USD", "1h"), "development")
     m5 = H.partition(history.load(rd, "XAU/USD", "5min"), "development")
-    bases = {"5m": m5, "15m": m15, "30m": sources.resample_ohlc(m15, "30min"), "1h": h1}
-    cfg = config.DEFAULT
-    trades, timing = {}, {}
-    for tf, sec in TFS.items():
-        t0 = time.time()
-        m = b10.make_market(bases[tf], h1, tf, sec)
-        res = engine.run(m, cfg, "treatment", compute_features(m, cfg))
-        trades[(tf, "treatment")] = backtest.simulate(res, cfg)
-        trades[(tf, "h4")], _ = arm_h4.simulate(res, cfg)
-        timing[tf] = round(time.time() - t0, 1)
-        log(f"[G6] {tf}: treatment {len(trades[(tf, 'treatment')])}, h4 {len(trades[(tf, 'h4')])} trades, {timing[tf]} s")
-        del res
+    bases = {"5m": m5, "15m": m15, "30m": sources.resample_ohlc(m15, "30min"), "1h": h1,
+             "4h": sources.resample_ny_session(h1, 4)}
+    tfs, arms = FAMILIES[family]
+    trades, timing = dev_trades(bases, h1, tfs, arms, log)
     ix5 = pd.DatetimeIndex(m5.index).tz_convert("UTC").as_unit("s").asi8.astype(np.int64)
     start = int(ix5[0])                                       # the common window: the 5-minute coverage
     grid = ix5 + 300                                          # every 5-minute bar close
@@ -359,11 +390,13 @@ def run_dev(rd: str, trials: str | None = None, log=print) -> dict:
     hashes = {"5m": H.data_hash(m5), "15m": H.data_hash(m15), "1h": H.data_hash(h1)}
     if trials:
         for c in res["comparisons"]:
-            H.log_trial(trials, {"reg": REG, "part": "development", "a": c["a"], "b": c["b"], "data_hash_5m": hashes["5m"],
+            H.log_trial(trials, {"reg": REG, **({"family": family} if family != "primary" else {}), "part": "development",
+                                 "a": c["a"], "b": c["b"], "data_hash_5m": hashes["5m"],
                                  "data_hash_15m": hashes["15m"], "data_hash_1h": hashes["1h"],
                                  **{f"{m}_diff": c[m]["diff"] for m in MEASURES}, **{f"{m}_p": c[m]["p_two_sided"] for m in MEASURES},
                                  **{f"{m}_p_holm": c[m]["p_holm"] for m in MEASURES}})
-    return {"registration": REG, "partition": "development", "data_hashes": hashes, "seed": SEED,
+    return {"registration": REG, "family": family, "arms": list(arms), "timeframes": list(tfs),
+            "partition": "development", "data_hashes": hashes, "seed": SEED,
             "window_utc": [datetime.fromtimestamp(start, timezone.utc).isoformat(), str(m5.index[-1])],
             "common_window_note": "every timeframe is measured from the first development 5-minute bar (2020-03-16) so that all "
                                   "four timeframes and the 5-minute sampling grid cover the same span; earlier 15m / 1h fills "
@@ -372,24 +405,67 @@ def run_dev(rd: str, trials: str | None = None, log=print) -> dict:
             "decision": "NONE: shadow research only (registration 'decision'); no limit is enforced or proposed for production"}
 
 
-def run_forward(ledger: str, store_dir: str, log=print) -> dict:
+def out_of_scope(ledger: str) -> dict:
+    """Amendment A1 'out_of_scope_listed': what the ledger holds that is not a position with a fill, an exit and a net
+    R, counted and listed (not modelled)."""
+    streams = Counter()
+    for path in sorted(glob.glob(os.path.join(ledger, "notifications", "*.jsonl"))):
+        with open(path) as f:
+            for line in f:
+                try:
+                    streams[str(json.loads(line).get("stream") or "unknown")] += 1
+                except ValueError:
+                    streams["unreadable line"] += 1
+    research = {}
+    for path in sorted(glob.glob(os.path.join(ledger, "research_forward", "*.json*"))):
+        name = os.path.basename(path)
+        with open(path) as f:
+            if name.endswith(".jsonl"):
+                research[name] = sum(1 for _ in f)
+                continue
+            d = json.load(f)
+        lists = {k: len(v) for k, v in d.items() if isinstance(v, list)} if isinstance(d, dict) else {"rows": len(d)}
+        research[name] = lists
+    return {"reason": "not positions with a fill, an exit and a net R: information messages, or shadow research records "
+                      "whose outcome is a race label; counted here, not modelled as positions",
+            "notification_attempts_by_stream": dict(sorted(streams.items())), "research_forward_records": research}
+
+
+def grid5(store_dir: str) -> np.ndarray:
+    """Bar-open times (epoch s) of the stored XAU/USD 5-minute bars as the engine keeps them: off-grid rows and
+    bars printed while gold is shut dropped (sources.drop_offgrid, sources.trading_week_only). Only the times are
+    used here; the reopen repair changes prices, not which bars exist."""
+    df = store.load(store_dir, "XAU/USD_5m")
+    if df is None or not len(df):
+        return np.array([], np.int64)
+    ix = pd.DatetimeIndex(sources.trading_week_only(sources.drop_offgrid(df)).index)
+    ix = ix.tz_localize("UTC") if ix.tz is None else ix.tz_convert("UTC")
+    return ix.as_unit("s").asi8.astype(np.int64)
+
+
+def run_forward(ledger: str, store_dir: str, log=print, family: str = "primary") -> dict:
     trades, src = {}, {}
-    for tf in TFS:
-        for arm in ARMS:
+    tfs, arms = FAMILIES[family]
+    for tf in tfs:
+        for arm in arms:
             path = os.path.join(ledger, "holdout", f"{tf}_{arm}.json")
+            if not os.path.exists(path):
+                src[f"{tf}_{arm}"] = {"records": None, "current_freeze": 0, "note": "no ledger file"}
+                continue
             with open(path) as f:
                 rows = json.load(f)
             keep = [t for t in rows if str(t.get("freeze_key", "")).startswith(CURRENT_FREEZE)]
             trades[(tf, arm)] = keep
             src[f"{tf}_{arm}"] = {"records": len(rows), "current_freeze": len(keep)}
     pos, skipped = positions(trades)
-    P5 = trade_diag.bars5(store_dir)
-    t5 = np.asarray(P5["t"], np.int64) if P5 else np.array([], np.int64)
+    t5 = grid5(store_dir)
     lo, hi = (min(p["fill"] for p in pos), max(p["end"] for p in pos)) if pos else (0, 0)
     grid = t5[(t5 + 300 >= lo) & (t5 + 300 <= hi)] + 300
     log(f"[G6] forward: {len(pos)} positions, {len(grid)} 5-minute samples")
     res = study(pos, grid, None, with_policies=False)
-    return {"registration": REG, "part": "forward (descriptive only; no policy replayed or compared)", "freeze_key": CURRENT_FREEZE,
+    extra = {"out_of_scope": out_of_scope(ledger)} if family == "a1" else {}
+    return {"registration": REG, "family": family, "arms": list(arms), "timeframes": list(tfs),
+            "part": "forward (descriptive only; no policy replayed or compared)", "freeze_key": CURRENT_FREEZE, **extra,
             "ledgers": src, "skipped": skipped, "utc": datetime.now(timezone.utc).isoformat(),
             "window_utc": [datetime.fromtimestamp(lo, timezone.utc).isoformat(), datetime.fromtimestamp(hi, timezone.utc).isoformat()]
             if pos else None, **res}
@@ -402,12 +478,14 @@ def main(argv=None) -> int:
     d.add_argument("--rd", required=True)
     d.add_argument("--out", required=True)
     d.add_argument("--trials")
+    d.add_argument("--family", choices=list(FAMILIES), default="primary")
     f = sub.add_parser("forward")
     f.add_argument("--ledger", required=True)
     f.add_argument("--store", required=True)
     f.add_argument("--out", required=True)
+    f.add_argument("--family", choices=list(FAMILIES), default="primary")
     a = ap.parse_args(argv)
-    out = run_dev(a.rd, a.trials) if a.cmd == "dev" else run_forward(a.ledger, a.store)
+    out = run_dev(a.rd, a.trials, family=a.family) if a.cmd == "dev" else run_forward(a.ledger, a.store, family=a.family)
     with open(a.out, "w") as fh:
         json.dump(out, fh, indent=1, default=str)
     return 0

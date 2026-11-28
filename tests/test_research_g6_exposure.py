@@ -156,5 +156,78 @@ def test_edges_the_first_tests_left_open():
     p = pos(("1h", "treatment", 1, T0, T0 + 7200, 1.0), ("15m", "h4", 1, T0 + 900, T0 + 1800, -1.0),
             ("15m", "h4", 1, T0 + d, T0 + d + 900, -1.0), ("15m", "h4", 1, T0 + d + 3600, T0 + d + 4500, -1.0))
     keeps = {k: G.replay(p, k) for k in G.POLICIES}
-    r = next(x for x in G.compare(p, keeps, H.seeded_rng(0), sims=200) if x["a"] == "P1_one_open" and x["b"] == "P0_none")
+    rows = {(x["a"], x["b"]): x for x in G.compare(p, keeps, H.seeded_rng(0), sims=200)}
+    r = rows[("P1_one_open", "P0_none")]
     assert r["net_r_per_day"]["diff"] == 0.5 and r["mean_net_r_per_trade"]["diff"] == round(-1 / 3 + 0.5, 4)
+    # the two days differ, so only a PAIRED bootstrap gives an identical pair of policies a zero-width interval
+    assert keeps["P1_one_open"] == keeps["P2_one_open_three_per_day"]
+    same = rows[("P1_one_open", "P2_one_open_three_per_day")]
+    assert same["mean_net_r_per_trade"]["ci95"] == [0.0, 0.0] and same["net_r_per_day"]["ci95"] == [0.0, 0.0]
+
+
+def _brute_replay(p, policy):
+    kept = []
+    for x in p:
+        live = [q for q in kept if q["fill"] <= x["fill"] < q["end"]]
+        day = sum(1 for q in kept if q["day"] == x["day"])
+        ok = {"P0_none": True, "P1_one_open": not live, "P2_one_open_three_per_day": not live and day < 3,
+              "P3_three_open": len(live) < 3, "P4_one_open_per_direction": all(q["d"] != x["d"] for q in live)}[policy]
+        if ok:
+            kept.append(x)
+    return [any(q is x for q in kept) for x in p]
+
+
+def test_replay_and_counts_equal_brute_force_on_random_positions():
+    rng = H.seeded_rng(7)
+    rows = []
+    for _ in range(400):
+        f = T0 + int(rng.integers(0, 20)) * 3600 + int(rng.integers(0, 12)) * 300     # many ties and touching ends
+        rows.append((str(rng.choice(["5m", "15m", "30m", "1h"])), str(rng.choice(["treatment", "h4"])),
+                     int(rng.choice([1, -1])), f, f + int(rng.integers(1, 30)) * 300, float(rng.normal())))
+    p = pos(*rows)
+    p.sort(key=lambda x: (x["fill"], G.TF_RANK[x["tf"]], G.ARM_RANK[x["arm"]], x["k"]))
+    for k in G.POLICIES:
+        assert G.replay(p, k) == _brute_replay(p, k), k
+    grid = np.arange(T0, T0 + 30 * 3600, 300, dtype=np.int64)
+    c = G.counts_at(p, grid)
+    assert c["all"].tolist() == [sum(1 for x in p if x["fill"] <= g < x["end"]) for g in grid]
+    assert G.exact_max(p)["max_open"] == max(sum(1 for q in p if q["fill"] <= x["fill"] < q["end"]) for x in p)
+
+
+def test_a1_family_is_the_registered_one_and_keeps_the_primary_order():
+    with open(REG) as f:
+        a1 = json.load(f)["amendments"][0]
+    assert a1["id"] == "A1" and "h6" not in G.ARMS_A1
+    assert all(arm in a1["arms"] for arm in G.ARMS_A1) and list(G.TFS_A1) == ["5m", "15m", "30m", "1h", "4h"]
+    assert G.FAMILIES["primary"] == (G.TFS, G.ARMS) and G.TFS_A1["4h"] == 14400
+    assert sorted(G.TFS_A1, key=G.TF_RANK.get) == ["4h", "1h", "30m", "15m", "5m"]
+    assert sorted(G.ARMS_A1, key=G.ARM_RANK.get) == list(G.ARMS_A1)
+    assert G.ARM_RANK["treatment"] < G.ARM_RANK["h4"]                     # the primary tie-break is unchanged
+    trades = {("4h", "h5"): [tr(T0 - 14400 + 900, T0 + 3600, 1.0)], ("1h", "control"): [tr(T0 - 2700, T0 + 3600, 1.0)],
+              ("1h", "treatment"): [tr(T0 - 2700, T0 + 3600, 1.0)]}           # all three fill at T0 + 900
+    p, _ = G.positions(trades)
+    assert [(x["tf"], x["arm"]) for x in p] == [("4h", "h5"), ("1h", "treatment"), ("1h", "control")]
+
+
+def test_out_of_scope_records_are_counted_not_modelled(tmp_path):
+    (tmp_path / "notifications").mkdir()
+    (tmp_path / "notifications" / "2026-11-27.jsonl").write_text('{"stream": "breakouts"}\n{"stream": "15m"}\nnot json\n')
+    (tmp_path / "research_forward").mkdir()
+    (tmp_path / "research_forward" / "B9-GRAB-FWD.json").write_text('{"id": "B9", "trades": [{}, {}]}')
+    (tmp_path / "research_forward" / "CONFIRM-EVENTS.jsonl").write_text("{}\n{}\n{}\n")
+    o = G.out_of_scope(str(tmp_path))
+    assert o["notification_attempts_by_stream"] == {"15m": 1, "breakouts": 1, "unreadable line": 1}
+    assert o["research_forward_records"] == {"B9-GRAB-FWD.json": {"trades": 2}, "CONFIRM-EVENTS.jsonl": 3}
+
+
+def test_the_forward_grid_keeps_only_trading_bars(tmp_path):
+    d = tmp_path / "XAU_USD_5m"
+    d.mkdir()
+    rows = ["datetime,open,high,low,close,volume",
+            "2026-11-20 14:00:00+00:00,1,1,1,1,",          # Friday 09:00 New York: trading
+            "2026-11-20 14:02:31+00:00,1,1,1,1,",          # off the grid (a quote stamped with its own time)
+            "2026-11-21 14:00:00+00:00,1,1,1,1,",          # Saturday: gold is shut
+            "2026-11-23 14:05:00+00:00,1,1,1,1,"]          # Monday: trading
+    (d / "2026-11.csv").write_text("\n".join(rows) + "\n")
+    got = G.grid5(str(tmp_path)).tolist()
+    assert got == [int(pd.Timestamp(x).timestamp()) for x in ("2026-11-20T14:00:00Z", "2026-11-23T14:05:00Z")]
