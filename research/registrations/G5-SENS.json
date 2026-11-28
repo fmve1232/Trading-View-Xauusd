@@ -4,7 +4,9 @@
  "status": "REGISTERED 2026-11-27, written and committed before any of its code or any run; research only; no production change",
  "approved_by_operator": true,
  "approval": "Operator, 2026-11-27 (chat), QUANTUM XAUUSD - NEXT PHASE EXECUTION & VALIDATION MANDATE, G5 (APPROVED): \"Parameter sensitivity: Do not select parameters based on the existing holdout period. Keep exploratory research separate from validation.\" Research integrity: \"Never tune against the holdout. Preserve registrations. Keep development / validation / forward separation. Register before running. Document failures.\" \"Never allow an automated AI research loop to approve its own strategy changes.\" The approval covers the DEVELOPMENT partition only; validation and the sealed holdout stay closed (harness.partition refuses them for this registration).",
- "partitions": ["development"],
+ "partitions": [
+  "development"
+ ],
  "not_used": "validation (2023-01-24 to 2024-07-01), the sealed holdout (2024-07-01 to 2026-01-01), the 'recent' 2026 span (it contains the forward holdout window, from 2026-09-28) and every forward ledger",
  "created_utc": "2026-11-27",
  "prior_evidence_disclosed_before_running": [
@@ -19,32 +21,97 @@
   "treatment": "the frozen engine's treatment arm (backtest.simulate on the engine's exec signals), production code",
   "h4": "arm H4 (quantum/arm_h4.py) on the same engine output, production code; volume-profile levels absent on this partition (above)"
  },
- "timeframes": ["15m", "30m", "1h"],
+ "timeframes": [
+  "15m",
+  "30m",
+  "1h"
+ ],
  "design": "ONE AT A TIME around the frozen value: each listed parameter takes each listed value while every other parameter stays at its frozen value. No grid search, no combinations, no optimisation, no second round. The value lists are fixed here and are not extended after a result is seen.",
  "parameters": {
   "engine (config.py; affects both arms)": {
-   "atr_len": [10, 14, 20],
-   "swing_pivot_len": [3, 5, 8],
-   "internal_pivot_len": [1, 2, 3],
-   "struct_window": [5, 8, 12],
-   "tq_min_score": [45, 55, 65],
-   "cal_gate_min_p": [0.45, 0.50, 0.55],
-   "eq_atr_mult": [0.15, 0.25, 0.35],
-   "liq_prox_mult": [1.0, 1.5, 2.0]
+   "atr_len": [
+    10,
+    14,
+    20
+   ],
+   "swing_pivot_len": [
+    3,
+    5,
+    8
+   ],
+   "internal_pivot_len": [
+    1,
+    2,
+    3
+   ],
+   "struct_window": [
+    5,
+    8,
+    12
+   ],
+   "tq_min_score": [
+    45,
+    55,
+    65
+   ],
+   "cal_gate_min_p": [
+    0.45,
+    0.5,
+    0.55
+   ],
+   "eq_atr_mult": [
+    0.15,
+    0.25,
+    0.35
+   ],
+   "liq_prox_mult": [
+    1.0,
+    1.5,
+    2.0
+   ]
   },
   "h4 (module constants; H4 only)": {
-   "GAP_ATR": [0.05, 0.1, 0.2],
-   "MERGE_ATR": [0.025, 0.05, 0.1],
-   "MIN_TP_R": [0.75, 1.0, 1.5],
-   "FALLBACK_R": [1.5, 2.0, 3.0]
+   "GAP_ATR": [
+    0.05,
+    0.1,
+    0.2
+   ],
+   "MERGE_ATR": [
+    0.025,
+    0.05,
+    0.1
+   ],
+   "MIN_TP_R": [
+    0.75,
+    1.0,
+    1.5
+   ],
+   "FALLBACK_R": [
+    1.5,
+    2.0,
+    3.0
+   ]
   },
   "cost of record (both arms; not a strategy parameter)": {
-   "cost multiplier on spread_cost, slippage_pts and commission_l together": [0.5, 1.0, 1.5, 2.0]
+   "cost multiplier on spread_cost, slippage_pts and commission_l together": [
+    0.5,
+    1.0,
+    1.5,
+    2.0
+   ]
   },
   "frozen values": "the middle value of each list (1.0 for the cost multiplier); a test checks they equal config.py and arm_h4.py"
  },
  "cells": "per timeframe: treatment 8 x 2 + 3 (cost) + 1 (frozen) = 20; H4 (8 + 4) x 2 + 3 + 1 = 28; three timeframes: 144 cells, each logged as one trial in research/trials.jsonl",
- "metrics_per_cell": ["closed trades n", "mean net R after the modelled cost", "mean R before cost", "profit factor", "win rate with Wilson 95%", "maximum drawdown in R", "mean net R day-block bootstrap 95% interval (as G5)"],
+ "metrics_per_cell": [
+  "closed trades n",
+  "mean net R after the modelled cost",
+  "mean R before cost",
+  "profit factor",
+  "win rate with Wilson 95%",
+  "maximum drawdown in R",
+  "mean net R day-block bootstrap 95% interval (as G5)"
+ ],
  "fragility_summary_stated_in_advance": {
   "sign_stability": "per parameter and arm / timeframe: whether mean net R keeps the frozen value's sign at every listed value",
   "frozen_rank": "the frozen value's rank among its list on mean net R (1 = best): a frozen value that is best while both neighbours are clearly worse is reported as a PEAK (a sign of a fitted spike), otherwise PLATEAU or SLOPE",
@@ -54,7 +121,29 @@
  "decision": "NONE. This is a diagnostic. No value from this study is proposed, adopted or recommended for production, the forward arms or the alerts, and no 'best' value is named as a recommendation. Any later parameter change would need its own amendment, a new forward test (the freeze key restarts by design) and the operator's explicit approval; this study cannot serve as that evidence on its own because it reads one partition many times.",
  "multiple_testing": "No test is used to choose. The 144 trials are logged so that any later claim can be deflated against them (harness.deflated_sharpe takes the trial count).",
  "feasibility_first": "Before the grid, the frozen cell is run once per arm and timeframe and its trade counts and run time are reported as they are. If a frozen cell has fewer than 20 closed trades, that arm / timeframe's cells are still run and reported, flagged INSUFFICIENT; nothing is re-designed to raise the count.",
- "not_done_by_design": ["no combination of parameters", "no search beyond the listed values", "no validation, holdout, recent or forward data", "no change to config.py or any arm module", "no new strategy"],
+ "not_done_by_design": [
+  "no combination of parameters",
+  "no search beyond the listed values",
+  "no validation, holdout, recent or forward data",
+  "no change to config.py or any arm module",
+  "no new strategy"
+ ],
  "trials_log": "research/trials.jsonl, append-only, one line per cell: registration id, partition, arm, timeframe, parameter, value, data hash, metrics",
- "outputs": "research/G5_SENS_RESULTS.md and research/G5_SENS_RESULTS.json, generated from the run, every number from the run file"
+ "outputs": "research/G5_SENS_RESULTS.md and research/G5_SENS_RESULTS.json, generated from the run, every number from the run file",
+ "amendments": [
+  {
+   "id": "A1",
+   "utc": "2026-11-28",
+   "status": "written and committed before any G5-SENS code or run; adds measurements only, changes no cell, no value list and no decision rule",
+   "authority": "Operator mandate 2026-11-28, Part 3: \"Measure net expectancy, win/loss distribution, drawdown and target-hit probabilities. Examine stability across timeframes and market regimes. ... Report sensitivity to transaction costs. Record every tested configuration. Preserve failed experiments. Report sample sizes and confidence intervals. Apply appropriate multiple-testing corrections. Do not select the best-performing parameter combination and present it as validated.\"",
+   "added_metrics_per_cell": {
+    "target_hit": "+$10 / +$15 / +$20 before the ORIGINAL stop, distances scaled by P0 / 4000 (the B19 / B30 convention, so $10 is the same relative move in 2020 as at $4,000), from the fill on the development 5-minute bars (research-data TD_XAU_USD_5min, which starts 2020-03-16 01:10 UTC: earlier fills are excluded and counted), a bar touching both counts as the stop, horizon 7 days, Wilson 95% intervals",
+    "win_loss_distribution": "net R quartiles, share of trades at or below -1 R, average win and average loss in R",
+    "by_regime_and_session": "n and mean net R per engine regime label and per session label at entry (the trade record's own fields)"
+   },
+   "multiple_testing": "Each cell's one-sided t-test of mean net R > 0 on its trades; Holm and Benjamini-Hochberg adjusted across all cells of the study. Reported so that no single cell can be read as an edge; nothing is selected by it.",
+   "supplementary_not_a_cell": "Cost sensitivity at FIXED signals: the frozen cell's trades re-priced with each trade's modelled cost multiplied by 0.5 / 1.5 / 2.0. Disclosed reason: features.compute floors the session spread (max(0.18 / 0.22 / 0.30 / 0.50, spread_cost)), so the registered config multiplier does not scale costs proportionally; the registered cells are still run exactly as declared.",
+   "disclosed": "30m on this partition is resampled from 15m (sources.resample_ohlc, as b19.engine_runs does); production fetches 30-minute bars from the vendor."
+  }
+ ]
 }
