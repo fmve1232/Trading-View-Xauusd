@@ -36,6 +36,9 @@
 </header>
 <div id="banners"></div>
 <main>
+  <!-- The terminal band (mandate 2026-11-28, Parts 18-19; site/bbg.js): sections A-I from the published payloads, each
+       row naming its source field (docs/DASHBOARD_FIELD_MAP.md). Display only: it decides nothing. -->
+  <section class="bbg" id="bbg" aria-label="Market terminal"></section>
   <!-- The chart terminal (TradingView layout, operator 27 Nov 2026): the Master's dashboard table and the developed
        line's strip over the chart, the plan strip at its foot. Every other panel follows below it. Display only. -->
   <section class="terminal" id="terminal" aria-label="Chart and engine dashboard">
@@ -98,6 +101,7 @@
   Charts: TradingView Lightweight Charts™, Copyright (c) 2025 TradingView, Inc. <a href="https://www.tradingview.com/">https://www.tradingview.com/</a> (Apache-2.0, <a href="vendor/LIGHTWEIGHT-CHARTS-LICENSE.txt">licence</a>).
 </footer>
 <script src="costs.js"></script>
+<script src="bbg.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
