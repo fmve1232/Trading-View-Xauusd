@@ -1,0 +1,54 @@
+{
+ "id": "G3-NEWS",
+ "title": "Major USD releases and the frozen engine's trades: volatility, stop behaviour, false breakouts and sweeps, target-before-stop, net expectancy and the trades a hypothetical news block would remove, against matched normal times. DEVELOPMENT data only; RESEARCH ONLY: production news blocking stays OFF",
+ "status": "REGISTERED 2026-11-28, written and committed before any of its code, any calendar download and any run; research only; no production change",
+ "approved_by_operator": true,
+ "approval": "Operator, 2026-11-27 mandate, G3 (RESEARCH ONLY), and 2026-11-28 mandate, Part 4: \"Conduct independent research into the effect of major USD economic announcements ... Use independently verified event timestamps. Compare: Normal trading. Pre-event exclusion windows. During-event exclusion windows. Post-event exclusion windows. Report the number of eligible events and trades in every category. Use matched comparisons, confidence intervals and multiple-testing corrections. Do not activate news blocking in production. Do not modify the frozen engine or Pine scripts.\" The approval covers the DEVELOPMENT partition only.",
+ "partitions": ["development"],
+ "not_used": "validation, the sealed holdout, the 2026 span and every forward ledger (the forward record has no NFP / CPI / FOMC inside any trade so far: G4 records)",
+ "created_utc": "2026-11-28",
+ "prior_evidence_disclosed_before_running": [
+  "B8 (2026-11-03, development): trading the first reaction to CPI / NFP / FOMC, with or against it, at +$13 / -$13 and +$10 / -$10, 32 trials: none beat the matched clock-time baseline after Holm. G3 asks a different question: what news does to the ENGINE's trades and what a block would remove.",
+  "B8's event dates (quantum/research/b8_news.DATES) come from the official schedules and passed its market-reaction check (a release bar whose range is under 1.5 x the same clock-time median is flagged). G3 verifies them again against a second, independent reading of the official schedules (below).",
+  "G5-SENS frozen cells on this partition (feasibility, 28 Nov): treatment 15m 154 trades, 30m 88, 1h 45; H4 (without volume-profile levels) 15m 9,005, 30m 4,899, 1h 2,743; every mean net R negative. G3 reads the same frozen engine runs."
+ ],
+ "events": {
+  "CPI": "BLS Consumer Price Index, 08:30 New York",
+  "NFP": "BLS Employment Situation, 08:30 New York",
+  "FOMC_STATEMENT": "FOMC statement / rate decision of scheduled meetings, 14:00 New York (unscheduled actions of 3 and 15 March 2020 listed separately, not pooled)",
+  "FOMC_PRESS": "Chair's press conference after scheduled meetings, 14:30 New York",
+  "PCE": "BEA Personal Income and Outlays (PCE price index), 08:30 New York",
+  "GDP": "BEA GDP (advance, second and third estimates), 08:30 New York",
+  "RETAIL": "Census Advance Monthly Retail Sales, 08:30 New York"
+ },
+ "timestamp_verification": {
+  "source_A": "the dates in quantum/research/b8_news.DATES (CPI, NFP, FOMC) as committed before this registration",
+  "source_B": "an independent reading, in this study, of the official release calendars (bls.gov schedules and archived release pages, federalreserve.gov FOMC calendars, bea.gov release archives, census.gov retail-sales release schedule), fetched through the web-fetch tool because the session's network refuses those hosts; every fetched date list is saved with its source address and fetch time",
+  "rule": "an event enters only if its date and time agree in A and B (for PCE, GDP and RETAIL: B plus the market-reaction check, ratio >= 1.5, B8's rule); every disagreement and exclusion is listed; nothing is selected by outcome",
+  "market_check": "B8's integrity ratio for every event, reported"
+ },
+ "data": "Twelve Data XAU/USD from the research-data branch through harness.partition('development'): 5-minute bars from 2020-03-16 (windows and races), 15-minute and 1-hour bars (engine runs); data hashes recorded. Spot mid prices only: the feed has no bid / ask and no volume for 2020-2022.",
+ "windows_new_york_minutes_around_each_release": {
+  "PRE": "[-30, 0)",
+  "DURING": "[0, +15)",
+  "POST": "[+15, +60)",
+  "LATE": "[+60, +120)",
+  "NORMAL": "the same New York clock-time windows on weekdays with none of the listed events (matched controls); and all other bars"
+ },
+ "measurements": {
+  "volatility": "per window: mean 5-minute bar range and mean absolute 5-minute return, event vs matched normal; ratio with a bootstrap 95% interval over events",
+  "spread_expansion": "UNAVAILABLE: no bid / ask in the feed (mid prices only); reported as unavailable, no proxy is presented as a spread",
+  "liquidity_conditions": "UNAVAILABLE as volume (none stored for 2020-2022); reported as unavailable",
+  "stop_behaviour": "frozen-engine trades (treatment and H4, 15m / 30m / 1h, the G5-SENS frozen runs) whose life contains a release: share stopped, share stopped by a gap at the open (SL_GAP / BE_GAP), mean adverse excursion past the stop; vs matched trades without one",
+  "false_breakouts_and_sweeps": "the engine's own BREAK (close beyond PDH / PDL / PWH / PWL) and GRAB (the engine's SWEEP) events (b10.liquidity_events): count per window and the share that reach +$10 (scaled) before -$10 (scaled) in their direction; vs matched normal",
+  "target_before_stop": "+$10 / +$15 / +$20 (scaled by P0 / 4000) before the original stop on 5-minute bars, for engine trades whose ENTRY falls in each window, vs matched normal entries (Wilson intervals)",
+  "net_expectancy": "mean net R (the engine's cost of record) of trades by entry window; day-block bootstrap intervals",
+  "hypothetical_block": "for each block rule -- no entry in [-15, +15), [-30, +30), [-30, +60) minutes of a release, and no open position held across a release -- the trades it would remove: count, their mean net R, their TP-first share (false exclusions = removed trades that reached TP1 before the stop), and the change in mean net R of the remaining set, with a paired day-block bootstrap interval"
+ },
+ "matching": "each event-window trade or bar is compared with the same arm, timeframe and direction at the same New York clock time (+-30 minutes) on weekdays without a listed event, within +-20 trading days",
+ "multiple_testing": "families declared here: (1) volatility ratios: 7 events x 4 windows; (2) mean net R difference by entry window: 2 arms x 3 timeframes x 4 windows; (3) block rules: 2 arms x 3 timeframes x 4 rules. Holm within each family and Benjamini-Hochberg across all; raw and adjusted p reported",
+ "decision": "NONE for production. Production news blocking stays OFF (config.use_news_suppress = False; the engine's gate is hard-wired off, engine.py). The report states whether any block rule would have changed the engine's development expectancy beyond its interval after correction; any production change would need its own amendment, a forward test and the operator's explicit approval",
+ "not_done_by_design": ["no change to the engine, config.py, the alerts or the Pine files", "no validation, holdout, 2026 or forward data", "no search over window lengths beyond those listed", "no spread or liquidity number invented"],
+ "trials_log": "research/trials.jsonl, one line per family member",
+ "outputs": "research/G3_NEWS_RESULTS.json and research/G3_NEWS_RESULTS.md, generated from the run; the fetched calendars in research/g3_calendar/"
+}
