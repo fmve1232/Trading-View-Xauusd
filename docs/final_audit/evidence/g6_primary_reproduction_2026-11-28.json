@@ -1,0 +1,7 @@
+{
+ "what": "the primary G6 development run (code ec45a1f8f, research/G6_EXPOSURE_RESULTS.json) re-run with the final module (A1 code, grid5) without trial logging",
+ "original_sha256": "2e82bc6a7ad12908fae92fc8e878893e2b8af2832e71b0ba362ab2e6972f6a73",
+ "rerun_sha256": "8a4fb4f6c12edc6e87feb264a97e62da6c8ef67f81dac392bf6adb3c82195d06",
+ "result": "identical in every field except the timestamp, the engine seconds and three added label keys (family, arms, timeframes)",
+ "check": "json fields compared after removing utc and engine_seconds; added keys listed"
+}

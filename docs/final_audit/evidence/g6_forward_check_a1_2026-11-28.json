@@ -1,0 +1,90 @@
+{
+ "check": "forward",
+ "rows": [
+  {
+   "name": "positions",
+   "independent": 836,
+   "study": 836,
+   "pass": true
+  },
+  {
+   "name": "samples",
+   "independent": 2712,
+   "study": 2712,
+   "pass": true
+  },
+  {
+   "name": "mean open",
+   "independent": 5.3267,
+   "study": 5.3267,
+   "pass": true
+  },
+  {
+   "name": "max open on grid",
+   "independent": 14,
+   "study": 14,
+   "pass": true
+  },
+  {
+   "name": "share 2+ open",
+   "independent": 0.9948,
+   "study": 0.9948,
+   "pass": true
+  },
+  {
+   "name": "share 2+ same direction",
+   "independent": 0.9782,
+   "study": 0.9782,
+   "pass": true
+  },
+  {
+   "name": "share long and short together",
+   "independent": 0.6545,
+   "study": 0.6545,
+   "pass": true
+  },
+  {
+   "name": "exact max open",
+   "independent": 14,
+   "study": 14,
+   "pass": true
+  },
+  {
+   "name": "share same-direction other-tf entry within 60m",
+   "independent": 0.8325,
+   "study": 0.8325,
+   "pass": true
+  },
+  {
+   "name": "net R",
+   "independent": -102.76,
+   "study": -102.76,
+   "pass": true
+  },
+  {
+   "name": "max drawdown R",
+   "independent": 105.1418,
+   "study": 105.1418,
+   "pass": true
+  },
+  {
+   "name": "longest losing streak",
+   "independent": 14,
+   "study": 14,
+   "pass": true
+  },
+  {
+   "name": "max entries in a day",
+   "independent": 119,
+   "study": 119,
+   "pass": true
+  },
+  {
+   "name": "worst realised day R",
+   "independent": -21.6104,
+   "study": -21.6104,
+   "pass": true
+  }
+ ],
+ "verdict": "PASS"
+}

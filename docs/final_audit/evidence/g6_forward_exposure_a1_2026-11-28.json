@@ -1,0 +1,441 @@
+{
+ "registration": "G6-EXPOSURE",
+ "family": "a1",
+ "arms": [
+  "treatment",
+  "control",
+  "challenger",
+  "h2",
+  "h3",
+  "h4",
+  "h5"
+ ],
+ "timeframes": [
+  "5m",
+  "15m",
+  "30m",
+  "1h",
+  "4h"
+ ],
+ "part": "forward (descriptive only; no policy replayed or compared)",
+ "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+ "out_of_scope": {
+  "reason": "not positions with a fill, an exit and a net R: information messages, or shadow research records whose outcome is a race label; counted here, not modelled as positions",
+  "notification_attempts_by_stream": {
+   "15m": 26,
+   "breakouts": 342,
+   "confirm_entry": 13,
+   "report": 11,
+   "sweeps": 80,
+   "zones": 24
+  },
+  "research_forward_records": {
+   "B15-ENGINE-FWD.json": {
+    "trades": 13,
+    "checks": 0
+   },
+   "B15b-ENGINE-FWD.json": {
+    "trades": 20,
+    "checks": 0
+   },
+   "B24-CONFIRM-FWD.json": {},
+   "B24-CONFIRM-FWD.void-20261110T213534Z.json": {},
+   "B31b-SHADOW-FWD.json": {
+    "setups": 93,
+    "days": 10
+   },
+   "B9-GRAB-FWD.json": {
+    "trades": 23,
+    "checks": 0
+   },
+   "CONFIRM-EVENTS.jsonl": 1102,
+   "CONFIRM-LIVE.json": {
+    "rows": 366
+   },
+   "SETUP-LIVE.json": {
+    "setups": 291
+   }
+  }
+ },
+ "ledgers": {
+  "5m_treatment": {
+   "records": 17,
+   "current_freeze": 17
+  },
+  "5m_control": {
+   "records": 2,
+   "current_freeze": 2
+  },
+  "5m_challenger": {
+   "records": 13,
+   "current_freeze": 13
+  },
+  "5m_h2": {
+   "records": 4,
+   "current_freeze": 4
+  },
+  "5m_h3": {
+   "records": 9,
+   "current_freeze": 9
+  },
+  "5m_h4": {
+   "records": 454,
+   "current_freeze": 454
+  },
+  "5m_h5": {
+   "records": 7,
+   "current_freeze": 7
+  },
+  "15m_treatment": {
+   "records": 7,
+   "current_freeze": 7
+  },
+  "15m_control": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "15m_challenger": {
+   "records": 7,
+   "current_freeze": 7
+  },
+  "15m_h2": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "15m_h3": {
+   "records": 5,
+   "current_freeze": 5
+  },
+  "15m_h4": {
+   "records": 162,
+   "current_freeze": 162
+  },
+  "15m_h5": {
+   "records": 0,
+   "current_freeze": 0
+  },
+  "30m_treatment": {
+   "records": 3,
+   "current_freeze": 3
+  },
+  "30m_control": {
+   "records": 2,
+   "current_freeze": 2
+  },
+  "30m_challenger": {
+   "records": 3,
+   "current_freeze": 3
+  },
+  "30m_h2": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "30m_h3": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "30m_h4": {
+   "records": 76,
+   "current_freeze": 76
+  },
+  "30m_h5": {
+   "records": 0,
+   "current_freeze": 0
+  },
+  "1h_treatment": {
+   "records": 4,
+   "current_freeze": 4
+  },
+  "1h_control": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "1h_challenger": {
+   "records": 4,
+   "current_freeze": 4
+  },
+  "1h_h2": {
+   "records": 0,
+   "current_freeze": 0
+  },
+  "1h_h3": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "1h_h4": {
+   "records": 41,
+   "current_freeze": 41
+  },
+  "1h_h5": {
+   "records": 0,
+   "current_freeze": 0
+  },
+  "4h_treatment": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "4h_control": {
+   "records": 0,
+   "current_freeze": 0
+  },
+  "4h_challenger": {
+   "records": 1,
+   "current_freeze": 1
+  },
+  "4h_h2": {
+   "records": 0,
+   "current_freeze": 0
+  },
+  "4h_h3": {
+   "records": 0,
+   "current_freeze": 0
+  },
+  "4h_h4": {
+   "records": 8,
+   "current_freeze": 8
+  },
+  "4h_h5": {
+   "records": 0,
+   "current_freeze": 0
+  }
+ },
+ "skipped": {
+  "open_at_end": 0,
+  "before_common_start": 0
+ },
+ "utc": "2026-11-28T07:10:48.601630+00:00",
+ "window_utc": [
+  "2026-11-15T23:05:00+00:00",
+  "2026-11-27T18:00:00+00:00"
+ ],
+ "positions": 836,
+ "by_tf_arm": {
+  "15m_challenger": 7,
+  "15m_control": 1,
+  "15m_h2": 1,
+  "15m_h3": 5,
+  "15m_h4": 162,
+  "15m_treatment": 7,
+  "1h_challenger": 4,
+  "1h_control": 1,
+  "1h_h3": 1,
+  "1h_h4": 41,
+  "1h_treatment": 4,
+  "30m_challenger": 3,
+  "30m_control": 2,
+  "30m_h2": 1,
+  "30m_h3": 1,
+  "30m_h4": 76,
+  "30m_treatment": 3,
+  "4h_challenger": 1,
+  "4h_h4": 8,
+  "4h_treatment": 1,
+  "5m_challenger": 13,
+  "5m_control": 2,
+  "5m_h2": 4,
+  "5m_h3": 9,
+  "5m_h4": 454,
+  "5m_h5": 7,
+  "5m_treatment": 17
+ },
+ "concurrency": {
+  "open_positions": {
+   "samples": 2712,
+   "mean": 5.3267,
+   "max": 14,
+   "share": {
+    "0": 0.0004,
+    "1": 0.0048,
+    "2": 0.0472,
+    "3": 0.108,
+    "4": 0.2065,
+    "5": 0.2323,
+    "6": 0.1656,
+    "7": 0.1239,
+    "8": 0.0398,
+    "9": 0.0125,
+    "10": 0.0324,
+    "11": 0.0236,
+    "12": 0.0007,
+    "14": 0.0022
+   },
+   "share_2_plus": 0.9948,
+   "share_3_plus": 0.9476
+  },
+  "long_open": {
+   "samples": 2712,
+   "mean": 1.8097,
+   "max": 6,
+   "share": {
+    "0": 0.2548,
+    "1": 0.2275,
+    "2": 0.1858,
+    "3": 0.1659,
+    "4": 0.1261,
+    "5": 0.0306,
+    "6": 0.0092
+   },
+   "share_2_plus": 0.5177,
+   "share_3_plus": 0.3319
+  },
+  "short_open": {
+   "samples": 2712,
+   "mean": 3.517,
+   "max": 14,
+   "share": {
+    "0": 0.0911,
+    "1": 0.135,
+    "2": 0.1619,
+    "3": 0.1622,
+    "4": 0.1641,
+    "5": 0.1029,
+    "6": 0.0642,
+    "7": 0.0494,
+    "8": 0.0052,
+    "9": 0.031,
+    "10": 0.0218,
+    "11": 0.0092,
+    "14": 0.0022
+   },
+   "share_2_plus": 0.774,
+   "share_3_plus": 0.6121
+  },
+  "net_long_minus_short": {
+   "mean": -1.7072,
+   "min": -14,
+   "max": 6
+  },
+  "share_of_time_any_open": 0.9996,
+  "share_of_time_two_plus_same_direction": 0.9782,
+  "share_of_time_long_and_short_together": 0.6545,
+  "mean_open_by_new_york_hour": {
+   "0": 4.625,
+   "1": 4.35,
+   "2": 4.8917,
+   "3": 5.2667,
+   "4": 4.675,
+   "5": 4.325,
+   "6": 4.5667,
+   "7": 4.9833,
+   "8": 4.8417,
+   "9": 5.1583,
+   "10": 5.9583,
+   "11": 6.4667,
+   "12": 6.05,
+   "13": 6.6514,
+   "14": 6.6481,
+   "15": 7.0093,
+   "16": 7.0741,
+   "17": 6.1111,
+   "18": 5.5273,
+   "19": 5.4417,
+   "20": 4.9833,
+   "21": 4.5833,
+   "22": 4.5583,
+   "23": 4.4333
+  },
+  "exact": {
+   "max_open": 14,
+   "first_at_utc": "2026-11-19T21:00:00+00:00",
+   "max_sum_stop_usd_per_oz": 642.09
+  },
+  "combined_stop_r": {
+   "max_r_at_risk": 14,
+   "max_usd_if_every_position_risked_650": 9100.0,
+   "note": "1 R per open position (its own stop); the USD figure is MODELLED: it assumes every position were taken at the operator's $650 planned loss, which the operator does not do"
+  }
+ },
+ "correlated": {
+  "entries": 836,
+  "share_with_same_direction_entry_on_another_tf_within_60m": 0.8325,
+  "share_with_same_direction_entry_on_other_arm_same_tf_within_60m": 0.1866,
+  "same_direction_pairs_open_together": 2142,
+  "both_lost_share": 0.3016,
+  "independence_expectation": 0.2264,
+  "phi_loss_loss": 0.3194
+ },
+ "sessions": {
+  "ASIAN": {
+   "entries": 251,
+   "initial_r": 251,
+   "net_r": -24.71,
+   "mean_net_r": -0.0984,
+   "mean_already_open_at_entry": 3.7849
+  },
+  "LON-CL": {
+   "entries": 28,
+   "initial_r": 28,
+   "net_r": 3.08,
+   "mean_net_r": 0.1098,
+   "mean_already_open_at_entry": 5.1429
+  },
+  "LON-FIX": {
+   "entries": 36,
+   "initial_r": 36,
+   "net_r": -5.8,
+   "mean_net_r": -0.1612,
+   "mean_already_open_at_entry": 3.8056
+  },
+  "LON-KZ": {
+   "entries": 59,
+   "initial_r": 59,
+   "net_r": -14.78,
+   "mean_net_r": -0.2505,
+   "mean_already_open_at_entry": 3.8136
+  },
+  "LONDON": {
+   "entries": 234,
+   "initial_r": 234,
+   "net_r": -38.49,
+   "mean_net_r": -0.1645,
+   "mean_already_open_at_entry": 4.2393
+  },
+  "NY": {
+   "entries": 76,
+   "initial_r": 76,
+   "net_r": 2.97,
+   "mean_net_r": 0.0391,
+   "mean_already_open_at_entry": 6.5395
+  },
+  "NY-KZ": {
+   "entries": 76,
+   "initial_r": 76,
+   "net_r": 0.81,
+   "mean_net_r": 0.0106,
+   "mean_already_open_at_entry": 4.8947
+  },
+  "OFF": {
+   "entries": 76,
+   "initial_r": 76,
+   "net_r": -25.83,
+   "mean_net_r": -0.3399,
+   "mean_already_open_at_entry": 4.8947
+  }
+ },
+ "book": {
+  "trades": 836,
+  "days_with_entries": 11,
+  "net_r": -102.76,
+  "mean_net_r": -0.1229,
+  "win_rate": 0.3648,
+  "tp1_first_share": 0.2978,
+  "worst_trade_r": -2.1835,
+  "gap_exits": 11,
+  "max_dd_r": 105.1418,
+  "longest_losing_streak": 14,
+  "potential_daily_loss_r": {
+   "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+   "mean": 76.0,
+   "p95": 115.0,
+   "max": 119,
+   "max_day": "2026-11-17",
+   "max_usd_if_every_position_risked_650": 77350.0
+  },
+  "realised_daily_r": {
+   "mean": -9.342,
+   "p05": -20.7691,
+   "worst": -21.6104,
+   "worst_day": "2026-11-16"
+  }
+ }
+}

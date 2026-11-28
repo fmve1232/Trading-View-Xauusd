@@ -1,0 +1,96 @@
+{
+ "check": "dev",
+ "rows": [
+  {
+   "name": "P0 keeps every position",
+   "independent": 40667,
+   "study": 40667,
+   "pass": true
+  },
+  {
+   "name": "P0_none: kept + blocked = all",
+   "independent": 40667,
+   "study": 40667,
+   "pass": true
+  },
+  {
+   "name": "P1_one_open: kept + blocked = all",
+   "independent": 40667,
+   "study": 40667,
+   "pass": true
+  },
+  {
+   "name": "P2_one_open_three_per_day: kept + blocked = all",
+   "independent": 40667,
+   "study": 40667,
+   "pass": true
+  },
+  {
+   "name": "P3_three_open: kept + blocked = all",
+   "independent": 40667,
+   "study": 40667,
+   "pass": true
+  },
+  {
+   "name": "P4_one_open_per_direction: kept + blocked = all",
+   "independent": 40667,
+   "study": 40667,
+   "pass": true
+  },
+  {
+   "name": "P1 never more than one open",
+   "independent": true,
+   "study": true,
+   "pass": true
+  },
+  {
+   "name": "P2 never more than one open",
+   "independent": true,
+   "study": true,
+   "pass": true
+  },
+  {
+   "name": "P2 never more than three entries a day",
+   "independent": true,
+   "study": true,
+   "pass": true
+  },
+  {
+   "name": "P3 never more than three open",
+   "independent": true,
+   "study": true,
+   "pass": true
+  },
+  {
+   "name": "P4 never more than two open",
+   "independent": true,
+   "study": true,
+   "pass": true
+  },
+  {
+   "name": "ten tests",
+   "independent": 10,
+   "study": 10,
+   "pass": true
+  },
+  {
+   "name": "Holm and BH no smaller than raw p",
+   "independent": true,
+   "study": true,
+   "pass": true
+  },
+  {
+   "name": "trials lines for G6",
+   "independent": 5,
+   "study": 5,
+   "pass": true
+  },
+  {
+   "name": "trials match results",
+   "independent": true,
+   "study": true,
+   "pass": true
+  }
+ ],
+ "verdict": "PASS"
+}

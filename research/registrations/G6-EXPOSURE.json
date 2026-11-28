@@ -1,0 +1,52 @@
+{
+ "id": "G6-EXPOSURE",
+ "title": "Aggregate exposure across the frozen engine's arms and timeframes, and five exposure policies compared on the DEVELOPMENT partition, in shadow mode. Research only: no production limit, no alert change",
+ "status": "REGISTERED 2026-11-28, written and committed before any of its code or any run; research only; no production change",
+ "approved_by_operator": true,
+ "approval": "Operator, 2026-11-27 mandate, G6 (SHADOW MODE): \"Measure: simultaneous open-alert count, directional exposure, combined stop-loss exposure, correlated strategy exposure, maximum potential daily loss, and session concentration. Evaluate 1-open / 3-max as a hypothesis only. Do not introduce an arbitrary position limit. No production enforcement without approval.\" 2026-11-28 mandate, Part 5: \"Compare alternative exposure limits using historical development data ... The user's actual manual trading arrangement is strictly one open MT5 trade at a time. The G6 1-open/3-maximum proposal is a separate shadow research hypothesis and must not override the manual trading rule or become a production control.\" Development partition only.",
+ "partitions": ["development"],
+ "forward_ledgers": "measured descriptively only (exposure statistics of the recorded forward trades); no policy is compared or chosen on them",
+ "created_utc": "2026-11-28",
+ "arms_and_timeframes": "the frozen engine's treatment arm and arm H4 on 5m, 15m, 30m and 1h (the G5-SENS frozen runs; 5m on the development 5-minute bars from 2020-03-16). Every arm already holds one position at a time; exposure arises across arms and timeframes",
+ "measurements": {
+  "concurrency": "number of positions open at each 5-minute bar close: distribution, maximum, share of time with 2+ / 3+ open",
+  "direction": "net and gross BUY / SELL exposure in positions and in R at risk",
+  "combined_stop": "sum of open initial risk (1 R per open position) and the worst simultaneous R at risk",
+  "correlated": "share of time two or more open positions share a direction; overlapping signals = entries in the same direction within 60 minutes across timeframes",
+  "session": "entries and open R by session label",
+  "daily": "maximum potential daily loss (the sum of R at risk of every position opened in a New York session day) and the realised daily R",
+  "streaks": "longest run of consecutive losing trades in exit order",
+  "drawdown": "combined maximum drawdown of cumulative net R in exit order"
+ },
+ "policies": {
+  "P0_none": "every trade of every arm and timeframe (the baseline)",
+  "P1_one_open": "at most ONE open position across all arms and timeframes: the operator's own manual rule. A signal arriving while a position is open is BLOCKED and recorded",
+  "P2_one_open_three_per_day": "the B11 hypothesis: one open position and at most three entries per New York session day",
+  "P3_three_open": "at most three open positions at once",
+  "P4_one_open_per_direction": "at most one open long and one open short"
+ },
+ "tie_break": "signals are taken in fill-time order; at the same fill time the higher timeframe first, then treatment before H4 (fixed here, not chosen by outcome)",
+ "first_order": "a policy keeps or blocks each recorded trade; the arms' own trade sequences are not re-simulated (a blocked trade does not create a new one)",
+ "comparisons": "each of P1-P4 against P0 and P1 against P2: mean net R per trade and total R per day with paired day-block bootstrap 95% intervals; the blocked trades' count, mean net R and TP1-first share; maximum drawdown and the worst day",
+ "multiple_testing": "5 comparisons x 2 measures = 10 tests; Holm, and BH reported",
+ "decision": "NONE. No policy is adopted for production or the alerts. The operator's one-trade-at-a-time manual rule is the operator's, not a result of this study; the 1-open / 3-max proposal stays a hypothesis whatever the result",
+ "not_done_by_design": ["no limit enforced anywhere", "no change to the engine, config.py, the alerts or the Pine files", "no validation, holdout, 2026 or forward-data comparison", "no policy beyond the five listed"],
+ "trials_log": "research/trials.jsonl, one line per comparison",
+ "outputs": "research/G6_EXPOSURE_RESULTS.json and .md; the forward exposure in docs/final_audit/evidence/g6_forward_exposure_<day>.json",
+ "amendments": [
+  {
+   "id": "A1",
+   "created_utc": "2026-11-28",
+   "written": "before any result of the primary run was read (the primary development run was still computing; only its per-timeframe trade counts had been logged) and before any A1 code or run",
+   "reason": "The operator's 2026-11-28 mandate, Part 5, asks for the analysis 'across all strategy arms'; the original registration covered only the treatment arm and arm H4 on 5m-1h. A1 widens the scope; the original analysis stays as registered and is reported unchanged as the PRIMARY family.",
+   "arms": "every live forward-test arm: treatment, control, challenger, h2, h3, h4, h5 (h6 is CLOSED under Amendment F and has no live record; it is left out and said so)",
+   "timeframes": "5m, 15m, 30m, 1h and 4h (4h on the development partition = the New York-session 4-hour resample of the 1-hour bars, sources.resample_ny_session, as production builds the 4h series' higher-timeframe context)",
+   "engine_runs": "one feature computation per timeframe; engine.run in modes treatment, control and challenger on it, exactly as quantum/pipeline.py does; backtest.simulate for those three; arm_h2/h3/h4/h5.simulate on the treatment run, exactly as quantum/report.py does",
+   "tie_break": "fill time, then the higher timeframe first (4h, 1h, 30m, 15m, 5m), then arm order treatment, control, challenger, h2, h3, h4, h5; fixed here",
+   "policies_and_comparisons": "the same five policies and the same 5 comparisons x 2 measures, as a SECOND family of 10 tests (A1); Holm and BH within A1; BH across both families also reported",
+   "forward": "descriptive only, as registered: every live ledger <tf>_<arm>.json for the arms and timeframes above, records under the current freeze key",
+   "out_of_scope_listed": "alert streams and shadow records that are not positions with a fill, an exit and a net R (breakout, sweep, zone and report messages; the B9 / B15b / SETUP / CONFIRM / B31b research-forward records, whose outcome is a race label): counted and listed with the reason, not modelled as positions",
+   "decision": "NONE, as registered"
+  }
+ ]
+}

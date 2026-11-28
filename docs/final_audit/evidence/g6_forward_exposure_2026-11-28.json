@@ -1,0 +1,245 @@
+{
+ "registration": "G6-EXPOSURE",
+ "part": "forward (descriptive only; no policy replayed or compared)",
+ "freeze_key": "1f88aad357497da4:4440d52587f5cc6b",
+ "ledgers": {
+  "5m_treatment": {
+   "records": 17,
+   "current_freeze": 17
+  },
+  "5m_h4": {
+   "records": 454,
+   "current_freeze": 454
+  },
+  "15m_treatment": {
+   "records": 7,
+   "current_freeze": 7
+  },
+  "15m_h4": {
+   "records": 162,
+   "current_freeze": 162
+  },
+  "30m_treatment": {
+   "records": 3,
+   "current_freeze": 3
+  },
+  "30m_h4": {
+   "records": 76,
+   "current_freeze": 76
+  },
+  "1h_treatment": {
+   "records": 4,
+   "current_freeze": 4
+  },
+  "1h_h4": {
+   "records": 41,
+   "current_freeze": 41
+  }
+ },
+ "skipped": {
+  "open_at_end": 0,
+  "before_common_start": 0
+ },
+ "utc": "2026-11-28T07:03:31.828789+00:00",
+ "window_utc": [
+  "2026-11-15T23:05:00+00:00",
+  "2026-11-27T17:35:00+00:00"
+ ],
+ "positions": 764,
+ "by_tf_arm": {
+  "15m_h4": 162,
+  "15m_treatment": 7,
+  "1h_h4": 41,
+  "1h_treatment": 4,
+  "30m_h4": 76,
+  "30m_treatment": 3,
+  "5m_h4": 454,
+  "5m_treatment": 17
+ },
+ "concurrency": {
+  "open_positions": {
+   "samples": 2707,
+   "mean": 3.683,
+   "max": 6,
+   "share": {
+    "0": 0.0011,
+    "1": 0.0225,
+    "2": 0.1212,
+    "3": 0.2028,
+    "4": 0.4939,
+    "5": 0.1167,
+    "6": 0.0417
+   },
+   "share_2_plus": 0.9764,
+   "share_3_plus": 0.8552
+  },
+  "long_open": {
+   "samples": 2707,
+   "mean": 1.4374,
+   "max": 5,
+   "share": {
+    "0": 0.3133,
+    "1": 0.2638,
+    "2": 0.1862,
+    "3": 0.1481,
+    "4": 0.0864,
+    "5": 0.0022
+   },
+   "share_2_plus": 0.423,
+   "share_3_plus": 0.2368
+  },
+  "short_open": {
+   "samples": 2707,
+   "mean": 2.2457,
+   "max": 6,
+   "share": {
+    "0": 0.1223,
+    "1": 0.2416,
+    "2": 0.2264,
+    "3": 0.1928,
+    "4": 0.1297,
+    "5": 0.0691,
+    "6": 0.0181
+   },
+   "share_2_plus": 0.6361,
+   "share_3_plus": 0.4097
+  },
+  "net_long_minus_short": {
+   "mean": -0.8083,
+   "min": -6,
+   "max": 5
+  },
+  "share_of_time_any_open": 0.9989,
+  "share_of_time_two_plus_same_direction": 0.9298,
+  "share_of_time_long_and_short_together": 0.5656,
+  "mean_open_by_new_york_hour": {
+   "0": 3.4667,
+   "1": 3.4083,
+   "2": 3.625,
+   "3": 3.6333,
+   "4": 3.35,
+   "5": 3.125,
+   "6": 3.2833,
+   "7": 3.2917,
+   "8": 3.2333,
+   "9": 3.55,
+   "10": 3.9,
+   "11": 3.9833,
+   "12": 3.9052,
+   "13": 4.2037,
+   "14": 4.3148,
+   "15": 4.5463,
+   "16": 4.5741,
+   "17": 4.2222,
+   "18": 3.9091,
+   "19": 3.8917,
+   "20": 3.5833,
+   "21": 3.4167,
+   "22": 3.4583,
+   "23": 3.3333
+  },
+  "exact": {
+   "max_open": 6,
+   "first_at_utc": "2026-11-16T23:45:00+00:00",
+   "max_sum_stop_usd_per_oz": 333.01
+  },
+  "combined_stop_r": {
+   "max_r_at_risk": 6,
+   "max_usd_if_every_position_risked_650": 3900.0,
+   "note": "1 R per open position (its own stop); the USD figure is MODELLED: it assumes every position were taken at the operator's $650 planned loss, which the operator does not do"
+  }
+ },
+ "correlated": {
+  "entries": 764,
+  "share_with_same_direction_entry_on_another_tf_within_60m": 0.8207,
+  "share_with_same_direction_entry_on_other_arm_same_tf_within_60m": 0.0838,
+  "same_direction_pairs_open_together": 1140,
+  "both_lost_share": 0.2886,
+  "independence_expectation": 0.2277,
+  "phi_loss_loss": 0.2645
+ },
+ "sessions": {
+  "ASIAN": {
+   "entries": 247,
+   "initial_r": 247,
+   "net_r": -27.57,
+   "mean_net_r": -0.1116,
+   "mean_already_open_at_entry": 2.6032
+  },
+  "LON-CL": {
+   "entries": 25,
+   "initial_r": 25,
+   "net_r": 2.87,
+   "mean_net_r": 0.1149,
+   "mean_already_open_at_entry": 2.8
+  },
+  "LON-FIX": {
+   "entries": 31,
+   "initial_r": 31,
+   "net_r": -3.48,
+   "mean_net_r": -0.1122,
+   "mean_already_open_at_entry": 2.3548
+  },
+  "LON-KZ": {
+   "entries": 56,
+   "initial_r": 56,
+   "net_r": -17.28,
+   "mean_net_r": -0.3086,
+   "mean_already_open_at_entry": 2.2679
+  },
+  "LONDON": {
+   "entries": 200,
+   "initial_r": 200,
+   "net_r": -31.17,
+   "mean_net_r": -0.1558,
+   "mean_already_open_at_entry": 2.555
+  },
+  "NY": {
+   "entries": 66,
+   "initial_r": 66,
+   "net_r": -0.06,
+   "mean_net_r": -0.0009,
+   "mean_already_open_at_entry": 3.5303
+  },
+  "NY-KZ": {
+   "entries": 67,
+   "initial_r": 67,
+   "net_r": 3.47,
+   "mean_net_r": 0.0518,
+   "mean_already_open_at_entry": 2.597
+  },
+  "OFF": {
+   "entries": 72,
+   "initial_r": 72,
+   "net_r": -22.94,
+   "mean_net_r": -0.3187,
+   "mean_already_open_at_entry": 3.1111
+  }
+ },
+ "book": {
+  "trades": 764,
+  "days_with_entries": 11,
+  "net_r": -96.16,
+  "mean_net_r": -0.1259,
+  "win_rate": 0.3639,
+  "tp1_first_share": 0.2919,
+  "worst_trade_r": -1.8584,
+  "gap_exits": 8,
+  "max_dd_r": 99.1092,
+  "longest_losing_streak": 14,
+  "potential_daily_loss_r": {
+   "note": "entries per New York day x 1 R each (the stop); costs and gaps can exceed it",
+   "mean": 69.455,
+   "p95": 108.0,
+   "max": 109,
+   "max_day": "2026-11-16",
+   "max_usd_if_every_position_risked_650": 70850.0
+  },
+  "realised_daily_r": {
+   "mean": -8.7417,
+   "p05": -19.7374,
+   "worst": -20.4309,
+   "worst_day": "2026-11-16"
+  }
+ }
+}
