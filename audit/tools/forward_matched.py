@@ -266,6 +266,7 @@ def one(t: dict, tf: str, P: dict, cand: dict, k: int, rng) -> dict | None:
     cost = float(t["cost_pts"])
     d1, d2 = abs(tp1 - e), abs(tp2 - e)
     rec = {"r": float(t["r"]), "gross_r": float(t["gross_pts"]) / risk if risk > 0 else 0.0, "day": nyday(fill),
+           "entry_time": t["entry_time"], "exit_reason": t.get("exit_reason"),
            "replay_r": manage(P, j0, end, side, e, sl, tp1, tp2, cost),
            "races": races(P, j0, side, e, sl), "mfe_mae": excursions(P, j0, end, side, e),
            "reopen_inside": bool(P["reopen"][j0:int(np.searchsorted(P["t"], end - 300, "right"))].any())}
@@ -329,6 +330,14 @@ def summarise(recs: list[dict], rng) -> dict:
                           "mae_median": round(float(np.median(mae)), 2) if len(mae) else None,
                           "mae_p75": round(float(np.quantile(mae, 0.75)), 2) if len(mae) else None,
                           "share_mfe_ge": {str(x): round(float(np.mean(mfe >= x)), 4) if len(mfe) else None for x in (10, 15, 20)}}
+    rep_ok = [x for x in recs if x["replay_r"] is not None]
+    agree = [x for x in rep_ok if abs(x["replay_r"] - x["r"]) < 1e-3]
+    out["replay_agrees_with_record"] = {
+        "note": "the recorded trade re-derived from the raw 5-minute bars under the fixed rules (a FLIP is the time exit "
+                "at the same close); agreement = |replay R - recorded R| < 0.001",
+        "replayed": len(rep_ok), "agree": len(agree),
+        "disagreements": [{"entry_time": x["entry_time"], "exit_reason": x["exit_reason"], "recorded_r": round(x["r"], 4),
+                           "replay_r": round(x["replay_r"], 4)} for x in rep_ok if abs(x["replay_r"] - x["r"]) >= 1e-3][:20]}
     clean = [x for x in recs if not x["reopen_inside"]]
     out["sensitivity_without_reopen_trades"] = {"trades": len(clean), "excluded": len(recs) - len(clean),
                                                 "net_r_mean": round(float(np.mean([x["r"] for x in clean])), 4) if clean else None}
